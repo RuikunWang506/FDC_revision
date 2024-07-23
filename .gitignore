@@ -1,0 +1,25 @@
+# Ignore Mac system files
+.DS_Store
+
+# Ignore output folder
+/output/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environments
+venv/
+ENV/
+env/
+
+# Ignore other potential system files
+Thumbs.db
+Desktop.ini
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+*.swp
