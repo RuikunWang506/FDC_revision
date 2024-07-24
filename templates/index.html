@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[MIGRATION]Fashion Distribution Center OMS Cloud</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/static/icons/handbag.svg">
+    <style>
+        .custom-btn {
+            padding: 40px 40px;
+            font-size: 40px;
+            border-radius: 50px; /* Changed from 100px to 50px to create oval shapes */
+            margin: 20px;
+            width: 250px; /* Adjust width to desired oval shape */
+            height: 300px; /* Adjust height to desired oval shape */
+            transition: background-color 0.3s, transform 0.3s;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            line-height: 1; /* Adjusted line-height to reduce space between lines */
+        }
+        .custom-btn:hover {
+            transform: translateY(-30px);
+        }
+        .custom-btn img {
+            margin-right: 10px;
+            width: 80px;
+            height: 80px;
+        }
+        .custom-btn h4 {
+            margin-top: 5px; /* Reduced margin to reduce space between lines */
+            margin-bottom: 0; /* Reduced bottom margin */
+        }
+
+        /* Media query for cellphones */
+        @media (max-width: 768px) {
+            .custom-btn {
+                padding: 20px 20px;
+                font-size: 20px;
+                border-radius: 25px;
+                margin: 10px;
+                width: 125px;
+                height: 150px;
+            }
+            .custom-btn img {
+                width: 40px;
+                height: 40px;
+            }
+            .custom-btn h4 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container mt-5 text-center">
+        <h1>Welcome to the Home Page</h1>
+        <h4>Undergoing Migration, please let me know if theres any bug <br>-5pm July 8, 2024</h4>
+        <div class="mt-4">
+            <a href="/Item_lookup" class="btn btn-primary custom-btn">
+                <p><img src="/static/icons/magnifying-glass.svg" alt="Item Lookup"></p>
+                Item Lookup<h4>看款</h4>
+            </a>
+            {% if current_user != 'fdc' %}
+            <a href="/Order_lookup" class="btn btn-secondary custom-btn">
+                <p><img src="/static/icons/document.svg" alt="Order Lookup"></p>
+                Order Lookup<h4>看单</h4>
+            </a>
+            <a href="/v4_listcreator" class="btn btn-success custom-btn">
+                <p><img src="/static/icons/handbag.svg" alt="V4 List Creator"></p>
+                V4 List Creator<h4>做List</h4>
+            </a>
+            <a href="/label_maker" class="btn btn-danger custom-btn">
+                <p><img src="/static/icons/shipping.svg" alt="Label Maker"></p>
+                Label Maker<h4>出货Label</h4>
+            </a>
+            <a href="/googlesheet" class="btn btn-info custom-btn">
+                <p><img src="/static/icons/google.svg" alt="Google Sheet"></p>
+                Google Sheet
+            </a>
+            
+                <a href="/loris" class="btn btn-dark custom-btn">
+                    <p><img src="/static/icons/loris.ico" alt="Loris"></p>
+                    Loris tools
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% include 'footer.html' %}
+</body>
+</html>

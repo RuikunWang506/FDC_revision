@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macy Label Maker</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-container .tooltip-text {
+            visibility: hidden;
+            width: 400px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position above the element */
+            left: 50%;
+            margin-left: -200px; /* Adjust to center the tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip-container .tooltip-text::after {
+            content: '';
+            position: absolute;
+            top: 100%; /* Arrow at the bottom of the tooltip */
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: black transparent transparent transparent;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="container mt-5">
+        <div class="row justify-content-center text-center">
+            {% if current_user != 'fdc' %}
+                <form method="POST">
+                    <h1>MACY SET MAKER</h1>
+                    <h4>You will get BOX Label, Packing Slip, and Pallet Label</h4>
+                    <h4><a href="/static/checklist.docx">Old Instruction.xlsx</a></h4>                
+
+                    <div class="form-group tooltip-container">
+                        <label for="po_num">PO Number:</label>
+                        <input type="text" class="form-control" id="po_num" name="po_num" value="{{ po_num }}" required>
+                        <span class="tooltip-text">this is on the order like 1835178</span>
+                    </div>
+
+                    <div class="form-group tooltip-container">
+                        <label for="bol">order#/BOL:</label>
+                        <input type="text" class="form-control" id="bol" name="bol" value="{{ bol }}" required>
+                        <span class="tooltip-text">4 digit for E-Fashion<br>5 digit for FDC</span>
+                    </div>
+
+                    <div class="form-group tooltip-container">
+                        <label for="apt">APT:</label>
+                        <input type="text" class="form-control" id="apt" name="apt" value="{{ apt }}" required>
+                        <span class="tooltip-text">Ruby Email like 53375808</span>
+                    </div>
+
+                    <div class="form-group tooltip-container">
+                        <label for="carrier">Carrier:</label>
+                        <input type="text" class="form-control" id="carrier" name="carrier" value="{{ carrier }}" required>
+                        <span class="tooltip-text">From Ruby Email</span>
+                    </div>
+
+                    <div class="form-group tooltip-container">
+                        <label for="project">Project:</label>
+                        <input type="text" class="form-control" id="project" name="project" value="{{ project }}" required>
+                        <span class="tooltip-text">Ruby Email title Macy's, Inc. Routing Notification (Project(s) 7565620) </span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">元神启动</button>
+                </form>
+            {% endif %}
+        </div>
+
+        {% if filename %}
+            <div class="text-center mt-5">
+                <div class="container d-flex justify-content-center align-items-top" style="height: 50vh;">
+                    <img src="static/macy_sticking_guide.jpg" alt="Sticking Guide">
+                </div>
+                <div class="d-flex flex-wrap justify-content-center mt-3">
+                    <a href="{{ url_for('download_file4', filename=filename) }}" class="btn btn-primary">
+                        Download {{ filename }}
+                    </a>   
+                </div>
+            </div>
+        {% endif %}
+
+        {% if error_message %}
+            <div class="text-center mt-5">
+                <p style="color: red;">{{ error_message }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

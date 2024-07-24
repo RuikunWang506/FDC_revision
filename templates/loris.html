@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loris Maker</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <style>
+        .large-button {
+            font-size: 1.5rem;
+        }
+        .textarea-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .textarea-container .form-group {
+            flex: 1;
+            margin: 0 10px;
+        }
+        .textarea-container .form-group textarea {
+            height: 200px; /* Adjust height as needed */
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .barcode {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            function updateInputData() {
+                const sku = document.getElementById('sku').value.split('\n');
+                const barcode = document.getElementById('barcode').value.split('\n');
+                const quantity = document.getElementById('quantity').value.split('\n');
+                let inputData = '';
+
+                for (let i = 0; i < sku.length; i++) {
+                    if (sku[i] && barcode[i] && quantity[i]) {
+                        inputData += `${sku[i]}\t${barcode[i]}\t${quantity[i]}\n`;
+                    }
+                }
+
+                document.getElementById('input_data').value = inputData.trim();
+            }
+
+            function generateBarcodes() {
+                const barcodeElements = document.querySelectorAll('.barcode');
+                barcodeElements.forEach(el => {
+                    const code = el.getAttribute('data-code');
+                    JsBarcode(el, code, {
+                        format: 'CODE128C',
+                        displayValue: false // This option hides the text at the bottom
+                    });
+                });
+            }
+
+            document.getElementById('sku').addEventListener('input', updateInputData);
+            document.getElementById('barcode').addEventListener('input', updateInputData);
+            document.getElementById('quantity').addEventListener('input', updateInputData);
+            generateBarcodes();
+        });
+    </script>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        {% if error_message %}
+        <div class="alert alert-danger mt-3" style="font-size: 24px; font-weight: bold;">
+            {{ error_message }}
+        </div>
+        {% endif %}
+        <form method="post" action="/loris" enctype="multipart/form-data">
+            <h1>Loris Maker</h1>
+            <h2>Sticker Maker</h2>
+            <div class="textarea-container">
+                <div class="form-group">
+                    <label for="sku">SKU:</label>
+                    <textarea id="sku" class="form-control" name="sku">{{ sku }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="barcode">Barcode:</label>
+                    <textarea id="barcode" class="form-control" name="barcode">{{ barcode }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity:</label>
+                    <textarea id="quantity" class="form-control" name="quantity">{{ quantity }}</textarea>
+                </div>
+                <div class="form-group" style="flex: 2;">
+                    <label for="input_data">Paste your list here:</label>
+                    <textarea id="input_data" class="form-control" name="input_data" rows="14">{{ input_data }}</textarea>
+                </div>
+            </div>
+            <div class="buttons mt-3">
+                <button type="submit" name="show_table" class="btn btn-secondary btn-lg large-button">Show Table</button>
+                <button type="submit" name="submit_data" class="btn btn-primary btn-lg large-button">Submit</button>
+                <button type="reset" class="btn btn-danger btn-lg large-button">Reset</button>
+                
+            </div>
+        </form>
+        {% if table_data %}
+        <div class="table-responsive mt-5">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Barcode</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_data %}
+                    <tr>
+                        <td>{{ row[0] }}</td>
+                        <td>{{ row[1] }}</td>
+                        <td>{{ row[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% if filename %}
+        <div class="text-center" style="padding-top: 50px;">
+            <h2><p>Download Label</p> <p><u>{{ filename }}</u></p> </h2>
+            <div class="d-flex flex-wrap justify-content-center" style="padding-top: 10px;">
+                <a href="{{ url_for('download_file3', filename=filename) }}" class="btn btn-primary" target="_blank">Download</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            generateBarcodes();
+        });
+    </script>
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log-entry { margin-bottom: 10px; }
+        .info { color: green; }
+        .error { color: red; }
+        .timestamp { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Log Viewer</h1>
+    <div>
+        {% for line in log_lines %}
+            <div class="log-entry {{ line[0] }}">
+                <span class="timestamp">{{ line[1] }}</span> - {{ line[2] }}
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        .nav-link {
+            display: flex;
+            align-items: center;
+        }
+        .nav-link img {
+            margin-right: 8px;
+        }
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">Home</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/Item_lookup">
+                        <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup" style="width: 20px; height: 20px;">
+                        Item Lookup
+                    </a>
+                </li>
+                {% if current_user != 'fdc' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/Order_lookup">
+                        <img src="/static/icons/document.svg" alt="Order Lookup" style="width: 20px; height: 20px;">
+                        Order Lookup
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/v4_listcreator">
+                        <img src="/static/icons/handbag.svg" alt="V4 List Creator" style="width: 20px; height: 20px;">
+                        V4 List Creator
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/label_maker">
+                        <img src="/static/icons/shipping.svg" alt="Label Maker" style="width: 20px; height: 20px;">
+                        Label Maker
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/googlesheet">
+                        <img src="/static/icons/google.svg" alt="Google Sheet" style="width: 20px; height: 20px;">
+                        Google Sheet
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/loris">
+                        <img src="/static/icons/loris.ico" alt="Loris" style="width: 20px; height: 20px;">
+                        Loris
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/calculator">
+                        <img src="/static/icons/calculator.ico" alt="calculator" style="width: 20px; height: 20px;">
+                        Calcualtor
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        <h1>Construction</h1>
+    </nav>
+</body>
+</html>

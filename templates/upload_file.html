@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Shipping Receipt</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #description {
+            width: 100%;
+            min-height: 100px;
+            resize: both;
+        }
+        #memo {
+            width: 100%;
+            min-height: 100px;
+            resize: both;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 5px;
+            padding: 20px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s ease;
+        }
+        .upload-area.dragover {
+            background-color: #e9ecef;
+        }
+        .upload-area p {
+            margin: 0;
+        }
+        .file-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .file-list li {
+            padding: 5px 0;
+            background-color: #f8f9fa;
+            border: 1px solid #007bff;
+            border-radius: 3px;
+            margin-top: 5px;
+            color: #007bff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h1 class="text-center mt-4">Upload Shipping Receipt</h1>
+                <form id="receipt-form" action="/send_shipping_receipt" method="POST" enctype="multipart/form-data" class="mt-4">
+                    <div class="form-group">
+                        <label for="memo">Memo:</label>
+                        <textarea id="memo" name="memo" class="form-control" ></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="store">Store:</label>
+                        <select id="store" name="store" class="form-control">
+                            <option value=""></option>
+                            <option value="FEDEX">FEDEX</option>
+                            <option value="UPS">UPS</option>
+                            <option value="USPS">USPS</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="file">Upload File:</label>
+                        <div id="upload-area" class="upload-area">
+                            <p>Drag & Drop your files here or click to select files</p>
+                            <ul id="file-list" class="file-list"></ul>
+                        </div>
+                        <input type="file" id="file" name="file" class="form-control-file d-none" multiple>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% include 'footer.html' %}
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var uploadArea = $('#upload-area');
+            var fileInput = $('#file');
+            var fileList = $('#file-list');
+
+            uploadArea.on('click', function() {
+                fileInput.click();
+            });
+
+            uploadArea.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('dragover');
+            });
+
+            uploadArea.on('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('dragover');
+            });
+
+            uploadArea.on('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('dragover');
+                var files = e.originalEvent.dataTransfer.files;
+                fileInput[0].files = files;
+                displayFileNames(files);
+            });
+
+            fileInput.on('change', function() {
+                var files = $(this)[0].files;
+                displayFileNames(files);
+            });
+
+            function displayFileNames(files) {
+                fileList.empty();
+                if (files.length > 0) {
+                    for (var i = 0; i < files.length; i++) {
+                        fileList.append('<li>' + files[i].name + '</li>');
+                    }
+                } else {
+                    fileList.append('<li>No files selected</li>');
+                }
+            }
+
+            $('#receipt-form').on('submit', function(e) {
+                if (!$('#memo').val() && $('#file')[0].files.length === 0) {
+                    e.preventDefault();
+                    alert('Please provide either a memo or a file.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

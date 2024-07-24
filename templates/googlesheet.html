@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Googlesheet特供</title>
+    <!-- Add DataTables CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+
+    <!-- Basic CSS styling for the table -->
+    <style>
+        /* Basic table styling */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        /* Style for resizable div */
+        #mydiv {
+            resize: both;
+            overflow: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px; /* Add margin bottom for better visibility */
+        }
+        /* Loading overlay styles */
+        #loading-overlay {
+            display: none; /* Hidden by default */
+            position: fixed; /* Sit on top of the page content */
+            width: 100%; /* Full width (cover the whole page) */
+            height: 100%; /* Full height (cover the whole page) */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5); /* Black background with 50% opacity */
+            z-index: 9999; /* Specify a stack order in case you're using a different order for other elements */
+            cursor: wait; /* Add a cursor to indicate waiting */
+        }
+        /* Loading text styles */
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            color: white;
+        }
+        /* Script output box styling */
+        #script-output-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #282c34; /* Dark background color */
+            border-radius: 5px;
+            color: #61dafb; /* Text color */
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap; /* Preserve whitespace */
+        }
+        #script-output {
+            overflow-x: auto;
+            color: #61dafb; /* Light blue color for text */
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    {% if current_user == 'fdc' %}
+        <div class="col-12">
+            <div class="alert alert-info text-center" role="alert">
+                ⭐ not avaliable at the moment ! ⭐
+            </div>
+        </div>
+        {% endif %}
+    {% if current_user != 'fdc' %}
+
+    <div class="container mt-5">
+        <h1>谷歌特供</h1>
+        <form method="POST" action="/googlesheet">
+            <h3>Enter Input, one only</h3>
+            <label for="user_input">Input:</label>
+            <input type="text" class="form-control" name="user_input" id="user_input" required>
+            <button type="submit" class="btn btn-primary mt-2">View Result</button>
+        </form>
+
+        <form id="fast-script-form" method="POST" action="/run_fast_script">
+            <button type="submit" class="btn btn-secondary mt-4">Run Fast Script</button>
+        </form>
+        <form id="get-tk-sheet-form" method="POST" action="/run_get_tk_sheet">
+            <button type="submit" class="btn btn-secondary mt-4">Update TK Import Sheet</button>
+        </form>
+    </div>
+    <div>
+        {% if sheet_data %}
+            <h2 class="text-center"><a href="https://docs.google.com/spreadsheets/d/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/edit?pli=1#gid=2128924330">TK Googlesheet Info:</a></h2>
+            <h5 class="text-center">OMS_update: {{ e1_value }}</h5>
+            
+            
+            <table id="excel_table">
+                <tbody>
+                    {{ sheet_data | safe }}
+                </tbody>
+            </table>
+            
+        {% endif %}
+        <div class="mt-5" id="script-output-container" style="display:none; border:20px;" >
+            <h3>Script Output:</h3>
+            <pre id="script-output"></pre>
+        </div>
+        <div id="loading-overlay">
+            <div id="loading">Loading...</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Include jQuery -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <!-- Include DataTables JS -->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+    <!-- DataTables initialization script -->
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // DataTables initialization for tables with the class .table
+            $('.table').DataTable({
+                "autoWidth": true, // Disable automatic column width calculation
+                "resize": true, // Enable column resizing
+                "pageLength": 100 // Set default number of entries to show
+            });
+        });
+
+        $('#fast-script-form').submit(function(event) {
+            event.preventDefault(); // Prevent the form from submitting via the browser
+
+            $('#loading-overlay').show();
+            $('#script-output-container').hide();
+
+            $.ajax({
+                type: 'POST',
+                url: '/run_fast_script',
+                success: function(response) {
+                    $('#loading-overlay').hide();
+                    $('#script-output-container').show();
+                    $('#script-output').html(response.split('\n').map(function(line) {
+                        if (line.length > 100) {
+                            return line.match(/.{1,100}/g).join('<br>');
+                        }
+                        return line;
+                    }).join('<br>'));
+                },
+                error: function(xhr, status, error) {
+                    $('#loading-overlay').hide();
+                    $('#script-output-container').show();
+                    $('#script-output').text('An error occurred: ' + error);
+                }
+            });
+        });
+    </script>
+    {% include 'footer.html' %}
+</body>
+</html>
