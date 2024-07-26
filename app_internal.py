@@ -146,33 +146,43 @@ def get_sheet_data(input_value):
     if not values:
         return "No data found in the sheet."
     else:
-        headers = values[1]  # Assuming the first row contains headers
+        # Headers are in the second row
+        headers = values[1]
+
+        # Identify the indices of the desired columns
+        sku_index = headers.index('SKU')
+        style_index = headers.index('Style')
+        tik_index = headers.index('TiK 1-999 #')
+
+        # Updated to match the actual header names and the desired columns
+        display_headers = values[1]
         input_values = [v.strip().lower() for v in input_value.split(',')]
+        if 'all' in input_values:
+            return values[1:]  # Return all data including headers
         matching_rows = []
 
         # Determine if input values are purely numeric
         is_numeric_input = all(val.isdigit() for val in input_values)
 
-        for row in values[1:]:
-            if len(row) >= 2:  # Ensure there are at least 6 elements in the row
+        for row in values[2:]:  # Skip the first two rows (headers and actual data starts from row 3)
+            if len(row) > max(sku_index, style_index, tik_index):  # Ensure the required columns exist in the row
                 if is_numeric_input:
-                    # Match only against the 5th column (index 4) if input is purely numeric
-                    if any(val in row[5].lower() for val in input_values):
+                    # Match only against the 'TiK 1-999 #' column if input is purely numeric
+                    if any(val in row[tik_index].lower() for val in input_values):
                         matching_rows.append(row)
                 else:
-                    # Match against the 1st, 2nd, 6th, and 11th columns if they exist, otherwise skip
-                    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
-                    if len(row) > 10:
-                        cells_to_check.append(row[10])  # Add row[10] only if it exists
+                    # Match against the 'SKU', 'Style', and 'TiK 1-999 #' columns
+                    cells_to_check = [row[sku_index], row[style_index], row[tik_index]]
 
                     if any(any(val in cell.lower() for val in input_values) for cell in cells_to_check):
                         matching_rows.append(row)
 
         if not matching_rows:
-            return [headers]
+            return [display_headers]
 
         logging.info("Found %d matching rows for input: %s", len(matching_rows), input_value)
-        return [headers] + matching_rows
+        return [display_headers] + matching_rows
+
     
 ####this can probably be combined with get_sheet_data    
 def get_e1_value():

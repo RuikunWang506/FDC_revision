@@ -283,6 +283,26 @@
   {% include 'footer.html' %}
   
   <script>
+    function LengthConverter1(valNum) {
+      document.getElementById("outputInches1").innerHTML = (valNum * 0.393701).toFixed(2);
+    }
+
+    function LengthConverter2(valNum) {
+      document.getElementById("outputInches2").innerHTML = (valNum * 0.393701).toFixed(2);
+    }
+
+    function LengthConverter3(valNum) {
+      document.getElementById("outputInches3").innerHTML = (valNum * 0.393701).toFixed(2);
+    }
+
+    function kgtolb(valNum) {
+      document.getElementById("kglbresult").innerHTML = (valNum * 2.20462).toFixed(2);
+    }
+
+    function lbtokg(valNum) {
+      document.getElementById("lbkgresult").innerHTML = (valNum / 2.20462).toFixed(2);
+    }
+
     function set(op) {
       document.getElementById("display").value += op;
     }

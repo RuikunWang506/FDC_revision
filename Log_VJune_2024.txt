@@ -35320,3 +35320,1509 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-07-23 16:50:04,607 - INFO - yeti submitted an order lookup
 2024-07-23 16:50:04,607 - INFO - yeti is looking up order number: 1588
 2024-07-23 16:50:04,637 - INFO - yeti searched for order number: 1588
+2024-07-23 17:24:35,989 - INFO - yeti is processing Macy Order: 33088
+2024-07-23 17:25:19,594 - INFO - yeti is processing Macy Order: 33088
+2024-07-23 17:25:22,962 - INFO - File macyset_33088.xlsx downloaded from label output
+2024-07-23 17:27:46,925 - INFO - Application is exiting
+2024-07-23 17:27:52,220 - INFO - Starting Flask application
+2024-07-23 17:27:52,267 - INFO - File macyset_33088.xlsx downloaded from label output
+2024-07-23 17:36:45,880 - INFO - Application is exiting
+2024-07-23 17:36:47,237 - INFO - Starting Flask application
+2024-07-23 17:36:57,643 - INFO - yeti is processing Macy Order: 33088
+2024-07-23 17:37:04,458 - INFO - File macyset_33088.xlsx downloaded from label output
+2024-07-23 18:46:05,523 - ERROR - 93.174.93.12 - - [23/Jul/2024 18:46:05] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-23 19:05:39,756 - INFO - Found 5 matching rows for input: N2071
+2024-07-23 19:05:39,919 - INFO - Found 5 matching rows for input: N2071
+2024-07-23 19:05:40,963 - INFO - Excel HTML and sheet data N2071 generated for nicye
+2024-07-23 19:05:41,022 - INFO - Excel HTML and sheet data N2071 generated for nicye
+2024-07-23 19:05:41,280 - INFO - Serving file N2071.jpg
+2024-07-23 19:14:21,331 - INFO - nicye submitted an order lookup
+2024-07-23 19:14:21,331 - INFO - nicye is looking up order number: S414
+2024-07-23 19:14:21,339 - INFO - nicye searched for order number: S414
+2024-07-23 19:14:21,339 - INFO - No data found for order number: S414
+2024-07-23 19:14:38,617 - INFO - nicye submitted an order lookup
+2024-07-23 19:14:38,618 - INFO - nicye is looking up order number: S1412
+2024-07-23 19:14:38,625 - INFO - nicye searched for order number: S1412
+2024-07-23 19:14:38,625 - INFO - No data found for order number: S1412
+2024-07-23 19:15:45,483 - INFO - Found 6 matching rows for input: S1412
+2024-07-23 19:15:46,515 - INFO - Excel HTML and sheet data S1412 generated for nicye
+2024-07-23 19:15:46,826 - INFO - Serving file S1412.jpg
+2024-07-23 19:42:53,267 - INFO - Excel HTML and sheet data EL1832 generated for ahua
+2024-07-23 19:42:53,952 - INFO - Serving file EL1832.jpg
+2024-07-23 19:45:38,323 - INFO - Starting Flask application
+2024-07-23 19:45:39,576 - INFO - Starting Flask application
+2024-07-23 22:43:27,265 - ERROR - 165.232.96.171 - - [23/Jul/2024 22:43:27] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x01ý\x01\x00\x01ù\x03\x03ÅÐ\x92Â\x0e')
+2024-07-24 00:18:52,530 - ERROR - 78.153.140.177 - - [24/Jul/2024 00:18:52] code 400, message Bad request version ('_Aç#]´\x07\x19>\x04ðoo¡#"³ÅM¥QYmè\x04ç«/\x00b\x13\x02\x13\x03\x13\x01À,À0À+À/Ì©Ì¨\x00£\x00\x9f\x00¢\x00\x9eÌªÀ¯À\xadÀ$À(À')
+2024-07-24 02:10:34,044 - ERROR - 35.203.210.193 - - [24/Jul/2024 02:10:34] code 400, message Bad request version ('À\x13À')
+2024-07-24 02:10:34,331 - ERROR - 35.203.210.193 - - [24/Jul/2024 02:10:34] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03\x07ÁÔàVA\\!4À,\x01/#Hñoþvé\x81ÙèÕ%Åû^\x9e×\x03x\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À")
+2024-07-24 03:55:28,457 - ERROR - 64.62.197.129 - - [24/Jul/2024 03:55:28] code 400, message Bad request version ('À\x14À')
+2024-07-24 04:09:53,053 - ERROR - 165.154.51.221 - - [24/Jul/2024 04:09:53] code 400, message Bad request version ('À\x13À')
+2024-07-24 04:09:53,548 - ERROR - 165.154.51.221 - - [24/Jul/2024 04:09:53] code 400, message Bad HTTP/0.9 request type ('t3')
+2024-07-24 04:21:27,412 - ERROR - 82.147.84.180 - - [24/Jul/2024 04:21:27] code 400, message Bad request version ('À\x13À')
+2024-07-24 05:22:31,411 - ERROR - 194.165.16.73 - - [24/Jul/2024 05:22:31] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-24 05:26:44,986 - ERROR - 91.238.181.31 - - [24/Jul/2024 05:26:44] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-24 05:28:54,998 - ERROR - 179.60.149.54 - - [24/Jul/2024 05:28:54] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-24 09:31:37,825 - ERROR - 5.8.11.202 - - [24/Jul/2024 09:31:37] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-24 09:45:46,442 - INFO - Found 4 matching rows for input: L1790
+2024-07-24 09:45:47,483 - INFO - Excel HTML and sheet data L1790 generated for nicye
+2024-07-24 09:45:48,001 - INFO - Serving file L1790.jpg
+2024-07-24 13:46:01,784 - INFO - Excel HTML and sheet data s1223 generated for yeti
+2024-07-24 13:46:02,165 - INFO - Serving file S1223.jpg
+2024-07-24 14:19:50,851 - INFO - Found 10 matching rows for input: ES1134
+2024-07-24 14:19:52,027 - INFO - Excel HTML and sheet data ES1134 generated for yeti
+2024-07-24 14:19:52,322 - INFO - Serving file ES1134.jpg
+2024-07-24 15:00:26,292 - INFO - Found 7 matching rows for input: t3305
+2024-07-24 15:00:27,459 - INFO - Excel HTML and sheet data t3305 generated for yeti
+2024-07-24 15:00:27,505 - INFO - Serving file T3305.jpg
+2024-07-24 15:06:15,215 - INFO - yeti is processing Macy Order: 33088
+2024-07-24 15:06:18,671 - INFO - File macyset_33088.xlsx downloaded from label output
+2024-07-24 15:08:21,759 - INFO - yeti is processing Macy Order: 33088
+2024-07-24 15:08:25,777 - INFO - File macyset_33088.xlsx downloaded from label output
+2024-07-24 15:22:58,130 - ERROR - 80.82.77.202 - - [24/Jul/2024 15:22:58] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-24 15:58:53,621 - INFO - helen submitted input for v4_listcreator: en1373,en1679,en1765,en1883,en1888,en2045,en2154,en2155,en2159,en2161,en2162,en2164,es1147,es1271,es1447,es1465,es1464,es1468,l0665,l1343,l1521,l1521m,l1522,l1522m,l1544,l1550m,n0602,n0720,n1105,n0870,n1100,n1158,n1163,n1194,n1242,n1283,n1423,n1513p,n1665,n1705,n1724,n1805,n1810,n1826,n1828,n1839,n1912,n1916,n1937,n1938,n1960,t3164,n2094,n2093,n2103,n2105,n2133,n2131,n2143,n2168,t2862,t3081,t3086,t3157,t3188,t3196,t3239,t3244,t3250,t3256,t3325,t3310
+2024-07-24 15:58:56,923 - INFO - helen downloaded the file: List-20240724-155853.xlsx
+2024-07-24 16:15:09,086 - INFO - yeti submitted input for v4_listcreator: N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2024-07-24 16:15:09,941 - INFO - yeti downloaded the file: List-20240724-161509.xlsx
+2024-07-24 16:15:12,416 - INFO - File List-20240724-161509.xlsx downloaded
+2024-07-24 16:17:25,735 - INFO - Application is exiting
+2024-07-24 16:17:25,741 - INFO - Application is exiting
+2024-07-24 16:17:31,845 - INFO - Starting Flask application
+2024-07-24 16:17:31,846 - INFO - Starting Flask application
+2024-07-24 16:18:38,645 - INFO - yeti submitted input for v4_listcreator: N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2024-07-24 16:18:39,610 - INFO - yeti downloaded the file: List-20240724-161838.xlsx
+2024-07-24 16:18:40,320 - INFO - File List-20240724-161838.xlsx downloaded
+2024-07-24 16:18:48,345 - INFO - Application is exiting
+2024-07-24 16:18:48,346 - INFO - Application is exiting
+2024-07-24 16:18:50,149 - INFO - Starting Flask application
+2024-07-24 16:18:50,149 - INFO - Starting Flask application
+2024-07-24 16:19:08,306 - INFO - Application is exiting
+2024-07-24 16:19:08,306 - INFO - Application is exiting
+2024-07-24 16:19:10,040 - INFO - Starting Flask application
+2024-07-24 16:19:10,042 - INFO - Starting Flask application
+2024-07-24 16:19:46,500 - INFO - Application is exiting
+2024-07-24 16:19:46,885 - INFO - Application is exiting
+2024-07-24 16:19:48,367 - INFO - Starting Flask application
+2024-07-24 16:19:48,663 - INFO - Starting Flask application
+2024-07-24 16:19:52,445 - INFO - yeti submitted input for v4_listcreator: N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2024-07-24 16:19:54,917 - INFO - yeti downloaded the file: List-20240724-161952.xlsx
+2024-07-24 16:19:56,341 - INFO - File List-20240724-161952.xlsx downloaded
+2024-07-24 16:20:22,901 - INFO - yeti submitted input for v4_listcreator: en1373,en1679,en1765,en1883,en1888,en2045,en2154,en2155,en2159,en2161,en2162,en2164,es1147,es1271,es1447,es1465,es1464,es1468,l0665,l1343,l1521,l1521m,l1522,l1522m,l1544,l1550m,n0602,n0720,n1105,n0870,n1100,n1158,n1163,n1194,n1242,n1283,n1423,n1513p,n1665,n1705,n1724,n1805,n1810,n1826,n1828,n1839,n1912,n1916,n1937,n1938,n1960,t3164,n2094,n2093,n2103,n2105,n2133,n2131,n2143,n2168,t2862,t3081,t3086,t3157,t3188,t3196,t3239,t3244,t3250,t3256,t3325,t3310
+2024-07-24 16:20:33,150 - INFO - yeti downloaded the file: List-20240724-162022.xlsx
+2024-07-24 16:20:34,854 - INFO - File List-20240724-162022.xlsx downloaded
+2024-07-24 16:21:12,812 - INFO - yeti submitted input for v4_listcreator: N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2024-07-24 16:21:14,513 - INFO - yeti downloaded the file: List-20240724-162112.xlsx
+2024-07-24 16:21:15,377 - INFO - File List-20240724-162112.xlsx downloaded
+2024-07-24 16:24:00,304 - INFO - Found 8 matching rows for input: n2088
+2024-07-24 16:24:01,471 - INFO - Excel HTML and sheet data n2088 generated for yeti
+2024-07-24 16:24:01,557 - INFO - Serving file N2088.jpg
+2024-07-24 16:28:46,424 - INFO - Found 77 matching rows for input: N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2024-07-24 16:28:48,289 - INFO - Excel HTML and sheet data N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513 generated for yeti
+2024-07-24 16:28:48,368 - INFO - Serving file L1494.jpg
+2024-07-24 16:28:48,380 - INFO - Serving file L1513.jpg
+2024-07-24 16:28:48,383 - INFO - Serving file N1151.jpg
+2024-07-24 16:28:48,386 - INFO - Serving file N1223.jpg
+2024-07-24 16:28:48,386 - INFO - Serving file N3007.jpg
+2024-07-24 16:28:48,387 - INFO - Serving file T2874.jpg
+2024-07-24 16:28:48,493 - INFO - Serving file N1835.jpg
+2024-07-24 16:28:48,494 - INFO - Serving file ET2949.jpg
+2024-07-24 16:28:48,514 - INFO - Serving file L1494-S.jpg
+2024-07-24 16:28:48,519 - INFO - Serving file N1782.jpg
+2024-07-24 16:28:48,527 - INFO - Serving file L1494M.jpg
+2024-07-24 16:28:48,575 - INFO - Serving file S1408.jpg
+2024-07-24 16:28:48,639 - INFO - Serving file S1426.jpg
+2024-07-24 16:28:48,655 - INFO - Serving file N1324.jpg
+2024-07-24 16:30:02,251 - INFO - Found 15 matching rows for input: n1151
+2024-07-24 16:30:03,451 - INFO - Excel HTML and sheet data n1151 generated for yeti
+2024-07-24 16:30:03,543 - INFO - Serving file N1151.jpg
+2024-07-24 16:30:23,762 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:34,704 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:41,264 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:42,443 - INFO - helen downloaded the file: List-20240724-163041.xlsx
+2024-07-24 16:30:43,119 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:49,505 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:49,588 - INFO - helen downloaded the file: List-20240724-163049.xlsx
+2024-07-24 16:30:50,716 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:51,316 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:51,754 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:52,290 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:52,871 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:30:55,274 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:31:05,911 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:31:10,611 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:31:10,694 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:31:10,754 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:31:14,681 - INFO - File List-20240724-163052.xlsx downloaded
+2024-07-24 16:31:25,502 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:31:26,234 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:31:29,444 - INFO - helen downloaded the file: List-20240724-163052.xlsx
+2024-07-24 16:32:45,204 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 16:33:00,608 - INFO - helen downloaded the file: List-20240724-163245.xlsx
+2024-07-24 16:36:57,268 - INFO - Excel HTML and sheet data t3395 generated for yeti
+2024-07-24 16:37:00,459 - INFO - Found 15 matching rows for input: n1151
+2024-07-24 16:37:01,639 - INFO - Excel HTML and sheet data n1151 generated for yeti
+2024-07-24 16:37:01,714 - INFO - Serving file N1151.jpg
+2024-07-24 16:37:39,990 - INFO - Found 1 matching rows for input: t2874
+2024-07-24 16:37:41,168 - INFO - Excel HTML and sheet data t2874 generated for yeti
+2024-07-24 16:37:41,282 - INFO - Serving file T2874.jpg
+2024-07-24 16:59:57,230 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 17:00:10,505 - INFO - helen submitted input for v4_listcreator: en1373,en1679,en1765,en1883,en1888,en2045,en2154,en2155,en2159,en2161,en2162,en2164,es1147,es1271,es1447,es1465,es1464,es1468,l0665,l1343,l1521,l1521m,l1522,l1522m,l1544,l1550m,n0602,n0720,n1105,n0870,n1100,n1158,n1163,n1194,n1242,n1283,n1423,n1513p,n1665,n1705,n1724,n1805,n1810,n1826,n1828,n1839,n1912,n1916,n1937,n1938,n1960,t3164,n2094,n2093,n2103,n2105,n2133,n2131,n2143,n2168,t2862,t3081,t3086,t3157,t3188,t3196,t3239,t3244,t3250,t3256,t3325,t3310
+2024-07-24 17:00:15,043 - INFO - helen downloaded the file: List-20240724-170010.xlsx
+2024-07-24 17:00:15,639 - INFO - helen downloaded the file: List-20240724-170010.xlsx
+2024-07-24 17:00:16,676 - INFO - File List-20240724-170010.xlsx downloaded
+2024-07-24 17:16:08,948 - INFO - yeti submitted input for v4_listcreator: n2067
+2024-07-24 17:16:09,441 - INFO - yeti downloaded the file: List-20240724-171608.xlsx
+2024-07-24 17:16:10,409 - INFO - File List-20240724-171608.xlsx downloaded
+2024-07-24 17:19:07,847 - ERROR - 78.153.140.179 - - [24/Jul/2024 17:19:07] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00Þ\x01\x00\x00Ú\x03\x03ãË\x82eqû\x9c.\x12þ±\x8dm\x10i\x15^Û]îÇðn°´Ã¡Ó÷ÕÎo\x00\x00nÀ0À,À2À.À/À+À1À-\x00¥\x00£\x00¡\x00\x9f\x00¤\x00¢\x00')
+2024-07-24 17:20:22,952 - INFO - Found 8 matching rows for input: n2088
+2024-07-24 17:20:24,112 - INFO - Excel HTML and sheet data n2088 generated for yeti
+2024-07-24 17:20:24,208 - INFO - Serving file N2088.jpg
+2024-07-24 17:20:31,235 - INFO - yeti submitted input for v4_listcreator: N2067,N2112,N2266,N2269,N2270,N2279,N2280,N2281,N2283,N2284,N2285,N2287,N2292,N2293,S1508,S1510,T3345,T3346,T3376,T3380,T3381,T3382,T3383,T3454
+2024-07-24 17:20:32,816 - INFO - yeti downloaded the file: List-20240724-172031.xlsx
+2024-07-24 17:20:34,999 - INFO - File List-20240724-172031.xlsx downloaded
+2024-07-24 17:40:38,253 - INFO - helen submitted input for v4_listcreator: en1373,en1679,en1765,en1883,en1888,en2045,en2154,en2155,en2159,en2161,en2162,en2164,es1147,es1271,es1447,es1465,es1464,es1468,l0665,l1343,l1521,l1521m,l1522,l1522m,l1544,l1550m,n0602,n0720,n1105,n0870,n1100,n1158,n1163,n1194,n1242,n1283,n1423,n1513p,n1665,n1705,n1724,n1805,n1810,n1826,n1828,n1839,n1912,n1916,n1937,n1938,n1960,t3164,n2094,n2093,n2103,n2105,n2133,n2131,n2143,n2168,t2862,t3081,t3086,t3157,t3188,t3196,t3239,t3244,t3250,t3256,t3325,t3310
+2024-07-24 17:40:47,254 - INFO - helen downloaded the file: List-20240724-174038.xlsx
+2024-07-24 17:41:07,783 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-24 17:41:27,206 - INFO - helen downloaded the file: List-20240724-174107.xlsx
+2024-07-24 17:41:29,299 - INFO - File List-20240724-174107.xlsx downloaded
+2024-07-24 18:11:18,902 - ERROR - 198.235.24.115 - - [24/Jul/2024 18:11:18] code 400, message Bad request version ('À\x13À')
+2024-07-24 18:11:19,171 - ERROR - 198.235.24.115 - - [24/Jul/2024 18:11:19] code 400, message Bad request version ('À(À$À\x14À')
+2024-07-24 18:36:23,739 - INFO - Excel HTML and sheet data L1408,L1849 generated for yeti
+2024-07-24 18:36:23,890 - INFO - Serving file L1849.jpg
+2024-07-24 18:36:23,891 - INFO - Serving file L1408.jpg
+2024-07-24 19:27:41,104 - INFO - Starting Flask application
+2024-07-24 19:27:42,147 - INFO - Starting Flask application
+2024-07-24 19:56:20,126 - ERROR - 46.101.225.68 - - [24/Jul/2024 19:56:20] code 400, message Bad request version ('À\x13À')
+2024-07-24 19:56:20,132 - ERROR - 139.59.145.147 - - [24/Jul/2024 19:56:20] code 400, message Bad request version ("§×ãl¤\x05\x05ae»\x15ØçþV6©©,fë\x9a»S\x00>\x13\x02\x13\x03\x13\x01À,À0\x00\x9fÌ©Ì¨ÌªÀ+À/\x00\x9eÀ$À(\x00kÀ#À'\x00gÀ")
+2024-07-24 19:56:20,434 - ERROR - 46.101.225.68 - - [24/Jul/2024 19:56:20] code 400, message Bad request version ('À\x13À')
+2024-07-24 19:56:20,743 - ERROR - 46.101.225.68 - - [24/Jul/2024 19:56:20] code 400, message Bad request syntax ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03ÖÌª\x9a©\x81$à')
+2024-07-24 20:23:06,340 - ERROR - 209.38.254.159 - - [24/Jul/2024 20:23:06] code 400, message Bad request version ('\x15L')
+2024-07-24 20:23:32,249 - ERROR - 46.101.225.186 - - [24/Jul/2024 20:23:32] code 400, message Bad request version ('À\x13À')
+2024-07-24 20:23:32,560 - ERROR - 46.101.225.186 - - [24/Jul/2024 20:23:32] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x82"SÁ$')
+2024-07-24 20:23:32,865 - ERROR - 46.101.225.186 - - [24/Jul/2024 20:23:32] code 400, message Bad request version ('À\x13À')
+2024-07-24 20:33:50,591 - ERROR - 80.66.76.121 - - [24/Jul/2024 20:33:50] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-24 23:07:03,449 - ERROR - 162.216.149.188 - - [24/Jul/2024 23:07:03] code 400, message Bad request version ('È\x92lÐ\x94X\x04\x9c±©`\x1bâº\x9cç\x97/\x8b»\x1a')
+2024-07-24 23:07:03,584 - ERROR - 162.216.149.188 - - [24/Jul/2024 23:07:03] code 400, message Bad request version ('À(À$À\x14À')
+2024-07-24 23:10:04,972 - ERROR - 93.174.93.12 - - [24/Jul/2024 23:10:04] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-24 23:45:00,411 - ERROR - 172.168.154.236 - - [24/Jul/2024 23:45:00] code 400, message Bad request syntax ('MGLNDD_173.198.50.202_80')
+2024-07-24 23:55:01,461 - ERROR - 45.129.14.224 - - [24/Jul/2024 23:55:01] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-25 00:13:17,731 - ERROR - 138.68.189.122 - - [25/Jul/2024 00:13:17] code 400, message Bad request syntax ('\x16\x03\x01\x01ý\x01\x00\x01ù\x03\x03§ÑOx±\x97J')
+2024-07-25 02:13:44,829 - INFO - nicye submitted an order lookup
+2024-07-25 02:13:44,830 - INFO - nicye is looking up order number: S1412
+2024-07-25 02:13:45,421 - INFO - nicye searched for order number: S1412
+2024-07-25 02:13:45,421 - INFO - No data found for order number: S1412
+2024-07-25 02:14:48,319 - INFO - nicye submitted an order lookup
+2024-07-25 02:14:48,321 - INFO - nicye is looking up order number: S1412
+2024-07-25 02:14:48,328 - INFO - nicye searched for order number: S1412
+2024-07-25 02:14:48,328 - INFO - No data found for order number: S1412
+2024-07-25 02:14:58,918 - INFO - nicye submitted an order lookup
+2024-07-25 02:14:58,919 - INFO - nicye is looking up order number: S1412
+2024-07-25 02:14:58,921 - INFO - nicye searched for order number: S1412
+2024-07-25 02:14:58,922 - INFO - No data found for order number: S1412
+2024-07-25 03:13:30,035 - ERROR - 80.82.77.202 - - [25/Jul/2024 03:13:30] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-25 03:23:20,661 - ERROR - 167.94.145.111 - - [25/Jul/2024 03:23:20] code 505, message Invalid HTTP version (2.0)
+2024-07-25 04:42:48,735 - ERROR - 184.105.247.195 - - [25/Jul/2024 04:42:48] code 400, message Bad request version ('À\x14À')
+2024-07-25 04:54:53,346 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:54:53] code 400, message Bad request version ('RTSP/1.0')
+2024-07-25 04:54:58,523 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:54:58] code 400, message Bad HTTP/0.9 request type ('l\x00')
+2024-07-25 04:55:03,980 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:03] code 400, message Bad request version ('\x00\x01\x97|\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+2024-07-25 04:55:09,070 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:09] code 400, message Bad HTTP/0.9 request type ('\x00')
+2024-07-25 04:55:09,155 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:09] code 400, message Bad request syntax ('HELP')
+2024-07-25 04:55:09,326 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:09] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+2024-07-25 04:55:09,497 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:09] code 400, message Bad request version ('\x00/\x00')
+2024-07-25 04:55:09,669 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:09] code 400, message Bad request syntax ('\x00\x00\x00qj\x81n0\x81k¡\x03\x02\x01\x05¢\x03\x02\x01')
+2024-07-25 04:55:14,844 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:14] code 400, message Bad request version ('0.12\x00')
+2024-07-25 04:55:14,930 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:14] code 400, message Bad request version ('SIP/2.0')
+2024-07-25 04:55:20,106 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:20] code 400, message Bad HTTP/0.9 request type ('AMQP\x00\x00')
+2024-07-25 04:55:20,230 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:20] code 400, message Bad request version ('\x00/\x00')
+2024-07-25 04:55:21,565 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:21] code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03V;')
+2024-07-25 04:55:21,615 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:21] code 400, message Bad request version (',¾\x07Rº³aà^\x04ÏÉ)\x860ÂÊÎd\x86»ªZE(l\x8dØ\x14"¾\x10\x00\x9c\x13\x02\x13\x03\x13\x01\x003\x009\x005\x00/À,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀSÀ+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀRÀ$À(\x00k\x00jÀsÀw\x00Ä\x00ÃÀ#À\'\x00g\x00@ÀrÀv\x00¾\x00½À')
+2024-07-25 04:55:22,414 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:22] code 400, message Bad request version (".\xadú[\x13?\x00\x9c\x13\x02\x13\x03\x13\x01\x003\x009\x005\x00/À,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀSÀ+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀRÀ$À(\x00k\x00jÀsÀw\x00Ä\x00ÃÀ#À'\x00g\x00@ÀrÀv\x00¾\x00½À")
+2024-07-25 04:55:52,438 - ERROR - 172.104.4.17 - - [25/Jul/2024 04:55:52] code 400, message Bad request syntax ('\x0e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00bbbb0100000001')
+2024-07-25 07:06:53,450 - ERROR - 80.82.78.39 - - [25/Jul/2024 07:06:53] code 400, message Bad request version ('À\x13À')
+2024-07-25 10:26:48,273 - INFO - Found 3 matching rows for input: L1343
+2024-07-25 10:26:49,418 - INFO - Excel HTML and sheet data L1343 generated for derrick
+2024-07-25 10:26:49,523 - INFO - Serving file L1343M.jpg
+2024-07-25 10:26:49,523 - INFO - Serving file L1343.jpg
+2024-07-25 10:40:38,816 - INFO - Found 3 matching rows for input: l1343
+2024-07-25 10:40:40,135 - INFO - Excel HTML and sheet data l1343 generated for derrick
+2024-07-25 10:40:40,251 - INFO - Serving file L1343.jpg
+2024-07-25 10:40:40,252 - INFO - Serving file L1343M.jpg
+2024-07-25 10:43:42,375 - INFO - Excel HTML and sheet data L1370 generated for yeti
+2024-07-25 10:43:42,554 - INFO - Serving file L1370.jpg
+2024-07-25 11:48:02,953 - ERROR - 91.238.181.21 - - [25/Jul/2024 11:48:02] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-25 13:40:04,451 - ERROR - 71.6.134.230 - - [25/Jul/2024 13:40:04] code 400, message Bad request version ('À\x14À')
+2024-07-25 14:49:55,182 - INFO - Running fast script
+2024-07-25 14:50:08,958 - ERROR - 205.210.31.246 - - [25/Jul/2024 14:50:08] code 400, message Bad request version ('À\x13À')
+2024-07-25 14:50:09,288 - ERROR - 205.210.31.246 - - [25/Jul/2024 14:50:09] code 400, message Bad request version ('À(À$À\x14À')
+2024-07-25 14:50:20,638 - INFO - Found 6 matching rows for input: L1687
+2024-07-25 14:50:21,792 - INFO - Excel HTML and sheet data L1687 generated for derrick
+2024-07-25 14:50:21,896 - INFO - Serving file L1687.jpg
+2024-07-25 14:50:21,897 - INFO - Serving file L1687-S.jpg
+2024-07-25 14:50:21,906 - INFO - Serving file L1687-M.jpg
+2024-07-25 14:55:24,692 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 14:55:32,556 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 14:55:54,764 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 14:56:06,551 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 14:56:10,785 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 14:56:42,461 - INFO - Excel HTML and sheet data t2801 generated for derrick
+2024-07-25 14:56:42,519 - INFO - Serving file T2801.jpg
+2024-07-25 14:56:42,520 - INFO - Serving file T2801-SET.jpg
+2024-07-25 15:08:55,540 - INFO - Running get_tk_sheet script
+2024-07-25 15:14:40,791 - INFO - derrick is looking up in googlesheet with input: EN6064
+2024-07-25 15:14:41,736 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 276, in googlesheet
+    sheet_data = get_sheet_data(user_input)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 15:14:55,944 - INFO - derrick is looking up in googlesheet with input: EN6064
+2024-07-25 15:14:56,913 - INFO - Found 6 matching rows for input: EN6064
+2024-07-25 15:15:07,653 - INFO - Found 6 matching rows for input: en6064
+2024-07-25 15:15:08,755 - INFO - Excel HTML and sheet data en6064 generated for derrick
+2024-07-25 15:15:08,859 - INFO - Serving file EN6064.jpg
+2024-07-25 15:22:30,898 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 15:25:03,412 - INFO - Serving file S1094.jpg
+2024-07-25 15:26:37,706 - INFO - Serving file ES1096.jpg
+2024-07-25 15:37:15,240 - ERROR - 80.82.78.39 - - [25/Jul/2024 15:37:15] code 400, message Bad request version ('À\x13À')
+2024-07-25 16:31:20,647 - ERROR - 80.82.77.202 - - [25/Jul/2024 16:31:20] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-25 16:49:40,230 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 16:50:19,093 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 16:53:24,625 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 195, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 164, in get_sheet_data
+    cells_to_check = [row[0], row[1], row[5]]  # Ensure row[5] exists
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 16:58:23,205 - INFO - Application is exiting
+2024-07-25 16:58:23,214 - INFO - Application is exiting
+2024-07-25 16:58:23,221 - INFO - Application is exiting
+2024-07-25 16:58:26,067 - INFO - Starting Flask application
+2024-07-25 16:58:26,067 - INFO - Starting Flask application
+2024-07-25 16:58:26,067 - INFO - Starting Flask application
+2024-07-25 16:59:05,332 - INFO - Application is exiting
+2024-07-25 16:59:05,339 - INFO - Application is exiting
+2024-07-25 16:59:05,339 - INFO - Application is exiting
+2024-07-25 16:59:06,708 - INFO - Starting Flask application
+2024-07-25 16:59:06,708 - INFO - Starting Flask application
+2024-07-25 16:59:06,710 - INFO - Starting Flask application
+2024-07-25 16:59:11,752 - INFO - Application is exiting
+2024-07-25 16:59:11,754 - INFO - Application is exiting
+2024-07-25 16:59:11,755 - INFO - Application is exiting
+2024-07-25 16:59:13,116 - INFO - Starting Flask application
+2024-07-25 16:59:13,117 - INFO - Starting Flask application
+2024-07-25 16:59:13,143 - INFO - Starting Flask application
+2024-07-25 16:59:43,419 - ERROR - 173.44.141.184 - - [25/Jul/2024 16:59:43] code 400, message Bad request version ('À\x13À')
+2024-07-25 17:00:21,350 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 215, in download_excel
+    sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can only concatenate str (not "list") to str
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:01:32,505 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 215, in download_excel
+    sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can only concatenate str (not "list") to str
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:01:55,061 - INFO - yeti is looking up in googlesheet with input: t3305
+2024-07-25 17:01:56,017 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 286, in googlesheet
+    sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can only concatenate str (not "list") to str
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:03:33,989 - INFO - Application is exiting
+2024-07-25 17:03:33,989 - INFO - Application is exiting
+2024-07-25 17:03:33,999 - INFO - Application is exiting
+2024-07-25 17:03:35,693 - INFO - Starting Flask application
+2024-07-25 17:03:35,700 - INFO - Starting Flask application
+2024-07-25 17:03:35,702 - INFO - Starting Flask application
+2024-07-25 17:03:39,316 - INFO - yeti is looking up in googlesheet with input: t3305
+2024-07-25 17:03:40,318 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 290, in googlesheet
+    sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can only concatenate str (not "list") to str
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:04:14,930 - INFO - Application is exiting
+2024-07-25 17:04:14,931 - INFO - Application is exiting
+2024-07-25 17:04:14,931 - INFO - Application is exiting
+2024-07-25 17:04:16,279 - INFO - Starting Flask application
+2024-07-25 17:04:16,279 - INFO - Starting Flask application
+2024-07-25 17:04:16,293 - INFO - Starting Flask application
+2024-07-25 17:04:17,303 - INFO - Application is exiting
+2024-07-25 17:04:17,303 - INFO - Application is exiting
+2024-07-25 17:04:17,313 - INFO - Application is exiting
+2024-07-25 17:04:18,655 - INFO - Starting Flask application
+2024-07-25 17:04:18,690 - INFO - Starting Flask application
+2024-07-25 17:04:18,690 - INFO - Starting Flask application
+2024-07-25 17:06:56,473 - INFO - Application is exiting
+2024-07-25 17:06:56,545 - INFO - Application is exiting
+2024-07-25 17:06:56,546 - INFO - Application is exiting
+2024-07-25 17:06:57,802 - INFO - Starting Flask application
+2024-07-25 17:06:57,874 - INFO - Starting Flask application
+2024-07-25 17:06:57,876 - INFO - Starting Flask application
+2024-07-25 17:07:09,889 - INFO - Application is exiting
+2024-07-25 17:07:09,958 - INFO - Application is exiting
+2024-07-25 17:07:09,958 - INFO - Application is exiting
+2024-07-25 17:07:11,234 - INFO - Starting Flask application
+2024-07-25 17:07:11,349 - INFO - Starting Flask application
+2024-07-25 17:07:11,352 - INFO - Starting Flask application
+2024-07-25 17:08:01,520 - INFO - Application is exiting
+2024-07-25 17:08:01,640 - INFO - Application is exiting
+2024-07-25 17:08:01,640 - INFO - Application is exiting
+2024-07-25 17:08:02,794 - INFO - Starting Flask application
+2024-07-25 17:08:02,957 - INFO - Starting Flask application
+2024-07-25 17:08:02,957 - INFO - Starting Flask application
+2024-07-25 17:08:06,271 - INFO - yeti is looking up in googlesheet with input: t3305
+2024-07-25 17:08:06,969 - INFO - Application is exiting
+2024-07-25 17:08:06,996 - INFO - Application is exiting
+2024-07-25 17:08:06,996 - INFO - Application is exiting
+2024-07-25 17:08:08,273 - INFO - Starting Flask application
+2024-07-25 17:08:08,349 - INFO - Starting Flask application
+2024-07-25 17:08:08,349 - INFO - Starting Flask application
+2024-07-25 17:08:09,821 - INFO - yeti is looking up in googlesheet with input: t3305
+2024-07-25 17:08:11,537 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 291, in googlesheet
+    df_sheet = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\frame.py", line 886, in __init__
+    raise ValueError("DataFrame constructor not properly called!")
+ValueError: DataFrame constructor not properly called!
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:08:18,587 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 221, in download_excel
+    sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can only concatenate str (not "list") to str
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:09:25,782 - INFO - Application is exiting
+2024-07-25 17:09:25,782 - INFO - Application is exiting
+2024-07-25 17:09:25,886 - INFO - Application is exiting
+2024-07-25 17:09:27,227 - INFO - Starting Flask application
+2024-07-25 17:09:27,231 - INFO - Starting Flask application
+2024-07-25 17:09:27,289 - INFO - Starting Flask application
+2024-07-25 17:10:04,441 - INFO - Application is exiting
+2024-07-25 17:10:04,442 - INFO - Application is exiting
+2024-07-25 17:10:04,492 - INFO - Application is exiting
+2024-07-25 17:10:05,761 - INFO - Starting Flask application
+2024-07-25 17:10:05,761 - INFO - Starting Flask application
+2024-07-25 17:10:05,787 - INFO - Starting Flask application
+2024-07-25 17:10:35,263 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 208, in download_excel
+    sheet_data = get_sheet_data(input_value)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 147, in get_sheet_data
+    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='ONLINE_CATALOG').execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 209, in request
+    self.credentials.before_request(self._request, method, uri, request_headers)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\auth\credentials.py", line 230, in before_request
+    self._blocking_refresh(request)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\auth\credentials.py", line 193, in _blocking_refresh
+    self.refresh(request)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\oauth2\service_account.py", line 446, in refresh
+    access_token, expiry, _ = _client.jwt_grant(
+                              ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\oauth2\_client.py", line 304, in jwt_grant
+    response_data = _token_endpoint_request(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\oauth2\_client.py", line 264, in _token_endpoint_request
+    response_status_ok, response_data, retryable_error = _token_endpoint_request_no_throw(
+                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\oauth2\_client.py", line 211, in _token_endpoint_request_no_throw
+    request_succeeded, response_data, retryable_error = _perform_request()
+                                                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\oauth2\_client.py", line 187, in _perform_request
+    response = request(
+               ^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 119, in __call__
+    response, data = self.http.request(
+                     ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1366, in _conn_request
+    conn.connect()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1156, in connect
+    sock.connect((self.host, self.port))
+TimeoutError: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:11:16,373 - INFO - yeti is looking up in googlesheet with input: M1121
+2024-07-25 17:11:17,366 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 290, in googlesheet
+    df_sheet = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\frame.py", line 886, in __init__
+    raise ValueError("DataFrame constructor not properly called!")
+ValueError: DataFrame constructor not properly called!
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:11:28,484 - INFO - yeti is looking up in googlesheet with input: n1547
+2024-07-25 17:11:29,491 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 290, in googlesheet
+    df_sheet = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\frame.py", line 886, in __init__
+    raise ValueError("DataFrame constructor not properly called!")
+ValueError: DataFrame constructor not properly called!
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:11:59,400 - INFO - Application is exiting
+2024-07-25 17:11:59,400 - INFO - Application is exiting
+2024-07-25 17:11:59,502 - INFO - Application is exiting
+2024-07-25 17:12:00,735 - INFO - Starting Flask application
+2024-07-25 17:12:00,816 - INFO - Starting Flask application
+2024-07-25 17:12:10,807 - INFO - Application is exiting
+2024-07-25 17:12:10,807 - INFO - Application is exiting
+2024-07-25 17:12:10,882 - INFO - Application is exiting
+2024-07-25 17:12:12,129 - INFO - Starting Flask application
+2024-07-25 17:12:12,132 - INFO - Starting Flask application
+2024-07-25 17:12:12,184 - INFO - Starting Flask application
+2024-07-25 17:12:24,206 - INFO - Application is exiting
+2024-07-25 17:12:24,208 - INFO - Application is exiting
+2024-07-25 17:12:24,260 - INFO - Application is exiting
+2024-07-25 17:12:25,527 - INFO - Starting Flask application
+2024-07-25 17:12:25,530 - INFO - Starting Flask application
+2024-07-25 17:12:25,550 - INFO - Starting Flask application
+2024-07-25 17:12:35,050 - INFO - yeti is looking up in googlesheet with input: n1547
+2024-07-25 17:12:42,063 - INFO - yeti is looking up in googlesheet with input: 12
+2024-07-25 17:12:45,509 - INFO - yeti is looking up in googlesheet with input: 1
+2024-07-25 17:12:54,112 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 212, in download_excel
+    df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\frame.py", line 886, in __init__
+    raise ValueError("DataFrame constructor not properly called!")
+ValueError: DataFrame constructor not properly called!
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-25 17:15:05,391 - INFO - Application is exiting
+2024-07-25 17:15:05,393 - INFO - Application is exiting
+2024-07-25 17:15:05,393 - INFO - Application is exiting
+2024-07-25 17:15:06,736 - INFO - Starting Flask application
+2024-07-25 17:15:06,736 - INFO - Starting Flask application
+2024-07-25 17:15:06,741 - INFO - Starting Flask application
+2024-07-25 17:15:15,803 - INFO - Application is exiting
+2024-07-25 17:15:15,804 - INFO - Application is exiting
+2024-07-25 17:15:15,804 - INFO - Application is exiting
+2024-07-25 17:15:17,145 - INFO - Starting Flask application
+2024-07-25 17:15:17,149 - INFO - Starting Flask application
+2024-07-25 17:15:17,149 - INFO - Starting Flask application
+2024-07-25 17:15:23,193 - INFO - Application is exiting
+2024-07-25 17:15:23,198 - INFO - Application is exiting
+2024-07-25 17:15:23,200 - INFO - Application is exiting
+2024-07-25 17:15:24,555 - INFO - Starting Flask application
+2024-07-25 17:15:24,555 - INFO - Starting Flask application
+2024-07-25 17:15:24,556 - INFO - Starting Flask application
+2024-07-25 17:15:29,569 - INFO - Excel HTML and sheet data m1121 generated for yeti
+2024-07-25 17:15:29,613 - INFO - Serving file M1121.jpg
+2024-07-25 17:15:39,214 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:15:39,244 - INFO - Serving file N1223.jpg
+2024-07-25 17:16:01,202 - INFO - Excel HTML and sheet data 12 generated for yeti
+2024-07-25 17:16:06,158 - INFO - Excel HTML and sheet data 1 generated for yeti
+2024-07-25 17:16:06,200 - INFO - Serving file 10.45.jpg
+2024-07-25 17:16:12,659 - INFO - Excel HTML and sheet data 5 generated for yeti
+2024-07-25 17:16:22,819 - INFO - Excel HTML and sheet data S1306 ST generated for yeti
+2024-07-25 17:16:59,421 - INFO - Excel HTML and sheet data N1298 BR generated for yeti
+2024-07-25 17:18:07,452 - INFO - Application is exiting
+2024-07-25 17:18:07,461 - INFO - Application is exiting
+2024-07-25 17:18:08,451 - INFO - Application is exiting
+2024-07-25 17:18:08,709 - INFO - Starting Flask application
+2024-07-25 17:18:08,711 - INFO - Starting Flask application
+2024-07-25 17:18:09,636 - INFO - Starting Flask application
+2024-07-25 17:18:26,739 - INFO - Application is exiting
+2024-07-25 17:18:26,820 - INFO - Application is exiting
+2024-07-25 17:18:26,821 - INFO - Application is exiting
+2024-07-25 17:18:27,975 - INFO - Starting Flask application
+2024-07-25 17:18:28,109 - INFO - Starting Flask application
+2024-07-25 17:18:28,130 - INFO - Starting Flask application
+2024-07-25 17:18:37,041 - INFO - Application is exiting
+2024-07-25 17:18:37,171 - INFO - Application is exiting
+2024-07-25 17:18:37,191 - INFO - Application is exiting
+2024-07-25 17:18:38,266 - INFO - Starting Flask application
+2024-07-25 17:18:38,477 - INFO - Starting Flask application
+2024-07-25 17:18:38,513 - INFO - Starting Flask application
+2024-07-25 17:18:42,489 - INFO - Excel HTML and sheet data t3305 generated for yeti
+2024-07-25 17:18:42,557 - INFO - Serving file T3305.jpg
+2024-07-25 17:18:48,159 - INFO - Excel HTML and sheet data n1547 generated for yeti
+2024-07-25 17:18:48,230 - INFO - Serving file N1547.jpg
+2024-07-25 17:19:00,087 - INFO - Excel HTML and sheet data N0469 generated for yeti
+2024-07-25 17:19:00,131 - INFO - Serving file N0469.jpg
+2024-07-25 17:20:13,849 - INFO - Application is exiting
+2024-07-25 17:20:13,973 - INFO - Application is exiting
+2024-07-25 17:20:13,992 - INFO - Application is exiting
+2024-07-25 17:20:15,052 - INFO - Starting Flask application
+2024-07-25 17:20:15,275 - INFO - Starting Flask application
+2024-07-25 17:20:15,277 - INFO - Starting Flask application
+2024-07-25 17:20:16,078 - INFO - Application is exiting
+2024-07-25 17:20:16,297 - INFO - Application is exiting
+2024-07-25 17:20:16,298 - INFO - Application is exiting
+2024-07-25 17:20:17,270 - INFO - Starting Flask application
+2024-07-25 17:20:17,568 - INFO - Starting Flask application
+2024-07-25 17:20:17,573 - INFO - Starting Flask application
+2024-07-25 17:20:20,506 - INFO - Excel HTML and sheet data N0469 generated for yeti
+2024-07-25 17:20:20,548 - INFO - Serving file N0469.jpg
+2024-07-25 17:20:51,464 - INFO - Application is exiting
+2024-07-25 17:20:51,764 - INFO - Application is exiting
+2024-07-25 17:20:51,764 - INFO - Application is exiting
+2024-07-25 17:20:52,657 - INFO - Starting Flask application
+2024-07-25 17:20:53,054 - INFO - Starting Flask application
+2024-07-25 17:20:53,054 - INFO - Starting Flask application
+2024-07-25 17:20:59,487 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:20:59,530 - INFO - Serving file N1223.jpg
+2024-07-25 17:21:09,090 - INFO - Excel HTML and sheet data N0469 generated for yeti
+2024-07-25 17:21:10,955 - INFO - Excel HTML and sheet data N0469 generated for yeti
+2024-07-25 17:21:10,977 - INFO - Serving file N0469.jpg
+2024-07-25 17:21:25,311 - INFO - Excel HTML and sheet data s1306 generated for yeti
+2024-07-25 17:21:25,338 - INFO - Serving file S1306.jpg
+2024-07-25 17:25:30,012 - INFO - Excel HTML and sheet data s1306 generated for yeti
+2024-07-25 17:25:30,037 - INFO - Serving file S1306.jpg
+2024-07-25 17:25:37,321 - INFO - Excel HTML and sheet data 1 generated for yeti
+2024-07-25 17:25:37,350 - INFO - Serving file 10.45.jpg
+2024-07-25 17:26:23,554 - INFO - Excel HTML and sheet data S1306 generated for yeti
+2024-07-25 17:26:23,584 - INFO - Serving file S1306.jpg
+2024-07-25 17:27:59,912 - INFO - Application is exiting
+2024-07-25 17:28:00,336 - INFO - Application is exiting
+2024-07-25 17:28:00,337 - INFO - Application is exiting
+2024-07-25 17:28:01,167 - INFO - Starting Flask application
+2024-07-25 17:28:01,622 - INFO - Starting Flask application
+2024-07-25 17:28:33,806 - INFO - Application is exiting
+2024-07-25 17:28:33,806 - INFO - Application is exiting
+2024-07-25 17:28:34,355 - INFO - Application is exiting
+2024-07-25 17:28:35,107 - INFO - Starting Flask application
+2024-07-25 17:28:35,111 - INFO - Starting Flask application
+2024-07-25 17:28:35,577 - INFO - Starting Flask application
+2024-07-25 17:28:38,346 - INFO - Found 6 matching rows for input: S1306
+2024-07-25 17:28:39,471 - INFO - Excel HTML and sheet data S1306 generated for yeti
+2024-07-25 17:28:39,509 - INFO - Serving file S1306.jpg
+2024-07-25 17:28:46,186 - INFO - Application is exiting
+2024-07-25 17:28:46,186 - INFO - Application is exiting
+2024-07-25 17:28:46,652 - INFO - Application is exiting
+2024-07-25 17:28:47,451 - INFO - Starting Flask application
+2024-07-25 17:28:47,468 - INFO - Starting Flask application
+2024-07-25 17:28:47,854 - INFO - Starting Flask application
+2024-07-25 17:28:49,085 - INFO - Found 6 matching rows for input: S1306
+2024-07-25 17:28:50,123 - INFO - Excel HTML and sheet data S1306 generated for yeti
+2024-07-25 17:28:50,158 - INFO - Serving file S1306.jpg
+2024-07-25 17:28:59,802 - INFO - Found 6 matching rows for input: s1306
+2024-07-25 17:29:00,806 - INFO - Excel HTML and sheet data s1306 generated for yeti
+2024-07-25 17:29:00,833 - INFO - Serving file S1306.jpg
+2024-07-25 17:29:50,262 - INFO - helen submitted input for v4_listcreator: el1852,el1855,el1856,en1177,en1373,en1880,en1881,en1883,en1885,en1980,en2007,en2046,en2154,en2155,en2159,en2161,en2162,en2164,es1169,es1170,es1264,es1372,es1377,es1381,es1383,es1385,es1386,es1393,es1398,es1404,es1413,es1414,es1415,es1422,et2408,et2949,et2953,et3102,et3136,et3167,et3167,et3282,et3283,et3284,l14085,l1518,l1521,l1521-m,l1522,l1522-m,l1848,l1847,m1128,m1129,m1141,n0732,n0813,n0815,n1155,n1163,n1242,n1460,n1513-p,n1656,n1861,n1862,n1864,n1866,n1871,n1900,n1910,n1916,n1938,n1939,n1941,n1959,n1960,n1961,n1963,n1965,n1978,n1979,n1981,n1989,n1997,n2011,n2018,n2023,n2027,n2222,n2216,s1034,s1306,s1333,s1407,s1408,s1402,s1412,s1493,s1491,s1490,s1484,s1478,t3063,t3121,t3124,t3155,t3161,t3164,t3180,t3188,t3196,t3197,t3217,t3224,t3225,t3256t3325,t3328,t3323,t3341
+2024-07-25 17:30:06,176 - INFO - helen downloaded the file: List-20240725-172950.xlsx
+2024-07-25 17:30:11,621 - INFO - Found 25 matching rows for input: n1223
+2024-07-25 17:30:12,711 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:30:12,743 - INFO - Serving file N1223.jpg
+2024-07-25 17:30:20,866 - INFO - Found 9 matching rows for input: 046
+2024-07-25 17:30:22,001 - INFO - Excel HTML and sheet data 046 generated for yeti
+2024-07-25 17:32:08,230 - INFO - Application is exiting
+2024-07-25 17:32:08,547 - INFO - Application is exiting
+2024-07-25 17:32:08,547 - INFO - Application is exiting
+2024-07-25 17:32:09,463 - INFO - Starting Flask application
+2024-07-25 17:32:09,827 - INFO - Starting Flask application
+2024-07-25 17:32:09,827 - INFO - Starting Flask application
+2024-07-25 17:32:37,284 - INFO - Excel HTML and sheet data 046 generated for yeti
+2024-07-25 17:32:41,005 - INFO - Application is exiting
+2024-07-25 17:32:41,007 - INFO - Application is exiting
+2024-07-25 17:32:41,644 - INFO - Application is exiting
+2024-07-25 17:32:42,282 - INFO - Starting Flask application
+2024-07-25 17:32:42,284 - INFO - Starting Flask application
+2024-07-25 17:32:42,848 - INFO - Starting Flask application
+2024-07-25 17:32:46,919 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:32:46,948 - INFO - Serving file N1223.jpg
+2024-07-25 17:32:57,028 - INFO - Application is exiting
+2024-07-25 17:32:57,381 - INFO - Application is exiting
+2024-07-25 17:32:57,382 - INFO - Application is exiting
+2024-07-25 17:32:58,216 - INFO - Starting Flask application
+2024-07-25 17:32:58,651 - INFO - Starting Flask application
+2024-07-25 17:32:58,651 - INFO - Starting Flask application
+2024-07-25 17:33:56,669 - INFO - helen submitted input for v4_listcreator: n2220,n2201,l1408,t3326,t2777,t2806,n0913,n2210,t3311,n1827,n0723,n1974,en2158,n2205,en2162,n2140,l1849,t3302,t3304,t3045,l1406,et3315,l1407,t3044,m1130,t3190
+2024-07-25 17:33:59,847 - INFO - helen downloaded the file: List-20240725-173356.xlsx
+2024-07-25 17:34:01,519 - INFO - File List-20240725-173356.xlsx downloaded
+2024-07-25 17:34:07,925 - INFO - Excel HTML and sheet data S1306 BK generated for yeti
+2024-07-25 17:36:03,689 - INFO - yeti is looking up in googlesheet with input: s1306
+2024-07-25 17:37:10,690 - INFO - Application is exiting
+2024-07-25 17:37:11,010 - INFO - Application is exiting
+2024-07-25 17:37:11,011 - INFO - Application is exiting
+2024-07-25 17:37:11,920 - INFO - Starting Flask application
+2024-07-25 17:37:12,275 - INFO - Starting Flask application
+2024-07-25 17:37:12,298 - INFO - Starting Flask application
+2024-07-25 17:44:28,115 - INFO - Application is exiting
+2024-07-25 17:44:28,583 - INFO - Application is exiting
+2024-07-25 17:44:28,583 - INFO - Application is exiting
+2024-07-25 17:44:29,377 - INFO - Starting Flask application
+2024-07-25 17:44:30,004 - INFO - Starting Flask application
+2024-07-25 17:44:30,030 - INFO - Starting Flask application
+2024-07-25 17:44:32,561 - INFO - yeti is looking up in googlesheet with input: t3305
+2024-07-25 17:44:33,434 - INFO - Found 7 matching rows for input: t3305
+2024-07-25 17:44:46,486 - INFO - Found 7 matching rows for input: t3305
+2024-07-25 17:44:47,552 - INFO - Excel HTML and sheet data t3305 generated for yeti
+2024-07-25 17:44:47,595 - INFO - Serving file T3305.jpg
+2024-07-25 17:46:22,597 - INFO - Application is exiting
+2024-07-25 17:46:22,602 - INFO - Application is exiting
+2024-07-25 17:46:23,298 - INFO - Application is exiting
+2024-07-25 17:46:28,752 - INFO - Starting Flask application
+2024-07-25 17:46:28,753 - INFO - Starting Flask application
+2024-07-25 17:46:28,753 - INFO - Starting Flask application
+2024-07-25 17:46:29,765 - INFO - Found 7 matching rows for input: t3305
+2024-07-25 17:46:30,865 - INFO - Excel HTML and sheet data t3305 generated for yeti
+2024-07-25 17:46:30,898 - INFO - Serving file T3305.jpg
+2024-07-25 17:47:58,957 - INFO - Found 24 matching rows for input: n1223
+2024-07-25 17:48:00,023 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:48:00,067 - INFO - Serving file N1223.jpg
+2024-07-25 17:48:20,411 - INFO - Application is exiting
+2024-07-25 17:48:20,411 - INFO - Application is exiting
+2024-07-25 17:48:20,477 - INFO - Application is exiting
+2024-07-25 17:48:21,706 - INFO - Starting Flask application
+2024-07-25 17:48:21,708 - INFO - Starting Flask application
+2024-07-25 17:48:21,741 - INFO - Starting Flask application
+2024-07-25 17:48:28,758 - INFO - Application is exiting
+2024-07-25 17:48:28,760 - INFO - Application is exiting
+2024-07-25 17:48:28,791 - INFO - Application is exiting
+2024-07-25 17:48:30,016 - INFO - Starting Flask application
+2024-07-25 17:48:30,040 - INFO - Starting Flask application
+2024-07-25 17:48:30,051 - INFO - Starting Flask application
+2024-07-25 17:48:30,942 - INFO - Found 24 matching rows for input: n1223
+2024-07-25 17:48:32,114 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:48:32,149 - INFO - Serving file N1223.jpg
+2024-07-25 17:49:22,303 - INFO - Application is exiting
+2024-07-25 17:49:22,309 - INFO - Application is exiting
+2024-07-25 17:49:22,366 - INFO - Application is exiting
+2024-07-25 17:49:23,579 - INFO - Starting Flask application
+2024-07-25 17:49:23,580 - INFO - Starting Flask application
+2024-07-25 17:49:23,619 - INFO - Starting Flask application
+2024-07-25 17:49:41,694 - INFO - Application is exiting
+2024-07-25 17:49:41,694 - INFO - Application is exiting
+2024-07-25 17:49:41,723 - INFO - Application is exiting
+2024-07-25 17:49:43,005 - INFO - Starting Flask application
+2024-07-25 17:49:43,006 - INFO - Starting Flask application
+2024-07-25 17:49:43,010 - INFO - Starting Flask application
+2024-07-25 17:49:44,870 - INFO - Found 24 matching rows for input: n1223
+2024-07-25 17:49:46,013 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:49:46,053 - INFO - Serving file N1223.jpg
+2024-07-25 17:49:53,349 - INFO - Found 6 matching rows for input: 67
+2024-07-25 17:49:54,355 - INFO - Excel HTML and sheet data 67 generated for yeti
+2024-07-25 17:50:02,859 - INFO - Found 1 matching rows for input: 067
+2024-07-25 17:50:03,845 - INFO - Excel HTML and sheet data 067 generated for yeti
+2024-07-25 17:50:27,893 - INFO - Found 1 matching rows for input: 067
+2024-07-25 17:50:28,921 - INFO - Excel HTML and sheet data 067 generated for yeti
+2024-07-25 17:50:34,635 - INFO - Found 24 matching rows for input: n1223
+2024-07-25 17:50:35,738 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-25 17:50:35,779 - INFO - Serving file N1223.jpg
+2024-07-25 17:50:51,440 - INFO - Excel HTML and sheet data all generated for yeti
+2024-07-25 17:51:27,582 - INFO - Application is exiting
+2024-07-25 17:51:27,583 - INFO - Application is exiting
+2024-07-25 17:51:27,830 - INFO - Application is exiting
+2024-07-25 17:51:28,831 - INFO - Starting Flask application
+2024-07-25 17:51:28,831 - INFO - Starting Flask application
+2024-07-25 17:51:29,020 - INFO - Starting Flask application
+2024-07-25 17:51:39,093 - INFO - Excel HTML and sheet data all generated for yeti
+2024-07-25 17:52:13,665 - INFO - yeti is looking up in googlesheet with input: all
+2024-07-25 17:57:22,737 - INFO - Application is exiting
+2024-07-25 17:57:22,737 - INFO - Application is exiting
+2024-07-25 17:57:22,811 - INFO - Application is exiting
+2024-07-25 17:57:24,059 - INFO - Starting Flask application
+2024-07-25 17:57:24,073 - INFO - Starting Flask application
+2024-07-25 17:57:24,109 - INFO - Starting Flask application
+2024-07-25 17:57:35,518 - INFO - yeti is looking up in googlesheet with input: n1223
+2024-07-25 17:57:36,429 - INFO - Found 24 matching rows for input: n1223
+2024-07-25 17:58:01,302 - INFO - Application is exiting
+2024-07-25 17:58:02,273 - INFO - Application is exiting
+2024-07-25 17:58:02,274 - INFO - Application is exiting
+2024-07-25 17:58:02,454 - INFO - Starting Flask application
+2024-07-25 17:58:03,514 - INFO - Starting Flask application
+2024-07-25 17:58:03,515 - INFO - Starting Flask application
+2024-07-25 17:58:04,249 - INFO - yeti is looking up in googlesheet with input: n1223
+2024-07-25 17:58:05,144 - INFO - Found 24 matching rows for input: n1223
+2024-07-25 17:58:18,029 - INFO - yeti is looking up in googlesheet with input: n1223
+2024-07-25 17:58:18,966 - INFO - Found 24 matching rows for input: n1223
+2024-07-25 17:58:23,693 - INFO - yeti is looking up in googlesheet with input: 067
+2024-07-25 17:58:24,620 - INFO - Found 1 matching rows for input: 067
+2024-07-25 17:58:31,328 - INFO - yeti is looking up in googlesheet with input: 067
+2024-07-25 17:58:32,164 - INFO - Found 1 matching rows for input: 067
+2024-07-25 17:58:38,697 - INFO - Application is exiting
+2024-07-25 17:58:38,706 - INFO - Application is exiting
+2024-07-25 17:58:38,707 - INFO - Application is exiting
+2024-07-25 17:58:39,978 - INFO - Starting Flask application
+2024-07-25 17:58:39,979 - INFO - Starting Flask application
+2024-07-25 17:58:39,981 - INFO - Starting Flask application

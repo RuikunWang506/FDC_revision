@@ -231,6 +231,7 @@ def process_label_2(output_line_number, row, to_address, ws_labels, number_of_la
         ws_labels["C" + str(temp_output_line_number)].alignment = Alignment(horizontal="center", vertical="center")
         ws_labels["D" + str(temp_output_line_number)] = "OF"
         ws_labels["D" + str(temp_output_line_number)].font=ft3
+        ws_labels.merge_cells(("E" + str(temp_output_line_number)) + ":" +("F" + str(temp_output_line_number)))
         ws_labels["E" + str(temp_output_line_number)] = number_of_labels
         ws_labels["E" + str(temp_output_line_number)].font = ftbigger
         temp_output_line_number += 1
