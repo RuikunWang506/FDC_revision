@@ -36826,3 +36826,891 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-07-25 17:58:39,978 - INFO - Starting Flask application
 2024-07-25 17:58:39,979 - INFO - Starting Flask application
 2024-07-25 17:58:39,981 - INFO - Starting Flask application
+2024-07-25 17:59:35,324 - INFO - yeti is looking up in googlesheet with input: S1206 TP
+2024-07-25 17:59:36,247 - INFO - Found 1 matching rows for input: S1206 TP
+2024-07-25 17:59:51,805 - INFO - yeti is looking up in googlesheet with input: L1809 BK
+2024-07-25 17:59:52,758 - INFO - Found 1 matching rows for input: L1809 BK
+2024-07-25 18:00:02,809 - INFO - yeti is looking up in googlesheet with input: 294,195
+2024-07-25 18:00:03,615 - INFO - Found 2 matching rows for input: 294,195
+2024-07-25 18:00:11,338 - INFO - Found 7 matching rows for input: t3305
+2024-07-25 18:00:12,480 - INFO - Excel HTML and sheet data t3305 generated for yeti
+2024-07-25 18:00:12,557 - INFO - Serving file T3305.jpg
+2024-07-25 18:00:29,069 - INFO - Running get_tk_sheet script
+2024-07-25 18:00:30,934 - INFO - Running fast script
+2024-07-25 18:06:19,453 - INFO - Application is exiting
+2024-07-25 18:06:19,457 - INFO - Application is exiting
+2024-07-25 18:06:19,457 - INFO - Application is exiting
+2024-07-25 18:06:20,758 - INFO - Starting Flask application
+2024-07-25 18:06:20,774 - INFO - Starting Flask application
+2024-07-25 18:06:20,775 - INFO - Starting Flask application
+2024-07-25 18:06:46,906 - INFO - Application is exiting
+2024-07-25 18:06:46,920 - INFO - Application is exiting
+2024-07-25 18:06:46,923 - INFO - Application is exiting
+2024-07-25 18:06:48,203 - INFO - Starting Flask application
+2024-07-25 18:06:48,203 - INFO - Starting Flask application
+2024-07-25 18:06:48,204 - INFO - Starting Flask application
+2024-07-25 18:06:51,805 - INFO - Running fast script
+2024-07-25 18:06:54,252 - INFO - Application is exiting
+2024-07-25 18:06:54,253 - INFO - Application is exiting
+2024-07-25 18:06:54,254 - INFO - Application is exiting
+2024-07-25 18:06:55,487 - INFO - Starting Flask application
+2024-07-25 18:06:55,533 - INFO - Starting Flask application
+2024-07-25 18:06:55,534 - INFO - Starting Flask application
+2024-07-25 18:07:15,606 - INFO - Application is exiting
+2024-07-25 18:07:15,653 - INFO - Application is exiting
+2024-07-25 18:07:15,653 - INFO - Application is exiting
+2024-07-25 18:07:16,875 - INFO - Starting Flask application
+2024-07-25 18:07:16,941 - INFO - Starting Flask application
+2024-07-25 18:07:16,942 - INFO - Starting Flask application
+2024-07-25 18:07:17,326 - INFO - Running fast script
+2024-07-25 18:07:53,072 - INFO - Application is exiting
+2024-07-25 18:07:53,146 - INFO - Application is exiting
+2024-07-25 18:07:53,147 - INFO - Application is exiting
+2024-07-25 18:07:54,254 - INFO - Starting Flask application
+2024-07-25 18:07:54,382 - INFO - Starting Flask application
+2024-07-25 18:07:54,402 - INFO - Starting Flask application
+2024-07-25 18:07:59,424 - INFO - Application is exiting
+2024-07-25 18:07:59,443 - INFO - Application is exiting
+2024-07-25 18:08:00,302 - INFO - Application is exiting
+2024-07-25 18:08:00,651 - INFO - Starting Flask application
+2024-07-25 18:08:00,652 - INFO - Starting Flask application
+2024-07-25 18:08:01,405 - INFO - Starting Flask application
+2024-07-25 18:08:04,606 - INFO - Running fast script
+2024-07-25 18:08:23,793 - INFO - Application is exiting
+2024-07-25 18:08:23,793 - INFO - Application is exiting
+2024-07-25 18:08:24,538 - INFO - Application is exiting
+2024-07-25 18:08:25,010 - INFO - Starting Flask application
+2024-07-25 18:08:25,043 - INFO - Starting Flask application
+2024-07-25 18:08:25,680 - INFO - Starting Flask application
+2024-07-25 18:08:30,942 - INFO - Running fast script
+2024-07-25 18:45:10,206 - ERROR - 184.105.139.67 - - [25/Jul/2024 18:45:10] code 400, message Bad request version ('À\x14À')
+2024-07-25 19:30:02,023 - INFO - Starting Flask application
+2024-07-25 19:30:03,040 - INFO - Starting Flask application
+2024-07-25 19:46:15,701 - INFO - nicye submitted an order lookup
+2024-07-25 19:46:15,702 - INFO - nicye is looking up order number: S1412
+2024-07-25 19:46:16,191 - INFO - nicye searched for order number: S1412
+2024-07-25 19:46:16,192 - INFO - No data found for order number: S1412
+2024-07-25 19:46:31,220 - INFO - nicye submitted an order lookup
+2024-07-25 19:46:31,220 - INFO - nicye is looking up order number: S1412
+2024-07-25 19:46:31,227 - INFO - nicye searched for order number: S1412
+2024-07-25 19:46:31,227 - INFO - No data found for order number: S1412
+2024-07-25 19:46:58,866 - INFO - Found 3 matching rows for input: S1424
+2024-07-25 19:46:59,856 - INFO - Found 3 matching rows for input: S1424
+2024-07-25 19:47:00,057 - INFO - Excel HTML and sheet data S1424 generated for nicye
+2024-07-25 19:47:00,813 - INFO - Excel HTML and sheet data S1424 generated for nicye
+2024-07-25 19:47:01,150 - INFO - Serving file S1424.jpg
+2024-07-25 19:47:40,768 - INFO - Excel HTML and sheet data T3242 generated for nicye
+2024-07-25 19:47:41,106 - INFO - Serving file T3242.jpg
+2024-07-25 19:50:18,183 - INFO - Found 6 matching rows for input: ES1421
+2024-07-25 19:50:19,194 - INFO - Excel HTML and sheet data ES1421 generated for nicye
+2024-07-25 19:50:20,022 - INFO - Found 6 matching rows for input: ES1421
+2024-07-25 19:50:21,038 - INFO - Excel HTML and sheet data ES1421 generated for nicye
+2024-07-25 19:50:21,382 - INFO - Serving file ES1421.jpg
+2024-07-25 19:52:32,916 - INFO - Found 6 matching rows for input: T3255
+2024-07-25 19:52:33,934 - INFO - Excel HTML and sheet data T3255 generated for nicye
+2024-07-25 19:52:34,260 - INFO - Serving file T3255.jpg
+2024-07-25 19:58:43,814 - INFO - Found 5 matching rows for input: S1112
+2024-07-25 19:58:44,830 - INFO - Excel HTML and sheet data S1112 generated for nicye
+2024-07-25 19:58:45,164 - INFO - Serving file S1112.jpg
+2024-07-25 19:59:25,228 - INFO - Found 4 matching rows for input: L1790
+2024-07-25 19:59:27,548 - INFO - Found 4 matching rows for input: L1790
+2024-07-25 19:59:28,022 - INFO - Excel HTML and sheet data L1790 generated for nicye
+2024-07-25 19:59:28,525 - INFO - Excel HTML and sheet data L1790 generated for nicye
+2024-07-25 19:59:28,849 - INFO - Serving file L1790.jpg
+2024-07-25 20:00:25,346 - INFO - Found 6 matching rows for input: ET2953
+2024-07-25 20:00:26,432 - INFO - Excel HTML and sheet data ET2953 generated for nicye
+2024-07-25 20:00:26,685 - INFO - Found 6 matching rows for input: ET2953
+2024-07-25 20:00:28,111 - INFO - Excel HTML and sheet data ET2953 generated for nicye
+2024-07-25 20:00:28,431 - INFO - Serving file ET2953.jpg
+2024-07-25 20:01:47,622 - INFO - Found 6 matching rows for input: EL1855
+2024-07-25 20:01:48,639 - INFO - Excel HTML and sheet data EL1855 generated for nicye
+2024-07-25 20:01:48,964 - INFO - Serving file EL1855.jpg
+2024-07-25 20:02:37,057 - INFO - Found 2 matching rows for input: L1830
+2024-07-25 20:02:38,020 - INFO - Excel HTML and sheet data L1830 generated for nicye
+2024-07-25 20:02:38,356 - INFO - Serving file L1830.jpg
+2024-07-25 20:03:54,689 - INFO - Found 5 matching rows for input: T3142
+2024-07-25 20:03:55,706 - INFO - Excel HTML and sheet data T3142 generated for nicye
+2024-07-25 20:03:56,035 - INFO - Serving file T3142.jpg
+2024-07-25 20:05:14,700 - INFO - Found 6 matching rows for input: ES1386
+2024-07-25 20:05:15,703 - INFO - Excel HTML and sheet data ES1386 generated for nicye
+2024-07-25 20:05:16,054 - INFO - Serving file ES1386.jpg
+2024-07-25 20:06:10,170 - INFO - Found 6 matching rows for input: N2013
+2024-07-25 20:06:11,238 - INFO - Excel HTML and sheet data N2013 generated for nicye
+2024-07-25 20:06:11,578 - INFO - Serving file N2013.jpg
+2024-07-25 20:06:51,806 - INFO - Found 5 matching rows for input: N1971
+2024-07-25 20:06:52,808 - INFO - Excel HTML and sheet data N1971 generated for nicye
+2024-07-25 20:06:53,124 - INFO - Serving file N1971.jpg
+2024-07-25 20:07:45,730 - INFO - Found 5 matching rows for input: EN2008
+2024-07-25 20:07:46,748 - INFO - Excel HTML and sheet data EN2008 generated for nicye
+2024-07-25 20:07:47,066 - INFO - Serving file EN2008.jpg
+2024-07-25 20:08:29,158 - INFO - Found 6 matching rows for input: N2087
+2024-07-25 20:08:30,188 - INFO - Excel HTML and sheet data N2087 generated for nicye
+2024-07-25 20:08:30,535 - INFO - Serving file N2087.jpg
+2024-07-25 20:09:52,319 - INFO - Found 6 matching rows for input: N2087
+2024-07-25 20:09:53,343 - INFO - Excel HTML and sheet data N2087 generated for nicye
+2024-07-25 20:09:53,668 - INFO - Serving file N2087.jpg
+2024-07-25 20:11:04,735 - INFO - Found 6 matching rows for input: N1422
+2024-07-25 20:11:05,749 - INFO - Excel HTML and sheet data N1422 generated for nicye
+2024-07-25 20:11:06,077 - INFO - Serving file N1422.jpg
+2024-07-25 20:12:59,998 - INFO - Found 6 matching rows for input: ET3167
+2024-07-25 20:13:01,041 - INFO - Excel HTML and sheet data ET3167 generated for nicye
+2024-07-25 20:13:01,365 - INFO - Serving file ET3167.jpg
+2024-07-25 20:13:51,247 - INFO - Found 6 matching rows for input: N2093
+2024-07-25 20:13:52,253 - INFO - Excel HTML and sheet data N2093 generated for nicye
+2024-07-25 20:13:52,583 - INFO - Serving file N2093.jpg
+2024-07-25 20:14:55,483 - INFO - Found 6 matching rows for input: N1814
+2024-07-25 20:14:56,517 - INFO - Excel HTML and sheet data N1814 generated for nicye
+2024-07-25 20:14:56,841 - INFO - Serving file N1814.jpg
+2024-07-25 20:15:49,979 - INFO - Excel HTML and sheet data PO-211-02006825064312135 generated for nicye
+2024-07-25 20:16:48,099 - INFO - Found 6 matching rows for input: N1782
+2024-07-25 20:16:49,173 - INFO - Found 6 matching rows for input: N1782
+2024-07-25 20:16:49,395 - INFO - Excel HTML and sheet data N1782 generated for nicye
+2024-07-25 20:16:50,189 - INFO - Excel HTML and sheet data N1782 generated for nicye
+2024-07-25 20:16:50,518 - INFO - Serving file N1782.jpg
+2024-07-25 20:22:20,797 - INFO - Found 6 matching rows for input: ES1421
+2024-07-25 20:22:21,824 - INFO - Excel HTML and sheet data ES1421 generated for nicye
+2024-07-25 20:22:22,154 - INFO - Serving file ES1421.jpg
+2024-07-25 21:31:05,703 - ERROR - 35.203.211.100 - - [25/Jul/2024 21:31:05] code 400, message Bad request version ('À\x13À')
+2024-07-25 21:31:05,990 - ERROR - 35.203.211.100 - - [25/Jul/2024 21:31:05] code 400, message Bad request version ('À(À$À\x14À')
+2024-07-25 22:04:26,711 - ERROR - 82.147.84.180 - - [25/Jul/2024 22:04:26] code 400, message Bad request version ('À\x13À')
+2024-07-25 22:11:48,447 - INFO - Found 6 matching rows for input: N1782
+2024-07-25 22:11:49,467 - INFO - Excel HTML and sheet data N1782 generated for nicye
+2024-07-25 22:11:49,817 - INFO - Serving file N1782.jpg
+2024-07-25 23:05:31,375 - INFO - Excel HTML and sheet data N2149 generated for ahua
+2024-07-25 23:05:32,386 - INFO - Excel HTML and sheet data N2149 generated for ahua
+2024-07-25 23:05:34,505 - INFO - Serving file N2149.jpg
+2024-07-25 23:30:06,323 - INFO - Excel HTML and sheet data S1459 generated for ahua
+2024-07-25 23:30:07,031 - INFO - Serving file S1459.jpg
+2024-07-25 23:35:18,264 - ERROR - 161.35.160.224 - - [25/Jul/2024 23:35:18] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x01ý\x01\x00\x01ù\x03\x03=L\x07\x8ae>\x9aÁ×\x82\'\x02\x8dÜd\x80Eô\x04\x06[ª\x1a"ù¶9')
+2024-07-26 00:12:56,326 - ERROR - 93.174.93.12 - - [26/Jul/2024 00:12:56] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-26 00:38:10,329 - INFO - Excel HTML and sheet data L1863 generated for ahua
+2024-07-26 00:38:10,517 - INFO - Excel HTML and sheet data L1863 generated for ahua
+2024-07-26 00:38:11,217 - INFO - Serving file L1863.jpg
+2024-07-26 00:41:01,904 - ERROR - 5.8.11.202 - - [26/Jul/2024 00:41:01] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-26 01:01:15,021 - ERROR - 45.148.10.127 - - [26/Jul/2024 01:01:15] code 400, message Bad request version ('À\x13À')
+2024-07-26 01:39:44,443 - INFO - Excel HTML and sheet data L1864 generated for ahua
+2024-07-26 01:39:45,331 - INFO - Serving file L1864.jpg
+2024-07-26 02:59:18,374 - ERROR - 91.238.181.31 - - [26/Jul/2024 02:59:18] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-26 03:03:41,092 - ERROR - 45.227.254.8 - - [26/Jul/2024 03:03:41] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-07-26 05:31:02,323 - ERROR - 178.79.139.219 - - [26/Jul/2024 05:31:02] code 400, message Bad request version ('«á\x02Hã§/D¶ív')
+2024-07-26 05:31:02,623 - ERROR - 178.79.139.219 - - [26/Jul/2024 05:31:02] code 400, message Bad request version ('\x00\x04\x03\x00\x01\x02\x00')
+2024-07-26 05:31:02,955 - ERROR - 178.79.139.219 - - [26/Jul/2024 05:31:02] code 400, message Bad request version ('\x00\x04\x03\x00\x01\x02\x00')
+2024-07-26 05:54:16,060 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:16] code 400, message Bad request version ('°\x9d')
+2024-07-26 05:54:16,070 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:16] code 400, message Bad request version ('À\x13À')
+2024-07-26 05:54:16,070 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:16] code 400, message Bad request version ('À\x13À')
+2024-07-26 05:54:18,232 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:18] code 400, message Bad request syntax ('PASS ')
+2024-07-26 05:54:18,234 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:18] code 400, message Bad HTTP/0.9 request type ('name')
+2024-07-26 05:54:18,243 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:18] code 400, message Bad request syntax ('\x01\x00\x00\x00z\x00\x00\x00\x00ô\x01\x00\x002\x00\x00\x00è\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00')
+2024-07-26 05:54:18,243 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:18] code 400, message Bad request syntax ('{"Platform":"linux","GCC":"386","CPU":2,"Payload":"Direct","Version":1.1}')
+2024-07-26 05:54:18,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:18] code 400, message Bad HTTP/0.9 request type ('NICK')
+2024-07-26 05:54:21,060 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad HTTP/0.9 request type ('\x00\x01\x00\x01\x02\x02')
+2024-07-26 05:54:21,232 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request syntax ('Å?ª\x81ô\x00\x00\x00\x00\x00\x00\x00\x96-_*')
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request syntax ('3f\x99')
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request syntax ('\x02\x00\x00B\x003\x00c\x01È\x02ü\x00I\x00\x07unknown\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request syntax ('\x00\x00')
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request version ('kernel\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x15\x07\x00\x00\x02\x00\x00\x00SYN-Flow')
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request version (";K0'Z\\/19RZUF60\x11\x16s\x12\x08p6AAA9541F0pl\x02hs36AAA9541F0")
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request syntax ('3f\x99\x07android')
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad HTTP/0.9 request type ('VERSONEX:Linux-5.0.0-25-generic|4|2201')
+2024-07-26 05:54:21,244 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request syntax ('Name:x86')
+2024-07-26 05:54:21,245 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request syntax ('PING')
+2024-07-26 05:54:21,245 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:21] code 400, message Bad request version ('é,æ\x93\x93\x93\x93')
+2024-07-26 05:54:26,068 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:26] code 400, message Bad request version ("x64|'|'|No|'|'|0.7d|'|'|..|'|'||'|'|888\x00inf|'|'|SGFjS2VkPDkxNzIuMTg4LjU2LjExM1dpbmRvd3MgdG8gRXJvcnIgV2luZG93cyBFcm9yck1pY3Jvc29mdCBDb3Jwb3JhdGlvbldpbmRvd3MgVXBkYXRlMTBFeHBsb3dlck5vdGVwYWQuZXhlW1NvZnR3YXJlXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXFJ1bl1ba11KYXZhIFVwZGF0ZUFkb2JlIFVwZGF0ZXN5c3RlbVtpXXwnfCd8OjcwNzA6NzA3MDw5VGVtcDw5YWQ3ZmYzNTg5OTFmYThiMjQyMmNhZWQzMWYyOTE4MGIuZXhlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlUcnVlPEZhbHNlOTxGYWxzZTk8RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlUcnVlPDlUcnVlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OVRydWU8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OUZhbHNlPDlGYWxzZTw5RmFsc2U8OVRydWU8OUZhbHNlPDlUcnVlPDlUcnVlPDlUcnVlPDlGYWxzZTw5RmFsc2U8OUZhbHNl")
+2024-07-26 05:54:26,071 - ERROR - 202.112.238.240 - - [26/Jul/2024 05:54:26] code 400, message Bad request version ('|\x17P7e')
+2024-07-26 09:36:46,923 - INFO - Found 3 matching rows for input: T2890
+2024-07-26 09:36:47,998 - INFO - Excel HTML and sheet data T2890 generated for derrick
+2024-07-26 09:36:53,199 - INFO - Found 2 matching rows for input: L1591
+2024-07-26 09:36:54,206 - INFO - Excel HTML and sheet data L1591 generated for derrick
+2024-07-26 09:36:54,346 - INFO - Serving file L1591.jpg
+2024-07-26 09:43:01,951 - INFO - Found 2 matching rows for input: L1804
+2024-07-26 09:43:02,979 - INFO - Excel HTML and sheet data L1804 generated for derrick
+2024-07-26 09:43:03,104 - INFO - Serving file L1804.jpg
+2024-07-26 09:52:25,690 - INFO - Found 7 matching rows for input: T3305
+2024-07-26 09:52:26,721 - INFO - Excel HTML and sheet data T3305 generated for derrick
+2024-07-26 09:52:26,830 - INFO - Serving file T3305.jpg
+2024-07-26 09:59:54,241 - INFO - Found 4 matching rows for input: N3007
+2024-07-26 09:59:55,264 - INFO - Excel HTML and sheet data N3007 generated for nicye
+2024-07-26 09:59:55,839 - INFO - Serving file N3007.jpg
+2024-07-26 10:01:57,559 - INFO - Found 5 matching rows for input: N2036
+2024-07-26 10:01:58,562 - INFO - Excel HTML and sheet data N2036 generated for nicye
+2024-07-26 10:01:59,041 - INFO - Serving file N2036.jpg
+2024-07-26 10:04:29,861 - INFO - Found 6 matching rows for input: N2013
+2024-07-26 10:04:30,930 - INFO - Excel HTML and sheet data N2013 generated for nicye
+2024-07-26 10:04:31,404 - INFO - Serving file N2013.jpg
+2024-07-26 10:04:48,928 - INFO - Serving file N2013.jpg
+2024-07-26 11:39:00,299 - ERROR - 51.8.71.168 - - [26/Jul/2024 11:39:00] code 400, message Bad request syntax ('MGLNDD_173.198.50.202_80')
+2024-07-26 12:42:15,344 - INFO - Found 2 matching rows for input: L1591
+2024-07-26 12:42:16,358 - INFO - Excel HTML and sheet data L1591 generated for derrick
+2024-07-26 12:42:16,480 - INFO - Serving file L1591.jpg
+2024-07-26 12:52:38,964 - INFO - Found 7 matching rows for input: L1687
+2024-07-26 12:52:39,992 - INFO - Excel HTML and sheet data L1687 generated for derrick
+2024-07-26 12:52:40,109 - INFO - Serving file L1687-S.jpg
+2024-07-26 12:52:40,123 - INFO - Serving file L1687.jpg
+2024-07-26 12:52:40,124 - INFO - Serving file L1687-M.jpg
+2024-07-26 12:53:41,162 - INFO - Found 2 matching rows for input: L1591
+2024-07-26 12:53:42,194 - INFO - Excel HTML and sheet data L1591 generated for derrick
+2024-07-26 12:53:42,301 - INFO - Serving file L1591.jpg
+2024-07-26 13:09:32,918 - INFO - yeti is processing order number for label maker: 32994
+2024-07-26 13:09:52,187 - INFO - yeti is processing order number for label maker: 32995
+2024-07-26 13:09:54,125 - INFO - File 32995_label.xlsx downloaded from label output
+2024-07-26 13:10:39,418 - INFO - Found 6 matching rows for input: ET2953
+2024-07-26 13:10:40,489 - INFO - Excel HTML and sheet data ET2953 generated for derrick
+2024-07-26 13:10:40,639 - INFO - Serving file ET2953.jpg
+2024-07-26 13:11:06,068 - INFO - yeti is processing order number for label maker: 32994
+2024-07-26 13:11:30,916 - INFO - yeti is processing order number for label maker: 32994
+2024-07-26 13:11:34,052 - INFO - yeti is processing order number for label maker: 32995
+2024-07-26 13:11:35,461 - INFO - File 32995_label.xlsx downloaded from label output
+2024-07-26 13:24:29,065 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 13:24:30,129 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 13:28:23,884 - ERROR - 198.235.24.110 - - [26/Jul/2024 13:28:23] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03i\x94¼\x8e½')
+2024-07-26 13:28:24,148 - ERROR - 198.235.24.110 - - [26/Jul/2024 13:28:24] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03\x04v\x8dbõï\x8b£f<Ó7YDÅu\x9bÍ3\x804bh÷À\x8e\x02Ç\x14\x04GV\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À")
+2024-07-26 14:34:44,643 - INFO - Found 5 matching rows for input: en2008
+2024-07-26 14:34:45,771 - INFO - Excel HTML and sheet data en2008 generated for derrick
+2024-07-26 14:34:45,918 - INFO - Serving file EN2008.jpg
+2024-07-26 14:35:03,115 - INFO - Found 6 matching rows for input: es1421
+2024-07-26 14:35:04,257 - INFO - Excel HTML and sheet data es1421 generated for derrick
+2024-07-26 14:35:04,360 - INFO - Serving file ES1421.jpg
+2024-07-26 14:35:44,262 - INFO - Excel HTML and sheet data N2222 generated for derrick
+2024-07-26 14:35:44,595 - INFO - Excel HTML and sheet data N2222 generated for derrick
+2024-07-26 14:35:44,729 - INFO - Serving file N2222.jpg
+2024-07-26 15:34:53,255 - ERROR - 5.8.11.202 - - [26/Jul/2024 15:34:53] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-26 16:51:17,454 - INFO - yeti is processing order number for label maker: 32994
+2024-07-26 16:51:22,564 - INFO - yeti submitted an order lookup
+2024-07-26 16:51:22,564 - INFO - yeti is looking up order number: 32994
+2024-07-26 16:51:22,604 - INFO - yeti searched for order number: 32994
+2024-07-26 16:51:56,437 - INFO - yeti submitted an order lookup
+2024-07-26 16:51:56,437 - INFO - yeti is looking up order number: 32995
+2024-07-26 16:51:56,465 - INFO - yeti searched for order number: 32995
+2024-07-26 16:52:08,318 - INFO - yeti is processing order number for label maker: 32995
+2024-07-26 16:52:09,656 - INFO - File 32995_label.xlsx downloaded from label output
+2024-07-26 16:52:28,952 - INFO - yeti submitted an order lookup
+2024-07-26 16:52:28,952 - INFO - yeti is looking up order number: 1762
+2024-07-26 16:52:28,986 - INFO - yeti searched for order number: 1762
+2024-07-26 16:52:42,741 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 16:52:44,890 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 16:52:52,308 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 16:58:27,990 - INFO - Application is exiting
+2024-07-26 16:58:28,024 - INFO - Application is exiting
+2024-07-26 16:58:28,024 - INFO - Application is exiting
+2024-07-26 16:58:28,025 - INFO - Application is exiting
+2024-07-26 16:58:35,182 - INFO - Starting Flask application
+2024-07-26 16:58:35,183 - INFO - Starting Flask application
+2024-07-26 16:58:35,183 - INFO - Starting Flask application
+2024-07-26 16:58:49,264 - INFO - yeti submitted an order lookup
+2024-07-26 16:58:49,269 - INFO - yeti is looking up order number: 1762
+2024-07-26 16:58:49,835 - INFO - yeti searched for order number: 1762
+2024-07-26 16:58:53,464 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 16:58:54,783 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 16:59:05,810 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 16:59:13,015 - INFO - yeti submitted an order lookup
+2024-07-26 16:59:13,015 - INFO - yeti is looking up order number: 1762
+2024-07-26 16:59:13,038 - INFO - yeti searched for order number: 1762
+2024-07-26 17:03:23,823 - INFO - Application is exiting
+2024-07-26 17:03:23,829 - INFO - Application is exiting
+2024-07-26 17:03:23,831 - INFO - Application is exiting
+2024-07-26 17:03:23,831 - INFO - Application is exiting
+2024-07-26 17:03:25,276 - INFO - Starting Flask application
+2024-07-26 17:03:25,276 - INFO - Starting Flask application
+2024-07-26 17:03:25,284 - INFO - Starting Flask application
+2024-07-26 17:03:25,296 - INFO - Starting Flask application
+2024-07-26 17:04:05,113 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 17:04:07,051 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 17:04:15,561 - INFO - Application is exiting
+2024-07-26 17:04:15,562 - INFO - Application is exiting
+2024-07-26 17:04:15,566 - INFO - Application is exiting
+2024-07-26 17:04:15,569 - INFO - Application is exiting
+2024-07-26 17:04:16,964 - INFO - Starting Flask application
+2024-07-26 17:04:16,964 - INFO - Starting Flask application
+2024-07-26 17:04:16,966 - INFO - Starting Flask application
+2024-07-26 17:04:16,988 - INFO - Starting Flask application
+2024-07-26 17:06:24,666 - INFO - Application is exiting
+2024-07-26 17:06:24,666 - INFO - Application is exiting
+2024-07-26 17:06:24,667 - INFO - Application is exiting
+2024-07-26 17:06:24,668 - INFO - Application is exiting
+2024-07-26 17:06:26,128 - INFO - Starting Flask application
+2024-07-26 17:06:26,128 - INFO - Starting Flask application
+2024-07-26 17:06:26,135 - INFO - Starting Flask application
+2024-07-26 17:06:26,135 - INFO - Starting Flask application
+2024-07-26 17:07:02,347 - INFO - Application is exiting
+2024-07-26 17:07:02,347 - INFO - Application is exiting
+2024-07-26 17:07:02,347 - INFO - Application is exiting
+2024-07-26 17:07:02,349 - INFO - Application is exiting
+2024-07-26 17:07:03,792 - INFO - Starting Flask application
+2024-07-26 17:07:03,793 - INFO - Starting Flask application
+2024-07-26 17:07:03,795 - INFO - Starting Flask application
+2024-07-26 17:07:03,795 - INFO - Starting Flask application
+2024-07-26 17:07:24,921 - INFO - Application is exiting
+2024-07-26 17:07:24,921 - INFO - Application is exiting
+2024-07-26 17:07:24,925 - INFO - Application is exiting
+2024-07-26 17:07:24,925 - INFO - Application is exiting
+2024-07-26 17:07:26,361 - INFO - Starting Flask application
+2024-07-26 17:07:26,368 - INFO - Starting Flask application
+2024-07-26 17:07:26,375 - INFO - Starting Flask application
+2024-07-26 17:07:26,375 - INFO - Starting Flask application
+2024-07-26 17:08:38,753 - INFO - Application is exiting
+2024-07-26 17:08:38,762 - INFO - Application is exiting
+2024-07-26 17:08:38,763 - INFO - Application is exiting
+2024-07-26 17:08:38,764 - INFO - Application is exiting
+2024-07-26 17:08:40,191 - INFO - Starting Flask application
+2024-07-26 17:08:40,192 - INFO - Starting Flask application
+2024-07-26 17:08:40,192 - INFO - Starting Flask application
+2024-07-26 17:08:40,192 - INFO - Starting Flask application
+2024-07-26 17:08:56,303 - INFO - Application is exiting
+2024-07-26 17:08:56,303 - INFO - Application is exiting
+2024-07-26 17:08:56,303 - INFO - Application is exiting
+2024-07-26 17:08:56,303 - INFO - Application is exiting
+2024-07-26 17:08:57,730 - INFO - Starting Flask application
+2024-07-26 17:08:57,750 - INFO - Starting Flask application
+2024-07-26 17:08:57,751 - INFO - Starting Flask application
+2024-07-26 17:08:57,751 - INFO - Starting Flask application
+2024-07-26 17:10:00,059 - INFO - Application is exiting
+2024-07-26 17:10:00,093 - INFO - Application is exiting
+2024-07-26 17:10:00,094 - INFO - Application is exiting
+2024-07-26 17:10:00,096 - INFO - Application is exiting
+2024-07-26 17:10:01,394 - INFO - Starting Flask application
+2024-07-26 17:10:01,506 - INFO - Starting Flask application
+2024-07-26 17:10:01,506 - INFO - Starting Flask application
+2024-07-26 17:10:01,512 - INFO - Starting Flask application
+2024-07-26 17:10:59,839 - INFO - Application is exiting
+2024-07-26 17:10:59,839 - INFO - Application is exiting
+2024-07-26 17:11:00,716 - INFO - Application is exiting
+2024-07-26 17:11:01,170 - INFO - Starting Flask application
+2024-07-26 17:11:01,208 - INFO - Starting Flask application
+2024-07-26 17:11:01,209 - INFO - Starting Flask application
+2024-07-26 17:11:01,938 - INFO - Starting Flask application
+2024-07-26 17:11:23,060 - INFO - Application is exiting
+2024-07-26 17:11:23,305 - INFO - Application is exiting
+2024-07-26 17:11:23,340 - INFO - Application is exiting
+2024-07-26 17:11:23,342 - INFO - Application is exiting
+2024-07-26 17:11:24,368 - INFO - Starting Flask application
+2024-07-26 17:11:24,683 - INFO - Starting Flask application
+2024-07-26 17:11:24,742 - INFO - Starting Flask application
+2024-07-26 17:11:24,742 - INFO - Starting Flask application
+2024-07-26 17:13:12,330 - INFO - Application is exiting
+2024-07-26 17:13:12,330 - INFO - Application is exiting
+2024-07-26 17:13:12,936 - INFO - Application is exiting
+2024-07-26 17:13:13,257 - INFO - Application is exiting
+2024-07-26 17:13:13,604 - INFO - Starting Flask application
+2024-07-26 17:13:13,643 - INFO - Starting Flask application
+2024-07-26 17:13:14,150 - INFO - Starting Flask application
+2024-07-26 17:13:14,431 - INFO - Starting Flask application
+2024-07-26 17:13:49,345 - INFO - Application is exiting
+2024-07-26 17:13:49,629 - INFO - Application is exiting
+2024-07-26 17:13:49,811 - INFO - Application is exiting
+2024-07-26 17:13:49,839 - INFO - Application is exiting
+2024-07-26 17:13:50,603 - INFO - Starting Flask application
+2024-07-26 17:13:50,902 - INFO - Starting Flask application
+2024-07-26 17:13:51,116 - INFO - Starting Flask application
+2024-07-26 17:13:51,161 - INFO - Starting Flask application
+2024-07-26 17:14:24,798 - INFO - Application is exiting
+2024-07-26 17:14:25,094 - INFO - Application is exiting
+2024-07-26 17:14:25,311 - INFO - Application is exiting
+2024-07-26 17:14:25,356 - INFO - Application is exiting
+2024-07-26 17:14:26,005 - INFO - Starting Flask application
+2024-07-26 17:14:26,363 - INFO - Starting Flask application
+2024-07-26 17:14:26,594 - INFO - Starting Flask application
+2024-07-26 17:14:26,649 - INFO - Starting Flask application
+2024-07-26 17:14:55,766 - INFO - Application is exiting
+2024-07-26 17:14:55,812 - INFO - Application is exiting
+2024-07-26 17:14:56,175 - INFO - Application is exiting
+2024-07-26 17:14:56,535 - INFO - Application is exiting
+2024-07-26 17:14:56,751 - INFO - Application is exiting
+2024-07-26 17:14:56,810 - INFO - Application is exiting
+2024-07-26 17:14:57,241 - INFO - Application is exiting
+2024-07-26 17:14:57,617 - INFO - Application is exiting
+2024-07-26 17:31:26,019 - INFO - Starting Flask application
+2024-07-26 17:31:27,089 - INFO - Starting Flask application
+2024-07-26 17:31:32,994 - INFO - Excel HTML and sheet data N2191 generated for yeti
+2024-07-26 17:31:33,068 - INFO - Serving file N2191.jpg
+2024-07-26 17:34:56,180 - INFO - Application is exiting
+2024-07-26 17:34:57,305 - INFO - Starting Flask application
+2024-07-26 17:52:37,156 - INFO - Starting Flask application
+2024-07-26 17:52:38,173 - INFO - Starting Flask application
+2024-07-26 17:52:42,210 - INFO - Application is exiting
+2024-07-26 17:52:43,316 - INFO - Starting Flask application
+2024-07-26 17:52:44,779 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 17:52:46,524 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 17:57:32,199 - INFO - Starting Flask application
+2024-07-26 17:57:33,203 - INFO - Starting Flask application
+2024-07-26 17:57:36,643 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 17:57:37,806 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 17:58:47,593 - INFO - Application is exiting
+2024-07-26 17:58:48,744 - INFO - Starting Flask application
+2024-07-26 18:00:25,246 - INFO - Application is exiting
+2024-07-26 18:00:26,369 - INFO - Starting Flask application
+2024-07-26 18:00:45,481 - INFO - Application is exiting
+2024-07-26 18:00:46,570 - INFO - Starting Flask application
+2024-07-26 18:01:05,405 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 18:01:12,735 - INFO - Excel HTML and sheet data 1672 generated for yeti
+2024-07-26 18:01:17,083 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 18:01:28,331 - INFO - yeti is processing order number for label maker: 33088
+2024-07-26 18:01:54,650 - INFO - yeti is processing order number for label maker: 32994
+2024-07-26 18:01:57,317 - INFO - File 32994_label.xlsx downloaded from label output
+2024-07-26 18:02:10,386 - INFO - yeti submitted an order lookup
+2024-07-26 18:02:10,386 - INFO - yeti is looking up order number: 32994
+2024-07-26 18:02:10,410 - INFO - yeti searched for order number: 32994
+2024-07-26 18:03:30,881 - INFO - yeti submitted an order lookup
+2024-07-26 18:03:30,881 - INFO - yeti is looking up order number: 32995
+2024-07-26 18:03:30,908 - INFO - yeti searched for order number: 32995
+2024-07-26 18:03:35,864 - INFO - yeti is processing order number for label maker: 32995
+2024-07-26 18:12:51,652 - INFO - Starting Flask application
+2024-07-26 18:12:52,708 - INFO - Starting Flask application
+2024-07-26 18:13:44,528 - INFO - Found 7 matching rows for input: t3305
+2024-07-26 18:13:45,658 - INFO - Excel HTML and sheet data t3305 generated for yeti
+2024-07-26 18:13:45,727 - INFO - Serving file T3305.jpg
+2024-07-26 18:13:51,205 - INFO - yeti submitted an order lookup
+2024-07-26 18:13:51,205 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:13:51,649 - INFO - yeti searched for order number: 1762
+2024-07-26 18:16:57,001 - INFO - Application is exiting
+2024-07-26 18:16:58,122 - INFO - Starting Flask application
+2024-07-26 18:17:43,360 - INFO - Application is exiting
+2024-07-26 18:17:44,470 - INFO - Starting Flask application
+2024-07-26 18:18:18,241 - INFO - yeti submitted an order lookup
+2024-07-26 18:18:18,242 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:18:18,279 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 253, in submit_order
+    excel_html, filename, number_of_labels, duplicate_numbers = Label_Maker.process_orders(order_number)
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: process_orders() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-26 18:18:55,845 - INFO - Application is exiting
+2024-07-26 18:18:56,963 - INFO - Starting Flask application
+2024-07-26 18:18:58,989 - INFO - Application is exiting
+2024-07-26 18:19:00,104 - INFO - Starting Flask application
+2024-07-26 18:19:00,614 - INFO - yeti submitted an order lookup
+2024-07-26 18:19:00,615 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:19:00,771 - INFO - yeti searched for order number: 1762
+2024-07-26 18:21:31,888 - INFO - Application is exiting
+2024-07-26 18:21:33,044 - INFO - Starting Flask application
+2024-07-26 18:21:39,850 - INFO - yeti submitted an order lookup
+2024-07-26 18:21:39,851 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:21:39,974 - INFO - yeti searched for order number: 1762
+2024-07-26 18:21:55,301 - INFO - yeti submitted an order lookup
+2024-07-26 18:21:55,301 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:21:55,316 - INFO - yeti searched for order number: 1762
+2024-07-26 18:22:01,700 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 18:22:01,709 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 254, in label_maker_from_order_lookup
+    filename, error_message, number_of_labels, duplicate_numbers = Label_Maker.process_orders()
+                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: process_orders() missing 1 required positional argument: 'order_number'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-26 18:22:41,404 - INFO - Application is exiting
+2024-07-26 18:22:42,523 - INFO - Starting Flask application
+2024-07-26 18:23:01,633 - INFO - Application is exiting
+2024-07-26 18:23:02,454 - INFO - Application is exiting
+2024-07-26 18:23:34,546 - INFO - Starting Flask application
+2024-07-26 18:23:35,551 - INFO - Starting Flask application
+2024-07-26 18:23:39,263 - INFO - yeti submitted an order lookup
+2024-07-26 18:23:39,264 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:23:39,387 - INFO - yeti searched for order number: 1762
+2024-07-26 18:23:43,004 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 18:23:48,995 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 18:23:54,838 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 18:25:20,957 - INFO - yeti submitted an order lookup
+2024-07-26 18:25:20,957 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:25:20,977 - INFO - yeti searched for order number: 1762
+2024-07-26 18:26:22,984 - INFO - yeti submitted an order lookup
+2024-07-26 18:26:22,984 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:26:22,999 - INFO - yeti searched for order number: 1762
+2024-07-26 18:29:30,513 - INFO - yeti submitted an order lookup
+2024-07-26 18:29:30,513 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:29:30,532 - INFO - yeti searched for order number: 1762
+2024-07-26 18:29:35,061 - INFO - yeti submitted an order lookup
+2024-07-26 18:29:35,061 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:29:35,076 - INFO - yeti searched for order number: 1762
+2024-07-26 18:29:36,719 - INFO - yeti is processing order number for label maker: None
+2024-07-26 18:29:36,728 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 253, in label_maker_from_order_lookup
+    filename, error_message, number_of_labels, duplicate_numbers = Label_Maker.process_orders(order_number)
+                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\Label_Maker.py", line 106, in process_orders
+    df = get_data_from_sql(order_number)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\Label_Maker.py", line 27, in get_data_from_sql
+    if len(order_number) == 5:
+       ^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object of type 'NoneType' has no len()
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-26 18:31:38,022 - INFO - Application is exiting
+2024-07-26 18:31:39,166 - INFO - Starting Flask application
+2024-07-26 18:31:44,073 - INFO - yeti submitted an order lookup
+2024-07-26 18:31:44,074 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:31:44,217 - INFO - yeti searched for order number: 1762
+2024-07-26 18:36:10,556 - INFO - Application is exiting
+2024-07-26 18:36:11,682 - INFO - Starting Flask application
+2024-07-26 18:36:19,740 - INFO - Application is exiting
+2024-07-26 18:36:20,840 - INFO - Starting Flask application
+2024-07-26 18:36:34,831 - INFO - yeti submitted an order lookup
+2024-07-26 18:36:34,832 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:36:34,958 - INFO - yeti searched for order number: 1762
+2024-07-26 18:38:02,971 - INFO - yeti is processing order number for label maker: 1762
+2024-07-26 18:38:02,978 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 374, in label_maker
+    filename, error_message, number_of_labels, duplicate_numbers = Label_Maker.process_orders()
+                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: process_orders() missing 1 required positional argument: 'order_number'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-26 18:38:46,564 - INFO - yeti submitted an order lookup
+2024-07-26 18:38:46,565 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:38:46,596 - INFO - yeti searched for order number: 1762
+2024-07-26 18:38:57,983 - INFO - yeti submitted an order lookup
+2024-07-26 18:38:57,983 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:38:57,998 - INFO - yeti searched for order number: 1762
+2024-07-26 18:40:52,384 - INFO - yeti submitted input for v4_listcreator: n1223
+2024-07-26 18:40:52,909 - INFO - yeti downloaded the file: List-20240726-184052.xlsx
+2024-07-26 18:40:53,919 - INFO - File List-20240726-184052.xlsx downloaded
+2024-07-26 18:41:21,539 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 18:43:45,122 - INFO - Application is exiting
+2024-07-26 18:43:46,286 - INFO - Starting Flask application
+2024-07-26 18:44:02,383 - INFO - Application is exiting
+2024-07-26 18:44:03,483 - INFO - Starting Flask application
+2024-07-26 18:44:08,369 - INFO - yeti submitted an order lookup
+2024-07-26 18:44:08,370 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:44:08,491 - INFO - yeti searched for order number: 1762
+2024-07-26 18:44:11,034 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 18:45:14,965 - INFO - Found 6 matching rows for input: S1110
+2024-07-26 18:45:15,716 - INFO - Found 6 matching rows for input: S1110
+2024-07-26 18:45:16,111 - INFO - Excel HTML and sheet data S1110 generated for nicye
+2024-07-26 18:45:16,803 - INFO - Excel HTML and sheet data S1110 generated for nicye
+2024-07-26 18:45:17,133 - INFO - Serving file S1110.jpg
+2024-07-26 18:46:11,162 - INFO - Application is exiting
+2024-07-26 18:46:12,331 - INFO - Starting Flask application
+2024-07-26 18:46:18,383 - INFO - Application is exiting
+2024-07-26 18:46:19,478 - INFO - Starting Flask application
+2024-07-26 18:46:19,492 - INFO - yeti submitted an order lookup
+2024-07-26 18:46:19,493 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:46:19,616 - INFO - yeti searched for order number: 1762
+2024-07-26 18:48:40,221 - INFO - Application is exiting
+2024-07-26 18:48:41,358 - INFO - Starting Flask application
+2024-07-26 18:49:01,027 - INFO - yeti submitted an order lookup
+2024-07-26 18:49:01,028 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:49:01,149 - INFO - yeti searched for order number: 1762
+2024-07-26 18:49:05,903 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 18:49:58,486 - INFO - yeti submitted an order lookup
+2024-07-26 18:49:58,486 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:49:58,500 - INFO - yeti searched for order number: 1762
+2024-07-26 18:52:51,607 - INFO - yeti submitted an order lookup
+2024-07-26 18:52:51,607 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:52:51,627 - INFO - yeti searched for order number: 1762
+2024-07-26 18:52:56,109 - INFO - yeti submitted an order lookup
+2024-07-26 18:52:56,109 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:52:56,123 - INFO - yeti searched for order number: 1762
+2024-07-26 18:53:06,798 - INFO - yeti submitted an order lookup
+2024-07-26 18:53:06,798 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:53:06,812 - INFO - yeti searched for order number: 1762
+2024-07-26 18:55:47,270 - INFO - yeti submitted an order lookup
+2024-07-26 18:55:47,270 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:55:47,290 - INFO - yeti searched for order number: 1762
+2024-07-26 18:55:51,756 - INFO - yeti submitted an order lookup
+2024-07-26 18:55:51,756 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:55:51,773 - INFO - yeti searched for order number: 1762
+2024-07-26 18:56:35,623 - INFO - yeti submitted an order lookup
+2024-07-26 18:56:35,623 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:56:35,636 - INFO - yeti searched for order number: 1762
+2024-07-26 18:56:45,669 - INFO - yeti submitted an order lookup
+2024-07-26 18:56:45,669 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:56:45,684 - INFO - yeti searched for order number: 1762
+2024-07-26 18:57:52,166 - INFO - Application is exiting
+2024-07-26 18:57:53,311 - INFO - Starting Flask application
+2024-07-26 18:57:53,605 - INFO - yeti submitted an order lookup
+2024-07-26 18:57:53,607 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:57:53,727 - INFO - yeti searched for order number: 1762
+2024-07-26 18:58:00,327 - INFO - yeti submitted an order lookup
+2024-07-26 18:58:00,327 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:58:00,341 - INFO - yeti searched for order number: 1762
+2024-07-26 18:58:56,319 - INFO - yeti submitted an order lookup
+2024-07-26 18:58:56,319 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:58:56,334 - INFO - yeti searched for order number: 1762
+2024-07-26 18:59:00,540 - INFO - yeti submitted an order lookup
+2024-07-26 18:59:00,540 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:59:00,556 - INFO - yeti searched for order number: 1762
+2024-07-26 18:59:48,493 - INFO - yeti submitted an order lookup
+2024-07-26 18:59:48,493 - INFO - yeti is looking up order number: 1762
+2024-07-26 18:59:48,507 - INFO - yeti searched for order number: 1762
+2024-07-26 19:00:34,544 - INFO - yeti submitted an order lookup
+2024-07-26 19:00:34,545 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:00:34,558 - INFO - yeti searched for order number: 1762
+2024-07-26 19:00:52,715 - INFO - yeti submitted an order lookup
+2024-07-26 19:00:52,715 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:00:52,729 - INFO - yeti searched for order number: 1762
+2024-07-26 19:01:51,325 - INFO - yeti submitted an order lookup
+2024-07-26 19:01:51,325 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:01:51,339 - INFO - yeti searched for order number: 1762
+2024-07-26 19:01:55,108 - INFO - yeti submitted an order lookup
+2024-07-26 19:01:55,108 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:01:55,122 - INFO - yeti searched for order number: 1762
+2024-07-26 19:02:02,257 - INFO - yeti submitted an order lookup
+2024-07-26 19:02:02,257 - INFO - yeti is looking up order number: n1223\
+2024-07-26 19:02:02,258 - INFO - yeti searched for order number: n1223\
+2024-07-26 19:02:09,619 - INFO - Found 24 matching rows for input: n1223
+2024-07-26 19:02:10,766 - INFO - Excel HTML and sheet data n1223 generated for yeti
+2024-07-26 19:02:10,841 - INFO - Serving file N1223.jpg
+2024-07-26 19:02:23,007 - INFO - yeti submitted an order lookup
+2024-07-26 19:02:23,008 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:02:23,022 - INFO - yeti searched for order number: 1762
+2024-07-26 19:02:31,877 - INFO - yeti submitted an order lookup
+2024-07-26 19:02:31,877 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:02:31,891 - INFO - yeti searched for order number: 1762
+2024-07-26 19:02:37,932 - INFO - yeti submitted an order lookup
+2024-07-26 19:02:37,932 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:02:37,948 - INFO - yeti searched for order number: 1762
+2024-07-26 19:02:48,994 - ERROR - 93.174.93.12 - - [26/Jul/2024 19:02:48] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-07-26 19:03:43,505 - INFO - yeti submitted an order lookup
+2024-07-26 19:03:43,505 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:03:43,525 - INFO - yeti searched for order number: 1762
+2024-07-26 19:05:08,640 - INFO - yeti submitted an order lookup
+2024-07-26 19:05:08,641 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:05:08,784 - INFO - yeti searched for order number: 1762
+2024-07-26 19:05:19,290 - INFO - yeti submitted an order lookup
+2024-07-26 19:05:19,290 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:05:19,305 - INFO - yeti searched for order number: 1762
+2024-07-26 19:05:24,622 - INFO - yeti submitted an order lookup
+2024-07-26 19:05:24,623 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:05:24,637 - INFO - yeti searched for order number: 1762
+2024-07-26 19:05:28,154 - INFO - yeti submitted an order lookup
+2024-07-26 19:05:28,154 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:05:28,168 - INFO - yeti searched for order number: 1762
+2024-07-26 19:05:32,520 - INFO - File 1762_label.xlsx downloaded from label output
+2024-07-26 19:05:40,333 - INFO - yeti submitted an order lookup
+2024-07-26 19:05:40,333 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:05:40,347 - INFO - yeti searched for order number: 1762
+2024-07-26 19:05:54,147 - INFO - yeti submitted an order lookup
+2024-07-26 19:05:54,148 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:05:54,162 - INFO - yeti searched for order number: 1762
+2024-07-26 19:06:20,717 - INFO - yeti submitted an order lookup
+2024-07-26 19:06:20,717 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:06:20,731 - INFO - yeti searched for order number: 1762
+2024-07-26 19:06:26,509 - INFO - yeti submitted an order lookup
+2024-07-26 19:06:26,509 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:06:26,524 - INFO - yeti searched for order number: 1762
+2024-07-26 19:06:29,116 - INFO - yeti submitted an order lookup
+2024-07-26 19:06:29,116 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:06:29,130 - INFO - yeti searched for order number: 1762
+2024-07-26 19:07:23,338 - INFO - yeti submitted an order lookup
+2024-07-26 19:07:23,339 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:07:23,354 - INFO - yeti searched for order number: 1762
+2024-07-26 19:07:26,084 - INFO - yeti submitted an order lookup
+2024-07-26 19:07:26,084 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:07:26,099 - INFO - yeti searched for order number: 1762
+2024-07-26 19:07:47,718 - INFO - yeti submitted an order lookup
+2024-07-26 19:07:47,718 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:07:47,732 - INFO - yeti searched for order number: 1762
+2024-07-26 19:08:06,417 - INFO - yeti submitted an order lookup
+2024-07-26 19:08:06,418 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:08:06,434 - INFO - yeti searched for order number: 1762
+2024-07-26 19:08:17,266 - INFO - Found 3 matching rows for input: L1851
+2024-07-26 19:08:18,086 - INFO - Found 3 matching rows for input: L1851
+2024-07-26 19:08:18,475 - INFO - Excel HTML and sheet data L1851 generated for nicye
+2024-07-26 19:08:19,148 - INFO - Excel HTML and sheet data L1851 generated for nicye
+2024-07-26 19:08:19,473 - INFO - Serving file L1851.jpg
+2024-07-26 19:08:40,018 - INFO - yeti submitted an order lookup
+2024-07-26 19:08:40,018 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:08:40,032 - INFO - yeti searched for order number: 1762
+2024-07-26 19:08:45,450 - INFO - yeti submitted an order lookup
+2024-07-26 19:08:45,450 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:08:45,484 - INFO - yeti searched for order number: 1762
+2024-07-26 19:08:52,394 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_basicauth.py", line 108, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\app_internal.py", line 387, in label_maker
+    return render_template("label_maker.html", filename=filename, error_message=error_message, current_user=current_user, number_of_labels=number_of_labels, duplicate_numbers=duplicate_numbers)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1084, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1013, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 972, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 65, in get_source
+    return self._get_source_fast(environment, template)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 99, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: label_maker.html
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-07-26 19:09:08,406 - INFO - yeti submitted an order lookup
+2024-07-26 19:09:08,407 - INFO - yeti is looking up order number: 1762
+2024-07-26 19:09:08,421 - INFO - yeti searched for order number: 1762

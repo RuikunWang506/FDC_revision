@@ -77,6 +77,19 @@ def update_google_sheet(sheet, inventory_data):
         print("API Error:", e)
         return
 
+    if not values:
+        print("No values found in the sheet.")
+        return
+
+    headers = values[1]  # Assuming the headers are in the first row
+    try:
+        sku_index = headers.index('SKU')
+        reserv_index = headers.index('reserv')  # Assuming 'Reserv' is the header name for reserved quantity
+        available_index = headers.index('avaliabl')  # Assuming 'Available' is the header name for available quantity
+    except ValueError as e:
+        print("Header not found:", e)
+        return
+
     for data in inventory_data:
         sku, fdc_in_stock, fdc_order_qty, ef_in_stock, ef_order_qty = data
 
@@ -84,7 +97,7 @@ def update_google_sheet(sheet, inventory_data):
         combined_order_qty = float(fdc_order_qty) + float(ef_order_qty)
         available_now = float(combined_in_stock) - float(combined_order_qty)
 
-        index = next((i + 1 for i, row in enumerate(values) if row and row[0] == sku), None)
+        index = next((i + 1 for i, row in enumerate(values) if row and row[sku_index] == sku), None)
         if index is None or index == 1:
             continue
 
@@ -93,7 +106,7 @@ def update_google_sheet(sheet, inventory_data):
         available_now_val = '' if available_now <= 0 else available_now
 
         values_to_update = [[combined_order_qty_val, available_now_val]]
-        range_to_update = f'D{index}:E{index}'
+        range_to_update = f'{chr(65 + reserv_index)}{index}:{chr(65 + available_index)}{index}'  # Convert column index to letter
         print("Range to update:", range_to_update)  # Print range to be updated
         batch_updates.append({
             'range': range_to_update,

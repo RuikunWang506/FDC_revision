@@ -5,6 +5,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 import shutil
+from collections import Counter
 
 # SQL related settings
 server = "192.168.254.204"
@@ -20,7 +21,7 @@ ft = Font(name="Arial", size="12")
 ft2 = Font(name="Arial", size="14")
 Yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
 
-order_number = ""
+order_number = "1762"
 
 def get_data_from_sql(order_number):
     if len(order_number) == 5:
@@ -95,12 +96,12 @@ def get_data_from_sql(order_number):
     """
 
     df = pd.read_sql_query(query, conn)
-    print(df)
+
     conn.close()
 
     return df
 
-def process_orders():
+def process_orders(order_number):
     error_message = None
     df = get_data_from_sql(order_number)
     
@@ -136,62 +137,76 @@ def process_orders():
     po_number = str(df.iloc[0]['PO_NUM'])
     text_after_boxes = re.search(r'BOXES\s+(.*)', str(df.iloc[0]['NOTES'])).group(1) if re.search(r'BOXES\s+(.*)', str(df.iloc[0]['NOTES'])) else None
 
-    local_max = -9999
+    number_of_labels = 0
+    all_desc_parts = []
     for _, row in df.iterrows():
-        try:
-            length_of_range = max(map(int, filter(lambda x: x.isdigit(), re.split(r'[-,\.]', row['UT_DESC']))))
-            local_max = max(local_max, length_of_range)
-        except ValueError:
-            error_message = "Invalid description value: you should change your description in OMS, 单子数字还没改哦"
-            print(error_message)
-            return None, error_message
+        desc_parts = re.split(r'[-,]', row['UT_DESC'].strip())
+        desc_parts = [part.strip() for part in desc_parts]
+        all_desc_parts.extend(desc_parts)
+        max_label = max(map(int, filter(lambda x: x.isdigit(), desc_parts)))
+        number_of_labels = max(number_of_labels, max_label)
 
+    desc_counts = Counter(all_desc_parts)
+    duplicate_numbers = [item for item, count in desc_counts.items() if count > 1]  
+    print("Number of labels is:", number_of_labels)
+    print("Mixed Boxes are:",duplicate_numbers)
+        
     output_line_number = 1
     sl_num = 1
     for _, row in df.iterrows():
-        output_line_number, sl_num = process_item(output_line_number, row, from_address, to_address, ws, str(local_max), po_number, sl_num)
+        output_line_number, sl_num = process_item(output_line_number, row, from_address, to_address, ws, str(number_of_labels), po_number, sl_num, duplicate_numbers)
 
-    while sl_num <= local_max:
-        output_line_number = generate_additional_label(output_line_number, from_address, to_address, ws, str(local_max), po_number, sl_num)
+    while sl_num <= number_of_labels:
+        output_line_number = generate_additional_label(output_line_number, from_address, to_address, ws, str(number_of_labels), po_number, sl_num)
         sl_num += 1
 
-    ws["B" + str(local_max * 20 + 7)] = "FDC"
-    ws["C" + str(local_max * 20 + 7)].font = ft2
-    ws["B" + str(local_max * 20 + 8)] = "内部单号:"
-    ws["C" + str(local_max * 20 + 8)] = str(order_number)
-    ws["C" + str(local_max * 20 + 8)].font = ft2
-    ws["B" + str(local_max * 20 + 10)] = "Boxes #:"
-    ws["C" + str(local_max * 20 + 10)] = str(local_max)
-    ws["C" + str(local_max * 20 + 10)].font = ft2
-    ws["B" + str(local_max * 20 + 11)] = "PO#:"
-    ws["C" + str(local_max * 20 + 11)] = str(po_number)
-    ws["C" + str(local_max * 20 + 11)].font = ft2
-    ws["B" + str(local_max * 20 + 12)] = "LOCATION: "
-    ws["C" + str(local_max * 20 + 12)] = text_after_boxes   # Adjust as needed
-    ws["C" + str(local_max * 20 + 12)].font = ft2
+    ws["B" + str(number_of_labels * 20 + 7)] = "FDC"
+    ws["C" + str(number_of_labels * 20 + 7)].font = ft2
+    ws["B" + str(number_of_labels * 20 + 8)] = "内部单号:"
+    ws["C" + str(number_of_labels * 20 + 8)] = str(order_number)
+    ws["C" + str(number_of_labels * 20 + 8)].font = ft2
+    ws["B" + str(number_of_labels * 20 + 10)] = "Boxes #:"
+    ws["C" + str(number_of_labels * 20 + 10)] = str(number_of_labels)
+    ws["C" + str(number_of_labels * 20 + 10)].font = ft2
+    ws["B" + str(number_of_labels * 20 + 11)] = "PO#:"
+    ws["C" + str(number_of_labels * 20 + 11)] = str(po_number)
+    ws["C" + str(number_of_labels * 20 + 11)].font = ft2
+    ws["B" + str(number_of_labels * 20 + 12)] = "LOCATION: "
+    ws["C" + str(number_of_labels * 20 + 12)] = text_after_boxes   # Adjust as needed
+    ws["C" + str(number_of_labels * 20 + 12)].font = ft2
 
     target_filename = str(order_number) + "_label"
     wb.save(output_directory + target_filename + ".xlsx")
-    print(sl_num)
 
-    return output_directory + target_filename + ".xlsx", error_message
 
-def process_item(output_line_number, row, from_address, to_address, ws, number_of_labels, po_number, sl_num):
+    return output_directory + target_filename + ".xlsx", None, number_of_labels, duplicate_numbers
+
+def process_item(output_line_number, row, from_address, to_address, ws, number_of_labels, po_number, sl_num, duplicate_numbers):
     sku_line = row['PROD_CD']
     sku = sku_line.split()[0]
     color = sku_line.split()[1]
-    num_labels =  1 + sum(int(part.split('-')[1]) - int(part.split('-')[0]) for part in row['UT_DESC'].split(',') if '-' in part)
 
-    print( str(sku) + "  " + str(color) + ":"  +str(num_labels) + "  " + row['UT_DESC'])
+    # Split on both space and comma, and filter to only keep parts with '-'
+    parts_with_dash = [part for part in re.split(r'[\s,]+', row['UT_DESC'].strip()) if '-' in part]
+    num_labels = sum([int(part.split('-')[1]) - int(part.split('-')[0]) + 1 for part in parts_with_dash])
+
+    print(str(sku) + "  " + str(color) + ":"  + str(num_labels) + "  " + row['UT_DESC'])
     quantity = row['PC_UNIT']
 
-    for _ in range(num_labels):
-        output_line_number = process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, sl_num)
-        sl_num += 1
+    desc_parts = re.split(r'[-\s,]+', row['UT_DESC'].strip())
+    desc_parts = [part.strip() for part in desc_parts]
 
+    for i in range(num_labels):
+        current_label_number = sl_num + i
+        if str(current_label_number) in duplicate_numbers:
+            output_line_number = process_label(sku, "MIX", from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number)
+        else:
+            output_line_number = process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number)
+    sl_num += num_labels
     return output_line_number, sl_num
 
-def process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, sl_num):
+
+def process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number):
     output_line_number += 1
     output_line_number += 1
     for line_num in range(len(from_address)):
@@ -249,13 +264,12 @@ def process_label(sku, color, from_address, to_address, output_line_number, ws, 
     ws["A" + str(output_line_number)].font = ft
     ws["D" + str(output_line_number)] = "=D" + str(output_line_number - 4)
     ws["D" + str(output_line_number)].font = ft
-    ws["E" + str(output_line_number)] = "PCS"
     ws["E" + str(output_line_number)].font = ft
     output_line_number += 2
 
     ws["A" + str(output_line_number)] = "CARTON"
     ws["A" + str(output_line_number)].font = ft
-    ws["B" + str(output_line_number)] = sl_num
+    ws["B" + str(output_line_number)] = current_label_number
     ws["B" + str(output_line_number)].fill = Yellow_fill
     ws["B" + str(output_line_number)].alignment = Alignment(horizontal="center", vertical="center")
     ws["B" + str(output_line_number)].font = ft
@@ -268,6 +282,8 @@ def process_label(sku, color, from_address, to_address, output_line_number, ws, 
     output_line_number += 1
 
     return output_line_number
+
+
 
 def generate_additional_label(output_line_number, from_address, to_address, ws, number_of_labels, po_number, sl_num):
     output_line_number += 1
@@ -295,8 +311,8 @@ def generate_additional_label(output_line_number, from_address, to_address, ws, 
     ws["B" + str(output_line_number)].fill = Yellow_fill
     ws["C" + str(output_line_number)] = "QUANTITY"
     ws["C" + str(output_line_number)].font = ft
-    ws["d" + str(output_line_number)].fill = Yellow_fill
-    ws["E" + str(output_line_number)] = "PCS"
+    ws["D" + str(output_line_number)].fill = Yellow_fill
+    ws["D" + str(output_line_number)].font = ft
     ws["E" + str(output_line_number)].font = ft
     output_line_number += 1
 
@@ -306,7 +322,7 @@ def generate_additional_label(output_line_number, from_address, to_address, ws, 
     ws["A" + str(output_line_number)].alignment = Alignment(horizontal="left", vertical="center")
     ws["C" + str(output_line_number)] = "COLOR:"
     ws["C" + str(output_line_number)].font = ft
-    ws["d" + str(output_line_number)].fill = Yellow_fill
+    ws["D" + str(output_line_number)].fill = Yellow_fill
     output_line_number += 1
 
     ws["A" + str(output_line_number)] = "COORDINATE: NO"
@@ -321,7 +337,6 @@ def generate_additional_label(output_line_number, from_address, to_address, ws, 
     ws["A" + str(output_line_number)].font = ft
     ws["D" + str(output_line_number)] = "=D" + str(output_line_number - 4)
     ws["D" + str(output_line_number)].font = ft
-    ws["E" + str(output_line_number)] = "PCS"
     ws["E" + str(output_line_number)].font = ft
     output_line_number += 2
 

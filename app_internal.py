@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_from_directory, jsonify, redirect, flash, url_for
+from flask import Flask, render_template, request, send_from_directory, jsonify, redirect, flash, url_for,session
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from flask_basicauth import BasicAuth
@@ -239,6 +239,32 @@ def sql_connector():
         user_input = request.form.get("user_input")
     return render_template("order_lookup.html", html_table=html_table, image_urls=image_urls, current_user=current_user)
 
+@app.route('/label_maker_from_order_lookup', methods=['POST'])
+def label_maker_from_order_lookup():
+    order_number = session.get('order_number')
+    if not order_number:
+        return "Order number is missing.", 400
+
+    print(f"Received order_number: {order_number}")  # Debug print
+
+    filename, error_message, number_of_labels, duplicate_numbers = Label_Maker.process_orders(order_number)
+    
+    if error_message:
+        return error_message, 400
+
+    # Extract just the filename
+    base_filename = os.path.basename(filename)
+    # Generate the correct download URL
+    download_url = url_for('download_file2', filename=base_filename)
+
+    return render_template(
+        'order_lookup.html',
+        filename=base_filename,
+        download_url=download_url,
+        number_of_labels=number_of_labels,
+        duplicate_numbers=duplicate_numbers
+    )
+
 @app.route("/submit_order", methods=["POST"])
 @basic_auth.required
 def submit_order():
@@ -249,11 +275,12 @@ def submit_order():
         return render_template("order_lookup.html", excel_html=None)
 
     order_number = request.form["order_number"]
+    session['order_number'] = order_number  # Store order number in session
     logging.info("%s is looking up order number: %s", current_user, order_number)
     excel_html = order_search.generate_order(order_number)
     logging.info("%s searched for order number: %s", current_user, order_number)
     if excel_html:
-        return render_template("order_lookup.html", excel_html=excel_html)
+        return render_template("order_lookup.html", excel_html=excel_html, order_number=order_number)
     else:
         logging.info("No data found for order number: %s", order_number)
         return render_template("order_lookup.html", excel_html=None)
@@ -337,24 +364,27 @@ def run_get_tk_sheet():
         logging.error("Error running get_tk_sheet script: %s", e)
         return jsonify(str(e))
 
-# Label Maker route
 @app.route("/label_maker", methods=["GET", "POST"])
 @basic_auth.required
 def label_maker():
     current_user = request.authorization.username
     filename = None
     error_message = None
+    number_of_labels = None
+    duplicate_numbers = None
+    
     if request.method == "POST":
         order_number = request.form.get("order_number")
         logging.info("%s is processing order number for label maker: %s", request.authorization.username, order_number)
         Label_Maker.order_number = order_number
-        filename, error_message = Label_Maker.process_orders()
+        filename, error_message, number_of_labels, duplicate_numbers = Label_Maker.process_orders()
         if filename is None and error_message is None:
             error_message = f"Order : {order_number} not found, maybe wrong?"
             logging.warning("Order number %s not found for %s", order_number, request.authorization.username)
         elif filename:
             filename = os.path.basename(filename)
-    return render_template("label_maker.html", filename=filename, error_message=error_message, current_user=current_user)
+    
+    return render_template("label_maker.html", filename=filename, error_message=error_message, current_user=current_user, number_of_labels=number_of_labels, duplicate_numbers=duplicate_numbers)
 
 @app.route("/macy", methods=["GET", "POST"])
 @basic_auth.required

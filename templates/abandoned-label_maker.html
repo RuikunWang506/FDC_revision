@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <title>Label Maker</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Include DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
-    <!-- Basic CSS styling for the table -->
 </head>
 <body>
     {% include 'navbar.html' %}
@@ -16,9 +14,8 @@
         <div class="alert alert-danger mt-3">
             {{ error_message }}
         </div>
-            
-            
         {% endif %}
+        
         {% if current_user == 'fdc' %}
         <div class="col-12">
             <div class="alert alert-info text-center" role="alert">
@@ -26,7 +23,7 @@
             </div>
         </div>
         {% endif %}
-
+        
         {% if current_user != 'fdc' %}
         <div class="row justify-content-center text-center">
             <form method="post">
@@ -39,7 +36,6 @@
                     <input type="text" id="order_number" class="form-control" name="order_number" required pattern="\d{4,5}" title="Please enter a 4-digit or 5-digit number"><br><br>
                 </div>
                 <button type="submit" class="btn btn-primary">Submit</button>
-                
             </form>
         {% endif %}
     </div>         
@@ -51,7 +47,10 @@
             <a href="{{ url_for('download_file2', filename=filename) }}" class="btn btn-primary">
                 Download
             </a>
-            
+        </div>
+        <div class="alert alert-info mt-3">
+            <p>Number of labels is: {{ number_of_labels }}</p>
+            <p>Mixed Boxes are: {{ duplicate_numbers }}</p>
         </div>
     </div>
     {% endif %}

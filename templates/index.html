@@ -66,15 +66,11 @@
             {% if current_user != 'fdc' %}
             <a href="/Order_lookup" class="btn btn-secondary custom-btn">
                 <p><img src="/static/icons/document.svg" alt="Order Lookup"></p>
-                Order Lookup<h4>看单</h4>
+                <h4>Order Lookup & Label Maker</h4><h4>看单+打label</h4>
             </a>
             <a href="/v4_listcreator" class="btn btn-success custom-btn">
                 <p><img src="/static/icons/handbag.svg" alt="V4 List Creator"></p>
                 V4 List Creator<h4>做List</h4>
-            </a>
-            <a href="/label_maker" class="btn btn-danger custom-btn">
-                <p><img src="/static/icons/shipping.svg" alt="Label Maker"></p>
-                Label Maker<h4>出货Label</h4>
             </a>
             <a href="/googlesheet" class="btn btn-info custom-btn">
                 <p><img src="/static/icons/google.svg" alt="Google Sheet"></p>
@@ -84,6 +80,9 @@
                 <a href="/loris" class="btn btn-dark custom-btn">
                     <p><img src="/static/icons/loris.ico" alt="Loris"></p>
                     Loris tools
+                </a>
+                <a href="/" class="btn btn-info custom-btn">
+                    广告位招租
                 </a>
             {% endif %}
         </div>
