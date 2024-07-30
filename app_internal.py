@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_from_directory, jsonify, redirect, flash, url_for,session
+from flask import Flask, render_template, request, send_from_directory, jsonify, redirect, flash, url_for, session
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from flask_basicauth import BasicAuth
@@ -7,7 +7,7 @@ from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
 import pandas as pd
 import logging
-import os
+import os, re,time
 import requests
 import datetime
 import sys
@@ -75,8 +75,8 @@ client = WebClient(token=SLACK_TOKEN)
 # Flask app
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Set the secret key for session management
-app.config['catalog_resized'] = r"D:\catalog_resized"
-app.config['catalog_original'] = r"D:\catalog_original"
+app.config['catalog_resized'] = r"D:\Catalog_pictures\catalog_resized"
+app.config['catalog_original'] = r"D:\Catalog_pictures\catalog_original"
 @app.template_filter('zip')
 def zip_filter(a, b):
     return zip(a, b)
@@ -86,6 +86,7 @@ app.jinja_env.filters['zip'] = zip_filter
 # Define multiple usernames and passwords
 USERS = {
     'fdc': '827',  # Lowest privilege, cannot see cost 看不见价格
+    'yetimaster':'whitebox',
     'yeti': '5788',  # Full visibility
     'ken': '2843', # Full visibility
     'ahua':'5788', # Full visibility
@@ -98,45 +99,43 @@ USERS = {
     'baiqiang':'1234' # Full visibility
 }
 
-# Create a BasicAuth instance with multiple credentials
-class MultiBasicAuth(BasicAuth):
-    def check_credentials(self, username, password):
-        return USERS.get(username) == password
+def check_credentials(username, password):
+    return USERS.get(username) == password
 
-# Initialize MultiBasicAuth
-basic_auth = MultiBasicAuth(app)
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if check_credentials(username, password):
+            session['username'] = username
+            flash(f"Logged in as {username}")
+            return redirect(url_for("home"))
+        else:
+            flash("Invalid credentials")
+    return render_template("login.html")
 
-# Function to handle application exit
-def handle_exit():
-    logger.info("Application is exiting")
+@app.route("/logout")
+def logout():
+    session.pop('username', None)
+    flash("Logged out")
+    return redirect(url_for("login"))
 
-# Function to handle unhandled exceptions
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        # Call the default excepthook saved earlier if it's a KeyboardInterrupt
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-    logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-
-# Register the exit handler
-atexit.register(handle_exit)
-
-# Set the exception hook to handle unhandled exceptions
-sys.excepthook = handle_exception
-
-# Home route
 @app.route("/", methods=["GET", "POST"])
-@basic_auth.required
 def home():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     return render_template("index.html", current_user=current_user)
+
 
 # Item lookup route
 @app.route("/Item_lookup", methods=["GET", "POST"])
-@basic_auth.required
 def item_lookup():
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     excel_html = None
-    current_user = request.authorization.username
     if request.method == "POST":
         item_number = request.form.get("item_number")
         logging.info("%s searched for: %s", current_user, item_number)
@@ -202,10 +201,69 @@ def get_e1_value():
     else:
         return values[0][0]
 
+def sort_filenames(filenames):
+    base_files = {}
+    version_files = []
+
+    # Regex to capture the base name and version number
+    pattern = re.compile(r"^(.*?)(v\d+)?\.jpg$")
+
+    for filename in filenames:
+        match = pattern.match(filename)
+        if match:
+            base = match.group(1)
+            version = match.group(2) or ""
+            if version:
+                version_files.append((base, version, filename))
+            else:
+                base_files[base] = filename
+
+    # Sort version files by base name and version number
+    version_files.sort(key=lambda x: (x[0], int(x[1][1:]) if x[1] else 0))
+
+    sorted_filenames = []
+    for base, base_file in base_files.items():
+        sorted_filenames.append(base_file)
+        sorted_filenames.extend([v[2] for v in version_files if v[0] == base])
+
+    return sorted_filenames
+
+@app.route("/delete_image", methods=["POST"])
+def delete_image():
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    current_user = session['username']
+    if current_user != 'yetimaster':
+        return jsonify({"error": "Permission denied"}), 403
+
+    file_name = request.form.get("file_name")
+    if file_name:
+        try:
+            # Paths to the files
+            resized_path = os.path.join(app.config['catalog_resized'], file_name)
+            original_path = os.path.join(app.config['catalog_original'], file_name)
+
+            # Delete the files if they exist
+            if os.path.exists(resized_path):
+                os.remove(resized_path)
+                logging.info(f"{current_user} deleted {resized_path}")
+
+            if os.path.exists(original_path):
+                os.remove(original_path)
+                logging.info(f"{current_user} deleted {original_path}")
+
+            return jsonify({"message": "File deleted successfully"}), 200
+        except Exception as e:
+            logging.error(f"Error deleting file {file_name}: {e}")
+            return jsonify({"error": "Error deleting file"}), 500
+    else:
+        return jsonify({"error": "No file name provided"}), 400
+
 @app.route("/look_up", methods=["POST"])
-@basic_auth.required
 def download_excel():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     user_input = request.form.get("user_input").lower()  # Normalize to lowercase
     input_value = user_input
     sheet_data = get_sheet_data(input_value)
@@ -226,10 +284,19 @@ def download_excel():
     image_urls = []
     file_names = []
     for term in search_terms:
-        for filename in os.listdir(app.config['catalog_resized']):
+        for filename in os.listdir(app.config['catalog_original']):
             if filename.lower().startswith(term):
                 image_urls.append(os.path.join('/ftp', filename))
                 file_names.append(filename)
+
+    file_info = []
+    for filename in file_names:
+        resized_path = os.path.join(app.config['catalog_original'], filename)
+        if os.path.exists(resized_path):
+            size = os.path.getsize(resized_path)
+            modified_time = os.path.getmtime(resized_path)
+            modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
+            file_info.append((filename, size, modified_date))
 
     if excel_html is not None:
         df = pd.read_html(excel_html)[0]
@@ -240,20 +307,26 @@ def download_excel():
         if current_user == 'fdc':
             df.drop(columns=['cost', 'Container', 'create_dt', 'update_dt'], inplace=True)
 
+        # Sort filenames
+        sorted_file_names = sort_filenames(file_names)
+        sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
+
         excel_html = df.to_html(classes='table', escape=False)
         sheet_data = df2.to_html(classes='table', escape=False)
         logging.info("Excel HTML and sheet data %s generated for %s", user_input, current_user)
-        return render_template("Item_lookup.html", excel_html=excel_html, image_urls=image_urls, file_names=file_names, sheet_data=sheet_data, current_user=current_user, e1_value=e1_value)
+        return render_template("Item_lookup.html", excel_html=excel_html, image_urls=sorted_image_urls, file_names=sorted_file_names, file_info=file_info, sheet_data=sheet_data, current_user=current_user, e1_value=e1_value)
     else:
         return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user)
+
     
 # Order lookup route
 @app.route("/Order_lookup", methods=["GET", "POST"])
-@basic_auth.required
 def sql_connector():
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     html_table = None
     image_urls = None
-    current_user = request.authorization.username
     if request.method == "POST":
         user_input = request.form.get("user_input")
     return render_template("order_lookup.html", html_table=html_table, image_urls=image_urls, current_user=current_user)
@@ -285,9 +358,10 @@ def label_maker_from_order_lookup():
     )
 
 @app.route("/submit_order", methods=["POST"])
-@basic_auth.required
 def submit_order():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     logging.info("%s submitted an order lookup", current_user)
     if current_user == 'fdc':
         logging.info("User %s does not have permission to view order details", current_user)
@@ -306,9 +380,10 @@ def submit_order():
 
 # V4 List Creator route
 @app.route("/v4_listcreator", methods=["GET", "POST"])
-@basic_auth.required
 def v4_listcreator():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     filename = None
     if request.method == "POST":
         user_input = request.form.get("user_input")
@@ -321,14 +396,15 @@ def v4_listcreator():
 
 # Google Sheet route
 @app.route("/googlesheet", methods=["GET", "POST"])
-@basic_auth.required
 def googlesheet():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     sheet_data_html = None
     e1_value = get_e1_value()
     if request.method == "POST":
         user_input = request.form.get("user_input")
-        logging.info("%s is looking up in googlesheet with input: %s", request.authorization.username, user_input)
+        logging.info("%s is looking up in googlesheet with input: %s", current_user, user_input)
         sheet_data = get_sheet_data(user_input)
         if sheet_data:
             max_length = max(len(row) for row in sheet_data)
@@ -384,9 +460,10 @@ def run_get_tk_sheet():
         return jsonify(str(e))
 
 @app.route("/label_maker", methods=["GET", "POST"])
-@basic_auth.required
 def label_maker():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     filename = None
     error_message = None
     number_of_labels = None
@@ -394,21 +471,22 @@ def label_maker():
     
     if request.method == "POST":
         order_number = request.form.get("order_number")
-        logging.info("%s is processing order number for label maker: %s", request.authorization.username, order_number)
+        logging.info("%s is processing order number for label maker: %s", current_user, order_number)
         Label_Maker.order_number = order_number
         filename, error_message, number_of_labels, duplicate_numbers = Label_Maker.process_orders()
         if filename is None and error_message is None:
             error_message = f"Order : {order_number} not found, maybe wrong?"
-            logging.warning("Order number %s not found for %s", order_number, request.authorization.username)
+            logging.warning("Order number %s not found for %s", order_number, current_user)
         elif filename:
             filename = os.path.basename(filename)
     
     return render_template("label_maker.html", filename=filename, error_message=error_message, current_user=current_user, number_of_labels=number_of_labels, duplicate_numbers=duplicate_numbers)
 
 @app.route("/macy", methods=["GET", "POST"])
-@basic_auth.required
 def macy_maker():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     filename = None
     error_message = None
     po_num = request.form.get("po_num", "")
@@ -431,9 +509,10 @@ def macy_maker():
 
 # Loris tool kit route
 @app.route("/loris", methods=["GET", "POST"])
-@basic_auth.required
 def loris():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     filename = None
     error_message = None
     table_data = None
@@ -444,13 +523,13 @@ def loris():
     if request.method == "POST":
         if "submit_data" in request.form:
             try:
-                logging.info("Processing data in Loris tool kit for %s", request.authorization.username)
+                logging.info("Processing data in Loris tool kit for %s", current_user)
                 filename = process_loris_stickers(input_data)
                 if filename is not None:
                     filename = os.path.basename(filename)
                 else:
                     error_message = "An error occurred while processing the data."
-                    logging.error("Error processing data in Loris tool kit for %s", request.authorization.username)
+                    logging.error("Error processing data in Loris tool kit for %s", current_user)
             except Exception as e:
                 error_message = f"An error occurred: {e}"
                 logging.error("Exception in Loris tool kit: %s", e)
@@ -458,7 +537,7 @@ def loris():
             try:
                 table_data = parse_input_data(input_data)
             except Exception as e:
-                error_message = f"An error occurred while parsing the data: %e"
+                error_message = f"An error occurred while parsing the data: {e}"
                 logging.error("Error parsing data in Loris tool kit: %s", e)
     return render_template("loris.html", filename=filename, error_message=error_message, table_data=table_data, input_data=input_data, sku=sku, barcode=barcode, quantity=quantity, current_user=current_user)
 
@@ -478,8 +557,9 @@ def parse_input_data(input_data):
     return table_data
 
 @app.route('/log')
-@basic_auth.required
 def display():
+    if 'username' not in session:
+        return redirect(url_for("login"))
     try:
         with open(log_file, 'r') as file:
             lines = file.readlines()
@@ -528,22 +608,25 @@ def serve_file2(path):
     return send_from_directory(app.config["catalog_original"], path, as_attachment=False)
 
 @app.route('/download4/<filename>')
-@basic_auth.required
 def download_file4(filename):
+    if 'username' not in session:
+        return redirect(url_for("login"))
     logging.info("File %s downloaded from label output", filename)
     return send_from_directory("output/macy_label/", filename, as_attachment=True)
 
 # Bug report route
 @app.route("/report_bug", methods=["GET"])
-@basic_auth.required
 def report_bug():
+    if 'username' not in session:
+        return redirect(url_for("login"))
     return render_template("report_bug.html")
 
 # Add the route to handle form submission
 @app.route("/submit_bug", methods=["POST"])
-@basic_auth.required
 def submit_bug():
-    current_user = request.authorization.username
+    if 'username' not in session:
+        return redirect(url_for("login"))
+    current_user = session['username']
     bug_type = request.form["bug_type"]
     bug_description = request.form["bug_description"]
     bug_file = request.files["bug_file"]
@@ -565,11 +648,11 @@ def submit_bug():
         filename = secure_filename(bug_file.filename)
         bug_file.save(os.path.join(bug_dir, filename))
 
-    logging.info(f"Bug report {bug_id} submitted by {request.authorization.username}")
+    logging.info(f"Bug report {bug_id} submitted by {current_user}")
     
     # Send Slack notification
     slack_message = {
-        "text": f"A new bug report has been submitted.\n\n*Type:* {bug_type}\n*Description:* {bug_description}\n*Submitted by:* {request.authorization.username}\n*Bug ID:* {bug_id}"
+        "text": f"A new bug report has been submitted.\n\n*Type:* {bug_type}\n*Description:* {bug_description}\n*Submitted by:* {current_user}\n*Bug ID:* {bug_id}"
     }
     response = requests.post(SLACK_WEBHOOK_URL, json=slack_message)
 
@@ -579,13 +662,15 @@ def submit_bug():
     return f"Bug report {bug_id} submitted successfully!"
 
 @app.route('/shipping_receipt', methods=['GET'])
-@basic_auth.required
 def shipping_receipt():
+    if 'username' not in session:
+        return redirect(url_for("login"))
     return render_template('upload_file.html')
 
 @app.route('/send_shipping_receipt', methods=['POST'])
-@basic_auth.required
 def send_shipping_receipt():
+    if 'username' not in session:
+        return redirect(url_for("login"))
     file = request.files.get('file')
     memo = request.form.get('memo')
     store = request.form.get('store')
@@ -659,7 +744,7 @@ def send_shipping_receipt():
         flash('Memo successfully saved.')
 
         slack_message = {
-            "text": f"*Submitted by:* {request.authorization.username}\n*Memo:* {memo}"
+            "text": f"*Submitted by:* {current_user}\n*Memo:* {memo}"
         }
         response = requests.post(SLACK_WEBHOOK_URL_SHIPPING_RECEIPT, json=slack_message)
 
@@ -673,10 +758,14 @@ os.makedirs(output_dir, exist_ok=True)
 
 @app.route("/calculator", methods=["GET"])
 def calculatorapp():
+    if 'username' not in session:
+        return redirect(url_for("login"))
     return render_template("calculator2.html")
 
 @app.route("/rentalagreement", methods=["GET", "POST"])
 def rental_agreement():
+    if 'username' not in session:
+        return redirect(url_for("login"))
     if request.method == "POST":
         name = request.form["name"]
         phone = request.form["phone"]
@@ -707,7 +796,7 @@ def rental_agreement():
     return render_template("rental_agreement.html")
 
 if __name__ == "__main__":
-    logger.info("Starting Flask application")
+    logger.info("autobots, roll out!")
     try:
         app.run(host='0.0.0.0', port=5555, debug=True)
     except Exception as e:

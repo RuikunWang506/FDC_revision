@@ -8,7 +8,7 @@ from PIL import Image as PILImage
 from openpyxl.styles import Alignment, Border, Side, PatternFill
 import io
 
-source_folder = r"D:\catalog_resized\\"
+source_folder = r"D:\Catalog_pictures\catalog_resized\\"
 user_input = "N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513"
 formatted_date = ""
 

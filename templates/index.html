@@ -8,56 +8,59 @@
     <link rel="icon" type="image/svg+xml" href="/static/icons/handbag.svg">
     <style>
         .custom-btn {
-            padding: 40px 40px;
-            font-size: 40px;
-            border-radius: 50px; /* Changed from 100px to 50px to create oval shapes */
-            margin: 20px;
-            width: 250px; /* Adjust width to desired oval shape */
-            height: 300px; /* Adjust height to desired oval shape */
-            transition: background-color 0.3s, transform 0.3s;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            line-height: 1; /* Adjusted line-height to reduce space between lines */
+            padding: 40px 40px !important;
+            font-size: 40px !important;
+            border-radius: 50px !important; /* Changed from 100px to 50px to create oval shapes */
+            margin: 20px !important;
+            width: 250px !important; /* Adjust width to desired oval shape */
+            height: 300px !important; /* Adjust height to desired oval shape */
+            transition: background-color 0.3s, transform 0.3s !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-direction: column !important;
+            line-height: 1 !important; /* Adjusted line-height to reduce space between lines */
         }
         .custom-btn:hover {
-            transform: translateY(-30px);
+            transform: translateY(-30px) !important;
         }
         .custom-btn img {
-            margin-right: 10px;
-            width: 80px;
-            height: 80px;
+            margin-right: 10px !important;
+            width: 80px !important;
+            height: 80px !important;
         }
         .custom-btn h4 {
-            margin-top: 5px; /* Reduced margin to reduce space between lines */
-            margin-bottom: 0; /* Reduced bottom margin */
+            margin-top: 5px !important; /* Reduced margin to reduce space between lines */
+            margin-bottom: 0 !important; /* Reduced bottom margin */
         }
-
         /* Media query for cellphones */
         @media (max-width: 768px) {
             .custom-btn {
-                padding: 20px 20px;
-                font-size: 20px;
-                border-radius: 25px;
-                margin: 10px;
-                width: 125px;
-                height: 150px;
+                padding: 20px 20px !important;
+                font-size: 20px !important;
+                border-radius: 25px !important;
+                margin: 10px !important;
+                width: 125px !important;
+                height: 150px !important;
             }
             .custom-btn img {
-                width: 40px;
-                height: 40px;
+                width: 40px !important;
+                height: 40px !important;
             }
             .custom-btn h4 {
-                font-size: 18px;
+                font-size: 18px !important;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Include Navbar -->
     {% include 'navbar.html' %}
+    <!-- End of Navbar -->
+
     <div class="container mt-5 text-center">
         <h1>Welcome to the Home Page</h1>
-        <h4>Undergoing Migration, please let me know if theres any bug <br>-5pm July 8, 2024</h4>
+        <h4>Migration successfull!<br>-5pm July 30, 2024</h4>
+        <h4>new function, get all catalog pictures here <a href="file://192.168.254.30">Access Network Drive</a></h4>
         <div class="mt-4">
             <a href="/Item_lookup" class="btn btn-primary custom-btn">
                 <p><img src="/static/icons/magnifying-glass.svg" alt="Item Lookup"></p>
@@ -76,17 +79,19 @@
                 <p><img src="/static/icons/google.svg" alt="Google Sheet"></p>
                 Google Sheet
             </a>
-            
-                <a href="/loris" class="btn btn-dark custom-btn">
-                    <p><img src="/static/icons/loris.ico" alt="Loris"></p>
-                    Loris tools
-                </a>
-                <a href="/" class="btn btn-info custom-btn">
-                    广告位招租
-                </a>
+            <a href="/loris" class="btn btn-dark custom-btn">
+                <p><img src="/static/icons/loris.ico" alt="Loris"></p>
+                Loris tools
+            </a>
+            <a href="/" class="btn btn-info custom-btn">
+                广告位招租
+            </a>
             {% endif %}
         </div>
     </div>
     {% include 'footer.html' %}
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

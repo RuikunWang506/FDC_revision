@@ -58,6 +58,8 @@
             display: block;
         }
     </style>
+    <!-- Include jQuery (for AJAX requests) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 </head>
 <body>
     {% include 'navbar.html' %}
@@ -77,11 +79,23 @@
         {% if image_urls %}
         <div class="col-12">
             <div class="d-flex flex-wrap justify-content-center">
-                {% for image_url, file_name in image_urls | zip(file_names) %}
+                {% for (image_url, file_info) in image_urls | zip(file_info) %}
                 <div class="img-container">
                     <img src="{{ image_url }}" alt="Image" class="img-fluid m-2">
                     <div class="hover-msg">Download Original Below</div>
-                    <p><a href="http://173.198.50.202/ftp2/{{ file_name }}" target="_blank">{{ file_name }}</a></p>
+                    <p>
+                        <a href="http://173.198.50.202/ftp2/{{ file_info[0] }}" target="_blank">{{ file_info[0] }}</a>
+                        {% if current_user == 'yetimaster' %}
+                        <br>Original Size: 
+                        {% if file_info[1] > 1000000 %}
+                            {{ (file_info[1] / (1024 * 1024)) | round(2) }} MB
+                        {% else %}
+                            {{ (file_info[1] / 1024) | round(2) }} KB
+                        {% endif %}
+                        <br>Modified: {{ file_info[2] }}
+                        <button class="btn btn-danger btn-sm delete-button" data-file-name="{{ file_info[0] }}">Delete</button>
+                        {% endif %}
+                    </p>
                 </div>
                 {% endfor %}
             </div>
@@ -139,6 +153,22 @@
             var formObject = {};
             formData.forEach((value, key) => formObject[key] = value);
             sessionStorage.setItem('formData', JSON.stringify(formObject));
+        });
+
+        $('.delete-button').click(function() {
+            const fileName = $(this).data('file-name');
+            $.ajax({
+                url: '/delete_image',
+                type: 'POST',
+                data: { file_name: fileName },
+                success: function(response) {
+                    alert('File deleted successfully');
+                    location.reload();
+                },
+                error: function(error) {
+                    alert('Error deleting file');
+                }
+            });
         });
     });
 </script>
