@@ -71,11 +71,17 @@ SLACK_TOKEN = 'xoxb-4986748541874-7439245251395-YMVIoCeqbhWRp4rAFx66JGMK'  # Rep
 SLACK_CHANNEL = 'C07CGNKSPF1'  # Replace with your actual Slack channel
 client = WebClient(token=SLACK_TOKEN)
 
+
 # Flask app
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Set the secret key for session management
-app.config['PICTURES'] = r"D:\localresized_catelog"
+app.config['catalog_resized'] = r"D:\catalog_resized"
+app.config['catalog_original'] = r"D:\catalog_original"
+@app.template_filter('zip')
+def zip_filter(a, b):
+    return zip(a, b)
 
+app.jinja_env.filters['zip'] = zip_filter
 
 # Define multiple usernames and passwords
 USERS = {
@@ -200,7 +206,7 @@ def get_e1_value():
 @basic_auth.required
 def download_excel():
     current_user = request.authorization.username
-    user_input = request.form.get("user_input")
+    user_input = request.form.get("user_input").lower()  # Normalize to lowercase
     input_value = user_input
     sheet_data = get_sheet_data(input_value)
     e1_value = get_e1_value()  # Add this line to get the E1 value
@@ -210,7 +216,20 @@ def download_excel():
 
     if user_input.endswith(","):
         user_input = user_input[:-1]
+
     excel_html, image_urls = SQL_connector.generate_excel(user_input)
+    
+    # Split user input into individual items
+    search_terms = [term.strip() for term in user_input.split(",")]
+
+    # Fetch images from the catalog_resized directory based on user input
+    image_urls = []
+    file_names = []
+    for term in search_terms:
+        for filename in os.listdir(app.config['catalog_resized']):
+            if filename.lower().startswith(term):
+                image_urls.append(os.path.join('/ftp', filename))
+                file_names.append(filename)
 
     if excel_html is not None:
         df = pd.read_html(excel_html)[0]
@@ -224,10 +243,10 @@ def download_excel():
         excel_html = df.to_html(classes='table', escape=False)
         sheet_data = df2.to_html(classes='table', escape=False)
         logging.info("Excel HTML and sheet data %s generated for %s", user_input, current_user)
-        return render_template("Item_lookup.html", excel_html=excel_html, image_urls=image_urls, sheet_data=sheet_data, current_user=current_user, e1_value=e1_value)
+        return render_template("Item_lookup.html", excel_html=excel_html, image_urls=image_urls, file_names=file_names, sheet_data=sheet_data, current_user=current_user, e1_value=e1_value)
     else:
         return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user)
-
+    
 # Order lookup route
 @app.route("/Order_lookup", methods=["GET", "POST"])
 @basic_auth.required
@@ -410,33 +429,6 @@ def macy_maker():
 
     return render_template("macy.html", filename=filename, error_message=error_message, current_user=current_user, po_num=po_num, bol=bol, apt=apt, carrier=carrier, project=project)
 
-# Siri tester route
-@app.route("/siri", methods=["GET", "POST"])
-@basic_auth.required
-def siri():
-    excel_html = None
-    image_urls = None
-    sheet_data = None
-    current_user = request.authorization.username
-    if request.method == "POST":
-        item_number = request.form.get("item_number")
-        logging.info("%s searched for: %s", current_user, item_number)
-        logging.info("Request Headers: %s", request.headers)
-        logging.info("Request Form Data: %s", request.form)
-        if request.is_json:
-            logging.info("Request JSON: %s", request.get_json())
-        excel_html, image_urls = SQL_connector.generate_excel(item_number)
-        sheet_data = get_sheet_data(item_number)
-        if excel_html and sheet_data:
-            max_length = max(len(row) for row in sheet_data)
-            sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
-            df_sheet = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
-            sheet_data_html = df_sheet.to_html(classes='table table-bordered table-striped', escape=False)
-            return render_template("siri.html", excel_html=excel_html, image_urls=image_urls, sheet_data=sheet_data_html)
-        else:
-            return render_template("siri.html", excel_html=None, image_urls=None, sheet_data=None)
-    return render_template("siri.html", excel_html=None, image_urls=None, sheet_data=None)
-
 # Loris tool kit route
 @app.route("/loris", methods=["GET", "POST"])
 @basic_auth.required
@@ -528,7 +520,12 @@ def download_file3(filename):
 @app.route('/ftp/<path:path>', methods=['GET'])
 def serve_file(path):
     logging.info("Serving file %s", path)
-    return send_from_directory(app.config["PICTURES"], path, as_attachment=False)
+    return send_from_directory(app.config["catalog_resized"], path, as_attachment=False)
+
+@app.route('/ftp2/<path:path>', methods=['GET'])
+def serve_file2(path):
+    logging.info("Serving file %s", path)
+    return send_from_directory(app.config["catalog_original"], path, as_attachment=False)
 
 @app.route('/download4/<filename>')
 @basic_auth.required

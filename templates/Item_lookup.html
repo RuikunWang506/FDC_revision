@@ -11,7 +11,6 @@
     <!-- Basic CSS styling for the table -->
     <style>
         /* Basic table styling */
-
         table {
             border: 1px solid black;
             border-collapse: collapse;
@@ -45,14 +44,15 @@
         .hover-msg {
             display: none;
             position: absolute;
-            bottom: 10px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 10px 10px;
             border-radius: 5px;
             font-size: 20px;
+            text-align: center; /* Center the text inside the hover message */
         }
         .img-container:hover .hover-msg {
             display: block;
@@ -77,10 +77,11 @@
         {% if image_urls %}
         <div class="col-12">
             <div class="d-flex flex-wrap justify-content-center">
-                {% for image_url in image_urls %}
+                {% for image_url, file_name in image_urls | zip(file_names) %}
                 <div class="img-container">
                     <img src="{{ image_url }}" alt="Image" class="img-fluid m-2">
-                    <div class="hover-msg">Download HD picture by clicking the link under style</div>
+                    <div class="hover-msg">Download Original Below</div>
+                    <p><a href="http://173.198.50.202/ftp2/{{ file_name }}" target="_blank">{{ file_name }}</a></p>
                 </div>
                 {% endfor %}
             </div>

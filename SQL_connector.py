@@ -17,7 +17,7 @@ password = 'Qwer1234##'
 driver = 'ODBC Driver 17 for SQL Server'  # Replace 'xx' with the appropriate version number
 
 def generate_excel(user_input):
-    global file_path  # Add this line
+    global file_path
     image_urls = []
     try:
         # Connect to the SQL Server databases
@@ -32,6 +32,9 @@ def generate_excel(user_input):
         # Create cursor objects to execute SQL queries in both databases
         cursor_fdc = conn_fdc.cursor()
         cursor_oms_ef = conn_oms_ef.cursor()
+
+        # Normalize the input to lowercase
+        user_input = user_input.lower()
 
         # Execute the same query in both databases and fetch the results
         queries = []
@@ -115,16 +118,16 @@ def generate_excel(user_input):
             queries.append(rows_with_database_name)
 
         # Combine the results from both databases
-        combined_results = queries[0]+ queries[1]
+        combined_results = queries[0] + queries[1]
 
         # Process the combined result
         workbook = openpyxl.Workbook()
         sheet = workbook.active
 
         # Column headers for the Excel sheet
-        column_headers = ['Database', 'SKU', 'Style', 'Container','Stock', 'Reserve', 'Avaliable',
+        column_headers = ['Database', 'SKU', 'Style', 'Container', 'Stock', 'Reserve', 'Available',
                           'Ocean', 'cost', 'MSRP', 'QTY_box', 'box_wt(lb)',
-                          'pc_wt(lb)', 'color', 'length', 'width', 'height',"update_dt","create_dt"]
+                          'pc_wt(lb)', 'color', 'length', 'width', 'height', "update_dt", "create_dt"]
 
         # Write the column headers to the Excel sheet
         for col_index, header in enumerate(column_headers, start=1):
@@ -136,31 +139,20 @@ def generate_excel(user_input):
                 if col_index == 3:  # Check if it's the column with SKU_no_color
                     hyperlink_value = value.strip()  # Remove trailing spaces
                     localresized_image_url = f"ftp/{hyperlink_value}.jpg"
-                    
+
                     # Add original image URL if not already added
                     if localresized_image_url not in image_urls:
                         image_urls.append(localresized_image_url)
 
-                    # Resize the image to 400x400 pixels if not already resized
-                    image_path = f"ftp/{hyperlink_value}.jpg"
-                    if os.path.exists(image_path):
-                        resized_image_path = f"ftp/resized_{hyperlink_value}.jpg"
-                        if resized_image_path not in image_urls:
-                            image = Image.open(image_path)
-                            image_resized = image.resize((400, 400))
-                            image_resized.save(resized_image_path)
-                            image_urls.append(resized_image_path)
-
                     # Add hyperlink to the backuplink the Excel sheet
-                    backup_original_image_url=f"http://flamingyetis.com/ftp3/picture/catelog_original/{hyperlink_value}.jpg"
+                    backup_original_image_url = f"/ftp2/{hyperlink_value}.jpg"
                     value = f'<a href="{backup_original_image_url}">{value}</a>'
-                
-                
+
                 # Write data to the Excel sheet
                 cell = sheet.cell(row=row_index, column=col_index, value=value)
 
         # Save the Excel file
-        output_directory = "output\itemsearch_output"
+        output_directory = r"output\itemsearch_output"
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
 
@@ -184,3 +176,4 @@ def get_file_path():
 if __name__ == "__main__":
     user_input = input("Enter User Input: ")
     generate_excel(user_input)
+
