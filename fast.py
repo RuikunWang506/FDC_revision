@@ -158,8 +158,6 @@ def log_inventory_data(inventory_data):
     # Log inventory data along with timestamp
     timestamp = datetime.datetime.now().strftime("%Y/%m/%d - %H:%M:%S")
     logging.info(f"Inventory data at {timestamp}:")
-    for data in inventory_data:
-        logging.info(data)
 
 def update_timestamp(sheet):
     # Get current timestamp

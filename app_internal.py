@@ -16,9 +16,11 @@ from werkzeug.utils import secure_filename
 import atexit
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+from io import StringIO
+from user_agents import parse
 
 # Configure logging
-log_file = "Log_VJune_2024.txt"
+log_file = "Log.txt"
 log_level = logging.INFO
 
 # Create a custom logger
@@ -110,6 +112,19 @@ def login():
         if check_credentials(username, password):
             session['username'] = username
             flash(f"Logged in as {username}")
+            client_ip = request.remote_addr
+            user_agent = parse(request.headers.get('User-Agent'))
+            referrer = request.referrer
+            query_params = request.args
+            
+
+            logging.info(
+                "User %s has logged in. IP: %s, Browser: %s %s, OS: %s %s, Device: %s, "
+                "Method: %s, URL: %s, Referrer: %s, Query Params: %s",
+                username, client_ip, user_agent.browser.family, user_agent.browser.version_string,
+                user_agent.os.family, user_agent.os.version_string, user_agent.device.family,
+                request.method, request.url, referrer, query_params
+            )
             return redirect(url_for("home"))
         else:
             flash("Invalid credentials")
@@ -263,13 +278,14 @@ def delete_image():
 def download_excel():
     if 'username' not in session:
         return redirect(url_for("login"))
+    
     current_user = session['username']
-    user_input = request.form.get("user_input").lower()  # Normalize to lowercase
-    input_value = user_input
-    sheet_data = get_sheet_data(input_value)
-    e1_value = get_e1_value()  # Add this line to get the E1 value
+    user_input = request.form.get("user_input", "").lower().strip()  # Normalize and strip input
 
-    if user_input is None:
+    # Initialize e1_value
+    e1_value = get_e1_value()
+
+    if not user_input:
         return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value)
 
     if user_input.endswith(","):
@@ -281,14 +297,13 @@ def download_excel():
     search_terms = [term.strip() for term in user_input.split(",")]
 
     # Fetch images from the catalog_resized directory based on user input
-    image_urls = []
     file_names = []
     for term in search_terms:
         for filename in os.listdir(app.config['catalog_original']):
             if filename.lower().startswith(term):
-                image_urls.append(os.path.join('/ftp', filename))
                 file_names.append(filename)
 
+    # Collect file information
     file_info = []
     for filename in file_names:
         resized_path = os.path.join(app.config['catalog_original'], filename)
@@ -298,8 +313,9 @@ def download_excel():
             modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
             file_info.append((filename, size, modified_date))
 
-    if excel_html is not None:
-        df = pd.read_html(excel_html)[0]
+    if excel_html:
+        df = pd.read_html(StringIO(excel_html))[0]  # Use StringIO to handle HTML string
+        sheet_data = get_sheet_data(user_input)  # Ensure sheet_data is assigned a value
         max_length = max(len(row) for row in sheet_data)
         sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
         df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
@@ -339,7 +355,7 @@ def label_maker_from_order_lookup():
 
     print(f"Received order_number: {order_number}")  # Debug print
 
-    filename, error_message, number_of_labels, duplicate_numbers = Label_Maker.process_orders(order_number)
+    filename, error_message, number_of_labels, duplicate_numbers,info_list = Label_Maker.process_orders(order_number)
     
     if error_message:
         return error_message, 400
@@ -354,7 +370,8 @@ def label_maker_from_order_lookup():
         filename=base_filename,
         download_url=download_url,
         number_of_labels=number_of_labels,
-        duplicate_numbers=duplicate_numbers
+        duplicate_numbers=duplicate_numbers,
+        info_list=info_list
     )
 
 @app.route("/submit_order", methods=["POST"])
@@ -674,6 +691,8 @@ def send_shipping_receipt():
     file = request.files.get('file')
     memo = request.form.get('memo')
     store = request.form.get('store')
+    current_user = session.get('username')  # Ensure current_user is defined
+
 
     if not memo and (not file or file.filename == ''):
         flash('Please provide either a memo or a file.')
@@ -752,48 +771,12 @@ def send_shipping_receipt():
             logging.error(f"Request to Slack returned an error {response.status_code}, the response is:\n{response.text}")
 
     return redirect(url_for('shipping_receipt'))
-# Rental agreement route
-output_dir = os.path.join('output', 'scooter')
-os.makedirs(output_dir, exist_ok=True)
 
 @app.route("/calculator", methods=["GET"])
 def calculatorapp():
     if 'username' not in session:
         return redirect(url_for("login"))
     return render_template("calculator2.html")
-
-@app.route("/rentalagreement", methods=["GET", "POST"])
-def rental_agreement():
-    if 'username' not in session:
-        return redirect(url_for("login"))
-    if request.method == "POST":
-        name = request.form["name"]
-        phone = request.form["phone"]
-        email = request.form["email"]
-
-        # Create the content of the rental agreement
-        agreement_content = (
-            f"Name: {name}\n"
-            f"Phone: {phone}\n"
-            f"Email: {email}\n"
-            f"Agreement: I agree to the terms and conditions.\n"
-            f"Rate: $2.99 per mile + $0.99 start fee\n"
-            f"Company: Flamingyeti Express\n"
-            f"Address: Tristen Table, City of Industry, CA 91748\n"
-            f"Contact Number: 626-278-9330\n"
-        )
-
-        # Save the agreement to a text file
-        file_path = os.path.join(output_dir, f"{name.replace(' ', '_')}_rental_agreement.txt")
-        with open(file_path, 'w') as file:
-            file.write(agreement_content)
-        slack_message = {
-        "text": f"A new agreement from {name} !"
-    }
-        response = requests.post(SLACK_WEBHOOK_URL, json=slack_message)
-
-        return "Agreement submitted successfully!"
-    return render_template("rental_agreement.html")
 
 if __name__ == "__main__":
     logger.info("autobots, roll out!")

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -25,6 +25,13 @@
             border: 1px solid #ccc;
             padding: 2px;
             margin-bottom: 5px;
+        }
+        .info-list {
+            text-align: center;
+        }
+        .info-list ul {
+            display: inline-block;
+            text-align: left;
         }
     </style>
 </head>
@@ -81,6 +88,14 @@
         <div class="alert alert-info mt-3">
             <p>Number of labels is: {{ number_of_labels }}</p>
             <p>Mixed Boxes are: {{ duplicate_numbers }}</p>
+            <div class="info-list">
+                <h2>Info List:</h2>
+                <ul>
+                    {% for info in info_list %}
+                        <li>{{ info }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     </div>
 {% endif %}

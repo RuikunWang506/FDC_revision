@@ -149,12 +149,14 @@ def process_orders(order_number):
     desc_counts = Counter(all_desc_parts)
     duplicate_numbers = [item for item, count in desc_counts.items() if count > 1]  
     print("Number of labels is:", number_of_labels)
-    print("Mixed Boxes are:",duplicate_numbers)
+    print("Mixed Boxes are:", duplicate_numbers)
         
     output_line_number = 1
     sl_num = 1
+    info_list = []
     for _, row in df.iterrows():
-        output_line_number, sl_num = process_item(output_line_number, row, from_address, to_address, ws, str(number_of_labels), po_number, sl_num, duplicate_numbers)
+        output_line_number, sl_num, info = process_item(output_line_number, row, from_address, to_address, ws, str(number_of_labels), po_number, sl_num, duplicate_numbers)
+        info_list.append(info)
 
     while sl_num <= number_of_labels:
         output_line_number = generate_additional_label(output_line_number, from_address, to_address, ws, str(number_of_labels), po_number, sl_num)
@@ -169,7 +171,6 @@ def process_orders(order_number):
     ws["C" + str(number_of_labels * 20 + 10)] = str(number_of_labels)
     ws["C" + str(number_of_labels * 20 + 10)].font = ft2
     ws["B" + str(number_of_labels * 20 + 11)] = "PO#:"
-    ws["C" + str(number_of_labels * 20 + 11)] = str(po_number)
     ws["C" + str(number_of_labels * 20 + 11)].font = ft2
     ws["B" + str(number_of_labels * 20 + 12)] = "LOCATION: "
     ws["C" + str(number_of_labels * 20 + 12)] = text_after_boxes   # Adjust as needed
@@ -178,8 +179,7 @@ def process_orders(order_number):
     target_filename = str(order_number) + "_label"
     wb.save(output_directory + target_filename + ".xlsx")
 
-
-    return output_directory + target_filename + ".xlsx", None, number_of_labels, duplicate_numbers
+    return output_directory + target_filename + ".xlsx", None, number_of_labels, duplicate_numbers, info_list
 
 def process_item(output_line_number, row, from_address, to_address, ws, number_of_labels, po_number, sl_num, duplicate_numbers):
     sku_line = row['PROD_CD']
@@ -190,7 +190,8 @@ def process_item(output_line_number, row, from_address, to_address, ws, number_o
     parts_with_dash = [part for part in re.split(r'[\s,]+', row['UT_DESC'].strip()) if '-' in part]
     num_labels = sum([int(part.split('-')[1]) - int(part.split('-')[0]) + 1 for part in parts_with_dash])
 
-    print(str(sku) + "  " + str(color) + ":"  + str(num_labels) + "  " + row['UT_DESC'])
+    info = (str(sku) + "  " + str(color) + ":"  + str(num_labels) + "  " + row['UT_DESC'])
+    print(info)
     quantity = row['PC_UNIT']
 
     desc_parts = re.split(r'[-\s,]+', row['UT_DESC'].strip())
@@ -199,14 +200,13 @@ def process_item(output_line_number, row, from_address, to_address, ws, number_o
     for i in range(num_labels):
         current_label_number = sl_num + i
         if str(current_label_number) in duplicate_numbers:
-            output_line_number = process_label(sku, "MIX", from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number)
+            output_line_number = process_label(sku, "MIX", from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number,info)
         else:
-            output_line_number = process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number)
+            output_line_number = process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number,info)
     sl_num += num_labels
-    return output_line_number, sl_num
+    return output_line_number, sl_num,info
 
-
-def process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number):
+def process_label(sku, color, from_address, to_address, output_line_number, ws, quantity, number_of_labels, po_number, current_label_number,info):
     output_line_number += 1
     output_line_number += 1
     for line_num in range(len(from_address)):
@@ -283,8 +283,6 @@ def process_label(sku, color, from_address, to_address, output_line_number, ws, 
 
     return output_line_number
 
-
-
 def generate_additional_label(output_line_number, from_address, to_address, ws, number_of_labels, po_number, sl_num):
     output_line_number += 1
     output_line_number += 1
@@ -357,4 +355,11 @@ def generate_additional_label(output_line_number, from_address, to_address, ws, 
     return output_line_number
 
 if __name__ == "__main__":
-    process_orders()
+    order_number = "1762"  # Example order number
+    file_path, error, number_of_labels, duplicate_numbers, info_list = process_orders(order_number)
+    if error:
+        print(f"Error: {error}")
+    else:
+        print(f"File created at: {file_path}")
+        for info in info_list:
+            print(info)
