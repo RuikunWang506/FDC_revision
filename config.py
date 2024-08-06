@@ -3,6 +3,7 @@ import os
 class Config:
     CATALOG_RESIZED = r"D:\Catalog_pictures\catalog_resized"
     CATALOG_ORIGINAL = r"D:\Catalog_pictures\catalog_original"
+    BIG_PICTURE_DIR  = r"D:\Individual_big_picture"
     LOG_FILE = "Log.txt"
     SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/edit'
     SPREADSHEET_ID = SPREADSHEET_URL.split('/d/')[1].split('/edit')[0]

@@ -1,19 +1,22 @@
-from flask import request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory
+from flask import request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory, send_file
 from werkzeug.utils import secure_filename
 import os
 import pandas as pd
 from custom_query import execute_custom_query, allowed_file
+from indexing_app import generate_index
 from config import Config
 from logging_setup import configure_logging
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import logging
 import re
+import urllib.parse
 import time
 import requests
 import datetime
 import subprocess
 import sys
+import json
 from io import StringIO
 from user_agents import parse
 from slack_sdk import WebClient
@@ -22,6 +25,12 @@ from slack_sdk.errors import SlackApiError
 import V4_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
+
+# New imports
+import base64
+from PIL import Image
+import io
+import zipfile
 
 client = WebClient(token=Config.SLACK_TOKEN)
 
@@ -720,8 +729,6 @@ def register_routes(app):
         except Exception as e:
             app.logger.error('Error accessing query log file: %s', e)
             return jsonify(error=str(e)), 500
-
-
         
     @app.route("/log")
     def display_log():
@@ -734,3 +741,90 @@ def register_routes(app):
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
+        
+
+    def resize_image(image_path, size=(300, 300)):
+        try:
+            with Image.open(image_path) as img:
+                img = img.convert("RGB")
+                img = img.resize(size, Image.LANCZOS)
+                buffer = io.BytesIO()
+                img.save(buffer, format="JPEG")
+                buffer.seek(0)
+                return buffer
+        except Exception as e:
+            app.logger.error(f"Error resizing image {image_path}: {e}")
+            return None
+
+    def b64encode_filter(data):
+        data.seek(0)
+        return base64.b64encode(data.read()).decode('utf-8')
+
+    app.jinja_env.filters['b64encode'] = b64encode_filter
+
+    @app.route('/download_all_images')
+    def download_all_images():
+        current_user = session['username']
+        search_str = request.args.get('search_str', '').lower()
+        index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
+
+        if not os.path.exists(index_file):
+            return "Index file not found. Please generate the index first.", 500
+
+        with open(index_file, 'r') as f:
+            index = json.load(f)
+
+        matching_files = [file_path for file_path in index if os.path.basename(file_path).lower().startswith(search_str)]
+
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            for file_path in matching_files:
+                zf.write(file_path, os.path.basename(file_path))
+        
+        memory_file.seek(0)
+        app.logger.info("%s downloaded all images of %s",current_user, search_str)
+        return send_file(memory_file, download_name='images.zip', as_attachment=True)
+
+    @app.route('/big_img', methods=['GET', 'POST'])
+    def big_img():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        current_user = session['username']
+
+        if request.method == 'POST':
+            search_str = request.form.get('search_str', '').lower()
+            index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
+            
+            if not os.path.exists(index_file):
+                return "Index file not found. Please generate the index first.", 500
+
+            with open(index_file, 'r') as f:
+                index = json.load(f)
+
+            matching_files = [file_path for file_path in index if os.path.basename(file_path).lower().startswith(search_str)]
+            
+            image_data = []
+            for filename in matching_files:
+                image_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
+                resized_image = resize_image(image_path)
+                if resized_image:
+                    image_data.append((filename, resized_image))
+            app.logger.info("%s downloaded one images of %s",current_user, search_str)
+            return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
+        return render_template('big_img.html', quote=urllib.parse.quote)
+
+    @app.route('/ftp3/<path:encoded_path>', methods=['GET'])
+    def serve_file3(encoded_path):
+        decoded_path = urllib.parse.unquote(encoded_path)
+        app.logger.info("Serving file %s", decoded_path)
+        full_path = os.path.join(app.config['BIG_PICTURE_DIR'], decoded_path)
+        directory, filename = os.path.split(full_path)
+        return send_from_directory(directory, filename, as_attachment=False)
+
+    @app.route('/ftp3/download/<path:encoded_path>', methods=['GET'])
+    def download_file5(encoded_path):
+        decoded_path = urllib.parse.unquote(encoded_path)
+        app.logger.info("Serving file %s", decoded_path)
+        full_path = os.path.join(app.config['BIG_PICTURE_DIR'], decoded_path)
+        directory, filename = os.path.split(full_path)
+        return send_from_directory(directory, filename, as_attachment=True)
