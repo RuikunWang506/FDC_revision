@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom SQL Query</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    <style>
+        body {
+            padding: 15px;
+        }
+        .container-flex {
+            display: flex;
+            width: 100%;
+            height: 800px;
+        }
+        .query-log, .memo-import {
+            flex: 0 0 25%;
+            padding: 15px;
+            border: 1px solid #ccc;
+            overflow-y: auto;
+            box-sizing: border-box;
+            height: 100%;  /* Ensure it takes full height */
+        }
+        .sql-input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        .sql-input .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .sql-input .form-group textarea {
+            flex-grow: 1;
+            resize: none;
+            height: calc(100% - 315px) !important; /* 300px for buttons and 15px for margin */
+            margin-bottom: 15px;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            height: 100px;
+        }
+        .btn-group button {
+            flex: 1;
+            margin: 0 5px;
+            font-size: 18px;
+        }
+        .excel-output {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+        .query-log .highlight {
+            background-color: #ffff99;
+            cursor: pointer;
+        }
+        .query-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+{% include 'navbar.html' %}
+    <div class="container-flex">
+        <div class="query-log">
+            <div class="query-log-header">
+                <h5>Query Log</h5>
+                <button class="btn btn-primary" onclick="fetchLogContent()">Refresh Log</button>
+            </div>
+            <ul id="log_content">
+                {% if log_content %}
+                    {% for line in log_content %}
+                        {% set parts = line.split(' - INFO - ') %}
+                        {% if parts|length == 2 %}
+                            <li>{{ parts[0] }} - INFO - <span class="highlight" onclick="setQuery('{{ parts[1] }}')">{{ parts[1] }}</span></li>
+                        {% else %}
+                            <li>{{ line }}</li>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <li>No log content available.</li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="sql-input">
+            <form method="POST" action="/geek_tools/custom_query" id="query_form" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                    <label for="sql_query">Enter SQL Query:</label>
+                    <textarea class="form-control" name="sql_query" id="sql_query" required style="height: calc(100% - 315px) !important;">{{ sql_query }}</textarea>
+                </div>
+                <div class="btn-group" role="group" aria-label="Database Selection">
+                    <input type="hidden" name="database_name" id="database_name" value="">
+                    <button type="button" class="btn btn-primary" onclick="setDatabaseAndSubmit('omsdata_FDC')">FDC</button>
+                    <button type="button" class="btn btn-primary" onclick="setDatabaseAndSubmit('oms_EF')">EF</button>
+                </div>
+            </form>
+        </div>
+        <div class="memo-import">
+            <h5>Imported Memo</h5>
+            <div id="memo_html">
+                {% if memo_html %}
+                    {{ memo_html | safe }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% if excel_html %}
+        <table id="excel_table" >
+            <tbody>
+            {{ excel_html | safe }}
+            </tbody>
+        </table>
+    {% endif %}
+
+{% if error_message %}
+    <div class="container">
+        <div class="alert alert-danger text-center">
+            {{ error_message }}
+        </div>
+    </div>
+{% endif %}
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#excel_table').DataTable({
+            "autoWidth": true,
+            "pageLength": 100
+        });
+    });
+
+    function fetchLogContent() {
+        var queryLogDiv = document.querySelector('.query-log');
+        var previousScrollTop = queryLogDiv.scrollTop;
+
+        $.ajax({
+            url: '/query_log',
+            type: 'GET',
+            success: function(data) {
+                var logContent = data.log_content.map(function(line) {
+                    var parts = line.split(' - INFO - ');
+                    if (parts.length === 2) {
+                        return '<li>' + parts[0] + ' - INFO - ' + '<span class="highlight" onclick="setQuery(\'' + parts[1].replace(/'/g, "\\'") + '\')">' + parts[1] + '</span>' + '</li>';
+                    } else {
+                        return '<li>' + line + '</li>';
+                    }
+                }).join('');
+                $('#log_content').html(logContent);
+
+                // Restore previous scroll position
+                queryLogDiv.scrollTop = previousScrollTop;
+            },
+            error: function(error) {
+                console.log('Error fetching log content:', error);
+            }
+        });
+    }
+
+    function setDatabaseAndSubmit(database) {
+        document.getElementById('database_name').value = database;
+        document.getElementById('query_form').submit();
+    }
+
+    function setQuery(query) {
+        document.getElementById('sql_query').value = query;
+    }
+</script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

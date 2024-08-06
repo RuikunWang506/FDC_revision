@@ -1,11 +1,15 @@
-from flask import request, render_template, jsonify, redirect, url_for, session, flash,send_from_directory
+from flask import request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory
+from werkzeug.utils import secure_filename
+import os
+import pandas as pd
+from custom_query import execute_custom_query, allowed_file
+from config import Config
+from logging_setup import configure_logging
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import logging
-import os,re
+import re
 import time
-import pandas as pd
-from werkzeug.utils import secure_filename
 import requests
 import datetime
 import subprocess
@@ -18,7 +22,10 @@ from slack_sdk.errors import SlackApiError
 import V4_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
-from config import Config
+
+client = WebClient(token=Config.SLACK_TOKEN)
+
+# Configure logging
 
 def register_routes(app):
     def check_credentials(username, password):
@@ -40,6 +47,9 @@ def register_routes(app):
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
+        if 'username' in session:
+            return redirect(url_for("home"))
+        
         if request.method == "POST":
             username = request.form.get("username")
             password = request.form.get("password")
@@ -47,9 +57,12 @@ def register_routes(app):
                 session['username'] = username
                 flash(f"Logged in as {username}")
                 log_user_activity(username)
-                return redirect(url_for("home"))
+                next_page = session.pop('next', url_for("home"))
+                return redirect(next_page)
             else:
                 flash("Invalid credentials")
+        
+        session['next'] = request.args.get('next') or request.referrer or url_for("home")
         return render_template("login.html")
 
     @app.route("/logout")
@@ -61,6 +74,7 @@ def register_routes(app):
     @app.route("/", methods=["GET", "POST"])
     def home():
         if 'username' not in session:
+            session['next'] = request.url
             return redirect(url_for("login"))
         current_user = session['username']
         return render_template("index.html", current_user=current_user)
@@ -68,6 +82,7 @@ def register_routes(app):
     @app.route("/Item_lookup", methods=["GET", "POST"])
     def item_lookup():
         if 'username' not in session:
+            session['next'] = request.url
             return redirect(url_for("login"))
         current_user = session['username']
         excel_html = None
@@ -76,24 +91,30 @@ def register_routes(app):
             app.logger.info("%s searched for: %s", current_user, item_number)
         return render_template("Item_lookup.html", excel_html=excel_html, current_user=current_user)
 
-    def get_sheet_data(input_value):
+
+    def get_sheet_data_and_e1_value(input_value):
         creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
         service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
         sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=Config.SPREADSHEET_ID, range='ONLINE_CATALOG').execute()
-        values = result.get('values', [])
-
-        if not values:
-            return "No data found in the sheet."
+        
+        # Fetch both the sheet data and E1 value in one request
+        ranges = ['ONLINE_CATALOG', 'ONLINE_CATALOG!E1']
+        result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+        
+        sheet_data = result['valueRanges'][0].get('values', [])
+        e1_value = result['valueRanges'][1].get('values', [[None]])[0][0]
+        
+        if not sheet_data:
+            return "No data found in the sheet.", e1_value
         else:
-            headers = values[1]
+            headers = sheet_data[1]
             sku_index, style_index, tik_index = headers.index('SKU'), headers.index('Style'), headers.index('TiK 1-999 #')
-            display_headers = values[1]
+            display_headers = sheet_data[1]
             input_values = [v.strip().lower() for v in input_value.split(',')]
             matching_rows = []
             is_numeric_input = all(val.isdigit() for val in input_values)
 
-            for row in values[2:]:
+            for row in sheet_data[2:]:
                 if len(row) > max(sku_index, style_index, tik_index):
                     if is_numeric_input:
                         if any(val in row[tik_index].lower() for val in input_values):
@@ -103,15 +124,8 @@ def register_routes(app):
                         if any(any(val in cell.lower() for val in input_values) for cell in cells_to_check):
                             matching_rows.append(row)
 
-            return [display_headers] + matching_rows if matching_rows else [display_headers]
+            return [display_headers] + matching_rows if matching_rows else [display_headers], e1_value
 
-    def get_e1_value():
-        creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
-        service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=Config.SPREADSHEET_ID, range='ONLINE_CATALOG!E1').execute()
-        values = result.get('values', [])
-        return values[0][0] if values else None
 
     @app.route("/delete_image", methods=["POST"])
     def delete_image():
@@ -146,9 +160,9 @@ def register_routes(app):
 
         current_user = session['username']
         user_input = request.form.get("user_input", "").lower().strip()
-        e1_value = get_e1_value()
 
         if not user_input:
+            _, e1_value = get_sheet_data_and_e1_value('')
             return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value)
 
         if user_input.endswith(","):
@@ -163,18 +177,26 @@ def register_routes(app):
                 if filename.lower().startswith(term):
                     file_names.append(filename)
 
+            # Check in catalog_resized if not found in catalog_original
+            for filename in os.listdir(Config.CATALOG_RESIZED):
+                if filename.lower().startswith(term) and filename not in file_names:
+                    file_names.append(filename)
+
         file_info = []
         for filename in file_names:
-            resized_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-            if os.path.exists(resized_path):
-                size = os.path.getsize(resized_path)
-                modified_time = os.path.getmtime(resized_path)
+            original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+            resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
+            file_path = original_path if os.path.exists(original_path) else resized_path
+            
+            if os.path.exists(file_path):
+                size = os.path.getsize(file_path)
+                modified_time = os.path.getmtime(file_path)
                 modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
                 file_info.append((filename, size, modified_date))
 
         if excel_html:
             df = pd.read_html(StringIO(excel_html))[0]
-            sheet_data = get_sheet_data(user_input)
+            sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
             max_length = max(len(row) for row in sheet_data)
             sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
             df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
@@ -184,13 +206,15 @@ def register_routes(app):
 
             sorted_file_names = sort_filenames(file_names)
             sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
-
             excel_html = df.to_html(classes='table', escape=False)
-            sheet_data = df2.to_html(classes='table', escape=False)
+            sheet_data_html = df2.to_html(classes='table', escape=False)
             app.logger.info("Excel HTML and sheet data %s generated for %s", user_input, current_user)
-            return render_template("Item_lookup.html", excel_html=excel_html, image_urls=sorted_image_urls, file_names=sorted_file_names, file_info=file_info, sheet_data=sheet_data, current_user=current_user, e1_value=e1_value)
+            return render_template("Item_lookup.html", excel_html=excel_html, image_urls=sorted_image_urls, file_names=sorted_file_names, file_info=file_info, sheet_data=sheet_data_html, current_user=current_user, e1_value=e1_value)
         else:
+            _, e1_value = get_sheet_data_and_e1_value('')
             return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user)
+
+                                            
 
     @app.route("/Order_lookup", methods=["GET", "POST"])
     def sql_connector():
@@ -198,10 +222,9 @@ def register_routes(app):
             return redirect(url_for("login"))
         current_user = session['username']
         html_table = None
-        image_urls = None
         if request.method == "POST":
             user_input = request.form.get("user_input")
-        return render_template("order_lookup.html", html_table=html_table, image_urls=image_urls, current_user=current_user)
+        return render_template("order_lookup.html", html_table=html_table,  current_user=current_user)
 
     @app.route('/label_maker_from_order_lookup', methods=['POST'])
     def label_maker_from_order_lookup():
@@ -267,19 +290,26 @@ def register_routes(app):
     def googlesheet():
         if 'username' not in session:
             return redirect(url_for("login"))
+        
         current_user = session['username']
         sheet_data_html = None
-        e1_value = get_e1_value()
+        e1_value = None
+
         if request.method == "POST":
             user_input = request.form.get("user_input")
             app.logger.info("%s is looking up in googlesheet with input: %s", current_user, user_input)
-            sheet_data = get_sheet_data(user_input)
+            
+            # Fetch both sheet data and e1_value
+            sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+            
             if sheet_data:
                 max_length = max(len(row) for row in sheet_data)
                 sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
                 df_sheet = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
                 sheet_data_html = df_sheet.to_html(classes='table table-bordered table-striped', escape=False)
+
         return render_template("googlesheet.html", sheet_data=sheet_data_html, e1_value=e1_value, current_user=current_user)
+
 
     @app.route("/run_fast_script", methods=["POST"])
     def run_fast_script():
@@ -526,6 +556,7 @@ def register_routes(app):
             return redirect(url_for("login"))
         return render_template('upload_file.html')
 
+
     @app.route('/send_shipping_receipt', methods=['POST'])
     def send_shipping_receipt():
         if 'username' not in session:
@@ -615,10 +646,16 @@ def register_routes(app):
             return redirect(url_for("login"))
         return render_template("calculator2.html")
 
+    @app.route("/geek_tools", methods=["GET"])
+    def geek_tools():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        return render_template("geek_tools.html")
+
     def sort_filenames(filenames):
         base_files = {}
         version_files = []
-        pattern = re.compile(r"^(.*?)(v\d+)?\.jpg$")
+        pattern = re.compile(r"^(.*?)(_v\d+)?\.jpg$")
 
         for filename in filenames:
             match = pattern.match(filename)
@@ -630,7 +667,8 @@ def register_routes(app):
                 else:
                     base_files[base] = filename
 
-        version_files.sort(key=lambda x: (x[0], int(x[1][1:]) if x[1] else 0))
+        # Sort versions based on the number after '_v'
+        version_files.sort(key=lambda x: (x[0], int(x[1][2:]) if x[1] else 0))
 
         sorted_filenames = []
         for base, base_file in base_files.items():
@@ -638,3 +676,61 @@ def register_routes(app):
             sorted_filenames.extend([v[2] for v in version_files if v[0] == base])
 
         return sorted_filenames
+    
+    @app.route("/geek_tools/custom_query", methods=["GET", "POST"])
+    def custom_query():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        current_user = session['username']
+        excel_html = None
+        error_message = None
+        log_content = []
+        memo_html = None
+        sql_query = ""  # Initialize the sql_query variable
+
+        if request.method == "POST":
+            sql_query = request.form.get("sql_query")
+            database_name = request.form.get("database_name")
+            app.logger.info("%s executed a custom SQL query: %s", current_user, sql_query)
+            excel_html, error_message = execute_custom_query(sql_query, database_name)
+
+        # Read memo from static/query.xlsx
+        memo_path = os.path.join(app.root_path, 'static', 'query.xlsx')
+        if os.path.exists(memo_path):
+            df = pd.read_excel(memo_path, usecols="A,B")
+            df = df.dropna(how='all')
+            memo_html = df.to_html(classes='table table-bordered table-striped', escape=False)
+
+        # Read log content and reverse it
+        with open('query_log.txt', 'r') as log_file:
+            log_content = log_file.read().splitlines()[::-1]  # Reverse the order of the lines
+
+        return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, log_content=log_content, current_user=current_user, sql_query=sql_query)
+
+    @app.route("/query_log")
+    def display_query_log():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        try:
+            with open('query_log.txt', 'r') as file:
+                lines = file.readlines()
+            # Reverse the lines
+            lines.reverse()
+            return jsonify(log_content=lines), 200
+        except Exception as e:
+            app.logger.error('Error accessing query log file: %s', e)
+            return jsonify(error=str(e)), 500
+
+
+        
+    @app.route("/log")
+    def display_log():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        try:
+            with open(Config.LOG_FILE, 'r') as file:
+                lines = file.readlines()
+            return jsonify(log_content=lines), 200
+        except Exception as e:
+            app.logger.error('Error accessing log file: %s', e)
+            return jsonify(error=str(e)), 500

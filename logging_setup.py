@@ -1,5 +1,4 @@
 import logging
-import os
 
 def configure_logging(app):
     log_file = app.config['LOG_FILE']
@@ -28,8 +27,13 @@ def configure_logging(app):
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
+    # Custom logger for SQL queries
+    query_logger = logging.getLogger('query_logger')
+    query_logger.setLevel(logging.INFO)
+    query_file_handler = logging.FileHandler('query_log.txt')
+    query_file_handler.setLevel(logging.INFO)
+    query_file_handler.setFormatter(formatter)
+    query_logger.addHandler(query_file_handler)
+
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
-    if not os.path.exists(log_file):
-        with open(log_file, 'w') as file:
-            file.write("Log file created.\n")

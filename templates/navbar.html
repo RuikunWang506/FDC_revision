@@ -12,6 +12,8 @@
         }
         .navbar-custom .nav-link img {
             margin-right: 8px;
+            width: 30px; /* Set a consistent width for all icons */
+            height: 30px; /* Set a consistent height for all icons */
         }
         .navbar-custom .nav-link:hover {
             text-decoration: underline;
@@ -28,39 +30,45 @@
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" href="/Item_lookup">
-                        <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup" style="width: 20px; height: 20px;">
+                        <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup">
                         Item Lookup
                     </a>
                 </li>
                 {% if current_user != 'fdc' %}
                 <li class="nav-item">
                     <a class="nav-link" href="/Order_lookup">
-                        <img src="/static/icons/document.svg" alt="Order Lookup" style="width: 20px; height: 20px;">
+                        <img src="/static/icons/document.svg" alt="Order Lookup">
                         Order Lookup & Label Maker
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/v4_listcreator">
-                        <img src="/static/icons/handbag.svg" alt="V4 List Creator" style="width: 20px; height: 20px;">
+                        <img src="/static/icons/handbag.svg" alt="V4 List Creator">
                         V4 List Creator
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/googlesheet">
-                        <img src="/static/icons/google.svg" alt="Google Sheet" style="width: 20px; height: 20px;">
+                        <img src="/static/icons/google.svg" alt="Google Sheet">
                         Google Sheet
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/loris">
-                        <img src="/static/icons/loris.ico" alt="Loris" style="width: 20px; height: 20px;">
+                        <img src="/static/icons/loris.ico" alt="Loris">
                         Loris
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/calculator">
-                        <img src="/static/icons/calculator.ico" alt="Calculator" style="width: 20px; height: 20px;">
+                        <img src="/static/icons/calculator.ico" alt="Calculator">
                         Calculator
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/geek_tools">
+                        <img src="/static/icons/geek.svg" alt="Geek_Tools">
+                        Geek_Tools
                     </a>
                 </li>
                 {% endif %}

@@ -23,6 +23,7 @@ class Config:
         'ting':'827',
         'helen':'827',
         'kx':'200',
+        'erin':'7555',
         'dennis':'dennis',
         'baiqiang':'1234'
     }

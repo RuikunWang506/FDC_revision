@@ -81,7 +81,7 @@
                 ⭐ not avaliable at the moment ! ⭐
             </div>
         </div>
-        {% endif %}
+    {% endif %}
     {% if current_user != 'fdc' %}
 
     <div class="container mt-5">
@@ -93,10 +93,10 @@
             <button type="submit" class="btn btn-primary mt-2">View Result</button>
         </form>
 
-        <form id="fast-script-form" method="POST" action="/run_fast_script">
+        <form id="fast-script-form" method="POST">
             <button type="submit" class="btn btn-secondary mt-4">Run Fast Script</button>
         </form>
-        <form id="get-tk-sheet-form" method="POST" action="/run_get_tk_sheet">
+        <form id="get-tk-sheet-form" method="POST">
             <button type="submit" class="btn btn-secondary mt-4">Update TK Import Sheet</button>
         </form>
     </div>
@@ -105,15 +105,13 @@
             <h2 class="text-center"><a href="https://docs.google.com/spreadsheets/d/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/edit?pli=1#gid=2128924330">TK Googlesheet Info:</a></h2>
             <h5 class="text-center">OMS_update: {{ e1_value }}</h5>
             
-            
             <table id="excel_table">
                 <tbody>
                     {{ sheet_data | safe }}
                 </tbody>
             </table>
-            
         {% endif %}
-        <div class="mt-5" id="script-output-container" style="display:none; border:20px;" >
+        <div class="mt-5" id="script-output-container" style="display:none;">
             <h3>Script Output:</h3>
             <pre id="script-output"></pre>
         </div>
@@ -126,7 +124,6 @@
     <!-- Include jQuery -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <!-- Include DataTables JS -->
     <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
     <!-- DataTables initialization script -->
@@ -138,32 +135,61 @@
                 "resize": true, // Enable column resizing
                 "pageLength": 100 // Set default number of entries to show
             });
-        });
 
-        $('#fast-script-form').submit(function(event) {
-            event.preventDefault(); // Prevent the form from submitting via the browser
+            // Fast script form submission handling
+            $('#fast-script-form').submit(function(event) {
+                event.preventDefault(); // Prevent the form from submitting via the browser
 
-            $('#loading-overlay').show();
-            $('#script-output-container').hide();
+                $('#loading-overlay').show();
+                $('#script-output-container').hide();
 
-            $.ajax({
-                type: 'POST',
-                url: '/run_fast_script',
-                success: function(response) {
-                    $('#loading-overlay').hide();
-                    $('#script-output-container').show();
-                    $('#script-output').html(response.split('\n').map(function(line) {
-                        if (line.length > 100) {
-                            return line.match(/.{1,100}/g).join('<br>');
-                        }
-                        return line;
-                    }).join('<br>'));
-                },
-                error: function(xhr, status, error) {
-                    $('#loading-overlay').hide();
-                    $('#script-output-container').show();
-                    $('#script-output').text('An error occurred: ' + error);
-                }
+                $.ajax({
+                    type: 'POST',
+                    url: '/run_fast_script',
+                    success: function(response) {
+                        $('#loading-overlay').hide();
+                        $('#script-output-container').show();
+                        $('#script-output').html(response.split('\n').map(function(line) {
+                            if (line.length > 100) {
+                                return line.match(/.{1,100}/g).join('<br>');
+                            }
+                            return line;
+                        }).join('<br>'));
+                    },
+                    error: function(xhr, status, error) {
+                        $('#loading-overlay').hide();
+                        $('#script-output-container').show();
+                        $('#script-output').text('An error occurred: ' + error);
+                    }
+                });
+            });
+
+            // TK sheet form submission handling
+            $('#get-tk-sheet-form').submit(function(event) {
+                event.preventDefault(); // Prevent the form from submitting via the browser
+
+                $('#loading-overlay').show();
+                $('#script-output-container').hide();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/run_get_tk_sheet',
+                    success: function(response) {
+                        $('#loading-overlay').hide();
+                        $('#script-output-container').show();
+                        $('#script-output').html(response.split('\n').map(function(line) {
+                            if (line.length > 100) {
+                                return line.match(/.{1,100}/g).join('<br>');
+                            }
+                            return line;
+                        }).join('<br>'));
+                    },
+                    error: function(xhr, status, error) {
+                        $('#loading-overlay').hide();
+                        $('#script-output-container').show();
+                        $('#script-output').text('An error occurred: ' + error);
+                    }
+                });
             });
         });
     </script>

@@ -1,4 +1,3 @@
-# SQL_connector.py
 import pyodbc
 import openpyxl
 import sys
@@ -138,15 +137,18 @@ def generate_excel(user_input):
             for col_index, value in enumerate(row, start=1):
                 if col_index == 3:  # Check if it's the column with SKU_no_color
                     hyperlink_value = value.strip()  # Remove trailing spaces
-                    localresized_image_url = f"ftp/{hyperlink_value}.jpg"
+                    local_resized_image_url = f"ftp/{hyperlink_value}.jpg"
+                    backup_original_image_url = f"/ftp2/{hyperlink_value}.jpg"
 
                     # Add original image URL if not already added
-                    if localresized_image_url not in image_urls:
-                        image_urls.append(localresized_image_url)
+                    if local_resized_image_url not in image_urls:
+                        image_urls.append(local_resized_image_url)
 
-                    # Add hyperlink to the backuplink the Excel sheet
-                    backup_original_image_url = f"/ftp2/{hyperlink_value}.jpg"
-                    value = f'<a href="{backup_original_image_url}">{value}</a>'
+                    # Check if the image exists in ftp directory
+                    if os.path.exists(os.path.join('ftp', f'{hyperlink_value}.jpg')):
+                        value = f'<a href="{local_resized_image_url}">{value}</a>'
+                    else:
+                        value = f'<a href="{backup_original_image_url}">{value}</a>'
 
                 # Write data to the Excel sheet
                 cell = sheet.cell(row=row_index, column=col_index, value=value)
@@ -157,7 +159,6 @@ def generate_excel(user_input):
             os.makedirs(output_directory)
 
         current_time = datetime.datetime.now()
-        formatted_date = current_time.strftime("%m_%d")
         first4user = user_input.split(',')[0].strip()
         file_path = os.path.join(output_directory, f"{first4user}.xlsx")
         workbook.save(file_path)
@@ -176,4 +177,3 @@ def get_file_path():
 if __name__ == "__main__":
     user_input = input("Enter User Input: ")
     generate_excel(user_input)
-
