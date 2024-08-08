@@ -5,7 +5,7 @@ import pandas as pd
 from custom_query import execute_custom_query, allowed_file
 from indexing_app import generate_index
 from config import Config
-from logging_setup import configure_logging
+from logging_setup import configure_logging,log_query
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import logging
@@ -700,21 +700,28 @@ def register_routes(app):
         if request.method == "POST":
             sql_query = request.form.get("sql_query")
             database_name = request.form.get("database_name")
-            app.logger.info("%s executed a custom SQL query: %s", current_user, sql_query)
-            excel_html, error_message = execute_custom_query(sql_query, database_name)
+            try:
+                app.logger.info("%s executed a custom SQL query: %s", current_user, sql_query)
+                excel_html, error_message = execute_custom_query(sql_query, database_name)
+                log_query(sql_query)
+            except Exception as e:
+                error_message = str(e)
+                log_query(sql_query, error_message)
 
         # Read memo from static/query.xlsx
         memo_path = os.path.join(app.root_path, 'static', 'query.xlsx')
         if os.path.exists(memo_path):
             df = pd.read_excel(memo_path, usecols="A,B")
             df = df.dropna(how='all')
-            memo_html = df.to_html(classes='table table-bordered table-striped', escape=False)
+            memo_html = df.to_html(classes='table table-bordered table-striped', escape=False, index=False)
 
-        # Read log content and reverse it
+        # Read log content, remove duplicates, and reverse it
         with open('query_log.txt', 'r') as log_file:
-            log_content = log_file.read().splitlines()[::-1]  # Reverse the order of the lines
+            lines = log_file.read().splitlines()
+            unique_lines = list(dict.fromkeys(lines))  # Remove duplicates
+            unique_lines.reverse()  # Reverse the order of the lines
 
-        return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, log_content=log_content, current_user=current_user, sql_query=sql_query)
+        return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, log_content=unique_lines, current_user=current_user, sql_query=sql_query)
 
     @app.route("/query_log")
     def display_query_log():
@@ -729,7 +736,7 @@ def register_routes(app):
         except Exception as e:
             app.logger.error('Error accessing query log file: %s', e)
             return jsonify(error=str(e)), 500
-        
+            
     @app.route("/log")
     def display_log():
         if 'username' not in session:

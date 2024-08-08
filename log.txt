@@ -9752,3 +9752,612 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-08-06 16:00:46,440 - INFO - autobots, roll out!
 2024-08-06 16:00:53,924 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
 2024-08-06 16:01:08,621 - INFO - yeti downloaded one images of t3305
+2024-08-06 17:51:40,800 - INFO - autobots, roll out!
+2024-08-06 17:51:43,165 - INFO - autobots, roll out!
+2024-08-06 17:52:00,428 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-06 19:15:35,051 - ERROR - 147.185.132.249 - - [06/Aug/2024 19:15:35] code 400, message Bad request version ('À\x13À')
+2024-08-06 19:15:35,186 - ERROR - 147.185.132.249 - - [06/Aug/2024 19:15:35] code 400, message Bad request version ('À(À$À\x14À')
+2024-08-06 19:28:15,127 - INFO - autobots, roll out!
+2024-08-06 19:28:16,279 - INFO - autobots, roll out!
+2024-08-06 19:55:37,316 - INFO - User nicye has logged in. IP: 60.180.170.218, Browser: Chrome 125.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-06 19:57:02,843 - INFO - nicye submitted an order lookup
+2024-08-06 19:57:13,779 - INFO - nicye submitted an order lookup
+2024-08-06 19:57:13,779 - INFO - nicye is looking up order number: S1424
+2024-08-06 19:57:13,789 - INFO - nicye searched for order number: S1424
+2024-08-06 19:57:13,789 - INFO - No data found for order number: S1424
+2024-08-06 19:57:22,935 - INFO - nicye submitted an order lookup
+2024-08-06 19:57:22,935 - INFO - nicye is looking up order number: S1424
+2024-08-06 19:57:22,945 - INFO - nicye searched for order number: S1424
+2024-08-06 19:57:22,945 - INFO - No data found for order number: S1424
+2024-08-06 19:57:28,417 - INFO - nicye submitted an order lookup
+2024-08-06 19:57:28,417 - INFO - nicye is looking up order number: S1424
+2024-08-06 19:57:28,424 - INFO - nicye searched for order number: S1424
+2024-08-06 19:57:28,424 - INFO - No data found for order number: S1424
+2024-08-06 19:57:32,722 - INFO - nicye submitted an order lookup
+2024-08-06 19:57:32,722 - INFO - nicye is looking up order number: S1424
+2024-08-06 19:57:32,726 - INFO - nicye searched for order number: S1424
+2024-08-06 19:57:32,726 - INFO - No data found for order number: S1424
+2024-08-06 19:57:41,499 - INFO - User nicye has logged in. IP: 60.180.170.218, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-06 19:57:48,686 - INFO - Excel HTML and sheet data s1112 generated for nicye
+2024-08-06 19:57:49,080 - INFO - Serving file S1112.jpg
+2024-08-06 19:57:56,531 - INFO - nicye submitted an order lookup
+2024-08-06 19:57:56,531 - INFO - nicye is looking up order number: S1424
+2024-08-06 19:57:56,535 - INFO - nicye searched for order number: S1424
+2024-08-06 19:57:56,535 - INFO - No data found for order number: S1424
+2024-08-06 19:58:37,214 - INFO - Excel HTML and sheet data s1424 generated for nicye
+2024-08-06 19:58:37,638 - INFO - Serving file S1424.jpg
+2024-08-06 19:59:21,863 - INFO - Excel HTML and sheet data s1245 generated for nicye
+2024-08-06 19:59:22,223 - INFO - Serving file S1245_v2.jpg
+2024-08-06 19:59:22,274 - INFO - Serving file S1245.jpg
+2024-08-06 19:59:37,356 - INFO - Excel HTML and sheet data s1240 generated for nicye
+2024-08-06 19:59:37,738 - INFO - Serving file S1240_v2.jpg
+2024-08-06 19:59:37,742 - INFO - Serving file S1240.jpg
+2024-08-06 20:00:17,761 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 126.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-06 20:00:24,130 - INFO - Excel HTML and sheet data s1110 generated for nicye
+2024-08-06 20:00:24,550 - INFO - Serving file S1110.jpg
+2024-08-06 20:00:42,995 - INFO - Excel HTML and sheet data t3279 generated for nicye
+2024-08-06 20:00:43,433 - INFO - Serving file T3279.jpg
+2024-08-06 20:01:01,845 - INFO - Excel HTML and sheet data s1426 generated for nicye
+2024-08-06 20:01:02,208 - INFO - Serving file S1426.jpg
+2024-08-06 20:01:10,766 - INFO - Excel HTML and sheet data el1832 generated for ahua
+2024-08-06 20:01:14,776 - INFO - Excel HTML and sheet data s1412 generated for nicye
+2024-08-06 20:01:15,164 - INFO - Serving file S1412.jpg
+2024-08-06 20:01:21,388 - INFO - Serving file EL1832.jpg
+2024-08-06 20:01:28,420 - INFO - Excel HTML and sheet data s1408 generated for nicye
+2024-08-06 20:01:28,780 - INFO - Serving file S1408_v2.jpg
+2024-08-06 20:01:28,798 - INFO - Serving file S1408.jpg
+2024-08-06 20:03:10,108 - INFO - Excel HTML and sheet data s1146 generated for ahua
+2024-08-06 20:03:12,747 - INFO - Excel HTML and sheet data s1405 generated for nicye
+2024-08-06 20:03:13,110 - INFO - Serving file S1405.jpg
+2024-08-06 20:03:30,287 - INFO - Serving file S1146.jpg
+2024-08-06 20:03:30,290 - INFO - Serving file S1146_v2.jpg
+2024-08-06 20:03:32,660 - INFO - Excel HTML and sheet data et2949 generated for nicye
+2024-08-06 20:03:33,039 - INFO - Serving file ET2949.jpg
+2024-08-06 20:03:47,951 - INFO - Excel HTML and sheet data en2209 generated for nicye
+2024-08-06 20:03:48,367 - INFO - Serving file EN2209.jpg
+2024-08-06 20:04:07,618 - INFO - Excel HTML and sheet data t3225 generated for nicye
+2024-08-06 20:04:07,984 - INFO - Serving file T3225_v2.jpg
+2024-08-06 20:04:08,170 - INFO - Serving file T3225.jpg
+2024-08-06 20:04:38,279 - INFO - Excel HTML and sheet data s1290 generated for nicye
+2024-08-06 20:04:38,654 - INFO - Serving file S1290.jpg
+2024-08-06 20:04:39,124 - INFO - Serving file S1290_v2.jpg
+2024-08-06 20:11:31,063 - INFO - Excel HTML and sheet data n1432 generated for nicye
+2024-08-06 20:11:31,427 - INFO - Serving file N1432.jpg
+2024-08-06 20:12:29,988 - INFO - Excel HTML and sheet data n0370 generated for nicye
+2024-08-06 20:12:30,355 - INFO - Serving file N0370.jpg
+2024-08-06 20:13:04,541 - INFO - Excel HTML and sheet data en1789 generated for nicye
+2024-08-06 20:13:04,939 - INFO - Serving file EN1789.jpg
+2024-08-06 20:13:26,631 - INFO - Excel HTML and sheet data l1851 generated for nicye
+2024-08-06 20:13:27,011 - INFO - Serving file L1851.jpg
+2024-08-06 20:34:59,588 - INFO - User yeti has logged in. IP: 104.28.85.108, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-06 20:46:14,700 - INFO - Excel HTML and sheet data es1394 generated for ahua
+2024-08-06 20:46:33,933 - INFO - Serving file ES1394.jpg
+2024-08-06 20:50:34,954 - INFO - Excel HTML and sheet data s1212 generated for ahua
+2024-08-06 20:50:54,690 - INFO - Serving file S1212.jpg
+2024-08-06 20:50:54,697 - INFO - Serving file S1212_v2.jpg
+2024-08-06 21:03:18,752 - ERROR - 152.32.133.103 - - [06/Aug/2024 21:03:18] code 400, message Bad request version ('åJËû|xiqý\x16NN\x1b\x1bò\x17\x08')
+2024-08-06 21:03:19,308 - ERROR - 152.32.133.103 - - [06/Aug/2024 21:03:19] code 400, message Bad HTTP/0.9 request type ('t3')
+2024-08-06 22:06:14,912 - INFO - Excel HTML and sheet data n2036 generated for nicye
+2024-08-06 22:06:15,239 - INFO - Serving file N2036.jpg
+2024-08-06 22:06:38,643 - INFO - Excel HTML and sheet data s1428 generated for nicye
+2024-08-06 22:06:38,955 - INFO - Serving file S1428_v2.jpg
+2024-08-06 22:06:38,974 - INFO - Serving file S1428.jpg
+2024-08-06 22:07:30,150 - INFO - Excel HTML and sheet data t3129 generated for nicye
+2024-08-06 22:07:30,476 - INFO - Serving file T3129.jpg
+2024-08-06 22:09:58,328 - INFO - Excel HTML and sheet data t3096 generated for nicye
+2024-08-06 22:09:58,640 - INFO - Serving file T3096_v2.jpg
+2024-08-06 22:09:58,692 - INFO - Serving file T3096.jpg
+2024-08-06 22:10:22,379 - INFO - Excel HTML and sheet data s1460 generated for nicye
+2024-08-06 22:10:22,697 - INFO - Serving file S1460.jpg
+2024-08-06 22:10:42,313 - INFO - Excel HTML and sheet data s1428 generated for nicye
+2024-08-06 22:10:42,648 - INFO - Serving file S1428_v2.jpg
+2024-08-06 22:10:42,660 - INFO - Serving file S1428.jpg
+2024-08-06 22:11:01,966 - INFO - Excel HTML and sheet data s1327 generated for nicye
+2024-08-06 22:11:02,312 - INFO - Serving file S1327.jpg
+2024-08-06 22:11:20,825 - INFO - Excel HTML and sheet data s1306 generated for nicye
+2024-08-06 22:11:21,132 - INFO - Serving file S1306_v2.jpg
+2024-08-06 22:11:21,177 - INFO - Serving file S1306.jpg
+2024-08-06 22:11:41,651 - INFO - Excel HTML and sheet data s1206 generated for nicye
+2024-08-06 22:11:41,972 - INFO - Serving file S1206_v2.jpg
+2024-08-06 22:11:41,981 - INFO - Serving file S1206.jpg
+2024-08-06 22:11:58,886 - INFO - Excel HTML and sheet data n2093 generated for nicye
+2024-08-06 22:11:59,198 - INFO - Serving file N2093.jpg
+2024-08-06 22:12:14,026 - INFO - Excel HTML and sheet data n2071 generated for nicye
+2024-08-06 22:12:14,380 - INFO - Serving file N2071.jpg
+2024-08-06 22:12:33,367 - INFO - Excel HTML and sheet data n1835 generated for nicye
+2024-08-06 22:12:33,682 - INFO - Serving file N1835.jpg
+2024-08-06 22:13:05,115 - INFO - Excel HTML and sheet data n1151 generated for nicye
+2024-08-06 22:13:05,448 - INFO - Serving file N1151.jpg
+2024-08-06 22:13:05,503 - INFO - Serving file N1151_v5.jpg
+2024-08-06 22:13:05,633 - INFO - Serving file N1151_v2.jpg
+2024-08-06 22:13:05,744 - INFO - Serving file N1151_V2.jpg
+2024-08-06 22:13:05,780 - INFO - Serving file N1151_v4.jpg
+2024-08-06 22:13:44,014 - INFO - Excel HTML and sheet data n1814 generated for nicye
+2024-08-06 22:13:44,328 - INFO - Serving file N1814_v2.jpg
+2024-08-06 22:13:44,353 - INFO - Serving file N1814.jpg
+2024-08-06 22:13:53,825 - INFO - yeti downloaded one images of m1121
+2024-08-06 22:15:06,177 - INFO - Excel HTML and sheet data n1782 generated for nicye
+2024-08-06 22:15:06,492 - INFO - Serving file N1782.jpg
+2024-08-06 22:17:37,519 - INFO - Excel HTML and sheet data n1745 generated for nicye
+2024-08-06 22:17:37,832 - INFO - Serving file N1745.jpg
+2024-08-06 22:17:58,934 - INFO - Excel HTML and sheet data m1141 generated for nicye
+2024-08-06 22:17:59,255 - INFO - Serving file M1141.jpg
+2024-08-06 22:18:19,308 - INFO - Excel HTML and sheet data m1121 generated for nicye
+2024-08-06 22:18:19,671 - INFO - Serving file M1121.jpg
+2024-08-06 22:18:49,032 - INFO - Excel HTML and sheet data et3167 generated for nicye
+2024-08-06 22:18:49,363 - INFO - Serving file ET3167.jpg
+2024-08-06 22:19:02,690 - INFO - Excel HTML and sheet data n2136 generated for nicye
+2024-08-06 22:19:03,064 - INFO - Serving file N2136.jpg
+2024-08-06 22:19:24,441 - INFO - Excel HTML and sheet data t3132 generated for nicye
+2024-08-06 22:19:24,771 - INFO - Serving file T3132.jpg
+2024-08-06 22:19:39,473 - INFO - Excel HTML and sheet data n2087 generated for nicye
+2024-08-06 22:19:39,815 - INFO - Serving file N2087.jpg
+2024-08-06 22:21:46,558 - INFO - Excel HTML and sheet data n1851 generated for nicye
+2024-08-06 22:21:46,869 - INFO - Serving file N1851.jpg
+2024-08-06 22:23:48,138 - INFO - Excel HTML and sheet data n1851 generated for nicye
+2024-08-06 22:23:48,469 - INFO - Serving file N1851.jpg
+2024-08-06 22:24:08,989 - INFO - Excel HTML and sheet data n1422 generated for nicye
+2024-08-06 22:24:09,298 - INFO - Serving file N1422_v2.jpg
+2024-08-06 22:24:09,351 - INFO - Serving file N1422.jpg
+2024-08-06 22:24:30,579 - INFO - Excel HTML and sheet data es1414 generated for nicye
+2024-08-06 22:24:30,945 - INFO - Serving file ES1414.jpg
+2024-08-06 22:25:27,063 - INFO - Excel HTML and sheet data s1209 generated for nicye
+2024-08-06 22:25:27,377 - INFO - Serving file S1209_v2.jpg
+2024-08-06 22:25:27,429 - INFO - Serving file S1209.jpg
+2024-08-06 22:31:13,934 - INFO - Excel HTML and sheet data n1979 generated for nicye
+2024-08-06 22:31:14,264 - INFO - Serving file N1979.jpg
+2024-08-06 22:31:53,900 - INFO - Excel HTML and sheet data n1971 generated for nicye
+2024-08-06 22:31:54,237 - INFO - Serving file N1971.jpg
+2024-08-06 22:38:16,556 - INFO - Excel HTML and sheet data n1547 generated for nicye
+2024-08-06 22:38:16,882 - INFO - Serving file N1547.jpg
+2024-08-06 22:39:23,942 - INFO - Excel HTML and sheet data es1394 generated for nicye
+2024-08-06 22:39:24,276 - INFO - Serving file ES1394.jpg
+2024-08-06 22:40:25,254 - INFO - Excel HTML and sheet data et2953 generated for nicye
+2024-08-06 22:40:25,581 - INFO - Serving file ET2953.jpg
+2024-08-06 22:41:55,048 - INFO - Excel HTML and sheet data es1394 generated for nicye
+2024-08-06 22:41:55,360 - INFO - Serving file ES1394.jpg
+2024-08-06 22:42:22,147 - INFO - Excel HTML and sheet data en1346 generated for nicye
+2024-08-06 22:42:22,461 - INFO - Serving file EN1346.jpg
+2024-08-06 22:42:40,356 - INFO - Excel HTML and sheet data s1112 generated for nicye
+2024-08-06 22:42:40,685 - INFO - Serving file S1112.jpg
+2024-08-06 22:44:06,730 - INFO - Excel HTML and sheet data t3142 generated for nicye
+2024-08-06 22:44:07,045 - INFO - Serving file T3142_v2.jpg
+2024-08-06 22:44:07,107 - INFO - Serving file T3142.jpg
+2024-08-06 22:45:04,893 - INFO - Excel HTML and sheet data es1386 generated for nicye
+2024-08-06 22:45:05,221 - INFO - Serving file ES1386.jpg
+2024-08-06 22:45:33,695 - INFO - Excel HTML and sheet data l1790 generated for nicye
+2024-08-06 22:45:34,021 - INFO - Serving file L1790.jpg
+2024-08-06 22:45:50,538 - INFO - Excel HTML and sheet data en2008 generated for nicye
+2024-08-06 22:45:50,855 - INFO - Serving file EN2008.jpg
+2024-08-06 22:46:17,298 - INFO - Excel HTML and sheet data s1212 generated for nicye
+2024-08-06 22:46:17,613 - INFO - Serving file S1212_v2.jpg
+2024-08-06 22:46:17,661 - INFO - Serving file S1212.jpg
+2024-08-06 22:47:03,373 - INFO - Excel HTML and sheet data t3255 generated for nicye
+2024-08-06 22:47:03,683 - INFO - Serving file T3255.jpg
+2024-08-06 22:48:22,601 - INFO - Excel HTML and sheet data t3243 generated for nicye
+2024-08-06 22:48:22,966 - INFO - Serving file T3243.jpg
+2024-08-06 22:48:41,707 - INFO - Excel HTML and sheet data t4142 generated for nicye
+2024-08-06 22:48:52,867 - INFO - Excel HTML and sheet data t3142 generated for nicye
+2024-08-06 22:48:53,177 - INFO - Serving file T3142_v2.jpg
+2024-08-06 22:48:53,230 - INFO - Serving file T3142.jpg
+2024-08-06 22:49:07,365 - INFO - Excel HTML and sheet data s1112 generated for nicye
+2024-08-06 22:49:07,680 - INFO - Serving file S1112.jpg
+2024-08-06 22:49:37,333 - INFO - Excel HTML and sheet data l1830 generated for nicye
+2024-08-06 22:49:37,644 - INFO - Serving file L1830_v2.jpg
+2024-08-06 22:49:37,648 - INFO - Serving file L1830.jpg
+2024-08-06 22:49:41,355 - ERROR - 165.232.33.127 - - [06/Aug/2024 22:49:41] code 400, message Bad request version ('Tz{£í\x94ã:Ã£x%\x90o¾µ\x92ÕÍè\x0f\x8bN\x95\x00\x01<Ì\x14Ì\x13Ì\x15À0À,À(À$À\x14À')
+2024-08-06 22:50:15,831 - INFO - Excel HTML and sheet data es1386 generated for nicye
+2024-08-06 22:50:16,142 - INFO - Serving file ES1386.jpg
+2024-08-06 22:51:25,912 - INFO - Excel HTML and sheet data es1386 generated for nicye
+2024-08-06 22:51:26,226 - INFO - Serving file ES1386.jpg
+2024-08-06 22:53:42,542 - INFO - Excel HTML and sheet data l1790 generated for nicye
+2024-08-06 22:53:42,851 - INFO - Serving file L1790.jpg
+2024-08-06 22:57:20,874 - INFO - Excel HTML and sheet data en2008 generated for nicye
+2024-08-06 22:57:21,244 - INFO - Serving file EN2008.jpg
+2024-08-06 22:59:39,652 - INFO - Excel HTML and sheet data el1855 generated for nicye
+2024-08-06 22:59:39,975 - INFO - Serving file EL1855.jpg
+2024-08-06 23:00:05,807 - INFO - Excel HTML and sheet data es1421 generated for nicye
+2024-08-06 23:00:06,286 - INFO - Serving file ES1421.jpg
+2024-08-06 23:02:11,193 - ERROR - 167.94.138.121 - - [06/Aug/2024 23:02:11] code 400, message Bad request version ('À\x14À')
+2024-08-06 23:26:10,568 - ERROR - 185.224.128.17 - - [06/Aug/2024 23:26:10] code 400, message Bad request syntax ('\x05\x01\x00')
+2024-08-06 23:26:10,570 - ERROR - 185.224.128.17 - - [06/Aug/2024 23:26:10] code 400, message Bad request syntax ('\x04\x01\x00P\x00\x00\x00\x01\x00example.com\x00')
+2024-08-06 23:27:24,341 - ERROR - 5.8.11.202 - - [06/Aug/2024 23:27:24] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-07 01:19:38,199 - ERROR - 35.203.211.116 - - [07/Aug/2024 01:19:38] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x88_Ø\x94K\x7f\x81}éå\\Åè¡\x18ªævâW£¤t§Ò/ÈÕ\x8fó\x04\x82')
+2024-08-07 01:19:38,483 - ERROR - 35.203.211.116 - - [07/Aug/2024 01:19:38] code 400, message Bad request version ('À(À$À\x14À')
+2024-08-07 01:24:41,991 - INFO - Excel HTML and sheet data s1146 generated for ahua
+2024-08-07 01:25:03,411 - INFO - Serving file S1146.jpg
+2024-08-07 01:25:03,892 - INFO - Serving file S1146_v2.jpg
+2024-08-07 02:04:54,594 - INFO - Excel HTML and sheet data s1146 generated for ahua
+2024-08-07 02:04:57,282 - INFO - Serving file S1146.jpg
+2024-08-07 02:04:57,350 - INFO - Serving file S1146_v2.jpg
+2024-08-07 02:13:11,577 - INFO - Excel HTML and sheet data en1789 generated for ahua
+2024-08-07 02:13:30,978 - INFO - Serving file EN1789.jpg
+2024-08-07 02:15:42,780 - INFO - Excel HTML and sheet data en1789 generated for ahua
+2024-08-07 02:16:02,785 - INFO - Serving file EN1789.jpg
+2024-08-07 02:43:11,432 - INFO - Excel HTML and sheet data s1291 generated for ahua
+2024-08-07 02:43:30,163 - INFO - Serving file S1291.jpg
+2024-08-07 02:43:30,164 - INFO - Serving file S1291_v2.jpg
+2024-08-07 02:45:57,910 - INFO - Excel HTML and sheet data s1291 generated for ahua
+2024-08-07 02:46:18,435 - INFO - Serving file S1291.jpg
+2024-08-07 02:46:18,949 - INFO - Serving file S1291_v2.jpg
+2024-08-07 03:11:05,793 - ERROR - 64.62.197.145 - - [07/Aug/2024 03:11:05] code 400, message Bad request version ('À\x14À')
+2024-08-07 04:10:16,461 - ERROR - 80.82.77.202 - - [07/Aug/2024 04:10:16] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-07 05:06:31,203 - ERROR - 167.94.146.51 - - [07/Aug/2024 05:06:31] code 505, message Invalid HTTP version (2.0)
+2024-08-07 05:06:36,584 - ERROR - 167.94.146.51 - - [07/Aug/2024 05:06:36] code 505, message Invalid HTTP version (2.0)
+2024-08-07 09:40:35,775 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 09:40:45,702 - INFO - yeti downloaded one images of s1424
+2024-08-07 09:40:49,898 - INFO - yeti downloaded all images of s1424
+2024-08-07 09:41:47,363 - INFO - Excel HTML and sheet data l1870 generated for yeti
+2024-08-07 09:41:47,405 - INFO - Serving file L1870.jpg
+2024-08-07 10:10:07,734 - INFO - User derrick has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 10:10:24,647 - INFO - Excel HTML and sheet data s1426 generated for derrick
+2024-08-07 10:10:24,783 - INFO - Serving file S1426.jpg
+2024-08-07 10:10:35,273 - INFO - Excel HTML and sheet data s1424 generated for derrick
+2024-08-07 10:10:35,371 - INFO - Serving file S1424.jpg
+2024-08-07 10:15:45,798 - INFO - Excel HTML and sheet data es134 generated for derrick
+2024-08-07 10:15:52,412 - INFO - Excel HTML and sheet data es1134 generated for derrick
+2024-08-07 10:15:52,510 - INFO - Serving file ES1134.jpg
+2024-08-07 10:42:18,441 - INFO - Excel HTML and sheet data s1424 generated for yeti
+2024-08-07 10:42:18,518 - INFO - Serving file S1424.jpg
+2024-08-07 10:43:17,912 - INFO - Excel HTML and sheet data es1134 cf generated for yeti
+2024-08-07 10:43:21,478 - INFO - Excel HTML and sheet data es1134 generated for yeti
+2024-08-07 10:43:21,513 - INFO - Serving file ES1134.jpg
+2024-08-07 10:43:48,378 - INFO - Serving file ES1134.jpg
+2024-08-07 10:43:51,439 - INFO - Serving file ES1134v2.jpg
+2024-08-07 10:49:08,160 - INFO - autobots, roll out!
+2024-08-07 10:49:09,338 - INFO - autobots, roll out!
+2024-08-07 10:49:38,025 - INFO - autobots, roll out!
+2024-08-07 10:49:39,227 - INFO - autobots, roll out!
+2024-08-07 10:51:37,534 - INFO - derrick executed a custom SQL query: select * from dbo.ord_log where prod_cd like 'S1424'
+2024-08-07 10:51:37,579 - INFO - select * from dbo.ord_log where prod_cd like 'S1424'
+2024-08-07 10:51:40,766 - INFO - derrick executed a custom SQL query: select * from dbo.ord_log where prod_cd like 'S1424'
+2024-08-07 10:51:40,821 - INFO - select * from dbo.ord_log where prod_cd like 'S1424'
+2024-08-07 10:51:42,443 - INFO - derrick executed a custom SQL query: select * from dbo.ord_log where prod_cd like 'S1424'
+2024-08-07 10:51:42,452 - INFO - select * from dbo.ord_log where prod_cd like 'S1424'
+2024-08-07 10:51:54,312 - INFO - derrick executed a custom SQL query: select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 10:51:54,340 - INFO - select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 10:52:45,643 - INFO - derrick submitted an order lookup
+2024-08-07 10:52:45,644 - INFO - derrick is looking up order number: 32146
+2024-08-07 10:52:45,672 - INFO - derrick searched for order number: 32146
+2024-08-07 10:53:45,982 - INFO - Excel HTML and sheet data s1424 generated for derrick
+2024-08-07 10:53:46,120 - INFO - Serving file S1424.jpg
+2024-08-07 10:55:51,110 - INFO - Excel HTML and sheet data n0370 generated for derrick
+2024-08-07 10:55:51,204 - INFO - Serving file N0370.jpg
+2024-08-07 11:40:29,295 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Opera 112.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 11:43:11,437 - INFO - autobots, roll out!
+2024-08-07 11:43:12,841 - INFO - autobots, roll out!
+2024-08-07 11:44:43,473 - INFO - autobots, roll out!
+2024-08-07 11:44:44,839 - INFO - autobots, roll out!
+2024-08-07 11:45:10,609 - INFO - autobots, roll out!
+2024-08-07 11:45:12,037 - INFO - autobots, roll out!
+2024-08-07 11:45:30,006 - INFO - autobots, roll out!
+2024-08-07 11:45:30,094 - INFO - autobots, roll out!
+2024-08-07 11:45:30,345 - INFO - autobots, roll out!
+2024-08-07 11:45:30,354 - INFO - autobots, roll out!
+2024-08-07 11:46:59,948 - INFO - autobots, roll out!
+2024-08-07 11:47:04,462 - INFO - autobots, roll out!
+2024-08-07 11:48:19,598 - INFO - User yeti has logged in. IP: 192.168.254.30, Browser: Opera 112.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://192.168.254.30:5555/login, Referrer: http://192.168.254.30:5555/login, Query Params: ImmutableMultiDict([])
+2024-08-07 11:50:23,454 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 11:51:49,311 - INFO - Running fast script
+2024-08-07 11:51:53,497 - INFO - Timestamp 2024/08/07 - 11:51:53 updated successfully.
+2024-08-07 11:52:01,841 - INFO - Inventory data at 2024/08/07 - 11:52:01:
+2024-08-07 12:02:41,375 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:02:41] code 400, message Bad request version ('RTSP/1.0')
+2024-08-07 12:02:46,377 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:02:46] code 400, message Bad HTTP/0.9 request type ('l\x00')
+2024-08-07 12:02:46,389 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:02:46] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+2024-08-07 12:02:46,401 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:02:46] code 400, message Bad request version ('\x00/\x00')
+2024-08-07 12:03:03,519 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:03] code 400, message Bad request version ('RTSP/1.0')
+2024-08-07 12:03:05,160 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:05] code 400, message Bad HTTP/0.9 request type ('l\x00')
+2024-08-07 12:03:05,163 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:05] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+2024-08-07 12:03:05,164 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:05] code 400, message Bad request version ('\x00/\x00')
+2024-08-07 12:03:31,640 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:31] code 400, message Bad request version ('RTSP/1.0')
+2024-08-07 12:03:36,641 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:36] code 400, message Bad HTTP/0.9 request type ('l\x00')
+2024-08-07 12:03:36,662 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:36] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+2024-08-07 12:03:36,664 - ERROR - 173.198.50.202 - - [07/Aug/2024 12:03:36] code 400, message Bad request version ('\x00/\x00')
+2024-08-07 12:21:03,369 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 12:27:13,370 - INFO - User yeti has logged in. IP: 192.168.254.70, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://192.168.254.30:5555/login, Referrer: http://192.168.254.30:5555/login, Query Params: ImmutableMultiDict([])
+2024-08-07 12:38:28,203 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 12:39:57,192 - INFO - autobots, roll out!
+2024-08-07 12:40:07,690 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+autobots, roll out!
+autobots, roll out!
+User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+autobots, roll out!
+autobots, roll out!
+User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+autobots, roll out!
+autobots, roll out!
+autobots, roll out!
+User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 12:51:35,759 - INFO - autobots, roll out!
+2024-08-07 12:52:03,185 - INFO - autobots, roll out!
+2024-08-07 12:52:08,521 - INFO - autobots, roll out!
+2024-08-07 12:52:10,937 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 12:52:18,066 - INFO - yeti executed a custom SQL query: select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:52:18,137 - INFO - select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:52:39,057 - INFO - yeti executed a custom SQL query: select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:52:39,075 - INFO - select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:57:10,880 - INFO - yeti executed a custom SQL query: select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:57:10,901 - INFO - select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:57:15,822 - INFO - yeti executed a custom SQL query: select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:57:15,839 - INFO - select * from dbo.ord_log where prod_cd='S1424 OW'
+2024-08-07 12:57:28,276 - INFO - yeti executed a custom SQL query: select * from dbo.ord_log where prod_cd=S1424 OW
+2024-08-07 12:57:28,279 - ERROR - An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'OW'. (102) (SQLExecDirectW)")
+2024-08-07 13:02:45,062 - INFO - autobots, roll out!
+2024-08-07 13:02:48,311 - INFO - autobots, roll out!
+2024-08-07 13:03:16,706 - INFO - autobots, roll out!
+2024-08-07 13:03:51,129 - INFO - autobots, roll out!
+2024-08-07 13:04:03,428 - INFO - autobots, roll out!
+2024-08-07 13:04:25,737 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 13:05:13,148 - INFO - yeti executed a custom SQL query: select * from dbo.ord_log where ord_num=1550
+2024-08-07 13:05:13,196 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 13:05:13,197 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 13:05:20,053 - INFO - yeti executed a custom SQL query: select * from dbo.ord_log where ord_numf=1550
+2024-08-07 13:05:20,055 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 13:05:20,056 - INFO - select * from dbo.ord_log where ord_numf=1550
+2024-08-07 13:09:25,288 - INFO - autobots, roll out!
+2024-08-07 13:09:33,147 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 13:10:23,332 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1550
+2024-08-07 13:10:23,380 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 13:10:23,380 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 13:10:30,649 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1550
+2024-08-07 13:10:30,651 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 13:10:30,652 - INFO - select * from dbo.ord_log where ord_numf=1550
+2024-08-07 14:04:06,206 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 14:04:11,603 - INFO - Excel HTML and sheet data es1134 generated for yeti
+2024-08-07 14:04:11,697 - INFO - Serving file ES1134.jpg
+2024-08-07 14:05:57,914 - INFO - Serving file ES1134.jpg
+2024-08-07 15:40:39,036 - INFO - autobots, roll out!
+2024-08-07 15:40:40,224 - INFO - autobots, roll out!
+2024-08-07 16:20:46,476 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:29:59,490 - INFO - autobots, roll out!
+2024-08-07 16:30:01,698 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:30:14,953 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num>1550
+2024-08-07 16:30:50,574 - ERROR - An error occurred: T1008 ST            cannot be used in worksheets.
+2024-08-07 16:30:50,987 - INFO - select * from dbo.ord_log where ord_num>1550
+2024-08-07 16:31:37,590 - INFO - Excel HTML and sheet data t1008 generated for yetimaster
+2024-08-07 16:31:43,589 - INFO - Excel HTML and sheet data t1008 generated for yetimaster
+2024-08-07 16:32:38,906 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num>1550
+2024-08-07 16:32:47,058 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:32:48,659 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:32:48,703 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:33:13,617 - ERROR - An error occurred: T1008 ST            cannot be used in worksheets.
+2024-08-07 16:33:14,020 - INFO - select * from dbo.ord_log where ord_num>1550
+2024-08-07 16:35:43,987 - INFO - autobots, roll out!
+2024-08-07 16:36:29,457 - INFO - autobots, roll out!
+2024-08-07 16:36:33,786 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:36:37,595 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 715, in custom_query
+    df = dropna(how='all')
+         ^^^^^^^^^^^^^^^^^
+NameError: name 'dropna' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-07 16:37:11,873 - INFO - autobots, roll out!
+2024-08-07 16:37:16,068 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:39:53,908 - INFO - autobots, roll out!
+2024-08-07 16:40:05,617 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:40:57,875 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:40:57,924 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:40:57,924 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:41:00,606 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:41:00,608 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:41:00,608 - INFO - select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:41:10,545 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:41:10,546 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:41:10,547 - INFO - select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:41:15,387 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:41:15,389 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:41:15,389 - INFO - select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:41:28,506 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1551
+2024-08-07 16:41:28,508 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:41:28,509 - INFO - select * from dbo.ord_log where ord_numf=1551
+2024-08-07 16:41:28,547 - ERROR - 185.224.3.4 - - [07/Aug/2024 16:41:28] code 400, message Bad request version ('\x00\x04\x03\x00\x01\x02\x00')
+2024-08-07 16:41:35,111 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:41:35,129 - INFO - select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:41:35,129 - INFO - select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:44:02,400 - INFO - autobots, roll out!
+2024-08-07 16:45:59,044 - INFO - autobots, roll out!
+2024-08-07 16:46:00,157 - INFO - autobots, roll out!
+2024-08-07 16:46:04,759 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:46:23,643 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:46:23,675 - INFO - select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:46:23,675 - INFO - select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:46:28,383 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:46:28,391 - INFO - select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:46:28,391 - INFO - select * from dbo.ord_log where ord_num=1440
+2024-08-07 16:46:36,321 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:46:36,349 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:46:36,349 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:46:46,778 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1552
+2024-08-07 16:46:46,807 - INFO - select * from dbo.ord_log where ord_num=1552
+2024-08-07 16:46:46,808 - INFO - select * from dbo.ord_log where ord_num=1552
+2024-08-07 16:46:52,742 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:46:52,767 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:46:52,767 - INFO - select * from dbo.ord_log where ord_num=1550
+2024-08-07 16:46:55,696 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:46:55,697 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:46:55,699 - INFO - select * from dbo.ord_log where ord_numf=1550
+2024-08-07 16:47:15,347 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1552
+2024-08-07 16:47:15,349 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:47:15,350 - INFO - select * from dbo.ord_log where ord_numf=1552
+2024-08-07 16:47:17,750 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1552
+2024-08-07 16:47:17,751 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:47:17,752 - INFO - select * from dbo.ord_log where ord_numf=1552
+2024-08-07 16:47:29,127 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numkf=1552
+2024-08-07 16:47:29,130 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numkf'. (207) (SQLExecDirectW)")
+2024-08-07 16:47:29,131 - INFO - select * from dbo.ord_log where ord_numkf=1552
+2024-08-07 16:48:56,270 - INFO - autobots, roll out!
+2024-08-07 16:49:40,710 - INFO - autobots, roll out!
+2024-08-07 16:49:43,607 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:49:47,253 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numkf=1552
+2024-08-07 16:49:47,272 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numkf'. (207) (SQLExecDirectW)")
+2024-08-07 16:49:47,272 - INFO - select * from dbo.ord_log where ord_numkf=1552
+2024-08-07 16:49:50,076 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1552
+2024-08-07 16:49:50,079 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:49:50,079 - INFO - select * from dbo.ord_log where ord_numf=1552
+2024-08-07 16:49:53,570 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:49:53,572 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:49:53,573 - INFO - select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:50:08,799 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:50:08,801 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:50:08,802 - INFO - select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:50:10,345 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:50:10,346 - ERROR - An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:50:10,347 - INFO - select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:52:56,932 - INFO - autobots, roll out!
+2024-08-07 16:53:02,139 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:53:04,605 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:53:04,626 - ERROR - select * from dbo.ord_log where ord_numf=1556 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:53:04,627 - INFO - select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:53:09,856 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:53:09,890 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:53:09,890 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:55:22,829 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:55:22,861 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:55:22,861 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:55:30,013 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:55:30,042 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:55:30,042 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:55:33,031 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:55:33,033 - ERROR - select * from dbo.ord_log where ord_numf=1556 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:55:33,034 - INFO - select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:55:46,725 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:55:46,727 - ERROR - select * from dbo.ord_log where ord_numf=1556 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numf'. (207) (SQLExecDirectW)")
+2024-08-07 16:55:46,728 - INFO - select * from dbo.ord_log where ord_numf=1556
+2024-08-07 16:57:03,373 - INFO - autobots, roll out!
+2024-08-07 16:57:16,667 - INFO - autobots, roll out!
+2024-08-07 16:58:02,737 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 16:58:05,306 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 16:58:05,359 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 16:58:05,359 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 16:58:12,271 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 16:58:12,300 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 16:58:12,300 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 16:58:17,477 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numc=1556
+
+2024-08-07 16:58:17,480 - ERROR - select * from dbo.ord_log where ord_numc=1556
+ | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numc'. (207) (SQLExecDirectW)")
+2024-08-07 16:58:17,481 - INFO - select * from dbo.ord_log where ord_numc=1556
+
+2024-08-07 16:58:31,593 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numc=1556
+2024-08-07 16:58:31,595 - ERROR - select * from dbo.ord_log where ord_numc=1556 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numc'. (207) (SQLExecDirectW)")
+2024-08-07 16:58:31,596 - INFO - select * from dbo.ord_log where ord_numc=1556
+2024-08-07 16:58:34,634 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numc=1556
+2024-08-07 16:58:34,636 - ERROR - select * from dbo.ord_log where ord_numc=1556 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numc'. (207) (SQLExecDirectW)")
+2024-08-07 16:58:34,637 - INFO - select * from dbo.ord_log where ord_numc=1556
+2024-08-07 16:58:41,592 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_numc=1556
+2024-08-07 16:58:41,594 - ERROR - select * from dbo.ord_log where ord_numc=1556 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_numc'. (207) (SQLExecDirectW)")
+2024-08-07 16:58:41,595 - INFO - select * from dbo.ord_log where ord_numc=1556
+2024-08-07 16:59:29,259 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:59:29,286 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:59:29,286 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:59:31,269 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:59:31,303 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:59:31,303 - INFO - select * from dbo.ord_log where ord_num=1556
+2024-08-07 16:59:36,065 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1557
+2024-08-07 16:59:36,089 - INFO - select * from dbo.ord_log where ord_num=1557
+2024-08-07 16:59:36,089 - INFO - select * from dbo.ord_log where ord_num=1557
+2024-08-07 16:59:39,113 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1558
+2024-08-07 16:59:39,138 - INFO - select * from dbo.ord_log where ord_num=1558
+2024-08-07 16:59:39,138 - INFO - select * from dbo.ord_log where ord_num=1558
+2024-08-07 16:59:44,007 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ddord_num=1558
+2024-08-07 16:59:44,009 - ERROR - select * from dbo.ord_log where ddord_num=1558 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ddord_num'. (207) (SQLExecDirectW)")
+2024-08-07 16:59:44,010 - INFO - select * from dbo.ord_log where ddord_num=1558
+2024-08-07 17:02:47,593 - INFO - autobots, roll out!
+2024-08-07 17:02:53,052 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 17:02:57,184 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ddord_num=1558
+2024-08-07 17:02:57,204 - ERROR - select * from dbo.ord_log where ddord_num=1558 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ddord_num'. (207) (SQLExecDirectW)")
+2024-08-07 17:02:57,205 - INFO - select * from dbo.ord_log where ddord_num=1558
+2024-08-07 17:03:33,290 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ddord_num=1558
+2024-08-07 17:03:33,292 - ERROR - select * from dbo.ord_log where ddord_num=1558 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ddord_num'. (207) (SQLExecDirectW)")
+2024-08-07 17:03:33,293 - INFO - select * from dbo.ord_log where ddord_num=1558
+2024-08-07 17:03:39,223 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ddorfsafd_num=1558
+2024-08-07 17:03:39,224 - ERROR - select * from dbo.ord_log where ddorfsafd_num=1558 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ddorfsafd_num'. (207) (SQLExecDirectW)")
+2024-08-07 17:03:39,225 - INFO - select * from dbo.ord_log where ddorfsafd_num=1558
+2024-08-07 17:03:42,097 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ddorfsafd_num=1558
+2024-08-07 17:03:42,099 - ERROR - select * from dbo.ord_log where ddorfsafd_num=1558 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ddorfsafd_num'. (207) (SQLExecDirectW)")
+2024-08-07 17:03:42,101 - INFO - select * from dbo.ord_log where ddorfsafd_num=1558
+2024-08-07 17:03:56,062 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 17:03:56,093 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 17:03:56,093 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 17:03:59,917 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 17:03:59,943 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 17:03:59,943 - INFO - select * from dbo.ord_log where ord_num=1556
+
+2024-08-07 17:04:03,960 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheres ord_num=1556
+
+2024-08-07 17:04:03,968 - ERROR - select * from dbo.ord_log wheres ord_num=1556
+ | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:04:03,969 - INFO - select * from dbo.ord_log wheres ord_num=1556
+
+2024-08-07 17:04:11,911 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:11,913 - ERROR - select * from dbo.ord_log wheres ord_num=1556 | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:04:11,913 - INFO - select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:14,310 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:14,312 - ERROR - select * from dbo.ord_log wheres ord_num=1556 | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:04:14,313 - INFO - select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:15,117 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:15,118 - ERROR - select * from dbo.ord_log wheres ord_num=1556 | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:04:15,119 - INFO - select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:22,219 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:22,220 - ERROR - select * from dbo.ord_log wheres ord_num=1556 | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:04:22,221 - INFO - select * from dbo.ord_log wheres ord_num=1556
+2024-08-07 17:04:25,308 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheress ord_num=1556
+2024-08-07 17:04:25,309 - ERROR - select * from dbo.ord_log wheress ord_num=1556 | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:04:25,310 - INFO - select * from dbo.ord_log wheress ord_num=1556
+2024-08-07 17:05:23,549 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheress ord_num=1556
+2024-08-07 17:05:23,551 - ERROR - select * from dbo.ord_log wheress ord_num=1556 | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:05:23,552 - INFO - select * from dbo.ord_log wheress ord_num=1556
+2024-08-07 17:06:18,763 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log wheress ord_num=1556
+2024-08-07 17:06:18,764 - ERROR - select * from dbo.ord_log wheress ord_num=1556 | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'ord_num'. (102) (SQLExecDirectW)")
+2024-08-07 17:06:18,765 - INFO - select * from dbo.ord_log wheress ord_num=1556
+2024-08-07 17:07:30,829 - INFO - autobots, roll out!
+2024-08-07 17:07:31,918 - INFO - autobots, roll out!
+2024-08-07 17:07:38,010 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-07 17:07:48,769 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ddord_num=1558
+2024-08-07 17:07:48,789 - ERROR - select * from dbo.ord_log where ddord_num=1558 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ddord_num'. (207) (SQLExecDirectW)")
+2024-08-07 17:07:55,566 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1558
+2024-08-07 17:07:55,593 - INFO - select * from dbo.ord_log where ord_num=1558
+2024-08-07 17:08:03,275 - INFO - autobots, roll out!

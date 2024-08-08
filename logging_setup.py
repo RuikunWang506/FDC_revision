@@ -1,3 +1,4 @@
+# logging_setup.py
 import logging
 
 def configure_logging(app):
@@ -13,6 +14,7 @@ def configure_logging(app):
     file_handler.setLevel(log_level)
     console_handler.setLevel(log_level)
 
+    # Standard log formatter
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
@@ -27,13 +29,21 @@ def configure_logging(app):
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-    # Custom logger for SQL queries
+    # Custom logger for SQL queries without date, time, and log level
     query_logger = logging.getLogger('query_logger')
     query_logger.setLevel(logging.INFO)
     query_file_handler = logging.FileHandler('query_log.txt')
     query_file_handler.setLevel(logging.INFO)
-    query_file_handler.setFormatter(formatter)
+    query_formatter = logging.Formatter('%(message)s')
+    query_file_handler.setFormatter(query_formatter)
     query_logger.addHandler(query_file_handler)
 
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
+
+def log_query(query, error_message=None):
+    query_logger = logging.getLogger('query_logger')
+    separator = " | ERROR: "
+    if error_message:
+        query_logger.error(f"{query}{separator}{error_message}")
+    

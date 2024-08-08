@@ -1,3 +1,4 @@
+# custom_query.py
 import os
 import pyodbc
 import pandas as pd
@@ -26,10 +27,6 @@ def execute_custom_query(sql_query, database_name):
         columns = [column[0] for column in cursor.description]
         data = cursor.fetchall()
 
-        # Debugging: Print the shape of data and columns
-        print(f"Data shape: {len(data)} rows, {len(data[0]) if data else 0} columns")
-        print(f"Columns: {columns}")
-
         # Ensure the number of columns in the data matches the columns list
         if data and len(data[0]) != len(columns):
             raise ValueError(f"Number of columns in data ({len(data[0])}) does not match the number of columns ({len(columns)})")
@@ -51,12 +48,13 @@ def execute_custom_query(sql_query, database_name):
         df.to_excel(file_path, index=False)
         excel_html = df.to_html(classes='table table-bordered table-striped', escape=False)
 
-        # Log the query to query_log.txt using the custom logger
-        query_logger.info(f"{sql_query}")
-        
+        # Log the successful query
+        query_logger.info(sql_query)
+
         return excel_html, None
 
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
-        query_logger.error(error_message)
+        # Log the query and the error message together with a separator
+        query_logger.error(f"{sql_query} | ERROR: {error_message}")
         return None, error_message

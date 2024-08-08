@@ -21,7 +21,38 @@
             border: 1px solid #ccc;
             overflow-y: auto;
             box-sizing: border-box;
-            height: 100%;  /* Ensure it takes full height */
+            height: 100%;
+        }
+        .query-log ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        .query-log li {
+            margin-bottom: 5px;
+            position: relative;
+            width: 100%;
+        }
+        .query-log .error-tooltip {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #f44336;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            white-space: normal; /* Allow wrapping of text */
+            z-index: 1;
+            width: 300px; /* Set a fixed width of 300px */
+            box-sizing: border-box; /* Ensure padding is included in the width */
+            overflow-wrap: break-word; /* Ensure long words break to fit within the tooltip */
+        }
+        .query-log li.error:hover .error-tooltip {
+            display: block;
+        }
+        .query-log li.success {
+            background-color: #d4edda;
+            cursor: pointer;
         }
         .sql-input {
             flex: 1;
@@ -39,7 +70,7 @@
         .sql-input .form-group textarea {
             flex-grow: 1;
             resize: none;
-            height: calc(100% - 315px) !important; /* 300px for buttons and 15px for margin */
+            height: calc(100% - 315px) !important;
             margin-bottom: 15px;
         }
         .btn-group {
@@ -58,10 +89,6 @@
             border: 1px solid #ccc;
             margin-top: 20px;
         }
-        .query-log .highlight {
-            background-color: #ffff99;
-            cursor: pointer;
-        }
         .query-log-header {
             display: flex;
             justify-content: space-between;
@@ -79,12 +106,13 @@
             </div>
             <ul id="log_content">
                 {% if log_content %}
-                    {% for line in log_content %}
-                        {% set parts = line.split(' - INFO - ') %}
-                        {% if parts|length == 2 %}
-                            <li>{{ parts[0] }} - INFO - <span class="highlight" onclick="setQuery('{{ parts[1] }}')">{{ parts[1] }}</span></li>
+                    {% set unique_lines = log_content|unique %}
+                    {% for line in unique_lines %}
+                        {% set parts = line.split(' | ERROR: ') %}
+                        {% if parts|length > 1 %}
+                            <li class="error">{{ parts[0] }}<span class="error-tooltip">{{ parts[1] }}</span></li>
                         {% else %}
-                            <li>{{ line }}</li>
+                            <li class="success" onclick="setQuery('{{ line }}')">{{ line }}</li>
                         {% endif %}
                     {% endfor %}
                 {% else %}
@@ -148,12 +176,13 @@
             url: '/query_log',
             type: 'GET',
             success: function(data) {
-                var logContent = data.log_content.map(function(line) {
-                    var parts = line.split(' - INFO - ');
-                    if (parts.length === 2) {
-                        return '<li>' + parts[0] + ' - INFO - ' + '<span class="highlight" onclick="setQuery(\'' + parts[1].replace(/'/g, "\\'") + '\')">' + parts[1] + '</span>' + '</li>';
+                var uniqueLines = Array.from(new Set(data.log_content));
+                var logContent = uniqueLines.map(function(line) {
+                    var parts = line.split(' | ERROR: ');
+                    if (parts.length > 1) {
+                        return '<li class="error">' + parts[0] + '<span class="error-tooltip">' + parts[1].replace(/'/g, "\\'") + '</span></li>';
                     } else {
-                        return '<li>' + line + '</li>';
+                        return '<li class="success" onclick="setQuery(\'' + line.replace(/'/g, "\\'") + '\')">' + line + '</li>';
                     }
                 }).join('');
                 $('#log_content').html(logContent);
