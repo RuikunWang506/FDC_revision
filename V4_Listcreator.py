@@ -9,7 +9,7 @@ from openpyxl.styles import Alignment, Border, Side, PatternFill
 import io
 
 source_folder = r"D:\Catalog_pictures\catalog_resized\\"
-user_input = "N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513"
+user_input = "N2189,T2737,T3373,N1790,EN2329,N2112,N1871,T3391,N2266,T3352,T3351,T3455,T3454,L1875,L1873,L1874,L1871,L1858,T3405,T3405,T3405,ET3428,ET3142,ET3142,ET3426,ET3426"
 formatted_date = ""
 
 def main():

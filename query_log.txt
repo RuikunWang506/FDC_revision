@@ -1,2 +1,29 @@
 select * from dbo.ord_log where ddord_num=1558 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ddord_num'. (207) (SQLExecDirectW)")
 select * from dbo.ord_log where ord_num=1558
+select * from dbo.ord_log where prod_cd='N2013'
+select * from dbo.ord_log where ord_num=1558
+select * from dbo.ord_log where ord_num=1558
+select * from dbo.ord_log where prod_cd like 'N2013%'
+select * from dbo.ord_log where prod_cd like 't3116%'
+select * from dbo.ord_log where prod_cd like 'es1386%'
+select * from dbo.ord_log where prod_cd like 'es1386%';
+select * from dbo.ord_log where prod_cd like 'es1386%'
+
+select * from dbo.ord_log where prod_cd like 'es1386%';
+select * from dbo.ord_log where prod_cd like 'S1412%'
+
+select * from dbo.ord_log where prod_cd like 'es1386%';
+select * from dbo.ord_log where prod_cd like 'S1412%';
+
+
+select * from dbo.ord_log where prod_cd like 'S1412%';
+
+select * from dbo.ord_log where prod_cd like es1386% | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near '%'. (102) (SQLExecDirectW)")
+select * from dbo.ord_log where prod_cd like 'es1386%'
+select * from dbo.ord_log where prod_cd like 'es1414%'
+select * from dbo.ord_log where prod_cd like 't3142%'
+select * from dbo.ord_log where prod_cd like 't3142%'
+select * from dbo.ord_log where prod_cd like 'et2953%'
+select * from dbo.ord_log where prod_cd like 's1460%'
+select * from dbo.ord_log where prod_cd like 's1460%'
+select * from dbo.ord_log where prod_cd like 's1460%'

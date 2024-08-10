@@ -172,14 +172,17 @@ def register_routes(app):
 
         if not user_input:
             _, e1_value = get_sheet_data_and_e1_value('')
-            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value)
+            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user)
 
         if user_input.endswith(","):
             user_input = user_input[:-1]
 
+        # Generate Excel and image URLs
         excel_html, image_urls = SQL_connector.generate_excel(user_input)
+        
         search_terms = [term.strip() for term in user_input.split(",")]
 
+        # Get filenames matching the search terms
         file_names = []
         for term in search_terms:
             for filename in os.listdir(Config.CATALOG_ORIGINAL):
@@ -191,12 +194,13 @@ def register_routes(app):
                 if filename.lower().startswith(term) and filename not in file_names:
                     file_names.append(filename)
 
+        # Get file information
         file_info = []
         for filename in file_names:
             original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
             resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
             file_path = original_path if os.path.exists(original_path) else resized_path
-            
+
             if os.path.exists(file_path):
                 size = os.path.getsize(file_path)
                 modified_time = os.path.getmtime(file_path)
@@ -206,6 +210,8 @@ def register_routes(app):
         if excel_html:
             df = pd.read_html(StringIO(excel_html))[0]
             sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+
+            # Normalize sheet data to ensure all rows have the same number of columns
             max_length = max(len(row) for row in sheet_data)
             sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
             df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
@@ -215,10 +221,22 @@ def register_routes(app):
 
             sorted_file_names = sort_filenames(file_names)
             sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
-            excel_html = df.to_html(classes='table', escape=False)
-            sheet_data_html = df2.to_html(classes='table', escape=False)
-            app.logger.info("Excel HTML and sheet data %s generated for %s", user_input, current_user)
-            return render_template("Item_lookup.html", excel_html=excel_html, image_urls=sorted_image_urls, file_names=sorted_file_names, file_info=file_info, sheet_data=sheet_data_html, current_user=current_user, e1_value=e1_value)
+
+            # Convert DataFrames back to HTML
+            excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
+            sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
+
+            app.logger.info("Excel HTML and sheet data generated for %s", current_user)
+            return render_template(
+                "Item_lookup.html",
+                excel_html=excel_html,
+                image_urls=sorted_image_urls,
+                file_names=sorted_file_names,
+                file_info=file_info,
+                sheet_data=sheet_data_html,
+                current_user=current_user,
+                e1_value=e1_value
+            )
         else:
             _, e1_value = get_sheet_data_and_e1_value('')
             return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user)
@@ -510,6 +528,11 @@ def register_routes(app):
     def serve_file2(path):
         app.logger.info("Serving file %s", path)
         return send_from_directory(Config.CATALOG_ORIGINAL, path, as_attachment=False)
+    
+    @app.route('/public/<path:path>', methods=['GET'])
+    def serve_file_pub(path):
+        app.logger.info("Serving file %s", path)
+        return send_from_directory(Config.FTP, path, as_attachment=True)
 
     @app.route('/download4/<filename>')
     def download_file4(filename):
@@ -789,8 +812,11 @@ def register_routes(app):
                 zf.write(file_path, os.path.basename(file_path))
         
         memory_file.seek(0)
-        app.logger.info("%s downloaded all images of %s",current_user, search_str)
-        return send_file(memory_file, download_name='images.zip', as_attachment=True)
+        app.logger.info("%s downloaded all images of %s", current_user, search_str)
+        
+        # Change the download_name to use search_str.zip
+        zip_filename = f"{search_str}.zip"
+        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
 
     @app.route('/big_img', methods=['GET', 'POST'])
     def big_img():
