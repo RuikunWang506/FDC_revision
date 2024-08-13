@@ -78,10 +78,6 @@ def generate_order(order_number):
             FROM OrderInfo O
             LEFT JOIN dbo.ntfile N ON O.ORD_NUM = N.nt_num
             INNER JOIN OrderDates OD ON O.ORD_NUM = OD.ord_num;
-
-
-
-
             """
         
         # Create a Pandas DataFrame from the query results

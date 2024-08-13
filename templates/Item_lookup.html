@@ -36,10 +36,12 @@
         }
         .img-container {
             position: relative;
-            display: inline-block;
+            display: block;
+            margin-bottom: 10px; /* Reduced space between images */
         }
         .img-container img {
-            height: 250px;
+            width: 100%;
+            height: auto;
         }
         .hover-msg {
             display: none;
@@ -57,26 +59,42 @@
         .img-container:hover .hover-msg {
             display: block;
         }
+        
         table.dataTable th, table.dataTable td {
             text-align: center;
         }
-
+    
         /* Optional: Center the pagination and search box */
         .dataTables_wrapper .dataTables_filter {
             text-align: center;
         }
-
+    
         .dataTables_wrapper .dataTables_length {
             text-align: center;
         }
-
+    
         .dataTables_wrapper .dataTables_info {
             text-align: center;
         }
-
+    
         .dataTables_wrapper .dataTables_paginate {
             text-align: center;
         }
+        @media only screen and (max-width: 767px) {
+            .accordion, .card {
+                display: none;
+            }
+            .mobile-content {
+                display: block;
+            }
+        }
+
+        @media only screen and (min-width: 768px) {
+            .mobile-content {
+                display: none;
+            }
+        }
+        
     </style>
 </head>
 <body>
@@ -89,19 +107,25 @@
                 <p>You can put multiple skus like n1223, N1551</p>
                 <p> Do not include color like bk</p>
                 <div class="form-group">
-                    <input type="text" class="form-control" name="user_input" id="user_input" required>
+                    <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}">
                 </div>
                 <button type="submit" class="btn btn-primary">View Result</button>
+                {% if user_input %}
+                <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
+                    Your search input was: <br>{{ user_input }}
+                </p>
+                {% endif %}
             </form>
         </div>
     </div>
     
     {% if image_urls %}
-        <div class="col-10 mx-auto">
-            <div class="d-flex flex-wrap justify-content-center">
-                {% for (image_url, file_info) in image_urls | zip(file_info) %}
-                <div class="img-container text-center" style="flex: 0 0 19%; max-width: 19%; margin: 0.5%;">
-                    <img src="{{ image_url }}" alt="Image" class="img-fluid text-center">
+    <div class="text-center"> <!-- Center the container -->
+        <div class="row justify-content-center"> <!-- Center the row content -->
+            {% for (image_url, file_info) in image_urls | zip(file_info) %}
+            <div class="col-6 col-md-4 col-lg-2 mb-3"> <!-- Adjusted column sizes for 6 per row -->
+                <div class="img-container text-center">
+                    <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block"> <!-- Center the image -->
                     <div class="hover-msg">Download Original Below</div>
                     <p>
                         <a href="http://173.198.50.202/ftp2/{{ file_info[0] }}" target="_blank">{{ file_info[0] }}</a>
@@ -117,13 +141,14 @@
                         {% endif %}
                     </p>
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
         </div>
-    {% endif %}
+    </div>
+{% endif %}
     
     <div class="accordion mt-4" id="dataAccordion">
-
+        
         <!-- OMS Data Section -->
         {% if excel_html %}
         <div class="card">
@@ -133,7 +158,6 @@
                     <i class="ml-2 fas fa-chevron-down"></i> <!-- Arrow icon indicating collapsibility -->
                 </h5>
             </div>
-    
             <div id="collapseOne" class="collapse show" aria-labelledby="headingOne">
                 <div class="card-body">
                     {{ excel_html | safe }}
@@ -159,6 +183,20 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    
+    <!-- Mobile content rendering -->
+    <div class="mobile-content">
+        {% if excel_html %}
+            {{ excel_html | safe }}
+        {% endif %}
+    
+        {% if current_user != 'fdc' %}
+            {% if sheet_data %}
+                <h5 class="text-center">OMS_update: {{ e1_value }}</h5>
+                {{ sheet_data | safe }}
             {% endif %}
         {% endif %}
     </div>

@@ -135,6 +135,29 @@
       border: 1px solid #c6c6c6;
       background-color: #d6d6d6;
     }
+
+    .date-container {
+      display: flex;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+
+    .date-input {
+      width: 40px;
+      text-align: center;
+      margin: 0 2px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .date-input:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
+  
+
   </style>
 </head>
 <body>
@@ -276,6 +299,58 @@
             <span id="calculatorResult" class="result"></span>
           </div>
         </div>
+        <h4>勾股定理（搁浅）</h4>
+         <div class="row">
+            <div class="col-md-3">
+                
+                    <label for="calculatorInput1">side 1</label>
+                    <input type="number" id="calculatorInput1" class="calculator-input" placeholder="Enter first value" oninput="calculateTriangleSide()">
+                
+            </div>
+            <div class="col-md-3">
+                
+                    <label for="calculatorInput2">side 2</label>
+                    <input type="number" id="calculatorInput2" class="calculator-input" placeholder="Enter second value" oninput="calculateTriangleSide()">
+                
+            </div>
+            <div class="col-md-6">
+                
+                    <label for="triangleResult">side 3</label>
+                    <span id="triangleResult" class="result"></span>
+                
+            </div>
+          </div>
+      </div>
+
+      <div class="col-md-6 box text-center">
+        <h4>数据库时间</h4>
+        <div class="form-group">
+          <div class="input-container">
+            <label for="dateconvertInput">81088-</label>
+            <input type="text" id="dateconvertInput" class="dateconvert-input" placeholder="Enter expression" oninput="dateconvert()">
+          </div>
+          <div class="input-container">
+            <label for="dateconvert">result</label>
+            <span id="dateconvert" class="result"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="input-container">
+            <label for="date-container">MM/DD/YYYY</label>
+            <div class="date-container">
+              <input type="number" id="monthInput" class="date-input" placeholder="MM" min="1" max="12" oninput="validateDate()">
+              /
+              <input type="number" id="dayInput" class="date-input" placeholder="DD" min="1" max="31" oninput="validateDate()">
+              /
+              <input type="number" id="yearInput" class="date-input" placeholder="YYYY" maxlength="4">
+            </div>
+          </div>
+          <div class="input-container">
+            <label for="dateToNumberResult">Number Result</label>
+            <span id="dateToNumberResult" class="result"></span>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -367,7 +442,27 @@
       var a = elem.substr(0, length);
       document.getElementById("display").value = a;
     }
+     function calculateTriangleSide() {
+        const input1 = parseFloat(document.getElementById('calculatorInput1').value);
+        const input2 = parseFloat(document.getElementById('calculatorInput2').value);
 
+        if (!isNaN(input1) && !isNaN(input2)) {
+            const result = Math.sqrt(Math.pow(input1, 2) + Math.pow(input2, 2));
+            document.getElementById('triangleResult').innerText = result.toFixed(2);
+        } else {
+            document.getElementById('triangleResult').innerText = '';
+        }
+    }
+
+    function calculateResult() {
+        const expression = document.getElementById('calculatorInput').value;
+        try {
+            const result = eval(expression);
+            document.getElementById('calculatorResult').innerText = result;
+        } catch {
+            document.getElementById('calculatorResult').innerText = 'Invalid expression';
+        }
+    }
     function calculateResult() {
       const calculatorInput = document.getElementById('calculatorInput').value;
       const calculatorResult = document.getElementById('calculatorResult');
@@ -377,7 +472,84 @@
       } catch (error) {
         calculatorResult.textContent = "Error";
       }
+    } 
+    function validateDate() {
+      const monthInput = document.getElementById('monthInput');
+      const dayInput = document.getElementById('dayInput');
+
+      // Pad month and day with leading zero if necessary
+      let month = monthInput.value;
+      let day = dayInput.value;
+
+      if (month < 10 && month.length === 1) month = '0' + month;
+      if (day < 10 && day.length === 1) day = '0' + day;
+
+      monthInput.value = month;
+      dayInput.value = day;
     }
+
+    function resultdataconvert(inputNumber) {
+      const baseDate = new Date('2023-01-01'); // Your base date
+      const offsetDays = inputNumber - 81088; // Subtract the offset from the input
+      const calculatedDate = new Date(baseDate);
+      calculatedDate.setDate(baseDate.getDate() + offsetDays + 1);
+
+      // Extracting the month, day, and year from the calculated date
+      const month = ('0' + (calculatedDate.getMonth() + 1)).slice(-2); // getMonth() is 0-based
+      const day = ('0' + calculatedDate.getDate()).slice(-2);
+      const year = calculatedDate.getFullYear();
+
+      // Return the formatted date as MM/DD/YYYY
+      return month + '/' + day + '/' + year;
+    }
+
+    // The function to convert input number to date and display it
+    function dateconvert() {
+      const dateInput = document.getElementById('dateconvertInput').value;
+      const dateResult = document.getElementById('dateconvert');
+      try {
+        const numericInput = parseInt(dateInput, 10); // Parse the input as an integer
+        const convertedDate = resultdataconvert(numericInput);
+        dateResult.textContent = convertedDate;
+      } catch (error) {
+        dateResult.textContent = "Error";
+      }
+    }
+    function resultdataconvert(inputNumber) {
+      const baseDate = new Date('2023-01-01'); // Your base date
+      const offsetDays = inputNumber - 81088; // Subtract the offset from the input
+      const calculatedDate = new Date(baseDate);
+      calculatedDate.setDate(baseDate.getDate() + offsetDays + 1); // Add 1 to adjust for the discrepancy
+
+      const month = ('0' + (calculatedDate.getMonth() + 1)).slice(-2);
+      const day = ('0' + calculatedDate.getDate()).slice(-2);
+      const year = calculatedDate.getFullYear();
+
+      return month + '/' + day + '/' + year;
+    }
+
+    // Function to convert date input to a number
+    function dateToNumberConvert() {
+      const month = document.getElementById('monthInput').value;
+      const day = document.getElementById('dayInput').value;
+      const year = document.getElementById('yearInput').value;
+      
+      const inputDate = new Date(`${year}-${month}-${day}`);
+      const baseDate = new Date('2023-01-01');
+      
+      const diffTime = Math.abs(inputDate - baseDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const resultNumber = diffDays + 81088; // Add 81088 to get the final number
+      document.getElementById('dateToNumberResult').textContent = resultNumber;
+    }
+
+    // Event listeners to trigger the conversion when user inputs date
+    document.getElementById('monthInput').addEventListener('input', dateToNumberConvert);
+    document.getElementById('dayInput').addEventListener('input', dateToNumberConvert);
+    document.getElementById('yearInput').addEventListener('input', dateToNumberConvert);
+    
+
   </script>
 </body>
 </html>

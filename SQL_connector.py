@@ -166,7 +166,7 @@ def generate_excel(user_input):
         df = pd.read_excel(file_path)
         html_table = df.to_html(index=False, classes="table table-bordered table-striped", table_id="excel_table")
 
-        return html_table, image_urls
+        return html_table, image_urls,user_input
 
     except pyodbc.Error as e:
         print("Error connecting to SQL Server:", e)

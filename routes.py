@@ -170,16 +170,19 @@ def register_routes(app):
         current_user = session['username']
         user_input = request.form.get("user_input", "").lower().strip()
 
+        # Remove all spaces from the user_input
+        user_input = user_input.replace(" ", "")
+
         if not user_input:
             _, e1_value = get_sheet_data_and_e1_value('')
-            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user)
+            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input)
 
         if user_input.endswith(","):
             user_input = user_input[:-1]
 
         # Generate Excel and image URLs
-        excel_html, image_urls = SQL_connector.generate_excel(user_input)
-        
+        excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
+
         search_terms = [term.strip() for term in user_input.split(",")]
 
         # Get filenames matching the search terms
@@ -225,6 +228,7 @@ def register_routes(app):
             # Convert DataFrames back to HTML
             excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
             sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
+        
 
             app.logger.info("Excel HTML and sheet data generated for %s", current_user)
             return render_template(
@@ -235,11 +239,12 @@ def register_routes(app):
                 file_info=file_info,
                 sheet_data=sheet_data_html,
                 current_user=current_user,
-                e1_value=e1_value
+                e1_value=e1_value,
+                user_input=user_input.capitalize()
             )
         else:
             _, e1_value = get_sheet_data_and_e1_value('')
-            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user)
+            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input.capitalize())
 
                                             
 

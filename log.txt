@@ -12868,3 +12868,1352 @@ select * from dbo.ord_log where prod_cd like 'S1412%';
 2024-08-09 17:49:06,680 - INFO - Serving file T3305_v3.jpg
 2024-08-09 17:49:06,682 - INFO - Serving file T3305_v2.jpg
 2024-08-09 17:49:25,419 - INFO - User fdc has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-09 19:29:22,285 - ERROR - 80.82.77.202 - - [09/Aug/2024 19:29:22] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-09 19:36:08,134 - INFO - autobots, roll out!
+2024-08-09 19:36:09,271 - INFO - autobots, roll out!
+2024-08-09 20:29:51,079 - INFO - User yetimaster has logged in. IP: 104.28.85.109, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-09 20:48:28,138 - ERROR - 64.62.197.203 - - [09/Aug/2024 20:48:28] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00{\x01\x00\x00w\x03\x03j-\x8b%]·Í\x12æC&\x8c\x86\x12§xÆ¼\x8f£ä\x03\x80îê\x92îÃ\x12®Ú®\x00\x00\x1aÀ/À+À\x11À\x07À\x13À')
+2024-08-09 22:32:45,792 - ERROR - 78.153.140.179 - - [09/Aug/2024 22:32:45] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00¬\x01\x00\x00¨\x03\x03G\xado¯')
+2024-08-10 01:31:37,276 - ERROR - 165.227.239.42 - - [10/Aug/2024 01:31:37] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x01ý\x01\x00\x01ù\x03\x03E/\x93.È¿\x80©þ²(ÉuÃ#Ë}c9x®@ÝKnÍû\x8cm½å')
+2024-08-10 04:13:36,122 - ERROR - 88.214.25.62 - - [10/Aug/2024 04:13:36] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-10 04:14:27,936 - ERROR - 93.174.93.12 - - [10/Aug/2024 04:14:27] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-10 07:20:17,589 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:17] code 400, message Bad request version ('RTSP/1.0')
+2024-08-10 07:20:22,744 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:22] code 400, message Bad HTTP/0.9 request type ('l\x00')
+2024-08-10 07:20:28,100 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:28] code 400, message Bad request version ('\x00\x01\x97|\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+2024-08-10 07:20:33,167 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:33] code 400, message Bad HTTP/0.9 request type ('\x00')
+2024-08-10 07:20:38,235 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:38] code 400, message Bad HTTP/0.9 request type ('\x00')
+2024-08-10 07:20:38,301 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:38] code 400, message Bad request syntax ('HELP')
+2024-08-10 07:20:38,439 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:38] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+2024-08-10 07:20:38,578 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:38] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00*%à\x00\x00\x00\x00\x00Cookie:')
+2024-08-10 07:20:38,714 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:38] code 400, message Bad request version ('\x00/\x00')
+2024-08-10 07:20:38,853 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:38] code 400, message Bad request syntax ('\x00\x00\x00qj\x81n0\x81k¡\x03\x02\x01\x05¢\x03\x02\x01')
+2024-08-10 07:20:43,992 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:43] code 400, message Bad request version ('0.12\x00')
+2024-08-10 07:20:44,060 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:44] code 400, message Bad request syntax ('\x01default')
+2024-08-10 07:20:44,195 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:44] code 400, message Bad request syntax ('0\x84\x00\x00\x00-\x02\x01\x07c\x84\x00\x00\x00$\x04\x00')
+2024-08-10 07:20:49,336 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:49] code 400, message Bad HTTP/0.9 request type ('0')
+2024-08-10 07:20:49,402 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:49] code 400, message Bad request version ('SIP/2.0')
+2024-08-10 07:20:54,547 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:54] code 400, message Bad request syntax ('TNMP\x04\x00\x00\x00TNME\x00\x00\x04\x00')
+2024-08-10 07:20:59,622 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:20:59] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00')
+2024-08-10 07:21:04,694 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:04] code 400, message Bad request syntax ('DmdT\x00\x00\x00\x17\x00\x00\x00\x01\x00\x00\x00\x00\x11\x11\x00ÿ\x01ÿ\x13')
+2024-08-10 07:21:09,763 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:09] code 400, message Bad HTTP/0.9 request type (':\x00\x00\x00/\x00\x00\x00\x02\x00\x00@\x02\x0f\x00\x01\x00=\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00/\x00\x00\x00\x00\x00\x00\x00\x00\x00@')
+2024-08-10 07:21:14,837 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:14] code 400, message Bad request syntax ('JRMI\x00\x02K')
+2024-08-10 07:21:19,910 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:19] code 400, message Bad request version ('\x00{\x000\x000\x000\x000\x00A\x00A\x000\x000\x00-\x000\x00A\x000\x000\x00-\x000\x000\x00a\x000\x00-\x00A\x00A\x000\x00A\x00-\x000\x000\x000\x000\x00A\x000\x00A\x00A\x000\x00A\x00A\x000\x00}\x00\x00\x00àmß_')
+2024-08-10 07:21:24,979 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:24] code 400, message Bad HTTP/0.9 request type ('\x00Z\x00\x00\x01\x00\x00\x00\x016\x01,\x00\x00\x08\x00\x7fÿ\x7f\x08\x00\x00\x00\x01\x00')
+2024-08-10 07:21:30,051 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:30] code 400, message Bad request version ('\x03\x00(\x00\x04ÿ\x08\x00\x01U\x00\x00\x00MSSQLServer\x00H\x0f\x00\x00')
+2024-08-10 07:21:35,123 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:35] code 400, message Bad request syntax ('\x00\x03\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x0f\x00')
+2024-08-10 07:21:40,195 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:40] code 400, message Bad request syntax ('GIOP\x01\x00\x01\x00$\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x06\x00\x00\x00abcdef\x00\x00\x04\x00\x00\x00get\x00\x00\x00\x00\x00')
+2024-08-10 07:21:45,395 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:45] code 400, message Bad request version ('\x00/\x00')
+2024-08-10 07:21:45,565 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:45] code 400, message Bad request version ("(/t<m\x88cYÀËQð©;ù\x1bËí©\x1böI¸jbTû{G`v¾\x00\x9c\x13\x02\x13\x03\x13\x01\x003\x009\x005\x00/À,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀSÀ+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀRÀ$À(\x00k\x00jÀsÀw\x00Ä\x00ÃÀ#À'\x00g\x00@ÀrÀv\x00¾\x00½À")
+2024-08-10 07:21:45,775 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:45] code 400, message Bad request version ("ÎöâwöëÔñ@¿¶Û\x9e\x9a\x8c\x1aÔáëKðÂÁjq\x98X´\x08vû7\x00\x9c\x13\x02\x13\x03\x13\x01\x003\x009\x005\x00/À,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀSÀ+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀRÀ$À(\x00k\x00jÀsÀw\x00Ä\x00ÃÀ#À'\x00g\x00@ÀrÀv\x00¾\x00½À")
+2024-08-10 07:21:46,016 - ERROR - 100.27.42.173 - - [10/Aug/2024 07:21:46] code 400, message Bad HTTP/0.9 request type ('t3')
+2024-08-10 08:21:01,099 - ERROR - 100.27.42.242 - - [10/Aug/2024 08:21:01] code 400, message Bad request syntax ('\x16\x03\x01\x00Ð\x01\x00\x00Ì\x03\x01Èã\x93Ií')
+2024-08-10 08:21:01,254 - ERROR - 100.27.42.242 - - [10/Aug/2024 08:21:01] code 400, message Bad request syntax ('\x16\x03\x00\x00}\x01\x00\x00y\x03\x00»\x90\x99\x14\x83?ø}whõõ81è+æxy\x92Hi[óÏcÊÿBôâK\x00\x00RÀ')
+2024-08-10 08:21:01,477 - ERROR - 100.27.42.242 - - [10/Aug/2024 08:21:01] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ð\x01\x00\x00Ì\x03\x02:\x10âÖ_«å.fLÎN'ÝÇ\x95Æ")
+2024-08-10 08:21:01,623 - ERROR - 100.27.42.242 - - [10/Aug/2024 08:21:01] code 400, message Bad request version ("ë{l{\x05\x81\x81?\x00\x00ÌÀ,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀS\x00§À+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀR\x00¦À$À(\x00k\x00jÀsÀw\x00Ä\x00Ã\x00m\x00ÅÀ#À'\x00g\x00@ÀrÀv\x00¾\x00½\x00l\x00¿À")
+2024-08-10 08:21:01,775 - ERROR - 100.27.42.242 - - [10/Aug/2024 08:21:01] code 400, message Bad request version ('\x00\x04\x03\x00\x01\x02\x00')
+2024-08-10 08:21:01,921 - ERROR - 100.27.42.242 - - [10/Aug/2024 08:21:01] code 400, message Bad request version ('\x00')
+2024-08-10 08:21:02,151 - ERROR - 100.27.42.242 - - [10/Aug/2024 08:21:02] code 400, message Bad request version ('\x00')
+2024-08-10 09:44:11,803 - ERROR - 5.8.11.202 - - [10/Aug/2024 09:44:11] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-10 09:56:03,458 - ERROR - 35.176.252.41 - - [10/Aug/2024 09:56:03] code 400, message Bad request version ('À\x14À')
+2024-08-10 10:00:30,338 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:00:30] code 400, message Bad request version ('À\x14À')
+2024-08-10 10:06:33,368 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:06:33] code 400, message Bad request version ('À\x14À')
+2024-08-10 10:13:52,960 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:13:52] code 400, message Bad request version ('À\x14À')
+2024-08-10 10:20:05,287 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:20:05] code 400, message Bad request version ('À\x14À')
+2024-08-10 10:26:19,193 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:26:19] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00±\x01\x00\x00\xad\x03\x03ã®\x04\x94?T\x05ú\x8fÑß#¦ÏvF\x80^ì\x8dÖQ\x87û\x80-Ò³8Ðá×\x00\x00PÀ/À+À\x11À\x07À\x13À')
+2024-08-10 10:31:56,436 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:31:56] code 400, message Bad request version ('À\x14À')
+2024-08-10 10:38:25,311 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:38:25] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00±\x01\x00\x00\xad\x03\x03gS¬\xad\x97\x83\x80ÈK1Úy,I\x97\x8czÕÊ²9\x18\x1bTvý\x90\x91dâ\x14i\x00\x00PÀ/À+À\x11À\x07À\x13À')
+2024-08-10 10:54:26,532 - ERROR - 35.176.252.41 - - [10/Aug/2024 10:54:26] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00±\x01\x00\x00\xad\x03\x03ÂÄ\x9aÙ\x06èÏMõjùó¡Ù\x18')
+2024-08-10 11:02:12,434 - INFO - User yetimaster has logged in. IP: 104.28.85.108, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-10 11:14:21,581 - ERROR - 93.174.93.12 - - [10/Aug/2024 11:14:21] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-10 11:54:49,823 - ERROR - 80.82.77.202 - - [10/Aug/2024 11:54:49] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-10 12:37:58,425 - ERROR - 104.248.191.65 - - [10/Aug/2024 12:37:58] code 400, message Bad request syntax ('\x16\x03\x01\x00{\x01\x00\x00w\x03\x03}¢÷"V\'@VÉrÍp9\x06í\x9dÏ\x99L')
+2024-08-10 12:37:58,457 - ERROR - 104.248.191.65 - - [10/Aug/2024 12:37:58] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00{\x01\x00\x00w\x03\x03@-o^ô;Öo;¸(ßbý\x87pÃW²E\x19M?\x8eb\x8e-{\x8dÆRú\x00\x00\x1aÀ/À+À\x11À\x07À\x13À')
+2024-08-10 17:14:02,350 - ERROR - 5.8.11.202 - - [10/Aug/2024 17:14:02] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-10 18:27:37,032 - ERROR - 91.238.181.34 - - [10/Aug/2024 18:27:37] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-10 19:18:47,118 - ERROR - 159.223.203.97 - - [10/Aug/2024 19:18:47] code 400, message Bad request syntax ('\x00\x0e8ª')
+2024-08-10 19:33:40,452 - INFO - autobots, roll out!
+2024-08-10 19:33:41,593 - INFO - autobots, roll out!
+2024-08-10 21:53:40,207 - ERROR - 80.82.77.202 - - [10/Aug/2024 21:53:40] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-10 23:20:51,788 - ERROR - 144.126.194.109 - - [10/Aug/2024 23:20:51] code 400, message Bad request syntax ('\x16\x03\x01\x01ý\x01\x00\x01ù\x03\x03')
+2024-08-10 23:40:03,844 - ERROR - 147.185.133.108 - - [10/Aug/2024 23:40:03] code 400, message Bad request version ('À\x13À')
+2024-08-10 23:40:04,187 - ERROR - 147.185.133.108 - - [10/Aug/2024 23:40:04] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03ç-3´\x92\x8aÅ{yÂA\x01\x15ð7ùë¥\x01½¥\x06$3\x05ò¢Â\x9cåuy\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À")
+2024-08-11 00:31:05,435 - INFO - User None has logged in. IP: 193.32.162.96, Browser: Chrome 81.0.4044, OS: Linux , Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: None, Query Params: ImmutableMultiDict([])
+2024-08-11 00:56:56,599 - ERROR - 205.210.31.98 - - [11/Aug/2024 00:56:56] code 400, message Bad request version ('À\x13À')
+2024-08-11 00:56:56,708 - ERROR - 205.210.31.98 - - [11/Aug/2024 00:56:56] code 400, message Bad request version ('À(À$À\x14À')
+2024-08-11 03:51:35,416 - ERROR - 157.245.176.130 - - [11/Aug/2024 03:51:35] code 400, message Bad request version ('À\x14À')
+2024-08-11 03:51:35,449 - ERROR - 157.245.176.130 - - [11/Aug/2024 03:51:35] code 400, message Bad request version ('À\x14À')
+2024-08-11 04:26:05,576 - ERROR - 13.64.49.182 - - [11/Aug/2024 04:26:05] code 400, message Bad request syntax ('MGLNDD_173.198.50.202_80')
+2024-08-11 04:53:07,475 - ERROR - 65.49.1.53 - - [11/Aug/2024 04:53:07] code 400, message Bad request syntax ("\x16\x03\x01\x00{\x01\x00\x00w\x03\x03}'\x0eêm6")
+2024-08-11 05:26:18,843 - ERROR - 5.8.11.202 - - [11/Aug/2024 05:26:18] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-11 06:09:36,862 - ERROR - 45.79.166.221 - - [11/Aug/2024 06:09:36] code 400, message Bad request version ('Ô|Ê:ÆLñ\x8c´¶\x9f¼\x11²HøÜ7_`\x04Þ(´Á·9\x00\x14\x13\x02\x13\x01\x13\x03À,À+Ì©À0À/Ì¨\x00ÿ\x01\x00\x00\x8e\x00')
+2024-08-11 06:09:47,022 - ERROR - 45.79.166.221 - - [11/Aug/2024 06:09:47] code 400, message Bad request version ('\x00\x02\x01\x00\x00#\x00\x00\x00+\x00\x05\x04\x03\x04\x03\x03\x00')
+2024-08-11 06:09:47,179 - ERROR - 45.79.166.221 - - [11/Aug/2024 06:09:47] code 400, message Bad request version ('\x00\x02\x01\x00\x00')
+2024-08-11 06:09:47,491 - ERROR - 45.79.166.221 - - [11/Aug/2024 06:09:47] code 400, message Bad request version ('\x00\x14\x13\x02\x13\x01\x13\x03À,À+Ì©À0À/Ì¨\x00ÿ\x01\x00\x00\x8e\x00')
+2024-08-11 06:09:47,647 - ERROR - 45.79.166.221 - - [11/Aug/2024 06:09:47] code 400, message Bad request syntax ('\x16\x03\x01\x00ï\x01\x00\x00ë\x03\x03\x9f\x1atú')
+2024-08-11 06:09:47,807 - ERROR - 45.79.166.221 - - [11/Aug/2024 06:09:47] code 400, message Bad request syntax ('\x16\x03\x01\x00ï\x01\x00\x00ë\x03\x03ØèBäy\x98\x94Ö\x9fá\x9f¸\x1bXÝLº´ãÖ×ÙWÐî¼d¢_ë\x8eY ')
+2024-08-11 06:09:47,964 - ERROR - 45.79.166.221 - - [11/Aug/2024 06:09:47] code 400, message Bad request version ('\x00\x14\x13\x02\x13\x01\x13\x03À,À+Ì©À0À/Ì¨\x00ÿ\x01\x00\x00\x8e\x00#\x00\x00\x00')
+2024-08-11 08:13:55,692 - ERROR - 167.94.138.56 - - [11/Aug/2024 08:13:55] code 505, message Invalid HTTP version (2.0)
+2024-08-11 08:13:59,049 - ERROR - 167.94.138.56 - - [11/Aug/2024 08:13:59] code 505, message Invalid HTTP version (2.0)
+2024-08-11 08:52:35,344 - ERROR - 159.223.95.210 - - [11/Aug/2024 08:52:35] code 400, message Bad request version ('À\x14À')
+2024-08-11 08:52:35,696 - ERROR - 159.223.95.210 - - [11/Aug/2024 08:52:35] code 400, message Bad request version ('À\x14À')
+2024-08-11 09:32:44,462 - ERROR - 93.174.93.12 - - [11/Aug/2024 09:32:44] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-11 09:36:24,322 - ERROR - 78.153.140.179 - - [11/Aug/2024 09:36:24] code 400, message Bad request version ('\x060\x14±\x18!Òê\x00\x008À,À')
+2024-08-11 09:36:59,396 - ERROR - 194.165.16.73 - - [11/Aug/2024 09:36:59] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-11 15:38:34,484 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-08-11 15:38:42,973 - INFO - Serving file index.php
+2024-08-11 16:14:07,349 - ERROR - 80.82.77.202 - - [11/Aug/2024 16:14:07] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-11 18:42:56,354 - ERROR - 5.8.11.202 - - [11/Aug/2024 18:42:56] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-11 18:55:51,832 - ERROR - 152.32.150.7 - - [11/Aug/2024 18:55:51] code 400, message Bad request syntax ('\x16\x03\x01\x01\x17\x01\x00\x01\x13\x03\x03(Ï\x13=°/ú.')
+2024-08-11 18:56:10,320 - ERROR - 45.79.181.94 - - [11/Aug/2024 18:56:10] code 400, message Bad request version ('À\x14À')
+2024-08-11 19:29:28,368 - INFO - autobots, roll out!
+2024-08-11 19:29:29,526 - INFO - autobots, roll out!
+2024-08-11 19:46:52,484 - ERROR - 35.203.210.20 - - [11/Aug/2024 19:46:52] code 400, message Bad request version ('À\x13À')
+2024-08-11 19:46:52,771 - ERROR - 35.203.210.20 - - [11/Aug/2024 19:46:52] code 400, message Bad request version ('À(À$À\x14À')
+2024-08-11 20:21:17,430 - ERROR - 167.94.145.108 - - [11/Aug/2024 20:21:17] code 505, message Invalid HTTP version (2.0)
+2024-08-11 20:21:21,570 - ERROR - 167.94.145.108 - - [11/Aug/2024 20:21:21] code 505, message Invalid HTTP version (2.0)
+2024-08-11 20:47:42,369 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 126.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-11 20:48:42,792 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-11 20:48:46,003 - INFO - Serving file N2227.jpg
+2024-08-11 20:49:32,584 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-11 20:49:52,903 - INFO - Serving file N2229.jpg
+2024-08-11 22:50:57,728 - ERROR - 167.94.146.60 - - [11/Aug/2024 22:50:57] code 505, message Invalid HTTP version (2.0)
+2024-08-11 22:51:02,316 - ERROR - 167.94.146.60 - - [11/Aug/2024 22:51:02] code 505, message Invalid HTTP version (2.0)
+2024-08-12 00:09:05,310 - ERROR - 64.62.197.219 - - [12/Aug/2024 00:09:05] code 400, message Bad request version ('À\x14À')
+2024-08-12 00:16:50,963 - ERROR - 91.238.181.34 - - [12/Aug/2024 00:16:50] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-12 01:38:15,875 - INFO - Serving file S1211.zip
+2024-08-12 01:43:31,196 - ERROR - 167.172.237.58 - - [12/Aug/2024 01:43:31] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00{\x01\x00\x00w\x03\x03')
+2024-08-12 01:43:31,355 - ERROR - 167.172.237.58 - - [12/Aug/2024 01:43:31] code 400, message Bad request version ('À\x14À')
+2024-08-12 02:12:04,483 - INFO - Serving file T3116.zip
+2024-08-12 02:29:14,007 - INFO - Serving file N2013.zip
+2024-08-12 02:29:50,860 - INFO - Serving file N2013.zip
+2024-08-12 02:32:56,351 - INFO - Serving file ES1386.zip
+2024-08-12 02:33:13,647 - INFO - Serving file S1412.zip
+2024-08-12 02:33:33,124 - INFO - Serving file ES1414.zip
+2024-08-12 02:33:45,651 - INFO - Serving file T3142.zip
+2024-08-12 02:33:56,550 - INFO - Serving file N2013.ziphttp://173.198.50.202/public/ET2953.zip
+2024-08-12 02:34:00,188 - INFO - Serving file ET2953.zip
+2024-08-12 02:34:11,030 - INFO - Serving file S1460.zip
+2024-08-12 02:34:30,747 - INFO - Serving file N2093.zip
+2024-08-12 02:56:54,689 - ERROR - 34.94.170.94 - - [12/Aug/2024 02:56:54] code 400, message Bad request version ('\x8a¯jÚ/Ã®\x98t>ØDâ')
+2024-08-12 02:57:54,110 - ERROR - 71.6.134.233 - - [12/Aug/2024 02:57:54] code 400, message Bad request version ('À\x14À')
+2024-08-12 03:43:28,683 - ERROR - 147.185.132.75 - - [12/Aug/2024 03:43:28] code 400, message Bad request version ('À\x13À')
+2024-08-12 03:43:28,815 - ERROR - 147.185.132.75 - - [12/Aug/2024 03:43:28] code 400, message Bad request version ('À(À$À\x14À')
+2024-08-12 06:47:40,938 - ERROR - 80.82.77.202 - - [12/Aug/2024 06:47:40] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-12 09:44:21,791 - INFO - User derrick has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 09:44:29,134 - INFO - Excel HTML and sheet data generated for derrick
+2024-08-12 09:44:29,271 - INFO - Serving file S1424.jpg
+2024-08-12 09:44:46,696 - INFO - Excel HTML and sheet data generated for derrick
+2024-08-12 09:44:46,819 - INFO - Serving file S1426.jpg
+2024-08-12 09:45:07,841 - INFO - Excel HTML and sheet data generated for derrick
+2024-08-12 09:45:07,996 - INFO - Serving file S1424.jpg
+2024-08-12 09:48:28,425 - INFO - Excel HTML and sheet data generated for derrick
+2024-08-12 09:48:28,519 - INFO - Serving file S1426.jpg
+2024-08-12 10:06:15,228 - ERROR - 162.142.125.42 - - [12/Aug/2024 10:06:15] code 505, message Invalid HTTP version (2.0)
+2024-08-12 10:06:21,059 - ERROR - 162.142.125.42 - - [12/Aug/2024 10:06:21] code 505, message Invalid HTTP version (2.0)
+2024-08-12 10:07:41,074 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 10:07:47,207 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 10:07:47,361 - INFO - Serving file S1426.jpg
+2024-08-12 10:08:03,745 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 10:08:03,807 - INFO - Serving file S1427.jpg
+2024-08-12 10:08:03,810 - INFO - Serving file S1427_v2.jpg
+2024-08-12 10:11:16,203 - INFO - User nicye has logged in. IP: 122.239.103.60, Browser: Edge 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 10:12:52,227 - INFO - Excel HTML and sheet data generated for nicye
+2024-08-12 10:12:52,861 - INFO - Serving file S1290_v2.jpg
+2024-08-12 10:12:52,868 - INFO - Serving file S1290.jpg
+2024-08-12 10:12:53,013 - INFO - Serving file ES1414.jpg
+2024-08-12 10:12:53,092 - INFO - Serving file L1851.jpg
+2024-08-12 10:16:29,399 - ERROR - 93.174.93.12 - - [12/Aug/2024 10:16:29] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-12 10:17:55,252 - INFO - Serving file S1290_v2.jpg
+2024-08-12 10:32:30,593 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 10:59:49,192 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 10:59:49,268 - INFO - Serving file T3116.jpg
+2024-08-12 10:59:49,270 - INFO - Serving file T3116_v2.jpg
+2024-08-12 10:59:49,271 - INFO - Serving file T3116_v3.jpg
+2024-08-12 11:04:42,039 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 11:04:49,756 - INFO - yetimaster downloaded one images of s1460
+2024-08-12 11:16:21,060 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 11:16:36,771 - INFO - yetimaster executed a custom SQL query: select * from dbo.ord_log where ord_num=1558
+2024-08-12 11:16:36,852 - INFO - select * from dbo.ord_log where ord_num=1558
+2024-08-12 11:18:51,515 - INFO - yetimaster executed a custom SQL query: select * from ord_log where ord_num=1558
+2024-08-12 11:18:51,558 - INFO - select * from ord_log where ord_num=1558
+2024-08-12 11:18:52,753 - INFO - yetimaster executed a custom SQL query: select * from ord_log where ord_num=1558
+2024-08-12 11:18:52,789 - INFO - select * from ord_log where ord_num=1558
+2024-08-12 11:18:56,569 - INFO - yetimaster executed a custom SQL query: select * from ord_log where ord_num=1558
+2024-08-12 11:18:56,595 - INFO - select * from ord_log where ord_num=1558
+2024-08-12 11:29:07,727 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 11:31:20,461 - INFO - autobots, roll out!
+2024-08-12 11:31:20,558 - INFO - autobots, roll out!
+2024-08-12 11:31:20,586 - INFO - autobots, roll out!
+2024-08-12 11:31:22,803 - INFO - autobots, roll out!
+2024-08-12 11:31:22,908 - INFO - autobots, roll out!
+2024-08-12 11:31:22,947 - INFO - autobots, roll out!
+2024-08-12 11:31:53,236 - INFO - autobots, roll out!
+2024-08-12 11:31:53,417 - INFO - autobots, roll out!
+2024-08-12 11:31:53,422 - INFO - autobots, roll out!
+2024-08-12 11:31:57,753 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 11:32:33,738 - INFO - autobots, roll out!
+2024-08-12 11:32:33,997 - INFO - autobots, roll out!
+2024-08-12 11:32:33,998 - INFO - autobots, roll out!
+2024-08-12 11:32:39,023 - INFO - autobots, roll out!
+2024-08-12 11:32:39,364 - INFO - autobots, roll out!
+2024-08-12 11:32:39,401 - INFO - autobots, roll out!
+2024-08-12 11:33:45,676 - INFO - autobots, roll out!
+2024-08-12 11:33:46,053 - INFO - autobots, roll out!
+2024-08-12 11:33:46,070 - INFO - autobots, roll out!
+2024-08-12 11:34:33,215 - INFO - autobots, roll out!
+2024-08-12 11:34:33,653 - INFO - autobots, roll out!
+2024-08-12 11:34:33,657 - INFO - autobots, roll out!
+2024-08-12 11:34:38,486 - INFO - autobots, roll out!
+2024-08-12 11:34:38,992 - INFO - autobots, roll out!
+2024-08-12 11:34:39,011 - INFO - autobots, roll out!
+2024-08-12 11:34:41,756 - INFO - autobots, roll out!
+2024-08-12 11:34:42,370 - INFO - autobots, roll out!
+2024-08-12 11:34:42,370 - INFO - autobots, roll out!
+2024-08-12 11:36:32,010 - INFO - User derrick has logged in. IP: 173.198.50.202, Browser: Mobile Safari 17.1.2, OS: iOS 17.1.2, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 11:36:45,923 - INFO - Excel HTML and sheet data generated for derrick
+2024-08-12 11:36:46,135 - INFO - Serving file N2093.jpg
+2024-08-12 11:37:34,307 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 11:37:39,483 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 11:37:39,593 - INFO - Serving file N2093.jpg
+2024-08-12 11:48:55,475 - INFO - autobots, roll out!
+2024-08-12 11:48:55,498 - INFO - autobots, roll out!
+2024-08-12 11:48:55,690 - INFO - autobots, roll out!
+2024-08-12 11:49:11,997 - INFO - autobots, roll out!
+2024-08-12 11:49:12,114 - INFO - autobots, roll out!
+2024-08-12 11:49:15,467 - INFO - autobots, roll out!
+2024-08-12 11:49:15,467 - INFO - autobots, roll out!
+2024-08-12 11:49:15,532 - INFO - autobots, roll out!
+2024-08-12 11:49:48,400 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 11:49:53,301 - INFO - yetimaster submitted an order lookup
+2024-08-12 11:49:53,302 - INFO - yetimaster is looking up order number: 1550
+2024-08-12 11:49:54,047 - INFO - yetimaster searched for order number: 1550
+2024-08-12 11:50:12,466 - INFO - yetimaster submitted an order lookup
+2024-08-12 11:50:12,467 - INFO - yetimaster is looking up order number: 1550
+2024-08-12 11:50:12,483 - INFO - yetimaster searched for order number: 1550
+2024-08-12 11:52:16,853 - INFO - yetimaster submitted an order lookup
+2024-08-12 11:52:16,853 - INFO - yetimaster is looking up order number: 33088
+2024-08-12 11:52:16,911 - INFO - yetimaster searched for order number: 33088
+2024-08-12 11:58:22,599 - INFO - yetimaster executed a custom SQL query: select * from ord_log where ord_num=1558cxzcvzxcz
+2024-08-12 11:58:22,607 - ERROR - select * from ord_log where ord_num=1558cxzcvzxcz | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'cxzcvzxcz'. (102) (SQLExecDirectW)")
+2024-08-12 13:36:41,334 - INFO - User derrick has logged in. IP: 173.198.50.202, Browser: Mobile Safari 17.1.2, OS: iOS 17.1.2, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 13:36:50,583 - INFO - Excel HTML and sheet data generated for derrick
+2024-08-12 13:36:50,834 - INFO - Serving file L1851.jpg
+2024-08-12 13:46:19,308 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 13:46:41,819 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 13:46:41,973 - INFO - Serving file N1851.jpg
+2024-08-12 13:46:48,558 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 13:46:48,713 - INFO - Serving file L1851.jpg
+2024-08-12 13:47:02,521 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 13:47:02,643 - INFO - Serving file N1851.jpg
+2024-08-12 13:59:08,043 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 13:59:08,149 - INFO - Serving file N1851.jpg
+2024-08-12 13:59:17,114 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 13:59:17,246 - INFO - Serving file L1851.jpg
+2024-08-12 14:15:30,188 - INFO - yetimaster submitted an order lookup
+2024-08-12 14:15:30,189 - INFO - yetimaster is looking up order number: 1550
+2024-08-12 14:15:30,218 - INFO - yetimaster searched for order number: 1550
+2024-08-12 14:15:40,758 - INFO - yetimaster executed a custom SQL query: select * from ord_log where ord_num=1558
+2024-08-12 14:15:40,785 - INFO - select * from ord_log where ord_num=1558
+2024-08-12 14:15:48,359 - INFO - yetimaster submitted an order lookup
+2024-08-12 14:15:48,360 - INFO - yetimaster is looking up order number: 1558
+2024-08-12 14:15:48,388 - INFO - yetimaster searched for order number: 1558
+2024-08-12 14:16:59,725 - INFO - yetimaster executed a custom SQL query: select * from ord_log where ord_num=1558
+2024-08-12 14:16:59,758 - INFO - select * from ord_log where ord_num=1558
+2024-08-12 14:21:14,226 - INFO - yetimaster executed a custom SQL query: select * from ord_log where ord_num=1558
+2024-08-12 14:21:14,267 - INFO - select * from ord_log where ord_num=1558
+2024-08-12 15:02:05,066 - ERROR - 147.185.132.40 - - [12/Aug/2024 15:02:05] code 400, message Bad request version ('À\x13À')
+2024-08-12 15:02:05,201 - ERROR - 147.185.132.40 - - [12/Aug/2024 15:02:05] code 400, message Bad request version ('À(À$À\x14À')
+2024-08-12 15:32:54,883 - ERROR - 91.238.181.32 - - [12/Aug/2024 15:32:54] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-12 15:38:21,790 - INFO - Serving file S1460.rar
+2024-08-12 15:52:18,764 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:52:18,900 - INFO - Serving file ES1147.jpg
+2024-08-12 15:53:46,615 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:53:46,814 - INFO - Serving file ET2408.jpg
+2024-08-12 15:55:02,899 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:55:03,206 - INFO - Serving file L0665.jpg
+2024-08-12 15:55:03,206 - INFO - Serving file L0665_v2.jpg
+2024-08-12 15:55:03,206 - INFO - Serving file L0665_v3.jpg
+2024-08-12 15:55:25,809 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:55:25,992 - INFO - Serving file L1343_V4.jpg
+2024-08-12 15:55:25,993 - INFO - Serving file L1343_v3.jpg
+2024-08-12 15:55:25,993 - INFO - Serving file L1343_v5.jpg
+2024-08-12 15:55:25,994 - INFO - Serving file L1343_V3.jpg
+2024-08-12 15:55:25,995 - INFO - Serving file L1343_v4.jpg
+2024-08-12 15:55:25,995 - INFO - Serving file L1343_V2.jpg
+2024-08-12 15:55:26,085 - INFO - Serving file L1343.jpg
+2024-08-12 15:55:26,086 - INFO - Serving file L1343-M.jpg
+2024-08-12 15:55:36,736 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:56:12,173 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:56:12,361 - INFO - Serving file L1343-M.jpg
+2024-08-12 15:56:12,428 - INFO - Serving file L1343_v3.jpg
+2024-08-12 15:56:12,428 - INFO - Serving file L1343_v4.jpg
+2024-08-12 15:56:12,429 - INFO - Serving file L1343_v5.jpg
+2024-08-12 15:56:12,429 - INFO - Serving file L1343_V3.jpg
+2024-08-12 15:56:12,429 - INFO - Serving file L1343_V4.jpg
+2024-08-12 15:56:12,429 - INFO - Serving file L1343_V2.jpg
+2024-08-12 15:56:12,443 - INFO - Serving file L1343.jpg
+2024-08-12 15:57:39,231 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:57:39,416 - INFO - Serving file L1494-M.jpg
+2024-08-12 15:57:39,416 - INFO - Serving file L1494-S.jpg
+2024-08-12 15:57:39,458 - INFO - Serving file L1494_v2.jpg
+2024-08-12 15:57:39,459 - INFO - Serving file L1494.jpg
+2024-08-12 15:59:33,431 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 15:59:33,502 - INFO - Serving file N1871.jpg
+2024-08-12 15:59:33,518 - INFO - Serving file N1871_v2.jpg
+2024-08-12 16:01:12,703 - INFO - User yetimaster has logged in. IP: 104.28.85.64, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 16:01:17,826 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:01:18,282 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:01:18,295 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:01:18,324 - INFO - Serving file T3305.jpg
+2024-08-12 16:01:18,488 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:03:08,495 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:03:08,577 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:03:08,578 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:03:08,582 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:03:08,583 - INFO - Serving file T3305.jpg
+2024-08-12 16:03:25,135 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:03:25,397 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:03:25,400 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:03:25,424 - INFO - Serving file T3305.jpg
+2024-08-12 16:03:25,424 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:04:35,412 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:04:35,589 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:04:35,589 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:04:35,590 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:04:35,591 - INFO - Serving file T3305.jpg
+2024-08-12 16:04:40,624 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:04:40,724 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:04:40,725 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:04:40,725 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:04:40,726 - INFO - Serving file T3305.jpg
+2024-08-12 16:04:51,513 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:04:51,908 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:04:51,910 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:04:51,911 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:04:51,912 - INFO - Serving file T3305.jpg
+2024-08-12 16:05:27,093 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:05:27,234 - INFO - Serving file T3305.jpg
+2024-08-12 16:05:27,236 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:05:27,244 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:05:27,245 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:05:33,370 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:05:33,471 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:05:33,472 - INFO - Serving file T3305.jpg
+2024-08-12 16:05:33,474 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:05:33,475 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:05:43,468 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:05:43,557 - INFO - Serving file T3305.jpg
+2024-08-12 16:05:43,558 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:05:43,558 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:05:43,559 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:07:29,728 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:07:29,897 - INFO - Serving file N1223.jpg
+2024-08-12 16:07:29,898 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:07:29,941 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:07:29,961 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:07:29,962 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:07:29,963 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:07:29,972 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:07:29,973 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:07:29,973 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:07:30,015 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:07:30,015 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:07:30,016 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:08:05,580 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:08:05,718 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:08:05,719 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:08:05,720 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:08:05,720 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:08:05,721 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:08:05,722 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:08:05,740 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:08:05,741 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:08:05,800 - INFO - Serving file N1223.jpg
+2024-08-12 16:08:05,800 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:08:05,849 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:08:05,850 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:08:09,624 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:08:09,833 - INFO - Serving file T3305.jpg
+2024-08-12 16:08:09,834 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:08:09,843 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:08:09,886 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:09:22,488 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:09:22,675 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:09:22,679 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:09:22,680 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:09:22,680 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:09:22,680 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:09:22,681 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:09:22,745 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:09:22,749 - INFO - Serving file N1223.jpg
+2024-08-12 16:09:22,757 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:09:22,758 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:09:22,823 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:09:22,823 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:09:37,156 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:09:37,266 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:09:37,266 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:09:37,267 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:09:37,268 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:09:37,269 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:09:37,270 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:09:37,329 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:09:37,330 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:09:37,331 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:09:37,332 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:09:37,333 - INFO - Serving file N1223.jpg
+2024-08-12 16:09:37,334 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:09:52,100 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:09:52,210 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:09:52,210 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:09:52,211 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:09:52,212 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:09:52,213 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:09:52,215 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:09:52,216 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:09:52,222 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:09:52,223 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:09:52,225 - INFO - Serving file N1223.jpg
+2024-08-12 16:09:52,225 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:09:52,226 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:10:30,609 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:10:30,801 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:10:30,802 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:10:30,803 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:10:30,804 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:10:30,805 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:10:30,805 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:10:30,879 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:10:30,880 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:10:30,881 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:10:30,882 - INFO - Serving file N1223.jpg
+2024-08-12 16:10:30,882 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:10:30,891 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:10:40,385 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:10:40,605 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:10:40,605 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:10:40,606 - INFO - Serving file T3305.jpg
+2024-08-12 16:10:40,607 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:10:56,140 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:10:56,249 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:10:56,249 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:10:56,271 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:10:56,272 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:10:56,272 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:10:56,305 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:10:56,306 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:10:56,306 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:10:56,340 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:10:56,341 - INFO - Serving file N1223.jpg
+2024-08-12 16:10:56,431 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:10:56,452 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:12:39,827 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:12:39,972 - INFO - Serving file N1223.jpg
+2024-08-12 16:12:39,974 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:12:39,975 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:12:39,979 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:12:39,984 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:12:39,985 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:12:39,985 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:12:39,985 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:12:39,987 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:12:39,988 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:12:40,001 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:12:40,003 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:12:49,718 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:12:49,940 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:12:49,941 - INFO - Serving file T3305.jpg
+2024-08-12 16:12:49,942 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:12:49,962 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:14:51,647 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:14:51,818 - INFO - Serving file N1223.jpg
+2024-08-12 16:14:51,820 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:14:51,888 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:14:51,889 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:14:51,895 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:14:51,896 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:14:51,896 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:14:51,913 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:14:51,914 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:14:51,915 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:14:51,953 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:14:51,956 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:15:10,515 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:15:10,619 - INFO - Serving file N1223.jpg
+2024-08-12 16:15:10,621 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:15:10,622 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:15:10,623 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:15:10,623 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:15:10,753 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:15:10,755 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:15:10,755 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:15:10,756 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:15:10,757 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:15:10,758 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:15:10,807 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:15:15,619 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:15:15,747 - INFO - Serving file N1223.jpg
+2024-08-12 16:15:15,749 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:15:15,749 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:15:15,749 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:15:15,750 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:15:15,750 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:15:15,853 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:15:15,854 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:15:15,855 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:15:15,855 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:15:15,857 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:15:15,858 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:15:30,193 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:15:30,413 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:15:30,415 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:15:30,416 - INFO - Serving file T3305.jpg
+2024-08-12 16:15:30,417 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:16:00,042 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:16:00,223 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:16:00,223 - INFO - Serving file N1223.jpg
+2024-08-12 16:16:00,265 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:16:00,265 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:16:00,265 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:16:00,266 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:16:00,292 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:16:00,292 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:16:00,369 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:16:00,369 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:16:00,370 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:16:00,372 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:16:13,411 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:16:13,520 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:16:13,521 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:16:13,522 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:16:13,523 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:16:13,524 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:16:13,525 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:16:13,552 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:16:13,589 - INFO - Serving file N1223.jpg
+2024-08-12 16:16:13,589 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:16:13,590 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:16:13,591 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:16:13,592 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:16:20,641 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:16:20,993 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:16:20,997 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:16:20,998 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:16:20,998 - INFO - Serving file T3305.jpg
+2024-08-12 16:18:10,162 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:18:10,455 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:18:10,456 - INFO - Serving file N1223.jpg
+2024-08-12 16:18:10,457 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:18:10,519 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:18:10,521 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:18:10,522 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:18:10,522 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:18:10,524 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:18:10,525 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:18:10,536 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:18:10,570 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:18:10,571 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:18:15,337 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:18:15,454 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:18:15,455 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:18:15,456 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:18:15,457 - INFO - Serving file N1223.jpg
+2024-08-12 16:18:15,458 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:18:15,476 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:18:15,477 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:18:15,518 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:18:15,520 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:18:15,520 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:18:15,527 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:18:15,545 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:18:26,861 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:18:26,974 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:18:26,975 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:18:26,976 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:18:26,978 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:18:26,978 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:18:26,996 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:18:26,997 - INFO - Serving file N1223.jpg
+2024-08-12 16:18:27,047 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:18:27,047 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:18:27,047 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:18:27,047 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:18:27,048 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:18:36,056 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:18:36,258 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:18:36,313 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:18:36,314 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:18:36,315 - INFO - Serving file T3305.jpg
+2024-08-12 16:18:47,817 - INFO - User yeti has logged in. IP: 104.28.85.64, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 16:18:58,647 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:18:58,892 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:18:58,893 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:18:58,893 - INFO - Serving file T3305.jpg
+2024-08-12 16:18:58,895 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:20:14,569 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:20:14,818 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:20:14,819 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:20:14,820 - INFO - Serving file T3305.jpg
+2024-08-12 16:20:14,820 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:21:49,598 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:21:49,762 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:21:49,765 - INFO - Serving file N1223.jpg
+2024-08-12 16:21:49,835 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:21:49,836 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:21:49,837 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:21:49,838 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:21:49,839 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:21:49,840 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:21:49,879 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:21:49,880 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:21:49,881 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:21:49,882 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:24:26,756 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:24:26,883 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 230, in download_excel
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1084, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1013, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 972, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 768, in compile
+    self.handle_exception(source=source_hint)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\Item_lookup.html", line 225, in template
+    {% include 'footer.html' %}
+jinja2.exceptions.TemplateSyntaxError: Unexpected end of template. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-12 16:24:51,146 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:24:51,159 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 230, in download_excel
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1084, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1013, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 972, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 768, in compile
+    self.handle_exception(source=source_hint)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\Item_lookup.html", line 125, in template
+    {% endfor image_urls %}
+jinja2.exceptions.TemplateSyntaxError: expected token 'end of statement block', got 'image_urls'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-12 16:25:58,730 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:25:58,962 - INFO - Serving file N1223.jpg
+2024-08-12 16:25:58,966 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:25:58,966 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:25:58,967 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:25:58,969 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:25:58,971 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:25:58,973 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:25:58,975 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:25:58,976 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:25:58,977 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:25:58,979 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:25:58,982 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:26:23,538 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:26:23,657 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:26:23,657 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:26:23,658 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:26:23,659 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:26:23,661 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:26:23,662 - INFO - Serving file N1223.jpg
+2024-08-12 16:26:23,665 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:26:23,666 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:26:23,667 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:26:23,668 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:26:23,669 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:26:23,691 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:26:40,271 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:26:40,343 - INFO - Serving file T3305.jpg
+2024-08-12 16:26:40,345 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:26:40,345 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:26:40,347 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:26:49,525 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:26:49,595 - INFO - Serving file T3305.jpg
+2024-08-12 16:26:49,596 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:26:49,597 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:26:49,600 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:26:57,792 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:26:57,856 - INFO - Serving file T3305.jpg
+2024-08-12 16:26:57,857 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:26:57,858 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:26:57,860 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:27:54,601 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:27:54,784 - INFO - Serving file T3305.jpg
+2024-08-12 16:27:54,785 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:27:54,791 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:27:54,793 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:28:03,390 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:28:03,515 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:28:03,516 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:28:03,516 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:28:03,517 - INFO - Serving file N1223.jpg
+2024-08-12 16:28:03,518 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:28:03,519 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:28:03,529 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:28:03,547 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:28:03,547 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:28:03,548 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:28:03,551 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:28:03,552 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:28:48,761 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:28:48,936 - INFO - Serving file N1223.jpg
+2024-08-12 16:28:48,936 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:28:48,937 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:28:48,939 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:28:48,951 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:28:48,951 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:28:48,952 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:28:48,954 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:28:48,955 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:28:48,956 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:28:48,958 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:28:48,962 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:29:29,104 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:29:29,347 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:29:29,347 - INFO - Serving file N1223.jpg
+2024-08-12 16:29:29,349 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:29:29,361 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:29:29,381 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:29:29,381 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:29:29,383 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:29:29,393 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:29:29,394 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:29:29,409 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:29:29,417 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:29:29,418 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:30:28,600 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:30:28,886 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:30:28,888 - INFO - Serving file N1223.jpg
+2024-08-12 16:30:28,890 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:30:28,949 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:30:28,951 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:30:28,952 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:30:28,960 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:30:28,964 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:30:28,967 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:30:29,023 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:30:29,023 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:30:29,024 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:30:32,362 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:30:32,512 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:30:32,525 - INFO - Serving file N1223.jpg
+2024-08-12 16:30:32,526 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:30:32,527 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:30:32,528 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:30:32,531 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:30:32,533 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:30:32,535 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:30:32,536 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:30:32,537 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:30:32,538 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:30:32,548 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:30:36,503 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:30:37,157 - INFO - Serving file T3305.jpg
+2024-08-12 16:30:37,174 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:30:37,174 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:30:37,229 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:30:43,174 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:30:43,946 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:30:44,414 - INFO - Serving file T3305.jpg
+2024-08-12 16:30:44,417 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:30:44,418 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:30:44,418 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:31:09,273 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:31:09,428 - INFO - Serving file N1223.jpg
+2024-08-12 16:31:09,430 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:31:09,449 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:31:09,509 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:31:09,510 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:31:09,511 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:31:09,512 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:31:09,513 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:31:09,515 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:31:09,572 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:31:09,573 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:31:09,575 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:31:16,349 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:31:16,653 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:31:16,654 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:31:16,655 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:31:16,656 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:31:16,657 - INFO - Serving file N1223.jpg
+2024-08-12 16:31:16,658 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:31:16,720 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:31:16,721 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:31:16,722 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:31:16,723 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:31:16,725 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:31:16,743 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:32:24,178 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:32:24,342 - INFO - Serving file N1223.jpg
+2024-08-12 16:32:24,343 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:32:24,356 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:32:24,431 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:32:24,432 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:32:24,433 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:32:24,435 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:32:24,436 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:32:24,437 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:32:24,458 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:32:24,459 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:32:24,460 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:32:52,923 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:32:53,004 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:32:53,005 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:32:53,008 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:32:53,010 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:32:53,012 - INFO - Serving file N1223.jpg
+2024-08-12 16:32:53,014 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:32:53,015 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:32:53,018 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:32:53,018 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:32:53,020 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:32:53,021 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:32:53,052 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:33:02,047 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:33:02,123 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:33:02,125 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:33:02,126 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:33:02,128 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:33:02,130 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:33:02,137 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:33:02,138 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:33:02,138 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:33:02,139 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:33:02,140 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:33:02,143 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:33:02,145 - INFO - Serving file N1223.jpg
+2024-08-12 16:33:16,621 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:33:16,718 - INFO - Serving file N1223.jpg
+2024-08-12 16:33:16,719 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:33:16,720 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:33:16,721 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:33:16,723 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:33:16,725 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:33:16,726 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:33:16,727 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:33:16,731 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:33:16,735 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:33:16,735 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:33:16,737 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:33:22,933 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:33:23,162 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:33:23,163 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:33:23,165 - INFO - Serving file T3305.jpg
+2024-08-12 16:33:23,166 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:33:31,302 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:33:31,560 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:33:31,566 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:33:31,648 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:33:31,650 - INFO - Serving file N1223.jpg
+2024-08-12 16:33:31,651 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:33:31,850 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:33:31,851 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:33:31,852 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:33:31,922 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:33:31,922 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:33:31,930 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:33:31,980 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:34:03,213 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:34:03,414 - INFO - Serving file N1223.jpg
+2024-08-12 16:34:03,415 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:34:03,416 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:34:03,416 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:34:03,456 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:34:03,458 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:34:03,459 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:34:03,460 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:34:03,463 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:34:03,464 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:34:03,496 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:34:03,498 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:34:58,936 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:34:59,340 - INFO - Serving file N1223.jpg
+2024-08-12 16:34:59,342 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:34:59,344 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:34:59,345 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:34:59,400 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:34:59,400 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:34:59,401 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:34:59,401 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:34:59,403 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:34:59,423 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:34:59,475 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:34:59,475 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:35:24,364 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:35:24,619 - INFO - Serving file N1223.jpg
+2024-08-12 16:35:24,620 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:35:24,622 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:35:24,622 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:35:24,685 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:35:24,686 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:35:24,686 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:35:24,687 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:35:24,687 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:35:24,687 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:35:24,728 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:35:24,729 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:37:02,254 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:37:02,777 - INFO - Serving file N1223.jpg
+2024-08-12 16:37:02,782 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:37:02,784 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:37:02,785 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:37:02,832 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:37:02,834 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:37:02,835 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:37:02,836 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:37:02,836 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:37:02,836 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:37:02,913 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:37:02,915 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:37:03,517 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:37:03,720 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:37:03,722 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:37:03,723 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:37:03,785 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:37:03,785 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:37:03,786 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:37:03,787 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:37:03,788 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:37:03,789 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:37:03,855 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:37:03,857 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:37:03,858 - INFO - Serving file N1223.jpg
+2024-08-12 16:37:24,158 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:37:24,247 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:37:24,248 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:37:24,250 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:37:24,251 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:37:24,252 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:37:24,253 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:37:24,265 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:37:24,267 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:37:24,268 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:37:24,269 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:37:24,270 - INFO - Serving file N1223.jpg
+2024-08-12 16:37:24,270 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:37:31,861 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:37:31,971 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:37:31,971 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:37:31,971 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:37:31,972 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:37:31,982 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:37:31,984 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:37:31,985 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:37:31,986 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:37:31,987 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:37:31,987 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:37:32,003 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:37:32,008 - INFO - Serving file N1223.jpg
+2024-08-12 16:37:53,367 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:37:53,471 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:37:53,471 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:37:53,473 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:37:53,474 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:37:53,476 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:37:53,538 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:37:53,540 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:37:53,541 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:37:53,544 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:37:53,555 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:37:53,586 - INFO - Serving file N1223.jpg
+2024-08-12 16:37:53,589 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:38:10,229 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:38:10,335 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:38:10,336 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:38:10,337 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:38:10,337 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:38:10,338 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:38:10,339 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:38:10,357 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:38:10,358 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:38:10,395 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:38:10,415 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:38:10,415 - INFO - Serving file N1223.jpg
+2024-08-12 16:38:10,415 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:38:12,330 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:38:12,602 - INFO - Serving file N1223.jpg
+2024-08-12 16:38:12,602 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:38:12,603 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:38:12,603 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:38:12,636 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:38:12,655 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:38:12,664 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:38:12,665 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:38:12,665 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:38:12,687 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:38:12,711 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:38:12,734 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:38:29,094 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:38:29,222 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:38:29,223 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:38:29,224 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:38:29,225 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:38:29,226 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:38:29,227 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:38:29,289 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:38:29,300 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:38:29,314 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:38:29,314 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:38:29,316 - INFO - Serving file N1223.jpg
+2024-08-12 16:38:29,317 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:39:27,621 - INFO - Excel HTML and sheet data generated for yetimaster
+2024-08-12 16:39:27,737 - INFO - Serving file N1223.jpg
+2024-08-12 16:39:27,741 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:39:27,742 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:39:27,746 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:39:27,747 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:39:27,757 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:39:27,759 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:39:27,762 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:39:27,764 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:39:27,765 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:39:27,767 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:39:27,769 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:39:34,661 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:39:34,993 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:39:34,994 - INFO - Serving file N1223.jpg
+2024-08-12 16:39:34,996 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:39:34,996 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:39:35,065 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:39:35,080 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:39:35,081 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:39:35,081 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:39:35,081 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:39:35,084 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:39:35,107 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:39:35,142 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:39:41,722 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:39:41,940 - INFO - Serving file T3305.jpg
+2024-08-12 16:39:41,946 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:39:41,955 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:39:41,956 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:39:50,215 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:39:50,505 - INFO - Serving file M1121.jpg
+2024-08-12 16:41:27,748 - INFO - autobots, roll out!
+2024-08-12 16:41:27,749 - INFO - autobots, roll out!
+2024-08-12 16:41:52,677 - INFO - User derrick has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 16:42:01,023 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 181, in download_excel
+    excel_html, image_urls = SQL_connector.generate_excel(user_input)
+ValueError: too many values to unpack (expected 2)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-12 16:42:11,983 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 181, in download_excel
+    excel_html, image_urls = SQL_connector.generate_excel(user_input)
+ValueError: too many values to unpack (expected 2)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-12 16:42:26,483 - INFO - derrick is looking up in googlesheet with input: EN1975
+2024-08-12 16:42:43,339 - INFO - derrick is looking up in googlesheet with input: EN1759
+2024-08-12 16:44:54,598 - INFO - autobots, roll out!
+2024-08-12 16:44:54,599 - INFO - autobots, roll out!
+2024-08-12 16:44:54,700 - INFO - autobots, roll out!
+2024-08-12 16:47:34,977 - INFO - autobots, roll out!
+2024-08-12 16:47:34,989 - INFO - autobots, roll out!
+2024-08-12 16:47:35,053 - INFO - autobots, roll out!
+2024-08-12 16:49:43,783 - INFO - autobots, roll out!
+2024-08-12 16:49:43,801 - INFO - autobots, roll out!
+2024-08-12 16:49:43,801 - INFO - autobots, roll out!
+2024-08-12 16:49:46,505 - INFO - autobots, roll out!
+2024-08-12 16:49:46,540 - INFO - autobots, roll out!
+2024-08-12 16:49:46,564 - INFO - autobots, roll out!
+2024-08-12 16:50:12,784 - INFO - autobots, roll out!
+2024-08-12 16:50:12,832 - INFO - autobots, roll out!
+2024-08-12 16:50:12,868 - INFO - autobots, roll out!
+2024-08-12 16:50:30,491 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 16:51:24,647 - INFO - autobots, roll out!
+2024-08-12 16:51:24,716 - INFO - autobots, roll out!
+2024-08-12 16:51:24,716 - INFO - autobots, roll out!
+2024-08-12 16:51:28,724 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 16:51:38,476 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:51:38,681 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:51:38,683 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:51:38,691 - INFO - Serving file T3305.jpg
+2024-08-12 16:51:38,695 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:51:38,743 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:52:30,052 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:52:30,216 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:52:30,220 - INFO - Serving file T3305.jpg
+2024-08-12 16:52:30,248 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:52:30,249 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:53:13,910 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:53:14,075 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:53:14,078 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:53:14,104 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:53:14,106 - INFO - Serving file T3305.jpg
+2024-08-12 16:53:28,591 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:53:28,694 - INFO - Serving file T3305_v4.jpg
+2024-08-12 16:53:28,697 - INFO - Serving file T3305_v2.jpg
+2024-08-12 16:53:28,698 - INFO - Serving file T3305_v3.jpg
+2024-08-12 16:53:28,706 - INFO - Serving file T3305.jpg
+2024-08-12 16:55:06,572 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 16:55:06,648 - INFO - Serving file N1223.jpg
+2024-08-12 16:55:06,649 - INFO - Serving file N1223_v2.jpg
+2024-08-12 16:55:06,654 - INFO - Serving file N1223_v3.jpg
+2024-08-12 16:55:06,654 - INFO - Serving file N1223_v4.jpg
+2024-08-12 16:55:06,654 - INFO - Serving file N1223_v5.jpg
+2024-08-12 16:55:06,656 - INFO - Serving file N1223_v6.jpg
+2024-08-12 16:55:06,661 - INFO - Serving file N1223_v7.jpg
+2024-08-12 16:55:06,663 - INFO - Serving file N1223_v8.jpg
+2024-08-12 16:55:06,668 - INFO - Serving file N1223_V3.jpg
+2024-08-12 16:55:06,668 - INFO - Serving file N1223_V2.jpg
+2024-08-12 16:55:06,668 - INFO - Serving file N1223_V6.jpg
+2024-08-12 16:55:06,669 - INFO - Serving file N1223_V5.jpg
+2024-08-12 16:55:06,671 - INFO - Serving file N1551.jpg
+2024-08-12 16:55:06,672 - INFO - Serving file EN2008.jpg
+2024-08-12 17:01:10,325 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 17:01:16,873 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 17:01:16,951 - INFO - Serving file T3305_v4.jpg
+2024-08-12 17:01:16,952 - INFO - Serving file T3305_v3.jpg
+2024-08-12 17:01:16,956 - INFO - Serving file T3305.jpg
+2024-08-12 17:01:16,960 - INFO - Serving file T3305_v2.jpg
+2024-08-12 17:02:00,606 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 17:02:00,760 - INFO - Serving file T3305.jpg
+2024-08-12 17:02:00,808 - INFO - Serving file T3305_v2.jpg
+2024-08-12 17:02:00,808 - INFO - Serving file T3305_v3.jpg
+2024-08-12 17:02:00,809 - INFO - Serving file T3305_v4.jpg
+2024-08-12 17:02:16,340 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 17:02:16,453 - INFO - Serving file T3305.jpg
+2024-08-12 17:02:16,454 - INFO - Serving file T3305_v3.jpg
+2024-08-12 17:02:16,462 - INFO - Serving file T3305_v2.jpg
+2024-08-12 17:02:16,463 - INFO - Serving file T3305_v4.jpg
+2024-08-12 17:02:20,841 - INFO - User None has logged in. IP: 2.57.122.123, Browser: Chrome 81.0.4044, OS: Linux , Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: None, Query Params: ImmutableMultiDict([])
+2024-08-12 17:02:48,357 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 17:02:48,467 - INFO - Serving file T3305.jpg
+2024-08-12 17:02:48,468 - INFO - Serving file T3305_v4.jpg
+2024-08-12 17:02:48,469 - INFO - Serving file T3305_v3.jpg
+2024-08-12 17:02:48,470 - INFO - Serving file T3305_v2.jpg
+2024-08-12 17:03:35,492 - INFO - autobots, roll out!
+2024-08-12 17:03:35,499 - INFO - autobots, roll out!
+2024-08-12 17:03:35,567 - INFO - autobots, roll out!
+2024-08-12 17:03:40,119 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 17:03:44,838 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 17:03:44,958 - INFO - Serving file T3305.jpg
+2024-08-12 17:03:44,959 - INFO - Serving file T3305_v2.jpg
+2024-08-12 17:03:44,964 - INFO - Serving file T3305_v3.jpg
+2024-08-12 17:03:44,965 - INFO - Serving file T3305_v4.jpg
+2024-08-12 17:03:52,394 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 17:03:52,467 - INFO - Serving file T3305_v4.jpg
+2024-08-12 17:03:52,468 - INFO - Serving file T3305_v2.jpg
+2024-08-12 17:03:52,470 - INFO - Serving file T3305.jpg
+2024-08-12 17:03:52,470 - INFO - Serving file T3305_v3.jpg
+2024-08-12 17:04:31,460 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-12 17:04:31,585 - INFO - Serving file T3305.jpg
+2024-08-12 17:04:31,586 - INFO - Serving file T3305_v2.jpg
+2024-08-12 17:04:31,586 - INFO - Serving file T3305_v3.jpg
+2024-08-12 17:04:31,588 - INFO - Serving file T3305_v4.jpg
+2024-08-12 17:05:29,680 - INFO - yeti submitted an order lookup
+2024-08-12 17:05:29,681 - INFO - yeti is looking up order number: 1550
+2024-08-12 17:05:30,264 - INFO - yeti searched for order number: 1550
+2024-08-12 17:06:58,975 - INFO - autobots, roll out!
+2024-08-12 17:06:58,980 - INFO - autobots, roll out!
+2024-08-12 17:06:59,087 - INFO - autobots, roll out!
+2024-08-12 17:07:21,494 - INFO - autobots, roll out!
+2024-08-12 17:07:21,499 - INFO - autobots, roll out!
+2024-08-12 17:07:21,550 - INFO - autobots, roll out!
+2024-08-12 17:07:37,985 - INFO - autobots, roll out!
+2024-08-12 17:07:37,985 - INFO - autobots, roll out!
+2024-08-12 17:07:38,010 - INFO - autobots, roll out!
+2024-08-12 17:07:40,563 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 17:07:42,738 - INFO - yeti submitted an order lookup
+2024-08-12 17:07:42,738 - INFO - yeti is looking up order number: 1550
+2024-08-12 17:07:42,864 - INFO - yeti searched for order number: 1550
+2024-08-12 17:08:55,994 - ERROR - 35.203.211.105 - - [12/Aug/2024 17:08:55] code 400, message Bad request version ('À\x13À')
+2024-08-12 17:08:56,278 - ERROR - 35.203.211.105 - - [12/Aug/2024 17:08:56] code 400, message Bad request version ('À(À$À\x14À')
+2024-08-12 17:10:34,778 - INFO - yeti submitted an order lookup
+2024-08-12 17:10:34,778 - INFO - yeti is looking up order number: 1550
+2024-08-12 17:10:34,804 - INFO - yeti searched for order number: 1550
+2024-08-12 17:10:53,546 - INFO - yeti submitted an order lookup
+2024-08-12 17:10:53,546 - INFO - yeti is looking up order number: 1550
+2024-08-12 17:10:53,560 - INFO - yeti searched for order number: 1550
+2024-08-12 17:11:18,642 - INFO - autobots, roll out!
+2024-08-12 17:11:18,642 - INFO - autobots, roll out!
+2024-08-12 17:11:18,643 - INFO - autobots, roll out!
+2024-08-12 17:11:46,231 - INFO - autobots, roll out!
+2024-08-12 17:11:46,231 - INFO - autobots, roll out!
+2024-08-12 17:11:46,248 - INFO - autobots, roll out!
+2024-08-12 17:11:48,925 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 17:11:54,849 - INFO - yeti submitted an order lookup
+2024-08-12 17:11:54,850 - INFO - yeti is looking up order number: 39442
+2024-08-12 17:11:54,982 - INFO - yeti searched for order number: 39442
+2024-08-12 17:12:00,759 - INFO - autobots, roll out!
+2024-08-12 17:12:00,759 - INFO - autobots, roll out!
+2024-08-12 17:12:00,773 - INFO - autobots, roll out!
+2024-08-12 17:12:12,218 - INFO - autobots, roll out!
+2024-08-12 17:12:12,235 - INFO - autobots, roll out!
+2024-08-12 17:12:12,254 - INFO - autobots, roll out!
+2024-08-12 17:12:14,787 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-12 17:12:17,716 - INFO - yeti submitted an order lookup
+2024-08-12 17:12:17,716 - INFO - yeti is looking up order number: 1550
+2024-08-12 17:12:17,854 - INFO - yeti searched for order number: 1550
+2024-08-12 17:12:20,190 - INFO - yeti submitted an order lookup
+2024-08-12 17:12:20,190 - INFO - yeti is looking up order number: 32984
+2024-08-12 17:12:20,226 - INFO - yeti searched for order number: 32984
+2024-08-12 17:12:23,387 - INFO - yeti submitted an order lookup
+2024-08-12 17:12:23,388 - INFO - yeti is looking up order number: 88791
+2024-08-12 17:12:23,408 - INFO - yeti searched for order number: 88791
+2024-08-12 17:12:27,582 - INFO - yeti submitted an order lookup
+2024-08-12 17:12:27,582 - INFO - yeti is looking up order number: 156189
+2024-08-12 17:12:27,582 - INFO - yeti searched for order number: 156189
+2024-08-12 17:12:32,480 - INFO - yeti submitted an order lookup
+2024-08-12 17:12:32,480 - INFO - yeti is looking up order number: 5555
+2024-08-12 17:12:32,501 - INFO - yeti searched for order number: 5555
+2024-08-12 17:12:42,790 - INFO - autobots, roll out!
+2024-08-12 17:12:42,821 - INFO - autobots, roll out!
+2024-08-12 17:12:42,829 - INFO - autobots, roll out!

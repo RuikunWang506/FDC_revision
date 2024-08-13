@@ -27,3 +27,11 @@ select * from dbo.ord_log where prod_cd like 'et2953%'
 select * from dbo.ord_log where prod_cd like 's1460%'
 select * from dbo.ord_log where prod_cd like 's1460%'
 select * from dbo.ord_log where prod_cd like 's1460%'
+select * from dbo.ord_log where ord_num=1558
+select * from ord_log where ord_num=1558
+select * from ord_log where ord_num=1558
+select * from ord_log where ord_num=1558
+select * from ord_log where ord_num=1558cxzcvzxcz | ERROR: An error occurred: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near 'cxzcvzxcz'. (102) (SQLExecDirectW)")
+select * from ord_log where ord_num=1558
+select * from ord_log where ord_num=1558
+select * from ord_log where ord_num=1558
