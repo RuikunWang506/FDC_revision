@@ -260,27 +260,50 @@ def register_routes(app):
 
     @app.route('/label_maker_from_order_lookup', methods=['POST'])
     def label_maker_from_order_lookup():
-        order_number = session.get('order_number')
-        if not order_number:
-            return "Order number is missing.", 400
+        try:
+            order_number = session.get('order_number')
+            if not order_number:
+                return "Order number is missing.", 400
 
-        app.logger.info("Received order_number: %s", order_number)
-        filename, error_message, number_of_labels, duplicate_numbers, info_list = Label_Maker.process_orders(order_number)
+            app.logger.info("Received order_number: %s", order_number)
+            filename, error_message, number_of_labels, duplicate_numbers, info_list = Label_Maker.process_orders(order_number)
 
-        if error_message:
-            return error_message, 400
+            if error_message:
+                return render_template(
+                    'order_lookup.html',
+                    excel_html=None,
+                    filename=None,
+                    number_of_labels=None,
+                    duplicate_numbers=None,
+                    info_list=None,
+                    error_message=error_message,
+                    order_number=order_number
+                )
 
-        base_filename = os.path.basename(filename)
-        download_url = url_for('download_file2', filename=base_filename)
+            base_filename = os.path.basename(filename)
+            download_url = url_for('download_file2', filename=base_filename)
 
-        return render_template(
-            'order_lookup.html',
-            filename=base_filename,
-            download_url=download_url,
-            number_of_labels=number_of_labels,
-            duplicate_numbers=duplicate_numbers,
-            info_list=info_list
-        )
+            return render_template(
+                'order_lookup.html',
+                filename=base_filename,
+                download_url=download_url,
+                number_of_labels=number_of_labels,
+                duplicate_numbers=duplicate_numbers,
+                info_list=info_list,
+                order_number=order_number
+            )
+        except Exception as e:
+            app.logger.error("An error occurred: %s", str(e))
+            return render_template(
+                'order_lookup.html',
+                excel_html=None,
+                filename=None,
+                number_of_labels=None,
+                duplicate_numbers=None,
+                info_list=None,
+                error_message=f"An error occurred: {str(e)}",
+                order_number=order_number
+            )
 
     @app.route("/submit_order", methods=["POST"])
     def submit_order():
@@ -309,14 +332,22 @@ def register_routes(app):
             return redirect(url_for("login"))
         current_user = session['username']
         filename = None
+        user_input = None  # Initialize user_input
+
         if request.method == "POST":
             user_input = request.form.get("user_input")
             app.logger.info("%s submitted input for v4_listcreator: %s", current_user, user_input)
-            V4_Listcreator.user_input = user_input
-            V4_Listcreator.main()
-            filename = f"{V4_Listcreator.formatted_date}.xlsx"
-            app.logger.info("%s downloaded the file: %s", current_user, filename)
-        return render_template("v4_listcreator.html", filename=filename, current_user=current_user)
+            
+            try:
+                V4_Listcreator.user_input = user_input
+                V4_Listcreator.main()
+                filename = f"{V4_Listcreator.formatted_date}.xlsx"
+                app.logger.info("%s downloaded the file: %s", current_user, filename)
+            except Exception as e:
+                app.logger.error("An error occurred: %s", str(e))
+                return render_template("v4_listcreator.html", filename=None, user_input=user_input, error_message=f"An error occurred: {str(e)}", current_user=current_user)
+
+        return render_template("v4_listcreator.html", filename=filename, user_input=user_input, current_user=current_user)
 
     @app.route("/googlesheet", methods=["GET", "POST"])
     def googlesheet():
@@ -483,6 +514,7 @@ def register_routes(app):
                     quantity = ' '.join(parts[2:])
                     table_data.append([sku, barcode, quantity])
         return table_data
+        
 
     @app.route('/log')
     def display():
@@ -822,6 +854,38 @@ def register_routes(app):
         # Change the download_name to use search_str.zip
         zip_filename = f"{search_str}.zip"
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
+    @app.route('/download_selected_images', methods=['POST'])
+    def download_selected_images():
+        if 'username' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        selected_images = request.form.getlist('selected_images')
+        if not selected_images:
+            flash("No images selected.")
+            return redirect(url_for('big_img'))
+
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            for filename in selected_images:
+                file_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
+                zf.write(file_path, os.path.basename(file_path))
+
+        memory_file.seek(0)
+        zip_filename = "selected_images.zip"
+        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
+    @app.template_filter('basename')
+    def basename_filter(path):
+        return os.path.basename(path)
+
+    # Register the filter
+    app.jinja_env.filters['basename'] = basename_filter 
+
+    def format_file_size(size):
+        if size < 1000:
+            return f"{size} KB"
+        else:
+            size_mb = size / 1000
+            return f"{size_mb:.2f} MB"
 
     @app.route('/big_img', methods=['GET', 'POST'])
     def big_img():
@@ -842,12 +906,16 @@ def register_routes(app):
             matching_files = [file_path for file_path in index if os.path.basename(file_path).lower().startswith(search_str)]
             
             image_data = []
-            for filename in matching_files:
-                image_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
+            for file_path in matching_files:
+                image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
                 resized_image = resize_image(image_path)
                 if resized_image:
-                    image_data.append((filename, resized_image))
-            app.logger.info("%s downloaded one images of %s",current_user, search_str)
+                    modified_time = os.path.getmtime(image_path)
+                    modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
+                    file_size = format_file_size(os.path.getsize(image_path) // 1024)  # Convert bytes to KB
+                    filename = os.path.basename(file_path)
+                    image_data.append((file_path, resized_image, modified_date, file_size))
+                    
             return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
         return render_template('big_img.html', quote=urllib.parse.quote)
 

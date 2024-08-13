@@ -47,37 +47,53 @@
         </div>
         {% endif %}
         {% if current_user != 'fdc' %}
-            <form method="POST" action="/submit_order">
+            <form method="POST" action="/submit_order" id="submitOrderForm">
                 <a href="/macy"><h5>⭐Macy Speical Click here⭐</h5></a>
                 <h4>Enter Order Number:</h4>
                 <p>4 digits for E-fashion</p>
                 <p>5 digits for FDC</p>
                 <div class="form-group">
                     <label for="order_number">Order Number:</label>
-                    <input type="text" class="form-control" name="order_number" id="order_number" required>
+                    <input type="text" class="form-control" name="order_number" id="order_number" required value="{{ order_number }}">
                 </div>
-                <button type="submit" class="btn btn-primary">Submit Order</button>
+                <div class="d-flex justify-content-center">
+                    <button type="submit" class="btn btn-primary">Submit Order</button>
+                    {% if excel_html %}
+                        <button type="button" class="btn btn-primary ml-2" onclick="document.getElementById('generateLabelForm').submit();">Generate Label</button>
+                    {% endif %}
+                </div>
             </form>
+
+            {% if excel_html %}
+            <form method="POST" action="/label_maker_from_order_lookup" id="generateLabelForm" style="display:none;">
+                <input type="hidden" name="order_number" value="{{ order_number }}">
+            </form>
+            {% endif %}
+            
             {{ order_form | safe }}
+        {% endif %}
+    </div>
+    <div class="row justify-content-center text-center">
+        {% if order_number %}
+        <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
+            Your search input was: <br>{{ order_number }}
+        </p>
         {% endif %}
     </div>
 </div>
 
 {% if excel_html %}
-    <div class="container mt-5">
-        <div class="row justify-content-center text-center">
-            <form method="POST" action="/label_maker_from_order_lookup">
-                <input type="hidden" name="order_number" value="{{ order_number }}">
-                <button type="submit" class="btn btn-primary">Generate Label</button>
-            </form>
-        </div>
-    </div>
     <h2 class="text-center">OMS Data:</h2>
     <table id="excel_table">
         <tbody>
         {{ excel_html | safe }}
         </tbody>
     </table>
+{% endif %}
+{% if error_message %}
+<div class="alert alert-info mt-3">
+    {{ error_message }}
+</div>
 {% endif %}
 {% if filename %}
     <div class="text-center">

@@ -8,9 +8,54 @@
     <style>
         .card {
             margin-bottom: 20px;
+            position: relative;
         }
         .img-clickable {
             cursor: pointer;
+        }
+        .select-checkbox {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+            background-color: white;
+            padding: 5px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            width: 25px;
+            height: 25px;
+        }
+        .filename {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            color: black; /* Set filename color to black */
+            text-decoration: none; /* Remove underline */
+            font-weight: normal; /* Ensure font is not bold */
+        }
+        .filename:hover {
+            color: black; /* Ensure color does not change on hover */
+            text-decoration: none; /* Ensure no underline on hover */
+        }
+        .tooltip-text {
+            display: none;
+            position: absolute;
+            bottom: 120%; /* Position above the filename */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white !important; /* Ensure text is white */
+            padding: 5px;
+            border-radius: 5px;
+            white-space: normal; /* Allow text to wrap */
+            z-index: 1001;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            max-width: 200px; /* Limit width to prevent bleeding */
+            word-wrap: break-word; /* Break long words to fit within tooltip */
+        }
+        .filename:hover .tooltip-text {
+            display: block;
         }
     </style>
 </head>
@@ -19,7 +64,9 @@
 
     <div class="container">
         <h1 class="mt-5">Big Image Search</h1>
-        <form method="post" class="mb-5">
+        <p>You can click on the picture to open it in the browser, or you can download it directly.</p>
+        <p>You can also download all as a ZIP, or you can select a few to download as selected.</p>
+        <form method="post" id="imageForm">
             <div class="form-group">
                 <label for="search_str">Search String:</label>
                 <input type="text" class="form-control" id="search_str" name="search_str" required>
@@ -28,17 +75,26 @@
         </form>
 
         {% if image_data %}
-        <a href="{{ url_for('download_all_images', search_str=request.form.get('search_str')) }}" class="btn btn-success mt-3">Download All as ZIP</a>
+        <form method="post" id="imageForm">
+            <div class="mb-3">
+                <a href="{{ url_for('download_all_images', search_str=request.form.get('search_str')) }}" class="btn btn-success d-inline">Download All as ZIP 全选打包下载</a>
+                <button type="submit" formaction="{{ url_for('download_selected_images') }}" class="btn btn-success d-inline">Download Selected as ZIP 选择性打包下载</button>
+            </div>
             <div class="row">
-                {% for filename, image in image_data %}
+                {% for filename, image, modified_date, file_size in image_data %}
                     <div class="col-md-3">
                         <div class="card">
+                            <input type="checkbox" name="selected_images" value="{{ filename }}" class="select-checkbox">
                             <a href="{{ url_for('serve_file3', encoded_path=quote(filename)) }}" target="_blank">
                                 <img src="data:image/jpeg;base64,{{ image|b64encode }}" class="card-img-top img-clickable" alt="{{ filename }}">
                             </a>
                             <div class="card-body">
-                                <h7 class="card-title">{{ filename }}</h7>
-                                <a href="{{ url_for('download_file5', encoded_path=quote(filename)) }}" target="_blank" class="btn btn-primary">Download</a>
+                                <p class="card-title filename">
+                                    {{ filename|basename }}
+                                    <span class="tooltip-text">{{ filename|escape }}</span>
+                                </p>
+                                <p>Modified: {{ modified_date }}</p>
+                                <p>Size: {{ file_size }} <a href="{{ url_for('download_file5', encoded_path=quote(filename)) }}" target="_blank" class="btn btn-primary float-right">Download</a></p>
                             </div>
                         </div>
                     </div>
@@ -47,7 +103,7 @@
                     {% endif %}
                 {% endfor %}
             </div>
-            
+        </form>
         {% endif %}
     </div>
 

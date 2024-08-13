@@ -21,94 +21,92 @@ ft = Font(name="Arial", size="12")
 ft2 = Font(name="Arial", size="14")
 Yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
 
-order_number = "1762"
-
 def get_data_from_sql(order_number):
-    if len(order_number) == 5:
-        database_name = 'omsdata_FDC'
-    elif len(order_number) == 4:
-        database_name = 'oms_EF'
-    else:
-        print("Invalid input length. Please provide a 4 or 5-digit input.")
-        return None
+    try:
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return None, "Invalid input length. Please provide a 4 or 5-digit input."
 
-    conn = pyodbc.connect(
-        f'DRIVER={driver};SERVER={server};DATABASE={database_name};UID={username};PWD={password}'
-    )
-
-    query = f"""
-        WITH ExtractedNumbers AS (
-            SELECT DISTINCT
-                ord.UT_DESC,
-                ord.PROD_CD,
-                ord.PC_UNIT,
-                orders.SP_ADR,
-                orders.SP_ADR_2,
-                orders.SP_ADR_22,
-                orders.SP_ADR_3,
-                orders.ord_num,
-                orders.PO_NUM,
-                ntfile.NOTES
-            FROM 
-                DBO.ORD_LOG AS ord
-            JOIN 
-                dbo.orders AS orders ON ord.ord_num = orders.ord_num
-            JOIN
-                dbo.ntfile AS ntfile ON orders.ord_num = ntfile.nt_num
-            WHERE  
-                ord.ord_num = {order_number}
+        conn = pyodbc.connect(
+            f'DRIVER={driver};SERVER={server};DATABASE={database_name};UID={username};PWD={password}'
         )
-        SELECT 
-            UT_DESC, 
-            PROD_CD, 
-            PC_UNIT, 
-            SP_ADR, 
-            SP_ADR_2, 
-            SP_ADR_22, 
-            SP_ADR_3,
-            ord_num,
-            PO_NUM,
-            NOTES
-        FROM 
-            ExtractedNumbers
-        ORDER BY 
-            CASE 
-                WHEN ISNUMERIC(
-                    LEFT(
-                        UT_DESC,
-                        CASE
-                            WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
-                            WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
-                            ELSE LEN(UT_DESC)
-                        END
-                    )
-                ) = 1 THEN CAST(
-                    LEFT(
-                        UT_DESC,
-                        CASE
-                            WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
-                            WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
-                            ELSE LEN(UT_DESC)
-                        END
-                    ) AS INT)
-                ELSE 1
-            END;
-    """
 
-    df = pd.read_sql_query(query, conn)
+        query = f"""
+            WITH ExtractedNumbers AS (
+                SELECT DISTINCT
+                    ord.UT_DESC,
+                    ord.PROD_CD,
+                    ord.PC_UNIT,
+                    orders.SP_ADR,
+                    orders.SP_ADR_2,
+                    orders.SP_ADR_22,
+                    orders.SP_ADR_3,
+                    orders.ord_num,
+                    orders.PO_NUM,
+                    ntfile.NOTES
+                FROM 
+                    DBO.ORD_LOG AS ord
+                JOIN 
+                    dbo.orders AS orders ON ord.ord_num = orders.ord_num
+                JOIN
+                    dbo.ntfile AS ntfile ON orders.ord_num = ntfile.nt_num
+                WHERE  
+                    ord.ord_num = {order_number}
+            )
+            SELECT 
+                UT_DESC, 
+                PROD_CD, 
+                PC_UNIT, 
+                SP_ADR, 
+                SP_ADR_2, 
+                SP_ADR_22, 
+                SP_ADR_3,
+                ord_num,
+                PO_NUM,
+                NOTES
+            FROM 
+                ExtractedNumbers
+            ORDER BY 
+                CASE 
+                    WHEN ISNUMERIC(
+                        LEFT(
+                            UT_DESC,
+                            CASE
+                                WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                                WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                                ELSE LEN(UT_DESC)
+                            END
+                        )
+                    ) = 1 THEN CAST(
+                        LEFT(
+                            UT_DESC,
+                            CASE
+                                WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                                WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                                ELSE LEN(UT_DESC)
+                            END
+                        ) AS INT)
+                    ELSE 1
+                END;
+        """
 
-    conn.close()
+        df = pd.read_sql_query(query, conn)
+        conn.close()
 
-    return df
+        if df.empty:
+            return None, f"No data found for order number: {order_number}"
+        return df, None
+    except Exception as e:
+        return None, str(e)
 
 def process_orders(order_number):
-    error_message = None
-    df = get_data_from_sql(order_number)
+    df, error_message = get_data_from_sql(order_number)
     
-    if df is None or df.empty:
-        error_message = f"No data found for order number: {order_number}"
-        print(error_message)
-        return None, error_message
+    if error_message:
+        return None, error_message, None, None, None
     
     wb = Workbook()
     ws = wb.active
@@ -355,7 +353,7 @@ def generate_additional_label(output_line_number, from_address, to_address, ws, 
     return output_line_number
 
 if __name__ == "__main__":
-    order_number = "1762"  # Example order number
+    order_number = "33074"  # Example order number
     file_path, error, number_of_labels, duplicate_numbers, info_list = process_orders(order_number)
     if error:
         print(f"Error: {error}")

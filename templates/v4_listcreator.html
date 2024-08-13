@@ -17,9 +17,15 @@
             <form method="POST" action="/v4_listcreator">
                 <div class="form-group">
                     <label for="user_input">Enter SKUs (comma separated):<p>like N1551,N1223</p><p>capital doesnt matter, but watchout for M -S all the weird stuff, you can leave it plain L1343 and it will get L1343M L1343-S L1343-Set, but make sure to fix the picture in the excel file</p></label>
-                    <input type="text" class="form-control" name="user_input" id="user_input" required>
+                    <input type="text" class="form-control" name="user_input" id="user_input" required {% if user_input %} value="{{ user_input }}" {% endif %}>
                 </div>
                 <button type="submit" class="btn btn-primary">Create List</button>
+                
+                {% if user_input %}
+                <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
+                    Your search input was: <br>{{ user_input }}
+                </p>
+                {% endif %}
             </form>
         {% endif %}
         <!-- Add this section to show the filename and download button -->
@@ -35,7 +41,7 @@
 <!-- Footer -->
 <footer class="footer  py-3 bg-light">
     <div class="container text-center">
-        <span class="text-muted">last Updated: 5/30/2024 10:41 AM</span>
+        <span class="text-muted">last Updated: 8/13/2024 3:13 PM</span>
     </div>
 </footer>
 
