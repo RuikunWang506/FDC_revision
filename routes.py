@@ -23,8 +23,10 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 import V4_Listcreator, Label_Maker, order_search, SQL_connector
+from v5_list_semi import list_creator_local
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
+import fnmatch
 
 # New imports
 import base64
@@ -170,9 +172,6 @@ def register_routes(app):
         current_user = session['username']
         user_input = request.form.get("user_input", "").lower().strip()
 
-        # Remove all spaces from the user_input
-        user_input = user_input.replace(" ", "")
-
         if not user_input:
             _, e1_value = get_sheet_data_and_e1_value('')
             return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input)
@@ -183,7 +182,12 @@ def register_routes(app):
         # Generate Excel and image URLs
         excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
 
-        search_terms = [term.strip() for term in user_input.split(",")]
+        if not excel_html:  # If the excel_html is None or empty, return the template without rendering data
+            app.logger.info("No valid data to display for input: %s", user_input)
+            return render_template("Item_lookup.html", excel_html=None, current_user=current_user)
+
+        # Normalize input parts by stripping color suffixes for image lookup
+        search_terms = [term.split()[0].strip() for term in user_input.split(",")]
 
         # Get filenames matching the search terms
         file_names = []
@@ -228,7 +232,6 @@ def register_routes(app):
             # Convert DataFrames back to HTML
             excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
             sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
-        
 
             app.logger.info("Excel HTML and sheet data generated for %s", current_user)
             return render_template(
@@ -245,6 +248,7 @@ def register_routes(app):
         else:
             _, e1_value = get_sheet_data_and_e1_value('')
             return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input.capitalize())
+
 
                                             
 
