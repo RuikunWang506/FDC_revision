@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V5 List Creator</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .directory-info, .file-list {
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            background-color: #88ff00;
+            text-align: center;
+        }
+    
+        .directory-info {
+            background-color: #88ff00; /* Adjust color as needed */
+            text-align: center;
+            padding-bottom: 10px;
+        }
+    
+        .file-list {
+            background-color: #88ff00; /* Slightly different green for variety */
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar -->
+{% include 'navbar.html' %}
+<div class="row justify-content-center text-center">
+    <div class="container mt-5">
+        <h2>V5 List Creator</h2>
+        {% if current_user != 'fdc' %}
+            <form method="POST" action="/v5_listcreator">
+                <!-- New input box for random strings -->
+                <div class="form-group">
+                    <label for="random_strings_input"><h6>Paste your raw list, can be from excel, seperator is comma "," or new line "enter</p></h6></label>
+                    <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="user_input">
+                        <h4>Need all styles from a dropbox folder? Format:</h4>
+                        <h7> Dropbox\Pictures-China (1)\ROSS\ROSS 2022\ROSS2022</h7>
+                    </label>
+                </div>
+                <form method="POST" action="/v5_listcreator">
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="user_input" id="user_input" required>
+                    </div>
+                <div class="form-group col-8 mx-auto text-center">
+                    <div class="btn-group btn-group-toggle d-flex justify-content-center" data-toggle="buttons">
+                        <label class="btn btn-outline-primary active" style="flex: 1; margin: 5px;">
+                            <input type="radio" name="image_option" id="option1" value="resizedpic" autocomplete="off" checked>
+                            <P>Use Image from Clean Catalog Picture </P><p> (no price/quantity/editing)</p>
+                        </label>
+                        <label class="btn btn-outline-primary" style="flex: 1; margin: 5px;">
+                            <input type="radio" name="image_option" id="option2" value="dropboxpic" autocomplete="off">
+                            <p>Use Image from Dropbox Folder </p><p>(required folder link)</p>
+                        </label>
+                    </div>
+                    <p id="item_count" style="font-size: 18px; font-weight: bold; color: #fff; background-color: #ff66ff; padding: 5px; border-radius: 5px; text-align: center; display: block; width: 100%;">
+                        Style Count: 0
+                    </p>
+                </div>
+
+                <!-- Counter for the number of items -->
+                
+
+                <button type="submit" class="btn btn-primary">Create Clean List</button>
+                
+                {% if user_input_directory %}
+                    <div class="directory-info">The directory you searched:<br> {{ user_input_directory }}</div>
+                    <div class="file-list">Your folder contains {{ file_count }} files, RIGHT? {{ '' if file_count != 1 else '' }} <br>{{ user_input }}</div>
+                {% elif user_input %}
+                    <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; border-radius: 5px;">
+                        Your search input was: <br>{{ user_input }}
+                    </p>
+                {% endif %}
+            </form>
+        {% endif %}
+        <!-- Add this section to show the filename and download button -->
+            {% if filename %}
+                <div class="mt-3">
+                    <h5>Generated File: {{ filename }}</h5>
+                    <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success mt-2">Download File</a>
+                </div>
+            {% endif %}
+    </div>
+</div>
+<!-- Footer -->
+
+
+<!-- Include Bootstrap JavaScript (Optional) -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    // JavaScript to process random strings and update user_input
+    document.getElementById('random_strings_input').addEventListener('input', function() {
+        const randomStrings = this.value.split(/[\s,]+/).filter(Boolean);
+        const formattedInput = randomStrings.join(',');
+        document.getElementById('user_input').value = formattedInput;
+        updateItemCount(formattedInput);
+    });
+
+    // Function to update the item count
+    function updateItemCount(input) {
+        const itemCount = input ? input.split(',').length : 0;
+        document.getElementById('item_count').textContent = `Items count: ${itemCount}`;
+    }
+
+    // Initial item count update for when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const initialInput = document.getElementById('user_input').value;
+        updateItemCount(initialInput);
+    });
+
+    // Update item count when user manually types in user_input
+    document.getElementById('user_input').addEventListener('input', function() {
+        updateItemCount(this.value);
+    });
+</script>
+<footer class="footer  py-3 bg-light">
+    <div class="container text-center">
+        <span class="text-muted">last Updated: 8/20/2024 7:13 PM</span>
+    </div>
+</footer>
+{% include 'footer.html' %}
+</body>
+</html>

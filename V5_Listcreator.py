@@ -7,26 +7,60 @@ import os
 from PIL import Image as PILImage
 from openpyxl.styles import Alignment, Border, Side, PatternFill
 import io
+from config import Config
 
-source_folder = r"D:\Catalog_pictures\catalog_resized\\"
-user_input = "N2189,T2737,T3373,N1790,EN2329,N2112,N1871,T3391,N2266,T3352,T3351,T3455,T3454,L1875,L1873,L1874,L1871,L1858,T3405,T3405,T3405,ET3428,ET3142,ET3142,ET3426,ET3426"
+# Define global variables
+user_input_type = None
+image_option = None
+user_input = None
 formatted_date = ""
+source_folder = None  # Correctly define and highlight the source_folder variable
 
 def main():
-    global user_input, formatted_date
-    if user_input.endswith(","):
-        user_input = user_input[:-1].strip()
-    user_input_list = [item.strip() for item in user_input.replace(" ", "").split(',')]
-    print("useinpu " + str(user_input))
-    print("uselist " + str(user_input_list))
+    global user_input, formatted_date, user_input_type, source_folder
+
+    today = datetime.datetime.now()
+    formatted_date = today.strftime("List-%Y%m%d-%H%M%S")
+
+    if user_input_type == "directory":
+        # Map the input directory to the local Dropbox path
+        dropbox_index = user_input.lower().find('dropbox')
+        if dropbox_index != -1:
+            relative_path = user_input[dropbox_index + len('dropbox') + 1:]  # +1 to skip the backslash
+            user_input_directory = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
+            
+            if not os.path.isdir(user_input_directory):
+                raise ValueError(f"The directory {user_input_directory} does not exist on the local system.")
+
+            # Get all filenames without the .jpg extension from the directory
+            user_input_list = [os.path.splitext(f)[0] for f in os.listdir(user_input_directory) if f.endswith('.jpg')]
+            user_input = ','.join(user_input_list)
+        else:
+            raise ValueError("The provided directory path does not include 'Dropbox'.")
+
+    else:
+        # If it's already a list input
+        if user_input.endswith(","):
+            user_input = user_input[:-1].strip()
+        user_input_list = [item.strip() for item in user_input.replace(" ", "").split(',')]
+
+    print("Processed user_input: " + str(user_input))
+    print("user_input_list: " + str(user_input_list))
+
+    # Select the correct source folder based on image_option
+    if image_option == "dropboxpic":
+        source_folder = user_input_directory
+    else:
+        source_folder = Config.CATALOG_RESIZED
+
+    # Continue with the existing logic...
+    # Database connection details
     server = "192.168.254.204"
     database_fdc = "omsdata_FDC"
     database_oms_ef = "oms_EF"
     username = "tristen"
     password = 'Qwer1234##'
     driver = 'ODBC Driver 17 for SQL Server'
-    today = datetime.datetime.now()
-    formatted_date = today.strftime("List-%Y%m%d-%H%M%S")
 
     try:
         conn_fdc = pyodbc.connect(
@@ -40,11 +74,7 @@ def main():
 
         queries = []
         for conn, cursor, database_name in [(conn_fdc, cursor_fdc, 'omsdata_FDC'), (conn_oms_ef, cursor_oms_ef, 'oms_EF')]:
-
-            if user_input.endswith(","):
-                user_input = user_input[:-1]
-
-            mylist = "'," + str(user_input).replace(" ","")
+            mylist = "'," + str(user_input).replace(" ", "")
             query = """\
             DECLARE @AltCDList NVARCHAR(MAX) = ?;
             DECLARE @ProductList NVARCHAR(MAX);
@@ -86,16 +116,17 @@ def main():
 
         combined_results = queries[0] + queries[1]
 
+        # Create Excel workbook and save the results
         workbook = Workbook()
         main_sheet = workbook.active
         main_sheet.title = 'main'
 
-        column_headers = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered', 'Avaliable_now','incoming_quantity',
-                          'selling_price', 'QTY_in_box', 'unit_weight',
-                          'color', 'item_length', 'item_width', 'item_height','dimensions']
+        column_headers = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered', 'Avaliable_now',
+                          'incoming_quantity', 'selling_price', 'QTY_in_box', 'unit_weight', 'color', 'item_length',
+                          'item_width', 'item_height', 'dimensions']
         for col_index, header in enumerate(column_headers, start=1):
             main_sheet.cell(row=1, column=col_index, value=header)
-        
+
         for row_index, row in enumerate(combined_results, start=2):
             for col_index, value in enumerate(row, start=1):
                 if col_index == 2:
@@ -109,7 +140,7 @@ def main():
         cursor_oms_ef.close()
         conn_fdc.close()
         conn_oms_ef.close()
-        
+
         create_and_save_pivot(excel_file_path)
         generate_image_sheet(combined_results, user_input_list)
 
@@ -140,7 +171,6 @@ def create_and_save_pivot(file_path):
     except Exception as e:
         print("Error creating and saving pivot table:", e)
 
-
 def set_border(ws, cell_range):
     thin = Side(border_style="thin", color="000000")
     for row in ws[cell_range]:
@@ -155,10 +185,7 @@ def reduce_image_quality(image_path, quality=20):
     return buffer
 
 def add_data_to_excel_sheet(sku_name, ws, row, existing_wb):
-    sorted_sheet = existing_wb["sorted"]
-    main_sheet = existing_wb["main"]
-    detail_row_num = 0  
-
+    global source_folder  # Use the source_folder determined in the main function
     picfile = sku_name + ".jpg"
     image_path = os.path.join(source_folder, picfile)
     
@@ -175,34 +202,35 @@ def add_data_to_excel_sheet(sku_name, ws, row, existing_wb):
     print(sku_name)
     ws['G' + str(row)] = sku_name
     price = ""
-    for xd in range(2, main_sheet.max_row + 1):
-        if main_sheet["A" + str(xd)].value is None:
+    for xd in range(2, existing_wb["main"].max_row + 1):
+        if existing_wb["main"]["A" + str(xd)].value is None:
             break
-        if sku_name == str(main_sheet["C" + str(xd)].value).strip():
-            price = main_sheet["H" + str(xd)].value
+        if sku_name == str(existing_wb["main"]["C" + str(xd)].value).strip():
+            price = existing_wb["main"]["H" + str(xd)].value
             break
     ws['F' + str(row)] = "$" + str(price)
 
-    for j in range(2, sorted_sheet.max_row + 1):
-        if str(sorted_sheet["A" + str(j)].value).strip().startswith(sku_name):
-            ws["H" + str(row + detail_row_num)] = sorted_sheet["C" + str(j)].value
-            ws["I" + str(row + detail_row_num)] = sorted_sheet["D" + str(j)].value
-            ws["N" + str(row + detail_row_num)] = sorted_sheet["B" + str(j)].value
-            for xd in range(2, main_sheet.max_row + 1):
-                if main_sheet["A" + str(xd)].value is None:
+    detail_row_num = 0
+    for j in range(2, existing_wb["sorted"].max_row + 1):
+        if str(existing_wb["sorted"]["A" + str(j)].value).strip().startswith(sku_name):
+            ws["H" + str(row + detail_row_num)] = existing_wb["sorted"]["C" + str(j)].value
+            ws["I" + str(row + detail_row_num)] = existing_wb["sorted"]["D" + str(j)].value
+            ws["N" + str(row + detail_row_num)] = existing_wb["sorted"]["B" + str(j)].value
+            for xd in range(2, existing_wb["main"].max_row + 1):
+                if existing_wb["main"]["A" + str(xd)].value is None:
                     break
-                if str(main_sheet["B" + str(xd)].value).strip() == str(sorted_sheet["B" + str(j)].value).strip():
-                    ws["K" + str(row + detail_row_num)] = main_sheet["I" + str(xd)].value
-                    dim_len = main_sheet["L" + str(xd)].value
-                    dim_wi = main_sheet["M" + str(xd)].value
-                    dim_hi = main_sheet["N" + str(xd)].value
+                if str(existing_wb["main"]["B" + str(xd)].value).strip() == str(existing_wb["sorted"]["B" + str(j)].value).strip():
+                    ws["K" + str(row + detail_row_num)] = existing_wb["main"]["I" + str(xd)].value
+                    dim_len = existing_wb["main"]["L" + str(xd)].value
+                    dim_wi = existing_wb["main"]["M" + str(xd)].value
+                    dim_hi = existing_wb["main"]["N" + str(xd)].value
                     ws["L" + str(row + detail_row_num)] = f"{dim_len} x {dim_wi} x {dim_hi}"
 
-                    if str(main_sheet["A" + str(xd)].value).strip() == "omsdata_FDC":
-                        ws["O" + str(row + detail_row_num)] = main_sheet["F" + str(xd)].value
-                        ws["J" + str(row + detail_row_num)] = main_sheet["G" + str(xd)].value
-                    elif str(main_sheet["A" + str(xd)].value).strip() == "oms_EF":
-                        ws["P" + str(row + detail_row_num)] = main_sheet["F" + str(xd)].value
+                    if str(existing_wb["main"]["A" + str(xd)].value).strip() == "omsdata_FDC":
+                        ws["O" + str(row + detail_row_num)] = existing_wb["main"]["F" + str(xd)].value
+                        ws["J" + str(row + detail_row_num)] = existing_wb["main"]["G" + str(xd)].value
+                    elif str(existing_wb["main"]["A" + str(xd)].value).strip() == "oms_EF":
+                        ws["P" + str(row + detail_row_num)] = existing_wb["main"]["F" + str(xd)].value
             detail_row_num += 1
 
     print(sku_name + " completed")
@@ -244,7 +272,7 @@ def generate_image_sheet(combined_results, user_input_list):
     new_ws['A1'].fill = highlight_fill
     set_border(new_ws, 'A1:L' + str(new_ws.max_row))
     existing_wb.save(os.path.join("output", "list_output", formatted_date + ".xlsx"))
-    
+
 if __name__ == "__main__":
     main()
     print("output/list_output/" + formatted_date + ".xlsx")

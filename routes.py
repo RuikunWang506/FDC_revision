@@ -22,11 +22,9 @@ from user_agents import parse
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-import V4_Listcreator, Label_Maker, order_search, SQL_connector
-from v5_list_semi import list_creator_local
+import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
-import fnmatch
 
 # New imports
 import base64
@@ -105,7 +103,7 @@ def register_routes(app):
 
     def get_sheet_data_and_e1_value(input_value):
         creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
-        service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
+        service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
         sheet = service.spreadsheets()
         
         # Fetch both the sheet data and E1 value in one request
@@ -330,28 +328,66 @@ def register_routes(app):
             app.logger.info("No data found for order number: %s", order_number)
             return render_template("order_lookup.html", excel_html=None)
 
-    @app.route("/v4_listcreator", methods=["GET", "POST"])
-    def v4_listcreator():
+    @app.route("/v5_listcreator", methods=["GET", "POST"])
+    def v5_listcreator():
         if 'username' not in session:
+            session['next'] = request.url
             return redirect(url_for("login"))
+        
         current_user = session['username']
         filename = None
-        user_input = None  # Initialize user_input
+        user_input = None  # Initialize user_input to prevent UnboundLocalError
+        user_input_list = None  # Initialize user_input_list to store the list of files
+        user_input_directory = None  # Initialize user_input_directory to pass it to the template
+        file_count = 0  # Initialize file_count
 
         if request.method == "POST":
-            user_input = request.form.get("user_input")
-            app.logger.info("%s submitted input for v4_listcreator: %s", current_user, user_input)
-            
-            try:
-                V4_Listcreator.user_input = user_input
-                V4_Listcreator.main()
-                filename = f"{V4_Listcreator.formatted_date}.xlsx"
-                app.logger.info("%s downloaded the file: %s", current_user, filename)
-            except Exception as e:
-                app.logger.error("An error occurred: %s", str(e))
-                return render_template("v4_listcreator.html", filename=None, user_input=user_input, error_message=f"An error occurred: {str(e)}", current_user=current_user)
+            user_input = request.form.get("user_input").strip()
+            image_option = request.form.get("image_option")
 
-        return render_template("v4_listcreator.html", filename=filename, user_input=user_input, current_user=current_user)
+            # Check if user_input was provided
+            if user_input:
+                # Look for the 'Dropbox' in the path and construct the local directory path
+                dropbox_index = user_input.lower().find('dropbox')
+                if (dropbox_index != -1):
+                    relative_path = user_input[dropbox_index + len('dropbox') + 1:].strip()  # +1 to skip the backslash and strip spaces
+                    user_input_directory = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path).strip()
+
+                    if os.path.isdir(user_input_directory):
+                        user_input_type = "directory"
+                        # Create a list of file names without extensions from the directory
+                        user_input_list = [os.path.splitext(f)[0] for f in os.listdir(user_input_directory) if f.endswith('.jpg')]
+                        # Count the number of files
+                        file_count = len(user_input_list)
+                        # Join the list into a comma-separated string
+                        user_input = ','.join(user_input_list).strip()
+                    else:
+                        raise ValueError(f"The directory {user_input_directory} does not exist.")
+                else:
+                    user_input_type = "list"
+                    user_input_list = [item.strip() for item in user_input.split(',')]
+
+                # If input is a list, force image option to be 'resizedpic'
+                if user_input_type == "list":
+                    image_option = "resizedpic"
+
+                # Pass these to the v5_Listcreator.py
+                try:
+                    V5_Listcreator.user_input = user_input_directory if user_input_type == "directory" else ','.join(user_input_list)
+                    V5_Listcreator.image_option = image_option
+                    V5_Listcreator.user_input_type = user_input_type
+                    V5_Listcreator.main()
+                    filename = f"{V5_Listcreator.formatted_date}.xlsx"
+                    app.logger.info("%s downloaded the file: %s", current_user, filename)
+                except Exception as e:
+                    app.logger.error("An error occurred: %s", str(e))
+                    return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message=f"An error occurred: {str(e)}", current_user=current_user)
+            else:
+                # Handle the case where user_input is not provided
+                app.logger.warning("No user input provided.")
+                return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message="Please provide input.", current_user=current_user)
+
+        return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, current_user=current_user)
 
     @app.route("/googlesheet", methods=["GET", "POST"])
     def googlesheet():
