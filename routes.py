@@ -392,7 +392,32 @@ def register_routes(app):
                 return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message="Please provide input.", current_user=current_user)
 
         return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, current_user=current_user)
-
+    @app.route('/download_images', methods=['POST'])
+    def download_images():
+        image_type = request.form.get('image_type')  # Expecting 'resized' or 'original'
+        user_input = request.form.get('user_input')
+        image_list = [item.strip().upper() + ".jpg" for item in user_input.split(',')]
+        
+        # Determine the correct folder based on the image_type
+        if image_type == 'resized':
+            source_folder = Config.CATALOG_RESIZED
+            zip_filename = "clean_resized_images.zip"
+        elif image_type == 'original':
+            source_folder = Config.CATALOG_ORIGINAL
+            zip_filename = "clean_original_images.zip"
+        else:
+            return "Invalid image type specified.", 400
+        
+        memory_file = io.BytesIO()
+        
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            for image_name in image_list:
+                image_path = os.path.join(source_folder, image_name)
+                if os.path.exists(image_path):
+                    zf.write(image_path, arcname=image_name)
+        
+        memory_file.seek(0)
+        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
     @app.route("/googlesheet", methods=["GET", "POST"])
     def googlesheet():
         if 'username' not in session:

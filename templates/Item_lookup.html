@@ -110,6 +110,7 @@
                     <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}">
                 </div>
                 <button type="submit" class="btn btn-primary">View Result</button>
+                
                 {% if user_input %}
                 <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
                     Your search input was: <br>{{ user_input }}
@@ -144,6 +145,11 @@
             </div>
             {% endfor %}
         </div>
+        <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">
+            <input type="hidden" name="user_input" value="{{ user_input }}">
+            <button type="submit" name="image_type" value="resized" class="btn btn-info mx-2">Download Clean Resized Image (small)</button>
+            <button type="submit" name="image_type" value="original" class="btn btn-warning mx-2">Download Clean Original Image (Large)</button>
+        </form>
     </div>
 {% endif %}
     

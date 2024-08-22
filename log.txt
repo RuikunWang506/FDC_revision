@@ -20968,3 +20968,240 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-08-22 13:31:03,743 - INFO - Serving file N1223_V2.jpg
 2024-08-22 13:31:13,301 - INFO - Serving file N1151_v4.jpg
 2024-08-22 13:31:41,700 - INFO - yeti downloaded the file: List-20240822-133140.xlsx
+2024-08-22 13:35:45,206 - INFO - yeti downloaded the file: List-20240822-133543.xlsx
+2024-08-22 13:40:01,308 - ERROR - 206.168.34.221 - - [22/Aug/2024 13:40:01] code 505, message Invalid HTTP version (2.0)
+2024-08-22 13:40:05,606 - ERROR - 206.168.34.221 - - [22/Aug/2024 13:40:05] code 505, message Invalid HTTP version (2.0)
+2024-08-22 13:44:50,777 - INFO - autobots, roll out!
+2024-08-22 13:45:10,807 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 13:45:16,671 - INFO - yeti downloaded the file: List-20240822-134515.xlsx
+2024-08-22 13:45:39,918 - INFO - yeti downloaded the file: List-20240822-134538.xlsx
+2024-08-22 13:45:41,656 - INFO - File List-20240822-134538.xlsx downloaded
+2024-08-22 13:46:09,171 - INFO - yeti downloaded the file: List-20240822-134607.xlsx
+2024-08-22 13:47:09,773 - INFO - yeti downloaded the file: List-20240822-134708.xlsx
+2024-08-22 13:48:06,811 - INFO - yeti downloaded the file: List-20240822-134805.xlsx
+2024-08-22 13:49:49,115 - INFO - yeti downloaded the file: List-20240822-134947.xlsx
+2024-08-22 13:49:53,709 - INFO - yeti downloaded the file: List-20240822-134952.xlsx
+2024-08-22 13:50:31,649 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 13:50:44,689 - INFO - yeti downloaded the file: List-20240822-135042.xlsx
+2024-08-22 13:50:48,255 - INFO - File List-20240822-135042.xlsx downloaded
+2024-08-22 13:55:10,579 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 13:55:10,725 - INFO - Serving file S1363.jpg
+2024-08-22 13:55:17,298 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 13:55:21,288 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 13:55:21,400 - INFO - Serving file ES1065.jpg
+2024-08-22 14:00:11,089 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 185, in download_excel
+    excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\SQL_connector.py", line 121, in generate_excel
+    base_sku = hyperlink_value.split()[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-22 14:00:18,942 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:00:21,645 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:00:27,818 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:00:47,726 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:01:39,293 - INFO - yeti executed a custom SQL query: select * from customer where cus_id=8137
+2024-08-22 14:01:59,951 - INFO - yeti executed a custom SQL query: select * from orders where cus_id=8137
+2024-08-22 14:02:03,034 - INFO - yeti executed a custom SQL query: select * from orders where cus_id=8137
+2024-08-22 14:02:06,336 - INFO - yeti executed a custom SQL query: select * from orders where cus_id='8137'
+2024-08-22 14:02:11,558 - ERROR - 80.82.78.39 - - [22/Aug/2024 14:02:11] code 400, message Bad request syntax ('\x16\x03\x01\x00ê\x01\x00\x00æ\x03\x03Âé\x0c')
+2024-08-22 14:02:34,221 - INFO - yeti executed a custom SQL query: select * from ord_log where cus_id='8137'
+2024-08-22 14:03:43,437 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 185, in download_excel
+    excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\SQL_connector.py", line 121, in generate_excel
+    base_sku = hyperlink_value.split()[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-22 14:09:27,022 - INFO - yeti downloaded the file: List-20240822-140926.xlsx
+2024-08-22 14:12:40,301 - INFO - yeti downloaded the file: List-20240822-141239.xlsx
+2024-08-22 14:13:04,473 - INFO - yeti downloaded the file: List-20240822-141304.xlsx
+2024-08-22 14:13:16,632 - INFO - yeti downloaded the file: List-20240822-141316.xlsx
+2024-08-22 14:13:23,808 - INFO - yeti downloaded the file: List-20240822-141323.xlsx
+2024-08-22 14:16:47,827 - INFO - yeti downloaded the file: List-20240822-141647.xlsx
+2024-08-22 14:17:44,003 - INFO - yeti downloaded the file: List-20240822-141743.xlsx
+2024-08-22 14:19:35,425 - INFO - yeti downloaded the file: List-20240822-141934.xlsx
+2024-08-22 14:20:24,193 - INFO - yeti downloaded the file: List-20240822-142023.xlsx
+2024-08-22 14:21:00,028 - INFO - yeti downloaded the file: List-20240822-142059.xlsx
+2024-08-22 14:21:10,333 - INFO - yeti downloaded the file: List-20240822-142109.xlsx
+2024-08-22 14:21:46,725 - INFO - yeti downloaded the file: List-20240822-142146.xlsx
+2024-08-22 14:22:46,116 - INFO - yeti downloaded the file: List-20240822-142244.xlsx
+2024-08-22 14:23:08,028 - INFO - yeti downloaded the file: List-20240822-142306.xlsx
+2024-08-22 14:23:12,908 - INFO - yeti downloaded the file: List-20240822-142311.xlsx
+2024-08-22 14:23:19,405 - INFO - yeti downloaded the file: List-20240822-142318.xlsx
+2024-08-22 14:23:31,727 - INFO - yeti downloaded the file: List-20240822-142330.xlsx
+2024-08-22 14:23:34,362 - INFO - yeti downloaded the file: List-20240822-142333.xlsx
+2024-08-22 14:23:55,728 - INFO - yeti downloaded the file: List-20240822-142354.xlsx
+2024-08-22 14:25:46,765 - INFO - yeti downloaded the file: List-20240822-142545.xlsx
+2024-08-22 14:25:52,029 - INFO - yeti downloaded the file: List-20240822-142550.xlsx
+2024-08-22 14:26:12,165 - INFO - yeti downloaded the file: List-20240822-142610.xlsx
+2024-08-22 14:26:22,603 - INFO - yeti downloaded the file: List-20240822-142621.xlsx
+2024-08-22 14:26:33,589 - INFO - yeti downloaded the file: List-20240822-142632.xlsx
+2024-08-22 14:27:11,893 - INFO - yeti downloaded the file: List-20240822-142710.xlsx
+2024-08-22 14:27:24,809 - INFO - yeti downloaded the file: List-20240822-142723.xlsx
+2024-08-22 14:27:36,246 - INFO - yeti downloaded the file: List-20240822-142734.xlsx
+2024-08-22 14:27:43,957 - INFO - yeti downloaded the file: List-20240822-142742.xlsx
+2024-08-22 14:28:05,296 - INFO - yeti downloaded the file: List-20240822-142804.xlsx
+2024-08-22 14:28:20,712 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:28:20,794 - INFO - Serving file T3305.jpg
+2024-08-22 14:28:20,794 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:28:20,794 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:28:20,795 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:30:38,123 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:30:38,233 - INFO - Serving file T3305.jpg
+2024-08-22 14:30:38,234 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:30:38,234 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:30:38,242 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:30:40,928 - INFO - File original downloaded
+2024-08-22 14:30:45,429 - INFO - File resized downloaded
+2024-08-22 14:34:23,920 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 185, in download_excel
+    excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\SQL_connector.py", line 121, in generate_excel
+    base_sku = hyperlink_value.split()[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-22 14:34:28,964 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:34:29,047 - INFO - Serving file T3305.jpg
+2024-08-22 14:34:29,047 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:34:29,048 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:34:29,049 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:34:40,503 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:34:40,580 - INFO - Serving file T3305.jpg
+2024-08-22 14:34:40,581 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:34:40,583 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:34:40,584 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:35:12,987 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:35:13,072 - INFO - Serving file T3305.jpg
+2024-08-22 14:35:13,075 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:35:13,078 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:35:13,080 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:35:26,062 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:35:26,180 - INFO - Serving file T3305.jpg
+2024-08-22 14:35:26,181 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:35:26,182 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:35:26,183 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:35:38,368 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:35:38,442 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:35:38,445 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:35:38,446 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:35:38,451 - INFO - Serving file T3305.jpg
+2024-08-22 14:35:49,909 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 14:35:50,012 - INFO - Serving file T3305.jpg
+2024-08-22 14:35:50,013 - INFO - Serving file T3305_v2.jpg
+2024-08-22 14:35:50,015 - INFO - Serving file T3305_v3.jpg
+2024-08-22 14:35:50,015 - INFO - Serving file T3305_v4.jpg
+2024-08-22 14:35:50,016 - INFO - Serving file N1223.jpg
+2024-08-22 14:35:50,019 - INFO - Serving file N1223_v2.jpg
+2024-08-22 14:35:50,021 - INFO - Serving file N1223_v3.jpg
+2024-08-22 14:35:50,023 - INFO - Serving file N1223_v5.jpg
+2024-08-22 14:35:50,025 - INFO - Serving file N1223_v4.jpg
+2024-08-22 14:35:50,033 - INFO - Serving file N1223_v6.jpg
+2024-08-22 14:35:50,035 - INFO - Serving file N1223_v7.jpg
+2024-08-22 14:35:50,035 - INFO - Serving file N1223_v8.jpg
+2024-08-22 14:35:50,036 - INFO - Serving file N1223_V2.jpg
+2024-08-22 14:35:50,037 - INFO - Serving file N1223_V3.jpg
+2024-08-22 14:35:50,038 - INFO - Serving file N1223_V6.jpg
+2024-08-22 14:35:50,043 - INFO - Serving file N1223_V5.jpg
