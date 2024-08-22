@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom SQL Query</title>
+    <title>Custom SQL Query and GPT Chat</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
     <style>
@@ -41,11 +41,11 @@
             color: white;
             padding: 5px;
             border-radius: 4px;
-            white-space: normal; /* Allow wrapping of text */
+            white-space: normal;
             z-index: 1;
-            width: 300px; /* Set a fixed width of 300px */
-            box-sizing: border-box; /* Ensure padding is included in the width */
-            overflow-wrap: break-word; /* Ensure long words break to fit within the tooltip */
+            width: 300px;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
         }
         .query-log li.error:hover .error-tooltip {
             display: block;
@@ -94,33 +94,84 @@
             justify-content: space-between;
             align-items: center;
         }
+        .input-container, .date-container {
+            display: block;
+            width: 100%;
+        }
+
+        .dateconvert-input {
+            width: 100%;
+            margin-top: 5px;
+            padding: 5px;
+        }
+
+        .result {
+            display: inline-block;
+            width: 100%;
+            height: 36px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .date-container .date-input {
+            text-align: center;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
 {% include 'navbar.html' %}
     <div class="container-flex">
-        <div class="query-log">
-            <div class="query-log-header">
-                <h5>Query Log</h5>
-                <button class="btn btn-primary" onclick="fetchLogContent()">Refresh Log</button>
+        <div class="memo-import col-4">
+            <div class="form-group">
+                <div class="row">
+                    <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
+                        <label for="dateconvertInput">81088-</label><br>
+                        <input type="text" id="dateconvertInput" class="dateconvert-input" placeholder="Enter expression" oninput="dateconvert()" style="width: 100%;">
+                    </div>
+                    <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
+                        <label for="dateconvert">Result</label><br>
+                        <span id="dateconvert" class="result"></span>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
+                        <label for="date-container">MM/DD/YYYY</label><br>
+                        <div class="date-container" style="display: flex; align-items: center;">
+                            <input type="number" id="monthInput" class="date-input" placeholder="MM" min="1" max="12" oninput="validateDate()" style="width: 60px;">
+                            /
+                            <input type="number" id="dayInput" class="date-input" placeholder="DD" min="1" max="31" oninput="validateDate()" style="width: 60px;">
+                            /
+                            <input type="number" id="yearInput" class="date-input" placeholder="YYYY" maxlength="4" style="width: 80px;">
+                        </div>
+                    </div>
+                    <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
+                        <label for="dateToNumberResult">Number Result</label><br>
+                        <span id="dateToNumberResult" class="result"></span>
+                    </div>
+                </div>
             </div>
-            <ul id="log_content">
-                {% if log_content %}
-                    {% set unique_lines = log_content|unique %}
-                    {% for line in unique_lines %}
-                        {% set parts = line.split(' | ERROR: ') %}
-                        {% if parts|length > 1 %}
-                            <li class="error">{{ parts[0] }}<span class="error-tooltip">{{ parts[1] }}</span></li>
-                        {% else %}
-                            <li class="success" onclick="setQuery('{{ line }}')">{{ line }}</li>
-                        {% endif %}
-                    {% endfor %}
-                {% else %}
-                    <li>No log content available.</li>
+            <h5>Imported Memo</h5>
+            <div id="memo_html">
+                {% if memo_html %}
+                    {{ memo_html | safe }}
                 {% endif %}
-            </ul>
+            </div>
+            <div class="chat-container col-12" style="border: 1px solid #ccc; padding: 10px; height: 300px; margin-top: 20px;">
+                <h5>Chat with GPT</h5>
+                <div id="chat-log" style="height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+                    <!-- Chat messages will be appended here -->
+                </div>
+                <div class="input-group">
+                    <input type="text" id="chat-input" class="form-control" placeholder="Type your message here..." onkeydown="if(event.key === 'Enter'){sendMessage();}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="sql-input">
+        <div class="sql-input col-8">
             <form method="POST" action="/geek_tools/custom_query" id="query_form" style="display: flex; flex-direction: column; height: 100%;">
                 <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
                     <label for="sql_query">Enter SQL Query:</label>
@@ -133,30 +184,23 @@
                 </div>
             </form>
         </div>
-        <div class="memo-import">
-            <h5>Imported Memo</h5>
-            <div id="memo_html">
-                {% if memo_html %}
-                    {{ memo_html | safe }}
-                {% endif %}
-            </div>
-        </div>
     </div>
+
     {% if excel_html %}
-        <table id="excel_table" >
+        <table id="excel_table">
             <tbody>
             {{ excel_html | safe }}
             </tbody>
         </table>
     {% endif %}
 
-{% if error_message %}
-    <div class="container">
-        <div class="alert alert-danger text-center">
-            {{ error_message }}
+    {% if error_message %}
+        <div class="container">
+            <div class="alert alert-danger text-center">
+                {{ error_message }}
+            </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
@@ -168,34 +212,6 @@
         });
     });
 
-    function fetchLogContent() {
-        var queryLogDiv = document.querySelector('.query-log');
-        var previousScrollTop = queryLogDiv.scrollTop;
-
-        $.ajax({
-            url: '/query_log',
-            type: 'GET',
-            success: function(data) {
-                var uniqueLines = Array.from(new Set(data.log_content));
-                var logContent = uniqueLines.map(function(line) {
-                    var parts = line.split(' | ERROR: ');
-                    if (parts.length > 1) {
-                        return '<li class="error">' + parts[0] + '<span class="error-tooltip">' + parts[1].replace(/'/g, "\\'") + '</span></li>';
-                    } else {
-                        return '<li class="success" onclick="setQuery(\'' + line.replace(/'/g, "\\'") + '\')">' + line + '</li>';
-                    }
-                }).join('');
-                $('#log_content').html(logContent);
-
-                // Restore previous scroll position
-                queryLogDiv.scrollTop = previousScrollTop;
-            },
-            error: function(error) {
-                console.log('Error fetching log content:', error);
-            }
-        });
-    }
-
     function setDatabaseAndSubmit(database) {
         document.getElementById('database_name').value = database;
         document.getElementById('query_form').submit();
@@ -204,6 +220,99 @@
     function setQuery(query) {
         document.getElementById('sql_query').value = query;
     }
+
+    function setQuery(query) {
+    document.getElementById('sql_query').value = query;
+    }
+
+    function dateconvert() {
+        const dateInput = document.getElementById('dateconvertInput').value;
+        const dateResult = document.getElementById('dateconvert');
+        try {
+            const numericInput = parseInt(dateInput, 10); // Parse the input as an integer
+            const convertedDate = resultdataconvert(numericInput);
+            dateResult.textContent = convertedDate;
+        } catch (error) {
+            dateResult.textContent = "Error";
+        }
+    }
+
+    function resultdataconvert(inputNumber) {
+        const baseDate = new Date('2023-01-01'); // Your base date
+        const offsetDays = inputNumber - 81088; // Subtract the offset from the input
+        const calculatedDate = new Date(baseDate);
+        calculatedDate.setDate(baseDate.getDate() + offsetDays + 1); // Add 1 to adjust for the discrepancy
+
+        const month = ('0' + (calculatedDate.getMonth() + 1)).slice(-2);
+        const day = ('0' + calculatedDate.getDate()).slice(-2);
+        const year = calculatedDate.getFullYear();
+
+        return month + '/' + day + '/' + year;
+    }
+
+    // Function to convert date input to a number
+    function dateToNumberConvert() {
+        const month = document.getElementById('monthInput').value;
+        const day = document.getElementById('dayInput').value;
+        const year = document.getElementById('yearInput').value;
+
+        const inputDate = new Date(`${year}-${month}-${day}`);
+        const baseDate = new Date('2023-01-01');
+
+        const diffTime = Math.abs(inputDate - baseDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const resultNumber = diffDays + 81088; // Add 81088 to get the final number
+        document.getElementById('dateToNumberResult').textContent = resultNumber;
+    }
+
+    function sendMessage() {
+        const inputField = document.getElementById('chat-input');
+        const message = inputField.value.trim();
+        if (message === "") return;
+
+        // Append user's message to chat log
+        const chatLog = document.getElementById('chat-log');
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.textContent = "You: " + message;
+        chatLog.appendChild(userMessageDiv);
+
+        // Clear input field
+        inputField.value = "";
+
+        // Scroll to the bottom of the chat log
+        chatLog.scrollTop = chatLog.scrollHeight;
+
+        // Send message to the Flask backend
+        fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Append GPT's response to chat log
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.textContent = "GPT: " + data.response;
+            chatLog.appendChild(botMessageDiv);
+
+            // Scroll to the bottom of the chat log
+            chatLog.scrollTop = chatLog.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Event listeners to trigger the conversion when user inputs date
+    document.getElementById('monthInput').addEventListener('input', dateToNumberConvert);
+    document.getElementById('dayInput').addEventListener('input', dateToNumberConvert);
+    document.getElementById('yearInput').addEventListener('input', dateToNumberConvert);
+
+    
+
 </script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>

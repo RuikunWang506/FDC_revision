@@ -5,7 +5,7 @@ import pandas as pd
 from custom_query import execute_custom_query, allowed_file
 from indexing_app import generate_index
 from config import Config
-from logging_setup import configure_logging,log_query
+from logging_setup import configure_logging
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import logging
@@ -21,7 +21,8 @@ from io import StringIO
 from user_agents import parse
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-
+import openai
+from openai import OpenAIError, RateLimitError
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
@@ -36,7 +37,10 @@ client = WebClient(token=Config.SLACK_TOKEN)
 
 # Configure logging
 
+
 def register_routes(app):
+    
+
     def check_credentials(username, password):
         return Config.USERS.get(username) == password
 
@@ -103,7 +107,7 @@ def register_routes(app):
 
     def get_sheet_data_and_e1_value(input_value):
         creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
-        service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
+        service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
         sheet = service.spreadsheets()
         
         # Fetch both the sheet data and E1 value in one request
@@ -803,10 +807,8 @@ def register_routes(app):
             try:
                 app.logger.info("%s executed a custom SQL query: %s", current_user, sql_query)
                 excel_html, error_message = execute_custom_query(sql_query, database_name)
-                log_query(sql_query)
             except Exception as e:
                 error_message = str(e)
-                log_query(sql_query, error_message)
 
         # Read memo from static/query.xlsx
         memo_path = os.path.join(app.root_path, 'static', 'query.xlsx')
@@ -815,27 +817,10 @@ def register_routes(app):
             df = df.dropna(how='all')
             memo_html = df.to_html(classes='table table-bordered table-striped', escape=False, index=False)
 
-        # Read log content, remove duplicates, and reverse it
-        with open('query_log.txt', 'r') as log_file:
-            lines = log_file.read().splitlines()
-            unique_lines = list(dict.fromkeys(lines))  # Remove duplicates
-            unique_lines.reverse()  # Reverse the order of the lines
 
-        return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, log_content=unique_lines, current_user=current_user, sql_query=sql_query)
+        return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, current_user=current_user, sql_query=sql_query)
 
-    @app.route("/query_log")
-    def display_query_log():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        try:
-            with open('query_log.txt', 'r') as file:
-                lines = file.readlines()
-            # Reverse the lines
-            lines.reverse()
-            return jsonify(log_content=lines), 200
-        except Exception as e:
-            app.logger.error('Error accessing query log file: %s', e)
-            return jsonify(error=str(e)), 500
+   
             
     @app.route("/log")
     def display_log():
@@ -973,4 +958,65 @@ def register_routes(app):
         app.logger.info("Serving file %s", decoded_path)
         full_path = os.path.join(app.config['BIG_PICTURE_DIR'], decoded_path)
         directory, filename = os.path.split(full_path)
-        return send_from_directory(directory, filename, as_attachment=True)
+        return send_from_directory(directory, filename, as_attachment=True)  
+    
+
+
+    def load_credentials():
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        credentials_path = os.path.join(base_dir, 'credentials.json')
+        with open(credentials_path) as file:
+            credentials = json.load(file)
+        return credentials
+
+    def setup_openai():
+        credentials = load_credentials()
+        openai.api_key = credentials['openai_api_key']
+        return openai
+
+    # Set up OpenAI API key
+    setup_openai()
+
+    def get_gpt_response(message, retries=5):
+        try:
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": message,
+                    },
+                ],
+            )
+            return completion.choices[0].message['content']
+        except RateLimitError:
+            if retries > 0:
+                delay = (6 - retries) ** 2  # Exponential backoff
+                time.sleep(delay)
+                return get_gpt_response(message, retries - 1)
+            else:
+                return "Error: Rate limit exceeded. Please try again later."
+        except OpenAIError as e:
+            return f"An OpenAI error occurred: {str(e)}"
+        except Exception as e:
+            return f"An error occurred: {str(e)}"
+
+    @app.route('/chat', methods=['POST'])
+    def chat():
+        data = request.get_json()
+        user_message = data.get('message', '')
+        gpt_response = get_gpt_response(user_message)
+        return jsonify({'response': gpt_response})
+    
+    '''
+    client = OpenAI(
+    # defaults to os.environ.get("OPENAI_API_KEY")
+    api_key="private",
+)
+
+def chat_gpt(prompt):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content.strip()'''

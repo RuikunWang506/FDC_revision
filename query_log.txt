@@ -1068,3 +1068,36 @@ select * from ord_log where ord_num='1786'
 SELECT * 
 FROM inv_data where ord_qty <0 | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_qty'. (207) (SQLExecDirectW)")
 select * from customer | ERROR: An error occurred: 43623          cannot be used in worksheets.
+select * from ord_log where ord_id='1786' | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_id'. (207) (SQLExecDirectW)")
+select * from ord_log where ord_num='1786'
+select * from ord_log where prod_cd='S1151'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: invalid literal for int() with base 10: ''
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: Invalid Julian date format: 0
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: Invalid Julian date format: 0
+select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: Invalid Julian date format: 0
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where ord_num='1786'
+select * from orders where ord_num='1786'
+select * from orders where ord_num='1786'
+select * from ord_log where prod_cd like '%S1151%'
+select * from ord_log where prod_cd like '%S1151 gy%'
+select * from ord_log where prod_cd like '%S1151 gy%'
+select * from ord_log where prod_cd like '%S1151%'

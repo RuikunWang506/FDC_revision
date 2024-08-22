@@ -20297,3 +20297,674 @@ FROM inv_data where ord_qty <0 | ERROR: An error occurred: ('42S22', "[42S22] [M
 2024-08-20 19:06:56,487 - INFO - yeti downloaded the file: List-20240820-190656.xlsx
 2024-08-20 19:07:16,362 - INFO - yeti downloaded the file: List-20240820-190715.xlsx
 2024-08-20 19:07:38,317 - INFO - yeti downloaded the file: List-20240820-190737.xlsx
+2024-08-20 19:12:39,985 - INFO - autobots, roll out!
+2024-08-20 19:12:41,161 - INFO - autobots, roll out!
+2024-08-20 19:12:44,269 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 19:20:03,723 - INFO - autobots, roll out!
+2024-08-20 19:20:04,843 - INFO - autobots, roll out!
+2024-08-20 19:43:14,790 - ERROR - 88.214.25.64 - - [20/Aug/2024 19:43:14] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-20 19:48:08,495 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 126.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 19:50:48,596 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 217, in download_excel
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 106, in get_sheet_data_and_e1_value
+    service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 304, in build
+    content = _retrieve_discovery_doc(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 421, in _retrieve_discovery_doc
+    raise UnknownApiNameOrVersion(
+googleapiclient.errors.UnknownApiNameOrVersion: name: sheets  version: v5
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-20 19:50:53,264 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 217, in download_excel
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 106, in get_sheet_data_and_e1_value
+    service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 304, in build
+    content = _retrieve_discovery_doc(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 421, in _retrieve_discovery_doc
+    raise UnknownApiNameOrVersion(
+googleapiclient.errors.UnknownApiNameOrVersion: name: sheets  version: v5
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-20 19:50:57,329 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 217, in download_excel
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 106, in get_sheet_data_and_e1_value
+    service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 304, in build
+    content = _retrieve_discovery_doc(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 421, in _retrieve_discovery_doc
+    raise UnknownApiNameOrVersion(
+googleapiclient.errors.UnknownApiNameOrVersion: name: sheets  version: v5
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-20 19:51:51,780 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 217, in download_excel
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 106, in get_sheet_data_and_e1_value
+    service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 304, in build
+    content = _retrieve_discovery_doc(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 421, in _retrieve_discovery_doc
+    raise UnknownApiNameOrVersion(
+googleapiclient.errors.UnknownApiNameOrVersion: name: sheets  version: v5
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-20 19:52:38,503 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 217, in download_excel
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 106, in get_sheet_data_and_e1_value
+    service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 304, in build
+    content = _retrieve_discovery_doc(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 421, in _retrieve_discovery_doc
+    raise UnknownApiNameOrVersion(
+googleapiclient.errors.UnknownApiNameOrVersion: name: sheets  version: v5
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-20 19:54:50,349 - ERROR - Error on request:
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 341, in debug_application
+    app_iter = self.app(environ, start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1476, in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 217, in download_excel
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 106, in get_sheet_data_and_e1_value
+    service = build('sheets', 'v5', credentials=creds, cache_discovery=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 304, in build
+    content = _retrieve_discovery_doc(
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\discovery.py", line 421, in _retrieve_discovery_doc
+    raise UnknownApiNameOrVersion(
+googleapiclient.errors.UnknownApiNameOrVersion: name: sheets  version: v5
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 363, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 326, in execute
+    for data in application_iter:
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\debug\__init__.py", line 376, in debug_application
+    environ["wsgi.errors"].write("".join(tb.render_traceback_text()))
+AttributeError: 'NoneType' object has no attribute 'write'
+2024-08-20 19:55:24,718 - INFO - autobots, roll out!
+2024-08-20 19:55:24,907 - INFO - autobots, roll out!
+2024-08-20 19:55:30,356 - INFO - autobots, roll out!
+2024-08-20 19:55:30,457 - INFO - autobots, roll out!
+2024-08-20 19:55:45,694 - INFO - User yeti has logged in. IP: 172.226.36.103, Browser: Chrome Mobile iOS 127.0.6533, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 19:55:51,353 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-20 19:55:51,669 - INFO - Serving file T3305_v2.jpg
+2024-08-20 19:55:51,904 - INFO - Serving file T3305.jpg
+2024-08-20 19:55:51,905 - INFO - Serving file T3305_v4.jpg
+2024-08-20 19:55:51,915 - INFO - Serving file T3305_v3.jpg
+2024-08-20 19:57:29,210 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 126.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 19:57:56,226 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-20 19:58:11,796 - INFO - Serving file N1223.jpg
+2024-08-20 19:58:11,796 - INFO - Serving file N1223_v2.jpg
+2024-08-20 19:58:11,798 - INFO - Serving file N1223_v3.jpg
+2024-08-20 19:58:11,804 - INFO - Serving file N1223_v4.jpg
+2024-08-20 19:58:11,807 - INFO - Serving file N1223_v5.jpg
+2024-08-20 19:58:11,811 - INFO - Serving file N1223_v6.jpg
+2024-08-20 19:58:12,146 - INFO - Serving file N1223_v7.jpg
+2024-08-20 19:58:12,146 - INFO - Serving file N1223_v8.jpg
+2024-08-20 19:58:12,147 - INFO - Serving file N1223_V3.jpg
+2024-08-20 19:58:12,148 - INFO - Serving file N1223_V2.jpg
+2024-08-20 19:58:12,149 - INFO - Serving file N1223_V5.jpg
+2024-08-20 19:58:12,157 - INFO - Serving file N1223_V6.jpg
+2024-08-20 21:34:39,094 - ERROR - 5.8.11.202 - - [20/Aug/2024 21:34:39] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-20 21:42:14,487 - ERROR - 104.40.85.15 - - [20/Aug/2024 21:42:14] code 400, message Bad request syntax ('MGLNDD_173.198.50.202_80')
+2024-08-20 23:19:41,455 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-20 23:20:03,154 - INFO - Serving file N1324.jpg
+2024-08-20 23:20:03,158 - INFO - Serving file N1324_v4.jpg
+2024-08-20 23:20:03,162 - INFO - Serving file N1324_v5.jpg
+2024-08-20 23:20:03,499 - INFO - Serving file N1324_V2.jpg
+2024-08-20 23:20:03,505 - INFO - Serving file N1324_V3.jpg
+2024-08-20 23:21:15,342 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 126.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 23:23:28,255 - INFO - User ahua has logged in. IP: 183.6.8.18, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 23:23:28,506 - INFO - User ahua has logged in. IP: 183.6.8.18, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 23:23:28,795 - INFO - User ahua has logged in. IP: 183.6.8.18, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-20 23:23:48,558 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-20 23:23:48,892 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-20 23:23:50,664 - INFO - Serving file N1324.jpg
+2024-08-20 23:23:50,859 - INFO - Serving file N1324_v4.jpg
+2024-08-20 23:23:50,909 - INFO - Serving file N1324_V3.jpg
+2024-08-20 23:23:50,922 - INFO - Serving file N1324_V2.jpg
+2024-08-20 23:23:50,935 - INFO - Serving file N1324_v5.jpg
+2024-08-20 23:24:36,929 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-20 23:24:58,330 - INFO - Serving file N1324.jpg
+2024-08-20 23:24:58,336 - INFO - Serving file N1324_v4.jpg
+2024-08-20 23:24:58,661 - INFO - Serving file N1324_v5.jpg
+2024-08-20 23:24:58,666 - INFO - Serving file N1324_V2.jpg
+2024-08-20 23:24:58,834 - INFO - Serving file N1324_V3.jpg
+2024-08-20 23:46:50,266 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-20 23:47:11,966 - INFO - Serving file N1151_v2.jpg
+2024-08-20 23:47:11,967 - INFO - Serving file N1151.jpg
+2024-08-20 23:47:11,972 - INFO - Serving file N1151_v3.jpg
+2024-08-20 23:47:12,302 - INFO - Serving file N1151_v4.jpg
+2024-08-20 23:47:12,310 - INFO - Serving file N1151_v5.jpg
+2024-08-20 23:47:12,324 - INFO - Serving file N1151_V2.jpg
+2024-08-21 00:49:16,929 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-21 00:49:38,315 - INFO - Serving file N1116.jpg
+2024-08-21 00:49:38,316 - INFO - Serving file N1116_v3.jpg
+2024-08-21 00:49:38,317 - INFO - Serving file N1116_v4.jpg
+2024-08-21 00:49:38,671 - INFO - Serving file N1116_v6.jpg
+2024-08-21 00:49:38,671 - INFO - Serving file N1116_v5.jpg
+2024-08-21 00:49:38,672 - INFO - Serving file N1116_v7.jpg
+2024-08-21 00:49:39,031 - INFO - Serving file N1116_v8.jpg
+2024-08-21 00:49:39,037 - INFO - Serving file N1116_V2.jpg
+2024-08-21 00:49:39,058 - INFO - Serving file N1116_V7.jpg
+2024-08-21 00:49:39,367 - INFO - Serving file N1116_V3.jpg
+2024-08-21 00:49:39,552 - INFO - Serving file N1116_V5.jpg
+2024-08-21 00:49:39,738 - INFO - Serving file N1116_V6.jpg
+2024-08-21 00:49:47,972 - ERROR - 64.62.156.68 - - [21/Aug/2024 00:49:47] code 400, message Bad request version ('À\x14À')
+2024-08-21 00:57:26,166 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-21 00:57:45,738 - INFO - Serving file N1116_v3.jpg
+2024-08-21 00:57:45,738 - INFO - Serving file N1116.jpg
+2024-08-21 00:57:45,739 - INFO - Serving file N1116_v4.jpg
+2024-08-21 00:57:45,743 - INFO - Serving file N1116_v5.jpg
+2024-08-21 00:57:45,751 - INFO - Serving file N1116_v6.jpg
+2024-08-21 00:57:46,075 - INFO - Serving file N1116_v8.jpg
+2024-08-21 00:57:46,081 - INFO - Serving file N1116_V2.jpg
+2024-08-21 00:57:46,081 - INFO - Serving file N1116_v7.jpg
+2024-08-21 00:57:46,085 - INFO - Serving file N1116_V7.jpg
+2024-08-21 00:57:46,090 - INFO - Serving file N1116_V3.jpg
+2024-08-21 00:57:46,418 - INFO - Serving file N1116_V5.jpg
+2024-08-21 00:57:46,756 - INFO - Serving file N1116_V6.jpg
+2024-08-21 01:55:29,502 - ERROR - 80.82.77.202 - - [21/Aug/2024 01:55:29] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-21 02:06:49,216 - ERROR - 198.235.24.77 - - [21/Aug/2024 02:06:49] code 400, message Bad request version ('À\x13À')
+2024-08-21 02:06:49,484 - ERROR - 198.235.24.77 - - [21/Aug/2024 02:06:49] code 400, message Bad request syntax ('\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03\x1br')
+2024-08-21 06:34:05,163 - ERROR - 72.46.130.218 - - [21/Aug/2024 06:34:05] code 400, message Bad request version ("\x06\x18Ðªþ1$ögC\x12²\x92\x98\x7f\x06\x19\x08°G\x0e\x130¥§ÆftÙ\x00È\x13\x01\x13\x02\x13\x03\x13\x04\x13\x05À,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀS\x00§À+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀR\x00¦À$À(\x00k\x00jÀsÀw\x00Ä\x00Ã\x00m\x00ÅÀ#À'\x00g\x00@ÀrÀv\x00¾\x00½\x00l\x00¿À")
+2024-08-21 10:01:49,764 - ERROR - 91.238.181.31 - - [21/Aug/2024 10:01:49] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-21 10:30:15,709 - ERROR - 5.8.11.202 - - [21/Aug/2024 10:30:15] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-21 10:59:40,467 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 10:59:50,319 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-21 10:59:50,367 - INFO - Serving file T3305_v2.jpg
+2024-08-21 10:59:50,370 - INFO - Serving file T3305.jpg
+2024-08-21 10:59:50,371 - INFO - Serving file T3305_v3.jpg
+2024-08-21 10:59:50,374 - INFO - Serving file T3305_v4.jpg
+2024-08-21 11:38:46,529 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 11:38:52,135 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-21 11:38:52,218 - INFO - Serving file ET2953.jpg
+2024-08-21 11:38:57,008 - INFO - Serving file ET2953.jpg
+2024-08-21 12:10:22,288 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 12:21:22,177 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-21 12:21:22,374 - INFO - Serving file T3305.jpg
+2024-08-21 12:21:22,375 - INFO - Serving file T3305_v2.jpg
+2024-08-21 12:21:22,376 - INFO - Serving file T3305_v4.jpg
+2024-08-21 12:21:22,377 - INFO - Serving file T3305_v3.jpg
+2024-08-21 14:24:48,781 - INFO - yeti executed a custom SQL query: select * from ord_log where ord_id='1786'
+2024-08-21 14:24:48,791 - ERROR - select * from ord_log where ord_id='1786' | ERROR: An error occurred: ('42S22', "[42S22] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid column name 'ord_id'. (207) (SQLExecDirectW)")
+2024-08-21 14:24:52,504 - INFO - yeti executed a custom SQL query: select * from ord_log where ord_num='1786'
+2024-08-21 14:24:52,562 - INFO - select * from ord_log where ord_num='1786'
+2024-08-21 14:25:51,278 - ERROR - 80.82.77.202 - - [21/Aug/2024 14:25:51] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-21 14:52:30,498 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd='S1151'
+2024-08-21 14:52:30,524 - INFO - select * from ord_log where prod_cd='S1151'
+2024-08-21 14:52:39,361 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 14:52:39,541 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 14:56:06,214 - INFO - autobots, roll out!
+2024-08-21 14:56:20,612 - INFO - autobots, roll out!
+2024-08-21 14:56:23,874 - INFO - autobots, roll out!
+2024-08-21 14:56:25,705 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 14:56:32,497 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 14:56:32,682 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 14:59:32,396 - INFO - autobots, roll out!
+2024-08-21 14:59:35,513 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 14:59:39,154 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 14:59:39,332 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 14:59:49,807 - INFO - autobots, roll out!
+2024-08-21 15:00:54,100 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:02:00,927 - INFO - autobots, roll out!
+2024-08-21 15:02:09,523 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:02:10,993 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:02:11,131 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+2024-08-21 15:02:19,655 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:02:19,772 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+2024-08-21 15:02:23,429 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:02:23,555 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+2024-08-21 15:04:03,005 - INFO - autobots, roll out!
+2024-08-21 15:04:06,670 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:04:08,344 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:04:08,479 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: 'int' object is not subscriptable
+2024-08-21 15:04:32,449 - INFO - autobots, roll out!
+2024-08-21 15:04:35,322 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:04:39,180 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:04:39,311 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: invalid literal for int() with base 10: ''
+2024-08-21 15:05:19,047 - INFO - autobots, roll out!
+2024-08-21 15:05:23,223 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:05:24,288 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:05:24,419 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: Invalid Julian date format: 0
+2024-08-21 15:05:24,618 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:05:24,733 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: Invalid Julian date format: 0
+2024-08-21 15:05:25,719 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:05:25,843 - ERROR - select * from ord_log where prod_cd like '%S1151%' | ERROR: An error occurred: Invalid Julian date format: 0
+2024-08-21 15:05:31,784 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:05:43,739 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-21 15:05:43,826 - INFO - Serving file N1123.jpg
+2024-08-21 15:05:43,834 - INFO - Serving file N1123_v2.jpg
+2024-08-21 15:05:53,517 - INFO - autobots, roll out!
+2024-08-21 15:05:57,788 - INFO - autobots, roll out!
+2024-08-21 15:06:00,251 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:06:07,986 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:06:08,167 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:08:27,026 - INFO - autobots, roll out!
+2024-08-21 15:08:30,071 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:08:33,805 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:08:33,995 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:09:59,924 - INFO - autobots, roll out!
+2024-08-21 15:10:11,245 - INFO - autobots, roll out!
+2024-08-21 15:10:16,367 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:10:19,431 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:10:19,610 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:10:37,090 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:10:37,256 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:10:38,916 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:10:38,983 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:10:40,161 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:10:40,322 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:11:27,235 - ERROR - 157.230.9.118 - - [21/Aug/2024 15:11:27] code 400, message Bad request syntax ('\x00\x0e8\x01\x01\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00')
+2024-08-21 15:12:30,466 - INFO - autobots, roll out!
+2024-08-21 15:12:34,445 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:12:35,560 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:12:35,739 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:12:49,879 - INFO - autobots, roll out!
+2024-08-21 15:12:54,716 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:12:57,233 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:12:57,414 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:13:37,453 - INFO - autobots, roll out!
+2024-08-21 15:13:41,499 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:13:44,125 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:13:44,301 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:15:01,312 - INFO - autobots, roll out!
+2024-08-21 15:15:04,100 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:15:06,819 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:15:06,997 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:15:36,787 - INFO - autobots, roll out!
+2024-08-21 15:15:39,445 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:15:43,545 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:15:43,903 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:18:37,301 - INFO - autobots, roll out!
+2024-08-21 15:18:39,589 - INFO - autobots, roll out!
+2024-08-21 15:18:41,353 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:18:44,299 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:18:44,484 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:19:10,101 - INFO - yeti executed a custom SQL query: select * from ord_log where ord_num='1786'
+2024-08-21 15:19:10,138 - INFO - select * from ord_log where ord_num='1786'
+2024-08-21 15:19:35,679 - INFO - yeti executed a custom SQL query: select * from orders where ord_num='1786'
+2024-08-21 15:19:35,735 - INFO - select * from orders where ord_num='1786'
+2024-08-21 15:21:48,267 - INFO - autobots, roll out!
+2024-08-21 15:21:57,580 - INFO - autobots, roll out!
+2024-08-21 15:22:01,989 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:22:06,857 - INFO - yeti executed a custom SQL query: select * from orders where ord_num='1786'
+2024-08-21 15:22:06,932 - INFO - select * from orders where ord_num='1786'
+2024-08-21 15:22:32,493 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:22:32,665 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:22:54,986 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151 gy%'
+2024-08-21 15:22:55,125 - INFO - select * from ord_log where prod_cd like '%S1151 gy%'
+2024-08-21 15:24:45,039 - INFO - autobots, roll out!
+2024-08-21 15:25:53,732 - INFO - autobots, roll out!
+2024-08-21 15:25:57,011 - INFO - autobots, roll out!
+2024-08-21 15:25:58,903 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:26:12,904 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151 gy%'
+2024-08-21 15:26:13,067 - INFO - select * from ord_log where prod_cd like '%S1151 gy%'
+2024-08-21 15:29:48,909 - INFO - User helen has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-21 15:31:22,776 - INFO - helen downloaded the file: List-20240821-153121.xlsx
+2024-08-21 15:31:26,610 - INFO - File List-20240821-153121.xlsx downloaded
+2024-08-21 15:31:46,865 - INFO - File List-20240821-153121.xlsx downloaded
+2024-08-21 15:56:41,799 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-21 15:56:41,915 - INFO - Serving file T3305_v3.jpg
+2024-08-21 15:56:41,916 - INFO - Serving file T3305_v2.jpg
+2024-08-21 15:56:41,917 - INFO - Serving file T3305.jpg
+2024-08-21 15:56:41,917 - INFO - Serving file T3305_v4.jpg
+2024-08-21 15:56:52,865 - INFO - yeti submitted an order lookup
+2024-08-21 15:56:52,865 - INFO - yeti is looking up order number: 1550
+2024-08-21 15:56:53,467 - INFO - yeti searched for order number: 1550
+2024-08-21 15:56:59,628 - INFO - yeti submitted an order lookup
+2024-08-21 15:56:59,628 - INFO - yeti is looking up order number: 1687
+2024-08-21 15:56:59,760 - INFO - yeti searched for order number: 1687
+2024-08-21 15:57:04,112 - INFO - yeti submitted an order lookup
+2024-08-21 15:57:04,112 - INFO - yeti is looking up order number: m1121
+2024-08-21 15:57:04,197 - INFO - yeti searched for order number: m1121
+2024-08-21 15:57:04,197 - INFO - No data found for order number: m1121
+2024-08-21 15:57:10,661 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-21 15:57:10,744 - INFO - Serving file M1121.jpg
+2024-08-21 15:57:45,106 - INFO - yeti submitted an order lookup
+2024-08-21 15:57:45,106 - INFO - yeti is looking up order number: 1547
+2024-08-21 15:57:45,172 - INFO - yeti searched for order number: 1547
+2024-08-21 15:57:55,482 - INFO - yeti executed a custom SQL query: select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 15:57:55,655 - INFO - select * from ord_log where prod_cd like '%S1151%'
+2024-08-21 17:55:46,969 - INFO - autobots, roll out!
+2024-08-21 17:55:48,440 - INFO - autobots, roll out!
+2024-08-21 17:56:20,611 - INFO - autobots, roll out!
+2024-08-21 17:56:22,065 - INFO - autobots, roll out!
+2024-08-21 19:50:58,129 - INFO - autobots, roll out!
+2024-08-21 19:50:59,603 - INFO - autobots, roll out!
+2024-08-22 00:01:44,025 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 126.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 00:12:13,689 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 00:12:35,993 - INFO - Serving file T3305.jpg
+2024-08-22 00:12:36,064 - INFO - Serving file T3305_v2.jpg
+2024-08-22 00:12:36,070 - INFO - Serving file T3305_v4.jpg
+2024-08-22 00:12:36,070 - INFO - Serving file T3305_v3.jpg
+2024-08-22 00:20:33,242 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 00:20:52,619 - INFO - Serving file N2149.jpg
+2024-08-22 00:36:16,397 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 00:36:35,958 - INFO - Serving file EN2209.jpg
+2024-08-22 00:53:18,973 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 00:53:41,520 - INFO - Serving file S1431.jpg
+2024-08-22 00:53:41,665 - INFO - Serving file S1431_v2.jpg
+2024-08-22 01:00:28,848 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 01:00:51,468 - INFO - Serving file S1426.jpg
+2024-08-22 01:03:40,315 - ERROR - 194.165.16.76 - - [22/Aug/2024 01:03:40] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-22 01:08:15,073 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 01:08:38,297 - INFO - Serving file S1424.jpg
+2024-08-22 01:47:27,999 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 01:47:47,575 - INFO - Serving file S1425.jpg
+2024-08-22 01:47:47,588 - INFO - Serving file S1425_v2.jpg
+2024-08-22 02:08:51,704 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-22 02:09:14,366 - INFO - Serving file T3258.jpg
+2024-08-22 02:16:20,497 - ERROR - 162.216.149.143 - - [22/Aug/2024 02:16:20] code 400, message Bad request version ('À\x13À')
+2024-08-22 02:16:20,634 - ERROR - 162.216.149.143 - - [22/Aug/2024 02:16:20] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03û\x7fÄ]³\x19e')
+2024-08-22 02:27:35,823 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:35] code 400, message Bad request version ('RTSP/1.0')
+2024-08-22 02:27:41,130 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:41] code 400, message Bad HTTP/0.9 request type ('l\x00')
+2024-08-22 02:27:46,913 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:46] code 400, message Bad request version ('\x00\x01\x97|\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+2024-08-22 02:27:52,065 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:52] code 400, message Bad HTTP/0.9 request type ('\x00')
+2024-08-22 02:27:53,229 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:53] code 400, message Bad request syntax ('HELP')
+2024-08-22 02:27:53,533 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:53] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+2024-08-22 02:27:54,860 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:54] code 400, message Bad request version ('\x00/\x00')
+2024-08-22 02:27:58,192 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:27:58] code 400, message Bad request syntax ('\x00\x00\x00qj\x81n0\x81k¡\x03\x02\x01\x05¢\x03\x02\x01')
+2024-08-22 02:28:03,499 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:28:03] code 400, message Bad request version ('0.12\x00')
+2024-08-22 02:28:03,652 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:28:03] code 400, message Bad request version ('SIP/2.0')
+2024-08-22 02:28:09,960 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:28:09] code 400, message Bad HTTP/0.9 request type ('AMQP\x00\x00')
+2024-08-22 02:29:05,607 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:29:05] code 400, message Bad request version ('\x00/\x00')
+2024-08-22 02:29:15,772 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:29:15] code 400, message Bad request version ("ñH\\Gc\x10S\x9d©Aý\\ÒÚÉñDÚÑ\x12ý«\x16º\x07§²,](Rá\x00\x9c\x13\x02\x13\x03\x13\x01\x003\x009\x005\x00/À,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀSÀ+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀRÀ$À(\x00k\x00jÀsÀw\x00Ä\x00ÃÀ#À'\x00g\x00@ÀrÀv\x00¾\x00½À")
+2024-08-22 02:29:19,138 - ERROR - 172.104.4.17 - - [22/Aug/2024 02:29:19] code 400, message Bad request version ("\x92ß\x13¡-}¨\x8c\x00\x9c\x13\x02\x13\x03\x13\x01\x003\x009\x005\x00/À,À0\x00£\x00\x9fÌ©Ì¨ÌªÀ¯À\xadÀ£À\x9fÀ]ÀaÀWÀSÀ+À/\x00¢\x00\x9eÀ®À¬À¢À\x9eÀ\\À`ÀVÀRÀ$À(\x00k\x00jÀsÀw\x00Ä\x00ÃÀ#À'\x00g\x00@ÀrÀv\x00¾\x00½À")
+2024-08-22 03:26:53,862 - ERROR - 5.8.11.202 - - [22/Aug/2024 03:26:53] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-22 04:48:24,580 - ERROR - 8.219.179.78 - - [22/Aug/2024 04:48:24] code 400, message Bad request syntax ('test')
+2024-08-22 08:00:53,016 - ERROR - 93.174.93.12 - - [22/Aug/2024 08:00:53] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-22 09:09:31,703 - ERROR - 78.153.140.179 - - [22/Aug/2024 09:09:31] code 400, message Bad request version ('\x1bÁ~¶MOñ')
+2024-08-22 10:28:55,662 - INFO - User yeti has logged in. IP: 172.226.3.209, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 10:29:02,352 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 10:29:02,588 - INFO - Serving file T3305_v3.jpg
+2024-08-22 10:29:02,588 - INFO - Serving file T3305_v2.jpg
+2024-08-22 10:29:02,589 - INFO - Serving file T3305_v4.jpg
+2024-08-22 10:29:02,589 - INFO - Serving file T3305.jpg
+2024-08-22 10:33:48,960 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 10:47:14,207 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 10:47:18,891 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 10:47:30,931 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 10:47:38,325 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 10:47:54,479 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 10:47:54,550 - INFO - Serving file N0370.jpg
+2024-08-22 11:26:10,766 - ERROR - 80.82.77.202 - - [22/Aug/2024 11:26:10] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-22 12:44:45,366 - INFO - User fdc has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 12:45:01,977 - INFO - User fdc has logged in. IP: 173.198.50.202, Browser: Safari 16.3, OS: Mac OS X 10.15.7, Device: Mac, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-22 12:45:43,528 - INFO - Excel HTML and sheet data generated for fdc
+2024-08-22 12:45:43,686 - INFO - Serving file T3200_v2.jpg
+2024-08-22 12:45:43,687 - INFO - Serving file T3200.jpg
+2024-08-22 12:55:12,997 - INFO - Excel HTML and sheet data generated for fdc
+2024-08-22 12:55:13,145 - INFO - Serving file L6023.jpg
+2024-08-22 12:56:27,782 - INFO - Excel HTML and sheet data generated for fdc
+2024-08-22 12:56:27,925 - INFO - Serving file T3148.jpg
+2024-08-22 12:57:27,430 - INFO - Excel HTML and sheet data generated for fdc
+2024-08-22 12:57:27,533 - INFO - Serving file T3148.jpg
+2024-08-22 12:57:27,598 - INFO - Serving file T3249.jpg
+2024-08-22 12:57:27,599 - INFO - Serving file T3249_v2.jpg
+2024-08-22 12:57:36,273 - INFO - Excel HTML and sheet data generated for fdc
+2024-08-22 12:57:36,418 - INFO - Serving file T3249.jpg
+2024-08-22 12:57:36,419 - INFO - Serving file T3249_v2.jpg
+2024-08-22 13:08:48,352 - INFO - Excel HTML and sheet data generated for fdc
+2024-08-22 13:08:48,485 - INFO - Serving file L1577-S.jpg
+2024-08-22 13:31:02,790 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-22 13:31:02,874 - INFO - Serving file N1324.jpg
+2024-08-22 13:31:02,874 - INFO - Serving file N3007_v4.jpg
+2024-08-22 13:31:02,874 - INFO - Serving file N3007.jpg
+2024-08-22 13:31:02,875 - INFO - Serving file L1513_v2.jpg
+2024-08-22 13:31:02,882 - INFO - Serving file N1223_v7.jpg
+2024-08-22 13:31:02,883 - INFO - Serving file T2874_v2.jpg
+2024-08-22 13:31:02,887 - INFO - Serving file L1494-S.jpg
+2024-08-22 13:31:03,519 - INFO - Serving file N1324_V2.jpg
+2024-08-22 13:31:03,529 - INFO - Serving file N1324_V3.jpg
+2024-08-22 13:31:03,537 - INFO - Serving file N3007_v2.jpg
+2024-08-22 13:31:03,544 - INFO - Serving file N1835.jpg
+2024-08-22 13:31:03,545 - INFO - Serving file L1494-M.jpg
+2024-08-22 13:31:03,547 - INFO - Serving file L1494.jpg
+2024-08-22 13:31:03,549 - INFO - Serving file N1223_v8.jpg
+2024-08-22 13:31:03,550 - INFO - Serving file N1223_v6.jpg
+2024-08-22 13:31:03,551 - INFO - Serving file N1324_v4.jpg
+2024-08-22 13:31:03,596 - INFO - Serving file N1151_v3.jpg
+2024-08-22 13:31:03,602 - INFO - Serving file L1513.jpg
+2024-08-22 13:31:03,608 - INFO - Serving file N1223_v2.jpg
+2024-08-22 13:31:03,625 - INFO - Serving file N1223_V6.jpg
+2024-08-22 13:31:03,627 - INFO - Serving file N1223.jpg
+2024-08-22 13:31:03,627 - INFO - Serving file N3007_v3.jpg
+2024-08-22 13:31:03,629 - INFO - Serving file N1324_v5.jpg
+2024-08-22 13:31:03,631 - INFO - Serving file N1223_V5.jpg
+2024-08-22 13:31:03,632 - INFO - Serving file N1223_V3.jpg
+2024-08-22 13:31:03,633 - INFO - Serving file S1408.jpg
+2024-08-22 13:31:03,636 - INFO - Serving file N1151_v2.jpg
+2024-08-22 13:31:03,642 - INFO - Serving file S1408_v2.jpg
+2024-08-22 13:31:03,643 - INFO - Serving file N1151_V2.jpg
+2024-08-22 13:31:03,669 - INFO - Serving file S1426.jpg
+2024-08-22 13:31:03,670 - INFO - Serving file N1223_v4.jpg
+2024-08-22 13:31:03,671 - INFO - Serving file ET2949.jpg
+2024-08-22 13:31:03,673 - INFO - Serving file L1494_v2.jpg
+2024-08-22 13:31:03,680 - INFO - Serving file N1151_v4.jpg
+2024-08-22 13:31:03,688 - INFO - Serving file N1151_v5.jpg
+2024-08-22 13:31:03,691 - INFO - Serving file N1782.jpg
+2024-08-22 13:31:03,711 - INFO - Serving file T2874.jpg
+2024-08-22 13:31:03,713 - INFO - Serving file N1151.jpg
+2024-08-22 13:31:03,737 - INFO - Serving file N1223_v5.jpg
+2024-08-22 13:31:03,740 - INFO - Serving file N1223_v3.jpg
+2024-08-22 13:31:03,743 - INFO - Serving file N1223_V2.jpg
+2024-08-22 13:31:13,301 - INFO - Serving file N1151_v4.jpg
+2024-08-22 13:31:41,700 - INFO - yeti downloaded the file: List-20240822-133140.xlsx
