@@ -7,13 +7,13 @@
     
     <!-- Include Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-
     <!-- Include DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    <!-- Include DataTables Buttons CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+    <!-- Include DataTables Responsive CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css">
 
-    <!-- Include Font Awesome for the arrow icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
-    
     <style>
         table {
             border: 1px solid black;
@@ -94,15 +94,21 @@
                 display: none;
             }
         }
+        div.dt-buttons {
+            display: flex !important;
+            justify-content: center !important; /* Center the buttons horizontally */
+            margin: 0 auto !important; /* Center the container */
+            float: none !important; /* Remove float */
+            position: static !important; /* Override position */
+        }
         
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
-
     <div class="container mt-5">
         <div class="row justify-content-center text-center">
-            <form id="orderLookupForm" method="POST" action="/look_up">
+            <form id="orderLookupForm" method="POST" action="/item_lookup">
                 <h4>Enter Input, separate by comma:</h4>
                 <p>You can put multiple skus like n1223 gy, N1551</p>
                 <p>style only = all colors, with color = one color</p>
@@ -110,7 +116,6 @@
                     <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}">
                 </div>
                 <button type="submit" class="btn btn-primary">View Result</button>
-                
                 {% if user_input %}
                 <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
                     Your search input was: <br>{{ user_input }}
@@ -119,7 +124,6 @@
             </form>
         </div>
     </div>
-    
     {% if image_urls %}
     <div class="text-center"> <!-- Center the container -->
         <div class="row justify-content-center"> <!-- Center the row content -->
@@ -147,8 +151,8 @@
         </div>
         <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">
             <input type="hidden" name="user_input" value="{{ user_input }}">
-            <button type="submit" name="image_type" value="resized" class="btn btn-info mx-2">Download Clean Resized Image (small)</button>
-            <button type="submit" name="image_type" value="original" class="btn btn-warning mx-2">Download Clean Original Image (Large)</button>
+            <button type="submit" name="image_type" value="resized" class="btn btn-info mx-2">Download Resized Image (small)</button>
+            <button type="submit" name="image_type" value="original" class="btn btn-warning mx-2">Download Original Image (Large)</button>
         </form>
     </div>
 {% endif %}
@@ -208,29 +212,44 @@
     </div>
     
     <!-- Include Font Awesome for the arrow icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-
-    
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.2/jszip.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
+        <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+        <script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
             // Toggle the arrow icon on collapse/expand
             $(document).ready(function() {
         $('#excel_table_1').DataTable({
-            "pageLength": 100,
-            "autoWidth": true,
-            "lengthMenu": [10, 25, 50, 100],
+            "paging": true, // Enable pagination
+                    "searching": true, // Enable search
+                    "autoWidth": true, // Enable column auto width
+                    "pageLength": 50, // Set default number of entries to show per page
+                    "lengthMenu": [10, 25, 50, 100], // Options for number of entries per page
+                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                    buttons: ['copy', 'excel', 'pdf'],
+                    responsive: true, // Make the table responsive,
             "createdRow": function(row, data, dataIndex) {
                 $(row).css('text-align', 'center');
             }
         });
 
         $('#excel_table_2').DataTable({
-            "pageLength": 100,
-            "autoWidth": true,
-            "lengthMenu": [10, 25, 50, 100],
-            "createdRow": function(row, data, dataIndex) {
+            "searching": true, // Enable search
+                    "autoWidth": true, // Enable column auto width
+                    "pageLength": 50, // Set default number of entries to show per page
+                    "lengthMenu": [10, 25, 50, 100], // Options for number of entries per page
+                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                    buttons: ['copy', 'excel', 'pdf'],
+                    responsive: true, // Make the table responsive
+                    "createdRow": function(row, data, dataIndex) {
                 $(row).css('text-align', 'center');
             }
         });

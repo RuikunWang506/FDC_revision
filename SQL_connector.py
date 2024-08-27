@@ -4,6 +4,7 @@ import os
 import datetime
 import pandas as pd
 from PIL import Image
+from flask import current_app as app  # Import current_app to use Flask's logger
 
 # SQL Server connection details
 server = "192.168.254.204"
@@ -18,23 +19,29 @@ def generate_excel(user_input):
     image_urls = []
     try:
         # Normalize the input to lowercase and strip extra spaces
-        user_input = user_input.lower().strip()
+        user_input = ' '.join(user_input.lower().strip().split())
 
-        # Split user_input into parts, trimming spaces around each part
+        # Split the input by commas
         input_parts = [part.strip() for part in user_input.split(",")]
 
-        # Generate the conditions for PROD_CD with and without colors
+        # Initialize conditions for each situation
         prod_cd_conditions = []
+        alt_cd_conditions = []
+        
         for part in input_parts:
-            if " " in part:  # Handle cases like 'en2209 bk'
+            if "%" in part:  # Handle Situation 3: Wildcards or specific query command
+                prod_cd_conditions.append(f"i.PROD_CD LIKE '{part}'")
+                alt_cd_conditions.append(f"i.ALT_CD LIKE '{part}'")
+            elif " " in part:  # Handle Situation 2: Full prod_cd with color code
                 prod_cd_conditions.append(f"i.PROD_CD = '{part}'")
-            else:  # Handle cases like 'en2208' without color
+            else:  # Handle Situation 1: alt_cd, so match prod_cd using LIKE
                 prod_cd_conditions.append(f"i.PROD_CD LIKE '{part}%'")
 
-        combined_condition = " OR ".join(prod_cd_conditions)
+        # Combine all conditions
+        combined_condition = " OR ".join(prod_cd_conditions + alt_cd_conditions)
 
-        # Debug: Print the generated SQL WHERE condition
-        print(f"Generated SQL WHERE condition: {combined_condition}")
+        # Debug: Log the generated SQL WHERE condition
+        #app.logger.info(f"Generated SQL WHERE condition: {combined_condition}")
 
         # Establish connections to the SQL Server databases
         conn_fdc = pyodbc.connect(
@@ -89,7 +96,7 @@ def generate_excel(user_input):
                 ) AS fcd ON i.PROD_CD = fcd.prod_cd
                 WHERE {combined_condition};
             """
-
+            
             cursor.execute(query)
             rows = cursor.fetchall()
             rows_with_database_name = [(database_name,) + tuple(row) for row in rows]
@@ -97,6 +104,7 @@ def generate_excel(user_input):
 
         # Combine the results from both databases
         combined_results = queries[0] + queries[1]
+
 
         # Process the combined result
         workbook = openpyxl.Workbook()
@@ -117,17 +125,18 @@ def generate_excel(user_input):
                 if col_index == 3:  # Check if it's the column with SKU_no_color
                     hyperlink_value = value.strip()  # Remove trailing spaces
 
-                    # Remove the color part from the PROD_CD for image URL generation
-                    base_sku = hyperlink_value.split()[0]
+                    # Split the hyperlink_value and get the base_sku, or use the full value if there's no space
+                    split_value = hyperlink_value.split()
+                    base_sku = split_value[0] if split_value else hyperlink_value
 
                     local_resized_image_url = f"ftp/{base_sku}.jpg"
                     backup_original_image_url = f"/ftp2/{base_sku}.jpg"
 
-                    # Add original image URL if not already added
+                    # Add the image URL to the list if it's not already there
                     if local_resized_image_url not in image_urls:
                         image_urls.append(local_resized_image_url)
 
-                    # Check if the image exists in ftp directory
+                    # Check if the image exists in the ftp directory
                     if os.path.exists(os.path.join('ftp', f'{base_sku}.jpg')):
                         value = f'<a href="{local_resized_image_url}">{value}</a>'
                     else:
@@ -149,9 +158,9 @@ def generate_excel(user_input):
         html_table = df.to_html(index=False, classes="table table-bordered table-striped", table_id="excel_table")
 
         return html_table, image_urls, user_input
-
+    
     except pyodbc.Error as e:
-        print("Error connecting to SQL Server:", e)
+        app.logger.error(f"Error connecting to SQL Server: {e}")
 
     finally:
         # Ensure that the connections are closed

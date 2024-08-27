@@ -8,7 +8,6 @@ from config import Config
 from logging_setup import configure_logging
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-import logging
 import re
 import urllib.parse
 import time
@@ -92,17 +91,6 @@ def register_routes(app):
         current_user = session['username']
         return render_template("index.html", current_user=current_user)
 
-    @app.route("/Item_lookup", methods=["GET", "POST"])
-    def item_lookup():
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("login"))
-        current_user = session['username']
-        excel_html = None
-        if request.method == "POST":
-            item_number = request.form.get("item_number")
-            app.logger.info("%s searched for: %s", current_user, item_number)
-        return render_template("Item_lookup.html", excel_html=excel_html, current_user=current_user)
 
 
     def get_sheet_data_and_e1_value(input_value):
@@ -139,7 +127,7 @@ def register_routes(app):
 
             return [display_headers] + matching_rows if matching_rows else [display_headers], e1_value
 
-
+    
     @app.route("/delete_image", methods=["POST"])
     def delete_image():
         if 'username' not in session:
@@ -166,103 +154,135 @@ def register_routes(app):
         else:
             return jsonify({"error": "No file name provided"}), 400
 
-    @app.route("/look_up", methods=["POST"])
-    def download_excel():
+    @app.route("/item_lookup", methods=["GET", "POST"])
+    def item_lookup():
         if 'username' not in session:
+            session['next'] = request.url
             return redirect(url_for("login"))
 
         current_user = session['username']
-        user_input = request.form.get("user_input", "").lower().strip()
+        excel_html = None
+        user_input = ""
 
-        if not user_input:
-            _, e1_value = get_sheet_data_and_e1_value('')
-            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input)
+        if request.method == "POST":
+            user_input = request.form.get("user_input", "").lower().strip()
 
-        if user_input.endswith(","):
-            user_input = user_input[:-1]
+            if not user_input:
+                _, e1_value = get_sheet_data_and_e1_value('')
+                return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input)
 
-        # Generate Excel and image URLs
-        excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
+            if user_input.endswith(","):
+                user_input = user_input[:-1]
 
-        if not excel_html:  # If the excel_html is None or empty, return the template without rendering data
-            app.logger.info("No valid data to display for input: %s", user_input)
-            return render_template("Item_lookup.html", excel_html=None, current_user=current_user)
+            # Generate Excel and image URLs
+            excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
 
-        # Normalize input parts by stripping color suffixes for image lookup
-        search_terms = [term.split()[0].strip() for term in user_input.split(",")]
+            if not excel_html:  # If the excel_html is None or empty, return the template without rendering data
+                app.logger.info("No valid data to display for input: %s", user_input)
+                return render_template("Item_lookup.html", excel_html=None, current_user=current_user)
 
-        # Get filenames matching the search terms
-        file_names = []
-        for term in search_terms:
-            for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                if filename.lower().startswith(term):
-                    file_names.append(filename)
+            # Normalize input parts by stripping color suffixes for image lookup
+            search_terms = [term.split()[0].strip() for term in user_input.split(",")]
 
-            # Check in catalog_resized if not found in catalog_original
-            for filename in os.listdir(Config.CATALOG_RESIZED):
-                if filename.lower().startswith(term) and filename not in file_names:
-                    file_names.append(filename)
+            # Get filenames matching the search terms
+            file_names = []
+            for term in search_terms:
+                for filename in os.listdir(Config.CATALOG_ORIGINAL):
+                    if filename.lower().startswith(term):
+                        file_names.append(filename)
 
-        # Get file information
-        file_info = []
-        for filename in file_names:
-            original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-            resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
-            file_path = original_path if os.path.exists(original_path) else resized_path
+                # Check in catalog_resized if not found in catalog_original
+                for filename in os.listdir(Config.CATALOG_RESIZED):
+                    if filename.lower().startswith(term) and filename not in file_names:
+                        file_names.append(filename)
 
-            if os.path.exists(file_path):
-                size = os.path.getsize(file_path)
-                modified_time = os.path.getmtime(file_path)
-                modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
-                file_info.append((filename, size, modified_date))
+            # Get file information
+            file_info = []
+            for filename in file_names:
+                original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+                resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
+                file_path = original_path if os.path.exists(original_path) else resized_path
 
-        if excel_html:
-            df = pd.read_html(StringIO(excel_html))[0]
-            sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                if os.path.exists(file_path):
+                    size = os.path.getsize(file_path)
+                    modified_time = os.path.getmtime(file_path)
+                    modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
+                    file_info.append((filename, size, modified_date))
 
-            # Normalize sheet data to ensure all rows have the same number of columns
-            max_length = max(len(row) for row in sheet_data)
-            sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
-            df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+            if excel_html:
+                df = pd.read_html(StringIO(excel_html))[0]
+                sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
 
-            if current_user == 'fdc':
-                df.drop(columns=['cost', 'Container', 'create_dt', 'update_dt'], inplace=True)
+                # Normalize sheet data to ensure all rows have the same number of columns
+                max_length = max(len(row) for row in sheet_data)
+                sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
+                df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
 
-            sorted_file_names = sort_filenames(file_names)
-            sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
+                if current_user == 'fdc':
+                    df.drop(columns=['cost', 'Container', 'create_dt', 'update_dt'], inplace=True)
 
-            # Convert DataFrames back to HTML
-            excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
-            sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
+                sorted_file_names = sort_filenames(file_names)
+                sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
 
-            app.logger.info("Excel HTML and sheet data generated for %s", current_user)
-            return render_template(
-                "Item_lookup.html",
-                excel_html=excel_html,
-                image_urls=sorted_image_urls,
-                file_names=sorted_file_names,
-                file_info=file_info,
-                sheet_data=sheet_data_html,
-                current_user=current_user,
-                e1_value=e1_value,
-                user_input=user_input.capitalize()
-            )
-        else:
-            _, e1_value = get_sheet_data_and_e1_value('')
-            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input.capitalize())
+                # Convert DataFrames back to HTML
+                excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
+                sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
+
+                app.logger.info("Excel HTML and sheet data generated for %s", current_user)
+                return render_template(
+                    "Item_lookup.html",
+                    excel_html=excel_html,
+                    image_urls=sorted_image_urls,
+                    file_names=sorted_file_names,
+                    file_info=file_info,
+                    sheet_data=sheet_data_html,
+                    current_user=current_user,
+                    e1_value=e1_value,
+                    user_input=user_input.capitalize()
+                )
+            else:
+                _, e1_value = get_sheet_data_and_e1_value('')
+                return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input.capitalize())
+        
+        # Handle GET request
+        return render_template("Item_lookup.html", excel_html=excel_html, current_user=current_user)
 
 
                                             
 
-    @app.route("/Order_lookup", methods=["GET", "POST"])
-    def sql_connector():
+    @app.route("/order_lookup", methods=["GET", "POST"])
+    def order_lookup():
         if 'username' not in session:
             return redirect(url_for("login"))
+        
         current_user = session['username']
-        html_table = None
+        excel_html = None
+        order_number = None
+
         if request.method == "POST":
-            user_input = request.form.get("user_input")
-        return render_template("order_lookup.html", html_table=html_table,  current_user=current_user)
+            # Handle the order lookup submission
+            order_number = request.form.get("order_number", "").strip()
+            
+            if not order_number:
+                app.logger.info("No order number provided by %s", current_user)
+                return render_template("order_lookup.html", excel_html=None, current_user=current_user)
+
+            session['order_number'] = order_number
+            app.logger.info("%s is looking up order number: %s", current_user, order_number)
+
+            if current_user == 'fdc':
+                app.logger.info("User %s does not have permission to view order details", current_user)
+                return render_template("order_lookup.html", excel_html=None)
+
+            excel_html = order_search.generate_order(order_number)
+            
+            if excel_html:
+                app.logger.info("%s searched for order number: %s", current_user, order_number)
+            else:
+                app.logger.info("No data found for order number: %s", order_number)
+                excel_html = None
+
+        return render_template("order_lookup.html", excel_html=excel_html, order_number=order_number, current_user=current_user)
 
     @app.route('/label_maker_from_order_lookup', methods=['POST'])
     def label_maker_from_order_lookup():
@@ -310,27 +330,6 @@ def register_routes(app):
                 error_message=f"An error occurred: {str(e)}",
                 order_number=order_number
             )
-
-    @app.route("/submit_order", methods=["POST"])
-    def submit_order():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        current_user = session['username']
-        app.logger.info("%s submitted an order lookup", current_user)
-        if current_user == 'fdc':
-            app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("order_lookup.html", excel_html=None)
-
-        order_number = request.form["order_number"]
-        session['order_number'] = order_number
-        app.logger.info("%s is looking up order number: %s", current_user, order_number)
-        excel_html = order_search.generate_order(order_number)
-        app.logger.info("%s searched for order number: %s", current_user, order_number)
-        if excel_html:
-            return render_template("order_lookup.html", excel_html=excel_html, order_number=order_number)
-        else:
-            app.logger.info("No data found for order number: %s", order_number)
-            return render_template("order_lookup.html", excel_html=None)
 
     @app.route("/v5_listcreator", methods=["GET", "POST"])
     def v5_listcreator():
@@ -392,6 +391,7 @@ def register_routes(app):
                 return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message="Please provide input.", current_user=current_user)
 
         return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, current_user=current_user)
+    
     @app.route('/download_images', methods=['POST'])
     def download_images():
         image_type = request.form.get('image_type')  # Expecting 'resized' or 'original'
@@ -418,12 +418,15 @@ def register_routes(app):
         
         memory_file.seek(0)
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
+    
     @app.route("/googlesheet", methods=["GET", "POST"])
     def googlesheet():
         if 'username' not in session:
             return redirect(url_for("login"))
-        
         current_user = session['username']
+        if current_user == 'fdc':
+            app.logger.info("User %s does not have permission to view order details", current_user)
+            return render_template("index.html", excel_html=None,current_user=current_user)
         sheet_data_html = None
         e1_value = None
 
@@ -783,6 +786,44 @@ def register_routes(app):
         if 'username' not in session:
             return redirect(url_for("login"))
         return render_template("calculator2.html")
+    
+    def get_temu_listings_data():
+        creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
+        service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
+        sheet = service.spreadsheets()
+        
+        # Fetch data from the "Temu Listings" sheet
+        ranges = ['Temu Listings!A:H']
+        result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+        
+        temu_listings_data = result['valueRanges'][0].get('values', [])
+        
+        # Process data to ensure all rows have the same length
+        if temu_listings_data:
+            max_length = max(len(row) for row in temu_listings_data)
+            temu_listings_data = [row + [''] * (max_length - len(row)) for row in temu_listings_data]
+            df_sheet = pd.DataFrame(temu_listings_data[1:], columns=temu_listings_data[0])
+            
+            # Find the index for the column that contains "Product ID"
+            product_id_index = next((i for i, header in enumerate(df_sheet.columns) if 'Product ID' in header), -1)
+
+            # Add hyperlinks to product IDs
+            if product_id_index != -1:
+                df_sheet.iloc[:, product_id_index] = df_sheet.iloc[:, product_id_index].apply(
+                    lambda x: f'<a href="https://www.temu.com/goods.html?_bg_fs=1&goods_id={x}">{x}</a>' if pd.notna(x) else x
+                )
+            
+            sheet_data_html = df_sheet.to_html(classes='table table-bordered table-striped', escape=False)
+        
+        return sheet_data_html
+
+    @app.route("/temu", methods=["GET"])
+    def temuroute():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        sheet_data_html = get_temu_listings_data()
+        return render_template("temu.html", sheet_data_html=sheet_data_html)
+
 
     @app.route("/geek_tools", methods=["GET"])
     def geek_tools():
