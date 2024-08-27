@@ -592,12 +592,24 @@ def register_routes(app):
     def display():
         if 'username' not in session:
             return redirect(url_for("login"))
+
         try:
             with open(Config.LOG_FILE, 'r') as file:
                 lines = file.readlines()
             formatted_lines = format_logs(lines)
             reversed_lines = list(reversed(formatted_lines))
-            return render_template('log_viewer.html', log_lines=reversed_lines), 200
+
+            # Pagination logic
+            per_page = 500
+            page = request.args.get('page', 1, type=int)
+            start = (page - 1) * per_page
+            end = start + per_page
+            paginated_log_lines = reversed_lines[start:end]
+
+            # Calculate total pages
+            total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
+
+            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages), 200
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
@@ -630,12 +642,10 @@ def register_routes(app):
 
     @app.route('/ftp/<path:path>', methods=['GET'])
     def serve_file(path):
-        app.logger.info("Serving file %s", path)
         return send_from_directory(Config.CATALOG_RESIZED, path, as_attachment=False)
 
     @app.route('/ftp2/<path:path>', methods=['GET'])
     def serve_file2(path):
-        app.logger.info("Serving file %s", path)
         return send_from_directory(Config.CATALOG_ORIGINAL, path, as_attachment=False)
     
     @app.route('/public/<path:path>', methods=['GET'])
@@ -647,7 +657,6 @@ def register_routes(app):
     def download_file4(filename):
         if 'username' not in session:
             return redirect(url_for("login"))
-        app.logger.info("File %s downloaded from label output", filename)
         return send_from_directory("output/macy_label/", filename, as_attachment=True)
 
     @app.route("/report_bug", methods=["GET"])
@@ -1013,7 +1022,6 @@ def register_routes(app):
     @app.route('/ftp3/<path:encoded_path>', methods=['GET'])
     def serve_file3(encoded_path):
         decoded_path = urllib.parse.unquote(encoded_path)
-        app.logger.info("Serving file %s", decoded_path)
         full_path = os.path.join(app.config['BIG_PICTURE_DIR'], decoded_path)
         directory, filename = os.path.split(full_path)
         return send_from_directory(directory, filename, as_attachment=False)
@@ -1025,8 +1033,6 @@ def register_routes(app):
         full_path = os.path.join(app.config['BIG_PICTURE_DIR'], decoded_path)
         directory, filename = os.path.split(full_path)
         return send_from_directory(directory, filename, as_attachment=True)  
-    
-
 
     def load_credentials():
         base_dir = os.path.dirname(os.path.abspath(__file__))

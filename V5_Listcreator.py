@@ -17,7 +17,7 @@ formatted_date = ""
 source_folder = None  # Correctly define and highlight the source_folder variable
 
 def main():
-    global user_input, formatted_date, user_input_type, source_folder
+    global user_input, formatted_date, user_input_type, source_folder,today
 
     today = datetime.datetime.now()
     formatted_date = today.strftime("List-%Y%m%d-%H%M%S")
@@ -246,7 +246,7 @@ def generate_image_sheet(combined_results, user_input_list):
     existing_wb = load_workbook(os.path.join("output", "list_output", formatted_date + ".xlsx"))
     new_ws = existing_wb.create_sheet(title="list")
     new_ws.freeze_panes = 'A3'
-    new_ws['A1'] = "PLEASE FILL HERE ! POWERED BY SID AND TRISTEN"
+    new_ws['A1'] = "Created Time:" + str(today.strftime("%Y/%m/%d"))
     new_ws.merge_cells("A1:E1")
     new_ws['A1'].alignment = Alignment(horizontal='center', vertical='center')  
     new_ws['A2'] = "ITEM"

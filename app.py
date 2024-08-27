@@ -1,7 +1,9 @@
 from flask import Flask
 from logging_setup import configure_logging
 from config import Config
-from routes import register_routes
+import flask_monitoringdashboard as dashboard
+from routes import register_routes  # Import your routes after binding the dashboard
+
 import os
 
 # Flask app
@@ -11,10 +13,9 @@ app.config.from_object(Config)
 
 # Configure logging
 configure_logging(app)
-
 # Register routes
 register_routes(app)
-
+dashboard.bind(app)  # This should only be called once and before registering routes
 # Register the zip filter
 @app.template_filter('zip')
 def zip_filter(a, b):
@@ -23,7 +24,7 @@ def zip_filter(a, b):
 app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
-    app.logger.info("autobots, roll out!")
+    app.logger.info("autobots, rolling out!")
     try:
         app.run(host='0.0.0.0', port=5555, debug=True)
     except Exception as e:

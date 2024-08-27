@@ -15,6 +15,8 @@ class Config:
     SLACK_CHANNEL = 'C07CGNKSPF1'
     SERVICE_ACCOUNT_FILE = 'credentials.json'
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+    
+    # Users dictionary
     USERS = {
         'fdc': '827',
         'yetimaster':'whitebox',
@@ -30,3 +32,4 @@ class Config:
         'dennis':'dennis',
         'baiqiang':'1234'
     }
+

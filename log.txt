@@ -24164,3 +24164,309 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-08-26 17:19:03,669 - INFO - Serving file T3305_v2.jpg
 2024-08-26 17:19:03,673 - INFO - Serving file T3305_v3.jpg
 2024-08-26 17:19:03,673 - INFO - Serving file T3305_v4.jpg
+2024-08-26 19:04:11,565 - ERROR - 45.79.181.94 - - [26/Aug/2024 19:04:11] code 400, message Bad request version ('À\x14À')
+2024-08-26 19:13:30,950 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-26 19:17:10,540 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-26 19:17:11,267 - INFO - Serving file EN1346.jpg
+2024-08-26 19:40:03,280 - INFO - autobots, roll out!
+2024-08-26 19:40:04,796 - INFO - autobots, roll out!
+2024-08-26 19:47:34,187 - ERROR - 45.84.89.2 - - [26/Aug/2024 19:47:34] code 400, message Bad request version ('\x00\x04\x03\x00\x01\x02\x00')
+2024-08-26 19:52:40,787 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-26 19:52:41,480 - INFO - Serving file EN1654.jpg
+2024-08-26 20:07:07,931 - ERROR - 45.227.254.49 - - [26/Aug/2024 20:07:07] code 400, message Bad HTTP/0.9 request type ('\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie:')
+2024-08-26 20:09:00,581 - ERROR - 35.203.210.178 - - [26/Aug/2024 20:09:00] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x030ª')
+2024-08-26 20:09:00,865 - ERROR - 35.203.210.178 - - [26/Aug/2024 20:09:00] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03\x8aoï\x94ªB6\x9a\x83ûÒ½ã\x84\x0eÛÊ\x8fAùÎ\x9eÊÝê{Ý£#6×\x12\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À")
+2024-08-26 20:23:58,469 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-26 20:23:59,150 - INFO - Serving file EN3007.jpg
+2024-08-26 23:26:34,067 - ERROR - 198.235.24.214 - - [26/Aug/2024 23:26:34] code 400, message Bad request version ('À\x13À')
+2024-08-26 23:26:34,373 - ERROR - 198.235.24.214 - - [26/Aug/2024 23:26:34] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03£2ñ_.äá¤|\x16·\xadK´£PÆJ¿\x86\x12ßÀad4ªÕf§\x15å\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À")
+2024-08-26 23:50:44,338 - ERROR - 64.62.156.101 - - [26/Aug/2024 23:50:44] code 400, message Bad request version ('À\x14À')
+2024-08-27 00:01:26,377 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 00:01:26,949 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 00:01:27,795 - INFO - Serving file N0529.jpg
+2024-08-27 00:01:27,931 - INFO - Serving file N0529_v2.jpg
+2024-08-27 00:26:50,962 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 00:26:52,816 - INFO - Serving file N0680.jpg
+2024-08-27 01:00:18,505 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 01:00:20,429 - INFO - Serving file N0735.jpg
+2024-08-27 01:18:10,904 - INFO - Serving file index.php
+2024-08-27 01:18:11,638 - INFO - Serving file index.php
+2024-08-27 01:18:12,335 - INFO - Serving file index.php
+2024-08-27 01:18:13,056 - INFO - Serving file index.php
+2024-08-27 01:18:13,592 - INFO - Serving file index.php/index
+2024-08-27 01:31:05,775 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 01:31:06,480 - INFO - Serving file N0813.jpg
+2024-08-27 01:31:06,491 - INFO - Serving file N0813_v2.jpg
+2024-08-27 01:46:47,588 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 01:46:48,295 - INFO - Serving file N0815.jpg
+2024-08-27 01:46:48,312 - INFO - Serving file N0815_v2.jpg
+2024-08-27 01:46:48,319 - INFO - Serving file N0815_v3.jpg
+2024-08-27 01:58:39,688 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 01:58:40,392 - INFO - Serving file N1267.jpg
+2024-08-27 01:58:40,396 - INFO - Serving file N1267_v2.jpg
+2024-08-27 01:58:40,401 - INFO - Serving file N1267_v3.jpg
+2024-08-27 01:58:40,413 - INFO - Serving file N1267_v4.jpg
+2024-08-27 02:16:47,420 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 02:16:48,125 - INFO - Serving file N1460.jpg
+2024-08-27 02:16:48,127 - INFO - Serving file N1460_v2.jpg
+2024-08-27 02:42:35,974 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 02:42:36,655 - INFO - Serving file N1546.jpg
+2024-08-27 02:45:23,511 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 02:45:55,492 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 02:45:56,231 - INFO - Serving file N1546.jpg
+2024-08-27 02:46:43,645 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 02:46:44,332 - INFO - Serving file N1546.jpg
+2024-08-27 03:36:39,649 - ERROR - 138.68.165.75 - - [27/Aug/2024 03:36:39] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x01ý\x01\x00\x01ù\x03\x03\x08¹ûlìK\x92\x12ÙjuÓ-@ûÄÏ]Å0¶ê\x05\x04')
+2024-08-27 05:33:27,035 - ERROR - 101.36.108.134 - - [27/Aug/2024 05:33:27] code 400, message Bad request version ('À\x13À')
+2024-08-27 05:33:27,426 - ERROR - 101.36.108.134 - - [27/Aug/2024 05:33:27] code 400, message Bad HTTP/0.9 request type ('t3')
+2024-08-27 05:46:33,294 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:33] code 400, message Bad request version ('RTSP/1.0')
+2024-08-27 05:46:38,350 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:38] code 400, message Bad HTTP/0.9 request type ('l\x00')
+2024-08-27 05:46:43,505 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:43] code 400, message Bad request version ('\x00\x01\x97|\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+2024-08-27 05:46:48,533 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:48] code 400, message Bad HTTP/0.9 request type ('\x00')
+2024-08-27 05:46:48,559 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:48] code 400, message Bad request syntax ('HELP')
+2024-08-27 05:46:48,613 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:48] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+2024-08-27 05:46:48,667 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:48] code 400, message Bad request version ('\x00/\x00')
+2024-08-27 05:46:48,721 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:48] code 400, message Bad request syntax ('\x00\x00\x00qj\x81n0\x81k¡\x03\x02\x01\x05¢\x03\x02\x01')
+2024-08-27 05:46:53,779 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:53] code 400, message Bad request version ('0.12\x00')
+2024-08-27 05:46:53,801 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:53] code 400, message Bad request version ('SIP/2.0')
+2024-08-27 05:46:58,855 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:46:58] code 400, message Bad HTTP/0.9 request type ('AMQP\x00\x00')
+2024-08-27 05:47:53,645 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:47:53] code 400, message Bad request version ('\x00/\x00')
+2024-08-27 05:48:04,115 - ERROR - 15.204.47.3 - - [27/Aug/2024 05:48:04] code 400, message Bad request syntax ('\x0e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00bbbb0100000001')
+2024-08-27 05:48:54,409 - ERROR - 80.82.77.202 - - [27/Aug/2024 05:48:54] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-27 06:52:28,289 - ERROR - 123.58.207.140 - - [27/Aug/2024 06:52:28] code 400, message Bad request version ('À\x13À')
+2024-08-27 06:52:28,603 - ERROR - 123.58.207.140 - - [27/Aug/2024 06:52:28] code 400, message Bad HTTP/0.9 request type ('t3')
+2024-08-27 09:27:47,840 - ERROR - 78.153.140.179 - - [27/Aug/2024 09:27:47] code 400, message Bad request syntax ('\x16\x03\x01\x00¬\x01\x00\x00¨\x03\x03Y/h¿\x13_%çì\x82nf,þo\x14\x96jÂá\x06{\x05\x0f\x874Ö_\x16ï\x81;\x00\x008À,À')
+2024-08-27 09:37:18,473 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-08-27 09:37:20,291 - INFO - Serving file index.php
+2024-08-27 10:16:24,773 - ERROR - 93.174.93.12 - - [27/Aug/2024 10:16:24] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-27 10:33:58,492 - ERROR - 154.216.17.87 - - [27/Aug/2024 10:33:58] code 400, message Bad request version ('\x00\x04\x03\x00\x01\x02\x00')
+2024-08-27 10:58:13,604 - ERROR - 165.232.129.254 - - [27/Aug/2024 10:58:13] code 400, message Bad request syntax ('\x00\x0e8´o\x99\x19j\x88À~\x00\x00\x00\x00\x00')
+2024-08-27 11:06:49,850 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 11:15:48,573 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 11:15:53,822 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 11:15:53,882 - INFO - Serving file L1806.jpg
+2024-08-27 11:55:53,987 - INFO - yeti downloaded the file: List-20240827-115531.xlsx
+2024-08-27 11:56:17,274 - INFO - File List-20240827-115531.xlsx downloaded
+2024-08-27 12:05:46,086 - INFO - autobots, roll out!
+2024-08-27 12:05:48,394 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 12:05:50,797 - INFO - autobots, roll out!
+2024-08-27 12:05:52,275 - INFO - yeti downloaded the file: List-20240827-120551.xlsx
+2024-08-27 12:05:53,529 - INFO - File List-20240827-120551.xlsx downloaded
+2024-08-27 12:06:53,843 - INFO - autobots, roll out!
+2024-08-27 12:06:54,226 - INFO - autobots, roll out!
+2024-08-27 12:08:24,422 - INFO - autobots, roll out!
+2024-08-27 12:08:25,065 - INFO - autobots, roll out!
+2024-08-27 12:08:40,804 - INFO - autobots, roll out!
+2024-08-27 12:08:41,185 - INFO - autobots, roll out!
+2024-08-27 12:17:00,942 - INFO - autobots, roll out!
+2024-08-27 12:17:01,676 - INFO - autobots, roll out!
+2024-08-27 12:21:09,882 - INFO - autobots, roll out!
+2024-08-27 12:21:10,119 - INFO - autobots, roll out!
+2024-08-27 12:21:14,300 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 12:21:18,264 - INFO - yeti downloaded the file: List-20240827-122117.xlsx
+2024-08-27 12:21:19,469 - INFO - File List-20240827-122117.xlsx downloaded
+2024-08-27 12:46:45,672 - INFO - autobots, roll out!
+2024-08-27 12:46:47,131 - INFO - autobots, roll out!
+2024-08-27 12:46:52,260 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 12:47:00,231 - INFO - yeti downloaded the file: List-20240827-124659.xlsx
+2024-08-27 12:47:21,827 - INFO - yeti downloaded the file: List-20240827-124717.xlsx
+2024-08-27 12:49:41,984 - INFO - autobots, roll out!
+2024-08-27 12:49:43,455 - INFO - autobots, roll out!
+2024-08-27 12:50:16,360 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 12:50:45,807 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 12:50:55,603 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 12:51:03,911 - INFO - autobots, roll out!
+2024-08-27 12:51:05,741 - INFO - autobots, roll out!
+2024-08-27 12:51:25,526 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 12:51:26,720 - INFO - Serving file T3305_v3.jpg
+2024-08-27 12:51:26,735 - INFO - Serving file T3305_v4.jpg
+2024-08-27 12:51:26,876 - INFO - Serving file T3305_v2.jpg
+2024-08-27 12:51:27,034 - INFO - Serving file T3305.jpg
+2024-08-27 12:52:34,264 - INFO - autobots, roll out!
+2024-08-27 12:52:35,900 - INFO - autobots, roll out!
+2024-08-27 12:54:42,931 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 12:54:47,081 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 12:54:47,120 - INFO - Serving file L1851.jpg
+2024-08-27 12:54:47,122 - INFO - Serving file N2086.jpg
+2024-08-27 12:54:47,124 - INFO - Serving file N2149.jpg
+2024-08-27 12:54:47,124 - INFO - Serving file S1235.jpg
+2024-08-27 12:54:47,125 - INFO - Serving file S1235_v2.jpg
+2024-08-27 12:54:47,126 - INFO - Serving file S1270.jpg
+2024-08-27 12:54:47,244 - INFO - Serving file T3305_v4.jpg
+2024-08-27 12:54:47,245 - INFO - Serving file S1270_v2.jpg
+2024-08-27 12:54:47,245 - INFO - Serving file T3164_v2.jpg
+2024-08-27 12:54:47,251 - INFO - Serving file T3305.jpg
+2024-08-27 12:54:47,254 - INFO - Serving file S1426.jpg
+2024-08-27 12:54:47,259 - INFO - Serving file T3305_v2.jpg
+2024-08-27 12:54:47,312 - INFO - Serving file T3164_v4.jpg
+2024-08-27 12:54:47,312 - INFO - Serving file S1290_v2.jpg
+2024-08-27 12:54:47,364 - INFO - Serving file T3164.jpg
+2024-08-27 12:54:47,364 - INFO - Serving file T3164_v3.jpg
+2024-08-27 12:54:47,403 - INFO - Serving file T3305_v3.jpg
+2024-08-27 12:54:47,429 - INFO - Serving file T3279.jpg
+2024-08-27 12:54:47,440 - INFO - Serving file S1290.jpg
+2024-08-27 12:56:26,804 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 12:56:26,890 - INFO - Serving file S1235.jpg
+2024-08-27 12:56:26,890 - INFO - Serving file S1235_v2.jpg
+2024-08-27 12:56:26,891 - INFO - Serving file S1270.jpg
+2024-08-27 12:56:26,892 - INFO - Serving file S1270_v2.jpg
+2024-08-27 13:01:41,914 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 13:01:51,705 - INFO - yeti downloaded the file: List-20240827-130150.xlsx
+2024-08-27 13:02:06,475 - INFO - autobots, roll out!
+2024-08-27 13:02:08,161 - INFO - autobots, roll out!
+2024-08-27 13:02:16,439 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 13:02:16,513 - INFO - Serving file T3305.jpg
+2024-08-27 13:02:16,513 - INFO - Serving file T3305_v2.jpg
+2024-08-27 13:02:16,513 - INFO - Serving file T3305_v3.jpg
+2024-08-27 13:02:16,515 - INFO - Serving file T3305_v4.jpg
+2024-08-27 13:05:51,230 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 13:05:51,995 - INFO - Serving file T3305.jpg
+2024-08-27 13:05:52,026 - INFO - Serving file T3305_v4.jpg
+2024-08-27 13:05:52,071 - INFO - Serving file T3305_v2.jpg
+2024-08-27 13:05:52,163 - INFO - Serving file T3305_v3.jpg
+2024-08-27 13:06:46,697 - INFO - yeti downloaded the file: List-20240827-130640.xlsx
+2024-08-27 13:06:51,623 - INFO - yeti downloaded the file: List-20240827-130640.xlsx
+2024-08-27 13:08:37,048 - INFO - File List-20240827-130640.xlsx downloaded
+2024-08-27 13:09:02,578 - INFO - autobots, roll out!
+2024-08-27 13:09:07,913 - INFO - autobots, roll out!
+2024-08-27 13:09:28,262 - ERROR - 167.94.138.48 - - [27/Aug/2024 13:09:28] code 505, message Invalid HTTP version (2.0)
+2024-08-27 13:09:31,350 - INFO - autobots, roll out!
+2024-08-27 13:09:31,707 - INFO - autobots, roll out!
+2024-08-27 13:09:35,880 - ERROR - 167.94.138.48 - - [27/Aug/2024 13:09:35] code 505, message Invalid HTTP version (2.0)
+2024-08-27 14:14:29,580 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:15:05,068 - INFO - yeti downloaded the file: List-20240827-141501.xlsx
+2024-08-27 14:15:07,696 - INFO - File List-20240827-141501.xlsx downloaded
+2024-08-27 14:17:44,371 - INFO - autobots, roll out!
+2024-08-27 14:17:44,374 - INFO - autobots, roll out!
+2024-08-27 14:17:58,172 - INFO - autobots, roll out!
+2024-08-27 14:17:58,173 - INFO - autobots, roll out!
+2024-08-27 14:19:28,473 - INFO - autobots, roll out!
+2024-08-27 14:19:28,474 - INFO - autobots, roll out!
+2024-08-27 14:21:22,847 - INFO - autobots, roll out!
+2024-08-27 14:21:22,847 - INFO - autobots, roll out!
+2024-08-27 14:21:25,076 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:24:22,827 - INFO - autobots, roll out!
+2024-08-27 14:24:25,781 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:24:49,583 - INFO - autobots, rolling out!
+2024-08-27 14:27:24,092 - INFO - autobots, rolling out!
+2024-08-27 14:27:34,548 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:29:29,409 - INFO - autobots, rolling out!
+2024-08-27 14:30:39,424 - INFO - autobots, rolling out!
+2024-08-27 14:30:42,484 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:38:18,336 - INFO - Scheduler started
+2024-08-27 14:38:18,437 - INFO - autobots, rolling out!
+2024-08-27 14:38:20,390 - INFO - Scheduler started
+2024-08-27 14:38:20,485 - INFO - autobots, rolling out!
+2024-08-27 14:38:33,006 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:40:12,226 - INFO - Scheduler has been shut down
+2024-08-27 14:40:14,429 - INFO - Scheduler started
+2024-08-27 14:40:14,524 - INFO - autobots, rolling out!
+2024-08-27 14:40:40,715 - INFO - Scheduler has been shut down
+2024-08-27 14:40:42,912 - INFO - Scheduler started
+2024-08-27 14:40:43,000 - INFO - autobots, rolling out!
+2024-08-27 14:41:03,157 - INFO - Scheduler has been shut down
+2024-08-27 14:41:05,343 - INFO - Scheduler started
+2024-08-27 14:41:05,432 - INFO - autobots, rolling out!
+2024-08-27 14:41:22,564 - INFO - Scheduler has been shut down
+2024-08-27 14:41:24,855 - INFO - Scheduler started
+2024-08-27 14:41:24,953 - INFO - autobots, rolling out!
+2024-08-27 14:41:45,013 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:42:32,408 - INFO - Scheduler has been shut down
+2024-08-27 14:42:34,555 - INFO - Scheduler started
+2024-08-27 14:42:34,650 - INFO - autobots, rolling out!
+2024-08-27 14:42:48,762 - INFO - Scheduler has been shut down
+2024-08-27 14:42:50,922 - INFO - Scheduler started
+2024-08-27 14:42:51,009 - INFO - autobots, rolling out!
+2024-08-27 14:43:14,174 - INFO - Scheduler has been shut down
+2024-08-27 14:43:16,341 - INFO - Scheduler started
+2024-08-27 14:43:16,429 - INFO - autobots, rolling out!
+2024-08-27 14:44:30,926 - INFO - Scheduler has been shut down
+2024-08-27 14:44:33,122 - INFO - Scheduler started
+2024-08-27 14:44:33,219 - INFO - autobots, rolling out!
+2024-08-27 14:44:35,252 - INFO - Scheduler has been shut down
+2024-08-27 14:44:37,409 - INFO - Scheduler started
+2024-08-27 14:44:37,505 - INFO - autobots, rolling out!
+2024-08-27 14:44:46,581 - INFO - Scheduler has been shut down
+2024-08-27 14:44:48,749 - INFO - Scheduler started
+2024-08-27 14:44:48,845 - INFO - autobots, rolling out!
+2024-08-27 14:44:58,928 - INFO - Scheduler has been shut down
+2024-08-27 14:45:01,069 - INFO - Scheduler started
+2024-08-27 14:45:01,158 - INFO - autobots, rolling out!
+2024-08-27 14:45:22,312 - INFO - Scheduler has been shut down
+2024-08-27 14:45:24,456 - INFO - Scheduler started
+2024-08-27 14:45:24,544 - INFO - autobots, rolling out!
+2024-08-27 14:46:19,908 - INFO - Scheduler has been shut down
+2024-08-27 14:46:21,457 - INFO - autobots, rolling out!
+2024-08-27 14:46:59,744 - INFO - Scheduler started
+2024-08-27 14:46:59,834 - INFO - autobots, rolling out!
+2024-08-27 14:47:38,097 - INFO - Scheduler has been shut down
+2024-08-27 14:47:40,312 - INFO - Scheduler started
+2024-08-27 14:47:40,410 - INFO - autobots, rolling out!
+2024-08-27 14:49:25,095 - INFO - Scheduler has been shut down
+2024-08-27 14:49:27,267 - INFO - Scheduler started
+2024-08-27 14:49:27,356 - INFO - autobots, rolling out!
+2024-08-27 14:49:28,383 - INFO - Scheduler has been shut down
+2024-08-27 14:49:30,553 - INFO - Scheduler started
+2024-08-27 14:49:30,665 - INFO - autobots, rolling out!
+2024-08-27 14:51:25,460 - INFO - Scheduler has been shut down
+2024-08-27 14:51:27,689 - INFO - Scheduler started
+2024-08-27 14:51:27,780 - INFO - autobots, rolling out!
+2024-08-27 14:51:28,807 - INFO - Scheduler has been shut down
+2024-08-27 14:51:30,971 - INFO - Scheduler started
+2024-08-27 14:51:31,070 - INFO - autobots, rolling out!
+2024-08-27 14:51:37,674 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 14:52:40,533 - INFO - Scheduler has been shut down
+2024-08-27 14:52:42,762 - INFO - Scheduler started
+2024-08-27 14:52:42,857 - INFO - autobots, rolling out!
+2024-08-27 14:53:41,252 - INFO - Scheduler has been shut down
+2024-08-27 14:53:43,448 - INFO - Scheduler started
+2024-08-27 14:53:43,540 - INFO - autobots, rolling out!
+2024-08-27 14:54:50,034 - INFO - Scheduler has been shut down
+2024-08-27 14:54:51,732 - INFO - Scheduler has been shut down
+2024-08-27 14:57:46,314 - INFO - Scheduler started
+2024-08-27 14:57:46,417 - INFO - Scheduler has been shut down
+2024-08-27 14:58:14,992 - INFO - Scheduler started
+2024-08-27 14:58:15,082 - INFO - Scheduler has been shut down
+2024-08-27 14:58:27,944 - INFO - Scheduler started
+2024-08-27 14:58:28,042 - INFO - Scheduler has been shut down
+2024-08-27 14:59:14,073 - INFO - Scheduler started
+2024-08-27 14:59:14,167 - INFO - Scheduler has been shut down
+2024-08-27 15:02:06,502 - INFO - Scheduler started
+2024-08-27 15:02:06,602 - INFO - autobots, rolling out!
+2024-08-27 15:02:08,553 - INFO - Scheduler started
+2024-08-27 15:02:08,658 - INFO - autobots, rolling out!
+2024-08-27 15:02:18,127 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 15:02:38,875 - INFO - Scheduler has been shut down
+2024-08-27 15:02:41,107 - INFO - Scheduler started
+2024-08-27 15:02:41,199 - INFO - autobots, rolling out!
+2024-08-27 15:03:05,373 - INFO - Scheduler has been shut down
+2024-08-27 15:03:07,562 - INFO - Scheduler started
+2024-08-27 15:03:07,660 - INFO - autobots, rolling out!
+2024-08-27 15:06:28,970 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 15:06:34,546 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-27 15:06:34,623 - INFO - Serving file T3305_v2.jpg
+2024-08-27 15:06:34,624 - INFO - Serving file T3305.jpg
+2024-08-27 15:06:34,624 - INFO - Serving file T3305_v3.jpg
+2024-08-27 15:06:34,630 - INFO - Serving file T3305_v4.jpg
+2024-08-27 15:06:39,880 - INFO - yeti downloaded the file: List-20240827-150639.xlsx
+2024-08-27 15:06:46,350 - INFO - Processing data in Loris tool kit for yeti
+2024-08-27 15:06:46,350 - ERROR - An error occurred: invalid literal for int() with base 10: 'fasd'
+2024-08-27 15:06:46,350 - ERROR - Error processing data in Loris tool kit for yeti
+2024-08-27 15:06:59,728 - INFO - yeti is looking up in googlesheet with input: n1223
+2024-08-27 15:08:56,074 - INFO - Scheduler has been shut down
+2024-08-27 15:08:58,793 - INFO - Scheduler started
+2024-08-27 15:08:58,903 - INFO - autobots, rolling out!
+2024-08-27 15:08:59,932 - INFO - Scheduler has been shut down
+2024-08-27 15:09:02,197 - INFO - Scheduler started
+2024-08-27 15:09:02,285 - INFO - autobots, rolling out!
+2024-08-27 15:09:08,251 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 15:17:54,004 - INFO - Scheduler has been shut down
+2024-08-27 15:17:54,261 - INFO - Scheduler has been shut down
+2024-08-27 15:17:58,206 - INFO - Scheduler started
+2024-08-27 15:17:58,298 - INFO - autobots, rolling out!
+2024-08-27 15:18:00,244 - INFO - Scheduler started
+2024-08-27 15:18:00,333 - INFO - autobots, rolling out!
+2024-08-27 15:18:09,570 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 15:20:36,347 - INFO - Scheduler has been shut down
+2024-08-27 15:20:38,569 - INFO - Scheduler started
+2024-08-27 15:20:38,680 - INFO - autobots, rolling out!
