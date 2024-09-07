@@ -79,7 +79,10 @@
             <div class="mb-3">
                 <a href="{{ url_for('download_all_images', search_str=request.form.get('search_str')) }}" class="btn btn-success d-inline">Download All as ZIP 全选打包下载</a>
                 <button type="submit" formaction="{{ url_for('download_selected_images') }}" class="btn btn-success d-inline">Download Selected as ZIP 选择性打包下载</button>
+                <a href="{{ url_for('download_all_images_1_1', search_str=request.form.get('search_str')) }}" class="btn btn-info d-inline">Download All as ZIP (1:1 ratio)</a>
+                <button type="submit" formaction="{{ url_for('download_selected_images_1_1') }}" class="btn btn-info d-inline">Download Selected as ZIP (1:1 ratio)</button>
             </div>
+            
             <div class="row">
                 {% for filename, image, modified_date, file_size in image_data %}
                     <div class="col-md-3">

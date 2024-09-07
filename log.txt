@@ -24833,3 +24833,79 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-09-05 18:05:44,602 - INFO - yeti downloaded the file: List-20240905-180542.xlsx
 2024-09-05 18:05:45,963 - INFO - File List-20240905-180542.xlsx downloaded
 2024-09-05 18:06:07,150 - INFO - item lookup for yeti with input ------- el1781,el1854,en1765,en1766,en1817,en1849,en1860,en1877,en1884,en2154,en6064,es1134,es1159,es1216,es1218,es1271,es1272,es1323,es1324,es1331,es1382,es1383,l0665,l1343-m,l1343,l1494,l1550-m,l1577,l1622 ------
+2024-09-05 19:34:06,775 - INFO - autobots, rolling out!
+2024-09-05 19:34:09,475 - INFO - autobots, rolling out!
+2024-09-05 23:41:11,043 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 23:41:28,908 - INFO - item lookup for nicye with input ------- t3132 ------
+2024-09-06 00:39:51,971 - INFO - User None has logged in. IP: 109.71.253.196, Browser: Go-http-client 1.1, OS: Other , Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: None, Query Params: ImmutableMultiDict([])
+2024-09-06 10:38:39,528 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-06 10:39:13,747 - INFO - yeti downloaded the file: List-20240906-103854.xlsx
+2024-09-06 10:39:19,025 - INFO - File List-20240906-103854.xlsx downloaded
+2024-09-06 10:41:37,633 - INFO - item lookup for yeti with input ------- n2149 ------
+2024-09-06 11:56:05,253 - INFO - item lookup for yeti with input ------- n1223 ------
+2024-09-06 12:51:28,675 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-06 12:51:32,979 - INFO - item lookup for yeti with input ------- s1460 ------
+2024-09-06 16:13:38,921 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-06 16:25:31,335 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-06 16:25:35,975 - INFO - item lookup for yeti with input ------- t334 ------
+2024-09-06 16:26:24,904 - INFO - item lookup for yeti with input ------- s1306 ------
+2024-09-06 16:27:10,731 - INFO - item lookup for yeti with input ------- t318 ------
+2024-09-06 16:32:54,116 - INFO - item lookup for yeti with input ------- el1781,el1854,en1765,en1766,en1817,en1849,en1860,en1877,en1884,en2154,en6064,es1134,es1159,es1216,es1218,es1271,es1272,es1323,es1324,es1331,es1382,es1383,l0665,l1343,l1343-m,l1494,l1550-m,l1577,l1622,l1627-s,l1629,l1687-m,l1689,l1732,l1748,l1783,l1834,l1844,l1845,n0812,n1357,n1432,n1513,n1553,n1797,n1806,n1810,n1819,n1831,n1832,n1836,n1837,n1839,n1840,n1844,n1845,n1846,n1847,n1852,n1854,n1855,n1856,n1861,n1862,n1863,n1865,n1867,n1868,n1870,n1916,n1917,n1922,n1938,n1939,n1941,n1955,n1959,n1962,n1963,n1964,n1965,n1972,n1976,n1981,n1991,n2012,n2026,n2083,n2096,n2137,n2139,n2141,s1111,s1151,s1186,s1187,s1197,s1198,s1203,s1222,s1226,s1228,s1248,s1249,s1250,s1286,s1287,s1288,s1292,s1293,s1303,s1339,s1340,s1341,s1350,s1427,s1441,s1458,s3004,s3028,t2653,t2790,t2806,t2812,t2899,t2902,t2903,t2936,t2946,t2983,t2995,t3004,t3007,t3027,t3055,t3056,t3058,t3097,t3120,t3123,t3126,t3131,t3133,t3134,t3135,t3143,t3146,t3180,t3229,t3242,t3243,t3244,t3247,t3251,t3319,t3321,t3322,el1855,en1346,en1654,en1789,en2009,en3007,es1264,es1386,es1394,es1414,es1447,et2949,et2953,l1790,l1851,l1863,l1864,m1121,m1141,n0370,n0529,n0680,n0735,n0813,n0815,n1116,n1151,n1223,n1267,n1324,n1422,n1460,n1546,n1547,n1548,n1656,n1745,n1782,n1798,n1799,n1811,n1814,n1835,n1851,n1910,n1914,n1926,n1928,n1929,n1930,n1931,n1971,n1979,n2013,n2036,n2087,n2093,n2136,n2149,n2191,n2222,n3007,n5010,s1034,s1110,s1112,s1146,s1167,s1172,s1173,s1174,s1206,s1209,s1211,s1212,s1220,s1221,s1231,s1240,s1245,s1270,s1290,s1291,s1306,s1327,s1336,s1399,s1400,s1401,s1402,s1405,s1408,s1412,s1424,s1425,s1426,s1428,s1431,s1460,s1478,t3096,t3129,t3132,t3142,t3186,t3225,t3255,t3258,t3279,t3280,t3305 ------
+2024-09-06 16:33:16,853 - INFO - yeti downloaded the file: List-20240906-163222.xlsx
+2024-09-06 16:34:53,302 - INFO - item lookup for yeti with input ------- l1343 ------
+2024-09-06 16:39:19,234 - INFO - item lookup for yeti with input ------- t3007 ------
+2024-09-06 16:39:43,572 - INFO - item lookup for yeti with input ------- n1964 ------
+2024-09-06 16:40:01,420 - INFO - item lookup for yeti with input ------- n2096 ------
+2024-09-06 16:40:16,540 - INFO - item lookup for yeti with input ------- l1748 ------
+2024-09-06 16:40:17,227 - INFO - item lookup for yeti with input ------- l1748 ------
+2024-09-06 16:40:55,172 - INFO - item lookup for yeti with input ------- en1654 ------
+2024-09-06 16:40:59,437 - INFO - item lookup for yeti with input ------- n1654 ------
+2024-09-06 16:41:05,315 - INFO - item lookup for yeti with input ------- en1654 ------
+2024-09-06 16:47:28,522 - INFO - item lookup for yeti with input ------- en1654 ------
+2024-09-06 17:00:55,968 - INFO - item lookup for yeti with input ------- t3186 ------
+2024-09-06 17:32:38,220 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,223 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,247 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,254 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,259 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,264 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,264 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,270 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,282 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,293 - INFO - autobots, rolling out!
+2024-09-06 17:32:38,293 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,838 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,853 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,868 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,873 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,883 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,888 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,903 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,906 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,911 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,918 - INFO - autobots, rolling out!
+2024-09-06 17:32:59,921 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,326 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,401 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,532 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,542 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,546 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,549 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,556 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,556 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,562 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,573 - INFO - autobots, rolling out!
+2024-09-06 17:33:09,584 - INFO - autobots, rolling out!
+2024-09-06 17:33:15,325 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-06 17:39:01,501 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,508 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,515 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,519 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,538 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,554 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,573 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,590 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,608 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,620 - INFO - autobots, rolling out!
+2024-09-06 17:39:01,636 - INFO - autobots, rolling out!
+2024-09-06 17:39:05,207 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])

@@ -25,6 +25,8 @@ from openai import OpenAIError, RateLimitError
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
+from PIL import Image, ImageOps
+
 
 # New imports
 import base64
@@ -1019,6 +1021,76 @@ def register_routes(app):
                     
             return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
         return render_template('big_img.html', quote=urllib.parse.quote)
+    
+    @app.route('/download_all_images_1_1')
+    def download_all_images_1_1():
+        current_user = session['username']
+        search_str = request.args.get('search_str', '').lower()
+        index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
+
+        if not os.path.exists(index_file):
+            return "Index file not found. Please generate the index first.", 500
+
+        with open(index_file, 'r') as f:
+            index = json.load(f)
+
+        matching_files = [file_path for file_path in index if os.path.basename(file_path).lower().startswith(search_str)]
+
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            for file_path in matching_files:
+                image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
+                output_image = create_square_image(image_path)
+                if output_image:
+                    zf.writestr(os.path.basename(file_path), output_image.getvalue())
+
+        memory_file.seek(0)
+        zip_filename = f"{search_str}_1_1.zip"
+        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
+    
+    @app.route('/download_selected_images_1_1', methods=['POST'])
+    def download_selected_images_1_1():
+        if 'username' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        selected_images = request.form.getlist('selected_images')
+        if not selected_images:
+            flash("No images selected.")
+            return redirect(url_for('big_img'))
+
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            for filename in selected_images:
+                file_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
+                output_image = create_square_image(file_path)
+                if output_image:
+                    zf.writestr(os.path.basename(file_path), output_image.getvalue())
+
+        memory_file.seek(0)
+        zip_filename = "selected_images_1_1.zip"
+        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
+    
+    def create_square_image(image_path):
+        try:
+            image = Image.open(image_path)
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+
+            size = max(image.size)
+            square_image = ImageOps.expand(image, (
+                (size - image.width) // 2,  # Left padding
+                (size - image.height) // 2,  # Top padding
+                (size - image.width + 1) // 2,  # Right padding
+                (size - image.height + 1) // 2  # Bottom padding
+            ), fill='white')
+
+            output_image = io.BytesIO()
+            square_image.save(output_image, format='JPEG', subsampling=0, quality=95)
+            output_image.seek(0)
+            return output_image
+        except Exception as e:
+            app.logger.error(f"Error processing image {image_path}: {e}")
+            return None
 
     @app.route('/ftp3/<path:encoded_path>', methods=['GET'])
     def serve_file3(encoded_path):
