@@ -32,14 +32,15 @@ from PIL import Image
 import io
 import zipfile
 
+
+
 client = WebClient(token=Config.SLACK_TOKEN)
 
 # Configure logging
 
-
 def register_routes(app):
     
-
+    
     def check_credentials(username, password):
         return Config.USERS.get(username) == password
 
@@ -228,7 +229,7 @@ def register_routes(app):
                 excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
                 sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
 
-                app.logger.info("Excel HTML and sheet data generated for %s", current_user)
+                app.logger.info("item lookup for %s with input ------- %s ------", current_user,user_input)
                 return render_template(
                     "Item_lookup.html",
                     excel_html=excel_html,

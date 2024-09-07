@@ -24470,3 +24470,366 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-08-27 15:20:36,347 - INFO - Scheduler has been shut down
 2024-08-27 15:20:38,569 - INFO - Scheduler started
 2024-08-27 15:20:38,680 - INFO - autobots, rolling out!
+2024-08-27 15:32:51,951 - ERROR - 80.82.77.202 - - [27/Aug/2024 15:32:51] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+2024-08-27 15:56:50,603 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 15:56:57,783 - INFO - yeti executed a custom SQL query: 
+2024-08-27 15:56:59,176 - INFO - yeti executed a custom SQL query: 
+2024-08-27 15:58:23,707 - INFO - yeti downloaded the file: List-20240827-155823.xlsx
+2024-08-27 15:58:52,720 - INFO - yeti downloaded the file: List-20240827-155845.xlsx
+2024-08-27 16:03:41,501 - INFO - Scheduler has been shut down
+2024-08-27 16:03:43,632 - INFO - Scheduler has been shut down
+2024-08-27 16:06:21,936 - INFO - Scheduler started
+2024-08-27 16:06:21,975 - INFO - autobots, rolling out!
+2024-08-27 16:06:24,170 - INFO - Scheduler started
+2024-08-27 16:06:24,213 - INFO - autobots, rolling out!
+2024-08-27 16:06:36,576 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 16:07:28,665 - INFO - Scheduler has been shut down
+2024-08-27 16:07:31,038 - INFO - Scheduler started
+2024-08-27 16:07:31,077 - INFO - autobots, rolling out!
+2024-08-27 16:07:43,183 - INFO - Scheduler has been shut down
+2024-08-27 16:07:45,533 - INFO - Scheduler started
+2024-08-27 16:07:45,574 - INFO - autobots, rolling out!
+2024-08-27 16:08:58,065 - INFO - Scheduler has been shut down
+2024-08-27 16:09:00,102 - INFO - Scheduler has been shut down
+2024-08-27 16:10:07,525 - INFO - Scheduler started
+2024-08-27 16:10:07,566 - INFO - autobots, rolling out!
+2024-08-27 16:10:09,693 - INFO - Scheduler started
+2024-08-27 16:10:09,733 - INFO - autobots, rolling out!
+2024-08-27 16:10:18,361 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 16:15:29,873 - INFO - Scheduler has been shut down
+2024-08-27 16:15:31,939 - INFO - Scheduler has been shut down
+2024-08-27 16:15:42,372 - INFO - Scheduler started
+2024-08-27 16:15:42,464 - INFO - autobots, rolling out!
+2024-08-27 16:15:44,399 - INFO - Scheduler started
+2024-08-27 16:15:44,494 - INFO - autobots, rolling out!
+2024-08-27 16:17:02,292 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 16:17:34,235 - INFO - Scheduler has been shut down
+2024-08-27 16:17:36,534 - INFO - autobots, rolling out!
+2024-08-27 16:17:44,352 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 16:29:50,812 - INFO - autobots, rolling out!
+2024-08-27 16:29:52,849 - INFO - autobots, rolling out!
+2024-08-27 16:31:22,073 - INFO - autobots, rolling out!
+2024-08-27 16:31:24,316 - INFO - autobots, rolling out!
+2024-08-27 16:31:24,335 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 16:35:53,975 - INFO - autobots, rolling out!
+2024-08-27 16:35:56,233 - INFO - autobots, rolling out!
+2024-08-27 16:36:03,327 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 16:39:09,537 - INFO - autobots, rolling out!
+2024-08-27 16:39:13,919 - INFO - autobots, rolling out!
+2024-08-27 16:39:23,246 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 18:49:10,145 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 18:53:41,142 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 18:55:21,292 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 19:03:51,228 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 19:12:05,518 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 19:28:16,601 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 19:37:46,906 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 19:39:33,436 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 19:40:08,763 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 19:48:22,524 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 20:06:57,759 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-27 20:09:49,264 - INFO - autobots, rolling out!
+2024-08-27 20:09:51,449 - INFO - autobots, rolling out!
+2024-08-27 21:30:01,995 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 17.5, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 23:21:50,927 - INFO - User nicye has logged in. IP: 172.90.98.237, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 23:21:52,570 - INFO - User nicye has logged in. IP: 122.240.232.166, Browser: Chrome 125.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-27 23:21:56,688 - INFO - Excel HTML and sheet data generated for nicye
+2024-08-27 23:22:00,580 - INFO - Excel HTML and sheet data generated for nicye
+2024-08-28 00:04:52,875 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 00:52:08,623 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 01:04:23,095 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 01:10:37,042 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 01:11:13,890 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 01:20:46,635 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 01:29:37,718 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 01:44:34,999 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 02:05:16,031 - INFO - Excel HTML and sheet data generated for ahua
+2024-08-28 09:05:40,688 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 09:23:14,242 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-28 09:23:19,706 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 09:31:42,145 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 09:49:58,072 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 09:50:02,821 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 09:50:11,877 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 09:50:15,718 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 09:53:14,808 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-28 09:53:19,343 - INFO - Excel HTML and sheet data generated for yeti
+2024-08-28 10:00:57,906 - INFO - autobots, rolling out!
+2024-08-28 10:00:57,918 - INFO - autobots, rolling out!
+2024-08-28 10:01:01,643 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-28 10:01:07,131 - INFO - Excel HTML and sheet data generated for yeti with input t3305
+2024-08-28 10:01:42,867 - INFO - autobots, rolling out!
+2024-08-28 10:01:42,877 - INFO - autobots, rolling out!
+2024-08-28 10:01:59,575 - INFO - autobots, rolling out!
+2024-08-28 10:01:59,589 - INFO - autobots, rolling out!
+2024-08-28 10:02:41,481 - INFO - autobots, rolling out!
+2024-08-28 10:02:41,486 - INFO - autobots, rolling out!
+2024-08-28 10:12:57,461 - INFO - autobots, rolling out!
+2024-08-28 10:12:57,468 - INFO - autobots, rolling out!
+2024-08-28 10:32:34,870 - INFO - User yeti has logged in. IP: 146.75.146.69, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-28 11:44:16,313 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-08-28 11:44:21,425 - INFO - Serving file index.php
+2024-08-28 14:10:08,288 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-28 14:10:13,574 - INFO - item lookup for yeti with input ------- s1449 ------
+2024-08-28 14:10:19,729 - INFO - item lookup for yeti with input ------- es1449 ------
+2024-08-28 14:10:42,561 - INFO - item lookup for yeti with input ------- e1449t ------
+2024-08-28 15:08:39,565 - INFO - item lookup for yeti with input ------- en2209 ------
+2024-08-28 15:55:09,905 - INFO - item lookup for yeti with input ------- n184% ------
+2024-08-28 15:55:14,357 - INFO - item lookup for yeti with input ------- n184 ------
+2024-08-28 15:55:19,634 - INFO - item lookup for yeti with input ------- n185 ------
+2024-08-28 15:55:31,835 - INFO - item lookup for yeti with input ------- n1853 ------
+2024-08-28 16:13:13,774 - INFO - Serving file .env
+2024-08-28 17:22:36,170 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-28 17:22:41,425 - INFO - item lookup for yeti with input ------- s1245 ------
+2024-08-28 19:33:01,673 - INFO - autobots, rolling out!
+2024-08-28 19:33:04,505 - INFO - autobots, rolling out!
+2024-08-29 00:21:45,833 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-29 00:21:52,084 - INFO - item lookup for ahua with input ------- s1172 ------
+2024-08-29 00:35:46,733 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-29 00:35:59,467 - INFO - item lookup for ahua with input ------- s1173 ------
+2024-08-29 01:53:32,627 - INFO - item lookup for ahua with input ------- s1174 ------
+2024-08-29 01:59:15,577 - INFO - item lookup for ahua with input ------- s1220 ------
+2024-08-29 02:07:28,639 - INFO - item lookup for ahua with input ------- s1221 ------
+2024-08-29 02:11:54,652 - INFO - item lookup for ahua with input ------- s1231 ------
+2024-08-29 02:21:31,739 - INFO - item lookup for ahua with input ------- s1270 ------
+2024-08-29 02:32:46,294 - INFO - item lookup for ahua with input ------- s1336 ------
+2024-08-29 02:43:21,016 - INFO - item lookup for ahua with input ------- s1399 ------
+2024-08-29 02:52:46,052 - INFO - item lookup for ahua with input ------- s1400 ------
+2024-08-29 02:56:45,480 - INFO - item lookup for ahua with input ------- s1401 ------
+2024-08-29 03:00:03,767 - INFO - item lookup for ahua with input ------- s1402 ------
+2024-08-29 07:48:27,841 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-08-29 07:48:30,423 - INFO - Serving file index.php
+2024-08-29 09:01:44,120 - INFO - User yeti has logged in. IP: 146.75.146.78, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-29 09:01:49,472 - INFO - item lookup for yeti with input ------- s1211 ------
+2024-08-29 11:53:14,526 - INFO - item lookup for yeti with input ------- s1211 ------
+2024-08-29 12:13:04,488 - INFO - item lookup for yeti with input ------- es1134 ------
+2024-08-29 12:17:38,079 - INFO - item lookup for yeti with input ------- s1211 ------
+2024-08-29 12:27:26,776 - INFO - item lookup for yeti with input ------- 342 ------
+2024-08-29 13:16:50,523 - INFO - item lookup for yeti with input ------- 342 ------
+2024-08-29 13:17:45,019 - INFO - item lookup for yeti with input ------- t2804 ------
+2024-08-29 13:17:45,823 - INFO - item lookup for yeti with input ------- t2804 ------
+2024-08-29 13:26:23,408 - INFO - item lookup for yeti with input ------- t2725 ------
+2024-08-29 14:30:13,118 - INFO - item lookup for yeti with input ------- n2103 ------
+2024-08-29 14:54:54,328 - INFO - item lookup for yeti with input ------- n2013 ------
+2024-08-29 16:28:07,895 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-29 16:28:13,747 - INFO - item lookup for yeti with input ------- n1546 ------
+2024-08-29 16:29:44,193 - INFO - item lookup for yeti with input ------- s1167 ------
+2024-08-29 20:07:15,277 - INFO - autobots, rolling out!
+2024-08-29 20:07:18,493 - INFO - autobots, rolling out!
+2024-08-30 00:49:34,653 - INFO - User nicye has logged in. IP: 107.116.170.65, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-30 00:49:46,625 - INFO - item lookup for nicye with input ------- t3132 ------
+2024-08-30 09:31:31,155 - INFO - item lookup for yeti with input ------- s1402 ------
+2024-08-30 09:31:44,143 - INFO - item lookup for yeti with input ------- s1401 ------
+2024-08-30 09:32:02,805 - INFO - item lookup for yeti with input ------- s1400 ------
+2024-08-30 09:35:57,255 - INFO - item lookup for yeti with input ------- t3305 ------
+2024-08-30 10:00:21,407 - INFO - User yeti has logged in. IP: 146.75.146.68, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-08-30 10:00:28,966 - INFO - item lookup for yeti with input ------- l1665,n1665 ------
+2024-08-30 10:10:54,027 - INFO - item lookup for yeti with input ------- n2013 ------
+2024-08-30 19:50:27,570 - INFO - autobots, rolling out!
+2024-08-30 19:50:30,046 - INFO - autobots, rolling out!
+2024-08-31 20:06:32,718 - INFO - autobots, rolling out!
+2024-08-31 20:06:34,978 - INFO - autobots, rolling out!
+2024-09-01 18:33:53,554 - INFO - item lookup for ahua with input ------- n2227 ------
+2024-09-01 19:51:40,558 - INFO - autobots, rolling out!
+2024-09-01 19:51:42,774 - INFO - autobots, rolling out!
+2024-09-02 00:07:48,001 - INFO - item lookup for ahua with input ------- n1223 ------
+2024-09-02 00:12:57,733 - INFO - item lookup for ahua with input ------- n1324 ------
+2024-09-02 00:15:59,433 - INFO - item lookup for ahua with input ------- n1151 ------
+2024-09-02 00:17:54,370 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-02 00:18:37,661 - INFO - item lookup for ahua with input ------- n1551 ------
+2024-09-02 00:19:45,344 - INFO - item lookup for ahua with input ------- n1151 ------
+2024-09-02 00:23:44,651 - INFO - item lookup for ahua with input ------- n1116 ------
+2024-09-02 00:25:40,665 - INFO - item lookup for ahua with input ------- n1223 ------
+2024-09-02 02:24:27,132 - INFO - item lookup for ahua with input ------- n1223 ------
+2024-09-02 02:59:28,669 - INFO - item lookup for ahua with input ------- n1324 ------
+2024-09-02 19:31:15,707 - INFO - autobots, rolling out!
+2024-09-02 19:31:17,959 - INFO - autobots, rolling out!
+2024-09-02 19:34:07,038 - INFO - User None has logged in. IP: 92.118.39.167, Browser: Chrome 81.0.4044, OS: Linux , Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: None, Query Params: ImmutableMultiDict([])
+2024-09-03 00:03:46,135 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-03 00:03:52,508 - INFO - item lookup for nicye with input ------- es1386 ------
+2024-09-03 00:43:16,226 - INFO - item lookup for nicye with input ------- et2949 ------
+2024-09-03 09:42:47,519 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-03 09:42:52,139 - INFO - item lookup for yeti with input ------- s1426 ------
+2024-09-03 09:45:08,354 - INFO - item lookup for yeti with input ------- t3258 ------
+2024-09-03 09:54:32,609 - INFO - item lookup for yeti with input ------- nm1324 gy ------
+2024-09-03 09:54:35,165 - INFO - item lookup for yeti with input ------- n1324 gy ------
+2024-09-03 10:56:56,453 - INFO - item lookup for yeti with input ------- t29 ------
+2024-09-03 10:57:36,236 - INFO - item lookup for yeti with input ------- t289 ------
+2024-09-03 10:57:43,510 - INFO - item lookup for yeti with input ------- t288 ------
+2024-09-03 11:05:30,138 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-03 11:08:12,365 - INFO - yeti downloaded the file: List-20240903-110549.xlsx
+2024-09-03 11:09:05,610 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-03 11:09:10,536 - INFO - item lookup for yeti with input ------- l16 ------
+2024-09-03 11:10:15,801 - INFO - item lookup for yeti with input ------- l18 ------
+2024-09-03 11:10:25,949 - INFO - item lookup for yeti with input ------- l15 ------
+2024-09-03 11:11:40,776 - INFO - item lookup for yeti with input ------- l17 ------
+2024-09-03 11:17:05,105 - INFO - item lookup for yeti with input ------- l1667 ------
+2024-09-03 11:17:55,525 - INFO - item lookup for yeti with input ------- l1667 ------
+2024-09-03 11:55:24,113 - INFO - item lookup for yeti with input ------- n2149 ------
+2024-09-03 12:04:10,169 - INFO - item lookup for yeti with input ------- et2949 wn ------
+2024-09-03 13:13:46,356 - INFO - item lookup for yeti with input ------- n2191 ------
+2024-09-03 13:33:24,688 - INFO - item lookup for yeti with input ------- s1291 ------
+2024-09-03 13:46:40,352 - INFO - item lookup for yeti with input ------- l1864 ------
+2024-09-03 16:42:15,476 - INFO - item lookup for yeti with input ------- l1567 ------
+2024-09-03 20:06:39,850 - INFO - autobots, rolling out!
+2024-09-03 20:06:42,130 - INFO - autobots, rolling out!
+2024-09-03 22:36:42,579 - INFO - User yetimaster has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-03 22:36:47,387 - INFO - item lookup for yetimaster with input ------- t3305 ------
+2024-09-03 22:50:54,310 - INFO - User nicye has logged in. IP: 122.240.237.187, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-04 00:03:29,586 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-04 00:03:55,124 - INFO - Serving file index.php
+2024-09-04 00:20:39,393 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-04 00:21:09,014 - INFO - yeti downloaded the file: List-20240904-002108.xlsx
+2024-09-04 00:21:10,742 - INFO - File List-20240904-002108.xlsx downloaded
+2024-09-04 00:21:45,168 - INFO - item lookup for yeti with input ------- n1851 ------
+2024-09-04 00:21:49,494 - INFO - item lookup for yeti with input ------- l1851 ------
+2024-09-04 00:21:58,443 - INFO - item lookup for yeti with input ------- l1850 ------
+2024-09-04 01:32:21,729 - INFO - item lookup for nicye with input ------- l1851 ------
+2024-09-04 01:34:27,503 - INFO - item lookup for nicye with input ------- t3279 ------
+2024-09-04 01:36:26,076 - INFO - item lookup for nicye with input ------- s1426 ------
+2024-09-04 01:38:09,414 - INFO - item lookup for nicye with input ------- s1412 ------
+2024-09-04 01:38:55,777 - INFO - item lookup for nicye with input ------- s1405 ------
+2024-09-04 01:39:38,409 - INFO - item lookup for nicye with input ------- et2949 ------
+2024-09-04 01:41:05,578 - INFO - item lookup for nicye with input ------- et2949 ------
+2024-09-04 01:41:42,983 - INFO - item lookup for nicye with input ------- s1424 ------
+2024-09-04 01:44:27,698 - INFO - item lookup for nicye with input ------- s1245 ------
+2024-09-04 01:45:09,331 - INFO - item lookup for nicye with input ------- s1245 ------
+2024-09-04 01:50:06,953 - INFO - item lookup for nicye with input ------- s1110 ------
+2024-09-04 01:50:56,600 - INFO - item lookup for nicye with input ------- n3007 ------
+2024-09-04 01:52:39,114 - INFO - item lookup for nicye with input ------- n2013 ------
+2024-09-04 01:54:07,002 - INFO - item lookup for nicye with input ------- n1971 ------
+2024-09-04 01:54:28,344 - INFO - item lookup for nicye with input ------- n1811 ------
+2024-09-04 01:55:03,474 - INFO - item lookup for nicye with input ------- n1547 ------
+2024-09-04 01:55:15,634 - INFO - item lookup for nicye with input ------- t3255 ------
+2024-09-04 01:55:31,105 - INFO - item lookup for nicye with input ------- t3243 ------
+2024-09-04 01:56:17,442 - INFO - item lookup for nicye with input ------- t3142 ------
+2024-09-04 01:56:31,933 - INFO - item lookup for nicye with input ------- s1112 ------
+2024-09-04 01:57:06,045 - INFO - item lookup for nicye with input ------- l1830 ------
+2024-09-04 01:57:18,673 - INFO - item lookup for nicye with input ------- es1421 ------
+2024-09-04 01:57:51,906 - INFO - item lookup for nicye with input ------- es1386 ------
+2024-09-04 01:58:01,370 - INFO - item lookup for nicye with input ------- el1855 ------
+2024-09-04 01:58:10,289 - INFO - item lookup for nicye with input ------- t3132 ------
+2024-09-04 01:58:42,400 - INFO - item lookup for nicye with input ------- n2136 ------
+2024-09-04 01:59:10,499 - INFO - item lookup for nicye with input ------- es1414 ------
+2024-09-04 01:59:22,406 - INFO - item lookup for nicye with input ------- t3096 ------
+2024-09-04 01:59:51,609 - INFO - item lookup for nicye with input ------- s1428 ------
+2024-09-04 02:00:00,357 - INFO - item lookup for nicye with input ------- s1327 ------
+2024-09-04 02:01:13,071 - INFO - item lookup for nicye with input ------- s1306 ------
+2024-09-04 02:01:36,550 - INFO - item lookup for nicye with input ------- n2071 ------
+2024-09-04 02:01:52,262 - INFO - item lookup for nicye with input ------- n1835 ------
+2024-09-04 02:02:18,794 - INFO - item lookup for nicye with input ------- n1814 ------
+2024-09-04 02:02:38,134 - INFO - item lookup for nicye with input ------- n1782 ------
+2024-09-04 02:02:56,698 - INFO - item lookup for nicye with input ------- n1782 ------
+2024-09-04 02:03:00,594 - INFO - item lookup for nicye with input ------- n1745 ------
+2024-09-04 02:03:49,882 - INFO - item lookup for nicye with input ------- m1141 ------
+2024-09-04 02:04:42,257 - INFO - item lookup for nicye with input ------- m1121 ------
+2024-09-04 02:05:09,518 - INFO - item lookup for nicye with input ------- et3167 ------
+2024-09-04 02:05:19,947 - INFO - item lookup for nicye with input ------- t3255 ------
+2024-09-04 09:47:16,511 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-04 09:47:20,483 - INFO - item lookup for yeti with input ------- s1426 ------
+2024-09-04 09:49:25,688 - INFO - item lookup for yeti with input ------- t3258 ------
+2024-09-04 09:49:25,959 - INFO - item lookup for yeti with input ------- t3258 ------
+2024-09-04 10:03:16,575 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-04 10:03:38,806 - INFO - yeti executed a custom SQL query: select * from orders where cus_id=00024
+2024-09-04 11:14:16,331 - INFO - item lookup for yeti with input ------- 1 ------
+2024-09-04 11:15:21,436 - INFO - item lookup for yeti with input ------- es1414,tp,es1421,nv,et2953,abl,et2953,bk,et2953,bp,et2953,mv,et3167,bk,et3167,nv,et3167,ol,et3167,tp,l1790,br,l1790,cf,l1830,br,n1422,bk,n1422,tn,n1422,wt,n1782,tn,n1782,wt,n1811,bk,n1814,bk,n1814,tn,n1971,sg,n1971,tn,n2013,ol,n2087,gn,n2087,gy,n2087,pk,n2087,tn,n2087,wt,s1428,bk,t3132,tp,t3142,bk,t3142,br,t3142,gy,t3142,tl,t3142,tn,t3243,bk,t3243,gn,t3255,bk,t3255,bl,t3255,gn,t3255,tn ------
+2024-09-04 11:19:54,292 - INFO - item lookup for yeti with input ------- l1851 ------
+2024-09-04 11:20:37,002 - INFO - item lookup for yeti with input ------- n2093 gy ------
+2024-09-04 11:20:55,306 - INFO - item lookup for yeti with input ------- l1851 nv ------
+2024-09-04 11:21:13,673 - INFO - item lookup for yeti with input ------- s1290 br ------
+2024-09-04 11:27:17,444 - INFO - item lookup for yeti with input ------- es1414,tp,es1421,nv,et2953,abl,et2953,bk,et2953,bp,et2953,mv,et3167,bk,et3167,nv,et3167,ol,et3167,tp,l1790,br,l1790,cf,l1830,br,n1422,bk,n1422,tn,n1422,wt,n1782,tn,n1782,wt,n1811,bk,n1814,bk,n1814,tn,n1971,sg,n1971,tn,n2013,ol,n2087,gn,n2087,gy,n2087,pk,n2087,tn,n2087,wt,s1428,bk,t3132,tp,t3142,bk,t3142,br,t3142,gy,t3142,tl,t3142,tn,t3243,bk,t3243,gn,t3255,bk,t3255,bl,t3255,gn,t3255,tn ------
+2024-09-04 12:42:04,202 - INFO - User yeti has logged in. IP: 172.226.186.127, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-04 12:42:10,523 - INFO - item lookup for yeti with input ------- t3258 ------
+2024-09-04 18:44:50,901 - INFO - User nicye has logged in. IP: 122.240.237.187, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-04 18:45:55,696 - INFO - item lookup for nicye with input ------- n1432 ------
+2024-09-04 18:46:34,531 - INFO - item lookup for nicye with input ------- s1424 ------
+2024-09-04 18:46:53,576 - INFO - item lookup for nicye with input ------- m1141 ------
+2024-09-04 18:47:24,820 - INFO - item lookup for nicye with input ------- s1428 ------
+2024-09-04 18:47:50,668 - INFO - item lookup for nicye with input ------- s1426 ------
+2024-09-04 18:48:13,625 - INFO - item lookup for nicye with input ------- n2071 ------
+2024-09-04 18:48:35,795 - INFO - item lookup for nicye with input ------- t3095 ------
+2024-09-04 18:49:08,588 - INFO - item lookup for nicye with input ------- s1306 ------
+2024-09-04 18:49:44,013 - INFO - item lookup for nicye with input ------- s1408 ------
+2024-09-04 18:50:17,325 - INFO - item lookup for nicye with input ------- es1386 ------
+2024-09-04 18:51:11,758 - INFO - item lookup for nicye with input ------- s1110 ------
+2024-09-04 18:51:41,768 - INFO - item lookup for nicye with input ------- s1240 ------
+2024-09-04 18:52:05,581 - INFO - item lookup for nicye with input ------- es1414 ------
+2024-09-04 18:52:37,323 - INFO - item lookup for nicye with input ------- n1979 ------
+2024-09-04 18:53:03,333 - INFO - item lookup for nicye with input ------- n2087 ------
+2024-09-04 18:53:58,207 - INFO - item lookup for nicye with input ------- en1346 ------
+2024-09-04 18:54:22,042 - INFO - item lookup for nicye with input ------- t3255 ------
+2024-09-04 18:54:52,219 - INFO - item lookup for nicye with input ------- l1790 ------
+2024-09-04 18:55:21,364 - INFO - item lookup for nicye with input ------- t3225 ------
+2024-09-04 18:55:44,039 - INFO - item lookup for nicye with input ------- es1421 ------
+2024-09-04 18:56:16,614 - INFO - item lookup for nicye with input ------- n1835 ------
+2024-09-04 18:56:43,218 - INFO - item lookup for nicye with input ------- n1782 ------
+2024-09-04 18:57:03,175 - INFO - item lookup for nicye with input ------- n1851 ------
+2024-09-04 18:57:48,340 - INFO - item lookup for nicye with input ------- en1789 ------
+2024-09-04 18:58:49,487 - INFO - item lookup for nicye with input ------- s1212 ------
+2024-09-04 18:59:10,904 - INFO - item lookup for nicye with input ------- s1460 ------
+2024-09-04 18:59:26,865 - INFO - item lookup for nicye with input ------- t3096 ------
+2024-09-04 18:59:48,826 - INFO - item lookup for nicye with input ------- m1121 ------
+2024-09-04 19:00:37,710 - INFO - item lookup for nicye with input ------- m1121 ------
+2024-09-04 19:00:46,262 - INFO - item lookup for nicye with input ------- s1245 ------
+2024-09-04 19:00:58,595 - INFO - item lookup for nicye with input ------- n0370 ------
+2024-09-04 19:01:31,330 - INFO - item lookup for nicye with input ------- n0370 ------
+2024-09-04 19:02:19,732 - INFO - item lookup for nicye with input ------- s1327 ------
+2024-09-04 19:03:12,641 - INFO - item lookup for nicye with input ------- n2036 ------
+2024-09-04 19:03:32,557 - INFO - item lookup for nicye with input ------- t3142 ------
+2024-09-04 19:03:45,274 - INFO - item lookup for nicye with input ------- n2013 ------
+2024-09-04 19:04:33,091 - INFO - item lookup for nicye with input ------- n1547 ------
+2024-09-04 19:04:55,205 - INFO - item lookup for nicye with input ------- n1422 ------
+2024-09-04 19:05:34,796 - INFO - item lookup for nicye with input ------- l1830 ------
+2024-09-04 19:06:03,387 - INFO - item lookup for nicye with input ------- l1830 ------
+2024-09-04 19:06:10,076 - INFO - item lookup for nicye with input ------- n1811 ------
+2024-09-04 19:06:28,639 - INFO - item lookup for nicye with input ------- s1412 ------
+2024-09-04 19:06:31,928 - INFO - item lookup for nicye with input ------- s1412 ------
+2024-09-04 19:06:57,357 - INFO - item lookup for nicye with input ------- et2953 ------
+2024-09-04 19:07:19,785 - INFO - item lookup for nicye with input ------- n1151 ------
+2024-09-04 19:08:27,543 - INFO - item lookup for nicye with input ------- n1814 ------
+2024-09-04 19:08:44,211 - INFO - item lookup for nicye with input ------- s1112 ------
+2024-09-04 19:09:18,541 - INFO - item lookup for nicye with input ------- s1206 ------
+2024-09-04 19:09:50,634 - INFO - item lookup for nicye with input ------- n1971 ------
+2024-09-04 19:10:19,739 - INFO - item lookup for nicye with input ------- l1851 ------
+2024-09-04 19:10:50,352 - INFO - item lookup for nicye with input ------- el1855 ------
+2024-09-04 19:11:22,814 - INFO - item lookup for nicye with input ------- s1405 ------
+2024-09-04 19:11:34,971 - INFO - item lookup for nicye with input ------- n2136 ------
+2024-09-04 19:11:57,740 - INFO - item lookup for nicye with input ------- t3279 ------
+2024-09-04 19:12:14,432 - INFO - item lookup for nicye with input ------- t3129 ------
+2024-09-04 19:12:35,239 - INFO - item lookup for nicye with input ------- n1745 ------
+2024-09-04 19:13:13,293 - INFO - item lookup for nicye with input ------- en2209 ------
+2024-09-04 19:51:40,689 - INFO - autobots, rolling out!
+2024-09-04 19:51:42,947 - INFO - autobots, rolling out!
+2024-09-05 08:37:19,559 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-05 08:37:38,863 - INFO - Serving file index.php
+2024-09-05 09:32:17,516 - INFO - User ting has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 09:32:26,453 - INFO - item lookup for ting with input ------- s1498 ------
+2024-09-05 09:32:26,579 - INFO - item lookup for ting with input ------- s1498 ------
+2024-09-05 10:52:43,381 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 10:52:49,423 - INFO - item lookup for yeti with input ------- s1498 ------
+2024-09-05 11:04:36,666 - INFO - item lookup for yeti with input ------- s1424 ------
+2024-09-05 11:05:53,546 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 11:11:54,711 - INFO - yeti downloaded the file: List-20240905-111153.xlsx
+2024-09-05 11:26:20,424 - INFO - yeti downloaded the file: List-20240905-112616.xlsx
+2024-09-05 11:26:27,811 - INFO - File List-20240905-112616.xlsx downloaded
+2024-09-05 11:45:43,079 - INFO - item lookup for ting with input ------- l1424 ------
+2024-09-05 11:45:50,055 - INFO - item lookup for ting with input ------- s1424 ------
+2024-09-05 11:46:42,107 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 11:46:56,735 - INFO - item lookup for nicye with input ------- s1428 ------
+2024-09-05 11:56:58,187 - INFO - yeti downloaded the file: List-20240905-115653.xlsx
+2024-09-05 11:59:33,468 - INFO - User yeti has logged in. IP: 104.28.85.64, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 11:59:40,480 - INFO - item lookup for yeti with input ------- s1212 ------
+2024-09-05 12:01:06,128 - INFO - File List-20240905-115653.xlsx downloaded
+2024-09-05 12:27:13,940 - INFO - item lookup for ting with input ------- s1428 ------
+2024-09-05 15:02:31,376 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 15:02:49,614 - INFO - item lookup for yeti with input ------- m2229 ------
+2024-09-05 15:02:53,133 - INFO - item lookup for yeti with input ------- n2229 ------
+2024-09-05 16:32:55,801 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 16:33:06,070 - INFO - item lookup for yeti with input ------- n1324 ------
+2024-09-05 16:33:18,061 - INFO - item lookup for yeti with input ------- n2149 ------
+2024-09-05 17:53:24,890 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-05 17:53:54,619 - INFO - yeti downloaded the file: List-20240905-175329.xlsx
+2024-09-05 18:04:49,929 - INFO - item lookup for yeti with input ------- el1781,el1854,en1765,en1766,en1817,en1849,en1860,en1877,en1884,en2154,en6064,es1134,es1159,es1216,es1218,es1271,es1272,es1323,es1324,es1331,es1382,es1383,l0665,l1343-m,l1343,l1494,l1550-m,l1577,l1622 ------
+2024-09-05 18:05:44,602 - INFO - yeti downloaded the file: List-20240905-180542.xlsx
+2024-09-05 18:05:45,963 - INFO - File List-20240905-180542.xlsx downloaded
+2024-09-05 18:06:07,150 - INFO - item lookup for yeti with input ------- el1781,el1854,en1765,en1766,en1817,en1849,en1860,en1877,en1884,en2154,en6064,es1134,es1159,es1216,es1218,es1271,es1272,es1323,es1324,es1331,es1382,es1383,l0665,l1343-m,l1343,l1494,l1550-m,l1577,l1622 ------
