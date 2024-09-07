@@ -1013,13 +1013,21 @@ def register_routes(app):
                 image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
                 resized_image = resize_image(image_path)
                 if resized_image:
+                    # Get image width and height using PIL
+                    with Image.open(image_path) as img:
+                        width, height = img.size
+                        ratio = f"{1}:{height/width}"
+
                     modified_time = os.path.getmtime(image_path)
                     modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
                     file_size = format_file_size(os.path.getsize(image_path) // 1024)  # Convert bytes to KB
                     filename = os.path.basename(file_path)
-                    image_data.append((file_path, resized_image, modified_date, file_size))
+                    
+                    # Add ratio to image data
+                    image_data.append((file_path, resized_image, modified_date, file_size, ratio))
                     
             return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
+        
         return render_template('big_img.html', quote=urllib.parse.quote)
     
     @app.route('/download_all_images_1_1')
