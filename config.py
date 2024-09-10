@@ -5,6 +5,7 @@ class Config:
     CATALOG_ORIGINAL = r"D:\Catalog_pictures\catalog_original"
     BIG_PICTURE_DIR  = r"D:\Individual_big_picture"
     LOCAL_DROPBOX_DIR = r"C:\users\stream\dropbox"
+    Dimension_DIR = r"D:\Individual_big_picture\picture-temu"
     FTP = r"D:\FTP"
     LOG_FILE = "Log.txt"
     SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/edit'
@@ -30,6 +31,7 @@ class Config:
         'kx':'200',
         'erin':'7555',
         'dennis':'dennis',
+        'jiayi':'1234',
         'baiqiang':'1234'
     }
     

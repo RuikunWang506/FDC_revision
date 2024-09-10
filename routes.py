@@ -1,6 +1,5 @@
 from flask import request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory, send_file
 from werkzeug.utils import secure_filename
-import os
 import pandas as pd
 from custom_query import execute_custom_query, allowed_file
 from indexing_app import generate_index
@@ -26,6 +25,9 @@ import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
 from PIL import Image, ImageOps
+import os
+import subprocess
+
 
 
 # New imports
@@ -158,97 +160,109 @@ def register_routes(app):
             return jsonify({"error": "No file name provided"}), 400
 
     @app.route("/item_lookup", methods=["GET", "POST"])
-    def item_lookup():
+    @app.route("/item_lookup/<string:user_input>", methods=["GET"])
+    def item_lookup(user_input=None):
         if 'username' not in session:
             session['next'] = request.url
             return redirect(url_for("login"))
 
         current_user = session['username']
         excel_html = None
-        user_input = ""
+        e1_value = None
 
         if request.method == "POST":
+            # Handle the case where user input is submitted via the form
             user_input = request.form.get("user_input", "").lower().strip()
 
-            if not user_input:
-                _, e1_value = get_sheet_data_and_e1_value('')
-                return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input)
+        elif request.method == "GET" and user_input:
+            # Handle the case where the input is provided via the URL
+            user_input = user_input.lower().strip()
+        else:
+            # Handle the case where user_input is not provided (i.e., user visits the page without input)
+            user_input = ""
 
-            if user_input.endswith(","):
-                user_input = user_input[:-1]
+        # Handle cases where user_input is empty
+        if not user_input:
+            _, e1_value = get_sheet_data_and_e1_value('')
+            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input)
 
-            # Generate Excel and image URLs
-            excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
+        # Continue with the rest of the logic if user_input is valid
+        if user_input.endswith(","):
+            user_input = user_input[:-1]
 
-            if not excel_html:  # If the excel_html is None or empty, return the template without rendering data
-                app.logger.info("No valid data to display for input: %s", user_input)
-                return render_template("Item_lookup.html", excel_html=None, current_user=current_user)
+        # Generate Excel and image URLs
+        excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
 
-            # Normalize input parts by stripping color suffixes for image lookup
-            search_terms = [term.split()[0].strip() for term in user_input.split(",")]
+        if not excel_html:  # If no valid data is found
+            app.logger.info("No valid data to display for input: %s", user_input)
+            return render_template("Item_lookup.html", excel_html=None, current_user=current_user, user_input=user_input)
 
-            # Get filenames matching the search terms
-            file_names = []
-            for term in search_terms:
-                for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                    if filename.lower().startswith(term):
-                        file_names.append(filename)
+        # Normalize input parts by stripping color suffixes for image lookup
+        search_terms = [term.split()[0].strip() for term in user_input.split(",")]
 
-                # Check in catalog_resized if not found in catalog_original
-                for filename in os.listdir(Config.CATALOG_RESIZED):
-                    if filename.lower().startswith(term) and filename not in file_names:
-                        file_names.append(filename)
+        # Get filenames matching the search terms
+        file_names = []
+        for term in search_terms:
+            for filename in os.listdir(Config.CATALOG_ORIGINAL):
+                if filename.lower().startswith(term):
+                    file_names.append(filename)
 
-            # Get file information
-            file_info = []
-            for filename in file_names:
-                original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-                resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
-                file_path = original_path if os.path.exists(original_path) else resized_path
+            # Check in catalog_resized if not found in catalog_original
+            for filename in os.listdir(Config.CATALOG_RESIZED):
+                if filename.lower().startswith(term) and filename not in file_names:
+                    file_names.append(filename)
 
-                if os.path.exists(file_path):
-                    size = os.path.getsize(file_path)
-                    modified_time = os.path.getmtime(file_path)
-                    modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
-                    file_info.append((filename, size, modified_date))
+        # Get file information (size and modification date)
+        file_info = []
+        for filename in file_names:
+            original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+            resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
+            file_path = original_path if os.path.exists(original_path) else resized_path
 
-            if excel_html:
-                df = pd.read_html(StringIO(excel_html))[0]
-                sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+            if os.path.exists(file_path):
+                size = os.path.getsize(file_path)
+                modified_time = os.path.getmtime(file_path)
+                modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
+                file_info.append((filename, size, modified_date))
 
-                # Normalize sheet data to ensure all rows have the same number of columns
-                max_length = max(len(row) for row in sheet_data)
-                sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
-                df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+        if excel_html:
+            df = pd.read_html(StringIO(excel_html))[0]
+            sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
 
-                if current_user == 'fdc':
-                    df.drop(columns=['cost', 'Container', 'create_dt', 'update_dt'], inplace=True)
+            # Normalize sheet data to ensure all rows have the same number of columns
+            max_length = max(len(row) for row in sheet_data)
+            sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
+            df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
 
-                sorted_file_names = sort_filenames(file_names)
-                sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
+            # Handle case for user 'fdc' and remove sensitive columns
+            if current_user == 'fdc':
+                df.drop(columns=['cost', 'Container', 'create_dt', 'update_dt'], inplace=True)
 
-                # Convert DataFrames back to HTML
-                excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
-                sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
+            # Sort filenames and prepare image URLs
+            sorted_file_names = sort_filenames(file_names)
+            sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
 
-                app.logger.info("item lookup for %s with input ------- %s ------", current_user,user_input)
-                return render_template(
-                    "Item_lookup.html",
-                    excel_html=excel_html,
-                    image_urls=sorted_image_urls,
-                    file_names=sorted_file_names,
-                    file_info=file_info,
-                    sheet_data=sheet_data_html,
-                    current_user=current_user,
-                    e1_value=e1_value,
-                    user_input=user_input.capitalize()
-                )
-            else:
-                _, e1_value = get_sheet_data_and_e1_value('')
-                return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input.capitalize())
-        
-        # Handle GET request
-        return render_template("Item_lookup.html", excel_html=excel_html, current_user=current_user)
+            # Convert DataFrames back to HTML for display
+            excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
+            sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
+
+            app.logger.info("Item lookup for %s with input: %s", current_user, user_input)
+            return render_template(
+                "Item_lookup.html",
+                excel_html=excel_html,
+                image_urls=sorted_image_urls,
+                file_names=sorted_file_names,
+                file_info=file_info,
+                sheet_data=sheet_data_html,
+                current_user=current_user,
+                e1_value=e1_value,
+                user_input=user_input.capitalize()  # Pass user_input back to the template to avoid "None"
+            )
+
+        else:
+            # No valid data, return the template without data
+            _, e1_value = get_sheet_data_and_e1_value('')
+            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input.capitalize())
 
 
                                             
@@ -655,12 +669,17 @@ def register_routes(app):
     def serve_file_pub(path):
         app.logger.info("Serving file %s", path)
         return send_from_directory(Config.FTP, path, as_attachment=True)
+    
+    @app.route('/sizepic/<path:path>', methods=['GET'])
+    def serve_temp_size_pic(path):
+        app.logger.info("Serving file %s", path)
+        return send_from_directory(Config.Dimension_DIR, path, as_attachment=True)
 
     @app.route('/download4/<filename>')
     def download_file4(filename):
         if 'username' not in session:
             return redirect(url_for("login"))
-        return send_from_directory("output/macy_label/", filename, as_attachment=True)
+        return send_from_directory("output/macy_label/", filename, as_attachment=False)
 
     @app.route("/report_bug", methods=["GET"])
     def report_bug():
@@ -805,7 +824,7 @@ def register_routes(app):
         sheet = service.spreadsheets()
         
         # Fetch data from the "Temu Listings" sheet
-        ranges = ['Temu Listings!A:H']
+        ranges = ['Temu!A:H']
         result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
         
         temu_listings_data = result['valueRanges'][0].get('values', [])
@@ -1006,7 +1025,7 @@ def register_routes(app):
             with open(index_file, 'r') as f:
                 index = json.load(f)
 
-            matching_files = [file_path for file_path in index if os.path.basename(file_path).lower().startswith(search_str)]
+            matching_files = [file_path for file_path in index if search_str.lower() in os.path.basename(file_path).lower()]
             
             image_data = []
             for file_path in matching_files:
@@ -1029,6 +1048,26 @@ def register_routes(app):
             return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
         
         return render_template('big_img.html', quote=urllib.parse.quote)
+    
+    @app.route('/reindex', methods=['GET'])
+    def reindex():
+        try:
+            # Run the indexing_app.py script
+            script_path = os.path.join(os.path.dirname(__file__), 'indexing_app.py')
+            result = subprocess.run([sys.executable, script_path], capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                reindex_result = result.stdout
+                flash("Re-Indexing completed successfully!", "success")
+            else:
+                reindex_result = result.stderr
+                flash(f"Re-Indexing failed: {result.stderr}", "danger")
+        except Exception as e:
+            reindex_result = str(e)
+            flash(f"An error occurred: {str(e)}", "danger")
+
+        # Return the result as JSON to the AJAX call
+        return jsonify({'reindex_result': reindex_result})
     
     @app.route('/download_all_images_1_1')
     def download_all_images_1_1():
@@ -1081,9 +1120,12 @@ def register_routes(app):
     def create_square_image(image_path):
         try:
             image = Image.open(image_path)
+            
+            # Convert to RGB if not already in that mode
             if image.mode != 'RGB':
                 image = image.convert('RGB')
 
+            # Make the image square by padding with white
             size = max(image.size)
             square_image = ImageOps.expand(image, (
                 (size - image.width) // 2,  # Left padding
@@ -1092,8 +1134,20 @@ def register_routes(app):
                 (size - image.height + 1) // 2  # Bottom padding
             ), fill='white')
 
+            # Prepare for saving the image
             output_image = io.BytesIO()
-            square_image.save(output_image, format='JPEG', subsampling=0, quality=95)
+            quality = 95  # Start with a high quality
+            square_image.save(output_image, format='JPEG', subsampling=0, quality=quality)
+            
+            # Check the size and reduce quality until it's less than 2MB
+            max_size = 2 * 1024 * 1024  # 2MB in bytes
+            while output_image.tell() > max_size and quality > 10:  # Avoid going below a quality of 10
+                quality -= 5  # Reduce the quality
+                output_image.seek(0)  # Reset the BytesIO buffer
+                output_image.truncate(0)  # Truncate the buffer to discard old data
+                square_image.save(output_image, format='JPEG', subsampling=0, quality=quality)
+            
+            # Ensure the output starts from the beginning
             output_image.seek(0)
             return output_image
         except Exception as e:
@@ -1160,6 +1214,113 @@ def register_routes(app):
         user_message = data.get('message', '')
         gpt_response = get_gpt_response(user_message)
         return jsonify({'response': gpt_response})
+
+    @app.route('/upload_center', methods=['GET', 'POST'])
+    def upload_center():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        current_user = session['username']
+
+        if request.method == 'POST':
+            files = request.files.getlist('files')
+            desired_filename = request.form.get('filename', 'output_image')
+            output_urls = []
+
+            # EasyOCR and OpenCV logic
+            import easyocr
+            import cv2
+            import numpy as np
+            from config import Config
+
+            reader = easyocr.Reader(['en'])
+
+            for i, file in enumerate(files):
+                # Use the file's stream without saving to disk
+                in_memory_file = np.frombuffer(file.read(), np.uint8)
+                image = cv2.imdecode(in_memory_file, cv2.IMREAD_COLOR)
+
+                # Process image with EasyOCR and cv2
+                gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                result = reader.readtext(gray_image)
+
+                for detection in result:
+                    top_left = tuple(map(int, detection[0][0]))
+                    bottom_right = tuple(map(int, detection[0][2]))
+                    box_width = bottom_right[0] - top_left[0]
+                    box_height = bottom_right[1] - top_left[1]
+                    text = detection[1]
+
+                    if text.replace('.', '', 1).isdigit():
+                        inches_value = float(text)
+                        cm_value = inches_value * 2.54
+                        text_with_inches = f"{inches_value} inches"
+                        text_with_cm = f"{cm_value:.2f} cm"
+
+                        # Erase the original text
+                        cv2.rectangle(image, top_left, bottom_right, (255, 255, 255), -1)
+
+                        # Calculate text sizes
+                        (inches_text_w, inches_text_h), _ = cv2.getTextSize(text_with_inches, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                        (cm_text_w, cm_text_h), _ = cv2.getTextSize(text_with_cm, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+
+                        # Find the center of the original bounding box
+                        center_x = top_left[0] + box_width // 2
+                        center_y = top_left[1] + box_height // 2
+
+                        # Move the text 30 pixels to the left
+                        move_left = 30
+
+                        # Calculate the positions for the inches and cm text
+                        inches_text_x = center_x - inches_text_w // 2 - move_left
+                        inches_text_y = center_y - 10  # Align inches text to be slightly above center
+                        cm_text_x = center_x - cm_text_w // 2 - move_left
+                        cm_text_y = inches_text_y + inches_text_h + 10  # Align cm text directly below inches text
+
+                        # Draw the background rectangle behind both lines of text
+                        background_padding = 5  # Reduced padding to make the background closer to the text
+                        background_top_left_x = min(inches_text_x, cm_text_x) - background_padding
+                        background_top_left_y = inches_text_y - inches_text_h - background_padding
+                        background_bottom_right_x = max(inches_text_x + inches_text_w, cm_text_x + cm_text_w) + background_padding
+                        background_bottom_right_y = cm_text_y + cm_text_h + background_padding
+
+                        # Draw the background rectangle
+                        cv2.rectangle(image, (background_top_left_x, background_top_left_y), 
+                                    (background_bottom_right_x, background_bottom_right_y), 
+                                    (255, 255, 255), -1)
+
+                        # Add inches text
+                        cv2.putText(image, text_with_inches, (inches_text_x, inches_text_y), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
+
+                        # Add centimeters text directly below
+                        cv2.putText(image, text_with_cm, (cm_text_x, cm_text_y), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
+
+                # Get current image dimensions
+                height, width, _ = image.shape
+
+                # Make the image square by padding it to 1:1 ratio
+                if width > height:
+                    padding = (width - height) // 2
+                    image_square = cv2.copyMakeBorder(image, padding, padding, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+                elif height > width:
+                    padding = (height - width) // 2
+                    image_square = cv2.copyMakeBorder(image, 0, 0, padding, padding, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+                else:
+                    image_square = image  # The image is already square
+
+                # Save the updated image in memory (without writing the original to disk)
+                output_image_path = os.path.join(Config.Dimension_DIR, f"{desired_filename}_sss_{i}.jpg")
+                cv2.imwrite(output_image_path, image_square)
+
+                output_urls.append({
+                    'url': url_for('serve_temp_size_pic', path=f"{desired_filename}_sss_{i}.jpg"),
+                    'name': f"{desired_filename}_sss_{i}.jpg"
+                })
+
+            return jsonify(output_urls)
+
+        return render_template('upload_center.html')
     
     '''
     client = OpenAI(

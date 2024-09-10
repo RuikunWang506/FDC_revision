@@ -4,19 +4,31 @@ import json
 BIG_PICTURE_DIR = r"D:\Individual_big_picture"
 
 def generate_index():
-    index = []
-    for root, dirs, files in os.walk(BIG_PICTURE_DIR):
-        for filename in files:
-            if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
-                file_path = os.path.join(root, filename).replace("\\", "/")
-                index.append(file_path)
+    try:
+        index = []
+        for root, dirs, files in os.walk(BIG_PICTURE_DIR):
+            for filename in files:
+                if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    file_path = os.path.join(root, filename).replace("\\", "/")
+                    index.append(file_path)
 
-    index_file = os.path.join(BIG_PICTURE_DIR, 'index.json')
+        index_file = os.path.join(BIG_PICTURE_DIR, 'index.json')
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(index_file), exist_ok=True)
+        
+        # Write the index to a file
+        with open(index_file, 'w') as f:
+            json.dump(index, f)
+        
+        return {"status": "success", "message": f"Index created with {len(index)} entries."}
     
-    os.makedirs(os.path.dirname(index_file), exist_ok=True)
-    
-    with open(index_file, 'w') as f:
-        json.dump(index, f)
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
-    generate_index()
+    result = generate_index()
+    if result["status"] == "success":
+        print(result["message"])
+    else:
+        print(f"Error: {result['message']}")

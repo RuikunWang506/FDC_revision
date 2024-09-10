@@ -18,6 +18,20 @@
         .navbar-custom .nav-link:hover {
             text-decoration: underline;
         }
+        /* Add a border around the three items */
+        .custom-box {
+            border: 5px solid; /* Make the border thicker to show the rainbow effect */
+            border-image-slice: 1;
+            border-image-source: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); /* Rainbow gradient */
+            padding: 10px; /* Add some padding inside the box */
+            border-radius: 8px; /* Optional: Rounded corners */
+            background-color: #f9f9f9; /* Light background */
+            display: flex; /* Ensure it stays inline with the other navbar items */
+        }
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -48,27 +62,25 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/loris">
-                        <img src="/static/icons/loris.ico" alt="Loris">
-                        Loris
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/calculator">
-                        <img src="/static/icons/calculator.ico" alt="Calculator">
-                        Calculator
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="/geek_tools">
                         <img src="/static/icons/geek.svg" alt="Geek_Tools">
                         Geek_Tools
                     </a>
                 </li>
-                <li class="nav-item">
+
+                <!-- Custom Box Around These Items -->
+                <li class="nav-item custom-box">
                     <a class="nav-link" href="/temu">
                         <img src="https://seller.temu.com/favicon.ico" alt="temu">
                         Temu
+                    </a>
+                    <a class="nav-link" href="/big_img">
+                        <img src="/static/icons/bigimg.png" alt="big_img">
+                        big_img
+                    </a>
+                    <a class="nav-link" href="/upload_center">
+                        <img src="https://img.icons8.com/clouds/200/upload.png" alt="图片处理">
+                        图片处理
                     </a>
                 </li>
                 {% endif %}

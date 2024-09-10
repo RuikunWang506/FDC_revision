@@ -108,12 +108,12 @@
     {% include 'navbar.html' %}
     <div class="container mt-5">
         <div class="row justify-content-center text-center">
-            <form id="orderLookupForm" method="POST" action="/item_lookup">
+            <form id="orderLookupForm" onsubmit="redirectToResult(event)">
                 <h4>Enter Input, separate by comma:</h4>
                 <p>You can put multiple skus like n1223 gy, N1551</p>
                 <p>style only = all colors, with color = one color</p>
                 <div class="form-group">
-                    <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}">
+                    <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}" placeholder="">
                 </div>
                 <button type="submit" class="btn btn-primary">View Result</button>
                 {% if user_input %}
@@ -267,6 +267,15 @@
                 $('#headingTwo i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
             });
         });
+        function redirectToResult(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+            var userInput = document.getElementById("user_input").value.trim().toLowerCase();
+            
+            if (userInput) {
+                // Redirect to the new URL with the user input
+                window.location.href = "/item_lookup/" + encodeURIComponent(userInput);
+            }
+        }
     </script>
     
     {% include 'footer.html' %}

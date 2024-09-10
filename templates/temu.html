@@ -17,33 +17,43 @@
         /* Basic table styling */
         table {
             border-collapse: collapse;
-            width: 100%;
+            table-layout: auto; /* Allow the table to adjust based on content */
+            width: auto; /* Allow the table to fit its content */
         }
         
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            padding: 8px !important; /* Add some padding for better readability */
+            text-align: center;
+            line-height: 20px !important; /* Ensure the text fits in the row */
+            white-space: nowrap; /* Prevent content from wrapping */
+            overflow: hidden; /* Hide any overflowed content */
         }
+
         th {
             background-color: #f2f2f2;
         }
+
+        /* DataTables adjustments */
         .dataTables_length {
-            width: 100%;
             text-align: left;
         }
         .dataTables_dt-buttons {
-            width: 100%;
-            text-align: left;
+            text-align: center;
         }
         div.dt-buttons {
             display: flex !important;
-            justify-content: center !important; /* Center the buttons horizontally */
-            margin: 0 auto !important; /* Center the container */
-            float: none !important; /* Remove float */
-            position: static !important; /* Override position */
+            justify-content: center !important;
+            margin: 0 auto !important;
+            float: none !important;
+            position: static !important;
         }
 
+        /* Override any conflicting widths */
+        .dataTables_wrapper .dataTables_scrollHeadInner,
+        .dataTables_wrapper .dataTables_scrollBody {
+            width: auto !important; /* Set the width to auto to fit content */
+        }
 
         /* Style for loading overlay */
         #loading-overlay {
@@ -93,7 +103,7 @@
         <h1>Temu Listings</h1>
     </div>
     {% if sheet_data_html %}
-            {{ sheet_data_html|safe }}
+        {{ sheet_data_html|safe }}
     {% else %}
         <p>No data available.</p>
     {% endif %}
@@ -116,12 +126,16 @@
                 $('table').DataTable({
                     "paging": true, // Enable pagination
                     "searching": true, // Enable search
-                    "autoWidth": true, // Enable column auto width
+                    "autoWidth": false, // Disable automatic column widths, let content decide width
                     "pageLength": 100, // Set default number of entries to show per page
                     "lengthMenu": [10, 25, 50, 100], // Options for number of entries per page
                     dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
                     buttons: ['copy', 'excel', 'pdf'],
-                    responsive: true // Make the table responsive
+                    responsive: true, // Make the table responsive
+                    "scrollX": false, // Prevent horizontal scroll and allow auto-width
+                    "columnDefs": [
+                        { "width": "auto", "targets": "_all" } // Ensure all columns adjust to content size
+                    ]
                 });
             }
         });

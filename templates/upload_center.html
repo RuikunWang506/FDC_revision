@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Center</title>
+    <!-- Add Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 500px;
+            padding-top: 40px;
+            background-color: #f0f0f0;
+        }
+        .drop-zone-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 90vw;
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
+        .drop-zone {
+            width: 100%; /* Full width by default */
+            height: 30vw;
+            border: 2px dashed #999;
+            border-radius: 10px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #666;
+            padding: 20px;
+            transition: width 0.5s ease; /* Smooth transition */
+        }
+        /* Shrink drop zone to 50% when file selected */
+        .drop-zone.shrink {
+            width: 50%;
+        }
+        .drop-zone.hover {
+            border-color: #333;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .filename-input {
+            margin-bottom: 20px;
+            width: 60%; /* Ensure the input is responsive */
+            height: 100px;
+            font-size: 25pt;        
+        }
+        /* File list section */
+        .file-list {
+            width: 40%;
+            margin-left: 20px;
+            display: none; /* Initially hidden */
+        }
+        .file-list.visible {
+            display: block; /* Show when files are added */
+        }
+        .file-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .file-list li {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .file-list strong {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="upload-container">
+        <h1>Upload Center</h1>
+        <h5>未来名字，现在只能叫<h3>上传纯数字尺寸图，加inch cm，变成1比1</h3></h5>
+        <h5>会自动存入数据库\individual_big_image\picture-temu</h5>
+
+        <div class="drop-zone-container">
+            <!-- Drop zone section -->
+            <div id="drop-zone" class="drop-zone">
+                <p>Drag & Drop files here or click to select files</p>
+                <p>拖拽or 点击上传文件s</p>
+                <p>其实我没试过多个文件，你试试？</p>
+                <input type="file" id="fileInput" multiple>
+            </div>
+            
+            <!-- File list section -->
+            <div class="file-list" id="fileListContainer">
+                <h4>Selected Files:</h4>
+                <ul id="fileList"></ul>
+            </div>
+        </div>
+
+        <div class="container text-center">
+            <!-- Input field centered -->
+            <input class="filename-input mb-3" type="text" id="desiredFilename" placeholder="Enter desired filename" style="width: 300px; display: block; margin: 0 auto;">
+            <!-- Submit button centered below input -->
+            <button type="button" class="button" id="submitUpload" style="display: block; margin: 0 auto;">Submit, 大概10秒</button>
+        </div>
+    </div>
+    <div id="uploadResult" class="container text-center"></div>
+    
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileListContainer = document.getElementById('fileListContainer');
+        const submitUpload = document.getElementById('submitUpload');
+        const uploadResult = document.getElementById('uploadResult');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Display selected files and file sizes
+        fileInput.addEventListener('change', () => {
+            fileList.innerHTML = ''; // Clear previous list
+            if (fileInput.files.length > 0) {
+                dropZone.classList.add('shrink'); // Shrink the drop zone
+                fileListContainer.classList.add('visible'); // Show the file list container
+            } else {
+                dropZone.classList.remove('shrink');
+                fileListContainer.classList.remove('visible');
+            }
+            Array.from(fileInput.files).forEach(file => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<strong>Filename:</strong> ${file.name}<br><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB`;
+                fileList.appendChild(listItem);
+            });
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('hover');
+        });
+
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('hover');
+            fileInput.files = e.dataTransfer.files;
+
+            // Display the dropped files in the list
+            fileList.innerHTML = ''; // Clear previous list
+            if (fileInput.files.length > 0) {
+                dropZone.classList.add('shrink'); // Shrink the drop zone
+                fileListContainer.classList.add('visible'); // Show the file list container
+            } else {
+                dropZone.classList.remove('shrink');
+                fileListContainer.classList.remove('visible');
+            }
+            Array.from(fileInput.files).forEach(file => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<strong>Filename:</strong> ${file.name}<br><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB`;
+                fileList.appendChild(listItem);
+            });
+        });
+
+        submitUpload.addEventListener('click', () => {
+            const formData = new FormData();
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+            formData.append('filename', document.getElementById('desiredFilename').value);
+
+            fetch('/upload_center', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                uploadResult.innerHTML = '';
+                data.forEach(file => {
+                    const link = `<button type="button" class="button" onclick="location.href='${file.url}'" style="display: block; margin: 0 auto;">Download</button>`;
+                    const img = `<img src="${file.url}" alt="${file.name}" style="max-width: 1000px; margin: 10px;">`;
+                    uploadResult.innerHTML += link + img;
+                });
+            });
+        });
+    </script>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% include 'footer.html' %}
+</body>
+</html>
