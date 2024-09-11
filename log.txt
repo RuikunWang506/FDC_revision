@@ -25583,3 +25583,145 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-09-10 14:06:21,401 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
 2024-09-10 14:08:26,016 - INFO - autobots, rolling out!
 2024-09-10 14:08:36,234 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 14:22:39,817 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 14:22:47,563 - INFO - Item lookup for yeti with input: t3001
+2024-09-10 14:27:37,839 - INFO - Item lookup for yeti with input: t3001
+2024-09-10 14:31:36,495 - INFO - Item lookup for yeti with input: t3305
+2024-09-10 14:38:18,133 - INFO - Serving file t3001_sss_0.jpg
+2024-09-10 14:52:00,033 - INFO - Item lookup for yeti with input: t3001
+2024-09-10 14:54:54,679 - INFO - Item lookup for yeti with input: l0665-set
+2024-09-10 14:54:59,388 - INFO - Item lookup for yeti with input: l0665
+2024-09-10 15:22:32,576 - INFO - Serving file L0665-set_sss_0.jpg
+2024-09-10 15:26:56,143 - INFO - Item lookup for yeti with input: l0665
+2024-09-10 15:36:28,478 - INFO - Item lookup for yeti with input: l1343
+2024-09-10 15:37:24,856 - INFO - yeti downloaded the file: List-20240910-153709.xlsx
+2024-09-10 15:37:38,584 - INFO - File List-20240910-153709.xlsx downloaded
+2024-09-10 15:38:30,772 - INFO - Item lookup for yeti with input: l1577
+2024-09-10 16:16:12,130 - INFO - Item lookup for yeti with input: l1577
+2024-09-10 16:19:25,541 - INFO - Serving file L1577_sss_0.jpg
+2024-09-10 16:23:16,024 - INFO - User yeti has logged in. IP: 172.226.186.63, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 16:23:22,398 - INFO - Item lookup for yeti with input: l1577
+2024-09-10 16:30:38,389 - INFO - Item lookup for yeti with input: -s
+2024-09-10 16:30:42,751 - INFO - Item lookup for yeti with input: %-s
+2024-09-10 16:30:56,412 - INFO - Item lookup for yeti with input: %-s%
+2024-09-10 16:31:00,054 - INFO - Item lookup for yeti with input: %-s%
+2024-09-10 16:31:06,745 - INFO - Item lookup for yeti with input: %-s
+2024-09-10 16:33:41,422 - INFO - Serving file L1577-s_sss_0.jpg
+2024-09-10 16:35:45,402 - INFO - Item lookup for yeti with input: wallet
+2024-09-10 16:35:53,041 - INFO - Item lookup for yeti with input: %wallet%
+2024-09-10 16:57:02,204 - INFO - Item lookup for yeti with input: l1494-s,l1577-s,l1627-s,l1629-s,l1648-s,l1687-s,l1689-s
+2024-09-10 17:25:45,401 - INFO - Item lookup for yeti with input: l1494-s,l1577-s,l1627-s,l1629-s,l1648-s,l1687-s,l1689-s
+2024-09-10 17:29:13,680 - INFO - Item lookup for yeti with input: l1550
+2024-09-10 17:29:21,168 - INFO - Item lookup for yeti with input: l1550-m
+2024-09-10 17:37:05,638 - INFO - Item lookup for yeti with input: n1831
+2024-09-10 17:40:43,788 - INFO - Item lookup for yeti with input: n1831
+2024-09-10 17:40:48,068 - INFO - Serving file n1831_sss_0.jpg
+2024-09-10 17:40:48,456 - INFO - Item lookup for yeti with input: n1831
+2024-09-10 17:42:06,764 - INFO - Serving file N1831_sss_0.jpg
+2024-09-10 17:42:56,632 - INFO - Serving file N1831_sss_0.jpg
+2024-09-10 17:54:03,974 - INFO - Item lookup for yeti with input: n1832
+2024-09-10 17:55:39,399 - INFO - Serving file N1832_sss_0.jpg
+2024-09-10 17:58:03,659 - INFO - Serving file N1832_sss_0.jpg
+2024-09-10 17:58:37,149 - INFO - Serving file N1832_sss_0.jpg
+2024-09-10 18:06:50,218 - INFO - Item lookup for yeti with input: n1861
+2024-09-10 18:09:35,188 - INFO - Serving file N1861_sss_0.jpg
+2024-09-10 18:12:14,466 - INFO - Serving file N1861_sss_0.jpg
+2024-09-10 18:13:07,713 - INFO - Serving file N1861_sss_0.jpg
+2024-09-10 18:13:58,922 - INFO - Serving file N1861_sss_0.jpg
+2024-09-10 18:15:06,690 - INFO - Serving file _sss_0.jpg
+2024-09-10 18:15:51,751 - INFO - Serving file _sss_0.jpg
+2024-09-10 18:20:16,348 - INFO - autobots, rolling out!
+2024-09-10 18:21:58,905 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 18:22:16,165 - INFO - Serving file _sss_0.jpg
+2024-09-10 18:23:11,329 - INFO - autobots, rolling out!
+2024-09-10 18:23:14,407 - INFO - autobots, rolling out!
+2024-09-10 18:23:45,123 - INFO - Serving file _sss_0.jpg
+2024-09-10 18:24:55,722 - INFO - autobots, rolling out!
+2024-09-10 18:24:55,863 - INFO - autobots, rolling out!
+2024-09-10 18:24:58,072 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 18:25:19,279 - INFO - Serving file _sss_0.jpg
+2024-09-10 18:29:27,833 - INFO - autobots, rolling out!
+2024-09-10 18:29:27,943 - INFO - autobots, rolling out!
+2024-09-10 18:29:31,387 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 18:29:58,867 - INFO - Serving file _sss_0.jpg
+2024-09-10 18:31:15,494 - INFO - autobots, rolling out!
+2024-09-10 18:31:16,161 - INFO - autobots, rolling out!
+2024-09-10 18:33:39,080 - INFO - autobots, rolling out!
+2024-09-10 18:33:39,865 - INFO - autobots, rolling out!
+2024-09-10 18:33:41,940 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 18:34:00,736 - INFO - detected [([[np.int32(440), np.int32(216)], [np.int32(492), np.int32(216)], [np.int32(492), np.int32(270)], [np.int32(440), np.int32(270)]], '3', np.float64(0.8208052554019274)), ([[np.int32(303), np.int32(1543)], [np.int32(347), np.int32(1543)], [np.int32(347), np.int32(1591)], [np.int32(303), np.int32(1591)]], '4', np.float64(0.9999800921477267)), ([[np.int32(1103), np.int32(1571)], [np.int32(1145), np.int32(1571)], [np.int32(1145), np.int32(1621)], [np.int32(1103), np.int32(1621)]], '9', np.float64(0.6751376610537216))]
+2024-09-10 18:34:00,836 - INFO - Serving file _sss_0.jpg
+2024-09-10 18:35:56,070 - INFO - detected [([[np.int32(371), np.int32(215)], [np.int32(413), np.int32(215)], [np.int32(413), np.int32(269)], [np.int32(371), np.int32(269)]], '3', np.float64(1.0))]
+2024-09-10 18:35:56,175 - INFO - Serving file N1861_sss_0.jpg
+2024-09-10 18:37:45,065 - INFO - detected [([[np.int32(411), np.int32(213)], [np.int32(453), np.int32(213)], [np.int32(453), np.int32(265)], [np.int32(411), np.int32(265)]], '3', np.float64(1.0)), ([[np.int32(134), np.int32(802)], [np.int32(164), np.int32(802)], [np.int32(164), np.int32(842)], [np.int32(134), np.int32(842)]], '7', np.float64(0.9899986775240563)), ([[np.int32(267), np.int32(1561)], [np.int32(305), np.int32(1561)], [np.int32(305), np.int32(1607)], [np.int32(267), np.int32(1607)]], '4', np.float64(0.9999964237245109)), ([[np.int32(1145), np.int32(1581)], [np.int32(1185), np.int32(1581)], [np.int32(1185), np.int32(1631)], [np.int32(1145), np.int32(1631)]], '9', np.float64(0.998889358392689))]
+2024-09-10 18:37:45,160 - INFO - Serving file N1861_sss_0.jpg
+2024-09-10 18:41:51,573 - INFO - detected [([[np.int32(411), np.int32(213)], [np.int32(453), np.int32(213)], [np.int32(453), np.int32(265)], [np.int32(411), np.int32(265)]], '3', np.float64(1.0)), ([[np.int32(134), np.int32(802)], [np.int32(164), np.int32(802)], [np.int32(164), np.int32(842)], [np.int32(134), np.int32(842)]], '7', np.float64(0.9899986775240563)), ([[np.int32(267), np.int32(1561)], [np.int32(305), np.int32(1561)], [np.int32(305), np.int32(1607)], [np.int32(267), np.int32(1607)]], '4', np.float64(0.9999964237245109)), ([[np.int32(1145), np.int32(1581)], [np.int32(1185), np.int32(1581)], [np.int32(1185), np.int32(1631)], [np.int32(1145), np.int32(1631)]], '9', np.float64(0.998889358392689))]
+2024-09-10 18:41:51,668 - INFO - Serving file N1861_sss_0.jpg
+2024-09-10 18:44:23,076 - INFO - Item lookup for yeti with input: n1861
+2024-09-10 18:48:23,379 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-10 18:57:45,678 - INFO - Item lookup for yeti with input: s1172
+2024-09-10 19:35:32,692 - INFO - Item lookup for ahua with input: el1781
+2024-09-10 20:33:14,471 - INFO - Item lookup for ahua with input: el1781
+2024-09-11 09:25:06,417 - INFO - autobots, rolling out!
+2024-09-11 09:25:08,511 - INFO - autobots, rolling out!
+2024-09-11 09:37:58,008 - INFO - autobots, rolling out!
+2024-09-11 09:38:00,287 - INFO - autobots, rolling out!
+2024-09-11 09:38:16,337 - INFO - autobots, rolling out!
+2024-09-11 09:38:18,651 - INFO - autobots, rolling out!
+2024-09-11 09:38:23,471 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 10:30:11,603 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 11:33:54,961 - INFO - autobots, rolling out!
+2024-09-11 11:33:57,338 - INFO - autobots, rolling out!
+2024-09-11 11:34:24,105 - INFO - autobots, rolling out!
+2024-09-11 11:34:26,420 - INFO - autobots, rolling out!
+2024-09-11 12:00:58,086 - INFO - autobots, rolling out!
+2024-09-11 12:01:02,416 - INFO - autobots, rolling out!
+2024-09-11 12:01:08,449 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 12:01:37,187 - INFO - Serving file _sss_0.jpg
+2024-09-11 12:03:54,317 - INFO - autobots, rolling out!
+2024-09-11 12:03:58,476 - INFO - autobots, rolling out!
+2024-09-11 12:10:21,963 - INFO - autobots, rolling out!
+2024-09-11 12:10:26,115 - INFO - autobots, rolling out!
+2024-09-11 12:11:05,006 - INFO - autobots, rolling out!
+2024-09-11 12:11:09,129 - INFO - autobots, rolling out!
+2024-09-11 13:10:12,885 - INFO - autobots, rolling out!
+2024-09-11 13:10:17,217 - INFO - autobots, rolling out!
+2024-09-11 13:16:52,276 - INFO - autobots, rolling out!
+2024-09-11 13:18:48,300 - INFO - autobots, rolling out!
+2024-09-11 13:18:52,606 - INFO - autobots, rolling out!
+2024-09-11 13:19:20,445 - INFO - autobots, rolling out!
+2024-09-11 13:23:29,336 - INFO - autobots, rolling out!
+2024-09-11 13:23:33,631 - INFO - autobots, rolling out!
+2024-09-11 13:27:36,604 - INFO - autobots, rolling out!
+2024-09-11 13:27:40,819 - INFO - autobots, rolling out!
+2024-09-11 13:32:47,722 - INFO - autobots, rolling out!
+2024-09-11 13:32:57,110 - INFO - autobots, rolling out!
+2024-09-11 13:33:13,055 - INFO - autobots, rolling out!
+2024-09-11 13:40:54,764 - INFO - autobots, rolling out!
+2024-09-11 13:40:57,934 - INFO - autobots, rolling out!
+2024-09-11 13:41:08,769 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 13:45:53,034 - INFO - autobots, rolling out!
+2024-09-11 13:45:56,265 - INFO - autobots, rolling out!
+2024-09-11 13:46:08,010 - INFO - autobots, rolling out!
+2024-09-11 13:46:18,543 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 14:05:05,670 - INFO - autobots, rolling out!
+2024-09-11 14:05:08,789 - INFO - autobots, rolling out!
+2024-09-11 14:05:15,255 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 14:05:35,126 - INFO - autobots, rolling out!
+2024-09-11 14:05:43,849 - INFO - autobots, rolling out!
+2024-09-11 14:11:41,421 - INFO - autobots, rolling out!
+2024-09-11 14:11:44,556 - INFO - autobots, rolling out!
+2024-09-11 14:17:00,633 - INFO - autobots, rolling out!
+2024-09-11 14:17:03,786 - INFO - autobots, rolling out!
+2024-09-11 14:31:51,538 - INFO - autobots, rolling out!
+2024-09-11 14:31:51,539 - ERROR - Error starting Flask application: name 'cytypes' is not defined
+2024-09-11 14:33:06,247 - INFO - autobots, rolling out!
+2024-09-11 14:33:06,247 - ERROR - Error starting Flask application: name 'cytypes' is not defined
+2024-09-11 14:34:19,581 - INFO - autobots, rolling out!
+2024-09-11 14:34:48,308 - INFO - autobots, rolling out!
+2024-09-11 14:35:08,141 - INFO - autobots, rolling out!
+2024-09-11 14:35:34,433 - INFO - autobots, rolling out!
+2024-09-11 14:35:45,176 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 14:40:31,514 - INFO - autobots, rolling out!
+2024-09-11 14:41:39,456 - INFO - autobots, rolling out!
+2024-09-11 14:42:24,820 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])

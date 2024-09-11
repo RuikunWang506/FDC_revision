@@ -19,16 +19,13 @@ from io import StringIO
 from user_agents import parse
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-import openai
-from openai import OpenAIError, RateLimitError
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
 from PIL import Image, ImageOps
 import os
 import subprocess
-
-
+from upload_processor import process_upload  # Import the processing function
 
 # New imports
 import base64
@@ -1048,7 +1045,7 @@ def register_routes(app):
             return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
         
         return render_template('big_img.html', quote=urllib.parse.quote)
-    
+    '''
     @app.route('/reindex', methods=['GET'])
     def reindex():
         try:
@@ -1068,7 +1065,7 @@ def register_routes(app):
 
         # Return the result as JSON to the AJAX call
         return jsonify({'reindex_result': reindex_result})
-    
+    '''
     @app.route('/download_all_images_1_1')
     def download_all_images_1_1():
         current_user = session['username']
@@ -1176,45 +1173,6 @@ def register_routes(app):
             credentials = json.load(file)
         return credentials
 
-    def setup_openai():
-        credentials = load_credentials()
-        openai.api_key = credentials['openai_api_key']
-        return openai
-
-    # Set up OpenAI API key
-    setup_openai()
-
-    def get_gpt_response(message, retries=5):
-        try:
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": message,
-                    },
-                ],
-            )
-            return completion.choices[0].message['content']
-        except RateLimitError:
-            if retries > 0:
-                delay = (6 - retries) ** 2  # Exponential backoff
-                time.sleep(delay)
-                return get_gpt_response(message, retries - 1)
-            else:
-                return "Error: Rate limit exceeded. Please try again later."
-        except OpenAIError as e:
-            return f"An OpenAI error occurred: {str(e)}"
-        except Exception as e:
-            return f"An error occurred: {str(e)}"
-
-    @app.route('/chat', methods=['POST'])
-    def chat():
-        data = request.get_json()
-        user_message = data.get('message', '')
-        gpt_response = get_gpt_response(user_message)
-        return jsonify({'response': gpt_response})
-
     @app.route('/upload_center', methods=['GET', 'POST'])
     def upload_center():
         if 'username' not in session:
@@ -1224,113 +1182,11 @@ def register_routes(app):
         if request.method == 'POST':
             files = request.files.getlist('files')
             desired_filename = request.form.get('filename', 'output_image')
-            output_urls = []
 
-            # EasyOCR and OpenCV logic
-            import easyocr
-            import cv2
-            import numpy as np
-            from config import Config
-
-            reader = easyocr.Reader(['en'])
-
-            for i, file in enumerate(files):
-                # Use the file's stream without saving to disk
-                in_memory_file = np.frombuffer(file.read(), np.uint8)
-                image = cv2.imdecode(in_memory_file, cv2.IMREAD_COLOR)
-
-                # Process image with EasyOCR and cv2
-                gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                result = reader.readtext(gray_image)
-
-                for detection in result:
-                    top_left = tuple(map(int, detection[0][0]))
-                    bottom_right = tuple(map(int, detection[0][2]))
-                    box_width = bottom_right[0] - top_left[0]
-                    box_height = bottom_right[1] - top_left[1]
-                    text = detection[1]
-
-                    if text.replace('.', '', 1).isdigit():
-                        inches_value = float(text)
-                        cm_value = inches_value * 2.54
-                        text_with_inches = f"{inches_value} inches"
-                        text_with_cm = f"{cm_value:.2f} cm"
-
-                        # Erase the original text
-                        cv2.rectangle(image, top_left, bottom_right, (255, 255, 255), -1)
-
-                        # Calculate text sizes
-                        (inches_text_w, inches_text_h), _ = cv2.getTextSize(text_with_inches, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-                        (cm_text_w, cm_text_h), _ = cv2.getTextSize(text_with_cm, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-
-                        # Find the center of the original bounding box
-                        center_x = top_left[0] + box_width // 2
-                        center_y = top_left[1] + box_height // 2
-
-                        # Move the text 30 pixels to the left
-                        move_left = 30
-
-                        # Calculate the positions for the inches and cm text
-                        inches_text_x = center_x - inches_text_w // 2 - move_left
-                        inches_text_y = center_y - 10  # Align inches text to be slightly above center
-                        cm_text_x = center_x - cm_text_w // 2 - move_left
-                        cm_text_y = inches_text_y + inches_text_h + 10  # Align cm text directly below inches text
-
-                        # Draw the background rectangle behind both lines of text
-                        background_padding = 5  # Reduced padding to make the background closer to the text
-                        background_top_left_x = min(inches_text_x, cm_text_x) - background_padding
-                        background_top_left_y = inches_text_y - inches_text_h - background_padding
-                        background_bottom_right_x = max(inches_text_x + inches_text_w, cm_text_x + cm_text_w) + background_padding
-                        background_bottom_right_y = cm_text_y + cm_text_h + background_padding
-
-                        # Draw the background rectangle
-                        cv2.rectangle(image, (background_top_left_x, background_top_left_y), 
-                                    (background_bottom_right_x, background_bottom_right_y), 
-                                    (255, 255, 255), -1)
-
-                        # Add inches text
-                        cv2.putText(image, text_with_inches, (inches_text_x, inches_text_y), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
-
-                        # Add centimeters text directly below
-                        cv2.putText(image, text_with_cm, (cm_text_x, cm_text_y), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
-
-                # Get current image dimensions
-                height, width, _ = image.shape
-
-                # Make the image square by padding it to 1:1 ratio
-                if width > height:
-                    padding = (width - height) // 2
-                    image_square = cv2.copyMakeBorder(image, padding, padding, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255))
-                elif height > width:
-                    padding = (height - width) // 2
-                    image_square = cv2.copyMakeBorder(image, 0, 0, padding, padding, cv2.BORDER_CONSTANT, value=(255, 255, 255))
-                else:
-                    image_square = image  # The image is already square
-
-                # Save the updated image in memory (without writing the original to disk)
-                output_image_path = os.path.join(Config.Dimension_DIR, f"{desired_filename}_sss_{i}.jpg")
-                cv2.imwrite(output_image_path, image_square)
-
-                output_urls.append({
-                    'url': url_for('serve_temp_size_pic', path=f"{desired_filename}_sss_{i}.jpg"),
-                    'name': f"{desired_filename}_sss_{i}.jpg"
-                })
+            # Use the function from upload_processor.py
+            output_urls = process_upload(files, desired_filename)
 
             return jsonify(output_urls)
 
         return render_template('upload_center.html')
     
-    '''
-    client = OpenAI(
-    # defaults to os.environ.get("OPENAI_API_KEY")
-    api_key="private",
-)
-
-def chat_gpt(prompt):
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content.strip()'''

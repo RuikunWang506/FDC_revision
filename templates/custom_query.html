@@ -158,18 +158,7 @@
                     {{ memo_html | safe }}
                 {% endif %}
             </div>
-            <div class="chat-container col-12" style="border: 1px solid #ccc; padding: 10px; height: 300px; margin-top: 20px;">
-                <h5>Chat with GPT</h5>
-                <div id="chat-log" style="height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
-                    <!-- Chat messages will be appended here -->
-                </div>
-                <div class="input-group">
-                    <input type="text" id="chat-input" class="form-control" placeholder="Type your message here..." onkeydown="if(event.key === 'Enter'){sendMessage();}">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="button" onclick="sendMessage()">Send</button>
-                    </div>
-                </div>
-            </div>
+            
         </div>
         <div class="sql-input col-8">
             <form method="POST" action="/geek_tools/custom_query" id="query_form" style="display: flex; flex-direction: column; height: 100%;">
@@ -264,46 +253,6 @@
 
         const resultNumber = diffDays + 81088; // Add 81088 to get the final number
         document.getElementById('dateToNumberResult').textContent = resultNumber;
-    }
-
-    function sendMessage() {
-        const inputField = document.getElementById('chat-input');
-        const message = inputField.value.trim();
-        if (message === "") return;
-
-        // Append user's message to chat log
-        const chatLog = document.getElementById('chat-log');
-        const userMessageDiv = document.createElement('div');
-        userMessageDiv.textContent = "You: " + message;
-        chatLog.appendChild(userMessageDiv);
-
-        // Clear input field
-        inputField.value = "";
-
-        // Scroll to the bottom of the chat log
-        chatLog.scrollTop = chatLog.scrollHeight;
-
-        // Send message to the Flask backend
-        fetch('/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message: message }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Append GPT's response to chat log
-            const botMessageDiv = document.createElement('div');
-            botMessageDiv.textContent = "GPT: " + data.response;
-            chatLog.appendChild(botMessageDiv);
-
-            // Scroll to the bottom of the chat log
-            chatLog.scrollTop = chatLog.scrollHeight;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
     }
 
     // Event listeners to trigger the conversion when user inputs date
