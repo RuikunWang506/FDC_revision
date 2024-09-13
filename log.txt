@@ -25725,3 +25725,2365 @@ AttributeError: 'NoneType' object has no attribute 'write'
 2024-09-11 14:40:31,514 - INFO - autobots, rolling out!
 2024-09-11 14:41:39,456 - INFO - autobots, rolling out!
 2024-09-11 14:42:24,820 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 14:45:03,015 - ERROR - Exception on /big_img [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 1047, in big_img
+    return render_template('big_img.html', quote=urllib.parse.quote)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1304, in render
+    self.environment.handle_exception()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\big_img.html", line 214, in top-level template code
+    url: "{{ url_for('reindex') }}",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1084, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1073, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'reindex'. Did you mean 'login' instead?
+2024-09-11 14:45:41,752 - ERROR - Exception on /big_img [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 1047, in big_img
+    return render_template('big_img.html', quote=urllib.parse.quote)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1304, in render
+    self.environment.handle_exception()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\big_img.html", line 214, in top-level template code
+    url: "{{ url_for('reindex') }}",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1084, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1073, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'reindex'. Did you mean 'login' instead?
+2024-09-11 14:45:44,486 - ERROR - Exception on /big_img [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 1047, in big_img
+    return render_template('big_img.html', quote=urllib.parse.quote)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1304, in render
+    self.environment.handle_exception()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\big_img.html", line 214, in top-level template code
+    url: "{{ url_for('reindex') }}",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1084, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1073, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'reindex'. Did you mean 'login' instead?
+2024-09-11 14:46:09,727 - ERROR - Exception on /big_img [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 1047, in big_img
+    return render_template('big_img.html', quote=urllib.parse.quote)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1304, in render
+    self.environment.handle_exception()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\big_img.html", line 214, in top-level template code
+    url: "{{ url_for('reindex') }}",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1084, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1073, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'reindex'. Did you mean 'login' instead?
+2024-09-11 14:46:45,851 - INFO - autobots, rolling out!
+2024-09-11 14:46:49,761 - ERROR - Exception on /big_img [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 1047, in big_img
+    return render_template('big_img.html', quote=urllib.parse.quote)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1304, in render
+    self.environment.handle_exception()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\big_img.html", line 214, in top-level template code
+    url: "{{ url_for('reindex') }}",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1084, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1073, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'reindex'. Did you mean 'login' instead?
+2024-09-11 14:46:53,925 - ERROR - Exception on /big_img [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 1047, in big_img
+    return render_template('big_img.html', quote=urllib.parse.quote)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 1304, in render
+    self.environment.handle_exception()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\jinja2\environment.py", line 939, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\FDC_FLASK_APP\templates\big_img.html", line 214, in top-level template code
+    url: "{{ url_for('reindex') }}",
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1084, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1073, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'reindex'. Did you mean 'login' instead?
+2024-09-11 14:47:46,709 - INFO - autobots, rolling out!
+2024-09-11 14:47:51,397 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 14:48:04,782 - INFO - Item lookup for yeti with input: t3305
+2024-09-11 14:48:11,457 - INFO - yeti is looking up order number: 1547
+2024-09-11 14:48:11,737 - INFO - yeti searched for order number: 1547
+2024-09-11 14:48:18,218 - INFO - yeti downloaded the file: List-20240911-144817.xlsx
+2024-09-11 14:48:19,309 - INFO - File List-20240911-144817.xlsx downloaded
+2024-09-11 15:23:35,554 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 15:26:40,024 - INFO - Item lookup for yeti with input: s1402
+2024-09-11 15:28:22,127 - INFO - Item lookup for yeti with input: n1810
+2024-09-11 15:31:58,052 - INFO - Serving file N1810_sss_0.jpg
+2024-09-11 15:33:19,273 - INFO - autobots, rolling out!
+2024-09-11 15:33:25,750 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 15:33:46,588 - INFO - Serving file N1810_sss_0.jpg
+2024-09-11 15:35:03,109 - INFO - Serving file N1810_sss_0.jpg
+2024-09-11 15:38:33,595 - INFO - Item lookup for yeti with input: n1810
+2024-09-11 15:46:00,661 - INFO - Item lookup for yeti with input: n1806
+2024-09-11 15:48:26,191 - INFO - Serving file N1806_sss_0.jpg
+2024-09-11 16:01:20,080 - INFO - Item lookup for yeti with input: n1955
+2024-09-11 16:02:37,628 - INFO - Serving file N1955_sss_0.jpg
+2024-09-11 16:56:41,720 - INFO - Item lookup for yeti with input: l1494
+2024-09-11 16:58:59,002 - INFO - Serving file L1494_sss_0.jpg
+2024-09-11 17:04:52,650 - INFO - autobots, rolling out!
+2024-09-11 17:05:16,345 - INFO - autobots, rolling out!
+2024-09-11 17:05:22,299 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 17:06:34,965 - INFO - autobots, rolling out!
+2024-09-11 17:06:38,238 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 17:32:37,825 - INFO - Serving file N1432_sss_0.jpg
+2024-09-11 17:34:32,218 - INFO - Serving file N1513_sss_0.jpg
+2024-09-11 17:35:56,414 - INFO - Serving file N1844_sss_0.jpg
+2024-09-11 17:36:39,669 - INFO - Serving file N1844_sss_0.jpg
+2024-09-11 17:37:49,354 - INFO - Serving file N1844_sss_0.jpg
+2024-09-11 17:40:40,746 - INFO - Item lookup for yeti with input: n1432
+2024-09-11 17:42:10,392 - INFO - Serving file N1432_sss_0_sss_0.jpg
+2024-09-11 17:43:21,594 - INFO - Item lookup for yeti with input: n1513
+2024-09-11 17:43:57,716 - INFO - Serving file N1513_sss_0_sss_0.jpg
+2024-09-11 17:45:10,330 - INFO - Serving file N1513_sss_0.jpg
+2024-09-11 17:46:12,782 - INFO - Serving file N1513_sss_0.jpg
+2024-09-11 17:50:59,197 - INFO - Serving file N1513_sss_0.jpg
+2024-09-11 17:52:43,624 - INFO - Serving file N1845_sss_0.jpg
+2024-09-11 17:54:32,679 - INFO - Serving file N1847_sss_0.jpg
+2024-09-11 17:55:04,010 - INFO - Serving file N1847_sss_0.jpg
+2024-09-11 17:56:36,434 - INFO - Serving file N1856_sss_0.jpg
+2024-09-11 17:56:57,397 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 17:57:27,972 - INFO - Serving file N1856_sss_0.jpg
+2024-09-11 17:59:56,782 - INFO - autobots, rolling out!
+2024-09-11 18:00:07,760 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:00:43,283 - INFO - Serving file N1856_sss_0.jpg
+2024-09-11 18:02:51,361 - INFO - autobots, rolling out!
+2024-09-11 18:03:17,483 - INFO - autobots, rolling out!
+2024-09-11 18:03:22,918 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:03:48,196 - INFO - Serving file N1856_sss_0.jpg
+2024-09-11 18:04:14,328 - INFO - Item lookup for yeti with input: n1862
+2024-09-11 18:05:26,148 - INFO - Serving file N1862_sss_0.jpg
+2024-09-11 18:05:55,947 - INFO - Serving file N1862_sss_0.jpg
+2024-09-11 18:07:31,590 - INFO - Serving file N1868_sss_0.jpg
+2024-09-11 18:08:34,922 - INFO - Serving file N1870_sss_0.jpg
+2024-09-11 18:09:16,407 - INFO - Serving file N1870_sss_0.jpg
+2024-09-11 18:10:39,421 - INFO - Serving file N1939_sss_0.jpg
+2024-09-11 18:12:02,011 - INFO - Serving file N1941_sss_0.jpg
+2024-09-11 18:15:14,810 - INFO - Serving file N1962_sss_0.jpg
+2024-09-11 18:16:28,012 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:16:33,120 - INFO - Serving file N1963_sss_0.jpg
+2024-09-11 18:17:39,424 - INFO - Serving file N2137_sss_0.jpg
+2024-09-11 18:18:49,911 - INFO - Serving file N2139_sss_0.jpg
+2024-09-11 18:19:57,356 - INFO - Serving file N2141_sss_0.jpg
+2024-09-11 18:21:13,793 - INFO - Serving file s1186_sss_0.jpg
+2024-09-11 18:21:44,527 - INFO - Serving file s1186_sss_0.jpg
+2024-09-11 18:22:19,669 - INFO - Serving file s1186_sss_0.jpg
+2024-09-11 18:23:54,552 - INFO - Serving file s1197_sss_0.jpg
+2024-09-11 18:25:30,704 - INFO - Serving file s1198_sss_0.jpg
+2024-09-11 18:26:40,480 - INFO - Serving file s1203_sss_0.jpg
+2024-09-11 18:27:09,883 - INFO - Serving file s1203_sss_0.jpg
+2024-09-11 18:27:36,250 - INFO - Item lookup for ahua with input: el1854
+2024-09-11 18:27:52,833 - INFO - Serving file s1203_sss_0.jpg
+2024-09-11 18:29:55,878 - INFO - Serving file s1203_sss_0.jpg
+2024-09-11 18:30:31,319 - INFO - Serving file s1203_sss_0.jpg
+2024-09-11 18:31:09,625 - INFO - Serving file s1203_sss_0.jpg
+2024-09-11 18:33:22,438 - INFO - Item lookup for ahua with input: en1765
+2024-09-11 18:33:31,522 - INFO - Item lookup for yeti with input: n1862
+2024-09-11 18:33:53,205 - INFO - autobots, rolling out!
+2024-09-11 18:34:02,178 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:34:47,101 - INFO - Serving file s1203_sss_0.jpg
+2024-09-11 18:36:13,675 - INFO - Serving file s1222_sss_0.jpg
+2024-09-11 18:36:42,174 - INFO - autobots, rolling out!
+2024-09-11 18:37:37,995 - INFO - Serving file s1228_sss_0.jpg
+2024-09-11 18:38:01,913 - INFO - Serving file s1228_sss_0.jpg
+2024-09-11 18:39:09,206 - INFO - Serving file s1248_sss_0.jpg
+2024-09-11 18:40:01,912 - INFO - Serving file s1287_sss_0.jpg
+2024-09-11 18:40:52,092 - INFO - User nicye has logged in. IP: 122.240.210.170, Browser: Chrome 125.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:41:09,947 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:41:49,567 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:43:01,688 - INFO - autobots, rolling out!
+2024-09-11 18:43:15,510 - INFO - User nicye has logged in. IP: 122.240.210.170, Browser: Chrome 125.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:43:18,723 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:43:22,982 - INFO - Item lookup for nicye with input: s1245
+2024-09-11 18:43:29,308 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:43:55,606 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:44:09,470 - INFO - Item lookup for nicye with input: t3225
+2024-09-11 18:44:23,723 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:47:06,332 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:47:20,307 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:20,308 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:39,053 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:39,093 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:39,095 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:39,100 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:39,101 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:43,597 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:47:59,019 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:48:07,886 - INFO - Item lookup for nicye with input: s1290
+2024-09-11 18:48:17,227 - INFO - Item lookup for nicye with input: s1290
+2024-09-11 18:48:26,273 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:48:26,288 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:48:26,327 - INFO - Item lookup for nicye with input: t3225
+2024-09-11 18:48:26,396 - ERROR - Exception on /item_lookup/t3225 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:48:26,400 - ERROR - Exception on /item_lookup/t3225 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:48:26,404 - ERROR - Exception on /item_lookup/t3225 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:48:26,530 - INFO - Item lookup for nicye with input: s1290
+2024-09-11 18:48:31,686 - INFO - User nicye has logged in. IP: 122.240.210.170, Browser: Chrome 125.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 18:48:35,774 - ERROR - Exception on /item_lookup/t3225 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:48:40,357 - INFO - Item lookup for nicye with input: s1290
+2024-09-11 18:48:40,384 - INFO - Item lookup for nicye with input: s1290
+2024-09-11 18:48:53,754 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:48:54,425 - ERROR - Exception on /item_lookup/s1290 [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 227, in item_lookup
+    sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:48:54,916 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:48:54,925 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:49:08,077 - ERROR - Exception on /temu [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 852, in temuroute
+    sheet_data_html = get_temu_listings_data()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 825, in get_temu_listings_data
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:49:51,902 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:49:59,865 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 938, in execute
+    raise HttpError(resp, content, uri=self.uri)
+googleapiclient.errors.HttpError: <HttpError 500 when requesting https://sheets.googleapis.com/v4/spreadsheets/1JvogexnVvPEPTxeuXhqt5zvYh7vMzOqhxCe6yxBWqaI/values:batchGet?ranges=ONLINE_CATALOG&ranges=ONLINE_CATALOG%21E1&alt=json returned "Internal error encountered.". Details: "Internal error encountered.">
+2024-09-11 18:50:46,302 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:50:51,200 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:50:51,882 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:50:51,942 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:50:52,114 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:06,874 - INFO - Serving file s1288_sss_0.jpg
+2024-09-11 18:51:06,912 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:10,698 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:14,791 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:30,573 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:31,193 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:31,459 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:31,522 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:31,538 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:31,631 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:51:31,801 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:52:03,630 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:52:05,776 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:52:14,553 - ERROR - Exception on /item_lookup [GET]
+Traceback (most recent call last):
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 183, in item_lookup
+    _, e1_value = get_sheet_data_and_e1_value('')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\FDC_FLASK_APP\routes.py", line 105, in get_sheet_data_and_e1_value
+    result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\_helpers.py", line 130, in positional_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 923, in execute
+    resp, content = _retry_request(
+                    ^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 222, in _retry_request
+    raise exception
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\googleapiclient\http.py", line 191, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\google_auth_httplib2.py", line 218, in request
+    response, content = self.http.request(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1724, in request
+    (response, content) = self._request(
+                          ^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1444, in _request
+    (response, content) = self._conn_request(conn, request_uri, method, body, headers)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\site-packages\httplib2\__init__.py", line 1396, in _conn_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1419, in getresponse
+    response.begin()
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 331, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 292, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1253, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\stream\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 1105, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+2024-09-11 18:52:51,061 - INFO - Serving file s1292_sss_0.jpg
+2024-09-11 18:54:12,100 - INFO - Serving file s1292_sss_0.jpg
+2024-09-11 18:57:10,279 - INFO - Serving file s1293_sss_0.jpg
+2024-09-11 18:59:04,297 - INFO - Serving file s1339_sss_0.jpg
+2024-09-11 19:00:01,005 - INFO - Serving file s1340_sss_0.jpg
+2024-09-11 19:01:03,027 - INFO - Serving file s1341_sss_0.jpg
+2024-09-11 19:03:08,454 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 19:03:16,219 - INFO - Serving file s1341_sss_0.jpg
+2024-09-11 19:04:31,133 - INFO - User ahua has logged in. IP: 183.6.8.18, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-11 19:04:36,202 - INFO - Serving file s1341_sss_0.jpg
+2024-09-11 19:04:42,171 - INFO - Item lookup for ahua with input: en1766
+2024-09-11 19:04:47,552 - INFO - Item lookup for ahua with input: el1766
+2024-09-11 19:06:03,588 - INFO - Serving file s1341_sss_0.jpg
+2024-09-11 19:08:45,303 - INFO - Serving file s1350_sss_0.jpg
+2024-09-11 19:09:38,887 - INFO - Serving file s1350_sss_0.jpg
+2024-09-11 19:12:32,595 - INFO - Serving file s3004_sss_0.jpg
+2024-09-11 19:13:16,474 - INFO - Serving file s3004_sss_0.jpg
+2024-09-11 19:14:36,498 - INFO - Serving file s3028_sss_0.jpg
+2024-09-11 19:37:19,713 - INFO - Item lookup for ahua with input: en1817
+2024-09-11 19:37:20,399 - INFO - Item lookup for ahua with input: en1817
+2024-09-11 19:54:27,792 - INFO - Item lookup for ahua with input: en1849
+2024-09-11 20:00:44,044 - INFO - Item lookup for ahua with input: en1860
+2024-09-11 20:34:25,995 - INFO - Item lookup for ahua with input: en1877
+2024-09-11 20:43:54,628 - INFO - Item lookup for ahua with input: en1884
+2024-09-11 20:51:20,062 - INFO - Item lookup for ahua with input: en2154
+2024-09-11 20:56:57,195 - INFO - Item lookup for ahua with input: en6064
+2024-09-11 23:27:10,495 - INFO - Item lookup for ahua with input: es1134
+2024-09-11 23:43:51,118 - INFO - Item lookup for ahua with input: es1159
+2024-09-11 23:51:52,617 - INFO - Item lookup for ahua with input: es1216
+2024-09-11 23:58:55,577 - INFO - Item lookup for ahua with input: es1218
+2024-09-12 00:07:30,163 - INFO - Item lookup for ahua with input: es1271
+2024-09-12 00:12:49,550 - INFO - Item lookup for ahua with input: es1272
+2024-09-12 00:19:15,845 - INFO - Item lookup for ahua with input: es1323
+2024-09-12 00:28:51,073 - INFO - Item lookup for ahua with input: es1324
+2024-09-12 00:33:42,881 - INFO - Item lookup for ahua with input: es1331
+2024-09-12 00:37:52,401 - INFO - Item lookup for ahua with input: es1382
+2024-09-12 00:38:11,921 - INFO - Item lookup for ahua with input: es1331
+2024-09-12 00:43:53,842 - INFO - Item lookup for ahua with input: es1383
+2024-09-12 01:09:11,488 - INFO - User nicye has logged in. IP: 122.240.210.170, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 01:10:01,506 - INFO - Item lookup for nicye with input: l1851
+2024-09-12 01:12:24,624 - INFO - Item lookup for nicye with input: t3279
+2024-09-12 01:13:50,487 - INFO - Item lookup for nicye with input: s1426
+2024-09-12 01:15:02,775 - INFO - Item lookup for nicye with input: s1412
+2024-09-12 01:15:55,963 - INFO - Item lookup for nicye with input: s1405
+2024-09-12 01:16:49,473 - INFO - Item lookup for nicye with input: et2949
+2024-09-12 01:17:38,072 - INFO - Item lookup for nicye with input: s1424
+2024-09-12 01:19:15,010 - INFO - Item lookup for nicye with input: s1245
+2024-09-12 01:20:05,146 - INFO - Item lookup for nicye with input: s1240
+2024-09-12 01:20:51,940 - INFO - Item lookup for nicye with input: s1110
+2024-09-12 01:24:14,610 - INFO - Item lookup for nicye with input: n3007
+2024-09-12 01:24:52,082 - INFO - Item lookup for nicye with input: n2013
+2024-09-12 01:26:48,145 - INFO - Item lookup for nicye with input: n1971
+2024-09-12 01:27:36,317 - INFO - Item lookup for nicye with input: n1811
+2024-09-12 01:28:21,498 - INFO - Item lookup for nicye with input: n1547
+2024-09-12 01:29:06,825 - INFO - Item lookup for nicye with input: t3255
+2024-09-12 01:29:52,752 - INFO - Item lookup for nicye with input: t3243
+2024-09-12 01:30:40,058 - INFO - Item lookup for nicye with input: t3142
+2024-09-12 01:31:28,009 - INFO - Item lookup for nicye with input: s1112
+2024-09-12 01:36:53,484 - INFO - Item lookup for nicye with input: l1830
+2024-09-12 01:37:39,553 - INFO - Item lookup for nicye with input: es1421
+2024-09-12 01:38:37,771 - INFO - Item lookup for nicye with input: es1386
+2024-09-12 01:40:25,615 - INFO - Item lookup for nicye with input: el1855
+2024-09-12 01:41:05,433 - INFO - Item lookup for nicye with input: t3132
+2024-09-12 01:41:55,437 - INFO - Item lookup for nicye with input: n2136
+2024-09-12 01:46:17,199 - INFO - Item lookup for nicye with input: es1414
+2024-09-12 01:46:57,400 - INFO - Item lookup for nicye with input: t3096
+2024-09-12 01:47:38,578 - INFO - Item lookup for nicye with input: s1428
+2024-09-12 01:48:20,103 - INFO - Item lookup for nicye with input: s1327
+2024-09-12 01:49:27,920 - INFO - Item lookup for nicye with input: s1306
+2024-09-12 01:50:25,931 - INFO - Item lookup for nicye with input: s1327
+2024-09-12 01:51:02,926 - INFO - Item lookup for nicye with input: s1306
+2024-09-12 01:52:08,562 - INFO - Item lookup for nicye with input: n2071
+2024-09-12 01:53:06,955 - INFO - Item lookup for nicye with input: n1835
+2024-09-12 01:53:48,987 - INFO - Item lookup for nicye with input: n1814
+2024-09-12 01:54:50,016 - INFO - Item lookup for nicye with input: n1782
+2024-09-12 01:55:32,974 - INFO - Item lookup for nicye with input: n1745
+2024-09-12 01:58:41,860 - INFO - Item lookup for nicye with input: m1141
+2024-09-12 01:59:38,749 - INFO - Item lookup for nicye with input: m1121
+2024-09-12 02:00:27,737 - INFO - Item lookup for nicye with input: et3167
+2024-09-12 02:01:04,468 - INFO - Item lookup for nicye with input: t3255
+2024-09-12 10:08:22,847 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 10:08:28,453 - INFO - Item lookup for yeti with input: t3305
+2024-09-12 10:09:59,010 - INFO - Item lookup for yeti with input: s1211
+2024-09-12 10:10:56,199 - INFO - Item lookup for yeti with input: s1146
+2024-09-12 10:13:39,975 - INFO - Item lookup for yeti with input: t3305
+2024-09-12 10:15:04,176 - INFO - Item lookup for yeti with input: t3305
+2024-09-12 11:16:33,533 - INFO - User yeti has logged in. IP: 192.168.254.35, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://192.168.254.30:5555/login, Referrer: http://192.168.254.30:5555/login, Query Params: ImmutableMultiDict([])
+2024-09-12 11:17:10,990 - INFO - User yeti has logged in. IP: 172.226.3.209, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 11:17:28,624 - INFO - Item lookup for yeti with input: s1211,s1146
+2024-09-12 11:25:16,288 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 11:25:24,151 - INFO - Item lookup for yeti with input: s1146
+2024-09-12 11:36:27,877 - INFO - Item lookup for yeti with input: t3109
+2024-09-12 11:39:52,567 - INFO - Item lookup for yeti with input: t3007,n1967
+2024-09-12 11:42:55,033 - INFO - Item lookup for yeti with input: 308
+2024-09-12 11:43:31,678 - INFO - Item lookup for yeti with input: t3007
+2024-09-12 16:22:24,403 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 16:22:31,346 - INFO - Item lookup for yeti with input: n2199
+2024-09-12 16:22:40,754 - INFO - Item lookup for yeti with input: n2209
+2024-09-12 16:22:43,948 - INFO - Item lookup for yeti with input: n2299
+2024-09-12 16:23:55,239 - INFO - Item lookup for yeti with input: n2229
+2024-09-12 16:34:03,988 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 16:34:34,191 - INFO - Item lookup for yeti with input: n1432
+2024-09-12 17:07:35,266 - INFO - Item lookup for yeti with input: n1432
+2024-09-12 17:13:41,355 - INFO - Item lookup for yeti with input: n1513
+2024-09-12 17:14:41,427 - INFO - yeti downloaded the file: List-20240912-171438.xlsx
+2024-09-12 17:14:43,272 - INFO - File List-20240912-171438.xlsx downloaded
+2024-09-12 17:16:12,799 - INFO - Item lookup for yeti with input: n1513
+2024-09-12 17:25:16,825 - INFO - Item lookup for yeti with input: n1844
+2024-09-12 17:40:23,828 - INFO - autobots, rolling out!
+2024-09-12 17:40:30,984 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 17:44:07,637 - INFO - Item lookup for yeti with input: t3305
+2024-09-12 17:44:27,246 - INFO - autobots, rolling out!
+2024-09-12 17:44:38,278 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 17:46:59,139 - INFO - autobots, rolling out!
+2024-09-12 17:47:03,096 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 17:48:46,223 - INFO - autobots, rolling out!
+2024-09-12 17:48:50,246 - INFO - autobots, rolling out!
+2024-09-12 17:48:54,740 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 18:01:26,230 - INFO - autobots, rolling out!
+2024-09-12 18:01:34,680 - INFO - autobots, rolling out!
+2024-09-12 18:02:24,325 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 18:03:20,599 - INFO - autobots, rolling out!
+2024-09-12 18:04:28,264 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 18:05:48,491 - INFO - Item lookup for ahua with input: n1223
+2024-09-12 18:06:30,291 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 18:36:43,821 - INFO - autobots, rolling out!
+2024-09-12 18:36:48,152 - INFO - autobots, rolling out!
+2024-09-12 19:13:50,126 - INFO - autobots, rolling out!
+2024-09-12 19:13:50,310 - INFO - autobots, rolling out!
+2024-09-12 19:14:26,066 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 19:16:33,548 - INFO - autobots, rolling out!
+2024-09-12 19:16:34,219 - INFO - autobots, rolling out!
+2024-09-12 19:16:36,382 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 19:42:21,034 - INFO - autobots, rolling out!
+2024-09-12 19:42:25,101 - INFO - autobots, rolling out!
+2024-09-12 19:42:27,026 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 19:45:57,259 - INFO - autobots, rolling out!
+2024-09-12 19:46:01,313 - INFO - autobots, rolling out!
+2024-09-12 19:46:03,074 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 19:48:35,005 - INFO - autobots, rolling out!
+2024-09-12 19:48:46,695 - INFO - autobots, rolling out!
+2024-09-12 19:48:49,740 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 19:51:24,435 - INFO - Item lookup for yeti with input: t3305
+2024-09-12 21:23:05,621 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:48:27,583 - INFO - autobots, rolling out!
+2024-09-12 21:49:29,144 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:53:15,315 - INFO - autobots, rolling out!
+2024-09-12 21:53:30,416 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:54:03,730 - INFO - autobots, rolling out!
+2024-09-12 21:54:07,769 - INFO - autobots, rolling out!
+2024-09-12 21:54:13,569 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:54:50,744 - INFO - autobots, rolling out!
+2024-09-12 21:55:06,473 - INFO - autobots, rolling out!
+2024-09-12 21:55:09,552 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:55:33,710 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:33,930 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:34,150 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:34,354 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:34,576 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:34,785 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:34,973 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:35,123 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:35,315 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:35,510 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:35,694 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:35,887 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:36,096 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:36,305 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:36,518 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:36,698 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:36,909 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,093 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,213 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,331 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,451 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,567 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,673 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,777 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:37,889 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:38,018 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:38,157 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:38,358 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:38,520 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:38,683 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:38,854 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:39,032 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:39,203 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:39,354 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:39,522 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:39,688 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:39,849 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:40,015 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:40,191 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:40,354 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:40,523 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:40,686 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:40,856 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:41,001 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:41,161 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:41,338 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:41,510 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:41,643 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:41,787 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:41,921 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:42,126 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:42,277 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:42,481 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:42,648 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:42,816 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:42,992 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:43,165 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:43,335 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:43,459 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:43,664 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:43,845 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:44,028 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:44,214 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:44,409 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:44,589 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:44,764 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:44,954 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:45,086 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:45,177 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:45,298 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:45,413 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:45,532 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:45,716 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:45,894 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:46,078 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:46,263 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:46,442 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:46,624 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:46,812 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:46,992 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:47,180 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:47,379 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:47,568 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:47,753 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:47,928 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:48,116 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:48,317 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:48,495 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:48,681 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:48,865 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:49,064 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:55:49,250 - ERROR - yeti searched big_img:  t3305
+2024-09-12 21:56:15,524 - INFO - autobots, rolling out!
+2024-09-12 21:56:28,063 - INFO - autobots, rolling out!
+2024-09-12 21:56:30,496 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:57:20,178 - INFO - autobots, rolling out!
+2024-09-12 21:57:49,824 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:57:49,847 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 21:58:17,906 - INFO - yeti searched big_img:  t3305
+2024-09-12 21:58:22,050 - INFO - yeti searched big_img:  t3305
+2024-09-12 22:08:13,435 - INFO - yeti searched big_img:  t3305
+2024-09-12 22:09:35,504 - INFO - autobots, rolling out!
+2024-09-12 22:09:43,702 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 22:10:01,824 - INFO - yeti searched big_img:  t3305 ,using D:\Individual_big_picture\index.json
+2024-09-12 22:12:29,641 - INFO - autobots, rolling out!
+2024-09-12 22:12:48,342 - INFO - autobots, rolling out!
+2024-09-12 22:13:49,375 - INFO - autobots, rolling out!
+2024-09-12 22:14:00,086 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 22:30:41,914 - INFO - autobots, rolling out!
+2024-09-12 22:30:45,916 - INFO - autobots, rolling out!
+2024-09-12 22:30:51,251 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-12 22:42:10,101 - INFO - yeti searched big_img: t3305, using original index file, returned 92 files
+2024-09-12 22:44:07,227 - INFO - yeti searched big_img: t3305, using original index file, returned 92 files
+2024-09-12 23:26:36,965 - INFO - autobots, rolling out!

@@ -7,7 +7,7 @@ from flask import url_for
 
 def process_upload(files, desired_filename):
     output_urls = []
-    reader = easyocr.Reader(['en'])
+    reader = easyocr.Reader(['ch_sim','en'])
 
     for i, file in enumerate(files):
         in_memory_file = np.frombuffer(file.read(), np.uint8)
@@ -16,6 +16,8 @@ def process_upload(files, desired_filename):
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         result = reader.readtext(gray_image)
 
+        allowlist = '0123456789.'
+
         for detection in result:
             top_left = tuple(map(int, detection[0][0]))
             bottom_right = tuple(map(int, detection[0][2]))
@@ -23,8 +25,21 @@ def process_upload(files, desired_filename):
             box_height = bottom_right[1] - top_left[1]
             text = detection[1]
 
+            # Check if the text contains only allowed characters (digits and dot)
+            if not all(char in allowlist for char in text):
+                continue
+
+            # Ignore if the detected text is "1" or "0.0"
+            if text == '1' or text == '0' or text == '0.0':
+                continue
+
             if text.replace('.', '', 1).isdigit():
                 inches_value = float(text)
+                
+                # Ignore if inches_value is 0
+                if inches_value == 0.0:
+                    continue
+                
                 cm_value = inches_value * 2.54
                 text_with_inches = f"{inches_value} inches"
                 text_with_cm = f"{cm_value:.2f} cm"
@@ -68,6 +83,9 @@ def process_upload(files, desired_filename):
             image_square = cv2.copyMakeBorder(image, 0, 0, padding, padding, cv2.BORDER_CONSTANT, value=(255, 255, 255))
         else:
             image_square = image
+
+        if not desired_filename:
+            desired_filename = file.filename.rsplit('.', 1)[0]  # Use the original filename without extension
 
         output_image_path = os.path.join(Config.Dimension_DIR, f"{desired_filename}_sss_{i}.jpg")
         cv2.imwrite(output_image_path, image_square)

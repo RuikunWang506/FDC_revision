@@ -929,15 +929,24 @@ def register_routes(app):
             return jsonify(error=str(e)), 500
         
 
-    def resize_image(image_path, size=(300, 300)):
+    def resize_image(image_path, fixed_height=300):
         try:
             with Image.open(image_path) as img:
                 img = img.convert("RGB")
-                img = img.resize(size, Image.LANCZOS)
+                
+                # Calculate the aspect ratio and determine the new width
+                aspect_ratio = img.width / img.height
+                new_width = int(fixed_height * aspect_ratio)
+                
+                # Resize the image with the fixed height and calculated width
+                img = img.resize((new_width, fixed_height), Image.LANCZOS)
+                
+                # Save the image to an in-memory buffer
                 buffer = io.BytesIO()
                 img.save(buffer, format="JPEG")
                 buffer.seek(0)
                 return buffer
+            
         except Exception as e:
             app.logger.error(f"Error resizing image {image_path}: {e}")
             return None
@@ -1006,6 +1015,7 @@ def register_routes(app):
             size_mb = size / 1000
             return f"{size_mb:.2f} MB"
 
+
     @app.route('/big_img', methods=['GET', 'POST'])
     def big_img():
         if 'username' not in session:
@@ -1014,38 +1024,42 @@ def register_routes(app):
 
         if request.method == 'POST':
             search_str = request.form.get('search_str', '').lower()
-            index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
-            
+            white_background = request.form.get('white_background', False)  # Check if the checkbox is selected
+            index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'white_background_images.json') if white_background else os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
+
             if not os.path.exists(index_file):
                 return "Index file not found. Please generate the index first.", 500
 
             with open(index_file, 'r') as f:
                 index = json.load(f)
 
-            matching_files = [file_path for file_path in index if search_str.lower() in os.path.basename(file_path).lower()]
+            matching_files = [file_path for file_path in index if search_str in os.path.basename(file_path).lower()]
             
             image_data = []
             for file_path in matching_files:
                 image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
                 resized_image = resize_image(image_path)
                 if resized_image:
-                    # Get image width and height using PIL
                     with Image.open(image_path) as img:
                         width, height = img.size
-                        ratio = f"{1}:{height/width}"
+                        ratio = f"{1}:{height/width:.1f}"
 
                     modified_time = os.path.getmtime(image_path)
                     modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
-                    file_size = format_file_size(os.path.getsize(image_path) // 1024)  # Convert bytes to KB
+                    file_size = format_file_size(os.path.getsize(image_path) // 1024)  # KB
                     filename = os.path.basename(file_path)
-                    
-                    # Add ratio to image data
                     image_data.append((file_path, resized_image, modified_date, file_size, ratio))
-                    
+                    # Log the search query and index file used
+            index_type = "white background" if white_background else "original index file"
+            file_count = len(matching_files)
+            app.logger.info("%s searched big_img: %s, using %s, returned %s files", current_user, search_str, index_type, file_count)
+
             return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
         
+
         return render_template('big_img.html', quote=urllib.parse.quote)
-    '''
+    
+
     @app.route('/reindex', methods=['GET'])
     def reindex():
         try:
@@ -1065,10 +1079,10 @@ def register_routes(app):
 
         # Return the result as JSON to the AJAX call
         return jsonify({'reindex_result': reindex_result})
-    '''
+    
     @app.route('/download_all_images_1_1')
     def download_all_images_1_1():
-        current_user = session['username']
+        current_user = session.get('username')
         search_str = request.args.get('search_str', '').lower()
         index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
 
@@ -1086,12 +1100,14 @@ def register_routes(app):
                 image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
                 output_image = create_square_image(image_path)
                 if output_image:
-                    zf.writestr(os.path.basename(file_path), output_image.getvalue())
+                    # Ensure filename has a lowercase extension
+                    zip_filename = os.path.splitext(os.path.basename(file_path))[0].lower() + '.jpg'
+                    zf.writestr(zip_filename, output_image.getvalue())
 
         memory_file.seek(0)
         zip_filename = f"{search_str}_1_1.zip"
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-    
+
     @app.route('/download_selected_images_1_1', methods=['POST'])
     def download_selected_images_1_1():
         if 'username' not in session:
@@ -1108,12 +1124,14 @@ def register_routes(app):
                 file_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
                 output_image = create_square_image(file_path)
                 if output_image:
-                    zf.writestr(os.path.basename(file_path), output_image.getvalue())
+                    # Ensure filename has a lowercase extension
+                    zip_filename = os.path.splitext(os.path.basename(filename))[0].lower() + '.jpg'
+                    zf.writestr(zip_filename, output_image.getvalue())
 
         memory_file.seek(0)
         zip_filename = "selected_images_1_1.zip"
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-    
+
     def create_square_image(image_path):
         try:
             image = Image.open(image_path)
