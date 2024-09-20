@@ -18,7 +18,7 @@
             position: absolute;
             top: 30px;
             right: 30px;
-            z-index: 900; /* Decrease z-index so it doesn't overlap the sticky buttons */
+            z-index: 900;
             background-color: rgb(255, 0, 0) !important;
             padding: 5px;
             border-radius: 50%;
@@ -63,18 +63,15 @@
             color: #666;
         }
         .sticky-buttons {
-            position: -webkit-sticky;
             position: sticky;
             top: 0;
             background-color: rgb(124, 245, 140);
-            z-index: 1050; /* Increase the z-index to make sure it stays above other elements */
+            z-index: 1050;
             padding: 10px 0;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             text-align: center;
-            padding-bottom: 1px;
             border: 2px solid rgb(0, 252, 42);
         }
-
         .btn-custom {
             width: 100%;
             max-width: 250px;
@@ -101,18 +98,11 @@
             max-width: 1080px;
         }
         .custom-checkbox {
-            /* Scale the checkbox to 1.5 times its original size */
             transform: scale(3);
-            -ms-transform: scale(2); /* IE 9 */
-            -webkit-transform: scale(2); /* Safari */
-            /* Adjust the margin to align the checkbox with the label */
             margin-right: 20px;
             padding-right: 20px;
-            /* Optional: Improve accessibility by increasing the clickable area */
-            cursor:pointer;
+            cursor: pointer;
         }
-
-        /* Optional: Adjust the label font size for better alignment */
         .form-check-label {
             font-size: 1.2em;
             cursor: pointer;
@@ -125,7 +115,6 @@
             color: transparent;
             font-weight: bold;
         }
-
     </style>
 </head>
 <body>
@@ -135,12 +124,12 @@
         <h1 class="mt-5">Big Image Search</h1>
         <p>You can click on the picture to open it in the browser, or you can download it directly.</p>
         <p>You can also download all as a ZIP, or you can select a few to download as selected.</p>
-        <h4><s>If you put new images in Database, 如果数据库放了新图, Click RE-index，不会花一小时了</s>，还没</h4>
+        <h4>If you put new images in Database, 如果数据库放了新图, Click RE-index，不会花一小时了，</h4>
         <h4>白底选项，但是有些细节图如果了一边贴边了就无了，除非用不勾选白底</h4>
         <a href="#" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal">
             Play Video
         </a>
-        
+
         <!-- Modal HTML for Video -->
         <div class="modal fade" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="videoModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
@@ -162,89 +151,99 @@
                 </div>
             </div>
         </div>
-        
+
         <form method="post" id="searchForm" class="text-center">
             <div class="form-group">
                 <label for="search_str">Search String:</label>
                 <input type="text" class="form-control" id="search_str" name="search_str" required placeholder="put style here, N1223">
             </div>
             <button type="submit" class="btn btn-primary">Search</button>
-            <a href="#" class="btn btn-warning" id="reindexBtn">Re-Index（暂时不要点）</a>
+            <a href="#" class="btn btn-warning" id="reindexBtn">Re-Index</a>
+
             <div class="checkbox-container mt-3">
                 <input type="checkbox" class="form-check-input custom-checkbox" id="white_background" name="white_background">
                 <label class="form-check-label" for="white_background">
-                    <span class="rainbow-text">  白底 photoshoped</span>
+                    <span class="rainbow-text"> 白底 photoshoped</span>
                 </label>
+                <input type="checkbox" class="form-check-input custom-checkbox" id="include_folders" name="include_folders">
+                <label class="form-check-label" for="include_folders"><span class="rainbow-text">Include Folder Names</span></label>
             </div>
         </form>
+
+
         {% if reindex_result %}
             <div class="alert alert-info mt-4">
                 <h5>Re-Indexing Result:</h5>
                 <pre>{{ reindex_result }}</pre>
             </div>
         {% endif %}
-        
+
         {% if image_data %}
         <form method="post" id="imageForm">
-            <form method="post" id="imageForm">
-                <div class="sticky-buttons">
-                    <!-- First Row: Download Options -->
-                    <div class="row justify-content-center mb-2">
-                        <div class="col-md-auto mb-2">
-                            <a href="{{ url_for('download_all_images', search_str=request.form.get('search_str')) }}" class="btn btn-custom">
-                                Download <span class="highlight-red">All</span> as ZIP<br>
-                                全选打包下载
-                            </a>
-                        </div>
-                        <div class="col-md-auto mb-2">
-                            <button type="submit" formaction="{{ url_for('download_selected_images') }}" class="btn btn-custom">
-                                Download <span class="highlight-red">Selected</span> as ZIP<br>
-                                选择性打包下载
-                            </button>
-                        </div>
-                        <div class="col-md-auto mb-2">
-                            <a href="{{ url_for('download_all_images_1_1', search_str=request.form.get('search_str')) }}" class="btn btn-custom">
-                                Download <span class="highlight-red">All</span> as ZIP<br>
-                                (1:1 ratio &lt;2MB <span class="highlight-red">TEMU</span>)
-                            </a>
-                        </div>
-                        <div class="col-md-auto mb-2">
-                            <button type="submit" formaction="{{ url_for('download_selected_images_1_1') }}" class="btn btn-custom">
-                                Download <span class="highlight-red">Selected</span> as ZIP<br>
-                                (1:1 ratio &lt;2MB <span class="highlight-red">TEMU</span>)
-                            </button>
-                        </div>
+            <div class="sticky-buttons">
+                <!-- First Row: Download Options -->
+                <div class="row justify-content-center mb-2">
+                    <!-- Download All Images as ZIP -->
+                    <div class="col-md-auto mb-2">
+                        <a href="{{ url_for('download_big_images', search_str=request.form.get('search_str'), download_type='all', image_type='normal') }}" class="btn btn-custom">
+                            Download <span class="highlight-red">All</span> as ZIP<br>
+                            全选打包下载
+                        </a>
                     </div>
-            
-                    <!-- Second Row: Sorting Options -->
-                    <div class="row justify-content-center">
-                        <div class="col-md-auto mb-2">
-                            <a class="btn btn-secondary btn-sm" href="#" data-sort="filename" data-order="asc">Filename A-Z</a>
-                        </div>
-                        <div class="col-md-auto mb-2">
-                            <a class="btn btn-secondary btn-sm" href="#" data-sort="filename" data-order="desc">Filename Z-A</a>
-                        </div>
-                        <div class="col-md-auto mb-2">
-                            <a class="btn btn-secondary btn-sm" href="#" data-sort="filesize" data-order="asc">File Size 0-N</a>
-                        </div>
-                        <div class="col-md-auto mb-2">
-                            <a class="btn btn-secondary btn-sm" href="#" data-sort="filesize" data-order="desc">File Size N-0</a>
-                        </div>
+                    <!-- Download Selected Images as ZIP -->
+                    <div class="col-md-auto mb-2">
+                        <button type="submit" formaction="{{ url_for('download_big_images', download_type='selected', image_type='normal') }}" class="btn btn-custom">
+                            Download <span class="highlight-red">Selected</span> as ZIP<br>
+                            选择性打包下载
+                        </button>
+                    </div>
+                    <!-- Download All Images as ZIP (1:1 Ratio) -->
+                    <div class="col-md-auto mb-2">
+                        <a href="{{ url_for('download_big_images', search_str=request.form.get('search_str'), download_type='all', image_type='1_1') }}" class="btn btn-custom">
+                            Download <span class="highlight-red">All</span> as ZIP<br>
+                            (1:1 ratio &lt;2MB <span class="highlight-red">TEMU</span>)
+                        </a>
+                    </div>
+                    <!-- Download Selected Images as ZIP (1:1 Ratio) -->
+                    <div class="col-md-auto mb-2">
+                        <button type="submit" formaction="{{ url_for('download_big_images', download_type='selected', image_type='1_1') }}" class="btn btn-custom">
+                            Download <span class="highlight-red">Selected</span> as ZIP<br>
+                            (1:1 ratio &lt;2MB <span class="highlight-red">TEMU</span>)
+                        </button>
                     </div>
                 </div>
             
+
+                <!-- Second Row: Sorting Options -->
+                <div class="row justify-content-center">
+                    <div class="col-md-auto mb-2">
+                        <a class="btn btn-secondary btn-sm" href="#" data-sort="filename" data-order="asc">Filename A-Z</a>
+                    </div>
+                    <div class="col-md-auto mb-2">
+                        <a class="btn btn-secondary btn-sm" href="#" data-sort="filename" data-order="desc">Filename Z-A</a>
+                    </div>
+                    <div class="col-md-auto mb-2">
+                        <a class="btn btn-secondary btn-sm" href="#" data-sort="filesize" data-order="asc">File Size 0-N</a>
+                    </div>
+                    <div class="col-md-auto mb-2">
+                        <a class="btn btn-secondary btn-sm" href="#" data-sort="filesize" data-order="desc">File Size N-0</a>
+                    </div>
+                </div>
+            </div>
+
             <div id="image-container" class="row mt-4">
+
                 {% for filename, image, modified_date, file_size, ratio in image_data %}
-                <div class="col-md-3 image-card" data-filename="{{ filename|basename }}" data-filesize="{{ file_size|replace(' KB', '')|replace(' MB', '') }}">
+                    <div class="col-md-3 image-card" data-filename="{{ filename }}" data-filesize="{{ file_size }}">
                         <div class="card">
                             <input type="checkbox" name="selected_images" value="{{ filename }}" class="select-checkbox">
                             <a href="{{ url_for('serve_file3', encoded_path=quote(filename)) }}" target="_blank">
-                                <img src="data:image/jpeg;base64,{{ image|b64encode }}" class="card-img-top img-clickable" alt="{{ filename }}">
+                                <img src="data:image/jpeg;base64,{{ image }}" class="card-img-top img-clickable" alt="{{ filename }}">
                             </a>
                             <div class="card-body">
                                 <p class="card-title filename">
-                                    {{ filename|basename }}
-                                    <span class="tooltip-text">{{ filename|escape }}</span>
+                                    {{ filename }}
+                                    <span class="tooltip-text">{{ filename }}</span>
                                 </p>
                                 <p class="image-info">Modified: {{ modified_date }}</p>
                                 <p class="image-info">
@@ -255,9 +254,11 @@
                             </div>
                         </div>
                     </div>
-                    {% if loop.index % 4 == 0 %}
-                        </div><div class="row mt-4">
-                    {% endif %}
+                    {% else %}
+                    <p>No images found.</p>
+                {% if loop.index % 4 == 0 %}
+                    </div><div class="row mt-4">
+                {% endif %}
                 {% endfor %}
             </div>
         </form>
@@ -268,58 +269,56 @@
 
     <!-- JavaScript dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <!-- Popper.js and Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <!-- Make sure to include Bootstrap JS after jQuery -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
-    
+
     <script>
         $(document).ready(function() {
-    // Sorting button click handler
-    $('.btn-secondary').on('click', function(e) {
-        e.preventDefault();
-
-        // Get the sort attribute and order from the button data attributes
-        let sortAttribute = $(this).data('sort');
-        let sortOrder = $(this).data('order');
-        let $imageCards = $('.image-card');
-
-        // Sort the image cards
-        $imageCards.sort(function(a, b) {
-            let aValue = $(a).data(sortAttribute);
-            let bValue = $(b).data(sortAttribute);
-
-            // Handle file size sorting
-            if (sortAttribute === 'filesize') {
-                aValue = convertToKB($(a).data('filesize'), $(a).find('.image-info').text());
-                bValue = convertToKB($(b).data('filesize'), $(b).find('.image-info').text());
-            } else {
-                // For filenames, compare as strings
-                aValue = aValue.toString().toLowerCase();
-                bValue = bValue.toString().toLowerCase();
+            // Sorting button click handler
+            $('.btn-secondary').on('click', function(e) {
+                e.preventDefault();
+    
+                // Get the sort attribute and order from the button data attributes
+                let sortAttribute = $(this).data('sort');
+                let sortOrder = $(this).data('order');
+                let $imageCards = $('.image-card');
+    
+                // Sort the image cards
+                $imageCards.sort(function(a, b) {
+                    let aValue = $(a).data(sortAttribute);
+                    let bValue = $(b).data(sortAttribute);
+    
+                    // Handle file size sorting
+                    if (sortAttribute === 'filesize') {
+                        aValue = convertToKB($(a).data('filesize'), $(a).find('.image-info').text());
+                        bValue = convertToKB($(b).data('filesize'), $(b).find('.image-info').text());
+                    } else {
+                        // For filenames, compare as strings
+                        aValue = aValue.toString().toLowerCase();
+                        bValue = bValue.toString().toLowerCase();
+                    }
+    
+                    // Perform sorting based on the selected order
+                    if (sortOrder === 'asc') {
+                        return (aValue > bValue) ? 1 : -1;
+                    } else {
+                        return (aValue < bValue) ? 1 : -1;
+                    }
+                });
+    
+                // Re-attach sorted elements to the container
+                $('#image-container').html($imageCards);
+            });
+    
+            // Function to convert file size strings to KB
+            function convertToKB(sizeValue, sizeText) {
+                if (sizeText.toLowerCase().includes('mb')) {
+                    return sizeValue * 1024; // Convert MB to KB
+                }
+                return sizeValue; // Already in KB
             }
-
-            // Perform sorting based on the selected order
-            if (sortOrder === 'asc') {
-                return (aValue > bValue) ? 1 : -1;
-            } else {
-                return (aValue < bValue) ? 1 : -1;
-            }
+                        
         });
-
-        // Re-attach sorted elements to the container
-        $('#image-container').html($imageCards);
-    });
-
-    // Function to convert file size strings to KB
-    function convertToKB(sizeValue, sizeText) {
-        if (sizeText.toLowerCase().includes('mb')) {
-            return sizeValue * 1024; // Convert MB to KB
-        }
-        return sizeValue; // Already in KB
-    }
-});
     </script>
 </body>
 </html>

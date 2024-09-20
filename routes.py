@@ -1,38 +1,40 @@
-from flask import request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory, send_file
+from flask import (request, render_template, jsonify, redirect, url_for, 
+                   session, flash, send_from_directory, send_file)
 from werkzeug.utils import secure_filename
+
+# Standard library imports
+import os
+import io
+import re
+import sys
+import time
+import json
+import datetime
+import subprocess
+import urllib.parse
+import zipfile
+
+# External library imports
 import pandas as pd
+import requests
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+from user_agents import parse
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+from io import StringIO
+
+
+# Application-specific imports
 from custom_query import execute_custom_query, allowed_file
 from indexing_app import generate_index
 from config import Config
 from logging_setup import configure_logging
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
-import re
-import urllib.parse
-import time
-import requests
-import datetime
-import subprocess
-import sys
-import json
-from io import StringIO
-from user_agents import parse
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
+from upload_processor import process_upload
+from big_img_routes import register_big_img_routes
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
-from PIL import Image, ImageOps
-import os
-import subprocess
-from upload_processor import process_upload  # Import the processing function
-
-# New imports
-import base64
-from PIL import Image
-import io
-import zipfile
-
 
 
 client = WebClient(token=Config.SLACK_TOKEN)
@@ -41,7 +43,8 @@ client = WebClient(token=Config.SLACK_TOKEN)
 
 def register_routes(app):
     
-    
+    register_big_img_routes(app)
+
     def check_credentials(username, password):
         return Config.USERS.get(username) == password
 
@@ -914,8 +917,6 @@ def register_routes(app):
 
         return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, current_user=current_user, sql_query=sql_query)
 
-   
-            
     @app.route("/log")
     def display_log():
         if 'username' not in session:
@@ -928,247 +929,6 @@ def register_routes(app):
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
         
-
-    def resize_image(image_path, fixed_height=300):
-        try:
-            with Image.open(image_path) as img:
-                img = img.convert("RGB")
-                
-                # Calculate the aspect ratio and determine the new width
-                aspect_ratio = img.width / img.height
-                new_width = int(fixed_height * aspect_ratio)
-                
-                # Resize the image with the fixed height and calculated width
-                img = img.resize((new_width, fixed_height), Image.LANCZOS)
-                
-                # Save the image to an in-memory buffer
-                buffer = io.BytesIO()
-                img.save(buffer, format="JPEG")
-                buffer.seek(0)
-                return buffer
-            
-        except Exception as e:
-            app.logger.error(f"Error resizing image {image_path}: {e}")
-            return None
-
-    def b64encode_filter(data):
-        data.seek(0)
-        return base64.b64encode(data.read()).decode('utf-8')
-
-    app.jinja_env.filters['b64encode'] = b64encode_filter
-
-    @app.route('/download_all_images')
-    def download_all_images():
-        current_user = session['username']
-        search_str = request.args.get('search_str', '').lower()
-        index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
-
-        if not os.path.exists(index_file):
-            return "Index file not found. Please generate the index first.", 500
-
-        with open(index_file, 'r') as f:
-            index = json.load(f)
-
-        matching_files = [file_path for file_path in index if os.path.basename(file_path).lower().startswith(search_str)]
-
-        memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
-            for file_path in matching_files:
-                zf.write(file_path, os.path.basename(file_path))
-        
-        memory_file.seek(0)
-        app.logger.info("%s downloaded all images of %s", current_user, search_str)
-        
-        # Change the download_name to use search_str.zip
-        zip_filename = f"{search_str}.zip"
-        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-    @app.route('/download_selected_images', methods=['POST'])
-    def download_selected_images():
-        if 'username' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-
-        selected_images = request.form.getlist('selected_images')
-        if not selected_images:
-            flash("No images selected.")
-            return redirect(url_for('big_img'))
-
-        memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
-            for filename in selected_images:
-                file_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
-                zf.write(file_path, os.path.basename(file_path))
-
-        memory_file.seek(0)
-        zip_filename = "selected_images.zip"
-        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-    @app.template_filter('basename')
-    def basename_filter(path):
-        return os.path.basename(path)
-
-    # Register the filter
-    app.jinja_env.filters['basename'] = basename_filter 
-
-    def format_file_size(size):
-        if size < 1000:
-            return f"{size} KB"
-        else:
-            size_mb = size / 1000
-            return f"{size_mb:.2f} MB"
-
-
-    @app.route('/big_img', methods=['GET', 'POST'])
-    def big_img():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        current_user = session['username']
-
-        if request.method == 'POST':
-            search_str = request.form.get('search_str', '').lower()
-            white_background = request.form.get('white_background', False)  # Check if the checkbox is selected
-            index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'white_background_images.json') if white_background else os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
-
-            if not os.path.exists(index_file):
-                return "Index file not found. Please generate the index first.", 500
-
-            with open(index_file, 'r') as f:
-                index = json.load(f)
-
-            matching_files = [file_path for file_path in index if search_str in os.path.basename(file_path).lower()]
-            
-            image_data = []
-            for file_path in matching_files:
-                image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
-                resized_image = resize_image(image_path)
-                if resized_image:
-                    with Image.open(image_path) as img:
-                        width, height = img.size
-                        ratio = f"{1}:{height/width:.1f}"
-
-                    modified_time = os.path.getmtime(image_path)
-                    modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
-                    file_size = format_file_size(os.path.getsize(image_path) // 1024)  # KB
-                    filename = os.path.basename(file_path)
-                    image_data.append((file_path, resized_image, modified_date, file_size, ratio))
-                    # Log the search query and index file used
-            index_type = "white background" if white_background else "original index file"
-            file_count = len(matching_files)
-            app.logger.info("%s searched big_img: %s, using %s, returned %s files", current_user, search_str, index_type, file_count)
-
-            return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
-        
-
-        return render_template('big_img.html', quote=urllib.parse.quote)
-    
-
-    @app.route('/reindex', methods=['GET'])
-    def reindex():
-        try:
-            # Run the indexing_app.py script
-            script_path = os.path.join(os.path.dirname(__file__), 'indexing_app.py')
-            result = subprocess.run([sys.executable, script_path], capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                reindex_result = result.stdout
-                flash("Re-Indexing completed successfully!", "success")
-            else:
-                reindex_result = result.stderr
-                flash(f"Re-Indexing failed: {result.stderr}", "danger")
-        except Exception as e:
-            reindex_result = str(e)
-            flash(f"An error occurred: {str(e)}", "danger")
-
-        # Return the result as JSON to the AJAX call
-        return jsonify({'reindex_result': reindex_result})
-    
-    @app.route('/download_all_images_1_1')
-    def download_all_images_1_1():
-        current_user = session.get('username')
-        search_str = request.args.get('search_str', '').lower()
-        index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
-
-        if not os.path.exists(index_file):
-            return "Index file not found. Please generate the index first.", 500
-
-        with open(index_file, 'r') as f:
-            index = json.load(f)
-
-        matching_files = [file_path for file_path in index if os.path.basename(file_path).lower().startswith(search_str)]
-
-        memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
-            for file_path in matching_files:
-                image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
-                output_image = create_square_image(image_path)
-                if output_image:
-                    # Ensure filename has a lowercase extension
-                    zip_filename = os.path.splitext(os.path.basename(file_path))[0].lower() + '.jpg'
-                    zf.writestr(zip_filename, output_image.getvalue())
-
-        memory_file.seek(0)
-        zip_filename = f"{search_str}_1_1.zip"
-        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-
-    @app.route('/download_selected_images_1_1', methods=['POST'])
-    def download_selected_images_1_1():
-        if 'username' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-
-        selected_images = request.form.getlist('selected_images')
-        if not selected_images:
-            flash("No images selected.")
-            return redirect(url_for('big_img'))
-
-        memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
-            for filename in selected_images:
-                file_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
-                output_image = create_square_image(file_path)
-                if output_image:
-                    # Ensure filename has a lowercase extension
-                    zip_filename = os.path.splitext(os.path.basename(filename))[0].lower() + '.jpg'
-                    zf.writestr(zip_filename, output_image.getvalue())
-
-        memory_file.seek(0)
-        zip_filename = "selected_images_1_1.zip"
-        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-
-    def create_square_image(image_path):
-        try:
-            image = Image.open(image_path)
-            
-            # Convert to RGB if not already in that mode
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-
-            # Make the image square by padding with white
-            size = max(image.size)
-            square_image = ImageOps.expand(image, (
-                (size - image.width) // 2,  # Left padding
-                (size - image.height) // 2,  # Top padding
-                (size - image.width + 1) // 2,  # Right padding
-                (size - image.height + 1) // 2  # Bottom padding
-            ), fill='white')
-
-            # Prepare for saving the image
-            output_image = io.BytesIO()
-            quality = 95  # Start with a high quality
-            square_image.save(output_image, format='JPEG', subsampling=0, quality=quality)
-            
-            # Check the size and reduce quality until it's less than 2MB
-            max_size = 2 * 1024 * 1024  # 2MB in bytes
-            while output_image.tell() > max_size and quality > 10:  # Avoid going below a quality of 10
-                quality -= 5  # Reduce the quality
-                output_image.seek(0)  # Reset the BytesIO buffer
-                output_image.truncate(0)  # Truncate the buffer to discard old data
-                square_image.save(output_image, format='JPEG', subsampling=0, quality=quality)
-            
-            # Ensure the output starts from the beginning
-            output_image.seek(0)
-            return output_image
-        except Exception as e:
-            app.logger.error(f"Error processing image {image_path}: {e}")
-            return None
-
     @app.route('/ftp3/<path:encoded_path>', methods=['GET'])
     def serve_file3(encoded_path):
         decoded_path = urllib.parse.unquote(encoded_path)
@@ -1207,4 +967,17 @@ def register_routes(app):
             return jsonify(output_urls)
 
         return render_template('upload_center.html')
+    
+    @app.route('/json_data')
+    def get_json_data():
+        index_file_path = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
+        white_bg_file_path = os.path.join(app.config['BIG_PICTURE_DIR'], 'white_background_images.json')
+
+        if os.path.exists(index_file_path) and os.path.exists(white_bg_file_path):
+            with open(index_file_path, 'r') as index_file, open(white_bg_file_path, 'r') as white_bg_file:
+                index_data = json.load(index_file)
+                white_bg_data = json.load(white_bg_file)
+            return jsonify({"index_data": index_data, "white_background_data": white_bg_data})
+        
+        return jsonify({"error": "Files not found"}), 404
     

@@ -28087,3 +28087,442 @@ TimeoutError: The read operation timed out
 2024-09-12 22:42:10,101 - INFO - yeti searched big_img: t3305, using original index file, returned 92 files
 2024-09-12 22:44:07,227 - INFO - yeti searched big_img: t3305, using original index file, returned 92 files
 2024-09-12 23:26:36,965 - INFO - autobots, rolling out!
+2024-09-12 23:50:12,780 - INFO - autobots, rolling out!
+2024-09-12 23:50:16,787 - INFO - autobots, rolling out!
+2024-09-12 23:55:53,448 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 00:02:51,207 - INFO - autobots, rolling out!
+2024-09-13 00:02:54,849 - INFO - autobots, rolling out!
+2024-09-13 00:03:02,420 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 09:50:05,435 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 09:50:27,137 - INFO - yeti searched big_img: n2189, using white background, returned 19 files
+2024-09-13 09:51:17,563 - INFO - yeti searched big_img: t2737, using white background, returned 22 files
+2024-09-13 09:51:22,903 - INFO - yeti searched big_img: t2737, using original index file, returned 106 files
+2024-09-13 09:52:01,940 - INFO - yeti searched big_img: t3373, using original index file, returned 35 files
+2024-09-13 11:14:38,805 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 11:14:46,971 - INFO - Item lookup for yeti with input: l1864
+2024-09-13 11:23:54,941 - INFO - Item lookup for yeti with input: n1298
+2024-09-13 11:26:48,418 - INFO - Item lookup for yeti with input: s1431
+2024-09-13 12:24:36,491 - INFO - yeti searched big_img: t3373, using original index file, returned 35 files
+2024-09-13 12:27:13,276 - INFO - Item lookup for yeti with input: n2112
+2024-09-13 14:40:01,964 - INFO - autobots, rolling out!
+2024-09-13 14:40:05,681 - INFO - autobots, rolling out!
+2024-09-13 14:46:36,842 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 14:46:43,181 - INFO - yeti searched big_img: wallet, using original index file, returned 19 files
+2024-09-13 14:48:28,833 - INFO - Item lookup for yeti with input: n1868
+2024-09-13 15:02:52,654 - ERROR - Error resizing image D:/Individual_big_picture/URL/crossbody/N2139/N2139_sss_0.jpg: [Errno 2] No such file or directory: 'D:\\Individual_big_picture\\URL\\crossbody\\N2139\\N2139_sss_0.jpg'
+2024-09-13 15:02:52,654 - INFO - yeti searched big_img: n2139, using original index file, returned 33 files
+2024-09-13 15:06:26,899 - ERROR - Error resizing image D:/Individual_big_picture/URL/crossbody/S1186/s1186_sss_0.jpg: [Errno 2] No such file or directory: 'D:\\Individual_big_picture\\URL\\crossbody\\S1186\\s1186_sss_0.jpg'
+2024-09-13 15:06:26,899 - INFO - yeti searched big_img: s1186, using original index file, returned 30 files
+2024-09-13 15:22:58,537 - ERROR - Error resizing image D:/Individual_big_picture/URL/crossbody/S1340/s1340_sss_0.jpg: [Errno 2] No such file or directory: 'D:\\Individual_big_picture\\URL\\crossbody\\S1340\\s1340_sss_0.jpg'
+2024-09-13 15:22:58,537 - INFO - yeti searched big_img: s1340, using white background, returned 11 files
+2024-09-13 15:22:59,016 - ERROR - Error resizing image D:/Individual_big_picture/URL/crossbody/S1340/s1340_sss_0.jpg: [Errno 2] No such file or directory: 'D:\\Individual_big_picture\\URL\\crossbody\\S1340\\s1340_sss_0.jpg'
+2024-09-13 15:22:59,017 - INFO - yeti searched big_img: s1340, using original index file, returned 38 files
+2024-09-13 15:24:54,806 - ERROR - Error resizing image D:/Individual_big_picture/URL/crossbody/S1340/s1340_sss_0.jpg: [Errno 2] No such file or directory: 'D:\\Individual_big_picture\\URL\\crossbody\\S1340\\s1340_sss_0.jpg'
+2024-09-13 15:24:54,806 - INFO - yeti searched big_img: s1340, using original index file, returned 38 files
+2024-09-13 16:05:21,442 - INFO - Item lookup for yeti with input: n1432
+2024-09-13 16:10:42,786 - INFO - yeti searched big_img: n1432, using original index file, returned 38 files
+2024-09-13 16:18:32,458 - INFO - Item lookup for yeti with input: n1432
+2024-09-13 16:49:23,413 - INFO - Item lookup for yeti with input: n1513,n1513,n1513,n1513,n1513,n1513,s1186,s1186,s1186,s1186,s1186,s1186,n1868,n1868,n1868,n1868,n1868,n1868,s1197,s1197,s1197,s1197,s1197,n1870,n1870,n1870,n1870,n1870,n1870,n1862,n1862,n1862,s3028,s3028,s3028,s3028,s3028,s3028,s3004,s3004,s3004,s3004,s3004,s1228,s1228,s1228,s1228,s1228,s1228,s1203,s1203,s1203,s1203,n1845,n1845,n1845,n1845,n1845,s1248,s1248,s1248,s1248,s1248,n1856,n1856,n1856,n1856,n1856,s1198,s1198,s1198,s1198,s1198,s1222,s1222,s1222,s1222,n1844,n1844,n1844,n1844,n1844,n1432,n1432,n1432,n1432,n1432,n1432,s1293,s1293,s1293,s1293,s1293,s1350,s1350,s1350,s1350,s1350,s1350,s1288,s1288,s1288,s1288,s1288,s1222,s1287,s1287,s1287,n1862,n1862,n1862,n1847,n1847,n1847,n1847,n1847,n1847,s1287,s1287,s1292,s1292,s1292,s1292,s1292,s1339,s1339,s1339,s1339,s1339,s1339,n1513,n1513,s1340,s1340,s1340,s1340,s1340,s1340,s1341,s1341,s1341,s1341,s1341,s1341,n1962,n1962,n1962,n1962,n1962,n1962,n1963,n1963,n1963,n1963,n1963,n1963,n1941,n1941,n1941,n1941,n1941,n2141,n2141,n2141,n2141,n1513,n1513,n1939,n1939,n1939,n1939,n1939,n2137,n2137,n2137,n2137,n2137,n2139,n2139,n2139,n2139,n2139,n2141,n1862,n1862,n1862,n1862,n1862,n1862,s3004,s3004,s3004,s3004,s3004,s1288,s1288,s1288,s1288,s1288,n2139,n2139,n2139,n2139,n2139
+2024-09-13 17:20:13,137 - INFO - Item lookup for yeti with input: n1513
+2024-09-13 17:32:45,421 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 19:55:33,575 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 19:57:56,466 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 19:58:47,514 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 19:58:47,741 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 19:58:50,832 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 19:58:58,989 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 19:59:35,818 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 19:59:47,276 - INFO - User yeti has logged in. IP: 172.226.212.63, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 19:59:55,679 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 20:00:19,542 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 20:06:16,533 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 20:09:26,794 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 20:09:27,121 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 20:09:27,121 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 20:09:39,741 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 20:12:05,951 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 20:26:39,793 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 20:26:39,793 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 20:26:52,792 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 22:19:18,410 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 22:19:38,443 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 22:22:21,284 - INFO - User yeti has logged in. IP: 172.226.2.88, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 22:22:29,723 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 22:23:49,590 - INFO - autobots, rolling out!
+2024-09-13 22:24:33,085 - INFO - autobots, rolling out!
+2024-09-13 22:25:38,692 - INFO - autobots, rolling out!
+2024-09-13 22:41:12,033 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 22:41:32,715 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-13 22:41:56,273 - INFO - yeti is looking up order number: 1567
+2024-09-13 22:42:00,174 - INFO - yeti searched for order number: 1567
+2024-09-13 22:42:24,268 - INFO - Item lookup for yeti with input: n1223
+2024-09-13 22:42:37,702 - INFO - Item lookup for yeti with input: t3305
+2024-09-13 22:54:25,978 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 22:55:06,020 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-13 22:55:09,963 - INFO - Item lookup for ahua with input: n1324
+2024-09-13 22:55:35,831 - INFO - Item lookup for ahua with input: n1324
+2024-09-13 22:56:00,624 - INFO - User ahua has logged in. IP: 183.6.8.18, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-13 23:36:07,597 - INFO - Item lookup for ahua with input: n1223
+2024-09-14 02:18:56,758 - INFO - Item lookup for ahua with input: n1324
+2024-09-14 15:04:04,822 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-14 15:04:21,470 - INFO - Serving file index.php
+2024-09-14 22:17:39,624 - INFO - User nicye has logged in. IP: 115.223.135.81, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-14 22:18:24,491 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-14 22:18:32,317 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-14 22:19:18,820 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-15 23:18:14,518 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-15 23:18:35,285 - ERROR - Error connecting to SQL Server: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2024-09-15 23:18:41,150 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-15 23:18:48,341 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-15 23:19:00,338 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-15 23:19:02,039 - ERROR - Error connecting to SQL Server: ('28000', '[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user \'tristen\'. (18456); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Cannot open database "omsdata_FDC" requested by the login. The login failed. (4060)')
+2024-09-16 10:26:56,699 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-16 10:27:02,907 - INFO - Item lookup for yeti with input: n2191
+2024-09-16 10:35:36,134 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-16 10:35:41,576 - INFO - Item lookup for yeti with input: n6064
+2024-09-16 10:35:51,337 - INFO - Item lookup for yeti with input: en6064
+2024-09-16 10:36:15,532 - INFO - Item lookup for yeti with input: es1272
+2024-09-16 10:37:00,940 - INFO - Item lookup for yeti with input: n2149
+2024-09-16 10:38:59,998 - INFO - Item lookup for yeti with input: es1272
+2024-09-16 10:54:16,198 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-16 10:54:18,251 - INFO - Item lookup for yeti with input: l1864
+2024-09-16 10:54:23,899 - INFO - Item lookup for yeti with input: n1324
+2024-09-16 11:04:05,997 - INFO - Item lookup for yeti with input: n2093
+2024-09-16 11:08:16,640 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-16 11:09:51,292 - INFO - yeti downloaded the file: List-20240916-110949.xlsx
+2024-09-16 11:09:53,216 - INFO - File List-20240916-110949.xlsx downloaded
+2024-09-16 11:12:36,506 - INFO - Item lookup for yeti with input: n2191
+2024-09-16 11:16:48,766 - INFO - Item lookup for yeti with input: n1553
+2024-09-16 11:48:52,692 - INFO - Item lookup for yeti with input: n1553
+2024-09-16 11:51:54,355 - INFO - Item lookup for yeti with input: n1116
+2024-09-16 12:17:46,378 - INFO - User yeti has logged in. IP: 172.226.4.1, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-16 12:17:54,667 - INFO - Item lookup for yeti with input: en6064
+2024-09-16 12:59:28,879 - INFO - Item lookup for yeti with input: n1553
+2024-09-16 13:02:23,117 - INFO - Item lookup for yeti with input: en6064
+2024-09-16 13:17:13,279 - INFO - Item lookup for yeti with input: s1460,el1781,s1426,s1424
+2024-09-16 13:17:30,056 - INFO - Item lookup for yeti with input: s1460,el1782,s1426,s1424
+2024-09-16 13:34:00,240 - INFO - Item lookup for yeti with input: en6064
+2024-09-16 14:16:59,586 - INFO - Item lookup for yeti with input: n1513
+2024-09-16 14:17:42,302 - INFO - Item lookup for yeti with input: n1844
+2024-09-16 14:20:41,385 - INFO - Item lookup for yeti with input: n1845
+2024-09-16 14:24:00,599 - INFO - Item lookup for yeti with input: n1847
+2024-09-16 14:26:07,802 - INFO - Item lookup for yeti with input: n1856
+2024-09-16 14:28:02,279 - INFO - Item lookup for yeti with input: n1862
+2024-09-16 14:29:26,280 - INFO - Item lookup for yeti with input: n1868
+2024-09-16 14:31:15,644 - INFO - Item lookup for yeti with input: n1870
+2024-09-16 14:32:52,715 - INFO - Item lookup for yeti with input: n1939
+2024-09-16 14:34:09,666 - INFO - Item lookup for yeti with input: n1941
+2024-09-16 14:35:26,259 - INFO - Item lookup for yeti with input: n1962
+2024-09-16 14:37:04,989 - INFO - Item lookup for yeti with input: n1963
+2024-09-16 14:38:08,921 - INFO - Item lookup for yeti with input: n2137
+2024-09-16 14:39:17,155 - INFO - Item lookup for yeti with input: n2139
+2024-09-16 14:39:59,082 - INFO - Item lookup for yeti with input: n2141
+2024-09-16 14:49:13,983 - INFO - Item lookup for yeti with input: s1186
+2024-09-16 14:50:32,416 - INFO - Item lookup for yeti with input: s1197
+2024-09-16 14:51:47,164 - INFO - Item lookup for yeti with input: s1198
+2024-09-16 14:53:12,106 - INFO - Item lookup for yeti with input: s1203
+2024-09-16 14:54:29,993 - INFO - Item lookup for yeti with input: s1222
+2024-09-16 14:59:22,634 - INFO - Item lookup for yeti with input: s1228
+2024-09-16 15:00:32,181 - INFO - Item lookup for yeti with input: s1248
+2024-09-16 15:01:34,462 - INFO - Item lookup for yeti with input: s1287
+2024-09-16 15:15:53,463 - INFO - Item lookup for yeti with input: s1288
+2024-09-16 15:17:42,875 - INFO - Item lookup for yeti with input: s1292
+2024-09-16 15:20:07,594 - INFO - Item lookup for yeti with input: s1293
+2024-09-16 15:33:30,305 - INFO - Item lookup for yeti with input: s1339
+2024-09-16 15:34:44,763 - INFO - Item lookup for yeti with input: s1340
+2024-09-16 15:35:54,234 - INFO - Item lookup for yeti with input: s1341
+2024-09-16 15:36:51,349 - INFO - Item lookup for yeti with input: s130
+2024-09-16 15:36:53,559 - INFO - Item lookup for yeti with input: s1350
+2024-09-16 15:37:50,203 - INFO - Item lookup for yeti with input: s3004
+2024-09-16 15:38:48,287 - INFO - Item lookup for yeti with input: s3028
+2024-09-16 17:12:21,855 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-16 17:12:22,943 - INFO - Serving file index.php
+2024-09-16 17:51:14,374 - INFO - yeti searched big_img: n1205, using original index file, returned 0 files
+2024-09-16 17:51:50,101 - INFO - yeti searched big_img: n1299, using original index file, returned 160 files
+2024-09-16 17:52:54,680 - INFO - yeti searched big_img: t3305, using white background, returned 21 files
+2024-09-16 17:53:18,659 - INFO - yeti downloaded all images of t3305
+2024-09-16 18:03:55,084 - INFO - yeti searched big_img: t3305, using white background, returned 21 files
+2024-09-16 18:04:20,729 - INFO - yeti downloaded all images of t3305
+2024-09-16 18:04:34,736 - INFO - yeti searched big_img: t3305, using white background, returned 21 files
+2024-09-16 18:04:42,509 - INFO - yeti downloaded all images of t3305
+2024-09-16 18:05:14,944 - INFO - yeti searched big_img: t3305, using original index file, returned 92 files
+2024-09-16 18:09:27,647 - INFO - Item lookup for yeti with input: t3305
+2024-09-16 18:20:26,896 - INFO - yeti searched big_img: t3305, using original index file, returned 92 files
+2024-09-17 10:23:57,296 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-17 10:24:03,753 - INFO - Item lookup for yeti with input: n1513
+2024-09-17 10:28:37,247 - INFO - Item lookup for yeti with input: s1220
+2024-09-17 10:29:24,630 - INFO - Item lookup for yeti with input: es1323
+2024-09-17 10:29:53,977 - INFO - Item lookup for yeti with input: en1765
+2024-09-17 10:57:18,839 - INFO - Item lookup for yeti with input: en1765,s1220,es1323
+2024-09-17 11:33:26,251 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-17 11:33:33,286 - INFO - Serving file index.php
+2024-09-17 11:34:24,536 - INFO - User yeti has logged in. IP: 172.226.186.62, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-17 11:34:30,246 - INFO - Item lookup for yeti with input: m1121
+2024-09-17 11:48:16,085 - INFO - Item lookup for yeti with input: es1323
+2024-09-17 12:39:03,175 - INFO - User yeti has logged in. IP: 104.28.85.109, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-17 12:39:10,861 - INFO - Item lookup for yeti with input: es1323
+2024-09-17 23:52:27,206 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-17 23:52:44,404 - INFO - Item lookup for nicye with input: s1306
+2024-09-18 09:44:20,326 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-18 09:44:27,033 - INFO - Item lookup for yeti with input: s1290
+2024-09-18 09:55:13,066 - INFO - Item lookup for yeti with input: s1290
+2024-09-18 09:55:40,778 - INFO - Item lookup for yeti with input: s1290
+2024-09-18 10:42:15,820 - INFO - Item lookup for yeti with input: en1842
+2024-09-18 10:42:20,485 - INFO - Item lookup for yeti with input: n1842
+2024-09-18 10:53:31,803 - INFO - User yeti has logged in. IP: 172.226.7.54, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-18 10:53:40,819 - INFO - Item lookup for yeti with input: l1806
+2024-09-18 10:57:19,284 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-18 10:57:24,235 - INFO - Item lookup for yeti with input: n1814
+2024-09-18 10:57:31,717 - INFO - Item lookup for yeti with input: n1842
+2024-09-18 11:03:10,275 - INFO - Item lookup for yeti with input: en2209
+2024-09-18 11:05:20,053 - INFO - Item lookup for yeti with input: t3173
+2024-09-18 11:06:37,955 - INFO - Item lookup for yeti with input: s1291
+2024-09-18 13:13:46,668 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-18 13:13:51,324 - INFO - Serving file index.php
+2024-09-18 15:16:24,109 - INFO - User ting has logged in. IP: 173.198.50.202, Browser: Mobile Safari UI/WKWebView , OS: iOS 17.7, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-18 15:16:33,272 - INFO - Item lookup for ting with input: t3222
+2024-09-18 15:17:01,796 - INFO - Item lookup for ting with input: t3161
+2024-09-18 15:17:52,156 - INFO - Item lookup for ting with input: t3181
+2024-09-18 15:18:20,863 - INFO - Item lookup for ting with input: t3153
+2024-09-18 15:20:26,652 - INFO - Item lookup for ting with input: t3359
+2024-09-18 15:21:04,975 - INFO - Item lookup for ting with input: t3361
+2024-09-18 15:21:23,570 - INFO - Item lookup for ting with input: t3402
+2024-09-18 15:22:08,469 - INFO - Item lookup for ting with input: t2549
+2024-09-18 15:22:35,679 - INFO - Item lookup for ting with input: et3443
+2024-09-18 15:22:53,588 - INFO - Item lookup for ting with input: t3361
+2024-09-18 15:23:09,563 - INFO - Item lookup for ting with input: t3359
+2024-09-18 15:23:41,021 - INFO - Item lookup for ting with input: l1875
+2024-09-18 15:24:38,087 - INFO - Item lookup for ting with input: t3257
+2024-09-18 15:25:07,937 - INFO - Item lookup for ting with input: et3441
+2024-09-18 15:25:30,939 - INFO - Item lookup for ting with input: t3409
+2024-09-18 15:26:44,672 - INFO - Item lookup for ting with input: t3393
+2024-09-18 15:27:18,126 - INFO - Item lookup for ting with input: n2279
+2024-09-18 15:27:32,562 - INFO - Item lookup for ting with input: n2280
+2024-09-18 15:28:21,994 - INFO - Item lookup for ting with input: n2279
+2024-09-18 15:28:52,521 - INFO - Item lookup for ting with input: l1830
+2024-09-18 15:29:24,397 - INFO - Item lookup for ting with input: n2278
+2024-09-18 15:29:54,211 - INFO - Item lookup for ting with input: t3180
+2024-09-18 15:30:37,139 - INFO - Item lookup for ting with input: t3345
+2024-09-18 15:32:01,104 - INFO - Item lookup for ting with input: n2259
+2024-09-18 15:35:11,581 - INFO - Item lookup for ting with input: t3345
+2024-09-18 15:35:36,271 - INFO - Item lookup for ting with input: s1399
+2024-09-18 15:35:53,346 - INFO - Item lookup for ting with input: n2255
+2024-09-18 15:36:15,935 - INFO - Item lookup for ting with input: en1884
+2024-09-18 15:37:28,679 - INFO - Item lookup for ting with input: n1962
+2024-09-18 15:38:41,880 - INFO - Item lookup for ting with input: n1939
+2024-09-18 15:42:45,646 - INFO - Item lookup for ting with input: t3222
+2024-09-18 15:44:14,282 - INFO - Item lookup for ting with input: t3161
+2024-09-18 15:46:47,914 - INFO - Item lookup for ting with input: t3181
+2024-09-18 15:48:47,173 - INFO - Item lookup for ting with input: t3153
+2024-09-18 15:50:22,230 - INFO - Item lookup for ting with input: m1133
+2024-09-18 15:51:51,744 - INFO - Item lookup for ting with input: t2549
+2024-09-18 15:54:11,982 - INFO - Item lookup for ting with input: t3257
+2024-09-18 15:55:31,513 - INFO - Item lookup for ting with input: t3393
+2024-09-18 15:58:00,549 - INFO - Item lookup for ting with input: t3180
+2024-09-18 16:00:00,363 - INFO - Item lookup for ting with input: n1939
+2024-09-18 16:00:54,912 - INFO - Item lookup for ting with input: n1962
+2024-09-18 16:01:55,890 - INFO - Item lookup for ting with input: t3364
+2024-09-18 16:03:26,127 - INFO - Item lookup for ting with input: t3361
+2024-09-18 16:04:35,608 - INFO - Item lookup for ting with input: t3359
+2024-09-18 16:05:40,497 - INFO - Item lookup for ting with input: l1875
+2024-09-18 18:51:05,628 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-18 18:52:36,962 - INFO - Item lookup for ahua with input: n2227
+2024-09-18 18:54:12,598 - INFO - Item lookup for ahua with input: n2229
+2024-09-18 18:57:02,941 - INFO - User yeti has logged in. IP: 146.75.146.78, Browser: Chrome Mobile iOS 128.0.6613, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-18 18:57:10,526 - INFO - Item lookup for yeti with input: n2229
+2024-09-18 19:19:33,674 - INFO - Item lookup for ahua with input: t3335
+2024-09-18 19:24:08,868 - INFO - Item lookup for ahua with input: el1832
+2024-09-18 19:30:25,489 - INFO - Item lookup for ahua with input: n2234
+2024-09-18 19:32:41,766 - INFO - Item lookup for ahua with input: s1505
+2024-09-18 22:47:38,166 - INFO - Item lookup for ahua with input: 7004994364
+2024-09-18 22:57:37,605 - INFO - Item lookup for ahua with input: en6064
+2024-09-18 22:59:05,122 - INFO - Item lookup for ahua with input: s1290
+2024-09-19 00:15:56,495 - INFO - Item lookup for ahua with input: s1410
+2024-09-19 10:10:26,130 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 10:10:32,389 - INFO - Item lookup for yeti with input: es1421
+2024-09-19 10:13:16,876 - INFO - yeti downloaded the file: List-20240919-101316.xlsx
+2024-09-19 10:13:20,995 - INFO - File List-20240919-101316.xlsx downloaded
+2024-09-19 11:24:12,874 - INFO - Item lookup for yeti with input: t3118
+2024-09-19 12:20:35,894 - INFO - yeti downloaded the file: List-20240919-122009.xlsx
+2024-09-19 12:20:40,814 - INFO - File List-20240919-122009.xlsx downloaded
+2024-09-19 12:43:34,222 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 12:51:41,595 - INFO - Item lookup for nicye with input: l1689
+2024-09-19 12:54:07,612 - INFO - Item lookup for nicye with input: l1689
+2024-09-19 12:54:23,309 - INFO - Item lookup for nicye with input: l1343
+2024-09-19 13:02:50,287 - INFO - yeti downloaded the file: List-20240919-130247.xlsx
+2024-09-19 13:04:58,296 - INFO - Item lookup for nicye with input: l1689
+2024-09-19 13:05:03,977 - INFO - yeti downloaded the file: List-20240919-130501.xlsx
+2024-09-19 13:09:45,954 - INFO - File List-20240919-130501.xlsx downloaded
+2024-09-19 13:10:54,574 - INFO - Item lookup for nicye with input: l1748
+2024-09-19 13:11:28,184 - INFO - Item lookup for nicye with input: n0812
+2024-09-19 13:15:59,851 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 13:16:01,219 - INFO - Item lookup for nicye with input: n1819
+2024-09-19 13:16:09,442 - INFO - yeti downloaded the file: List-20240919-131602.xlsx
+2024-09-19 13:16:11,516 - INFO - File List-20240919-131602.xlsx downloaded
+2024-09-19 13:21:56,747 - INFO - File List-20240919-131602.xlsx downloaded
+2024-09-19 13:21:58,657 - INFO - yeti downloaded the file: List-20240919-132158.xlsx
+2024-09-19 13:22:00,041 - INFO - File List-20240919-132158.xlsx downloaded
+2024-09-19 13:26:11,426 - INFO - yeti executed a custom SQL query: select * from inv;
+2024-09-19 13:28:57,149 - INFO - yeti downloaded the file: List-20240919-132854.xlsx
+2024-09-19 13:28:58,424 - INFO - File List-20240919-132854.xlsx downloaded
+2024-09-19 13:30:01,750 - INFO - yeti downloaded the file: List-20240919-132955.xlsx
+2024-09-19 13:30:03,076 - INFO - File List-20240919-132955.xlsx downloaded
+2024-09-19 13:33:40,258 - INFO - yeti executed a custom SQL query: select * from inv_data where IN_STOCK>0 ; 
+2024-09-19 13:33:48,276 - INFO - Item lookup for nicye with input: s1249
+2024-09-19 13:36:00,231 - INFO - Item lookup for nicye with input: t2790
+2024-09-19 13:36:26,917 - INFO - Item lookup for nicye with input: t3055
+2024-09-19 13:36:42,452 - INFO - Item lookup for nicye with input: t3056
+2024-09-19 13:39:25,390 - INFO - yeti downloaded the file: List-20240919-133523.xlsx
+2024-09-19 13:39:33,372 - INFO - File List-20240919-133523.xlsx downloaded
+2024-09-19 16:08:11,881 - INFO - autobots, rolling out!
+2024-09-19 16:08:15,932 - INFO - autobots, rolling out!
+2024-09-19 16:08:19,541 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 16:08:57,942 - INFO - yeti searched big_img: n1223, using original index file, returned 229 files
+2024-09-19 16:10:58,200 - INFO - autobots, rolling out!
+2024-09-19 16:16:05,106 - INFO - autobots, rolling out!
+2024-09-19 16:18:00,619 - INFO - autobots, rolling out!
+2024-09-19 16:18:04,320 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 16:18:43,840 - INFO - yeti searched big_img: 5666, using original index file, returned 2 files
+2024-09-19 16:18:57,300 - INFO - yeti searched big_img: 5666, using original index file, returned 2 files
+2024-09-19 16:19:00,165 - INFO - yeti searched big_img: 5666, using original index file, returned 2 files
+2024-09-19 16:21:35,719 - INFO - autobots, rolling out!
+2024-09-19 16:23:37,602 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 16:23:40,315 - INFO - yeti searched big_img: 5666, using original index file, returned 2 files
+2024-09-19 16:26:50,616 - INFO - autobots, rolling out!
+2024-09-19 16:32:40,858 - INFO - autobots, rolling out!
+2024-09-19 16:32:55,800 - INFO - autobots, rolling out!
+2024-09-19 16:37:31,881 - INFO - autobots, rolling out!
+2024-09-19 16:38:06,734 - INFO - autobots, rolling out!
+2024-09-19 16:38:24,807 - INFO - autobots, rolling out!
+2024-09-19 16:41:55,798 - INFO - autobots, rolling out!
+2024-09-19 16:44:04,530 - INFO - autobots, rolling out!
+2024-09-19 16:45:11,945 - INFO - autobots, rolling out!
+2024-09-19 16:45:58,969 - INFO - autobots, rolling out!
+2024-09-19 16:47:15,538 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 16:47:17,886 - INFO - yeti searched big_img: 5666, using original index file, returned 4 files
+2024-09-19 16:47:22,421 - INFO - yeti searched big_img: 5666, using white background, returned 4 files
+2024-09-19 16:47:44,246 - INFO - yeti searched big_img: t3305, using original index file, returned 92 files
+2024-09-19 16:48:01,964 - INFO - yeti searched big_img: 5666, using original index file, returned 4 files
+2024-09-19 16:48:04,259 - INFO - yeti downloaded all images of 5666
+2024-09-19 16:48:09,602 - INFO - yeti searched big_img: 5666, using original index file, returned 4 files
+2024-09-19 16:49:21,993 - INFO - yeti searched big_img: 5666, using original index file, returned 4 files
+2024-09-19 16:51:28,028 - INFO - autobots, rolling out!
+2024-09-19 16:53:46,260 - INFO - autobots, rolling out!
+2024-09-19 16:53:49,955 - INFO - autobots, rolling out!
+2024-09-19 16:53:52,445 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 16:53:58,906 - INFO - yeti searched big_img: 5666, using original index file, returned 4 files
+2024-09-19 16:54:37,940 - INFO - yeti downloaded all images of 5666
+2024-09-19 16:58:57,576 - INFO - autobots, rolling out!
+2024-09-19 16:59:38,127 - INFO - autobots, rolling out!
+2024-09-19 16:59:40,378 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 16:59:44,028 - INFO - yeti searched big_img: 5666, using original index file, returned 4 files
+2024-09-19 16:59:44,992 - INFO - yeti downloaded all images of 5666
+2024-09-19 17:03:10,996 - INFO - autobots, rolling out!
+2024-09-19 17:07:05,016 - INFO - autobots, rolling out!
+2024-09-19 17:07:19,398 - INFO - autobots, rolling out!
+2024-09-19 17:09:11,545 - INFO - autobots, rolling out!
+2024-09-19 17:09:28,931 - INFO - autobots, rolling out!
+2024-09-19 17:14:42,998 - INFO - autobots, rolling out!
+2024-09-19 17:14:46,659 - INFO - autobots, rolling out!
+2024-09-19 17:14:48,699 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:15:20,142 - INFO - autobots, rolling out!
+2024-09-19 17:15:22,493 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:17:13,293 - INFO - autobots, rolling out!
+2024-09-19 17:17:15,317 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:26:59,354 - INFO - autobots, rolling out!
+2024-09-19 17:27:03,058 - INFO - autobots, rolling out!
+2024-09-19 17:27:06,203 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:27:49,758 - INFO - autobots, rolling out!
+2024-09-19 17:27:52,227 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:29:26,762 - INFO - autobots, rolling out!
+2024-09-19 17:30:33,499 - INFO - autobots, rolling out!
+2024-09-19 17:34:53,785 - INFO - autobots, rolling out!
+2024-09-19 17:35:24,243 - INFO - autobots, rolling out!
+2024-09-19 17:35:26,301 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:35:58,837 - INFO - autobots, rolling out!
+2024-09-19 17:36:00,829 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:36:05,433 - INFO - Item lookup for yeti with input: t3305
+2024-09-19 17:38:12,189 - INFO - autobots, rolling out!
+2024-09-19 17:38:15,830 - INFO - autobots, rolling out!
+2024-09-19 17:38:17,732 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:38:24,299 - INFO - Item lookup for yeti with input: t3305
+2024-09-19 17:38:33,556 - INFO - yeti is looking up order number: 1553
+2024-09-19 17:38:33,632 - INFO - yeti searched for order number: 1553
+2024-09-19 17:38:36,807 - INFO - Received order_number: 1553
+2024-09-19 17:38:38,249 - INFO - File 1553_label.xlsx downloaded from label output
+2024-09-19 17:38:55,749 - INFO - yeti downloaded the file: List-20240919-173855.xlsx
+2024-09-19 17:39:22,397 - INFO - File List-20240919-173855.xlsx downloaded
+2024-09-19 17:39:40,108 - INFO - yeti executed a custom SQL query: select * from order where ord_num='1550'
+2024-09-19 17:39:46,877 - INFO - yeti executed a custom SQL query: select * from ord where ord_num='1550'
+2024-09-19 17:39:52,309 - INFO - yeti executed a custom SQL query: select * from orders where ord_num='1550'
+2024-09-19 17:39:52,969 - INFO - yeti executed a custom SQL query: select * from orders where ord_num='1550'
+2024-09-19 17:42:32,415 - INFO - autobots, rolling out!
+2024-09-19 17:48:38,449 - INFO - autobots, rolling out!
+2024-09-19 17:48:40,833 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:51:52,541 - INFO - autobots, rolling out!
+2024-09-19 17:55:04,873 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 17:57:27,379 - INFO - autobots, rolling out!
+2024-09-19 18:04:14,530 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:08:16,046 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:08:17,463 - INFO - Item lookup for ahua with input: s1410
+2024-09-19 18:17:05,688 - INFO - autobots, rolling out!
+2024-09-19 18:17:09,358 - INFO - autobots, rolling out!
+2024-09-19 18:17:11,614 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:17:39,783 - INFO - autobots, rolling out!
+2024-09-19 18:17:42,119 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:17:58,145 - INFO - autobots, rolling out!
+2024-09-19 18:18:00,086 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:19:01,118 - INFO - autobots, rolling out!
+2024-09-19 18:19:04,517 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:19:48,173 - INFO - autobots, rolling out!
+2024-09-19 18:22:06,823 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:33:02,560 - INFO - autobots, rolling out!
+2024-09-19 18:33:36,377 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:36:43,700 - INFO - autobots, rolling out!
+2024-09-19 18:36:47,621 - INFO - autobots, rolling out!
+2024-09-19 18:37:17,264 - INFO - autobots, rolling out!
+2024-09-19 18:37:18,204 - INFO - autobots, rolling out!
+2024-09-19 18:48:56,106 - INFO - autobots, rolling out!
+2024-09-19 18:48:56,110 - INFO - autobots, rolling out!
+2024-09-19 18:51:21,668 - INFO - autobots, rolling out!
+2024-09-19 18:51:21,672 - INFO - autobots, rolling out!
+2024-09-19 18:54:05,157 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:55:28,089 - INFO - autobots, rolling out!
+2024-09-19 18:55:28,114 - INFO - autobots, rolling out!
+2024-09-19 18:55:42,709 - INFO - autobots, rolling out!
+2024-09-19 18:55:42,714 - INFO - autobots, rolling out!
+2024-09-19 18:56:01,313 - INFO - autobots, rolling out!
+2024-09-19 18:56:01,327 - INFO - autobots, rolling out!
+2024-09-19 18:56:17,951 - INFO - autobots, rolling out!
+2024-09-19 18:56:17,959 - INFO - autobots, rolling out!
+2024-09-19 18:56:19,805 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 18:57:59,440 - INFO - autobots, rolling out!
+2024-09-19 18:58:00,103 - INFO - autobots, rolling out!
+2024-09-19 19:01:49,383 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 19:04:24,489 - INFO - autobots, rolling out!
+2024-09-19 19:04:24,881 - INFO - autobots, rolling out!
+2024-09-19 19:05:10,574 - INFO - autobots, rolling out!
+2024-09-19 19:05:11,174 - INFO - autobots, rolling out!
+2024-09-19 19:05:13,033 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 19:08:09,979 - INFO - autobots, rolling out!
+2024-09-19 19:08:10,387 - INFO - autobots, rolling out!
+2024-09-19 19:09:06,909 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 23:04:58,266 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-19 23:05:16,135 - INFO - Item lookup for nicye with input: t2790
+2024-09-19 23:05:32,001 - INFO - Item lookup for nicye with input: t3055
+2024-09-19 23:05:44,970 - INFO - Item lookup for nicye with input: t3056
+2024-09-19 23:24:58,713 - INFO - Item lookup for nicye with input: s1249
+2024-09-20 00:15:32,102 - INFO - Item lookup for nicye with input: n1819
+2024-09-20 00:25:39,605 - INFO - Item lookup for nicye with input: n0812
+2024-09-20 01:09:20,531 - INFO - Item lookup for nicye with input: l1689
+2024-09-20 01:20:51,068 - INFO - Item lookup for nicye with input: m1121
+2024-09-20 01:20:53,698 - INFO - Item lookup for nicye with input: m1121
+2024-09-20 01:26:35,313 - INFO - Item lookup for nicye with input: s1327
+2024-09-20 09:30:16,098 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome Mobile iOS 129.0.6668, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 09:58:16,261 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 09:58:18,250 - INFO - Item lookup for yeti with input: t3118
+2024-09-20 09:58:23,207 - INFO - Item lookup for yeti with input: n1223
+2024-09-20 10:15:48,776 - INFO - autobots, rolling out!
+2024-09-20 10:15:52,778 - INFO - autobots, rolling out!
+2024-09-20 10:15:56,028 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 10:18:11,075 - INFO - autobots, rolling out!
