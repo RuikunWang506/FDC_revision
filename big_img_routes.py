@@ -53,7 +53,7 @@ def register_big_img_routes(app):
                         modified_time = os.path.getmtime(full_path)
                         modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
                         file_size = format_file_size(os.path.getsize(full_path) // 1024)
-                        ratio = f"{img.width}:{img.height}"
+                        ratio = f"1:{round(img.height / img.width, 1)}"
                         filename = os.path.basename(file_path)
                         image_data.append((filename, base64_image, modified_date, file_size, ratio))
                 except Exception as e:

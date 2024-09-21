@@ -28526,3 +28526,67 @@ TimeoutError: The read operation timed out
 2024-09-20 10:15:52,778 - INFO - autobots, rolling out!
 2024-09-20 10:15:56,028 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
 2024-09-20 10:18:11,075 - INFO - autobots, rolling out!
+2024-09-20 10:20:20,029 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 10:41:24,964 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 10:42:27,068 - INFO - Item lookup for yeti with input: n1862
+2024-09-20 10:46:01,867 - INFO - Item lookup for yeti with input: en6064
+2024-09-20 10:51:21,623 - INFO - Item lookup for yeti with input: s1172
+2024-09-20 10:51:40,975 - INFO - File file.ext downloaded
+2024-09-20 11:33:48,770 - INFO - User yeti has logged in. IP: 172.226.3.208, Browser: Chrome Mobile iOS 129.0.6668, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 11:34:01,411 - INFO - Item lookup for yeti with input: s1327
+2024-09-20 11:43:54,457 - INFO - Item lookup for yeti with input: en6064
+2024-09-20 11:45:10,876 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 11:45:11,854 - INFO - Item lookup for yeti with input: n1223
+2024-09-20 11:45:17,160 - INFO - Item lookup for yeti with input: l1846
+2024-09-20 11:46:43,687 - INFO - Item lookup for yeti with input: n2152
+2024-09-20 11:48:09,172 - INFO - Item lookup for yeti with input: el1781
+2024-09-20 11:56:17,540 - INFO - Item lookup for yeti with input: el1781
+2024-09-20 12:04:35,622 - INFO - Item lookup for yeti with input: el1781
+2024-09-20 12:04:53,873 - INFO - Item lookup for yeti with input: n1223
+2024-09-20 12:06:05,054 - INFO - Item lookup for yeti with input: s1172
+2024-09-20 12:34:58,227 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 12:43:42,440 - INFO - Processing data in Loris tool kit for yeti
+2024-09-20 12:43:45,934 - INFO - File 30_stickers_2024-09-20_12_43_43.pdf downloaded from barcode output
+2024-09-20 13:38:58,855 - INFO - Item lookup for yeti with input: t3305
+2024-09-20 13:39:44,382 - INFO - Item lookup for yeti with input: t3242
+2024-09-20 13:41:14,376 - INFO - Serving file T3142_sss_0.jpg
+2024-09-20 13:43:49,049 - INFO - Item lookup for yeti with input: t3305
+2024-09-20 13:49:30,592 - INFO - yeti downloaded the file: List-20240920-134924.xlsx
+2024-09-20 13:49:32,095 - INFO - File List-20240920-134924.xlsx downloaded
+2024-09-20 14:00:45,347 - INFO - Item lookup for yeti with input: n1223
+2024-09-20 14:24:44,094 - INFO - Item lookup for yeti with input: t3123
+2024-09-20 14:41:11,838 - INFO - User fdc has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 14:41:16,765 - INFO - Item lookup for fdc with input: t3305
+2024-09-20 14:41:32,810 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 14:41:33,827 - INFO - Item lookup for yeti with input: t3305
+2024-09-20 15:01:31,432 - INFO - Item lookup for yeti with input: t289
+2024-09-20 15:02:11,742 - INFO - Item lookup for yeti with input: t2902
+2024-09-20 15:02:46,092 - INFO - Item lookup for yeti with input: style,el1855,en1346,en1460,en1496,en1759,en1789,en1905,en2008,en2156,en2209,en6064,es1096,es1134,es1269,es1386,es1394,es1414,es1421,et2408,et2905,et2949,et2951,et2953,et3167,et3313,l0665,l1162,l1343,l1494,l1513,l1550-m,l1591,l1622,l1632,l1676,l1687-m,l1687-s,el1781,l1790,l1804,l1805,l1806,l1808,l1809,l1815,l1827,l1830,l1838,l1850,l1851,l1862,l6050,m0024,m1044,m1068,m1121,m1141,n0122,n0370,n0469,n0812,n1004b,n1030,n1151,n1185,n1223,n1282,n1296,n1298,n1422,n1432,n1460,n1464,n1507,n1538,n1547,n1571,n1616,n1632,n1655,n1745,n1751,n1775,n1782,n1811,n1812,n1814,n1835,n1842,n1851,n1853,n1866,n1967,n1971,n1972,n1978,n1979,n2013,n2036,n2071,n2087,n2088,n2093,n2100,n2102,n2136,n2152,n2191,n3007,s1005,s1015,s1017,s1034,s1042,s1044,s1045,s1057,s1058,s1072,s1074g,s1094,s1108,s1110,s1112,s1113,s1121,s1206,s1209,s1211,s1212,s1225,s1240,s1245,s1290,s1302,s1306,s1327,s1405,s1408,s1409,s1410,s1412,s1424,s1426,s1428,s1460,s1553,t2522,t2653,t2725,t2739,t2772,t2801,t2804,t2843,t2874,t2886,t2887,t2890,t2899-set,t2902,t2902-set,t2907,t2946,t2962,t2966,t2994,t3002,t3006,t3007,t3027,t3029,t3030,t3095,t3096,t3109,t3112,t3116,t3118,t3129,t3131,t3132,t3142,t3172,t3225,t3243,t3255,t3279,t3305,s1146,es1272,n1553,s1293,s1220,es1323
+2024-09-20 15:28:37,883 - INFO - User ting has logged in. IP: 166.196.79.73, Browser: Mobile Safari UI/WKWebView , OS: iOS 17.7, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 15:28:48,112 - INFO - Item lookup for ting with input: t3161
+2024-09-20 15:33:30,000 - INFO - autobots, rolling out!
+2024-09-20 15:33:34,058 - INFO - autobots, rolling out!
+2024-09-20 15:42:15,483 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 15:52:00,658 - INFO - Serving file 56666.jpg
+2024-09-20 15:57:59,824 - INFO - User ting has logged in. IP: 166.196.79.73, Browser: Mobile Safari UI/WKWebView , OS: iOS 17.7, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 15:58:01,032 - INFO - Item lookup for ting with input: t3161
+2024-09-20 15:58:06,661 - INFO - Item lookup for ting with input: t3180
+2024-09-20 15:58:28,774 - INFO - Item lookup for ting with input: t3153
+2024-09-20 16:01:59,879 - INFO - autobots, rolling out!
+2024-09-20 16:03:21,616 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 16:03:27,736 - INFO - Item lookup for yeti with input: n1223,n1357,n1548,n1553,lv,rd,sg,n1797,n1836,n1837,n1839,n1840,n1846,n1852,n1854,n1855,n1863,n1865,n1867,n1916,n1917,n1922,n1938,n1959,n1965,n1972,n1976,n1981,n1991,n2012,n2026,n2083,s1111,s1151,s1187,s1220,s1226,s1250,s1286,s1303,s1427,s1441,s1458,t2653,t2806,t2812,t2899-set,t2902-set,t2903-set,t2936,t2946,t2983,t2995-set,t3004,t3007-set,t3027,t3058,t3097,t3120,t3123,t3126,t3131,t3133,t3134,t3135,t3143
+2024-09-20 16:03:34,331 - INFO - yeti is looking up order number: 1567
+2024-09-20 16:03:34,359 - INFO - yeti searched for order number: 1567
+2024-09-20 16:03:35,671 - INFO - Received order_number: 1567
+2024-09-20 16:03:37,136 - INFO - File 1567_label.xlsx downloaded from label output
+2024-09-20 16:03:59,376 - INFO - yeti is looking up order number: 1567
+2024-09-20 16:03:59,392 - INFO - yeti searched for order number: 1567
+2024-09-20 16:04:03,676 - INFO - Received order_number: 1567
+2024-09-20 16:04:08,884 - INFO - File 1567_label.xlsx downloaded from label output
+2024-09-20 16:06:20,477 - INFO - Item lookup for yeti with input: t2902
+2024-09-20 16:24:13,802 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 16:30:04,952 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-20 16:30:06,116 - INFO - Item lookup for yeti with input: n1223
+2024-09-20 16:30:17,636 - INFO - Item lookup for yeti with input: s1146
+2024-09-20 16:34:18,689 - INFO - Item lookup for yeti with input: n1223
+2024-09-20 17:58:42,676 - INFO - autobots, rolling out!

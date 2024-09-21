@@ -115,20 +115,65 @@
             color: transparent;
             font-weight: bold;
         }
+
+                /* Trigger box */
+        .info-hover-trigger {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            padding: 5px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 10px; /* Adjust as needed */
+            text-align: center; /* Center the text inside the trigger */
+        }
+
+        /* Tooltip box */
+        .info-hover {
+            display: none;
+            position: absolute;
+            z-index: 1002;
+            width: 800px; /* Adjust width as needed */
+            background-color: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            text-align: center; /* Center the text inside the tooltip */
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            top: 100%; /* Place the tooltip below the trigger */
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: normal;
+            padding: 10px; /* Add padding for better spacing */
+        }
+
+        /* Show the tooltip on hover */
+        .info-hover-trigger:hover .info-hover {
+            display: block;
+        }
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
 
     <div class="container text-center">
-        <h1 class="mt-5">Big Image Search</h1>
-        <p>You can click on the picture to open it in the browser, or you can download it directly.</p>
-        <p>You can also download all as a ZIP, or you can select a few to download as selected.</p>
-        <h4>If you put new images in Database, 如果数据库放了新图, Click RE-index，不会花一小时了，</h4>
-        <h4>白底选项，但是有些细节图如果了一边贴边了就无了，除非用不勾选白底</h4>
-        <a href="#" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal">
-            Play Video
-        </a>
+        <h1 class="mt-5">影神图</h1>
+        <h4>Big Image Search</h4>
+
+        <div class="info-hover-trigger">Hover 4 more info
+            <!-- Info Box Content -->
+            <div class="info-hover">
+                <p>You can click on the picture to open it in the browser, or you can download it directly.</p>
+                <p>You can also download all as a ZIP, or you can select a few to download as selected.</p>
+                <p>If you put new images in the Database, Click RE-index</p>
+                <p>Photoshop Option: retrive only white background images</p>
+                <p>Folder Name Option: some image names don't have sku, they are included in the folder names </p>
+                <a href="#" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal">
+                    Play demo Video
+                </a>
+            </div>
+        </div>    
+        
 
         <!-- Modal HTML for Video -->
         <div class="modal fade" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="videoModalLabel" aria-hidden="true">
