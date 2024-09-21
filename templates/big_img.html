@@ -261,6 +261,7 @@
 
                 <!-- Second Row: Sorting Options -->
                 <div class="row justify-content-center">
+                    Sort By
                     <div class="col-md-auto mb-2">
                         <a class="btn btn-secondary btn-sm" href="#" data-sort="filename" data-order="asc">Filename A-Z</a>
                     </div>
@@ -278,24 +279,24 @@
 
             <div id="image-container" class="row mt-4">
 
-                {% for filename, image, modified_date, file_size, ratio in image_data %}
-                    <div class="col-md-3 image-card" data-filename="{{ filename }}" data-filesize="{{ file_size }}">
-                        <div class="card">
-                            <input type="checkbox" name="selected_images" value="{{ filename }}" class="select-checkbox">
-                            <a href="{{ url_for('serve_file3', encoded_path=quote(filename)) }}" target="_blank">
-                                <img src="data:image/jpeg;base64,{{ image }}" class="card-img-top img-clickable" alt="{{ filename }}">
-                            </a>
-                            <div class="card-body">
-                                <p class="card-title filename">
-                                    {{ filename }}
-                                    <span class="tooltip-text">{{ filename }}</span>
-                                </p>
-                                <p class="image-info">Modified: {{ modified_date }}</p>
-                                <p class="image-info">
-                                    Size: {{ file_size }}
-                                    <a href="{{ url_for('download_file5', encoded_path=quote(filename)) }}" target="_blank" class="btn btn-primary float-right">Download</a>
-                                </p>
-                                <p class="image-info">Ratio: {{ ratio }}</p>
+                {% for filename, image, modified_date, file_size, ratio, file_path in image_data %}
+                <div class="col-md-3 image-card" data-filename="{{ filename }}" data-filesize="{{ file_size }}">
+                    <div class="card">
+                        <input type="checkbox" name="selected_images" value="{{ file_path }}" class="select-checkbox">
+                        <a href="{{ url_for('serve_file3', encoded_path=quote(file_path)) }}" target="_blank">
+                            <img src="data:image/jpeg;base64,{{ image }}" class="card-img-top img-clickable" alt="{{ filename }}">
+                        </a>
+                        <div class="card-body">
+                            <p class="card-title filename">
+                                {{ filename }}
+                                <span class="tooltip-text">{{ file_path }}</span>
+                            </p>
+                            <p class="image-info">Modified: {{ modified_date }}</p>
+                            <p class="image-info">
+                                Size: {{ file_size }}
+                                <a href="{{ url_for('download_file5', encoded_path=quote(file_path)) }}" target="_blank" class="btn btn-primary float-right">Download</a>
+                            </p>
+                            <p class="image-info">Ratio: {{ ratio }}</p>
                             </div>
                         </div>
                     </div>

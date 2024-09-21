@@ -929,20 +929,9 @@ def register_routes(app):
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
         
-    @app.route('/ftp3/<path:encoded_path>', methods=['GET'])
-    def serve_file3(encoded_path):
-        decoded_path = urllib.parse.unquote(encoded_path)
-        full_path = os.path.join(app.config['BIG_PICTURE_DIR'], decoded_path)
-        directory, filename = os.path.split(full_path)
-        return send_from_directory(directory, filename, as_attachment=False)
+    
 
-    @app.route('/ftp3/download/<path:encoded_path>', methods=['GET'])
-    def download_file5(encoded_path):
-        decoded_path = urllib.parse.unquote(encoded_path)
-        app.logger.info("Serving file %s", decoded_path)
-        full_path = os.path.join(app.config['BIG_PICTURE_DIR'], decoded_path)
-        directory, filename = os.path.split(full_path)
-        return send_from_directory(directory, filename, as_attachment=True)  
+     
 
     def load_credentials():
         base_dir = os.path.dirname(os.path.abspath(__file__))

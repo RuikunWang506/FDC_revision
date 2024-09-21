@@ -1,4 +1,4 @@
-from flask import request, render_template, session, jsonify, send_file, redirect, url_for, flash
+from flask import request, render_template, session, jsonify, send_file, redirect, url_for, flash,send_from_directory
 import os
 import json
 import zipfile
@@ -10,6 +10,8 @@ import subprocess
 import sys
 import base64
 import urllib.parse
+from urllib.parse import quote
+
 
 def basename_filter(path):
     return os.path.basename(path)
@@ -18,19 +20,23 @@ def basename_filter(path):
 def register_big_img_routes(app):
     app.jinja_env.filters['basename'] = basename_filter
 
+    def prepend_path_to_file(file_path):
+    # Construct the full path by prepending the missing directory structure
+        return os.path.join(Config.BIG_PICTURE_DIR, file_path)
+
     @app.route('/big_img', methods=['GET', 'POST'])
     def big_img():
         if 'username' not in session:
             return redirect(url_for("login"))
 
-        image_data = []  # Initialize image_data
+        image_data = []
 
         if request.method == 'POST':
             search_str = request.form.get('search_str', '').lower()
             white_background = request.form.get('white_background', False)
             include_folders = request.form.get('include_folders', False)
             
-            index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'white_background_images.json') if white_background else os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
+            index_file = os.path.join(Config.BIG_PICTURE_DIR, 'white_background_images.json') if white_background else os.path.join(Config.BIG_PICTURE_DIR, 'index.json')
 
             if not os.path.exists(index_file):
                 return "Index file not found. Please generate the index first.", 500
@@ -38,12 +44,11 @@ def register_big_img_routes(app):
             with open(index_file, 'r') as f:
                 index = json.load(f)
 
-            # Search logic: include folders or not
-            matching_files = [file_path for file_path in index if search_str in (file_path.lower() if include_folders else os.path.basename(file_path).lower())]
+            # Ensure file paths are strings
+            matching_files = [str(file_path) for file_path in index if search_str in (file_path.lower() if include_folders else os.path.basename(file_path).lower())]
 
-            # Generate image data
             for file_path in matching_files:
-                full_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
+                full_path = prepend_path_to_file(file_path)
                 try:
                     with Image.open(full_path) as img:
                         buffer = io.BytesIO()
@@ -55,12 +60,11 @@ def register_big_img_routes(app):
                         file_size = format_file_size(os.path.getsize(full_path) // 1024)
                         ratio = f"1:{round(img.height / img.width, 1)}"
                         filename = os.path.basename(file_path)
-                        image_data.append((filename, base64_image, modified_date, file_size, ratio))
+                        image_data.append((filename, base64_image, modified_date, file_size, ratio, file_path))
                 except Exception as e:
                     flash(f"Error processing image {file_path}: {str(e)}", "danger")
 
-        return render_template('big_img.html', image_data=image_data, quote=urllib.parse.quote)
-    
+        return render_template('big_img.html', image_data=image_data, quote=quote)
     @app.route('/get_image_data', methods=['GET'])
     def get_image_data():
         filename = request.args.get('filename')
@@ -106,7 +110,7 @@ def register_big_img_routes(app):
 
         # Determine the correct image list
         if download_type == 'all':
-            index_file = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
+            index_file = os.path.join(Config.BIG_PICTURE_DIR, 'index.json')
             if not os.path.exists(index_file):
                 return "Index file not found. Please generate the index first.", 500
             with open(index_file, 'r') as f:
@@ -114,7 +118,7 @@ def register_big_img_routes(app):
             matching_files = [file_path for file_path in index if search_str in file_path.lower()]
             file_list = matching_files
         else:
-            file_list = selected_images
+            file_list = selected_images  # selected_images now contains the relative paths
 
         if not file_list:
             return "No images selected or found.", 404
@@ -123,7 +127,10 @@ def register_big_img_routes(app):
         memory_file = io.BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:
             for file_path in file_list:
-                image_path = os.path.join(app.config['BIG_PICTURE_DIR'], file_path)
+                # Ensure the full path is constructed by combining the base directory and the relative path
+                image_path = os.path.join(Config.BIG_PICTURE_DIR, file_path)  # Now uses the full relative path
+                if not os.path.exists(image_path):
+                    return f"File {image_path} not found.", 404  # Better error handling
                 if image_type == '1_1':
                     output_image = create_square_image(image_path)
                     if output_image:
@@ -183,3 +190,20 @@ def register_big_img_routes(app):
         return base64.b64encode(data.read()).decode('utf-8')
 
     app.jinja_env.filters['b64encode'] = b64encode_filter
+    
+
+    @app.route('/ftp3/<path:encoded_path>', methods=['GET'])
+    def serve_file3(encoded_path):
+        # Decode the path and serve the file from the correct location
+        decoded_path = urllib.parse.unquote(encoded_path)
+        full_path = os.path.join(Config.BIG_PICTURE_DIR, decoded_path)
+        directory, filename = os.path.split(full_path)
+        return send_from_directory(directory, filename, as_attachment=False)
+
+    @app.route('/ftp3/download/<path:encoded_path>', methods=['GET'])
+    def download_file5(encoded_path):
+        # Decode the path and serve the file for download
+        decoded_path = urllib.parse.unquote(encoded_path)
+        full_path = os.path.join(Config.BIG_PICTURE_DIR, decoded_path)
+        directory, filename = os.path.split(full_path)
+        return send_from_directory(directory, filename, as_attachment=True)
