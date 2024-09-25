@@ -8,6 +8,8 @@ from PIL import Image as PILImage
 from openpyxl.styles import Alignment, Border, Side, PatternFill
 import io
 from config import Config
+from openpyxl.utils.datetime import from_excel
+from datetime import datetime as dt
 
 # Define global variables
 user_input_type = None
@@ -15,7 +17,7 @@ image_option = None
 user_input = None
 formatted_date = ""
 source_folder = None  # Correctly define and highlight the source_folder variable
-
+    
 def main():
     global user_input, formatted_date, user_input_type, source_folder,today
 
@@ -78,6 +80,8 @@ def main():
             query = """\
             DECLARE @AltCDList NVARCHAR(MAX) = ?;
             DECLARE @ProductList NVARCHAR(MAX);
+
+            -- Modify AltCDList and generate the product list
             SET @AltCDList = REPLACE(@AltCDList, ',', '%,') + '%';
             WITH SplitAltCD AS (
                 SELECT value
@@ -86,16 +90,19 @@ def main():
             SELECT @ProductList = COALESCE(@ProductList + ',', '') + PROD_CD
             FROM dbo.inv
             WHERE EXISTS (SELECT 1 FROM SplitAltCD WHERE alt_CD LIKE value);
+
             WITH SplitValues AS (
                 SELECT value
                 FROM dbo.SplitString(@ProductList, ',')
             )
+
+            -- Main Query
             SELECT 
                 i.PROD_CD AS SKU,
                 i.ALT_CD AS SKU_no_color,
                 id.in_stock AS in_stock,
                 id.ORDER_QTY AS some_one_ordered,
-                (id.in_stock - id.order_qty) AS Avaliable_now,
+                (id.in_stock - id.order_qty) AS Available_now,
                 id.on_order_qty AS incoming_quantity,
                 i.RETAIL_PRS AS selling_price,
                 i.PC_CASE AS QTY_in_box,
@@ -103,10 +110,29 @@ def main():
                 i.UNIT_COLOR AS color,
                 idt.ut_len AS item_length,
                 idt.ut_wi AS item_width,
-                idt.UT_hi AS item_height
+                idt.UT_hi AS item_height,
+                -- Add last_activity logic
+                CASE 
+                    WHEN LT_SL_DT = 0 THEN 'NEVER'
+                    ELSE RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                        RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                        CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR)
+                END AS last_activity,
+                -- Add created_dt logic
+                fcd.create_dt AS created_dt
+
             FROM dbo.inv AS i
             LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
             LEFT JOIN inv_detl AS idt ON i.PROD_CD = idt.prod_cd
+            LEFT JOIN (
+                SELECT 
+                    prod_cd,
+                    -- Add created_dt formatting logic from wm_skufile
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR) AS create_dt
+                FROM wm_skufile
+            ) AS fcd ON i.PROD_CD = fcd.prod_cd
             WHERE i.PROD_CD IN (SELECT value FROM SplitValues);
             """
             cursor.execute(query, mylist)
@@ -123,7 +149,7 @@ def main():
 
         column_headers = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered', 'Avaliable_now',
                           'incoming_quantity', 'selling_price', 'QTY_in_box', 'unit_weight', 'color', 'item_length',
-                          'item_width', 'item_height', 'dimensions']
+                          'item_width', 'item_height', 'last_activity','Created_dt']
         for col_index, header in enumerate(column_headers, start=1):
             main_sheet.cell(row=1, column=col_index, value=header)
 
@@ -216,9 +242,14 @@ def add_data_to_excel_sheet(sku_name, ws, row, existing_wb):
             ws["H" + str(row + detail_row_num)] = existing_wb["sorted"]["C" + str(j)].value
             ws["I" + str(row + detail_row_num)] = existing_wb["sorted"]["D" + str(j)].value
             ws["N" + str(row + detail_row_num)] = existing_wb["sorted"]["B" + str(j)].value
+            
+            last_modified_dates = []  # To store all last_modified dates
+            created_dates = []  # To store all created_dt dates
+
             for xd in range(2, existing_wb["main"].max_row + 1):
                 if existing_wb["main"]["A" + str(xd)].value is None:
                     break
+
                 if str(existing_wb["main"]["B" + str(xd)].value).strip() == str(existing_wb["sorted"]["B" + str(j)].value).strip():
                     ws["K" + str(row + detail_row_num)] = existing_wb["main"]["I" + str(xd)].value
                     dim_len = existing_wb["main"]["L" + str(xd)].value
@@ -231,7 +262,47 @@ def add_data_to_excel_sheet(sku_name, ws, row, existing_wb):
                         ws["J" + str(row + detail_row_num)] = existing_wb["main"]["G" + str(xd)].value
                     elif str(existing_wb["main"]["A" + str(xd)].value).strip() == "oms_EF":
                         ws["P" + str(row + detail_row_num)] = existing_wb["main"]["F" + str(xd)].value
+
+                    # Collect last_modified and created_dt dates
+                    last_modified = existing_wb["main"]["o" + str(xd)].value
+                    created_dt = existing_wb["main"]["p" + str(xd)].value
+
+                    # Collect dates if they are valid
+                    if last_modified:
+                        last_modified_dates.append(last_modified)
+
+                    if created_dt:
+                        created_dates.append(created_dt)
+
+            # Get the most recent last_modified date
+            last_modified_dates_filtered = [date for date in last_modified_dates if date != 'NEVER']
+
+            if last_modified_dates_filtered:  # Check if the list is not empty
+                # Convert filtered date strings to datetime objects
+                last_modified_dates_dt = [dt.strptime(date, '%m/%d/%Y') for date in last_modified_dates_filtered]
+                
+                # Get the most recent (newest) last modified date
+                newest_last_modified = max(last_modified_dates_dt).strftime('%m/%d/%Y')
+                ws["Q" + str(row + detail_row_num)] = newest_last_modified
+            else:
+                ws["Q" + str(row + detail_row_num)] = "No Date"  # or some other default value
+
+            created_dates_filtered = [date for date in created_dates if date != 'NEVER']
+
+
+            if created_dates_filtered:
+                # Convert the filtered date strings to datetime objects
+                created_dates_dt = [dt.strptime(date, '%m/%d/%Y') for date in created_dates_filtered]
+                
+                # Get the oldest date if there are valid dates
+                oldest_created_dt = min(created_dates_dt).strftime('%m/%d/%Y')
+                ws["R" + str(row + detail_row_num)] = oldest_created_dt
+            else:
+                # If all values are 'NEVER', return 'NEVER'
+                ws["R" + str(row + detail_row_num)] = "NEVER"
+            
             detail_row_num += 1
+    detail_row_num += 1
 
     print(sku_name + " completed")
     ws.merge_cells("A" + str(row) + ":" + "D" + str(row + (7 if detail_row_num < 8 else detail_row_num - 1)))
@@ -239,6 +310,7 @@ def add_data_to_excel_sheet(sku_name, ws, row, existing_wb):
     ws.merge_cells("F" + str(row) + ":" + "F" + str(row + (7 if detail_row_num < 8 else detail_row_num - 1)))
     ws['F' + str(row)].alignment = Alignment(horizontal='center', vertical='center')
     row += 8 if detail_row_num < 8 else detail_row_num
+
 
     return row  
 
@@ -262,6 +334,9 @@ def generate_image_sheet(combined_results, user_input_list):
     new_ws['N2'] = "SKU"
     new_ws['O2'] = "FDC Quantity"
     new_ws['P2'] = "E fashion quantity"
+    new_ws['Q2'] = "Last Modified Date"
+    new_ws['R2'] = "Created Date"
+    
 
     row = 3
     for sku in user_input_list:
@@ -275,4 +350,5 @@ def generate_image_sheet(combined_results, user_input_list):
 
 if __name__ == "__main__":
     main()
+    print(main())
     print("output/list_output/" + formatted_date + ".xlsx")
