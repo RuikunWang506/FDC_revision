@@ -201,14 +201,14 @@
         <!-- Combined Search and Re-Index Form -->
         <form method="post" id="searchForm" action="{{ url_for('big_img') }}" class="text-center">
             <div class="form-group">
-                <label for="search_str">Search String:</label>
+                <label for="search_str" style="padding-top: 30px; padding-bottom: 30px;">Search String:</label>
                 <input type="text" class="form-control d-inline-block" id="search_str" name="search_str" required placeholder="put style here, N1223" style="width: auto; display: inline-block;">
-                
+                <br>
                 <!-- Search Button -->
                 <button type="submit" class="btn btn-primary d-inline-block">Search</button>
 
                 <!-- Re-Index Button (Trigger JavaScript) -->
-                <button type="button" class="btn btn-warning d-inline-block" id="reindexBtn">Re-Index</button>
+                <button type="button" class="btn btn-warning d-inline-block" id="reindexBtn">Re-Index 45 sec</button>
             </div>
 
             <!-- Checkbox Options -->

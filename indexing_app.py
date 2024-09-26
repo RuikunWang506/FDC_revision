@@ -18,7 +18,6 @@ def backup_file(file_path):
     if os.path.exists(file_path):
         backup_path = os.path.join(saved_index_dir, os.path.basename(file_path)) + f".{datetime.now().strftime('%d%m%Y')}"
         shutil.move(file_path, backup_path)  # Use shutil.move instead of os.rename
-        print(f"Backup created: {backup_path}")
 
 def load_json(file_path):
     """Load JSON file if exists, otherwise return an empty list."""
