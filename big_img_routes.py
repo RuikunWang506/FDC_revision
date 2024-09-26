@@ -79,24 +79,23 @@ def register_big_img_routes(app):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
     
-    
-    @app.route('/reindex', methods=['GET'])
+    @app.route('/reindex', methods=['POST'])
     def reindex():
         try:
-            script_path = os.path.join(os.path.dirname(__file__), 'indexing_app.py')
-            result = subprocess.run([sys.executable, script_path], capture_output=True, text=True)
-
-            if result.returncode == 0:
-                reindex_result = result.stdout
-                flash("Re-Indexing completed successfully!", "success")
-            else:
-                reindex_result = result.stderr
-                flash(f"Re-Indexing failed: {result.stderr}", "danger")
+            # Run indexing_app.py using subprocess with UTF-8 encoding
+            result = subprocess.run(
+                [sys.executable, os.path.join(os.path.dirname(__file__), 'indexing_app.py')],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            # Capture the stdout from the script
+            reindex_result = result.stdout
         except Exception as e:
-            reindex_result = str(e)
-            flash(f"An error occurred: {str(e)}", "danger")
-
-        return jsonify({'reindex_result': reindex_result})
+            reindex_result = f"Error during re-indexing: {str(e)}"
+        
+        return render_template('big_img.html', reindex_result=reindex_result)
+    
 
     @app.route('/download_big_images', methods=['GET', 'POST'])
     def download_big_images():

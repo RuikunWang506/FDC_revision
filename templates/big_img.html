@@ -198,23 +198,35 @@
             </div>
         </div>
 
-        <form method="post" id="searchForm" class="text-center">
+        <!-- Combined Search and Re-Index Form -->
+        <form method="post" id="searchForm" action="{{ url_for('big_img') }}" class="text-center">
             <div class="form-group">
                 <label for="search_str">Search String:</label>
-                <input type="text" class="form-control" id="search_str" name="search_str" required placeholder="put style here, N1223">
-            </div>
-            <button type="submit" class="btn btn-primary">Search</button>
-            <a href="#" class="btn btn-warning" id="reindexBtn">Re-Index</a>
+                <input type="text" class="form-control d-inline-block" id="search_str" name="search_str" required placeholder="put style here, N1223" style="width: auto; display: inline-block;">
+                
+                <!-- Search Button -->
+                <button type="submit" class="btn btn-primary d-inline-block">Search</button>
 
+                <!-- Re-Index Button (Trigger JavaScript) -->
+                <button type="button" class="btn btn-warning d-inline-block" id="reindexBtn">Re-Index</button>
+            </div>
+
+            <!-- Checkbox Options -->
             <div class="checkbox-container mt-3">
                 <input type="checkbox" class="form-check-input custom-checkbox" id="white_background" name="white_background">
                 <label class="form-check-label" for="white_background">
                     <span class="rainbow-text"> 白底 photoshoped</span>
                 </label>
                 <input type="checkbox" class="form-check-input custom-checkbox" id="include_folders" name="include_folders">
-                <label class="form-check-label" for="include_folders"><span class="rainbow-text">Include Folder Names</span></label>
+                <label class="form-check-label" for="include_folders">
+                    <span class="rainbow-text">Include Folder Names</span>
+                </label>
             </div>
         </form>
+
+        <!-- Hidden Re-Index Form (Handled Separately by JavaScript) -->
+        <form id="reindexForm" action="{{ url_for('reindex') }}" method="POST" style="display:none;"></form>
+
 
 
         {% if reindex_result %}
@@ -320,6 +332,10 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
+        document.getElementById('reindexBtn').addEventListener('click', function() {
+        document.getElementById('reindexForm').submit();
+    });
+    
         $(document).ready(function() {
             // Sorting button click handler
             $('.btn-secondary').on('click', function(e) {
