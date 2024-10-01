@@ -110,13 +110,33 @@
 {% endif %}
 {% if filename %}
     <div class="text-center">
-        <h2><p>Download Label</p> <p><u>{{ filename }}</u></p> </h2>
-            <a href="{{ url_for('download_file2', filename=filename) }}" class="btn btn-primary">
-                Download
-            </a>
+        <h2>
+            <p>Download Label</p>
+            <p>现在mix的数字也自动输入了，但是装箱数错了整个还是会错</p>
+            <p>尾箱的数字暂时还要改</p>
+            <p><u>{{ filename }}</u></p>
+        </h2>
+        <a href="{{ url_for('download_file2', filename=filename) }}" class="btn btn-primary">
+            Download
+        </a>
         <div class="alert alert-info mt-3">
-            <p>Number of labels is: {{ number_of_labels }}</p>
-            <p>Mixed Boxes are: {{ duplicate_numbers }}</p>
+            <!-- Calculate the number of boxes -->
+            {% set labels_divided = (number_of_labels // 4) %}
+            {% if number_of_labels % 4 != 0 %}
+                {% set labels_divided = labels_divided + 1 %}
+                
+            {% endif %}
+
+            <h3>
+                一共有: {{ number_of_labels }} 张 + 1张统计表
+                <!-- Bordered box displaying the calculated number -->
+                <span class="badge badge-secondary ml-2" style="border: 1px solid #000; padding: 10px;">
+                    Jennifer 1x4 的话需要打 {{ labels_divided }} 张大纸
+                </span>
+            </h3>
+            </h3>
+            <h3>混装的是: {{ duplicate_numbers }}，请再次确认这些数字</h3>
+            <h4>还有对方地址！{{addresslist}}</h4>
             <div class="info-list">
                 <h2>Info List:</h2>
                 <ul>

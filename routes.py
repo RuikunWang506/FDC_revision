@@ -27,11 +27,11 @@ from io import StringIO
 
 # Application-specific imports
 from custom_query import execute_custom_query, allowed_file
-from indexing_app import generate_index
 from config import Config
 from logging_setup import configure_logging
 from upload_processor import process_upload
 from big_img_routes import register_big_img_routes
+from location_service import location_service_bp
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
@@ -44,6 +44,8 @@ client = WebClient(token=Config.SLACK_TOKEN)
 def register_routes(app):
     
     register_big_img_routes(app)
+    app.register_blueprint(location_service_bp)
+
 
     def check_credentials(username, password):
         return Config.USERS.get(username) == password
@@ -309,7 +311,7 @@ def register_routes(app):
                 return "Order number is missing.", 400
 
             app.logger.info("Received order_number: %s", order_number)
-            filename, error_message, number_of_labels, duplicate_numbers, info_list = Label_Maker.process_orders(order_number)
+            filename, error_message, number_of_labels, duplicate_numbers, info_list,addresslist = Label_Maker.process_orders(order_number)
 
             if error_message:
                 return render_template(
@@ -333,6 +335,7 @@ def register_routes(app):
                 number_of_labels=number_of_labels,
                 duplicate_numbers=duplicate_numbers,
                 info_list=info_list,
+                addresslist=addresslist,
                 order_number=order_number
             )
         except Exception as e:
@@ -398,7 +401,6 @@ def register_routes(app):
                     V5_Listcreator.user_input_type = user_input_type
                     V5_Listcreator.main()
                     filename = f"{V5_Listcreator.formatted_date}.xlsx"
-                    app.logger.info("%s downloaded the file: %s", current_user, filename)
                 except Exception as e:
                     app.logger.error("An error occurred: %s", str(e))
                     return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message=f"An error occurred: {str(e)}", current_user=current_user)
@@ -644,7 +646,10 @@ def register_routes(app):
 
     @app.route('/download/<filename>')
     def download_file(filename):
-        app.logger.info("File %s downloaded", filename)
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        current_user = session['username']
+        app.logger.info("%s downloaded the file: %s", current_user, filename)
         return send_from_directory("output/list_output", filename, as_attachment=False)
 
     @app.route('/download2/<filename>')

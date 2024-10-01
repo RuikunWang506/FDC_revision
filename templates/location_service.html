@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Location Service</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6.4.0 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-top: 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .form-section {
+            padding: 20px;
+        }
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        /* Styling for Toasts */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050; /* Higher than Bootstrap's navbar (z-index: 1030) */
+            min-width: 250px;
+        }
+        /* Suggestions Dropdown */
+        #suggestions {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    {% include 'navbar.html' %}
+
+    <!-- Toast Container for Flash Messages -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true">
+        <!-- Flashed Messages as Toasts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast align-items-center text-bg-{{ 'warning' if category == 'warning' else ('success' if category == 'message' else 'danger') }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {% if category == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% elif category == 'message' %}
+                                    <i class="fas fa-check-circle me-2"></i>
+                                {% else %}
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="container mt-4">
+        <!-- Existing content with tabs and forms -->
+        
+        <!-- Tabs for Sections -->
+        <ul class="nav nav-tabs" id="locationServiceTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if action != 'viewall' and action != 'add' and action != 'import_export' %}active{% endif %}" href="{{ url_for('location_service.location_service', action='search') }}">
+                    <i class="fas fa-search"></i> Search / Update Products
+                </a>
+            </li>
+            {% if current_user != 'fdc' %}
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if action == 'viewall' %}active{% endif %}" href="{{ url_for('location_service.location_service', action='viewall') }}">
+                    <i class="fas fa-table"></i> View All Products
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if action == 'add' %}active{% endif %}" href="{{ url_for('location_service.location_service', action='add') }}">
+                    <i class="fas fa-plus-circle"></i> Add New Product
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if action == 'import_export' %}active{% endif %}" href="{{ url_for('location_service.location_service', action='import_export') }}">
+                    <i class="fas fa-file-import"></i> Import/Export
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+        <div class="tab-content" id="locationServiceTabContent">
+            <!-- Section 1: Search / Update Products -->
+            <div class="tab-pane fade {% if action != 'viewall' and action != 'add' and action != 'import_export' %}show active{% endif %}" id="search-update" role="tabpanel" aria-labelledby="search-update-tab">
+                <div class="card form-section">
+                    <h5 class="card-header bg-secondary text-white">Search for Products</h5>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('location_service.location_service') }}" class="row g-3">
+                            <input type="hidden" name="action" value="search">
+                            <div class="col-md-8 position-relative">
+                                <label for="search_input" class="form-label">SKU or Style (auto match existed)</label>
+                                <input type="text" class="form-control" id="search_input" name="search_input" placeholder="Enter SKU or Style" autocomplete="off" required value="{{ search_query }}">
+                                <!-- Dropdown for suggestions -->
+                                <ul class="list-group position-absolute w-100" id="suggestions" style="z-index: 1000; display: none;"></ul>
+                            </div>
+                            <div class="col-md-4 align-self-end">
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {% if search_results %}
+                    <div class="card form-section">
+                        <h5 class="card-header bg-info text-white">Product Details</h5>
+                        <div class="card-body table-responsive">
+                            <form method="POST" action="{{ url_for('location_service.location_service') }}">
+                                <input type="hidden" name="action" value="update_multiple">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Style</th>
+                                            <th>SKU</th>
+                                            <th>Update Date</th>
+                                            <th>Location</th>
+                                            <th>New Location</th>
+                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for product in search_results %}
+                                            <tr>
+                                                <td>{{ product.Style }}</td>
+                                                <td>{{ product.SKU }}</td>
+                                                <td>{{ product.Update_Date }}</td>
+                                                <td>{{ product.Location }}</td>
+                                                    {% if current_user != 'fdc' %}                                               
+                                                        <td>
+                                                            <input type="hidden" name="original_sku" value="{{ product.SKU }}">
+                                                            <input type="hidden" name="original_style" value="{{ product.Style }}">
+                                                            <input type="text" class="form-control" name="new_location" placeholder="Enter new location">
+                                                        </td>
+                                                    {% endif %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% if current_user != 'fdc' %}
+                                <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Update Locations</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            {% if current_user != 'fdc' %}
+            <!-- Section 2: View All Products -->
+            <div class="tab-pane fade {% if action == 'viewall' %}show active{% endif %}" id="view-all" role="tabpanel" aria-labelledby="view-all-tab">
+                <div class="card form-section">
+                    <h5 class="card-header bg-secondary text-white">All Products</h5>
+                    <div class="card-body table-responsive">
+                        {% if all_products %}
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Style</th>
+                                        <th>SKU</th>
+                                        <th>Location</th>
+                                        <th>Update Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in all_products %}
+                                        <tr>
+                                            <td>{{ product.Style }}</td>
+                                            <td>{{ product.SKU }}</td>
+                                            <td>{{ product.Location }}</td>
+                                            <td>
+                                                {% if product.Update_Date %}
+                                                    {{ product.Update_Date.strftime('%Y-%m-%d %H:%M:%S') }}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No products available to display.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Add New Product -->
+            <div class="tab-pane fade {% if action == 'add' %}show active{% endif %}" id="add-product" role="tabpanel" aria-labelledby="add-product-tab">
+                <div class="card form-section">
+                    <h5 class="card-header bg-secondary text-white">Add New Product(s)</h5>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('location_service.location_service') }}" class="row g-3" id="add-product-form">
+                            <input type="hidden" name="action" value="add">
+                            <table class="table table-bordered" id="add-product-table">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Style</th>
+                                        <th>Location</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <input type="text" class="form-control" name="new_sku" placeholder="Enter SKU" required>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="new_style" placeholder="Enter Style" required>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="new_location" placeholder="Enter Location" required>
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-times"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-secondary" id="add-row"><i class="fas fa-plus"></i> Add Row</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Section 4: Import/Export -->
+            <div class="tab-pane fade {% if action == 'import_export' %}show active{% endif %}" id="import-export" role="tabpanel" aria-labelledby="import-export-tab">
+                <div class="card form-section">
+                    <h5 class="card-header bg-secondary text-white">Import/Export Products</h5>
+                    <div class="card-body">
+                        <!-- Export Section -->
+                        <div class="mb-4">
+                            <h6>Export Products</h6>
+                            <form method="POST" action="{{ url_for('location_service.location_service') }}">
+                                <input type="hidden" name="action" value="import_export">
+                                <input type="hidden" name="import_export_action" value="export">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-file-download"></i> Download Products as Excel
+                                </button>
+                            </form>
+                        </div>
+
+                        <hr>
+
+                        <!-- Import Section -->
+                        <div>
+                            <h6>Import Products</h6>
+                            <form method="POST" action="{{ url_for('location_service.location_service') }}" enctype="multipart/form-data">
+                                <input type="hidden" name="action" value="import_export">
+                                <input type="hidden" name="import_export_action" value="import">
+                                <div class="mb-3">
+                                    <label for="import_file" class="form-label">Upload Excel File</label>
+                                    <input class="form-control" type="file" id="import_file" name="import_file" accept=".xlsx, .xls" required>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-file-upload"></i> Upload and Import
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <!-- Bootstrap 5 JS and Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Initialize and Show Toasts -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+            var toastList = toastElList.map(function(toastEl) {
+                var option = {
+                    delay: 5000, // 5 seconds
+                    autohide: true
+                };
+                var toast = new bootstrap.Toast(toastEl, option);
+                toast.show();
+                return toast;
+            });
+        });
+    </script>
+
+    <!-- Autocomplete Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var searchInput = document.getElementById('search_input');
+            var suggestionsBox = document.getElementById('suggestions');
+
+            // Debounce function to limit the rate of AJAX requests
+            function debounce(func, delay) {
+                let debounceTimer
+                return function() {
+                    const context = this
+                    const args = arguments
+                    clearTimeout(debounceTimer)
+                    debounceTimer = setTimeout(() => func.apply(context, args), delay)
+                }
+            }
+
+            // Fetch suggestions from the backend
+            function fetchSuggestions(query) {
+                if (query.length < 1) {
+                    suggestionsBox.style.display = 'none';
+                    suggestionsBox.innerHTML = '';
+                    return;
+                }
+
+                fetch(`{{ url_for('location_service.suggestions') }}?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.suggestions.length > 0) {
+                            suggestionsBox.innerHTML = '';
+                            data.suggestions.forEach(function(item) {
+                                var listItem = document.createElement('li');
+                                listItem.classList.add('list-group-item', 'list-group-item-action');
+                                listItem.textContent = item;
+                                listItem.addEventListener('click', function() {
+                                    searchInput.value = this.textContent;
+                                    suggestionsBox.style.display = 'none';
+                                    suggestionsBox.innerHTML = '';
+                                });
+                                suggestionsBox.appendChild(listItem);
+                            });
+                            suggestionsBox.style.display = 'block';
+                        } else {
+                            suggestionsBox.style.display = 'none';
+                            suggestionsBox.innerHTML = '';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching suggestions:', error);
+                        suggestionsBox.style.display = 'none';
+                        suggestionsBox.innerHTML = '';
+                    });
+            }
+
+            // Attach event listener with debounce
+            searchInput.addEventListener('input', debounce(function() {
+                var query = this.value.trim();
+                fetchSuggestions(query);
+            }, 300));
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!searchInput.contains(event.target) && !suggestionsBox.contains(event.target)) {
+                    suggestionsBox.style.display = 'none';
+                    suggestionsBox.innerHTML = '';
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const addRowButton = document.getElementById('add-row');
+            const addProductTable = document.getElementById('add-product-table').getElementsByTagName('tbody')[0];
+            const form = document.getElementById('add-product-form');
+    
+            // Function to add a new row
+            function addNewRow() {
+                const newRow = document.createElement('tr');
+    
+                newRow.innerHTML = `
+                    <td>
+                        <input type="text" class="form-control" name="new_sku" placeholder="Enter SKU" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" name="new_style" placeholder="Enter Style" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" name="new_location" placeholder="Enter Location" required>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-times"></i></button>
+                    </td>
+                `;
+    
+                addProductTable.appendChild(newRow);
+            }
+    
+            // Event listener for adding new rows
+            addRowButton.addEventListener('click', function() {
+                addNewRow();
+            });
+    
+            // Event delegation for removing rows
+            addProductTable.addEventListener('click', function(e) {
+                if (e.target && (e.target.matches('.remove-row') || e.target.closest('.remove-row'))) {
+                    const row = e.target.closest('tr');
+                    if (addProductTable.rows.length > 1) {
+                        row.remove();
+                    } else {
+                        // Optionally, you can flash a message indicating at least one row is required
+                        alert('At least one product entry is required.');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

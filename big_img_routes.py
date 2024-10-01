@@ -81,6 +81,8 @@ def register_big_img_routes(app):
     
     @app.route('/reindex', methods=['POST'])
     def reindex():
+        app.logger.info("Running re-indexing script")
+
         try:
             # Run indexing_app.py using subprocess with UTF-8 encoding
             result = subprocess.run(

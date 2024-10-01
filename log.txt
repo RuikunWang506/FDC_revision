@@ -62,3 +62,963 @@
 2024-09-25 18:03:14,960 - INFO - yeti is looking up order number: 1550
 2024-09-25 18:03:15,055 - INFO - yeti searched for order number: 1550
 2024-09-25 18:04:49,613 - INFO - Item lookup for yeti with input: t3305
+2024-09-26 11:21:06,651 - INFO - autobots, rolling out!
+2024-09-26 11:21:10,192 - INFO - autobots, rolling out!
+2024-09-26 11:21:43,020 - INFO - autobots, rolling out!
+2024-09-26 11:21:55,268 - INFO - autobots, rolling out!
+2024-09-26 11:21:58,806 - INFO - autobots, rolling out!
+2024-09-26 11:21:58,825 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 11:22:08,084 - INFO - Item lookup for yeti with input: el1832
+2024-09-26 11:22:23,684 - INFO - Item lookup for yeti with input: es1394
+2024-09-26 11:25:46,532 - INFO - Item lookup for yeti with input: t3118
+2024-09-26 11:29:46,035 - INFO - Item lookup for yeti with input: n1806
+2024-09-26 11:38:05,351 - INFO - User yeti has logged in. IP: 172.226.7.54, Browser: Chrome Mobile iOS 129.0.6668, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 11:38:17,050 - INFO - Item lookup for yeti with input: n1806,en1765
+2024-09-26 11:57:39,263 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 11:57:46,385 - INFO - Item lookup for yeti with input: el1852
+2024-09-26 12:06:40,796 - INFO - Item lookup for yeti with input: m1121
+2024-09-26 12:43:42,096 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 12:43:48,299 - INFO - Item lookup for nicye with input: t3056
+2024-09-26 12:52:59,509 - INFO - Item lookup for nicye with input: s1249
+2024-09-26 12:53:31,958 - INFO - Item lookup for nicye with input: n1819
+2024-09-26 12:54:25,017 - INFO - Item lookup for nicye with input: n0812
+2024-09-26 12:55:17,519 - INFO - Item lookup for nicye with input: l1689
+2024-09-26 13:03:02,651 - INFO - autobots, rolling out!
+2024-09-26 13:03:06,140 - INFO - autobots, rolling out!
+2024-09-26 13:03:12,502 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 13:03:24,262 - INFO - Item lookup for yeti with input: t3305
+2024-09-26 13:03:31,613 - INFO - yeti is looking up order number: 1567
+2024-09-26 13:03:31,868 - INFO - yeti searched for order number: 1567
+2024-09-26 13:03:39,525 - INFO - yeti downloaded the file: List-20240926-130338.xlsx
+2024-09-26 13:03:40,624 - INFO - File List-20240926-130338.xlsx downloaded
+2024-09-26 13:08:27,640 - INFO - autobots, rolling out!
+2024-09-26 13:08:33,666 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 13:08:58,151 - INFO - yeti is looking up in googlesheet with input: t3305
+2024-09-26 13:09:07,032 - INFO - Running fast script
+2024-09-26 13:09:09,387 - INFO - Timestamp 2024/09/26 - 13:09:09 updated successfully.
+2024-09-26 13:09:18,808 - INFO - Inventory data at 2024/09/26 - 13:09:18:
+2024-09-26 13:11:15,728 - INFO - autobots, rolling out!
+2024-09-26 13:11:55,531 - INFO - autobots, rolling out!
+2024-09-26 13:11:58,639 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 13:12:28,230 - INFO - Serving file DALL·E 2024-09-16 16.43.58 - A Mid-Autumn Festival themed image with a serene night sky illuminated by a bright full moon, surrounded by soft clouds. The stars twinkle in the dist_sss_0.jpg
+2024-09-26 13:24:08,018 - INFO - autobots, rolling out!
+2024-09-26 13:24:15,302 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 13:24:34,405 - INFO - Running re-indexing script
+2024-09-26 14:01:26,496 - INFO - autobots, rolling out!
+2024-09-26 14:01:30,290 - INFO - autobots, rolling out!
+2024-09-26 14:01:33,404 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 14:49:48,185 - INFO - autobots, rolling out!
+2024-09-26 14:49:51,871 - INFO - autobots, rolling out!
+2024-09-26 14:49:57,792 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 14:55:25,375 - INFO - autobots, rolling out!
+2024-09-26 14:55:36,348 - INFO - autobots, rolling out!
+2024-09-26 14:56:27,621 - INFO - autobots, rolling out!
+2024-09-26 14:56:54,674 - INFO - autobots, rolling out!
+2024-09-26 14:57:50,128 - INFO - autobots, rolling out!
+2024-09-26 15:00:37,250 - INFO - autobots, rolling out!
+2024-09-26 15:01:10,824 - INFO - autobots, rolling out!
+2024-09-26 15:02:23,218 - INFO - autobots, rolling out!
+2024-09-26 15:04:27,991 - INFO - autobots, rolling out!
+2024-09-26 15:04:37,915 - INFO - autobots, rolling out!
+2024-09-26 15:06:12,450 - INFO - autobots, rolling out!
+2024-09-26 15:09:48,896 - INFO - autobots, rolling out!
+2024-09-26 15:10:53,302 - INFO - autobots, rolling out!
+2024-09-26 15:12:09,760 - INFO - autobots, rolling out!
+2024-09-26 15:15:21,023 - INFO - autobots, rolling out!
+2024-09-26 16:59:51,558 - INFO - autobots, rolling out!
+2024-09-26 16:59:55,155 - INFO - autobots, rolling out!
+2024-09-26 17:02:08,344 - INFO - autobots, rolling out!
+2024-09-26 17:06:24,995 - INFO - User yeti has logged in. IP: 172.226.3.208, Browser: Chrome Mobile iOS 129.0.6668, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 17:06:54,621 - INFO - Item lookup for yeti with input: es1414
+2024-09-26 17:11:42,261 - INFO - autobots, rolling out!
+2024-09-26 17:22:51,220 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-26 17:24:22,116 - INFO - yeti downloaded the file: List-20240926-172419.xlsx
+2024-09-26 20:16:57,863 - INFO - autobots, rolling out!
+2024-09-26 20:17:01,203 - INFO - autobots, rolling out!
+2024-09-26 22:28:07,356 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 10:09:43,898 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 12:29:41,794 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 12:30:15,325 - INFO - autobots, rolling out!
+2024-09-27 12:30:18,972 - INFO - autobots, rolling out!
+2024-09-27 12:30:21,093 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 12:30:26,082 - INFO - Item lookup for yeti with input: n1931
+2024-09-27 12:30:51,383 - INFO - Item lookup for yeti with input: en1765
+2024-09-27 13:12:53,101 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 13:13:00,877 - INFO - Item lookup for yeti with input: n1931
+2024-09-27 13:25:05,315 - INFO - Item lookup for yeti with input: l1851
+2024-09-27 13:29:51,690 - INFO - yeti is looking up order number: 33345
+2024-09-27 13:29:52,429 - INFO - yeti searched for order number: 33345
+2024-09-27 13:29:59,162 - INFO - Received order_number: 33345
+2024-09-27 13:30:00,162 - INFO - File 33345_label.xlsx downloaded from label output
+2024-09-27 13:33:04,616 - INFO - yeti is looking up order number: 33330
+2024-09-27 13:33:04,645 - INFO - yeti searched for order number: 33330
+2024-09-27 13:33:06,060 - INFO - Received order_number: 33330
+2024-09-27 13:33:07,012 - INFO - File 33330_label.xlsx downloaded from label output
+2024-09-27 13:34:21,829 - INFO - yeti is looking up order number: 33409
+2024-09-27 13:34:21,886 - INFO - yeti searched for order number: 33409
+2024-09-27 13:34:27,285 - INFO - Received order_number: 33409
+2024-09-27 13:34:28,360 - INFO - File 33409_label.xlsx downloaded from label output
+2024-09-27 13:34:31,527 - INFO - yeti is looking up order number: 33409
+2024-09-27 13:34:31,542 - INFO - yeti searched for order number: 33409
+2024-09-27 13:38:08,873 - INFO - yeti is looking up order number: 33343
+2024-09-27 13:38:08,902 - INFO - yeti searched for order number: 33343
+2024-09-27 13:38:12,039 - INFO - Received order_number: 33343
+2024-09-27 13:38:13,289 - INFO - File 33343_label.xlsx downloaded from label output
+2024-09-27 13:39:05,719 - INFO - yeti is looking up order number: 33327
+2024-09-27 13:39:05,752 - INFO - yeti searched for order number: 33327
+2024-09-27 13:39:07,647 - INFO - Received order_number: 33327
+2024-09-27 13:39:08,765 - INFO - File 33327_label.xlsx downloaded from label output
+2024-09-27 13:44:09,432 - INFO - File 33327_label.xlsx downloaded from label output
+2024-09-27 13:45:09,115 - INFO - autobots, rolling out!
+2024-09-27 13:48:21,731 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 13:48:35,194 - INFO - Item lookup for nicye with input: s1327
+2024-09-27 13:49:53,065 - INFO - autobots, rolling out!
+2024-09-27 13:50:32,161 - INFO - autobots, rolling out!
+2024-09-27 13:50:45,548 - INFO - autobots, rolling out!
+2024-09-27 13:51:00,979 - INFO - autobots, rolling out!
+2024-09-27 13:51:12,381 - INFO - autobots, rolling out!
+2024-09-27 13:56:30,263 - INFO - autobots, rolling out!
+2024-09-27 13:57:34,049 - INFO - autobots, rolling out!
+2024-09-27 14:03:09,979 - INFO - autobots, rolling out!
+2024-09-27 14:04:59,169 - INFO - autobots, rolling out!
+2024-09-27 14:06:53,399 - INFO - autobots, rolling out!
+2024-09-27 14:07:02,686 - INFO - autobots, rolling out!
+2024-09-27 14:08:13,562 - INFO - autobots, rolling out!
+2024-09-27 14:09:06,246 - INFO - autobots, rolling out!
+2024-09-27 14:09:25,777 - INFO - autobots, rolling out!
+2024-09-27 14:09:32,078 - INFO - autobots, rolling out!
+2024-09-27 14:09:47,536 - INFO - autobots, rolling out!
+2024-09-27 14:18:26,353 - INFO - autobots, rolling out!
+2024-09-27 14:32:40,074 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 14:32:53,429 - INFO - yeti executed a custom SQL query: select * from customer;
+2024-09-27 14:33:15,007 - INFO - yeti executed a custom SQL query: select * from customer where addr like "tx";
+2024-09-27 14:36:43,639 - INFO - yeti is looking up order number: 33088
+2024-09-27 14:36:43,793 - INFO - yeti searched for order number: 33088
+2024-09-27 14:37:34,952 - INFO - yeti is looking up order number: 33089
+2024-09-27 14:37:34,983 - INFO - yeti searched for order number: 33089
+2024-09-27 14:37:39,008 - INFO - yeti is looking up order number: 33040
+2024-09-27 14:37:39,028 - INFO - yeti searched for order number: 33040
+2024-09-27 14:37:42,831 - INFO - yeti is looking up order number: 33208
+2024-09-27 14:37:42,863 - INFO - yeti searched for order number: 33208
+2024-09-27 14:59:59,259 - INFO - autobots, rolling out!
+2024-09-27 15:16:40,900 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 15:16:51,629 - INFO - Item lookup for yeti with input: el1856,en1883,en1885
+2024-09-27 15:40:16,193 - INFO - autobots, rolling out!
+2024-09-27 15:40:49,590 - INFO - autobots, rolling out!
+2024-09-27 15:42:11,269 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 15:42:20,949 - INFO - yeti is looking up order number: 33327
+2024-09-27 15:42:21,219 - INFO - yeti searched for order number: 33327
+2024-09-27 15:44:37,593 - INFO - autobots, rolling out!
+2024-09-27 15:44:48,822 - INFO - autobots, rolling out!
+2024-09-27 15:45:25,290 - INFO - autobots, rolling out!
+2024-09-27 15:45:35,496 - INFO - autobots, rolling out!
+2024-09-27 15:46:58,396 - INFO - autobots, rolling out!
+2024-09-27 15:48:01,049 - INFO - autobots, rolling out!
+2024-09-27 15:58:23,658 - INFO - autobots, rolling out!
+2024-09-27 15:58:42,625 - INFO - autobots, rolling out!
+2024-09-27 15:58:51,200 - INFO - autobots, rolling out!
+2024-09-27 15:58:57,059 - INFO - autobots, rolling out!
+2024-09-27 15:59:19,780 - INFO - autobots, rolling out!
+2024-09-27 16:00:02,472 - INFO - autobots, rolling out!
+2024-09-27 16:00:09,032 - INFO - autobots, rolling out!
+2024-09-27 16:01:16,282 - INFO - autobots, rolling out!
+2024-09-27 16:02:16,790 - INFO - autobots, rolling out!
+2024-09-27 16:03:40,809 - INFO - autobots, rolling out!
+2024-09-27 16:04:21,169 - INFO - autobots, rolling out!
+2024-09-27 16:04:53,882 - INFO - autobots, rolling out!
+2024-09-27 16:06:05,646 - INFO - autobots, rolling out!
+2024-09-27 16:06:26,136 - INFO - autobots, rolling out!
+2024-09-27 16:06:41,491 - INFO - autobots, rolling out!
+2024-09-27 16:07:13,924 - INFO - autobots, rolling out!
+2024-09-27 16:07:42,362 - INFO - autobots, rolling out!
+2024-09-27 16:07:49,428 - INFO - autobots, rolling out!
+2024-09-27 16:07:56,636 - INFO - autobots, rolling out!
+2024-09-27 16:09:00,349 - INFO - autobots, rolling out!
+2024-09-27 16:09:50,941 - INFO - autobots, rolling out!
+2024-09-27 16:10:26,402 - INFO - autobots, rolling out!
+2024-09-27 16:11:56,276 - INFO - autobots, rolling out!
+2024-09-27 16:13:21,124 - INFO - autobots, rolling out!
+2024-09-27 16:16:09,557 - INFO - autobots, rolling out!
+2024-09-27 16:17:03,960 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 16:17:06,568 - INFO - yeti is looking up order number: 33345
+2024-09-27 16:17:06,725 - INFO - yeti searched for order number: 33345
+2024-09-27 16:17:07,923 - INFO - Received order_number: 33345
+2024-09-27 16:17:07,957 - ERROR - An error occurred: [Errno 13] Permission denied: 'output/label_output/33345_label.xlsx'
+2024-09-27 16:17:14,250 - INFO - yeti is looking up order number: 33345
+2024-09-27 16:17:14,265 - INFO - yeti searched for order number: 33345
+2024-09-27 16:17:16,340 - INFO - Received order_number: 33345
+2024-09-27 16:18:44,023 - INFO - autobots, rolling out!
+2024-09-27 16:22:17,877 - INFO - autobots, rolling out!
+2024-09-27 16:22:38,159 - INFO - autobots, rolling out!
+2024-09-27 16:24:42,273 - INFO - autobots, rolling out!
+2024-09-27 16:29:51,907 - INFO - autobots, rolling out!
+2024-09-27 16:30:30,556 - INFO - autobots, rolling out!
+2024-09-27 16:32:02,405 - INFO - autobots, rolling out!
+2024-09-27 16:32:32,736 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 16:32:36,134 - INFO - yeti is looking up order number: 33345
+2024-09-27 16:32:36,285 - INFO - yeti searched for order number: 33345
+2024-09-27 16:33:52,932 - INFO - yeti is looking up order number: 33345
+2024-09-27 16:33:52,946 - INFO - yeti searched for order number: 33345
+2024-09-27 16:34:12,720 - INFO - yeti is looking up order number: 33345
+2024-09-27 16:34:12,741 - INFO - yeti searched for order number: 33345
+2024-09-27 17:16:05,985 - INFO - yeti executed a custom SQL query: WITH ExtractedNumbers AS (
+                SELECT DISTINCT
+                    ord.UT_DESC,
+                    ord.PROD_CD,
+                    ord.PC_UNIT,
+                    orders.SP_ADR,
+                    orders.SP_ADR_2,
+                    orders.SP_ADR_22,
+                    orders.SP_ADR_3,
+                    orders.ord_num,
+                    orders.PO_NUM,
+                    ntfile.NOTES
+                FROM 
+                    DBO.ORD_LOG AS ord
+                JOIN 
+                    dbo.orders AS orders ON ord.ord_num = orders.ord_num
+                JOIN
+                    dbo.ntfile AS ntfile ON orders.ord_num = ntfile.nt_num
+                WHERE  
+                    ord.ord_num = 33345
+            )
+            SELECT 
+                UT_DESC, 
+                PROD_CD, 
+                PC_UNIT, 
+                SP_ADR, 
+                SP_ADR_2, 
+                SP_ADR_22, 
+                SP_ADR_3,
+                ord_num,
+                PO_NUM,
+                NOTES
+            FROM 
+                ExtractedNumbers
+            ORDER BY 
+                CASE 
+                    WHEN ISNUMERIC(
+                        LEFT(
+                            UT_DESC,
+                            CASE
+                                WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                                WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                                ELSE LEN(UT_DESC)
+                            END
+                        )
+                    ) = 1 THEN CAST(
+                        LEFT(
+                            UT_DESC,
+                            CASE
+                                WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                                WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                                ELSE LEN(UT_DESC)
+                            END
+                        ) AS INT)
+                    ELSE 1
+                END;
+2024-09-27 17:16:48,331 - INFO - yeti executed a custom SQL query: select * from ord_log where ord_num=33345
+2024-09-27 17:19:05,345 - INFO - yeti executed a custom SQL query: select * from orders where ord_num=33345
+2024-09-27 17:19:25,052 - INFO - yeti executed a custom SQL query: select * from * where ord_num=33345
+2024-09-27 17:20:21,283 - INFO - yeti executed a custom SQL query: select * from orders where ord_num=33345
+2024-09-27 17:23:01,483 - INFO - yeti executed a custom SQL query: WITH ExtractedNumbers AS (
+    SELECT DISTINCT
+        ord.UT_DESC,
+        ord.PROD_CD,
+        ord.PC_UNIT,
+        ord.ord_qty,          -- Added ord_qty to the CTE
+        orders.SP_ADR,
+        orders.SP_ADR_2,
+        orders.SP_ADR_22,
+        orders.SP_ADR_3,
+        orders.ord_num,
+        orders.PO_NUM,
+        ntfile.NOTES
+    FROM 
+        DBO.ORD_LOG AS ord
+    JOIN 
+        dbo.orders AS orders ON ord.ord_num = orders.ord_num
+    JOIN
+        dbo.ntfile AS ntfile ON orders.ord_num = ntfile.nt_num
+    WHERE  
+        ord.ord_num = 33345
+)
+SELECT 
+    UT_DESC, 
+    PROD_CD, 
+    PC_UNIT, 
+    SP_ADR, 
+    SP_ADR_2, 
+    SP_ADR_22, 
+    SP_ADR_3,
+    ord_num,
+    PO_NUM,
+    NOTES,
+    ord_qty % PC_UNIT AS Remainder  -- Calculating the remainder
+FROM 
+    ExtractedNumbers
+ORDER BY 
+    CASE 
+        WHEN ISNUMERIC(
+            LEFT(
+                UT_DESC,
+                CASE
+                    WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                    WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                    ELSE LEN(UT_DESC)
+                END
+            )
+        ) = 1 THEN CAST(
+            LEFT(
+                UT_DESC,
+                CASE
+                    WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                    WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                    ELSE LEN(UT_DESC)
+                END
+            ) AS INT)
+        ELSE 1
+    END;
+2024-09-27 17:23:32,115 - INFO - yeti executed a custom SQL query: select * from ord_log where ord_num=33345
+2024-09-27 17:23:46,483 - INFO - yeti executed a custom SQL query: WITH ExtractedNumbers AS (
+    SELECT DISTINCT
+        ord.UT_DESC,
+        ord.PROD_CD,
+        ord.PC_UNIT,
+        ord.ord_qty,          -- Added ord_qty to the CTE
+        orders.SP_ADR,
+        orders.SP_ADR_2,
+        orders.SP_ADR_22,
+        orders.SP_ADR_3,
+        orders.ord_num,
+        orders.PO_NUM,
+        ntfile.NOTES
+    FROM 
+        DBO.ORD_LOG AS ord
+    JOIN 
+        dbo.orders AS orders ON ord.ord_num = orders.ord_num
+    JOIN
+        dbo.ntfile AS ntfile ON orders.ord_num = ntfile.nt_num
+    WHERE  
+        ord.ord_num = 33345
+)
+SELECT 
+    UT_DESC, 
+    PROD_CD, 
+    PC_UNIT, 
+    SP_ADR, 
+    SP_ADR_2, 
+    SP_ADR_22, 
+    SP_ADR_3,
+    ord_num,
+    PO_NUM,
+    NOTES,
+    order_qty % PC_UNIT AS Remainder  -- Calculating the remainder
+FROM 
+    ExtractedNumbers
+ORDER BY 
+    CASE 
+        WHEN ISNUMERIC(
+            LEFT(
+                UT_DESC,
+                CASE
+                    WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                    WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                    ELSE LEN(UT_DESC)
+                END
+            )
+        ) = 1 THEN CAST(
+            LEFT(
+                UT_DESC,
+                CASE
+                    WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                    WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                    ELSE LEN(UT_DESC)
+                END
+            ) AS INT)
+        ELSE 1
+    END;
+2024-09-27 17:24:07,723 - INFO - yeti executed a custom SQL query: WITH ExtractedNumbers AS (
+    SELECT DISTINCT
+        ord.UT_DESC,
+        ord.PROD_CD,
+        ord.PC_UNIT,
+        ord.order_qty ,          -- Added ord_qty to the CTE
+        orders.SP_ADR,
+        orders.SP_ADR_2,
+        orders.SP_ADR_22,
+        orders.SP_ADR_3,
+        orders.ord_num,
+        orders.PO_NUM,
+        ntfile.NOTES
+    FROM 
+        DBO.ORD_LOG AS ord
+    JOIN 
+        dbo.orders AS orders ON ord.ord_num = orders.ord_num
+    JOIN
+        dbo.ntfile AS ntfile ON orders.ord_num = ntfile.nt_num
+    WHERE  
+        ord.ord_num = 33345
+)
+SELECT 
+    UT_DESC, 
+    PROD_CD, 
+    PC_UNIT, 
+    SP_ADR, 
+    SP_ADR_2, 
+    SP_ADR_22, 
+    SP_ADR_3,
+    ord_num,
+    PO_NUM,
+    NOTES,
+    order_qty % PC_UNIT AS Remainder  -- Calculating the remainder
+FROM 
+    ExtractedNumbers
+ORDER BY 
+    CASE 
+        WHEN ISNUMERIC(
+            LEFT(
+                UT_DESC,
+                CASE
+                    WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                    WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                    ELSE LEN(UT_DESC)
+                END
+            )
+        ) = 1 THEN CAST(
+            LEFT(
+                UT_DESC,
+                CASE
+                    WHEN CHARINDEX('-', UT_DESC) > 0 THEN CHARINDEX('-', UT_DESC) - 1
+                    WHEN CHARINDEX(',', UT_DESC) > 0 THEN CHARINDEX(',', UT_DESC) - 1
+                    ELSE LEN(UT_DESC)
+                END
+            ) AS INT)
+        ELSE 1
+    END;
+2024-09-27 17:24:46,348 - INFO - autobots, rolling out!
+2024-09-27 17:32:06,129 - INFO - autobots, rolling out!
+2024-09-27 17:32:45,954 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:32:47,209 - INFO - Item lookup for yeti with input: el1856,en1883,en1885
+2024-09-27 17:32:51,767 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:32:51,905 - INFO - yeti searched for order number: 33345
+2024-09-27 17:32:52,833 - INFO - Received order_number: 33345
+2024-09-27 17:32:52,871 - ERROR - An error occurred: [Errno 13] Permission denied: 'output/label_output/33345_label.xlsx'
+2024-09-27 17:32:57,120 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:32:57,135 - INFO - yeti searched for order number: 33345
+2024-09-27 17:32:57,794 - INFO - Received order_number: 33345
+2024-09-27 17:32:57,844 - ERROR - An error occurred: too many values to unpack (expected 5)
+2024-09-27 17:33:02,799 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:33:02,814 - INFO - yeti searched for order number: 33345
+2024-09-27 17:33:04,149 - INFO - Received order_number: 33345
+2024-09-27 17:33:04,190 - ERROR - An error occurred: too many values to unpack (expected 5)
+2024-09-27 17:33:19,917 - INFO - autobots, rolling out!
+2024-09-27 17:33:21,733 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:33:28,419 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:33:28,558 - INFO - yeti searched for order number: 33345
+2024-09-27 17:33:29,493 - INFO - Received order_number: 33345
+2024-09-27 17:33:29,541 - ERROR - An error occurred: too many values to unpack (expected 5)
+2024-09-27 17:33:40,268 - INFO - autobots, rolling out!
+2024-09-27 17:34:11,639 - INFO - autobots, rolling out!
+2024-09-27 17:34:13,361 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:34:19,183 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:34:19,327 - INFO - yeti searched for order number: 33345
+2024-09-27 17:34:20,284 - INFO - Received order_number: 33345
+2024-09-27 17:34:20,331 - ERROR - An error occurred: too many values to unpack (expected 5)
+2024-09-27 17:34:26,028 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:34:26,042 - INFO - yeti searched for order number: 33345
+2024-09-27 17:34:48,125 - INFO - Received order_number: 33345
+2024-09-27 17:34:48,168 - ERROR - An error occurred: too many values to unpack (expected 5)
+2024-09-27 17:35:32,737 - INFO - autobots, rolling out!
+2024-09-27 17:35:44,975 - INFO - autobots, rolling out!
+2024-09-27 17:35:56,192 - INFO - autobots, rolling out!
+2024-09-27 17:36:15,455 - INFO - autobots, rolling out!
+2024-09-27 17:36:20,642 - INFO - autobots, rolling out!
+2024-09-27 17:36:22,409 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:36:29,291 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:36:29,431 - INFO - yeti searched for order number: 33345
+2024-09-27 17:36:30,520 - INFO - Received order_number: 33345
+2024-09-27 17:36:33,747 - INFO - File 33345_label.xlsx downloaded from label output
+2024-09-27 17:37:22,863 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:37:22,877 - INFO - yeti searched for order number: 33345
+2024-09-27 17:37:24,752 - INFO - Received order_number: 33345
+2024-09-27 17:38:05,310 - INFO - Received order_number: 33345
+2024-09-27 17:44:08,709 - INFO - autobots, rolling out!
+2024-09-27 17:44:14,583 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:44:18,993 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:44:19,152 - INFO - yeti searched for order number: 33345
+2024-09-27 17:44:20,561 - INFO - Received order_number: 33345
+2024-09-27 17:45:38,551 - INFO - Received order_number: 33345
+2024-09-27 17:46:03,675 - INFO - File 33345_label.xlsx downloaded from label output
+2024-09-27 17:46:29,272 - INFO - autobots, rolling out!
+2024-09-27 17:50:31,715 - INFO - autobots, rolling out!
+2024-09-27 17:50:34,282 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:50:39,364 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:50:39,573 - INFO - yeti searched for order number: 33345
+2024-09-27 17:50:40,739 - INFO - Received order_number: 33345
+2024-09-27 17:50:49,683 - INFO - File 33345_label.xlsx downloaded from label output
+2024-09-27 17:51:34,643 - INFO - autobots, rolling out!
+2024-09-27 17:51:36,621 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:51:40,024 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:51:40,237 - INFO - yeti searched for order number: 33345
+2024-09-27 17:51:41,210 - INFO - Received order_number: 33345
+2024-09-27 17:52:50,624 - INFO - autobots, rolling out!
+2024-09-27 17:52:56,898 - INFO - autobots, rolling out!
+2024-09-27 17:52:58,598 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:53:03,624 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:53:03,765 - INFO - yeti searched for order number: 33345
+2024-09-27 17:53:04,657 - INFO - Received order_number: 33345
+2024-09-27 17:53:04,668 - ERROR - An error occurred: cannot access local variable 'current_label_number' where it is not associated with a value
+2024-09-27 17:53:57,592 - INFO - autobots, rolling out!
+2024-09-27 17:53:59,934 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:54:06,004 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:54:06,148 - INFO - yeti searched for order number: 33345
+2024-09-27 17:54:07,174 - INFO - Received order_number: 33345
+2024-09-27 17:54:28,030 - INFO - autobots, rolling out!
+2024-09-27 17:54:58,431 - INFO - autobots, rolling out!
+2024-09-27 17:55:12,635 - INFO - autobots, rolling out!
+2024-09-27 17:55:14,357 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 17:55:19,094 - INFO - yeti is looking up order number: 33345
+2024-09-27 17:55:19,234 - INFO - yeti searched for order number: 33345
+2024-09-27 17:55:20,622 - INFO - Received order_number: 33345
+2024-09-27 17:55:44,077 - INFO - autobots, rolling out!
+2024-09-27 17:56:09,488 - INFO - autobots, rolling out!
+2024-09-27 17:56:45,943 - INFO - autobots, rolling out!
+2024-09-27 17:57:53,569 - INFO - autobots, rolling out!
+2024-09-27 18:04:36,937 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 18:04:41,703 - INFO - yeti is looking up order number: 33345
+2024-09-27 18:04:41,853 - INFO - yeti searched for order number: 33345
+2024-09-27 18:04:43,219 - INFO - Received order_number: 33345
+2024-09-27 18:07:22,927 - INFO - autobots, rolling out!
+2024-09-27 18:07:26,539 - INFO - autobots, rolling out!
+2024-09-27 18:08:56,435 - INFO - autobots, rolling out!
+2024-09-27 18:09:15,698 - INFO - autobots, rolling out!
+2024-09-27 18:09:53,906 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 18:09:59,269 - INFO - yeti is looking up order number: 33345
+2024-09-27 18:09:59,417 - INFO - yeti searched for order number: 33345
+2024-09-27 18:10:00,601 - INFO - Received order_number: 33345
+2024-09-27 18:10:37,469 - INFO - Received order_number: 33345
+2024-09-27 18:14:17,345 - INFO - autobots, rolling out!
+2024-09-27 18:15:20,027 - INFO - autobots, rolling out!
+2024-09-27 18:15:42,345 - INFO - autobots, rolling out!
+2024-09-27 18:15:44,175 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 18:15:49,332 - INFO - yeti is looking up order number: 33345
+2024-09-27 18:15:49,483 - INFO - yeti searched for order number: 33345
+2024-09-27 18:15:50,514 - INFO - Received order_number: 33345
+2024-09-27 18:18:16,784 - INFO - autobots, rolling out!
+2024-09-27 18:18:20,066 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 18:18:23,430 - INFO - yeti is looking up order number: 33345
+2024-09-27 18:18:23,571 - INFO - yeti searched for order number: 33345
+2024-09-27 18:18:24,770 - INFO - Received order_number: 33345
+2024-09-27 18:18:34,353 - INFO - File 33345_label.xlsx downloaded from label output
+2024-09-27 18:21:24,957 - INFO - yeti is looking up order number: 33345
+2024-09-27 18:21:24,985 - INFO - yeti searched for order number: 33345
+2024-09-27 18:21:26,941 - INFO - Received order_number: 33345
+2024-09-27 18:21:58,616 - INFO - yeti is looking up order number: 33346
+2024-09-27 18:21:58,645 - INFO - yeti searched for order number: 33346
+2024-09-27 18:22:01,979 - INFO - yeti is looking up order number: 33333
+2024-09-27 18:22:02,024 - INFO - yeti searched for order number: 33333
+2024-09-27 18:22:05,854 - INFO - Received order_number: 33333
+2024-09-27 18:22:07,692 - INFO - yeti is looking up order number: 33331
+2024-09-27 18:22:07,714 - INFO - yeti searched for order number: 33331
+2024-09-27 18:22:12,366 - INFO - Received order_number: 33331
+2024-09-27 18:22:19,015 - INFO - yeti is looking up order number: 33329
+2024-09-27 18:22:19,037 - INFO - yeti searched for order number: 33329
+2024-09-27 18:22:21,784 - INFO - yeti is looking up order number: 33328
+2024-09-27 18:22:21,804 - INFO - yeti searched for order number: 33328
+2024-09-27 18:22:23,561 - INFO - yeti is looking up order number: 33327
+2024-09-27 18:22:23,576 - INFO - yeti searched for order number: 33327
+2024-09-27 18:22:25,538 - INFO - Received order_number: 33327
+2024-09-27 18:22:38,511 - INFO - yeti is looking up order number: 33310
+2024-09-27 18:22:38,538 - INFO - yeti searched for order number: 33310
+2024-09-27 18:22:40,943 - INFO - yeti is looking up order number: 33312
+2024-09-27 18:22:40,971 - INFO - yeti searched for order number: 33312
+2024-09-27 18:22:46,282 - INFO - Received order_number: 33312
+2024-09-27 18:22:56,053 - INFO - Received order_number: 33312
+2024-09-27 18:22:57,980 - INFO - yeti is looking up order number: 33312
+2024-09-27 18:22:57,994 - INFO - yeti searched for order number: 33312
+2024-09-27 18:22:58,958 - INFO - Received order_number: 33312
+2024-09-27 18:23:39,791 - INFO - Received order_number: 33312
+2024-09-27 18:23:41,369 - INFO - yeti is looking up order number: 33312
+2024-09-27 18:23:41,382 - INFO - yeti searched for order number: 33312
+2024-09-27 18:23:42,179 - INFO - Received order_number: 33312
+2024-09-27 18:23:46,380 - INFO - yeti is looking up order number: 33312
+2024-09-27 18:23:46,394 - INFO - yeti searched for order number: 33312
+2024-09-27 18:23:47,061 - INFO - Received order_number: 33312
+2024-09-27 18:24:54,437 - INFO - Received order_number: 33312
+2024-09-27 18:24:56,413 - INFO - Received order_number: 33312
+2024-09-27 18:25:52,631 - INFO - Received order_number: 33312
+2024-09-27 18:26:09,359 - INFO - Received order_number: 33312
+2024-09-27 18:26:37,534 - INFO - Received order_number: 33312
+2024-09-27 18:26:53,147 - INFO - Received order_number: 33312
+2024-09-27 18:28:41,630 - INFO - Received order_number: 33312
+2024-09-27 18:28:44,039 - INFO - Received order_number: 33312
+2024-09-27 18:29:41,351 - INFO - Received order_number: 33312
+2024-09-27 18:30:30,305 - INFO - Received order_number: 33312
+2024-09-27 18:31:06,737 - INFO - Received order_number: 33312
+2024-09-27 18:31:30,152 - INFO - Received order_number: 33312
+2024-09-27 18:33:27,843 - INFO - Received order_number: 33312
+2024-09-27 18:33:31,158 - INFO - yeti is looking up order number: 33316
+2024-09-27 18:33:31,181 - INFO - yeti searched for order number: 33316
+2024-09-27 18:33:33,501 - INFO - Received order_number: 33316
+2024-09-27 18:35:03,569 - INFO - Received order_number: 33316
+2024-09-27 21:39:16,723 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 21:39:49,530 - INFO - Item lookup for nicye with input: l1439
+2024-09-27 21:40:22,148 - INFO - Item lookup for nicye with input: n2173
+2024-09-27 21:46:23,973 - INFO - Item lookup for nicye with input: en2159
+2024-09-27 21:47:11,405 - INFO - Item lookup for nicye with input: n2077
+2024-09-27 21:47:45,081 - INFO - Item lookup for nicye with input: t3303
+2024-09-27 21:50:00,691 - INFO - Item lookup for nicye with input: t3298
+2024-09-27 21:50:01,363 - INFO - Item lookup for nicye with input: t3298
+2024-09-27 21:51:13,190 - INFO - Item lookup for nicye with input: t3274
+2024-09-27 21:51:39,506 - INFO - Item lookup for nicye with input: s1491
+2024-09-27 21:51:59,056 - INFO - Item lookup for nicye with input: s1493
+2024-09-27 21:52:21,638 - INFO - Item lookup for nicye with input: t3321
+2024-09-27 21:52:49,740 - INFO - Item lookup for nicye with input: n2196
+2024-09-27 21:53:13,179 - INFO - Item lookup for nicye with input: n2187
+2024-09-27 21:53:38,823 - INFO - Item lookup for nicye with input: n0813
+2024-09-27 21:55:20,097 - INFO - Item lookup for nicye with input: n1151
+2024-09-27 21:56:27,842 - INFO - Item lookup for nicye with input: n1267
+2024-09-27 21:57:35,629 - INFO - Item lookup for nicye with input: n2191
+2024-09-27 21:58:06,545 - INFO - Item lookup for nicye with input: t3319
+2024-09-27 21:58:32,397 - INFO - Item lookup for nicye with input: t3262
+2024-09-27 21:59:20,159 - INFO - Item lookup for nicye with input: et3284
+2024-09-27 22:01:53,333 - INFO - Item lookup for nicye with input: t2806
+2024-09-27 22:02:30,260 - INFO - Item lookup for nicye with input: n1283
+2024-09-27 22:03:00,024 - INFO - Item lookup for nicye with input: n1283
+2024-09-27 22:03:21,911 - INFO - Item lookup for nicye with input: n1242
+2024-09-27 22:03:46,531 - INFO - Item lookup for nicye with input: es1449
+2024-09-27 22:04:21,313 - INFO - Item lookup for nicye with input: es1447
+2024-09-27 22:05:00,633 - INFO - Item lookup for nicye with input: es1464
+2024-09-27 22:05:22,381 - INFO - Item lookup for nicye with input: es1470
+2024-09-27 22:05:44,043 - INFO - Item lookup for nicye with input: s1477
+2024-09-27 22:06:07,156 - INFO - Item lookup for nicye with input: s1478
+2024-09-27 22:06:53,240 - INFO - Item lookup for nicye with input: t3258
+2024-09-27 22:07:22,065 - INFO - Item lookup for nicye with input: n0720
+2024-09-27 22:07:43,338 - INFO - Item lookup for nicye with input: n1724
+2024-09-27 22:08:05,350 - INFO - Item lookup for nicye with input: n1828
+2024-09-27 22:08:51,680 - INFO - Item lookup for nicye with input: s1193
+2024-09-27 22:09:43,159 - INFO - Item lookup for nicye with input: s1484
+2024-09-27 22:11:25,452 - INFO - Item lookup for nicye with input: n2200
+2024-09-27 22:11:56,341 - INFO - Item lookup for nicye with input: l1513
+2024-09-27 22:12:30,598 - INFO - Item lookup for nicye with input: n2189
+2024-09-27 22:13:02,537 - INFO - Item lookup for nicye with input: n2216
+2024-09-27 23:06:57,967 - INFO - User yeti has logged in. IP: 47.150.133.145, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-27 23:09:59,123 - INFO - yeti is looking up order number: 33345
+2024-09-27 23:09:59,153 - INFO - yeti searched for order number: 33345
+2024-09-27 23:13:33,790 - INFO - Item lookup for yeti with input: t3305
+2024-09-27 23:19:18,699 - INFO - Item lookup for nicye with input: en2209
+2024-09-27 23:19:46,509 - INFO - Item lookup for nicye with input: s1492
+2024-09-27 23:20:09,753 - INFO - Item lookup for nicye with input: s1471
+2024-09-27 23:20:49,185 - INFO - Item lookup for nicye with input: s1472
+2024-09-27 23:21:14,840 - INFO - Item lookup for nicye with input: en2164
+2024-09-27 23:21:38,405 - INFO - Item lookup for nicye with input: et3283
+2024-09-27 23:22:03,232 - INFO - Item lookup for nicye with input: s1457
+2024-09-27 23:22:35,236 - INFO - Item lookup for nicye with input: s1458
+2024-09-27 23:23:00,548 - INFO - Item lookup for nicye with input: n2222
+2024-09-27 23:23:26,603 - INFO - Item lookup for nicye with input: es1467
+2024-09-27 23:23:46,505 - INFO - Item lookup for nicye with input: en2153
+2024-09-27 23:24:11,700 - INFO - Item lookup for nicye with input: n1805
+2024-09-27 23:25:23,451 - INFO - Item lookup for nicye with input: l1648
+2024-09-27 23:28:18,667 - INFO - Item lookup for nicye with input: n1422
+2024-09-27 23:34:19,028 - INFO - Item lookup for nicye with input: n1423
+2024-09-27 23:34:38,348 - INFO - Item lookup for nicye with input: t3305
+2024-09-27 23:35:01,695 - INFO - Item lookup for nicye with input: t3322
+2024-09-27 23:35:29,822 - INFO - Item lookup for nicye with input: t3332
+2024-09-27 23:35:55,344 - INFO - Item lookup for nicye with input: n1000
+2024-09-27 23:36:26,124 - INFO - Item lookup for nicye with input: n0731
+2024-09-27 23:36:46,508 - INFO - Item lookup for nicye with input: t3328
+2024-09-27 23:37:06,930 - INFO - Item lookup for nicye with input: t2011
+2024-09-27 23:39:02,340 - INFO - Item lookup for nicye with input: l1408
+2024-09-27 23:39:26,977 - INFO - Item lookup for nicye with input: n5010
+2024-09-27 23:39:55,336 - INFO - Item lookup for nicye with input: en3007
+2024-09-27 23:40:33,890 - INFO - Item lookup for nicye with input: n0702
+2024-09-27 23:40:57,361 - INFO - Item lookup for nicye with input: n1223
+2024-09-28 11:58:59,800 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-28 11:59:02,633 - INFO - Serving file index.php
+2024-09-28 12:00:27,147 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-28 12:00:28,903 - INFO - Item lookup for yeti with input: n1931
+2024-09-28 12:00:32,448 - INFO - Item lookup for yeti with input: s1327
+2024-09-28 13:12:52,929 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-28 13:12:55,125 - INFO - Serving file index.php
+2024-09-28 16:35:20,367 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-28 16:35:34,517 - INFO - Serving file index.php
+2024-09-28 17:37:43,806 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 127.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-28 17:40:03,253 - INFO - Item lookup for ahua with input: s1478
+2024-09-28 21:47:52,165 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-28 21:49:26,802 - INFO - Item lookup for nicye with input: l1627
+2024-09-28 21:50:23,599 - INFO - Item lookup for nicye with input: n0529
+2024-09-28 21:50:44,694 - INFO - Item lookup for nicye with input: n0680
+2024-09-28 21:51:06,770 - INFO - Item lookup for nicye with input: n0812
+2024-09-28 22:05:57,040 - INFO - Item lookup for nicye with input: s1034
+2024-09-28 22:06:33,267 - INFO - Item lookup for nicye with input: t3009
+2024-09-28 22:07:26,200 - INFO - Item lookup for nicye with input: n0385
+2024-09-28 22:07:59,506 - INFO - Item lookup for nicye with input: n1863
+2024-09-28 22:08:19,250 - INFO - Item lookup for nicye with input: l1521
+2024-09-28 22:11:01,783 - INFO - Item lookup for nicye with input: l1521
+2024-09-28 22:12:48,229 - INFO - Item lookup for nicye with input: en1636
+2024-09-28 22:14:25,710 - INFO - Item lookup for nicye with input: en1636
+2024-09-28 22:15:00,909 - INFO - Item lookup for nicye with input: s1050
+2024-09-28 22:15:41,448 - INFO - Item lookup for nicye with input: n0370
+2024-09-28 22:16:09,763 - INFO - Item lookup for nicye with input: n0233
+2024-09-28 22:17:38,689 - INFO - Item lookup for nicye with input: l1343
+2024-09-28 22:18:43,826 - INFO - Item lookup for nicye with input: s1249
+2024-09-28 22:19:09,186 - INFO - Item lookup for nicye with input: n1835
+2024-09-28 22:19:45,931 - INFO - Item lookup for nicye with input: n1832
+2024-09-28 22:20:12,709 - INFO - Item lookup for nicye with input: n1840
+2024-09-28 22:21:51,406 - INFO - Item lookup for nicye with input: s1237
+2024-09-28 22:22:18,201 - INFO - Item lookup for nicye with input: s1285
+2024-09-28 22:42:33,148 - INFO - Item lookup for nicye with input: s1285
+2024-09-28 22:43:45,803 - INFO - Item lookup for nicye with input: s1229
+2024-09-28 22:44:10,234 - INFO - Item lookup for nicye with input: s1245
+2024-09-28 22:44:30,913 - INFO - Item lookup for nicye with input: s1231
+2024-09-28 22:44:58,072 - INFO - Item lookup for nicye with input: s1287
+2024-09-28 22:45:31,303 - INFO - Item lookup for nicye with input: en1881
+2024-09-28 22:46:57,550 - INFO - Item lookup for nicye with input: en1881
+2024-09-28 22:47:19,144 - INFO - Item lookup for nicye with input: en1885
+2024-09-28 22:47:43,079 - INFO - Item lookup for nicye with input: es1271
+2024-09-28 22:48:05,448 - INFO - Item lookup for nicye with input: n1265
+2024-09-28 22:48:34,673 - INFO - Item lookup for nicye with input: s1174
+2024-09-28 22:49:15,236 - INFO - Item lookup for nicye with input: n1512
+2024-09-28 22:49:35,479 - INFO - Item lookup for nicye with input: n1865
+2024-09-28 22:49:54,809 - INFO - Item lookup for nicye with input: n2198
+2024-09-28 22:50:23,221 - INFO - Item lookup for nicye with input: n2171
+2024-09-28 22:50:57,715 - INFO - Item lookup for nicye with input: n2169
+2024-09-28 22:51:18,459 - INFO - Item lookup for nicye with input: l1865
+2024-09-28 22:51:39,150 - INFO - Item lookup for nicye with input: l1866
+2024-09-28 22:52:00,350 - INFO - Item lookup for nicye with input: l1867
+2024-09-28 22:52:24,835 - INFO - Item lookup for nicye with input: t3290
+2024-09-28 22:52:45,159 - INFO - Item lookup for nicye with input: t3289
+2024-09-28 22:53:01,675 - INFO - Item lookup for nicye with input: s1220
+2024-09-28 22:53:43,317 - INFO - Item lookup for nicye with input: l1868
+2024-09-28 22:54:03,588 - INFO - Item lookup for nicye with input: en2154
+2024-09-28 22:54:21,510 - INFO - Item lookup for nicye with input: en2161
+2024-09-28 22:54:39,800 - INFO - Item lookup for nicye with input: n2194
+2024-09-28 22:57:53,490 - INFO - Item lookup for nicye with input: n2206
+2024-09-28 22:59:00,357 - INFO - Item lookup for nicye with input: n2207
+2024-09-28 22:59:17,842 - INFO - Item lookup for nicye with input: n2185
+2024-09-28 22:59:41,245 - INFO - Item lookup for nicye with input: t3291
+2024-09-28 23:47:11,196 - INFO - Item lookup for nicye with input: t3291
+2024-09-28 23:47:44,850 - INFO - Item lookup for nicye with input: n1033
+2024-09-28 23:48:11,758 - INFO - Item lookup for nicye with input: n1464
+2024-09-29 01:27:11,904 - INFO - Item lookup for ahua with input: s1478
+2024-09-29 06:13:17,182 - INFO - Serving file vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php
+2024-09-29 06:13:19,061 - INFO - Serving file index.php
+2024-09-29 14:08:12,460 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-29 14:08:32,308 - INFO - Item lookup for nicye with input: l1622
+2024-09-29 14:10:38,626 - INFO - Item lookup for nicye with input: et2953
+2024-09-29 14:11:04,212 - INFO - Item lookup for nicye with input: n1675
+2024-09-29 14:11:35,995 - INFO - Item lookup for nicye with input: n1839
+2024-09-29 14:12:03,417 - INFO - Item lookup for nicye with input: s1111
+2024-09-29 14:12:31,536 - INFO - Item lookup for nicye with input: s1114
+2024-09-29 14:12:56,899 - INFO - Item lookup for nicye with input: s1322
+2024-09-29 14:13:19,901 - INFO - Item lookup for nicye with input: en1849
+2024-09-29 14:14:56,809 - INFO - Item lookup for nicye with input: s1253
+2024-09-29 14:15:22,416 - INFO - Item lookup for nicye with input: n1814
+2024-09-29 14:16:07,452 - INFO - Item lookup for nicye with input: t3117
+2024-09-29 14:16:38,306 - INFO - Item lookup for nicye with input: s1246
+2024-09-29 14:17:02,829 - INFO - Item lookup for nicye with input: n1811
+2024-09-29 14:17:32,799 - INFO - Item lookup for nicye with input: s1207
+2024-09-29 14:18:03,131 - INFO - Item lookup for nicye with input: s1211
+2024-09-29 14:18:32,251 - INFO - Item lookup for nicye with input: s1212
+2024-09-29 14:18:57,060 - INFO - Item lookup for nicye with input: l1848
+2024-09-29 14:19:31,161 - INFO - Item lookup for nicye with input: n1656
+2024-09-29 14:19:48,363 - INFO - Item lookup for nicye with input: t2891
+2024-09-29 14:20:11,506 - INFO - Item lookup for nicye with input: n1644
+2024-09-29 14:20:53,196 - INFO - Item lookup for nicye with input: l1522-m
+2024-09-29 14:21:18,625 - INFO - Item lookup for nicye with input: n1937
+2024-09-29 14:21:40,783 - INFO - Item lookup for nicye with input: n0815
+2024-09-29 14:22:11,499 - INFO - Item lookup for nicye with input: n3007
+2024-09-29 14:22:32,275 - INFO - Item lookup for nicye with input: n1116
+2024-09-29 14:23:14,900 - INFO - Item lookup for nicye with input: s1172
+2024-09-29 14:23:36,331 - INFO - Item lookup for nicye with input: n1324
+2024-09-29 14:24:00,468 - INFO - Item lookup for nicye with input: l1522
+2024-09-29 14:24:23,667 - INFO - Item lookup for nicye with input: l1494
+2024-09-29 14:24:43,913 - INFO - Item lookup for nicye with input: n1548
+2024-09-29 14:25:08,916 - INFO - Item lookup for nicye with input: n1547
+2024-09-29 14:25:29,090 - INFO - Item lookup for nicye with input: n1525
+2024-09-29 14:25:50,488 - INFO - Item lookup for nicye with input: n1546
+2024-09-29 14:26:39,220 - INFO - Item lookup for nicye with input: n1685
+2024-09-29 14:27:02,845 - INFO - Item lookup for nicye with input: l1518
+2024-09-29 14:27:56,967 - INFO - Item lookup for nicye with input: l1689
+2024-09-29 14:28:15,752 - INFO - Item lookup for nicye with input: n1922
+2024-09-29 14:28:36,749 - INFO - Item lookup for nicye with input: s1333
+2024-09-29 14:28:56,296 - INFO - Item lookup for nicye with input: l1687-m
+2024-09-29 14:29:16,579 - INFO - Item lookup for nicye with input: l1577
+2024-09-29 14:31:04,678 - INFO - Item lookup for nicye with input: l1846
+2024-09-29 14:31:39,012 - INFO - Item lookup for nicye with input: l1372
+2024-09-29 14:32:25,066 - INFO - Item lookup for nicye with input: t3055
+2024-09-29 14:32:47,342 - INFO - Item lookup for nicye with input: es1134
+2024-09-29 14:33:25,840 - INFO - Item lookup for nicye with input: n1460
+2024-09-29 14:33:48,268 - INFO - Item lookup for nicye with input: n1691
+2024-09-29 14:34:13,438 - INFO - Item lookup for nicye with input: n1696
+2024-09-29 14:34:38,882 - INFO - Item lookup for nicye with input: l1845
+2024-09-29 14:35:59,412 - INFO - Item lookup for nicye with input: t3131
+2024-09-29 14:36:31,528 - INFO - Item lookup for nicye with input: t2812
+2024-09-29 14:37:15,251 - INFO - Item lookup for nicye with input: n1110
+2024-09-29 14:37:38,814 - INFO - Item lookup for nicye with input: n1782
+2024-09-29 14:38:00,610 - INFO - Item lookup for nicye with input: n1912
+2024-09-29 14:38:30,130 - INFO - Item lookup for nicye with input: n1036
+2024-09-29 14:39:01,889 - INFO - Item lookup for nicye with input: n1780
+2024-09-29 14:41:09,449 - INFO - Item lookup for nicye with input: t2936
+2024-09-29 14:41:51,581 - INFO - Item lookup for nicye with input: s1151
+2024-09-29 14:42:50,064 - INFO - Item lookup for nicye with input: n0735
+2024-09-29 14:43:38,911 - INFO - Item lookup for nicye with input: t2549-set
+2024-09-29 14:44:00,633 - INFO - Item lookup for nicye with input: en1765
+2024-09-29 14:44:36,304 - INFO - Item lookup for nicye with input: n1738
+2024-09-29 14:47:17,911 - INFO - Item lookup for nicye with input: n1123
+2024-09-29 14:49:26,918 - INFO - Item lookup for nicye with input: en1766
+2024-09-29 14:49:50,300 - INFO - Item lookup for nicye with input: n1771
+2024-09-29 14:50:11,849 - INFO - Item lookup for nicye with input: n1745
+2024-09-29 14:50:33,127 - INFO - Item lookup for nicye with input: es1159
+2024-09-29 14:51:01,279 - INFO - Item lookup for nicye with input: s1167
+2024-09-29 14:51:21,932 - INFO - Item lookup for nicye with input: es1169
+2024-09-29 14:52:07,665 - INFO - Item lookup for nicye with input: es1171
+2024-09-29 14:52:36,899 - INFO - Item lookup for nicye with input: en1789
+2024-09-29 14:52:58,739 - INFO - Item lookup for nicye with input: t3063
+2024-09-29 14:53:24,057 - INFO - Item lookup for nicye with input: n1790
+2024-09-29 14:53:47,976 - INFO - Item lookup for nicye with input: n1426
+2024-09-29 14:54:38,327 - INFO - Item lookup for nicye with input: n1430
+2024-09-29 14:55:08,262 - INFO - Item lookup for nicye with input: s1186
+2024-09-29 14:55:35,210 - INFO - Item lookup for nicye with input: t3056
+2024-09-29 14:56:01,654 - INFO - Item lookup for nicye with input: s1327
+2024-09-29 14:56:35,940 - INFO - Item lookup for nicye with input: s3028
+2024-09-29 14:58:59,165 - INFO - Item lookup for nicye with input: et2949
+2024-09-29 14:59:33,297 - INFO - Item lookup for nicye with input: l1790
+2024-09-29 15:07:35,970 - INFO - Item lookup for nicye with input: t3001
+2024-09-29 15:07:59,276 - INFO - Item lookup for nicye with input: t3343
+2024-09-29 15:08:20,781 - INFO - Item lookup for nicye with input: t3344
+2024-09-29 15:08:40,117 - INFO - Item lookup for nicye with input: t3345
+2024-09-29 15:08:57,515 - INFO - Item lookup for nicye with input: t3346
+2024-09-29 15:09:15,824 - INFO - Item lookup for nicye with input: t3347
+2024-09-29 15:09:39,857 - INFO - Item lookup for nicye with input: t3348
+2024-09-29 15:20:51,677 - INFO - Item lookup for nicye with input: es1498
+2024-09-29 15:21:14,395 - INFO - Item lookup for nicye with input: n2280
+2024-09-29 15:21:37,218 - INFO - Item lookup for nicye with input: n2281
+2024-09-29 15:21:58,271 - INFO - Item lookup for nicye with input: n2067
+2024-09-29 15:22:25,064 - INFO - Item lookup for nicye with input: n2275
+2024-09-29 15:22:51,650 - INFO - Item lookup for nicye with input: n2276
+2024-09-29 15:23:36,074 - INFO - Item lookup for nicye with input: t3368
+2024-09-29 15:23:55,057 - INFO - Item lookup for nicye with input: n2227
+2024-09-29 15:24:13,580 - INFO - Item lookup for nicye with input: s1511
+2024-09-29 15:24:42,000 - INFO - Item lookup for nicye with input: t3081
+2024-09-29 15:25:17,700 - INFO - Item lookup for nicye with input: n1797
+2024-09-29 15:26:02,605 - INFO - Item lookup for nicye with input: s1197
+2024-09-29 15:26:33,520 - INFO - Item lookup for nicye with input: es1216
+2024-09-29 15:49:23,222 - INFO - Item lookup for nicye with input: en1858
+2024-09-29 15:49:41,295 - INFO - Item lookup for nicye with input: n1806
+2024-09-29 15:49:56,862 - INFO - Item lookup for nicye with input: n1799
+2024-09-29 15:50:18,252 - INFO - Item lookup for nicye with input: s1173
+2024-09-29 15:51:09,566 - INFO - Item lookup for nicye with input: en1884
+2024-09-29 15:51:44,904 - INFO - Item lookup for nicye with input: n1842
+2024-09-29 15:52:20,976 - INFO - Item lookup for nicye with input: n1163
+2024-09-29 15:52:44,580 - INFO - Item lookup for nicye with input: n1868
+2024-09-29 15:53:18,316 - INFO - Item lookup for nicye with input: n1798
+2024-09-29 15:53:37,273 - INFO - Item lookup for nicye with input: n1822
+2024-09-29 15:54:19,185 - INFO - Item lookup for nicye with input: n2289
+2024-09-29 15:54:41,223 - INFO - Item lookup for nicye with input: es1269
+2024-09-29 15:54:59,414 - INFO - Item lookup for nicye with input: es1147
+2024-09-29 16:25:30,834 - INFO - Item lookup for nicye with input: s1187
+2024-09-29 16:26:13,505 - INFO - Item lookup for nicye with input: s1226
+2024-09-29 16:27:42,869 - INFO - Item lookup for nicye with input: s1228
+2024-09-29 16:28:06,067 - INFO - Item lookup for nicye with input: s1221
+2024-09-29 16:28:27,112 - INFO - Item lookup for nicye with input: en1880
+2024-09-29 16:28:50,827 - INFO - Item lookup for nicye with input: t3085
+2024-09-29 16:29:36,525 - INFO - Item lookup for nicye with input: es1323
+2024-09-29 16:30:00,031 - INFO - Item lookup for nicye with input: s1203
+2024-09-29 16:30:20,003 - INFO - Item lookup for nicye with input: n1831
+2024-09-29 16:30:38,011 - INFO - Item lookup for nicye with input: en1177
+2024-09-29 16:31:01,123 - INFO - Item lookup for nicye with input: n1864
+2024-09-29 16:31:19,858 - INFO - Item lookup for nicye with input: n1866
+2024-09-29 16:31:43,475 - INFO - Item lookup for nicye with input: n1867
+2024-09-29 16:32:08,377 - INFO - Item lookup for nicye with input: n1869
+2024-09-29 16:32:22,534 - INFO - Item lookup for nicye with input: n1870
+2024-09-29 16:32:40,248 - INFO - Item lookup for nicye with input: n1802
+2024-09-29 16:32:57,274 - INFO - Item lookup for nicye with input: t3096
+2024-09-29 16:33:15,083 - INFO - Item lookup for nicye with input: t3097
+2024-09-29 16:33:50,225 - INFO - Item lookup for nicye with input: en1512
+2024-09-29 16:34:24,235 - INFO - Item lookup for nicye with input: n1845
+2024-09-29 16:34:49,386 - INFO - Item lookup for nicye with input: s1204
+2024-09-29 16:35:11,949 - INFO - Item lookup for nicye with input: en1905
+2024-09-29 16:35:36,093 - INFO - Item lookup for nicye with input: es1313
+2024-09-29 16:36:06,903 - INFO - Item lookup for nicye with input: s1247
+2024-09-29 16:36:25,809 - INFO - Item lookup for nicye with input: s1248
+2024-09-29 19:20:52,799 - INFO - Item lookup for ahua with input: s1478
+2024-09-30 01:09:05,848 - INFO - Item lookup for nicye with input: m1121
+2024-09-30 01:31:54,351 - INFO - Item lookup for nicye with input: t3132
+2024-09-30 02:56:41,412 - INFO - Item lookup for ahua with input: s1478
+2024-09-30 09:48:37,092 - INFO - Item lookup for yeti with input: s1478
+2024-09-30 09:49:21,554 - INFO - Item lookup for yeti with input: t3224
+2024-09-30 11:07:57,000 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 11:08:03,254 - INFO - Item lookup for yeti with input: s1478
+2024-09-30 11:09:36,917 - INFO - Item lookup for yeti with input: t3305
+2024-09-30 11:15:25,036 - INFO - Item lookup for yeti with input: s1400
+2024-09-30 11:15:44,519 - INFO - Item lookup for yeti with input: s1426
+2024-09-30 11:18:47,722 - INFO - Item lookup for yeti with input: t3224
+2024-09-30 11:22:38,764 - INFO - Item lookup for yeti with input: s1426
+2024-09-30 11:35:39,744 - INFO - Item lookup for yeti with input: s1034
+2024-09-30 11:35:51,097 - INFO - Item lookup for yeti with input: n1004
+2024-09-30 11:38:26,808 - INFO - Item lookup for yeti with input: t2843,l1632
+2024-09-30 11:43:26,486 - INFO - Item lookup for yeti with input: l1838,t3243
+2024-09-30 12:27:20,890 - INFO - Item lookup for yeti with input: es1323
+2024-09-30 12:32:27,827 - INFO - Item lookup for yeti with input: es1323,en1765
+2024-09-30 12:32:41,577 - INFO - Item lookup for yeti with input: es1323,en1765,s1400
+2024-09-30 12:34:54,407 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 12:35:00,993 - INFO - Item lookup for yeti with input: t3351
+2024-09-30 15:26:41,202 - INFO - Item lookup for yeti with input: et3424
+2024-09-30 15:49:49,422 - INFO - autobots, rolling out!
+2024-09-30 15:50:06,896 - INFO - autobots, rolling out!
+2024-09-30 15:50:27,455 - INFO - autobots, rolling out!
+2024-09-30 15:52:03,633 - INFO - autobots, rolling out!
+2024-09-30 15:52:40,270 - INFO - autobots, rolling out!
+2024-09-30 15:56:43,766 - INFO - autobots, rolling out!
+2024-09-30 15:56:56,143 - INFO - autobots, rolling out!
+2024-09-30 15:57:05,526 - INFO - autobots, rolling out!
+2024-09-30 15:59:08,879 - INFO - autobots, rolling out!
+2024-09-30 16:03:54,556 - INFO - autobots, rolling out!
+2024-09-30 16:04:41,253 - INFO - autobots, rolling out!
+2024-09-30 16:14:07,150 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 16:14:32,037 - INFO - yeti executed a custom SQL query: select * from inv_data where loc="TESTER122";
+2024-09-30 16:14:41,771 - INFO - yeti executed a custom SQL query: select * from inv_data where loc.="TESTER122";
+2024-09-30 16:15:07,730 - INFO - yeti executed a custom SQL query: select * from inv_data where prod_cd="07203-1437 BLACK";
+2024-09-30 16:15:27,914 - INFO - yeti executed a custom SQL query: select * from inv where prod_cd="07203-1437 BLACK";
+2024-09-30 16:15:28,492 - INFO - yeti executed a custom SQL query: select * from inv where prod_cd="07203-1437 BLACK";
+2024-09-30 16:15:34,491 - INFO - yeti executed a custom SQL query: select * from inv_detl where prod_cd="07203-1437 BLACK";
+2024-09-30 16:16:07,140 - INFO - yeti executed a custom SQL query: select * from inv_data;
+2024-09-30 16:30:21,819 - INFO - autobots, rolling out!
+2024-09-30 16:30:37,568 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 16:36:36,072 - INFO - autobots, rolling out!
+2024-09-30 16:38:13,095 - INFO - autobots, rolling out!
+2024-09-30 16:39:10,791 - INFO - autobots, rolling out!
+2024-09-30 16:40:00,363 - INFO - autobots, rolling out!
+2024-09-30 16:40:34,965 - INFO - autobots, rolling out!
+2024-09-30 16:41:45,775 - INFO - autobots, rolling out!
+2024-09-30 16:45:27,778 - INFO - autobots, rolling out!
+2024-09-30 16:49:14,902 - INFO - autobots, rolling out!
+2024-09-30 16:49:22,107 - INFO - autobots, rolling out!
+2024-09-30 16:49:40,679 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 16:50:16,842 - INFO - autobots, rolling out!
+2024-09-30 16:52:29,601 - INFO - autobots, rolling out!
+2024-09-30 16:57:10,586 - INFO - autobots, rolling out!
+2024-09-30 17:02:27,537 - INFO - autobots, rolling out!
+2024-09-30 17:02:32,891 - INFO - autobots, rolling out!
+2024-09-30 17:08:29,165 - INFO - autobots, rolling out!
+2024-09-30 17:11:02,769 - INFO - autobots, rolling out!
+2024-09-30 17:13:50,306 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 17:26:58,171 - INFO - autobots, rolling out!
+2024-09-30 17:41:10,746 - INFO - autobots, rolling out!
+2024-09-30 17:41:33,232 - INFO - autobots, rolling out!
+2024-09-30 17:42:29,076 - INFO - autobots, rolling out!
+2024-09-30 17:42:44,528 - INFO - autobots, rolling out!
+2024-09-30 17:43:16,971 - INFO - autobots, rolling out!
+2024-09-30 17:44:30,716 - INFO - autobots, rolling out!
+2024-09-30 17:50:21,964 - INFO - autobots, rolling out!
+2024-09-30 17:50:29,380 - INFO - autobots, rolling out!
+2024-09-30 17:51:27,053 - INFO - autobots, rolling out!
+2024-09-30 17:54:51,997 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 17:55:10,220 - INFO - User fdc has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 17:59:20,214 - INFO - autobots, rolling out!
+2024-09-30 17:59:49,338 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 18:04:08,812 - INFO - autobots, rolling out!
+2024-09-30 18:05:44,148 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 18:07:49,154 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
