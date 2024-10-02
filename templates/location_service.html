@@ -70,8 +70,6 @@
     </div>
 
     <div class="container mt-4">
-        <!-- Existing content with tabs and forms -->
-        
         <!-- Tabs for Sections -->
         <ul class="nav nav-tabs" id="locationServiceTab" role="tablist">
             <li class="nav-item" role="presentation">
@@ -79,7 +77,7 @@
                     <i class="fas fa-search"></i> Search / Update Products
                 </a>
             </li>
-            {% if current_user != 'fdc' %}
+            {% if current_user != 'fdc'  %}
             <li class="nav-item" role="presentation">
                 <a class="nav-link {% if action == 'viewall' %}active{% endif %}" href="{{ url_for('location_service.location_service', action='viewall') }}">
                     <i class="fas fa-table"></i> View All Products
@@ -90,11 +88,13 @@
                     <i class="fas fa-plus-circle"></i> Add New Product
                 </a>
             </li>
+            {% if current_user != 'local_user'  %}
             <li class="nav-item" role="presentation">
                 <a class="nav-link {% if action == 'import_export' %}active{% endif %}" href="{{ url_for('location_service.location_service', action='import_export') }}">
                     <i class="fas fa-file-import"></i> Import/Export
                 </a>
             </li>
+            {% endif %}
             {% endif %}
         </ul>
         <div class="tab-content" id="locationServiceTabContent">
@@ -107,7 +107,7 @@
                             <input type="hidden" name="action" value="search">
                             <div class="col-md-8 position-relative">
                                 <label for="search_input" class="form-label">SKU or Style (auto match existed)</label>
-                                <input type="text" class="form-control" id="search_input" name="search_input" placeholder="Enter SKU or Style" autocomplete="off" required value="{{ search_query }}">
+                                <input type="text" class="form-control" id="search_input" name="search_input" placeholder="Enter SKU or Style" autocomplete="off" required>
                                 <!-- Dropdown for suggestions -->
                                 <ul class="list-group position-absolute w-100" id="suggestions" style="z-index: 1000; display: none;"></ul>
                             </div>
@@ -122,8 +122,17 @@
                     <div class="card form-section">
                         <h5 class="card-header bg-info text-white">Product Details</h5>
                         <div class="card-body table-responsive">
+                            <!-- Update Multiple Form -->
                             <form method="POST" action="{{ url_for('location_service.location_service') }}">
                                 <input type="hidden" name="action" value="update_multiple">
+                                
+                                <!-- Bulk Update Input and Button -->
+                                <div class="input-group mb-3">
+                                    <input type="text" id="bulk-location-input" class="form-control" placeholder="Enter bulk location">
+                                    <button type="button" class="btn btn-primary" id="bulk-update-button">Bulk Update</button>
+                                </div>
+                                
+                                <!-- Products Table -->
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr>
@@ -132,30 +141,33 @@
                                             <th>Update Date</th>
                                             <th>Location</th>
                                             <th>New Location</th>
-                                            
+                                            <th>Delete</th> <!-- New Delete Column -->
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for product in search_results %}
-                                            <tr>
-                                                <td>{{ product.Style }}</td>
-                                                <td>{{ product.SKU }}</td>
-                                                <td>{{ product.Update_Date }}</td>
-                                                <td>{{ product.Location }}</td>
-                                                    {% if current_user != 'fdc' %}                                               
-                                                        <td>
-                                                            <input type="hidden" name="original_sku" value="{{ product.SKU }}">
-                                                            <input type="hidden" name="original_style" value="{{ product.Style }}">
-                                                            <input type="text" class="form-control" name="new_location" placeholder="Enter new location">
-                                                        </td>
-                                                    {% endif %}
-                                            </tr>
+                                        <tr id="product-row-{{ loop.index }}">
+                                            <td>{{ product.Style }}</td>
+                                            <td>{{ product.SKU }}</td>
+                                            <td>{{ product.Update_Date }}</td>
+                                            <td>{{ product.Location }}</td>
+                                            <td>
+                                                <input type="hidden" name="original_sku_{{ loop.index }}" value="{{ product.SKU }}">
+                                                <input type="hidden" name="original_style_{{ loop.index }}" value="{{ product.Style }}">
+                                                <input type="text" class="form-control" name="new_location_{{ loop.index }}" placeholder="Enter new location">
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-danger btn-sm delete-button" data-sku="{{ product.SKU }}" data-style="{{ product.Style }}">
+                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                </button>
+                                            </td>
+                                        </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
-                                {% if current_user != 'fdc' %}
+                                
+                                <!-- Update Locations Button -->
                                 <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Update Locations</button>
-                                {% endif %}
                             </form>
                         </div>
                     </div>
@@ -375,11 +387,11 @@
             const addRowButton = document.getElementById('add-row');
             const addProductTable = document.getElementById('add-product-table').getElementsByTagName('tbody')[0];
             const form = document.getElementById('add-product-form');
-    
+
             // Function to add a new row
             function addNewRow() {
                 const newRow = document.createElement('tr');
-    
+
                 newRow.innerHTML = `
                     <td>
                         <input type="text" class="form-control" name="new_sku" placeholder="Enter SKU" required>
@@ -394,15 +406,15 @@
                         <button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-times"></i></button>
                     </td>
                 `;
-    
+
                 addProductTable.appendChild(newRow);
             }
-    
+
             // Event listener for adding new rows
             addRowButton.addEventListener('click', function() {
                 addNewRow();
             });
-    
+
             // Event delegation for removing rows
             addProductTable.addEventListener('click', function(e) {
                 if (e.target && (e.target.matches('.remove-row') || e.target.closest('.remove-row'))) {
@@ -414,6 +426,118 @@
                         alert('At least one product entry is required.');
                     }
                 }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tableRows = document.querySelectorAll('tbody tr');
+
+            tableRows.forEach((row, index) => {
+                const locationCell = row.querySelector('td:nth-child(4)'); // Select the Location cell (4th cell in the row)
+                const newLocationInput = row.querySelector(`input[name="new_location_${index + 1}"]`); // Correct new location input selector
+
+                if (newLocationInput) {
+                    locationCell.addEventListener('click', function() {
+                        newLocationInput.value = locationCell.textContent.trim(); // Copy the Location value to the New Location input
+                        // Highlight both Location cell and New Location input
+                        locationCell.style.backgroundColor = '#ffeb3b'; // Highlight Location cell (yellow)
+                        newLocationInput.style.backgroundColor = '#e0f7fa'; // Highlight New Location input (light blue)
+                        setTimeout(function() {
+                            locationCell.style.backgroundColor = ''; // Remove highlight from Location cell
+                            newLocationInput.style.backgroundColor = ''; // Remove highlight from New Location input
+                        }, 1500); // Highlights stay for 1.5 seconds
+                    });
+                }
+            });
+
+            // Bulk update functionality (without form submission)
+            const bulkInput = document.getElementById('bulk-location-input');
+            const bulkUpdateButton = document.getElementById('bulk-update-button');
+
+            bulkUpdateButton.addEventListener('click', function() {
+                const newLocation = bulkInput.value.trim();
+                if (newLocation) {
+                    tableRows.forEach((row, index) => {
+                        const newLocationInput = row.querySelector(`input[name="new_location_${index + 1}"]`);
+                        if (newLocationInput) {
+                            newLocationInput.value = newLocation; // Set new location for all rows
+                            newLocationInput.style.backgroundColor = '#e0f7fa'; // Highlight input to indicate update
+                            setTimeout(function() {
+                                newLocationInput.style.backgroundColor = ''; // Remove highlight after 1.5 seconds
+                            }, 1500);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Function to display Bootstrap toasts (if needed)
+            function showToast(type, message) {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-bg-${type} border-0 mb-2`;
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                `;
+                toastContainer.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+                bsToast.show();
+
+                // Remove the toast element after it hides
+                toast.addEventListener('hidden.bs.toast', () => {
+                    toast.remove();
+                });
+            }
+
+            // Attach event listeners to all delete buttons (in case of dynamic content)
+            const deleteButtons = document.querySelectorAll('.delete-button');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const sku = this.getAttribute('data-sku');
+                    const style = this.getAttribute('data-style');
+                    const row = this.closest('tr');
+
+                    if (confirm('Are you sure you want to delete this product?')) {
+                        // Retrieve CSRF token from meta tag
+
+                        // Send AJAX request to delete the product
+                        fetch(`{{ url_for('location_service.delete_product') }}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                'sku': sku,
+                                'style': style
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Remove the product row from the table
+                                row.remove();
+                                showToast('success', data.message);
+                            } else {
+                                showToast('danger', data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showToast('danger', 'An error occurred while deleting the product.');
+                        });
+                    }
+                });
             });
         });
     </script>

@@ -32,6 +32,7 @@ from logging_setup import configure_logging
 from upload_processor import process_upload
 from big_img_routes import register_big_img_routes
 from location_service import location_service_bp
+from container import container_bp
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
@@ -45,6 +46,7 @@ def register_routes(app):
     
     register_big_img_routes(app)
     app.register_blueprint(location_service_bp)
+    app.register_blueprint(container_bp)
 
 
     def check_credentials(username, password):

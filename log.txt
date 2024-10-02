@@ -1022,3 +1022,342 @@ ORDER BY
 2024-09-30 18:04:08,812 - INFO - autobots, rolling out!
 2024-09-30 18:05:44,148 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
 2024-09-30 18:07:49,154 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 23:09:26,844 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-09-30 23:09:36,293 - INFO - Item lookup for nicye with input: s1327
+2024-09-30 23:18:45,714 - INFO - Item lookup for nicye with input: t3243
+2024-10-01 09:55:33,668 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 09:55:40,546 - INFO - Item lookup for yeti with input: en1765
+2024-10-01 09:56:03,993 - INFO - Item lookup for yeti with input: n2149
+2024-10-01 09:56:21,675 - INFO - Item lookup for yeti with input: es1382
+2024-10-01 10:01:28,504 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 10:01:33,290 - INFO - Item lookup for yeti with input: t3305
+2024-10-01 10:17:17,022 - INFO - autobots, rolling out!
+2024-10-01 10:17:20,219 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 10:23:27,095 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 10:51:47,849 - INFO - Item lookup for yeti with input: l1809
+2024-10-01 10:59:29,475 - INFO - Item lookup for yeti with input: t3243
+2024-10-01 12:43:09,983 - INFO - Item lookup for yeti with input: es1382
+2024-10-01 12:54:18,089 - INFO - Item lookup for yeti with input: es1382
+2024-10-01 13:21:19,517 - INFO - autobots, rolling out!
+2024-10-01 13:21:31,774 - INFO - Item lookup for local_user with input: t3305
+2024-10-01 13:32:46,139 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 14:03:25,352 - INFO - autobots, rolling out!
+2024-10-01 14:03:29,060 - INFO - autobots, rolling out!
+2024-10-01 14:03:45,070 - INFO - local_user is looking up order number: 1780
+2024-10-01 14:03:45,396 - INFO - local_user searched for order number: 1780
+2024-10-01 14:03:50,535 - INFO - local_user is looking up order number: 1555
+2024-10-01 14:03:51,109 - INFO - local_user searched for order number: 1555
+2024-10-01 14:04:01,430 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 14:11:34,450 - INFO - autobots, rolling out!
+2024-10-01 14:12:26,050 - INFO - autobots, rolling out!
+2024-10-01 14:12:31,885 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 14:24:20,393 - INFO - autobots, rolling out!
+2024-10-01 14:24:24,100 - INFO - autobots, rolling out!
+2024-10-01 14:25:17,581 - INFO - autobots, rolling out!
+2024-10-01 14:25:21,302 - INFO - autobots, rolling out!
+2024-10-01 14:25:23,597 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 14:25:45,798 - INFO - autobots, rolling out!
+2024-10-01 14:26:29,620 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 14:59:28,484 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 15:03:24,227 - INFO - yeti downloaded the file: List-20241001-150259.xlsx
+2024-10-01 15:27:15,290 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 15:35:22,196 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 15:36:58,251 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 15:37:16,165 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 15:41:04,613 - INFO - autobots, rolling out!
+2024-10-01 15:41:07,640 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 15:41:09,230 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 15:44:24,189 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 15:45:04,025 - INFO - Item lookup for yeti with input: t3388
+2024-10-01 15:45:09,236 - INFO - Item lookup for yeti with input: t3349
+2024-10-01 15:45:51,876 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 15:52:49,438 - INFO - Item lookup for yeti with input: et34
+2024-10-01 15:53:08,195 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 15:53:09,266 - INFO - Item lookup for yetimaster with input: et34
+2024-10-01 15:58:49,121 - INFO - Item lookup for yetimaster with input: t3449
+2024-10-01 16:00:48,127 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 16:00:49,075 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 16:00:58,481 - INFO - Item lookup for yeti with input: t3305
+2024-10-01 16:01:08,834 - INFO - Item lookup for yeti with input: t3449
+2024-10-01 16:01:38,444 - INFO - Item lookup for yeti with input: t3449,n2287
+2024-10-01 16:03:42,494 - INFO - Item lookup for yeti with input: l1871
+2024-10-01 16:08:52,171 - INFO - Item lookup for local_user with input: t344
+2024-10-01 16:09:02,436 - INFO - Item lookup for local_user with input: t334
+2024-10-01 16:09:21,805 - INFO - User yetimaster has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 16:09:22,785 - INFO - Item lookup for yetimaster with input: t334
+2024-10-01 16:10:02,056 - INFO - Item lookup for yetimaster with input: t334
+2024-10-01 16:12:02,265 - INFO - Item lookup for yetimaster with input: t3348
+2024-10-01 16:15:06,921 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 128.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 16:19:57,657 - INFO - yeti downloaded the file: List-20241001-161948.xlsx
+2024-10-01 16:30:54,194 - INFO - yetimaster executed a custom SQL query: select * from inv where prod_cd="n1977 bk"
+2024-10-01 16:30:59,633 - INFO - yetimaster executed a custom SQL query: select * from inv where prod_cd="N1977 bk"
+2024-10-01 16:31:21,042 - INFO - yetimaster executed a custom SQL query: select * from inv_detl where prod_cd="N1977 bk"
+2024-10-01 16:31:27,033 - INFO - yetimaster executed a custom SQL query: select * from inv_data where prod_cd="N1977 bk"
+2024-10-01 16:31:33,601 - INFO - yetimaster executed a custom SQL query: select * from inv_data where prod_cd="N1977 bk";
+2024-10-01 16:31:51,817 - INFO - yetimaster executed a custom SQL query: select * from inv_data where alt_id="N1977";
+2024-10-01 16:31:59,737 - INFO - yetimaster executed a custom SQL query: select * from inv where alt_id="N1977";
+2024-10-01 16:32:08,751 - INFO - yetimaster executed a custom SQL query: select * from inv where alt_id=N1977;
+2024-10-01 16:32:12,815 - INFO - yetimaster executed a custom SQL query: select * from inv where alt_cd=N1977;
+2024-10-01 16:32:38,361 - INFO - yetimaster executed a custom SQL query: select * from inv;
+2024-10-01 16:33:07,873 - INFO - yetimaster executed a custom SQL query: SELECT * FROM inv
+LIMIT 10;
+2024-10-01 16:33:25,656 - INFO - yetimaster executed a custom SQL query: SELECT * FROM inv
+LIMIT 10;
+2024-10-01 16:33:33,900 - INFO - yetimaster executed a custom SQL query: SELECT * FROM inv LIMIT 10;
+2024-10-01 16:33:41,013 - INFO - yetimaster executed a custom SQL query: SELECT * FROM inv LIMIT 10
+2024-10-01 16:33:55,201 - INFO - yetimaster executed a custom SQL query: SELECT TOP 10 * FROM inv;
+
+2024-10-01 16:34:39,521 - INFO - Item lookup for yetimaster with input: en2149
+2024-10-01 16:34:45,288 - INFO - Item lookup for yetimaster with input: n2149
+2024-10-01 16:35:10,598 - INFO - yetimaster executed a custom SQL query: SELECT TOP 10 * FROM inv where prod_cd=T1649 BK;
+
+2024-10-01 16:35:17,901 - INFO - yetimaster executed a custom SQL query: SELECT TOP 10 * FROM inv where prod_cd="T1649 BK";
+
+2024-10-01 16:35:19,134 - INFO - yetimaster executed a custom SQL query: SELECT TOP 10 * FROM inv where prod_cd="T1649 BK";
+
+2024-10-01 16:35:20,918 - INFO - yetimaster executed a custom SQL query: SELECT TOP 10 * FROM inv where prod_cd="T1649 BK";
+
+2024-10-01 16:35:26,861 - INFO - yetimaster executed a custom SQL query: SELECT TOP 10 * FROM inv where PROD_CD="T1649 BK";
+
+2024-10-01 16:35:34,846 - INFO - yetimaster executed a custom SQL query: SELECT TOP 10 * FROM inv where PROD_CD="T1649 BK";
+
+2024-10-01 16:35:39,774 - INFO - yetimaster executed a custom SQL query: SELEC * FROM inv where PROD_CD="T1649 BK";
+
+2024-10-01 16:35:56,196 - INFO - yetimaster executed a custom SQL query: SELECt * FROM inv where PROD_CD="T1649 BK";
+
+2024-10-01 16:36:01,716 - INFO - yetimaster executed a custom SQL query: select * FROM inv where PROD_CD="T1649 BK";
+
+2024-10-01 16:36:35,267 - INFO - yetimaster executed a custom SQL query: SELECT * FROM inv WHERE PROD_CD LIKE "%T1649 BK%";
+
+2024-10-01 16:36:40,693 - INFO - yetimaster executed a custom SQL query: SELECT * FROM inv WHERE PROD_CD LIKE "%T1649 BK%";
+
+2024-10-01 16:38:27,714 - INFO - yetimaster executed a custom SQL query: SELECT * FROM inv WHERE PROD_CD LIKE '%T1649 BK%';
+
+2024-10-01 16:52:17,978 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 16:53:59,193 - INFO - yeti downloaded the file: List-20241001-165354.xlsx
+2024-10-01 17:23:04,710 - INFO - Item lookup for nicye with input: s1248
+2024-10-01 17:23:26,657 - INFO - Item lookup for nicye with input: s1250
+2024-10-01 17:23:59,438 - INFO - Item lookup for nicye with input: n1834
+2024-10-01 17:24:20,030 - INFO - Item lookup for nicye with input: el0961
+2024-10-01 17:24:40,319 - INFO - Item lookup for nicye with input: n1861
+2024-10-01 17:24:57,997 - INFO - Item lookup for nicye with input: n1848
+2024-10-01 17:25:14,764 - INFO - Item lookup for nicye with input: n1846
+2024-10-01 17:25:37,902 - INFO - autobots, rolling out!
+2024-10-01 17:25:43,404 - INFO - autobots, rolling out!
+2024-10-01 17:25:46,719 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 17:25:47,762 - INFO - Item lookup for nicye with input: n1846
+2024-10-01 17:25:50,703 - INFO - Item lookup for nicye with input: n1846
+2024-10-01 17:26:04,682 - INFO - Item lookup for nicye with input: s1283
+2024-10-01 17:27:08,695 - INFO - Item lookup for nicye with input: s1334
+2024-10-01 17:27:41,948 - INFO - autobots, rolling out!
+2024-10-01 17:27:49,461 - INFO - autobots, rolling out!
+2024-10-01 17:27:56,022 - INFO - autobots, rolling out!
+2024-10-01 17:27:59,144 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 17:28:00,241 - INFO - Item lookup for nicye with input: s1334
+2024-10-01 17:28:03,598 - INFO - Item lookup for nicye with input: et3136
+2024-10-01 17:28:16,677 - INFO - autobots, rolling out!
+2024-10-01 17:28:30,290 - INFO - autobots, rolling out!
+2024-10-01 17:29:05,338 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 17:29:11,948 - INFO - Item lookup for nicye with input: n1862
+2024-10-01 17:29:29,460 - INFO - Item lookup for nicye with input: s1240
+2024-10-01 17:29:56,542 - INFO - Item lookup for nicye with input: s1242
+2024-10-01 17:30:18,796 - INFO - Item lookup for nicye with input: n1826
+2024-10-01 17:30:52,045 - INFO - autobots, rolling out!
+2024-10-01 17:30:54,990 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 17:30:56,032 - INFO - Item lookup for nicye with input: n1826
+2024-10-01 17:31:00,530 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 17:31:02,243 - INFO - Item lookup for nicye with input: s1288
+2024-10-01 17:31:15,750 - INFO - autobots, rolling out!
+2024-10-01 17:31:21,269 - INFO - autobots, rolling out!
+2024-10-01 17:31:28,513 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 17:31:29,620 - INFO - Item lookup for nicye with input: s1288
+2024-10-01 17:32:10,213 - INFO - autobots, rolling out!
+2024-10-01 17:33:21,285 - INFO - autobots, rolling out!
+2024-10-01 17:34:41,505 - INFO - autobots, rolling out!
+2024-10-01 17:35:42,558 - INFO - autobots, rolling out!
+2024-10-01 17:36:09,390 - INFO - autobots, rolling out!
+2024-10-01 20:52:29,658 - INFO - User nicye has logged in. IP: 99.113.209.64, Browser: Edge 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-01 20:52:32,211 - INFO - Item lookup for nicye with input: s1288
+2024-10-01 20:52:35,757 - INFO - Item lookup for nicye with input: es1272
+2024-10-01 20:53:13,346 - INFO - Item lookup for nicye with input: n1851
+2024-10-01 20:53:36,627 - INFO - Item lookup for nicye with input: n1856
+2024-10-01 20:54:25,781 - INFO - Item lookup for nicye with input: n1850
+2024-10-01 20:54:54,027 - INFO - Item lookup for nicye with input: n1855
+2024-10-01 20:55:19,470 - INFO - Item lookup for nicye with input: n1854
+2024-10-01 20:55:39,511 - INFO - Item lookup for nicye with input: en1860
+2024-10-01 20:56:54,550 - INFO - Item lookup for nicye with input: n1852
+2024-10-01 20:57:19,153 - INFO - Item lookup for nicye with input: s1198
+2024-10-01 20:57:45,861 - INFO - Item lookup for nicye with input: es1218
+2024-10-01 20:58:07,987 - INFO - Item lookup for nicye with input: en1817
+2024-10-01 20:58:34,923 - INFO - Item lookup for nicye with input: n1819
+2024-10-01 20:58:55,944 - INFO - Item lookup for nicye with input: s1222
+2024-10-01 20:59:42,206 - INFO - Item lookup for nicye with input: s1235
+2024-10-01 21:01:01,067 - INFO - Item lookup for nicye with input: s1270
+2024-10-01 21:01:21,842 - INFO - Item lookup for nicye with input: s1286
+2024-10-01 21:01:49,037 - INFO - Item lookup for nicye with input: t3116
+2024-10-01 21:03:45,833 - INFO - Item lookup for nicye with input: n1844
+2024-10-01 21:04:04,036 - INFO - Item lookup for nicye with input: s1346
+2024-10-01 21:04:28,706 - INFO - Item lookup for nicye with input: s1347
+2024-10-01 21:04:51,272 - INFO - Item lookup for nicye with input: s1340
+2024-10-01 21:05:14,431 - INFO - Item lookup for nicye with input: s1341
+2024-10-01 21:09:30,038 - INFO - Item lookup for nicye with input: t3133
+2024-10-01 21:10:29,044 - INFO - Item lookup for nicye with input: s1339
+2024-10-01 21:11:15,309 - INFO - Item lookup for nicye with input: s1345
+2024-10-01 21:12:04,452 - INFO - Item lookup for nicye with input: s1349
+2024-10-01 21:12:25,854 - INFO - Item lookup for nicye with input: n1931
+2024-10-01 21:12:56,612 - INFO - Item lookup for nicye with input: n1847
+2024-10-01 21:15:13,037 - INFO - Item lookup for nicye with input: s1206
+2024-10-01 21:15:58,748 - INFO - Item lookup for nicye with input: s1208
+2024-10-01 21:16:36,706 - INFO - Item lookup for nicye with input: en1346
+2024-10-01 21:16:55,602 - INFO - Item lookup for nicye with input: n1900
+2024-10-01 21:23:48,380 - INFO - Item lookup for nicye with input: en1873
+2024-10-01 21:24:37,723 - INFO - Item lookup for nicye with input: l1550-m
+2024-10-01 21:25:16,503 - INFO - Item lookup for nicye with input: n1432
+2024-10-01 21:25:41,625 - INFO - Item lookup for nicye with input: n1929
+2024-10-01 21:27:02,845 - INFO - Item lookup for nicye with input: n1926
+2024-10-01 21:27:55,258 - INFO - Item lookup for nicye with input: t3101
+2024-10-01 21:28:33,004 - INFO - Item lookup for nicye with input: l1343m
+2024-10-01 21:28:53,733 - INFO - Item lookup for nicye with input: n1194
+2024-10-01 21:29:32,587 - INFO - Item lookup for nicye with input: l1629
+2024-10-01 21:29:38,777 - INFO - Item lookup for nicye with input: l1629
+2024-10-01 21:30:55,149 - INFO - Item lookup for nicye with input: n2295
+2024-10-01 21:31:27,155 - INFO - Item lookup for nicye with input: t3388
+2024-10-01 21:43:36,998 - INFO - Item lookup for nicye with input: t3390
+2024-10-01 21:44:05,162 - INFO - Item lookup for nicye with input: t3398
+2024-10-01 22:00:21,887 - INFO - Item lookup for nicye with input: en1679
+2024-10-01 22:00:44,794 - INFO - Item lookup for nicye with input: s1209
+2024-10-01 22:01:54,961 - INFO - Item lookup for nicye with input: l1847
+2024-10-01 22:02:53,960 - INFO - Item lookup for nicye with input: l1850
+2024-10-01 22:04:34,524 - INFO - Item lookup for nicye with input: s1293
+2024-10-01 22:04:57,515 - INFO - Item lookup for nicye with input: s1275
+2024-10-01 22:06:08,099 - INFO - Item lookup for nicye with input: es1264
+2024-10-01 22:07:00,255 - INFO - Item lookup for nicye with input: es1279
+2024-10-01 22:07:56,510 - INFO - Item lookup for nicye with input: et3114
+2024-10-01 22:08:28,640 - INFO - Item lookup for nicye with input: et3102
+2024-10-01 22:08:49,896 - INFO - Item lookup for nicye with input: l1687-s
+2024-10-01 22:09:57,672 - INFO - Item lookup for nicye with input: n1928
+2024-10-01 22:10:15,310 - INFO - Item lookup for nicye with input: n1930
+2024-10-01 22:10:31,013 - INFO - Item lookup for nicye with input: s1292
+2024-10-01 22:10:54,886 - INFO - Item lookup for nicye with input: s1290
+2024-10-01 22:11:16,483 - INFO - Item lookup for nicye with input: s1291
+2024-10-01 22:11:47,298 - INFO - Item lookup for nicye with input: t3120
+2024-10-01 22:12:08,623 - INFO - Item lookup for nicye with input: s1294
+2024-10-01 22:12:32,862 - INFO - Item lookup for nicye with input: l1834
+2024-10-01 22:13:08,179 - INFO - Item lookup for nicye with input: l1841
+2024-10-01 22:13:29,328 - INFO - Item lookup for nicye with input: s1338
+2024-10-01 22:13:50,974 - INFO - Item lookup for nicye with input: s1351
+2024-10-01 22:14:11,877 - INFO - Item lookup for nicye with input: s1336
+2024-10-01 22:14:34,483 - INFO - Item lookup for nicye with input: s1350
+2024-10-01 22:15:16,149 - INFO - Item lookup for nicye with input: n1910
+2024-10-01 22:15:35,986 - INFO - Item lookup for nicye with input: t3132
+2024-10-01 22:16:06,279 - INFO - Item lookup for nicye with input: s1395
+2024-10-01 22:16:28,138 - INFO - Item lookup for nicye with input: t3129
+2024-10-01 22:16:53,549 - INFO - Item lookup for nicye with input: t3146
+2024-10-01 22:17:15,485 - INFO - Item lookup for nicye with input: n1938
+2024-10-01 22:17:47,232 - INFO - Item lookup for nicye with input: t3134
+2024-10-02 04:24:15,862 - INFO - User ahua has logged in. IP: 120.235.182.51, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 04:24:16,290 - INFO - User ahua has logged in. IP: 120.235.182.51, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 04:24:16,719 - INFO - User ahua has logged in. IP: 120.235.182.51, Browser: Mobile Safari 16.6, OS: iOS 16.6.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 04:24:31,808 - INFO - Item lookup for ahua with input: t3449
+2024-10-02 04:24:32,267 - INFO - Item lookup for ahua with input: t3449
+2024-10-02 11:15:11,525 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 11:47:34,689 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 11:50:29,378 - INFO - autobots, rolling out!
+2024-10-02 11:50:44,083 - INFO - autobots, rolling out!
+2024-10-02 11:51:49,230 - INFO - autobots, rolling out!
+2024-10-02 11:58:04,197 - INFO - autobots, rolling out!
+2024-10-02 11:58:07,066 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 12:34:10,942 - INFO - autobots, rolling out!
+2024-10-02 12:36:59,969 - INFO - autobots, rolling out!
+2024-10-02 12:37:03,916 - INFO - autobots, rolling out!
+2024-10-02 12:46:25,699 - INFO - autobots, rolling out!
+2024-10-02 12:46:40,321 - INFO - autobots, rolling out!
+2024-10-02 12:51:35,615 - INFO - autobots, rolling out!
+2024-10-02 12:55:01,061 - INFO - autobots, rolling out!
+2024-10-02 12:57:23,834 - INFO - autobots, rolling out!
+2024-10-02 13:00:15,796 - INFO - autobots, rolling out!
+2024-10-02 13:03:12,969 - INFO - autobots, rolling out!
+2024-10-02 13:05:44,840 - INFO - autobots, rolling out!
+2024-10-02 13:07:05,526 - INFO - autobots, rolling out!
+2024-10-02 13:07:50,466 - INFO - autobots, rolling out!
+2024-10-02 13:07:58,031 - INFO - autobots, rolling out!
+2024-10-02 13:08:15,523 - INFO - Serving file .env
+2024-10-02 13:30:48,132 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 13:31:27,989 - INFO - yeti is looking up order number: 33202
+2024-10-02 13:31:28,317 - INFO - yeti searched for order number: 33202
+2024-10-02 13:32:39,945 - INFO - autobots, rolling out!
+2024-10-02 13:34:56,681 - INFO - autobots, rolling out!
+2024-10-02 13:35:33,899 - INFO - autobots, rolling out!
+2024-10-02 13:39:46,791 - INFO - autobots, rolling out!
+2024-10-02 13:40:56,946 - INFO - autobots, rolling out!
+2024-10-02 13:41:41,842 - INFO - autobots, rolling out!
+2024-10-02 13:44:18,869 - INFO - autobots, rolling out!
+2024-10-02 13:45:48,232 - INFO - autobots, rolling out!
+2024-10-02 13:45:55,792 - INFO - autobots, rolling out!
+2024-10-02 13:46:10,413 - INFO - autobots, rolling out!
+2024-10-02 13:46:27,217 - INFO - autobots, rolling out!
+2024-10-02 13:49:11,198 - INFO - autobots, rolling out!
+2024-10-02 13:49:45,024 - INFO - autobots, rolling out!
+2024-10-02 13:51:00,256 - INFO - autobots, rolling out!
+2024-10-02 13:52:27,734 - INFO - autobots, rolling out!
+2024-10-02 13:52:51,479 - INFO - autobots, rolling out!
+2024-10-02 13:53:47,659 - INFO - autobots, rolling out!
+2024-10-02 13:54:39,705 - INFO - autobots, rolling out!
+2024-10-02 13:55:37,743 - INFO - autobots, rolling out!
+2024-10-02 13:56:04,523 - INFO - autobots, rolling out!
+2024-10-02 13:56:19,252 - INFO - autobots, rolling out!
+2024-10-02 13:57:50,595 - INFO - autobots, rolling out!
+2024-10-02 13:57:54,546 - INFO - autobots, rolling out!
+2024-10-02 13:58:43,612 - INFO - autobots, rolling out!
+2024-10-02 14:01:09,579 - INFO - autobots, rolling out!
+2024-10-02 14:01:54,625 - INFO - autobots, rolling out!
+2024-10-02 14:02:13,366 - INFO - autobots, rolling out!
+2024-10-02 14:02:47,238 - INFO - autobots, rolling out!
+2024-10-02 14:03:02,944 - INFO - autobots, rolling out!
+2024-10-02 14:03:13,615 - INFO - autobots, rolling out!
+2024-10-02 14:05:10,187 - INFO - autobots, rolling out!
+2024-10-02 14:06:30,617 - INFO - autobots, rolling out!
+2024-10-02 14:07:32,864 - INFO - autobots, rolling out!
+2024-10-02 14:07:55,658 - INFO - autobots, rolling out!
+2024-10-02 14:09:47,205 - INFO - autobots, rolling out!
+2024-10-02 14:10:19,119 - INFO - autobots, rolling out!
+2024-10-02 14:11:50,559 - INFO - autobots, rolling out!
+2024-10-02 14:11:58,227 - INFO - autobots, rolling out!
+2024-10-02 14:12:36,052 - INFO - autobots, rolling out!
+2024-10-02 14:13:19,972 - INFO - autobots, rolling out!
+2024-10-02 14:14:24,058 - INFO - autobots, rolling out!
+2024-10-02 14:15:51,349 - INFO - autobots, rolling out!
+2024-10-02 14:16:25,335 - INFO - autobots, rolling out!
+2024-10-02 14:16:37,020 - INFO - autobots, rolling out!
+2024-10-02 14:17:29,078 - INFO - autobots, rolling out!
+2024-10-02 14:17:46,784 - INFO - autobots, rolling out!
+2024-10-02 14:19:01,163 - INFO - autobots, rolling out!
+2024-10-02 14:20:03,327 - INFO - autobots, rolling out!
+2024-10-02 14:20:08,941 - INFO - autobots, rolling out!
+2024-10-02 14:23:34,357 - INFO - autobots, rolling out!
+2024-10-02 14:28:20,549 - INFO - autobots, rolling out!
+2024-10-02 14:28:30,157 - INFO - autobots, rolling out!
+2024-10-02 14:31:35,369 - INFO - autobots, rolling out!
+2024-10-02 14:34:50,654 - INFO - autobots, rolling out!
+2024-10-02 14:35:11,345 - INFO - autobots, rolling out!
+2024-10-02 14:35:46,292 - INFO - autobots, rolling out!
+2024-10-02 14:37:03,605 - INFO - autobots, rolling out!
+2024-10-02 14:44:15,100 - INFO - autobots, rolling out!
+2024-10-02 14:44:42,897 - INFO - autobots, rolling out!
+2024-10-02 14:44:58,549 - INFO - autobots, rolling out!
+2024-10-02 14:47:47,349 - INFO - autobots, rolling out!
+2024-10-02 14:48:00,929 - INFO - autobots, rolling out!
+2024-10-02 14:49:32,261 - INFO - autobots, rolling out!
+2024-10-02 14:49:41,846 - INFO - autobots, rolling out!
+2024-10-02 14:50:06,747 - INFO - autobots, rolling out!
+2024-10-02 14:52:35,753 - INFO - autobots, rolling out!
+2024-10-02 14:54:11,172 - INFO - autobots, rolling out!
+2024-10-02 14:56:17,945 - INFO - autobots, rolling out!
+2024-10-02 14:57:37,070 - INFO - autobots, rolling out!
+2024-10-02 14:57:58,867 - INFO - autobots, rolling out!
+2024-10-02 14:59:54,597 - INFO - autobots, rolling out!
+2024-10-02 14:59:58,512 - INFO - autobots, rolling out!
+2024-10-02 15:00:04,367 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 15:19:09,998 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 15:21:42,317 - INFO - User yeti has logged in. IP: 104.28.85.64, Browser: Chrome Mobile iOS 129.0.6668, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-10-02 15:22:00,009 - INFO - User yeti has logged in. IP: 104.28.85.64, Browser: Chrome Mobile iOS 129.0.6668, OS: iOS 18.1, Device: iPhone, Method: POST, URL: http://173.198.50.202/login, Referrer: http://173.198.50.202/login, Query Params: ImmutableMultiDict([])

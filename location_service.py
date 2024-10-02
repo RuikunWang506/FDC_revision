@@ -6,6 +6,8 @@ import os
 from datetime import datetime
 from io import BytesIO
 
+# Initialize CSRF protection
+
 # Create a Blueprint for location_service
 location_service_bp = Blueprint('location_service', __name__, template_folder='../templates')
 
@@ -47,9 +49,8 @@ def location_service():
         current_user = session['username']
     else:
         if user_ip == allowed_ip:
-            # User IP is allowed; set username to 'fdc'
-            current_user = 'fdc'
-            # Optionally, you might want to store this in the session
+            # User IP is allowed; set username to 'local_user'
+            current_user = 'local_user'
             session['username'] = current_user
         else:
             # User is not logged in and IP is not allowed; redirect to login
@@ -60,12 +61,6 @@ def location_service():
     all_products = []
     action = 'search'  # Default action
 
-    # Determine the action based on GET or POST
-    if request.method == 'POST':
-        action = request.form.get('action', 'search')  # Default to 'search' if 'action' not provided
-    else:
-        action = request.args.get('action', 'search')  # Default to 'search' if 'action' not provided
-
     try:
         connection = get_db_connection()
         if connection is None:
@@ -74,8 +69,10 @@ def location_service():
 
         cursor = connection.cursor(dictionary=True)
 
-        if action == 'search':
-            if request.method == 'POST':
+        if request.method == 'POST':
+            action = request.form.get('action', 'search')  # Default to 'search' if 'action' not provided
+
+            if action == 'search':
                 search_input = request.form.get('search_input', '').strip()
                 if not search_input:
                     flash('Please enter a SKU or Style to search.', 'error')
@@ -89,64 +86,58 @@ def location_service():
                         flash('Products found. You can update their locations below.', 'message')
                         # Store the search input in session to pre-fill the search box
                         session['last_search'] = search_input
-            else:
-                # For GET requests, retrieve the last search query if available
-                search_input = request.args.get('search', '') or session.get('last_search', '')
+
+            elif action == 'update_multiple':
+                # Determine the number of rows by counting 'original_sku_' fields
+                num_rows = len([key for key in request.form.keys() if key.startswith('original_sku_')])
+                updated_count = 0
+
+                # Loop over the number of rows and process each one
+                for i in range(1, num_rows + 1):
+                    original_sku = request.form.get(f'original_sku_{i}', '').strip()
+                    original_style = request.form.get(f'original_style_{i}', '').strip()
+                    new_location = (request.form.get(f'new_location_{i}') or '').strip()
+
+                    if new_location:  # Only update if new location is provided
+                        update_query = """
+                            UPDATE products 
+                            SET Location = %s, Update_Date = NOW()
+                            WHERE SKU = %s AND Style = %s
+                        """
+                        cursor.execute(update_query, (new_location, original_sku, original_style))
+                        if cursor.rowcount > 0:
+                            updated_count += 1
+
+                connection.commit()
+
+                if updated_count > 0:
+                    flash(f'Updated {updated_count} product(s) successfully.', 'message')
+                else:
+                    flash('No locations were updated. Please check your inputs.', 'error')
+
+                # Re-fetch the search results if a search was performed
+                search_input = session.get('last_search', '')
                 if search_input:
                     query = "SELECT * FROM products WHERE SKU = %s OR Style = %s"
                     cursor.execute(query, (search_input, search_input))
                     search_results = cursor.fetchall()
                     if not search_results:
-                        flash('No matching products found.', 'error')
+                        flash('No matching products found after update.', 'error')
                     else:
-                        flash('Products found. You can update their locations below.', 'message')
+                        flash('Products updated successfully.', 'message')
 
-        elif action == 'update_multiple' and request.method == 'POST':
-            # Retrieve lists of data
-            original_skus = request.form.getlist('original_sku')
-            original_styles = request.form.getlist('original_style')
-            new_locations = request.form.getlist('new_location')
-
-            update_query = """
-                UPDATE products 
-                SET Location = %s, Update_Date = NOW()
-                WHERE SKU = %s AND Style = %s
-            """
-            updated_count = 0
-            for sku, style, new_loc in zip(original_skus, original_styles, new_locations):
-                if new_loc.strip():  # Only update if new location is provided
-                    cursor.execute(update_query, (new_loc.strip(), sku, style))
-                    if cursor.rowcount > 0:
-                        updated_count += 1
-            connection.commit()
-            if updated_count > 0:
-                flash(f'Updated {updated_count} product(s) successfully.', 'message')
-            else:
-                flash('No locations were updated. Please check your inputs.', 'error')
-
-            # Re-fetch the search results if a search was performed
-            search_input = session.get('last_search', '')
-            if search_input:
-                query = "SELECT * FROM products WHERE SKU = %s OR Style = %s"
-                cursor.execute(query, (search_input, search_input))
-                search_results = cursor.fetchall()
-                if not search_results:
-                    flash('No matching products found after update.', 'error')
+            elif action == 'viewall':
+                # Fetch all products without pagination
+                select_query = "SELECT * FROM products ORDER BY Update_Date DESC"
+                cursor.execute(select_query)
+                all_products = cursor.fetchall()
+                if not all_products:
+                    flash('No products available to display.', 'error')
                 else:
-                    flash('Products updated successfully.', 'message')
+                    flash('Displaying all products.', 'message')
 
-        elif action == 'viewall':
-            # Fetch all products without pagination
-            select_query = "SELECT * FROM products ORDER BY Update_Date DESC"
-            cursor.execute(select_query)
-            all_products = cursor.fetchall()
-            if not all_products:
-                flash('No products available to display.', 'error')
-            else:
-                flash('Displaying all products.', 'message')
-
-        elif action == 'add':
-            if request.method == 'POST':
+            elif action == 'add':
+                # Handle adding new products
                 new_skus = request.form.getlist('new_sku')
                 new_styles = request.form.getlist('new_style')
                 new_locations = request.form.getlist('new_location')
@@ -201,120 +192,154 @@ def location_service():
 
                 # Redirect to view all products or back to add form
                 return redirect(url_for('location_service.location_service', action='viewall'))
-            else:
-                # For GET requests, simply render the add product form without performing any action
-                pass
 
-        elif action == 'import_export':
-            if request.method == 'POST':
-                import_export_action = request.form.get('import_export_action', '').lower()
+            elif action == 'import_export':
+                if 'import_export_action' not in request.form:
+                    flash('No import/export action specified.', 'error')
+                else:
+                    import_export_action = request.form.get('import_export_action', '').lower()
 
-                if import_export_action == 'export':
-                    # Export the entire table to Excel
-                    try:
-                        select_query = "SELECT * FROM products"
-                        cursor.execute(select_query)
-                        products = cursor.fetchall()
-                        if not products:
-                            flash('No products available to export.', 'error')
-                        else:
-                            df = pd.DataFrame(products)
-                            # Convert datetime objects to string to prevent serialization issues
-                            if 'Update_Date' in df.columns:
-                                df['Update_Date'] = df['Update_Date'].apply(
-                                    lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if x else ''
+                    if import_export_action == 'export':
+                        # Export the entire table to Excel
+                        try:
+                            select_query = "SELECT * FROM products"
+                            cursor.execute(select_query)
+                            products = cursor.fetchall()
+                            if not products:
+                                flash('No products available to export.', 'error')
+                            else:
+                                df = pd.DataFrame(products)
+                                # Convert datetime objects to string to prevent serialization issues
+                                if 'Update_Date' in df.columns:
+                                    df['Update_Date'] = df['Update_Date'].apply(
+                                        lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if x else ''
+                                    )
+                                # Generate filename with current datetime
+                                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                filename = f'products_backup_{timestamp}.xlsx'
+                                filepath = os.path.join(OUTPUT_DIR, filename)
+                                # Save to Excel
+                                df.to_excel(filepath, index=False)
+
+                                flash('Products exported successfully.', 'message')
+                                # Send the file for download
+                                return send_file(
+                                    filepath, 
+                                    as_attachment=True, 
+                                    download_name=filename,
+                                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                                 )
-                            # Generate filename with current datetime
-                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                            filename = f'products_backup_{timestamp}.xlsx'
-                            filepath = os.path.join(OUTPUT_DIR, filename)
-                            # Save to Excel
-                            df.to_excel(filepath, index=False)
+                        except Exception as e:
+                            flash(f'An error occurred during export: {e}', 'error')
 
-                            flash('Products exported successfully.', 'message')
-                            # Send the file for download
-                            return send_file(
-                                filepath, 
-                                as_attachment=True, 
-                                download_name=filename,
-                                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                            )
-                    except Exception as e:
-                        flash(f'An error occurred during export: {e}', 'error')
+                    elif import_export_action == 'import':
+                        # Import the uploaded Excel file
+                        try:
+                            # Fetch current products for backup
+                            cursor.execute("SELECT * FROM products")
+                            products = cursor.fetchall()  # Ensure 'products' is assigned here
 
-                elif import_export_action == 'import':
-                    # Import the uploaded Excel file
-                    try:
-                        # Fetch current products for backup
-                        cursor.execute("SELECT * FROM products")
-                        products = cursor.fetchall()  # Ensure 'products' is assigned here
-
-                        if 'import_file' not in request.files:
-                            flash('No file part in the request.', 'error')
-                            return redirect(url_for('location_service.location_service', action='import_export'))
-
-                        file = request.files['import_file']
-                        if file.filename == '':
-                            flash('No file selected for uploading.', 'error')
-                            return redirect(url_for('location_service.location_service', action='import_export'))
-
-                        if file and allowed_file(file.filename):
-                            # Read the Excel file into a DataFrame
-                            df = pd.read_excel(file, engine='openpyxl')
-
-                            # Validate required columns
-                            required_columns = {'SKU', 'Style', 'Location'}
-                            if not required_columns.issubset(set(df.columns)):
-                                flash('Uploaded Excel file is missing required columns: SKU, Style, Location.', 'error')
+                            if 'import_file' not in request.files:
+                                flash('No file part in the request.', 'error')
                                 return redirect(url_for('location_service.location_service', action='import_export'))
 
-                            # Optional: Additional data validation can be added here
+                            file = request.files['import_file']
+                            if file.filename == '':
+                                flash('No file selected for uploading.', 'error')
+                                return redirect(url_for('location_service.location_service', action='import_export'))
 
-                            # Backup current table before wiping
-                            backup_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                            backup_filename = f'products_backup_before_import_{backup_timestamp}.xlsx'
-                            backup_filepath = os.path.join(OUTPUT_DIR, backup_filename)
-                            if products:
-                                backup_df = pd.DataFrame(products)
-                                backup_df.to_excel(backup_filepath, index=False)
+                            if file and allowed_file(file.filename):
+                                # Read the Excel file into a DataFrame
+                                df = pd.read_excel(file, engine='openpyxl')
+
+                                # Validate required columns
+                                required_columns = {'SKU', 'Style', 'Location'}
+                                if not required_columns.issubset(set(df.columns)):
+                                    flash('Uploaded Excel file is missing required columns: SKU, Style, Location.', 'error')
+                                    return redirect(url_for('location_service.location_service', action='import_export'))
+
+                                # Optional: Additional data validation can be added here
+
+                                # Backup current table before wiping
+                                backup_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                backup_filename = f'products_backup_before_import_{backup_timestamp}.xlsx'
+                                backup_filepath = os.path.join(OUTPUT_DIR, backup_filename)
+                                if products:
+                                    backup_df = pd.DataFrame(products)
+                                    backup_df.to_excel(backup_filepath, index=False)
+                                else:
+                                    flash('No existing products to backup before import.', 'warning')
+
+                                # Wipe the current table
+                                cursor.execute("DELETE FROM products")
+                                connection.commit()
+
+                                # Insert new data
+                                insert_query = """
+                                    INSERT INTO products (SKU, Style, Location, Update_Date)
+                                    VALUES (%s, %s, %s, NOW())
+                                """
+                                insert_data = []
+                                for _, row in df.iterrows():
+                                    sku = str(row['SKU']).strip()
+                                    style = str(row['Style']).strip()
+                                    location = str(row['Location']).strip()
+                                    insert_data.append((sku, style, location))
+                                
+                                cursor.executemany(insert_query, insert_data)
+                                connection.commit()
+
+                                flash('Products imported and database updated successfully.', 'message')
+                                return redirect(url_for('location_service.location_service', action='viewall'))
                             else:
-                                flash('No existing products to backup before import.', 'warning')
-
-                            # Wipe the current table
-                            cursor.execute("DELETE FROM products")
-                            connection.commit()
-
-                            # Insert new data
-                            insert_query = """
-                                INSERT INTO products (SKU, Style, Location, Update_Date)
-                                VALUES (%s, %s, %s, NOW())
-                            """
-                            insert_data = []
-                            for _, row in df.iterrows():
-                                sku = str(row['SKU']).strip()
-                                style = str(row['Style']).strip()
-                                location = str(row['Location']).strip()
-                                insert_data.append((sku, style, location))
-                            
-                            cursor.executemany(insert_query, insert_data)
-                            connection.commit()
-
-                            flash('Products imported and database updated successfully.', 'message')
-                            return redirect(url_for('location_service.location_service', action='viewall'))
-                        else:
-                            flash('Allowed file types are Excel files (.xlsx, .xls).', 'error')
+                                flash('Allowed file types are Excel files (.xlsx, .xls).', 'error')
+                                return redirect(url_for('location_service.location_service', action='import_export'))
+                        except Exception as e:
+                            flash(f'An error occurred while importing the file: {e}', 'error')
                             return redirect(url_for('location_service.location_service', action='import_export'))
-                    except Exception as e:
-                        flash(f'An error occurred while importing the file: {e}', 'error')
-                        return redirect(url_for('location_service.location_service', action='import_export'))
-                else:
-                    flash('Unknown import/export action.', 'error')
+                    else:
+                        flash('Unknown import/export action.', 'error')
             else:
-                # For GET requests, simply render the import/export section
-                pass
+                flash('Unknown action.', 'error')
 
-        else:
-            flash('Unknown action.', 'error')
+        elif request.method == 'GET':
+            action = request.args.get('action', 'search')
+
+            if action == 'search':
+                # Retrieve the last search query if available, but clear it if no search is happening
+                search_input = request.args.get('search', '') or session.get('last_search', '')
+
+                if search_input:
+                    # Store the current search query in session
+                    session['last_search'] = search_input
+
+                    # Execute the search query
+                    query = "SELECT * FROM products WHERE SKU = %s OR Style = %s"
+                    cursor.execute(query, (search_input, search_input))
+                    search_results = cursor.fetchall()
+
+                    if not search_results:
+                        flash('No matching products found.', 'error')
+                    else:
+                        flash('Products found. You can update their locations below.', 'message')
+                else:
+                    # Clear the session if no search input
+                    session.pop('last_search', None)
+                    search_results = None  # Ensure search results are cleared
+                    flash('Please enter a search query.', 'warning')
+
+
+            elif action == 'viewall':
+                # Fetch all products without pagination
+                select_query = "SELECT * FROM products ORDER BY Update_Date DESC"
+                cursor.execute(select_query)
+                all_products = cursor.fetchall()
+                if not all_products:
+                    flash('No products available to display.', 'error')
+                else:
+                    flash('Displaying all products.', 'message')
+
+            # Handle other GET actions if necessary
 
     except Error as e:
         # Log the error in production instead of printing
@@ -322,24 +347,10 @@ def location_service():
         flash(f"Database error: {e}", 'error')
 
     finally:
-        if cursor:
+        if 'cursor' in locals() and cursor:
             cursor.close()
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
-
-    # Handle GET requests and prepare data for rendering
-    if action == 'viewall' and request.method == 'GET':
-        # Data has already been fetched in the 'viewall' action above
-        pass
-    elif action == 'search' and not search_results:
-        # If there's a search query but no results, handle accordingly
-        pass
-    elif action == 'add':
-        pass  # Flash message already set
-    elif action == 'update_multiple':
-        pass  # Flash message already set
-    elif action == 'import_export':
-        pass  # Flash message already set
 
     # If 'search' is in the query parameters, pre-fill the search input
     search_query = request.args.get('search', '') or session.get('last_search', '')
@@ -350,6 +361,51 @@ def location_service():
                            action=action,
                            current_user=current_user,
                            search_query=search_query)
+
+@location_service_bp.route('/delete_product', methods=['POST'])
+def delete_product():
+    """
+    Handles AJAX requests to delete a product based on SKU and Style.
+    Expects JSON payload with 'sku' and 'style'.
+    Returns JSON response indicating success or failure.
+    """
+    if not request.is_json:
+        return jsonify({'success': False, 'message': 'Invalid request format. JSON expected.'}), 400
+    
+    data = request.get_json()
+    delete_sku = data.get('sku', '').strip()
+    delete_style = data.get('style', '').strip()
+
+    if not delete_sku or not delete_style:
+        return jsonify({'success': False, 'message': 'Missing SKU or Style for deletion.'}), 400
+
+    try:
+        connection = get_db_connection()
+        if connection is None:
+            return jsonify({'success': False, 'message': 'Failed to connect to the database.'}), 500
+
+        cursor = connection.cursor()
+        delete_query = """
+            DELETE FROM products
+            WHERE SKU = %s AND Style = %s
+        """
+        cursor.execute(delete_query, (delete_sku, delete_style))
+        connection.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({'success': True, 'message': f'Product with SKU "{delete_sku}" and Style "{delete_style}" has been deleted successfully.'})
+        else:
+            return jsonify({'success': False, 'message': f'No product found with SKU "{delete_sku}" and Style "{delete_style}".'}), 404
+
+    except Error as e:
+        print(f"Database error during deletion: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while deleting the product.'}), 500
+
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if 'connection' in locals() and connection and connection.is_connected():
+            connection.close()
 
 @location_service_bp.route('/suggestions', methods=['GET'])
 def suggestions():
@@ -380,9 +436,9 @@ def suggestions():
     except Error as e:
         print(f"Error fetching suggestions: {e}")
     finally:
-        if cursor:
+        if 'cursor' in locals() and cursor:
             cursor.close()
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
 
     return jsonify({'suggestions': suggestions})

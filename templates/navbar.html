@@ -48,7 +48,7 @@
                         Item Lookup
                     </a>
                 </li>
-                {% if current_user != 'fdc' %}
+                {% if current_user != 'fdc' and current_user != 'local_user' %}
                 <li class="nav-item">
                     <a class="nav-link" href="/order_lookup">
                         <img src="/static/icons/document.svg" alt="Order Lookup">
