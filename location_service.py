@@ -5,6 +5,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from io import BytesIO
+import json
 
 # Initialize CSRF protection
 
@@ -70,22 +71,47 @@ def location_service():
         cursor = connection.cursor(dictionary=True)
 
         if request.method == 'POST':
-            action = request.form.get('action', 'search')  # Default to 'search' if 'action' not provided
+            action = request.form.get('action', 'search')
 
             if action == 'search':
-                search_input = request.form.get('search_input', '').strip()
-                if not search_input:
-                    flash('Please enter a SKU or Style to search.', 'error')
-                else:
-                    query = "SELECT * FROM products WHERE SKU = %s OR Style = %s"
-                    cursor.execute(query, (search_input, search_input))
+                # Deserialize the JSON string into a Python list
+                search_inputs = request.form.get('search_input[]')
+                
+                if search_inputs:
+                    try:
+                        search_inputs = json.loads(search_inputs)  # Deserialize the JSON string
+                    except json.JSONDecodeError:
+                        flash('Invalid input format. Please try again.', 'error')
+                        return redirect(url_for('location_service.location_service'))  # Handle JSON decoding error
+
+                    search_inputs = [input.strip() for input in search_inputs if input.strip()]  # Clean up inputs
+
+                    # Ensure at least one valid input is provided
+                    if not search_inputs:
+                        flash('Please enter at least one SKU or Style to search.', 'error')
+                        return redirect(url_for('location_service.location_service'))  # Redirect back to the form
+
+                    # Prepare placeholders for query based on the number of search inputs
+                    placeholders = ' OR '.join([f"SKU LIKE %s OR Style LIKE %s"] * len(search_inputs))
+
+                    # Final query string
+                    query = f"SELECT * FROM products WHERE {placeholders}"
+
+                    # Add wildcards to each search input
+                    wildcard_search_inputs = [f"%{input}%" for input in search_inputs]
+
+                    # Execute query, passing each input for both SKU and Style
+                    cursor.execute(query, wildcard_search_inputs * 2)  # Multiplying to pass for both SKU and Style
                     search_results = cursor.fetchall()
+
                     if not search_results:
-                        flash('No matching products found.', 'error')
+                        flash(f"No matching products found for: {', '.join(search_inputs)}", 'error')
                     else:
                         flash('Products found. You can update their locations below.', 'message')
-                        # Store the search input in session to pre-fill the search box
-                        session['last_search'] = search_input
+                        session['last_search'] = search_inputs  # Store search inputs in session
+                else:
+                    flash('Please enter at least one SKU or Style to search.', 'error')
+                    return redirect(url_for('location_service.location_service'))
 
             elif action == 'update_multiple':
                 # Determine the number of rows by counting 'original_sku_' fields
@@ -306,27 +332,32 @@ def location_service():
             action = request.args.get('action', 'search')
 
             if action == 'search':
-                # Retrieve the last search query if available, but clear it if no search is happening
-                search_input = request.args.get('search', '') or session.get('last_search', '')
+                # Retrieve the last search query from the session if available
+                search_inputs = session.get('last_search', [])
 
-                if search_input:
-                    # Store the current search query in session
-                    session['last_search'] = search_input
+                if search_inputs:
+                    # Clean up inputs in case they have extra spaces
+                    search_inputs = [input.strip() for input in search_inputs if input.strip()]
 
-                    # Execute the search query
-                    query = "SELECT * FROM products WHERE SKU = %s OR Style = %s"
-                    cursor.execute(query, (search_input, search_input))
-                    search_results = cursor.fetchall()
+                    if search_inputs:
+                        # Prepare placeholders for query based on the number of search inputs
+                        placeholders = ', '.join(['%s'] * len(search_inputs))
 
-                    if not search_results:
-                        flash('No matching products found.', 'error')
+                        # Modify the query to search for multiple SKUs or Styles using the IN clause
+                        query = f"SELECT * FROM products WHERE SKU IN ({placeholders}) OR Style IN ({placeholders})"
+                        cursor.execute(query, search_inputs + search_inputs)  # Pass inputs for both SKU and Style
+                        search_results = cursor.fetchall()  # Fetch results
+
+                        if not search_results:
+                            flash('No matching products found.', 'error')
+                        else:
+                            flash('Products found. You can update their locations below.', 'message')
                     else:
-                        flash('Products found. You can update their locations below.', 'message')
-                else:
-                    # Clear the session if no search input
-                    session.pop('last_search', None)
-                    search_results = None  # Ensure search results are cleared
-                    flash('Please enter a search query.', 'warning')
+                        # Clear the session if no search input is found
+                        session.pop('last_search', None)
+                        search_results = None
+                        flash('Please enter a search query.', 'warning')
+
 
 
             elif action == 'viewall':
