@@ -1,4 +1,2 @@
 @echo off
-cd "C:\FDC_FLASK_APP"
-
-start pythonw "C:\FDC_FLASK_APP\app.py"
+start /B pythonw "C:\FDC_FLASK_APP\app.py" > output_new.log 2>&1

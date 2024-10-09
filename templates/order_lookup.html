@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Lookup</title>
+    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Include DataTables CSS -->
+    <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
-    <!-- Include DataTables Buttons CSS -->
+    <!-- DataTables Buttons CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
-    <!-- Include DataTables Responsive CSS -->
+    <!-- DataTables Responsive CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css">
 
     <style>
+        /* General Table Styling */
         table {
             border-collapse: collapse;
             width: 100%;
@@ -25,6 +27,7 @@
         th {
             background-color: #f2f2f2;
         }
+        /* Resizable Div Styling */
         #mydiv {
             resize: both;
             overflow: auto;
@@ -32,126 +35,161 @@
             padding: 2px;
             margin-bottom: 5px;
         }
+        /* Info List Styling */
         .info-list {
             text-align: center;
         }
-        .info-list ul {
+        .info-list table {
             display: inline-block;
             text-align: left;
         }
+        /* DataTables Buttons Centering */
         div.dt-buttons {
             display: flex !important;
-            justify-content: center !important; /* Center the buttons horizontally */
-            margin: 0 auto !important; /* Center the container */
-            float: none !important; /* Remove float */
-            position: static !important; /* Override position */
+            justify-content: center !important;
+            margin: 0 auto !important;
+            float: none !important;
+            position: static !important;
+        }
+        .highlighted-row {
+            background-color: #ffff99 !important;
         }
     </style>
 </head>
 <body>
-{% include 'navbar.html' %}
-<div class="container mt-5">
-    <div class="row justify-content-center text-center">
-        {% if current_user == 'fdc' %}
-        <div class="col-12">
-            <div class="alert alert-info" role="alert">
-                ⭐ If you need to see cost and lookup order, ask tristen ⭐
+    {% include 'navbar.html' %}
+
+    <div class="container mt-5">
+        <div class="row justify-content-center text-center">
+            {% if current_user == 'fdc' %}
+            <div class="col-12">
+                <div class="alert alert-info" role="alert">
+                    ⭐ If you need to see cost and lookup order, ask Tristen ⭐
+                </div>
             </div>
-        </div>
-        {% endif %}
-        {% if current_user != 'fdc' %}
-            <form method="POST" action="/order_lookup" id="submitOrderForm">
-                <a href="/macy"><h5>⭐Macy Speical Click here⭐</h5></a>
-                <h4>Enter Order Number:</h4>
-                <p>4 digits for E-fashion</p>
-                <p>5 digits for FDC</p>
-                <div class="form-group">
-                    <label for="order_number">Order Number:</label>
-                    <input type="text" class="form-control" name="order_number" id="order_number" required value="{{ order_number or ''}}">
-                </div>
-                <div class="d-flex justify-content-center">
-                    <button type="submit" class="btn btn-primary">Submit Order</button>
-                    {% if excel_html %}
-                        <button type="button" class="btn btn-primary ml-2" onclick="document.getElementById('generateLabelForm').submit();">Generate Label</button>
-                    {% endif %}
-                </div>
-            </form>
-
-            {% if excel_html %}
-            <form method="POST" action="/label_maker_from_order_lookup" id="generateLabelForm" style="display:none;">
-                <input type="hidden" name="order_number" value="{{ order_number }}">
-            </form>
             {% endif %}
-            
-            {{ order_form | safe }}
-        {% endif %}
-    </div>
-    <div class="row justify-content-center text-center">
-        {% if order_number %}
-        <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
-            Your search input was: <br>{{ order_number }}
-        </p>
-        {% endif %}
-    </div>
-</div>
+            {% if current_user != 'fdc' %}
+                <form method="POST" action="/order_lookup" id="submitOrderForm">
+                    <a href="/macy"><h5>⭐Macy Special Click here⭐</h5></a>
+                    <h4>Enter Order Number:</h4>
+                    <p>4 digits for E-fashion</p>
+                    <p>5 digits for FDC</p>
+                    <div class="form-group">
+                        <label for="order_number">Order Number:</label>
+                        <input type="text" class="form-control" name="order_number" id="order_number" required pattern="\d{4,5}" title="Please enter a 4 or 5-digit number" value="{{ order_number or ''}}">
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button type="submit" class="btn btn-primary">Submit Order</button>
+                        {% if excel_html %}
+                            <button type="button" class="btn btn-primary ml-2" onclick="generateLabel()">Generate Label</button>
+                        {% endif %}
+                    </div>
+                </form>
 
-{% if excel_html %}
-    <h2 class="text-center">OMS Data:</h2>
-    <table id="excel_table">
-        <tbody>
-        {{ excel_html | safe }}
-        </tbody>
-    </table>
-{% endif %}
-{% if error_message %}
-<div class="alert alert-info mt-3 text-center">
-    {{ error_message }}, maybe check the description? make sure it has 1-1 or 5-5 for singles
-</div>
-{% endif %}
-{% if filename %}
-    <div class="text-center">
-        <h2>
-            <p>Download Label</p>
-            <p>现在mix的数字也自动输入了，但是装箱数错了整个还是会错</p>
-            <p>尾箱的数字暂时还要改</p>
-            <p><u>{{ filename }}</u></p>
-        </h2>
-        <a href="{{ url_for('download_file2', filename=filename) }}" class="btn btn-primary">
-            Download
-        </a>
-        <div class="alert alert-info mt-3">
-            <!-- Calculate the number of boxes -->
-            {% set labels_divided = (number_of_labels // 4) %}
-            {% if number_of_labels % 4 != 0 %}
-                {% set labels_divided = labels_divided + 1 %}
+                {% if excel_html %}
+                <form method="POST" action="/label_maker_from_order_lookup" id="generateLabelForm" style="display:none;">
+                    <input type="hidden" name="order_number" value="{{ order_number }}">
+                </form>
+                {% endif %}
                 
+                {{ order_form | safe }}
             {% endif %}
-
-            <h3>
-                一共有: {{ number_of_labels }} 张 + 1张统计表
-                <!-- Bordered box displaying the calculated number -->
-                <span class="badge badge-secondary ml-2" style="border: 1px solid #000; padding: 10px;">
-                    Jennifer 1x4 的话需要打 {{ labels_divided }} 张大纸
-                </span>
-            </h3>
-            </h3>
-            <h3>混装的是: {{ duplicate_numbers }}，请再次确认这些数字</h3>
-            <h4>还有对方地址！{{addresslist}}</h4>
-            <div class="info-list">
-                <h2>Info List:</h2>
-                <ul>
-                    {% for info in info_list %}
-                        <li>{{ info }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
+        </div>
+        <div class="row justify-content-center text-center">
+            {% if order_number %}
+            <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
+                Your search input was: <br>{{ order_number }}
+            </p>
+            {% endif %}
         </div>
     </div>
-{% endif %}
+    {% if excel_html %}
+        <h2 class="text-center">OMS Data:</h2>
+        <table id="excel_table">
+            <tbody>
+            {{ excel_html | safe }}
+            </tbody>
+        </table>
+    {% endif %}
+        
+    {% if error_message %}
+    <div class="alert alert-info mt-3 text-center">
+        {{ error_message }}, maybe check the description? make sure it has 1-1 or 5-5 for singles
+    </div>
+    {% endif %}
+    {% if filename %}
+        <div class="text-center">
+            <h2>
+                <p>现在mix的数字也自动输入了, loose piece 也自动了，但是需要确认装箱数（每箱多少只）！</p>
+                <p><u>{{ filename }}</u></p>
+            </h2>
+            <a href="{{ url_for('download_file2', filename=filename) }}" class="btn btn-primary">
+                Download
+            </a>
+            <div class="alert alert-info mt-3">
+                {% if number_of_labels % 4 == 0 %}
+                    {% set labels_divided = "[JENNIFER][信息单][可除尽] 打印 1 - " ~ number_of_labels %}
+                {% else %}
+                    {% set labels_divided = "[JENNIFER][信息单][不可除尽] 打印所有" %}
+                {% endif %}
 
-<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                <h3>
+                    一共有: {{ number_of_labels }} 张 + 1张统计表
+                    <span class="badge badge-secondary ml-2" style="border: 1px solid #000; padding: 10px; color: #ffffff; background-color: #ff0099;">
+                         {{ labels_divided }}
+                    </span>
+                </h3>
+                <h3>混装的是: {{ duplicate_numbers }}，请再次确认这些数字</h3>
+                <h4>还有对方地址！{{ addresslist }}</h4>
+                {% if warnings %}
+                    <div class="alert alert-warning mt-3">
+                        <strong>警告:</strong>
+                        <ul>
+                            {% for warning in warnings %}
+                                <li>{{ warning }}</li>
+                            {% endfor %}
+                        </ul>
+                        <p>请检查上述样式, 有没分配的散款，可能是description 少了个数字。</p>
+                    </div>
+                {% endif %}
+                
+                <div class="info-list mt-4 text-center">
+                    <h2>特别箱数，点开关打开所有</h2>
+                    <div class="table-container">
+                        <table id="info_list_table" class="display nowrap" style="width:auto;">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Style</th>
+                                    <th>Color</th>
+                                    <th>Duplicate</th>
+                                    <th>Duplicate SKUs</th>
+                                    <th>PC Unit</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for info in info_list %}
+                                <tr>
+                                    <td>{{ info.label_number }}</td>
+                                    <td>{{ info.Style }}</td>
+                                    <td>{{ info.Color }}</td>
+                                    <td>{{ info.Duplicate }}</td>
+                                    <td>{{ info.Duplicate_SKUs }}</td>
+                                    <td>{{ info.PC_unit }}</td>
+                                    <td>{{ info.quantity }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- JavaScript Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.2/jszip.min.js"></script>
@@ -160,21 +198,76 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
-<script type="text/javascript">
-    $(document).ready(function() {
-        $('.table').DataTable({
-            "paging": true, // Enable pagination
-                    "searching": true, // Enable search
-                    "autoWidth": true, // Enable column auto width
-                    "pageLength": 50, // Set default number of entries to show per page
-                    "lengthMenu": [10, 25, 50, 100], // Options for number of entries per page
-                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
-                    buttons: ['copy', 'excel', 'pdf'],
-                    responsive: true // Make the table responsive
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+   
+    <script type="text/javascript">
+        let showOnlyHighlights = true;
+
+        function toggleHighlights() {
+            showOnlyHighlights = !showOnlyHighlights;
+            $('#info_list_table').DataTable().draw();
+        }
+
+        function generateLabel() {
+            document.getElementById('generateLabelForm').submit();
+            showOnlyHighlights = true;
+            $('#info_list_table').DataTable().draw();
+        }
+
+        function checkForm() {
+            var orderNumber = document.getElementById('order_number').value;
+            console.log('Order Number:', orderNumber);
+            if (!orderNumber) {
+                alert('Order number is empty!');
+                return false;
+            }
+            return true;
+        }
+        $('#toggleHighlights').on('click', function() {
+            toggleHighlights();
         });
-    });
-</script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-{% include 'footer.html' %}
+
+        $(document).ready(function() {
+            $('.table').DataTable({
+                "paging": true,
+                "searching": true,
+                "autoWidth": true,
+                "pageLength": 50,
+                "lengthMenu": [10, 25, 50, 100],
+                dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                buttons: ['copy', 'excel', 'pdf'],
+                responsive: true
+            });
+
+            $('#info_list_table').DataTable({
+                "paging": true,
+                "searching": true,
+                "autoWidth": true,
+                "pageLength": 500,
+                "lengthMenu": [500, 1000],
+                dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                buttons: ['copy', 'excel', 'pdf', {
+                    text: '打开隐藏',
+                    action: function (e, dt, node, config) {
+                        toggleHighlights();
+                    }
+                }],
+                responsive: true,
+                "createdRow": function(row, data, dataIndex) {
+                    if (data[3].includes("重复数字") || (parseInt(data[5]) !== parseInt(data[6]))) {
+                        $(row).addClass('highlighted-row');
+                    }
+                },
+                "rowCallback": function(row, data, index) {
+                    if (showOnlyHighlights) {
+                        $(row).toggle($(row).hasClass('highlighted-row'));
+                    } else {
+                        $(row).show();
+                    }
+                }
+            });
+        });
+    </script>
+    {% include 'footer.html' %}
 </body>
 </html>

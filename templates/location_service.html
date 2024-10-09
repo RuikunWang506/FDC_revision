@@ -95,6 +95,7 @@
             </li>
             {% endif %}
             {% endif %}
+        
         </ul>
         <div class="tab-content" id="locationServiceTabContent">
             <!-- Section 1: Search / Update Products -->
@@ -126,14 +127,17 @@
                         <div class="card-body table-responsive">
                             <!-- Update Multiple Form -->
                             <form method="POST" action="{{ url_for('location_service.location_service') }}">
+                                <!-- Hidden input to specify the action -->
+                                <input type="hidden" name="action" value="update_multiple">
+                                
                                 <div class="row mb-3">
-                                    <!-- Bulk Update Input and Button taking 50% in one line -->
+                                    <!-- Bulk Update Input and Button -->
                                     <div class="col-md-6 d-flex align-items-center">
                                         <input type="text" id="bulk-location-input" class="form-control" placeholder="Enter bulk location">
                                         <button type="button" class="btn btn-primary ms-2" id="bulk-update-button" style="white-space: nowrap;">Bulk Update</button>
                                     </div>
-                                
-                                    <!-- Update Locations Button taking 50% and aligned right -->
+                                    
+                                    <!-- Submit Button -->
                                     <div class="col-md-6 text-end">
                                         <button type="submit" class="btn btn-success">
                                             <i class="fas fa-save"></i> Submit New Locations

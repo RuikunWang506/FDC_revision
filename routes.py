@@ -34,8 +34,11 @@ from big_img_routes import register_big_img_routes
 from location_service import location_service_bp
 from container import container_bp
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
-from loris_sticker import main as process_loris_stickers
 from macy_special import process_order
+from loris_sticker import main, process_input_data
+
+from products import products_bp
+
 
 
 client = WebClient(token=Config.SLACK_TOKEN)
@@ -47,6 +50,7 @@ def register_routes(app):
     register_big_img_routes(app)
     app.register_blueprint(location_service_bp)
     app.register_blueprint(container_bp)
+    app.register_blueprint(products_bp)
 
 
     def check_credentials(username, password):
@@ -101,41 +105,6 @@ def register_routes(app):
         return render_template("index.html", current_user=current_user)
 
 
-
-    def get_sheet_data_and_e1_value(input_value):
-        creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
-        service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
-        sheet = service.spreadsheets()
-        
-        # Fetch both the sheet data and E1 value in one request
-        ranges = ['ONLINE_CATALOG', 'ONLINE_CATALOG!E1']
-        result = sheet.values().batchGet(spreadsheetId=Config.SPREADSHEET_ID, ranges=ranges).execute()
-        
-        sheet_data = result['valueRanges'][0].get('values', [])
-        e1_value = result['valueRanges'][1].get('values', [[None]])[0][0]
-        
-        if not sheet_data:
-            return "No data found in the sheet.", e1_value
-        else:
-            headers = sheet_data[1]
-            sku_index, style_index, tik_index = headers.index('SKU'), headers.index('Style'), headers.index('TiK 1-999 #')
-            display_headers = sheet_data[1]
-            input_values = [v.strip().lower() for v in input_value.split(',')]
-            matching_rows = []
-            is_numeric_input = all(val.isdigit() for val in input_values)
-
-            for row in sheet_data[2:]:
-                if len(row) > max(sku_index, style_index, tik_index):
-                    if is_numeric_input:
-                        if any(val in row[tik_index].lower() for val in input_values):
-                            matching_rows.append(row)
-                    else:
-                        cells_to_check = [row[sku_index], row[style_index], row[tik_index]]
-                        if any(any(val in cell.lower() for val in input_values) for cell in cells_to_check):
-                            matching_rows.append(row)
-
-            return [display_headers] + matching_rows if matching_rows else [display_headers], e1_value
-
     
     @app.route("/delete_image", methods=["POST"])
     def delete_image():
@@ -172,7 +141,6 @@ def register_routes(app):
 
         current_user = session['username']
         excel_html = None
-        e1_value = None
 
         if request.method == "POST":
             # Handle the case where user input is submitted via the form
@@ -187,8 +155,7 @@ def register_routes(app):
 
         # Handle cases where user_input is empty
         if not user_input:
-            _, e1_value = get_sheet_data_and_e1_value('')
-            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input)
+            return render_template("Item_lookup.html", excel_html=None, current_user=current_user, user_input=user_input)
 
         # Continue with the rest of the logic if user_input is valid
         if user_input.endswith(","):
@@ -231,12 +198,7 @@ def register_routes(app):
 
         if excel_html:
             df = pd.read_html(StringIO(excel_html))[0]
-            sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
 
-            # Normalize sheet data to ensure all rows have the same number of columns
-            max_length = max(len(row) for row in sheet_data)
-            sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
-            df2 = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
 
             # Handle case for user 'fdc' and remove sensitive columns
             if current_user == 'fdc':
@@ -248,7 +210,6 @@ def register_routes(app):
 
             # Convert DataFrames back to HTML for display
             excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
-            sheet_data_html = df2.to_html(classes='table', escape=False, table_id="excel_table_2")
 
             app.logger.info("Item lookup for %s with input: %s", current_user, user_input)
             return render_template(
@@ -257,18 +218,13 @@ def register_routes(app):
                 image_urls=sorted_image_urls,
                 file_names=sorted_file_names,
                 file_info=file_info,
-                sheet_data=sheet_data_html,
                 current_user=current_user,
-                e1_value=e1_value,
                 user_input=user_input.capitalize()  # Pass user_input back to the template to avoid "None"
             )
 
         else:
             # No valid data, return the template without data
-            _, e1_value = get_sheet_data_and_e1_value('')
-            return render_template("Item_lookup.html", excel_html=None, sheet_data=None, e1_value=e1_value, current_user=current_user, user_input=user_input.capitalize())
-
-
+            return render_template("Item_lookup.html", excel_html=None, current_user=current_user, user_input=user_input.capitalize())
                                             
 
     @app.route("/order_lookup", methods=["GET", "POST"])
@@ -313,7 +269,7 @@ def register_routes(app):
                 return "Order number is missing.", 400
 
             app.logger.info("Received order_number: %s", order_number)
-            filename, error_message, number_of_labels, duplicate_numbers, info_list,addresslist = Label_Maker.process_orders(order_number)
+            filename, error_message, number_of_labels, duplicate_numbers, info_list, addresslist, warnings = Label_Maker.process_orders(order_number)
 
             if error_message:
                 return render_template(
@@ -338,7 +294,8 @@ def register_routes(app):
                 duplicate_numbers=duplicate_numbers,
                 info_list=info_list,
                 addresslist=addresslist,
-                order_number=order_number
+                order_number=order_number,
+                warnings=warnings  # Pass warnings to the template
             )
         except Exception as e:
             app.logger.error("An error occurred: %s", str(e))
@@ -369,6 +326,7 @@ def register_routes(app):
         if request.method == "POST":
             user_input = request.form.get("user_input").strip()
             image_option = request.form.get("image_option")
+            app.logger.info(f"{current_user} request to create a list: {user_input}")
 
             # Check if user_input was provided
             if user_input:
@@ -440,32 +398,6 @@ def register_routes(app):
         memory_file.seek(0)
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
     
-    @app.route("/googlesheet", methods=["GET", "POST"])
-    def googlesheet():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        current_user = session['username']
-        if current_user == 'fdc':
-            app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("index.html", excel_html=None,current_user=current_user)
-        sheet_data_html = None
-        e1_value = None
-
-        if request.method == "POST":
-            user_input = request.form.get("user_input")
-            app.logger.info("%s is looking up in googlesheet with input: %s", current_user, user_input)
-            
-            # Fetch both sheet data and e1_value
-            sheet_data, e1_value = get_sheet_data_and_e1_value(user_input)
-            
-            if sheet_data:
-                max_length = max(len(row) for row in sheet_data)
-                sheet_data = [row + [''] * (max_length - len(row)) for row in sheet_data]
-                df_sheet = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
-                sheet_data_html = df_sheet.to_html(classes='table table-bordered table-striped', escape=False)
-
-        return render_template("googlesheet.html", sheet_data=sheet_data_html, e1_value=e1_value, current_user=current_user)
-
 
     @app.route("/run_fast_script", methods=["POST"])
     def run_fast_script():
@@ -564,24 +496,30 @@ def register_routes(app):
     def loris():
         if 'username' not in session:
             return redirect(url_for("login"))
+
         current_user = session['username']
-        filename = None
+        filename_30stickers = None
+        filename_exact = None
         error_message = None
         table_data = None
         input_data = request.form.get("input_data")
         sku = request.form.get("sku", "")
         barcode = request.form.get("barcode", "")
         quantity = request.form.get("quantity", "")
+
         if request.method == "POST":
             if "submit_data" in request.form:
                 try:
                     app.logger.info("Processing data in Loris tool kit for %s", current_user)
-                    filename = process_loris_stickers(input_data)
-                    if filename is not None:
-                        filename = os.path.basename(filename)
-                    else:
-                        error_message = "An error occurred while processing the data."
-                        app.logger.error("Error processing data in Loris tool kit for %s", current_user)
+                    
+                    # Process input data to get labels
+                    labels = process_input_data(input_data)
+                    
+                    # Generate PDFs for both versions
+                    filename_30stickers, filename_exact = main(input_data)
+                    
+                    if not filename_30stickers or not filename_exact:
+                        error_message = "An error occurred while generating the PDFs."
                 except Exception as e:
                     error_message = f"An error occurred: {e}"
                     app.logger.error("Exception in Loris tool kit: %s", e)
@@ -591,12 +529,17 @@ def register_routes(app):
                 except Exception as e:
                     error_message = f"An error occurred while parsing the data: {e}"
                     app.logger.error("Error parsing data in Loris tool kit: %s", e)
-        return render_template("loris.html", filename=filename, error_message=error_message, table_data=table_data, input_data=input_data, sku=sku, barcode=barcode, quantity=quantity, current_user=current_user)
 
+        # Ensure table_data is a list
+        if table_data is None:
+            table_data = []
+        return render_template("loris.html", filename_30stickers=filename_30stickers, filename_exact=filename_exact, error_message=error_message, table_data=table_data, input_data=input_data, sku=sku, barcode=barcode, quantity=quantity, current_user=current_user)
+        
     def parse_input_data(input_data):
         lines = input_data.strip().split('\n')
         if any(keyword in lines[0] for keyword in ["SKU", "Barcode", "Quantity"]):
             lines = lines[1:]
+
         table_data = []
         for line in lines:
             if line.strip():
@@ -604,8 +547,15 @@ def register_routes(app):
                 if len(parts) >= 3:
                     sku = parts[0]
                     barcode = parts[1]
-                    quantity = ' '.join(parts[2:])
+                    try:
+                        # Convert quantity to an integer
+                        quantity = int(' '.join(parts[2:]))
+                    except ValueError:
+                        # Handle the case where conversion fails
+                        quantity = 0  # or handle it in another way, e.g., log an error
+
                     table_data.append([sku, barcode, quantity])
+
         return table_data
         
 
@@ -651,17 +601,17 @@ def register_routes(app):
         if 'username' not in session:
             return redirect(url_for("login"))
         current_user = session['username']
-        app.logger.info("%s downloaded the file: %s", current_user, filename)
+        app.logger.info("[Download][List] %s downloaded the file: %s", current_user, filename)
         return send_from_directory("output/list_output", filename, as_attachment=False)
 
     @app.route('/download2/<filename>')
     def download_file2(filename):
-        app.logger.info("File %s downloaded from label output", filename)
+        app.logger.info("[Download][labels]File %s downloaded from label output", filename)
         return send_from_directory("output/label_output/", filename, as_attachment=False)
 
     @app.route('/download3/<filename>')
     def download_file3(filename):
-        app.logger.info("File %s downloaded from barcode output", filename)
+        app.logger.info("[Download][loris_barcode]File %s downloaded from barcode output", filename)
         return send_from_directory("output/barcode_output/", filename, as_attachment=False)
 
     @app.route('/ftp/<path:path>', methods=['GET'])
@@ -686,48 +636,47 @@ def register_routes(app):
     def download_file4(filename):
         if 'username' not in session:
             return redirect(url_for("login"))
+        app.logger.info("[Download][macy_label]File %s downloaded from label output", filename)
         return send_from_directory("output/macy_label/", filename, as_attachment=False)
 
-    @app.route("/report_bug", methods=["GET"])
+    @app.route("/report_bug", methods=["GET", "POST"])
     def report_bug():
         if 'username' not in session:
             return redirect(url_for("login"))
-        return render_template("report_bug.html")
+        
+        if request.method == "POST":
+            current_user = session['username']
+            bug_type = request.form["bug_type"]
+            bug_description = request.form["bug_description"]
+            bug_file = request.files["bug_file"]
 
-    @app.route("/submit_bug", methods=["POST"])
-    def submit_bug():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        current_user = session['username']
-        bug_type = request.form["bug_type"]
-        bug_description = request.form["bug_description"]
-        bug_file = request.files["bug_file"]
-
-        bug_id = 10001
-        bug_dir = os.path.join("output", "bug", str(bug_id))
-        while os.path.exists(bug_dir):
-            bug_id += 1
+            bug_id = 10001
             bug_dir = os.path.join("output", "bug", str(bug_id))
-        os.makedirs(bug_dir)
+            while os.path.exists(bug_dir):
+                bug_id += 1
+                bug_dir = os.path.join("output", "bug", str(bug_id))
+            os.makedirs(bug_dir)
 
-        with open(os.path.join(bug_dir, "description.txt"), "w") as f:
-            f.write(f"Type: {bug_type}\nDescription: {bug_description}")
+            with open(os.path.join(bug_dir, "description.txt"), "w") as f:
+                f.write(f"Type: {bug_type}\nDescription: {bug_description}")
 
-        if bug_file:
-            filename = secure_filename(bug_file.filename)
-            bug_file.save(os.path.join(bug_dir, filename))
+            if bug_file:
+                filename = secure_filename(bug_file.filename)
+                bug_file.save(os.path.join(bug_dir, filename))
 
-        app.logger.info(f"Bug report {bug_id} submitted by {current_user}")
+            app.logger.info(f"Bug report {bug_id} submitted by {current_user}")
 
-        slack_message = {
-            "text": f"A new bug report has been submitted.\n\n*Type:* {bug_type}\n*Description:* {bug_description}\n*Submitted by:* {current_user}\n*Bug ID:* {bug_id}"
-        }
-        response = requests.post(Config.SLACK_WEBHOOK_URL, json=slack_message)
+            slack_message = {
+                "text": f"A new bug report has been submitted.\n\n*Type:* {bug_type}\n*Description:* {bug_description}\n*Submitted by:* {current_user}\n*Bug ID:* {bug_id}"
+            }
+            response = requests.post(Config.SLACK_WEBHOOK_URL, json=slack_message)
 
-        if response.status_code != 200:
-            app.logger.error(f"Request to Slack returned an error {response.status_code}, the response is:\n{response.text}")
+            if response.status_code != 200:
+                app.logger.error(f"Request to Slack returned an error {response.status_code}, the response is:\n{response.text}")
 
-        return f"Bug report {bug_id} submitted successfully!"
+            return f"Bug report {bug_id} submitted successfully!"
+
+        return render_template("report_bug.html")
 
     @app.route('/shipping_receipt', methods=['GET'])
     def shipping_receipt():
@@ -935,10 +884,7 @@ def register_routes(app):
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
-        
-    
 
-     
 
     def load_credentials():
         base_dir = os.path.dirname(os.path.abspath(__file__))

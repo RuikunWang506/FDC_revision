@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from io import BytesIO
 import json
-
+ 
 # Initialize CSRF protection
 
 # Create a Blueprint for location_service
@@ -60,6 +60,8 @@ def location_service():
 
     search_results = []
     all_products = []
+    search_inputs = []
+
     action = 'search'  # Default action
 
     try:
@@ -69,27 +71,39 @@ def location_service():
             return redirect(url_for('location_service.location_service'))
 
         cursor = connection.cursor(dictionary=True)
+        
 
         if request.method == 'POST':
             action = request.form.get('action', 'search')
 
             if action == 'search':
                 # Deserialize the JSON string into a Python list
-                search_inputs = request.form.get('search_input[]')
-                
-                if search_inputs:
-                    try:
-                        search_inputs = json.loads(search_inputs)  # Deserialize the JSON string
-                    except json.JSONDecodeError:
-                        flash('Invalid input format. Please try again.', 'error')
-                        return redirect(url_for('location_service.location_service'))  # Handle JSON decoding error
+                search_inputs = request.form.get('search_input[]', '[]')
 
-                    search_inputs = [input.strip() for input in search_inputs if input.strip()]  # Clean up inputs
+                if action == 'search':
+                    # Deserialize the JSON string into a Python list
+                    search_inputs = request.form.get('search_input[]', '[]')
+
+                    if isinstance(search_inputs, str):
+                        try:
+                            search_inputs = json.loads(search_inputs)
+                        except json.JSONDecodeError:
+                            search_inputs = [search_inputs]  # Treat as a single search term if not valid JSON
+
+                    # Ensure search_inputs is always a list
+                    if not isinstance(search_inputs, list):
+                        search_inputs = [search_inputs]
+
+                    # Clean up inputs
+                    search_inputs = [input.strip() for input in search_inputs if input.strip()]
+
+                    # Debug: Log the search inputs
+                    print(f"Search inputs: {search_inputs}")
 
                     # Ensure at least one valid input is provided
                     if not search_inputs:
                         flash('Please enter at least one SKU or Style to search.', 'error')
-                        return redirect(url_for('location_service.location_service'))  # Redirect back to the form
+                        return redirect(url_for('location_service.location_service'))
 
                     # Prepare placeholders for query based on the number of search inputs
                     placeholders = ' OR '.join([f"SKU LIKE %s OR Style LIKE %s"] * len(search_inputs))
@@ -100,29 +114,39 @@ def location_service():
                     # Add wildcards to each search input
                     wildcard_search_inputs = [f"%{input}%" for input in search_inputs]
 
+                    # Debug: Log the query and parameters
+                    print(f"Executing query: {query} with params: {wildcard_search_inputs * 2}")
+
                     # Execute query, passing each input for both SKU and Style
-                    cursor.execute(query, wildcard_search_inputs * 2)  # Multiplying to pass for both SKU and Style
+                    cursor.execute(query, wildcard_search_inputs * 2)
                     search_results = cursor.fetchall()
+
+                    # Debug: Log the search results
+                    print(f"Search results: {search_results}")
 
                     if not search_results:
                         flash(f"No matching products found for: {', '.join(search_inputs)}", 'error')
                     else:
                         flash('Products found. You can update their locations below.', 'message')
                         session['last_search'] = search_inputs  # Store search inputs in session
-                else:
-                    flash('Please enter at least one SKU or Style to search.', 'error')
-                    return redirect(url_for('location_service.location_service'))
 
             elif action == 'update_multiple':
                 # Determine the number of rows by counting 'original_sku_' fields
                 num_rows = len([key for key in request.form.keys() if key.startswith('original_sku_')])
                 updated_count = 0
 
+                # Collect all original SKUs
+                original_skus = []
+
                 # Loop over the number of rows and process each one
                 for i in range(1, num_rows + 1):
                     original_sku = request.form.get(f'original_sku_{i}', '').strip()
                     original_style = request.form.get(f'original_style_{i}', '').strip()
                     new_location = (request.form.get(f'new_location_{i}') or '').strip()
+
+                    # Add original SKU to the list
+                    if original_sku:
+                        original_skus.append(original_sku)
 
                     if new_location:  # Only update if new location is provided
                         update_query = """
@@ -141,16 +165,25 @@ def location_service():
                 else:
                     flash('No locations were updated. Please check your inputs.', 'error')
 
-                # Re-fetch the search results if a search was performed
-                search_input = session.get('last_search', '')
-                if search_input:
-                    query = "SELECT * FROM products WHERE SKU = %s OR Style = %s"
-                    cursor.execute(query, (search_input, search_input))
+                # Re-fetch the updated products using the original SKU list
+                if original_skus:
+                    # Prepare placeholders for query based on the number of original SKUs
+                    placeholders = ', '.join(['%s'] * len(original_skus))
+
+                    # Query to fetch updated products using the original SKUs
+                    query = f"SELECT * FROM products WHERE SKU IN ({placeholders})"
+                    
+                    # Execute query with the original SKUs
+                    cursor.execute(query, original_skus)
                     search_results = cursor.fetchall()
+
                     if not search_results:
                         flash('No matching products found after update.', 'error')
                     else:
                         flash('Products updated successfully.', 'message')
+                else:
+                    search_results = None
+                    flash('Please enter a search query.', 'warning')
 
             elif action == 'viewall':
                 # Fetch all products without pagination
@@ -173,10 +206,11 @@ def location_service():
                     flash('Mismatch in the number of SKUs, Styles, and Locations provided.', 'error')
                     return redirect(url_for('location_service.location_service', action='add'))
 
-                # Initialize counters
+                # Initialize counters and lists
                 added_count = 0
                 duplicate_count = 0
                 invalid_entries = []
+                added_skus = []  # List to store SKUs of newly added products
 
                 insert_query = """
                     INSERT INTO products (SKU, Style, Location, Update_Date)
@@ -202,9 +236,10 @@ def location_service():
                         duplicate_count += 1
                         continue
 
-                    # Prepare data for insertion
+                    # Insert new product
                     cursor.execute(insert_query, (sku, style, location))
                     added_count += 1
+                    added_skus.append(sku)  # Add SKU to the list of added SKUs
 
                 connection.commit()
 
@@ -216,8 +251,21 @@ def location_service():
                 if invalid_entries:
                     flash(f'Skipped {len(invalid_entries)} invalid product(s) due to missing fields.', 'error')
 
-                # Redirect to view all products or back to add form
-                return redirect(url_for('location_service.location_service', action='viewall'))
+                # Fetch details of newly added products
+                if added_skus:
+                    placeholders = ', '.join(['%s'] * len(added_skus))
+                    query = f"SELECT * FROM products WHERE SKU IN ({placeholders})"
+                    cursor.execute(query, added_skus)
+                    new_product_details = cursor.fetchall()
+                else:
+                    new_product_details = []
+
+                # Pass new product details to the template
+                return render_template('location_service.html',
+                                    search_results=new_product_details,
+                                    all_products=all_products,
+                                    action='search',
+                                    current_user=current_user)
 
             elif action == 'import_export':
                 if 'import_export_action' not in request.form:
@@ -333,7 +381,7 @@ def location_service():
 
             if action == 'search':
                 # Retrieve the last search query from the session if available
-                search_inputs = session.get('last_search', [])
+                search_inputs = []
 
                 if search_inputs:
                     # Clean up inputs in case they have extra spaces
@@ -357,7 +405,9 @@ def location_service():
                         session.pop('last_search', None)
                         search_results = None
                         flash('Please enter a search query.', 'warning')
-
+                else:
+                # If no search inputs are available, do not perform a search
+                    search_results = None
 
 
             elif action == 'viewall':

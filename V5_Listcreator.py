@@ -14,7 +14,7 @@ from datetime import datetime as dt
 # Define global variables
 user_input_type = None
 image_option = None
-user_input = None
+user_input = "en2209"
 formatted_date = ""
 source_folder = None  # Correctly define and highlight the source_folder variable
     
@@ -187,9 +187,9 @@ def create_and_save_pivot(file_path):
         output_dir = os.path.join("output", "list_output")
         os.makedirs(output_dir, exist_ok=True)
         file_path = os.path.join(output_dir, f"{formatted_date}.xlsx")
-        
-        # Save the pivot table to a new sheet in the Excel file
-        with pd.ExcelWriter(file_path, mode='a', if_sheet_exists='replace') as writer:
+
+        # Save the pivot table to a new sheet using openpyxl
+        with pd.ExcelWriter(file_path, mode='a', engine='openpyxl') as writer:
             pivot_df.to_excel(writer, sheet_name=output_sheet_name, index=False)
 
         print("Pivot table created and saved in the same Excel file.")

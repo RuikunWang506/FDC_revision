@@ -1,27 +1,28 @@
 <!-- footer.html -->
-<footer class="footer mt-5 py-1 bg-light">
-    <div class="container text-center justify-content-between align-items-center">
-        <div>
-            <a href="/report_bug" class="text-muted align-items-center">
-                <img src="/static/icons/bug.svg" alt="Report a bug" style="width: 30px; height: 30px; margin-right: 5px;">
-                <span>Click here to Report a Bug</span>
-            </a>
+<footer class="footer mt-5 py-3 bg-light">
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-md-4 mb-3">
+                <a href="/report_bug" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="fas fa-bug mr-2"></i>Report a Bug
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="/shipping_receipt" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-upload mr-2"></i>Upload Shipping Receipt
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="/log" class="btn btn-outline-info btn-sm w-100">
+                    <i class="fas fa-list-alt mr-2"></i>View Log
+                </a>
+            </div>
         </div>
-        <div>
-            <a href="/shipping_receipt" class="text-muted align-items-center">
-                <img src="/static/icons/receipt.png" alt="Report a bug" style="width: 30px; height: 30px; margin-right: 5px;">
-                <span>Upload Shipping Receipt or memo</span>
-            </a>
-        </div>
-        <div style="margin-top: 10px;">
-            <p><span class="text-muted"> Version 3.0 Temu Ready || Updated on: 9/10/2024</span></p>
-        </div>
-        <div style="margin-top: 10px;">
-            <img src="/static/icons/giraffe.ico" alt="Giraffie_here" style="width: 30px; height: 30px;">
-            <span class="text-muted"> Powered by FlamingYeti || GPT-4o</span>
-            <span class="text-muted">           
-                 <a href="/log" class="text-muted align-items-center">log</a> || <a href="/dashboard" class="text-muted align-items-center">dashboard</a>
-            </span>
+        <div class="row mt-3">
+            <div class="col-12">
+                <p class="mb-0"><small class="text-muted">Version 3.0 Temu Ready | Updated: 9/10/2024</small></p>
+                <p class="mb-0"><small class="text-muted">Powered by FlamingYeti | GPT-4o | sourcegraph</small></p>
+            </div>
         </div>
     </div>
 </footer>

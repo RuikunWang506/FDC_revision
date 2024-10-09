@@ -26,6 +26,7 @@ class Config:
         'ken': '2843',
         'ahua':'5788',
         'derrick': '0914',
+        'jennifer': '123456',
         'nicye':'dick',
         'ting':'827',
         'helen':'827',
