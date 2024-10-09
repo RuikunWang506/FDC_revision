@@ -13,6 +13,8 @@ import datetime
 import subprocess
 import urllib.parse
 import zipfile
+import mysql.connector
+from mysql.connector import Error
 
 # External library imports
 import pandas as pd
@@ -131,6 +133,69 @@ def register_routes(app):
                 return jsonify({"error": "Error deleting file"}), 500
         else:
             return jsonify({"error": "No file name provided"}), 400
+    db_config = {
+        'host': '192.168.254.30',
+        'port': 3306,
+        'user': 'yeti',
+        'password': 'qwe123',
+        'database': 'onlinedb'  # Replace with your actual database name
+    }
+    def get_db_connection():
+        """Establishes a connection to the MySQL database."""
+        try:
+            connection = mysql.connector.connect(**db_config)
+            if connection.is_connected():
+                return connection
+        except Error as e:
+            app.logger.error(f"Error connecting to MySQL: {e}")
+        return None
+
+    def fetch_locations(skus):
+        """
+        Fetches the Location for each SKU from the database.
+
+        Args:
+            skus (list): A list of SKU strings.
+
+        Returns:
+            dict: A dictionary mapping SKU to Location.
+        """
+        location_dict = {}
+        updated_date_dict ={}
+        if not skus:
+            return location_dict,updated_date_dict
+
+        try:
+            connection = get_db_connection()
+            if connection is None:
+                app.logger.error("Failed to connect to the database for fetching locations.")
+                return location_dict
+
+            cursor = connection.cursor()
+            # Prepare the query to fetch Location based on SKUs
+            placeholders = ', '.join(['%s'] * len(skus))
+            query = f"SELECT SKU, Location,Update_Date FROM products WHERE SKU IN ({placeholders})"
+            cursor.execute(query, skus)
+            results = cursor.fetchall()
+
+            # Populate the dictionary
+            for sku, location,Updated_date in results:
+                location_dict[sku.lower()] = location  # Assuming SKU matching is case-insensitive
+                updated_date_dict[sku.lower()] = Updated_date
+
+        except Error as e:
+            app.logger.error(f"Error fetching locations: {e}")
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection and connection.is_connected():
+                connection.close()
+
+        return location_dict,updated_date_dict
+
+    # Ensure the output directory exists
+    OUTPUT_DIR = os.path.join(os.getcwd(), 'output', 'location_DB')
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     @app.route("/item_lookup", methods=["GET", "POST"])
     @app.route("/item_lookup/<string:user_input>", methods=["GET"])
@@ -197,19 +262,75 @@ def register_routes(app):
                 file_info.append((filename, size, modified_date))
 
         if excel_html:
+            # Convert the HTML back to a DataFrame
             df = pd.read_html(StringIO(excel_html))[0]
 
+            # Add a row number column to the DataFrame
+            df.insert(0, '#', range(1, len(df) + 1))
+
+            # Fetch SKUs from the DataFrame
+            if 'SKU' in df.columns:
+                skus = df['SKU'].astype(str).str.lower().tolist()
+            else:
+                app.logger.error("SKU column not found in the DataFrame.")
+                skus = []
+
+            # Fetch locations and update dates using the helper function
+            location_dict, updated_date_dict = fetch_locations(skus)
+
+            # Add the 'Location' column based on SKU matching
+            # Replace 'N/A' with empty string "" for unmatched locations
+            df['Location'] = df['SKU'].astype(str).str.lower().map(location_dict).fillna('')
+
+            # Add the 'Update_Date' column based on SKU matching
+            df['Update_Date'] = df['SKU'].astype(str).str.lower().map(updated_date_dict).fillna('no data')
+
+            # **Replacement Logic for 'Database' Column**
+            if 'Database' in df.columns:
+                replacement_dict = {
+                    'oms_ef': 'E_FAS',
+                    'omsdata_fdc': 'FDC'
+                }
+                # Perform case-insensitive replacement
+                df['Database'] = df['Database'].str.lower().replace(replacement_dict)
+            else:
+                app.logger.warning("Database column not found in the DataFrame.")
 
             # Handle case for user 'fdc' and remove sensitive columns
             if current_user == 'fdc':
-                df.drop(columns=['cost', 'Container', 'create_dt', 'update_dt'], inplace=True)
+                sensitive_columns = ['cost', 'Container', 'create<br>dt', 'update<br>dt']
+                # Only drop columns that exist in the DataFrame
+                existing_sensitive = [col for col in sensitive_columns if col in df.columns]
+                if existing_sensitive:
+                    df.drop(columns=existing_sensitive, inplace=True)
 
             # Sort filenames and prepare image URLs
             sorted_file_names = sort_filenames(file_names)
             sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
 
-            # Convert DataFrames back to HTML for display
-            excel_html = df.to_html(classes='table text-center', escape=False, table_id="excel_table_1")
+            # Convert DataFrame back to HTML for display
+            # Specify the desired column order if needed
+            # For example, inserting 'Location' after the third column (index 2)
+            if 'Location' in df.columns:
+                cols = list(df.columns)
+                loc_index = 3  # After the third column
+                cols.insert(loc_index, cols.pop(cols.index('Location')))
+                df = df[cols]
+
+            # Modify 'Location' cells to include 'title' attribute with 'Update_Date'
+            if 'Location' in df.columns and 'Update_Date' in df.columns:
+                df['Location'] = df.apply(
+                    lambda row: f'<span title="Update: {row["Update_Date"]}">{row["Location"]}</span>',
+                    axis=1
+                )
+
+            # Convert DataFrame to HTML without escaping to allow HTML content
+            excel_html = df.to_html(
+                classes='table text-center',
+                escape=False,  # Allow HTML tags like <br> in headers
+                table_id="excel_table_1",
+                index=False  # Avoid showing the DataFrame index in the table
+            )
 
             app.logger.info("Item lookup for %s with input: %s", current_user, user_input)
             return render_template(

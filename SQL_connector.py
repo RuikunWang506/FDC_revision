@@ -111,9 +111,9 @@ def generate_excel(user_input):
         sheet = workbook.active
 
         # Column headers for the Excel sheet
-        column_headers = ['Database', 'SKU', 'Style', 'Container', 'Stock', 'Reserve', 'Available',
-                          'Ocean', 'cost', 'MSRP', 'QTY_in_box', 'box_wt(lb)',
-                          'pc_wt(lb)', 'color', 'length', 'width', 'height', "update_dt", "create_dt"]
+        column_headers = ['Database', 'SKU', 'Style', 'Descrip', 'Stock', 'Sold', 'Avail',
+                          'Ocean', 'cost', 'MSRP', 'Case<br>Qty', 'box_wt<br>(lb)',
+                          'pc_wt<br>(lb)', 'color', 'length', 'width', 'height', 'update<br>dt', 'create<br>dt']
 
         # Write the column headers to the Excel sheet
         for col_index, header in enumerate(column_headers, start=1):
@@ -155,8 +155,12 @@ def generate_excel(user_input):
         workbook.save(file_path)
 
         df = pd.read_excel(file_path)
-        html_table = df.to_html(index=False, classes="table table-bordered table-striped", table_id="excel_table")
-
+        html_table = df.to_html(
+        index=False,
+        classes="table table-bordered table-striped",
+        table_id="excel_table",
+        escape=False  # Allow HTML in headers
+    )
         return html_table, image_urls, user_input
     
     except pyodbc.Error as e:
