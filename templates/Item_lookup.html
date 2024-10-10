@@ -53,11 +53,9 @@
             font-weight: 700;
             text-transform: uppercase;
         }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
+
         table.dataTable td, table.dataTable th {
-            border: 1px solid #ddd;
+            border: 1px solid #000000;
         }
         table.dataTable {
             border-collapse: collapse;
@@ -198,9 +196,9 @@
         .tooltip-inner {
             background-color: black !important;
             color: white !important;
-            max-width: 200px !important;
-            min-width: 200px !important;
-            max-height: 50px !important;
+            max-width: 300px !important;
+            min-width: 300px !important;
+            max-height: 300px !important;
             min-height: 50px !important;
             font-size: 16px !important;
             padding: 10px !important;
@@ -266,6 +264,24 @@
             width: 99% !important; /* Ensures the table takes up the full width */
             margin-right: 0px !important; /* Reinforces no right margin */
         }
+        tr:nth-child(even) {
+           background-color: #f2f2f2; 
+        }
+
+        /* Alternating row colors only */
+        table.dataTable tbody tr:nth-child(odd) {
+            background-color: #f9f9f9; /* Light gray for odd rows */
+        }
+
+        table.dataTable tbody tr:nth-child(even) {
+            background-color: #bde0cf80; /* White for even rows */
+        }
+
+        /* Optional: Enhance hover effect for better user experience */
+        table.dataTable tbody tr:hover {
+            background-color: #e0e0e0; /* Slightly darker gray on hover */
+        }
+        
     </style>
 </head>
 <body>
@@ -381,7 +397,16 @@
                         "visible": false, // Hide the 'Update_Date' column
                         "searchable": false
                     },
-
+                    {
+                        "targets": 4, // 5th column (Style)
+                        "render": function(data, type, row, meta) {
+                            if(type === 'display' || type === 'filter') {
+                                var encodedStyle = encodeURIComponent(data.trim());
+                                return '<a href="/ftp2/' + encodedStyle + '.jpg">' + data + '</a>';
+                            }
+                            return data;
+                        }
+                    },
                     {
                         "targets": '_all',
                         "className": 'dt-body-center'
@@ -401,8 +426,12 @@
 
 
             // Initialize Bootstrap tooltips for elements with 'title' attribute
-            $('[data-toggle="tooltip"]').tooltip();
-            $('[title]').tooltip();
+            $('[data-toggle="tooltip"]').tooltip({
+                html:true
+            });
+            $('[title]').tooltip({
+                html:true
+            });
 
             $.fn.dataTable.ext.search.push(
                 function( settings, data, dataIndex ) {

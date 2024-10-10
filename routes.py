@@ -152,7 +152,8 @@ def register_routes(app):
 
     def fetch_locations(skus):
         """
-        Fetches the Location for each SKU from the database.
+        Fetches the Location for each SKU from the database. If a location is not found,
+        it tries to remove the part after the first space in the SKU and retries the query.
 
         Args:
             skus (list): A list of SKU strings.
@@ -161,27 +162,44 @@ def register_routes(app):
             dict: A dictionary mapping SKU to Location.
         """
         location_dict = {}
-        updated_date_dict ={}
+        updated_date_dict = {}
+
         if not skus:
-            return location_dict,updated_date_dict
+            return location_dict, updated_date_dict
 
         try:
             connection = get_db_connection()
             if connection is None:
                 app.logger.error("Failed to connect to the database for fetching locations.")
-                return location_dict
+                return location_dict, updated_date_dict
 
             cursor = connection.cursor()
             # Prepare the query to fetch Location based on SKUs
             placeholders = ', '.join(['%s'] * len(skus))
-            query = f"SELECT SKU, Location,Update_Date FROM products WHERE SKU IN ({placeholders})"
+            query = f"SELECT SKU, Location, Update_Date FROM products WHERE SKU IN ({placeholders})"
             cursor.execute(query, skus)
             results = cursor.fetchall()
 
             # Populate the dictionary
-            for sku, location,Updated_date in results:
+            for sku, location, updated_date in results:
                 location_dict[sku.lower()] = location  # Assuming SKU matching is case-insensitive
-                updated_date_dict[sku.lower()] = Updated_date
+                updated_date_dict[sku.lower()] = updated_date.strftime('%Y-%m-%d') + "<br>location by sku" 
+
+            # Handle SKUs without locations
+            for sku in skus:
+                if sku.lower() not in location_dict or not location_dict[sku.lower()]:
+                    # Modify SKU by removing everything after the first space
+                    stripped_sku = sku.split(' ')[0]
+                    if stripped_sku != sku:  # Only retry if the SKU was modified
+                        cursor.execute(
+                            "SELECT SKU, Location, Update_Date FROM products WHERE SKU = %s",
+                            (stripped_sku,)
+                        )
+                        result = cursor.fetchone()
+                        if result:
+                            location_dict[sku.lower()] = result[1]
+                            updated_date_dict[sku.lower()] =  result[2].strftime('%Y-%m-%d') + "<br>accurate location by style" 
+
 
         except Error as e:
             app.logger.error(f"Error fetching locations: {e}")
@@ -191,7 +209,7 @@ def register_routes(app):
             if 'connection' in locals() and connection and connection.is_connected():
                 connection.close()
 
-        return location_dict,updated_date_dict
+        return location_dict, updated_date_dict
 
     # Ensure the output directory exists
     OUTPUT_DIR = os.path.join(os.getcwd(), 'output', 'location_DB')
@@ -323,6 +341,11 @@ def register_routes(app):
                     lambda row: f'<span title="Update: {row["Update_Date"]}">{row["Location"]}</span>',
                     axis=1
                 )
+            df.columns = df.columns.str.replace('<br>', ' ')  # Remove any unwanted <br> in column headers
+            df.columns = df.columns.str.replace('\n', '<br>')  # Replace newline with <br> in column headers
+            df.columns = df.columns.str.replace(',', '<br>')  # Replace newline with <br> in column headers
+
+
 
             # Convert DataFrame to HTML without escaping to allow HTML content
             excel_html = df.to_html(
