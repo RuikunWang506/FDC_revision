@@ -6,8 +6,11 @@ import os
 from datetime import datetime
 from io import BytesIO
 import json
+import pyodbc
+from flask import current_app
+
+
  
-# Initialize CSRF protection
 
 # Create a Blueprint for location_service
 location_service_bp = Blueprint('location_service', __name__, template_folder='../templates')
@@ -20,6 +23,13 @@ db_config = {
     'password': 'qwe123',
     'database': 'onlinedb'  # Replace with your actual database name
 }
+
+server = "192.168.254.204"
+database_fdc = "omsdata_FDC"
+database_oms_ef = "oms_EF"
+username = "tristen"
+password = 'Qwer1234##'
+driver = 'ODBC Driver 17 for SQL Server'
 
 # Ensure the output directory exists
 OUTPUT_DIR = os.path.join(os.getcwd(), 'output', 'location_DB')
@@ -42,6 +52,8 @@ def allowed_file(filename):
 
 @location_service_bp.route('/location_service', methods=['GET', 'POST'])
 def location_service():
+    current_app.logger.info(f"Location service accessed by user: {session.get('username', 'Unknown')}")
+
     allowed_ip = '173.198.50.202'
     user_ip = request.remote_addr
 
@@ -445,6 +457,8 @@ def location_service():
 
 @location_service_bp.route('/delete_product', methods=['POST'])
 def delete_product():
+    current_app.logger.info("Delete product request received")
+
     """
     Handles AJAX requests to delete a product based on SKU and Style.
     Expects JSON payload with 'sku' and 'style'.
@@ -488,8 +502,77 @@ def delete_product():
         if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
 
+@location_service_bp.route('/sync-to-oms', methods=['POST'])
+def sync_to_oms():
+    try:
+        current_app.logger.info("Starting sync to OMS")
+        mysql_connection = mysql.connector.connect(**db_config)
+        mysql_cursor = mysql_connection.cursor(dictionary=True)
+
+        mysql_cursor.execute("SELECT style, sku, location, Update_Date FROM products")
+        products = mysql_cursor.fetchall()
+        current_app.logger.info(f"Fetched {len(products)} products from online database")
+
+        conn_string1 = f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}'
+        fdc_conn = pyodbc.connect(conn_string1)
+        fdc_cursor = fdc_conn.cursor()
+
+        conn_string2 = f'DRIVER={driver};SERVER={server};DATABASE={database_oms_ef};UID={username};PWD={password}'
+        oms_ef_conn = pyodbc.connect(conn_string2)
+        oms_ef_cursor = oms_ef_conn.cursor()
+
+        updated_count = 0
+        for product in products:
+            try:
+                sku = product['sku']
+                new_location = product['location'][:50]  # Truncate location to 50 characters
+                current_app.logger.info(f"Updating location for SKU: {sku} to {new_location}")
+
+                fdc_cursor.execute("SELECT * FROM inv_data WHERE prod_cd=?", sku)
+                fdc_result = fdc_cursor.fetchone()
+
+                query = "UPDATE inv_data SET inv_loc=? WHERE prod_cd=?"
+                if fdc_result:
+                    oms_ef_cursor.execute(query, (new_location, sku))
+                    fdc_cursor.execute(query, (new_location, sku))
+                else:
+                    query = "UPDATE inv_data SET inv_loc=? WHERE prod_cd LIKE ?"
+                    fdc_cursor.execute(query, (new_location, f'%{sku}%'))
+                    oms_ef_cursor.execute(query, (new_location, f'%{sku}%'))
+
+                updated_count += fdc_cursor.rowcount + oms_ef_cursor.rowcount
+            except Exception as e:
+                current_app.logger.error(f"Error updating SKU {sku}: {str(e)}")
+
+        fdc_conn.commit()
+        oms_ef_conn.commit()
+
+        current_app.logger.info(f"Sync completed successfully. Updated {updated_count} records.")
+        return jsonify({'message': f'Sync completed successfully. Updated {updated_count} records.'})
+
+    except Exception as e:
+        current_app.logger.error(f"An error occurred during sync: {str(e)}")
+        return jsonify({'message': f'An error occurred: {str(e)}'}), 500
+
+    finally:
+        if 'mysql_cursor' in locals() and mysql_cursor:
+            mysql_cursor.close()
+        if 'mysql_connection' in locals() and mysql_connection.is_connected():
+            mysql_connection.close()
+        if 'fdc_cursor' in locals() and fdc_cursor:
+            fdc_cursor.close()
+        if 'fdc_conn' in locals() and fdc_conn:
+            fdc_conn.close()
+        if 'oms_ef_cursor' in locals() and oms_ef_cursor:
+            oms_ef_cursor.close()
+        if 'oms_ef_conn' in locals() and oms_ef_conn:
+            oms_ef_conn.close()
+
+
 @location_service_bp.route('/suggestions', methods=['GET'])
 def suggestions():
+    current_app.logger.info("Suggestions request received")
+
     query = request.args.get('q', '').strip()
     suggestions = []
 

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </head>
 <body>
     <div class="container mt-5">
@@ -23,9 +25,29 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Login</button>
                 </form>
+                <div class="text-center">
+                    
+                    {% if location.status == 'success' %}
+                        
+                        <p>Your IP is: {{ client_ip }}</p>
+                        <p>City: {{ location.city }}</p>
+                        <p>Region: {{ location.regionName }}</p>
+                        <p>Country: {{ location.country }}</p>
+                        <p>Latitude: {{ location.lat }}</p>
+                        <p>Longitude: {{ location.lon }}</p>
+                        <h3>👁️ Am Watching You</h3>
+                        <!-- Map container -->
+                        <div class="text-center" id="map" style="height: 400px"></div>
+                        
+                        
+                    {% else %}
+                        <p>Location not found.</p>
+                    {% endif %}
+                </div>
+                
                 {% with messages = get_flashed_messages() %}
                     {% if messages %}
-                        <div class="alert alert-warning mt-3">
+                        <div class="alert alert-warning mt-3 text-center">
                             {{ messages[0] }}
                         </div>
                     {% endif %}
@@ -43,5 +65,18 @@
         </div>
     </div>
 </footer>
-
+<script>
+    var lat = {{ location.lat  }};
+    var lon = {{ location.lon  }};
+    console.log('Latitude:', lat, 'Longitude:', lon);
+    var map = L.map('map').setView([lat, lon], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    L.marker([lat, lon]).addTo(map)
+        .bindPopup('<b>Location:</b> {{ location.city }}, {{ location.regionName }}, {{ location.country }}')
+        .openPopup();
+</script>
 </html>

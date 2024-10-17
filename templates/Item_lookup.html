@@ -281,7 +281,20 @@
         table.dataTable tbody tr:hover {
             background-color: #e0e0e0; /* Slightly darker gray on hover */
         }
-        
+        .editable {
+            cursor: pointer;
+            background-color: #f9f9f9;
+        }
+        .edit-buttons {
+            display: none;
+        }
+        .editing .edit-buttons {
+            display: inline;
+        }
+        .editing .editable {
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -468,7 +481,6 @@
             $topScroll.on('scroll', function() {
                 $tableResponsive.scrollLeft($(this).scrollLeft());
             });
-
             $tableResponsive.on('scroll', function() {
                 $topScroll.scrollLeft($(this).scrollLeft());
             });
@@ -477,7 +489,6 @@
             $(window).on('resize', function(){
                 updateTopScrollWidth();
             });
-
         });
 
         function redirectToResult(event) {
@@ -489,7 +500,73 @@
                 window.location.href = "/item_lookup/" + encodeURIComponent(userInput);
             }
         }
-        
     </script>
-</body>
-</html>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // Make the 4th column editable (including empty cells)
+            $('#excel_table_1').on('click', 'td:nth-child(4) .editable', function() {
+                var $span = $(this);
+                
+                // Check if the span is already in edit mode
+                if (!$span.hasClass('editing')) {
+                    var currentText = $span.text().trim(); // This will be an empty string if the cell is empty
+                    
+                    // Convert the span to an input field with save and cancel buttons
+                    $span.addClass('editing').html(
+                        '<input type="text" value="' + currentText + '"/> ' +
+                        '<span class="edit-buttons">' +
+                        '<button class="save-btn">✔</button> ' +
+                        '<button class="cancel-btn">✖</button>' +
+                        '</span>'
+                    );
+                    $span.find('input').focus();
+                }
+            });
+
+            // Save changes when the save button is clicked
+            // Save changes when the save button is clicked
+            $('#excel_table_1').on('click', '.save-btn', function(e) {
+                e.stopPropagation();
+                var $editableSpan = $(this).closest('.editable'); // Correct selector
+                var newValue = $editableSpan.find('input').val().trim(); // Now correctly finds the input
+
+                // Safely access the SKU and Style values
+                var sku = $editableSpan.closest('tr').find('td:nth-child(3)').text().trim() || ''; // Ensure a default empty string
+                var style = $editableSpan.closest('tr').find('td:nth-child(5)').text().trim() || ''; // Ensure a default empty string
+
+                // Check if SKU and Style are present before proceeding
+                if (!sku || !style) {
+                    alert('SKU or Style is missing.');
+                    return; // Stop if SKU or Style is undefined or empty
+                }
+
+                // Send AJAX request to update the location in the database
+                $.ajax({
+                    url: '/update_location',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ sku: sku, style: style, location: newValue }),
+                    success: function(response) {
+                        if (response.success) {
+                            $editableSpan.removeClass('editing').text(newValue || ''); // Update cell with new value or empty string
+                            alert('Location updated successfully.');
+                        } else {
+                            alert('Error updating location: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while updating the location.');
+                    }
+                });
+            });
+
+            // Cancel editing when the cancel button is clicked
+            $('#excel_table_1').on('click', '.cancel-btn', function(e) {
+                e.stopPropagation();
+                var $editableSpan = $(this).closest('.editable'); // Correct selector
+                var originalText = $editableSpan.find('input').val() || ''; // Get the original text or empty string
+                $editableSpan.removeClass('editing').text(originalText); // Revert to the original text or empty if it was empty
+            });
+        });
+    </script>
+</body></html>

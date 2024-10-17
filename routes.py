@@ -59,7 +59,7 @@ def register_routes(app):
         return Config.USERS.get(username) == password
 
     def log_user_activity(username):
-        client_ip = request.remote_addr
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         user_agent = parse(request.headers.get('User-Agent'))
         referrer = request.referrer
         query_params = request.args
@@ -72,10 +72,17 @@ def register_routes(app):
             request.method, request.url, referrer, query_params
         )
 
+    def get_location(ip):
+        response = requests.get(f'http://ip-api.com/json/{ip}')
+        return response.json()
+
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if 'username' in session:
             return redirect(url_for("home"))
+        
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        location_data = get_location(client_ip)
         
         if request.method == "POST":
             username = request.form.get("username")
@@ -90,7 +97,9 @@ def register_routes(app):
                 flash("Invalid credentials")
         
         session['next'] = request.args.get('next') or request.referrer or url_for("home")
-        return render_template("login.html")
+        
+        # Pass additional location data to the template if available
+        return render_template("login.html", client_ip=client_ip, location=location_data)
 
     @app.route("/logout")
     def logout():
@@ -338,12 +347,15 @@ def register_routes(app):
             # Modify 'Location' cells to include 'title' attribute with 'Update_Date'
             if 'Location' in df.columns and 'Update_Date' in df.columns:
                 df['Location'] = df.apply(
-                    lambda row: f'<span title="Update: {row["Update_Date"]}">{row["Location"]}</span>',
+                    lambda row: (
+                        f'<span class="editable" title="Update: {row["Update_Date"]}">'
+                        
+                        f'{row["Location"] if pd.notnull(row["Location"]) and row["Location"] != "" else "✨ADD✨"}</span>'
+                    ),
                     axis=1
                 )
             df.columns = df.columns.str.replace('<br>', ' ')  # Remove any unwanted <br> in column headers
             df.columns = df.columns.str.replace('\n', '<br>')  # Replace newline with <br> in column headers
-            df.columns = df.columns.str.replace(',', '<br>')  # Replace newline with <br> in column headers
 
 
 
@@ -369,6 +381,58 @@ def register_routes(app):
         else:
             # No valid data, return the template without data
             return render_template("Item_lookup.html", excel_html=None, current_user=current_user, user_input=user_input.capitalize())
+        
+    @app.route('/update_location', methods=['POST'])
+    def update_location():
+        data = request.get_json()
+        sku = data.get('sku')
+        style = data.get('style')
+        location = data.get('location')
+
+        if not sku or not style:
+            app.logger.warning(f"Missing SKU or Style in update_location request: SKU={sku}, Style={style}")
+            return jsonify({'success': False, 'message': 'SKU or Style is missing.'}), 400
+
+        connection = None
+        cursor = None
+        try:
+            connection = get_db_connection()
+            if connection is None:
+                app.logger.error("Failed to connect to the database.")
+                return jsonify({'success': False, 'message': 'Failed to connect to the database.'}), 500
+
+            cursor = connection.cursor()
+
+            # Check if the product exists
+            select_query = "SELECT * FROM products WHERE SKU = %s AND Style = %s"
+            app.logger.info(f"Executing SELECT query: {select_query} with SKU={sku} and Style={style}")
+            cursor.execute(select_query, (sku, style))
+            product = cursor.fetchone()
+
+            if product:
+                # Update existing product
+                update_query = "UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s"
+                app.logger.info(f"Executing UPDATE query: {update_query} for SKU={sku} and Style={style}")
+                cursor.execute(update_query, (location, sku, style))
+            else:
+                # Insert new product
+                insert_query = "INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW())"
+                app.logger.info(f"Executing INSERT query: {insert_query} for SKU={sku} and Style={style}")
+                cursor.execute(insert_query, (sku, style, location))
+
+            connection.commit()
+            app.logger.info(f"Location updated successfully for SKU={sku} and Style={style}")
+            return jsonify({'success': True, 'message': 'Location updated successfully.'})
+
+        except Error as e:
+            app.logger.error(f"Database error during location update for SKU={sku} and Style={style}: {e}")
+            return jsonify({'success': False, 'message': 'An error occurred while updating the location.'}), 500
+
+        finally:
+            if cursor:
+                cursor.close()
+            if connection and connection.is_connected():
+                connection.close()
                                             
 
     @app.route("/order_lookup", methods=["GET", "POST"])
@@ -827,6 +891,12 @@ def register_routes(app):
         if 'username' not in session:
             return redirect(url_for("login"))
         return render_template('upload_file.html')
+    
+    @app.route('/help', methods=['GET'])
+    def help():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        return render_template('help.html')
 
 
     @app.route('/send_shipping_receipt', methods=['POST'])

@@ -45,31 +45,31 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/item_lookup">
                         <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup">
-                        Item Lookup
+                        SKU
                     </a>
                 </li>
                 {% if current_user != 'fdc' and current_user != 'local_user' %}
                 <li class="nav-item">
                     <a class="nav-link" href="/order_lookup">
                         <img src="/static/icons/document.svg" alt="Order Lookup">
-                        Order Lookup & Label Maker
+                        Orders
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/v5_listcreator">
                         <img src="/static/icons/handbag.svg" alt="v5 List Creator">
-                        v5 List Creator
+                        List
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/geek_tools">
                         <img src="/static/icons/geek.svg" alt="Geek_Tools">
-                        Geek_Tools
+                        Tools
                     </a>
                 </li>
 
                 <!-- Custom Box Around These Items -->
-                <li class="nav-item custom-box">
+                
                     <a class="nav-link" href="/temu">
                         <img src="https://seller.temu.com/favicon.ico" alt="temu">
                         Temu
@@ -81,18 +81,23 @@
                     </a>
                     <a class="nav-link" href="/big_img">
                         <img src="/static/icons/bigimg.png" alt="big_img">
-                        STOCK_IMG_V3
+                        STOCK_IMG
                     </a>
-                 </li>
+                    
+                 
                 {% endif %}
             </ul>
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
+                
+                    <a class="nav-link" href="/help">
+                        <img src="https://www.svgrepo.com/show/493520/person-reading-a-book-question-mark.svg" alt="help">
+                        HELP
+                    </a>
                     <a class="nav-link" href="/logout">
                         <img src="/static/icons/logout.svg" alt="OUT" style="width: 40px; height: 40px;">
                         Logout
                     </a>
-                </li>
+                
             </ul>
         </div>
     </nav>
