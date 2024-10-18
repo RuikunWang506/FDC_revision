@@ -329,7 +329,7 @@
                     <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block"> <!-- Center the image -->
                     <div class="hover-msg">Download Original Below</div>
                     <p>
-                        <a href="http://173.198.50.202/ftp2/{{ file_info[0] }}" target="_blank">{{ file_info[0] }}</a>
+                        <a href="/ftp2/{{ file_info[0] }}" target="_blank">{{ file_info[0] }}</a>
                         {% if current_user == 'yetimaster' %}
                         <br>Original Size: 
                         {% if file_info[1] > 1000000 %}

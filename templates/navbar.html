@@ -50,6 +50,12 @@
                 </li>
                 {% if current_user != 'fdc' and current_user != 'local_user' %}
                 <li class="nav-item">
+                    <a class="nav-link" href="/boat">
+                        <img src="https://www.svgrepo.com/show/217702/cargo-ship.svg" alt="boat">
+                        Boat
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/order_lookup">
                         <img src="/static/icons/document.svg" alt="Order Lookup">
                         Orders
@@ -83,6 +89,11 @@
                         <img src="/static/icons/bigimg.png" alt="big_img">
                         STOCK_IMG
                     </a>
+                    <a class="nav-link" href="/chatgpt">
+                        <img src="https://cdn.worldvectorlogo.com/logos/chatgpt-6.svg" alt="chatgpt">
+                        chatgpt(Beta)
+                    </a>
+                    
                     
                  
                 {% endif %}
@@ -101,7 +112,7 @@
             </ul>
         </div>
     </nav>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>

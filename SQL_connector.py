@@ -27,18 +27,22 @@ def generate_excel(user_input):
         # Initialize conditions for each situation
         prod_cd_conditions = []
         alt_cd_conditions = []
+        descrip_conditions = []
+
         
         for part in input_parts:
             if "%" in part:  # Handle Situation 3: Wildcards or specific query command
                 prod_cd_conditions.append(f"i.PROD_CD LIKE '{part}'")
                 alt_cd_conditions.append(f"i.ALT_CD LIKE '{part}'")
+                descrip_conditions.append(f"i.DESCRIP LIKE '{part}'")
+
             elif " " in part:  # Handle Situation 2: Full prod_cd with color code
                 prod_cd_conditions.append(f"i.PROD_CD = '{part}'")
             else:  # Handle Situation 1: alt_cd, so match prod_cd using LIKE
                 prod_cd_conditions.append(f"i.PROD_CD LIKE '{part}%'")
 
         # Combine all conditions
-        combined_condition = " OR ".join(prod_cd_conditions + alt_cd_conditions)
+        combined_condition = " OR ".join(prod_cd_conditions + alt_cd_conditions + descrip_conditions)
 
         # Debug: Log the generated SQL WHERE condition
         #app.logger.info(f"Generated SQL WHERE condition: {combined_condition}")

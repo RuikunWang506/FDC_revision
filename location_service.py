@@ -55,7 +55,7 @@ def location_service():
     current_app.logger.info(f"Location service accessed by user: {session.get('username', 'Unknown')}")
 
     allowed_ip = '173.198.50.202'
-    user_ip = request.remote_addr
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if 'username' in session:
         # User is logged in; use the session username

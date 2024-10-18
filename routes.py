@@ -35,10 +35,11 @@ from upload_processor import process_upload
 from big_img_routes import register_big_img_routes
 from location_service import location_service_bp
 from container import container_bp
+from boat import boat_service_bp
+from chatgpt import chatgpt_bp
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from macy_special import process_order
 from loris_sticker import main, process_input_data
-
 from products import products_bp
 
 
@@ -48,11 +49,12 @@ client = WebClient(token=Config.SLACK_TOKEN)
 # Configure logging
 
 def register_routes(app):
-    
     register_big_img_routes(app)
     app.register_blueprint(location_service_bp)
     app.register_blueprint(container_bp)
     app.register_blueprint(products_bp)
+    app.register_blueprint(boat_service_bp)
+    app.register_blueprint(chatgpt_bp)
 
 
     def check_credentials(username, password):

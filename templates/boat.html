@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boat Service</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Full jQuery version with AJAX support -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .custom-btn {
+            padding: 5px 5px !important;
+            font-size: 20px !important;
+            border-radius: 50px !important; /* Changed from 100px to 50px to create oval shapes */
+            margin: 10px !important;
+            width: 150px !important; /* Adjust width to desired oval shape */
+            height: 150px !important; /* Adjust height to desired oval shape */
+            transition: background-color 0.3s, transform 0.3s !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-direction: column !important;
+            line-height: 1 !important; /* Adjusted line-height to reduce space between lines */
+        }
+        .custom-btn:hover {
+            transform: translateY(-30px) !important;
+        }
+        .custom-btn img {
+            margin-right: 10px !important;
+            width: 100px !important;
+            height: 100px !important;
+        }
+        .btn-info {
+            color: #fff !important;
+            background-color: #d57bac !important;
+            border-color: #17a2b8 !important;
+        }
+        .custom-btn h4 {
+            margin-top: 5px !important; /* Reduced margin to reduce space between lines */
+            margin-bottom: 0 !important; /* Reduced bottom margin */
+        }
+        table.editable td {
+            text-align: center; /* Horizontally center */
+            vertical-align: middle; /* Vertically center */
+        }
+
+        /* Styling for rows based on status */
+        .status-ocean {
+            background-color: rgba(172, 212, 255, 0.3) !important; /* Lighter blue with more transparency */
+        }
+
+        .status-landed {
+            background-color: rgba(255, 239, 190, 0.3) !important; /* Light golden yellow with more transparency */
+        }
+
+        .status-memo {
+            background-color: rgba(216, 127, 136, 0.3) !important; /* Light red with more transparency */
+            color: white; /* White text for better contrast */
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <h1 class="text-center">Boat Service Data</h1>
+    <div class="container mt-5">
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <h4>Click on Container to see styles</h4>
+                <h4 style="margin-left: 4em;">if Ocean >0 --> on the way</h4> 
+                <h4 style="margin-left: 4em;">if Ocean =0 --> arrived</h4>
+                <h4>Click on link to track container</h4>
+                <h5 style="margin-left: 4em;">theres a daily limit, you can login with google to track more</h5>
+
+            </div>
+            
+            <div class="col-md-4 text-right">
+                <a href="/container" class="btn btn-info custom-btn">
+                    <img src="/static/icons/container.png" alt="containers">
+                    Container 文件处理
+                </a>
+            </div>
+        </div>
+        
+
+        <div class="table-responsive mt-4">
+            <div class="row mt-4">
+                <div class="col-md-12 text-center">
+                    <h3>Last Updated: {{ last_modified_date }}</h3>
+                </div>
+            </div>
+            <table class="table table-bordered editable">
+                {{ table_data|safe }}  <!-- Display the cleaned and formatted Excel data table -->
+            </table>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        // Apply conditional styling based on Status and MEMO1 column
+        $(document).ready(function() {
+            $('table.editable tr').each(function() {
+                var status = $(this).find('td:nth-child(7)').text().trim(); // Assuming 'Status' is in the 6th column
+                var memo1 = $(this).find('td:nth-child(6)').text().trim();  // Assuming 'MEMO1' is in the 5th column
+                var eta = $(this).find('td:nth-child(4)').text().trim();    // Assuming 'ETA' is in the 3rd column
+                var rcd = $(this).find('td:nth-child(5)').text().trim();    // Assuming 'RCD' is in the 4th column
+                var reserved = $(this).find('td:nth-child(1)').text().trim();
+
+                // Hide NaT or empty values for ETA and RCD columns
+                if (eta === 'NaT' || eta === '') {
+                    $(this).find('td:nth-child(4)').text('');
+                }
+                if (rcd === 'NaT' || rcd === '') {
+                    $(this).find('td:nth-child(5)').text('');
+                }
+    
+                // Apply background based on the status value
+                if (status === '🚢ocean🚢') {
+                    $(this).addClass('status-ocean');
+                } else if (status === '📍landed📍') {
+                    $(this).addClass('status-landed');
+                }
+    
+                // Apply red background if MEMO1 is not blank
+                if (memo1 !== '') {
+                    $(this).addClass('status-memo');
+                }
+                if (reserved !== '') {
+                    $(this).addClass('status-memo');
+                }
+                
+            });
+        });
+    </script>
+    
+</body>
+</html>
