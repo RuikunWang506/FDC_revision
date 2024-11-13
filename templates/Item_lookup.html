@@ -94,10 +94,25 @@
             text-align: center;
             transition: opacity 0.3s ease;
         }
-        .img-container:hover .hover-msg {
+       /* .img-container:hover .hover-msg {
             display: block;
         }
-        
+        */
+        .hover-msg {
+            display: none; /* Ensure it's hidden by default */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            text-align: center;
+            transition: opacity 0.3s ease;
+            opacity: 0; /* Start with 0 opacity for fade effect */
+        }
         table.dataTable td {
             text-align: left;
         }
@@ -133,10 +148,40 @@
                 padding: 2px;
             }
         }
+        @media (max-width: 1500px) {
+            /* Hide specific columns by their position in the table */
+            #excel_table_1 td:nth-child(5), /* Style column */
+            #excel_table_1 td:nth-child(12), /* WIDTH column */
+            #excel_table_1 td:nth-child(13), /* HEIGHT column */
+            #excel_table_1 td:nth-child(14), /* WEIGHT column */
+            #excel_table_1 td:nth-child(15), /* PRICE column */
+            #excel_table_1 td:nth-child(16), /* TOTAL column */
+            #excel_table_1 td:nth-child(17), /* TOTAL_PRICE column */
+            #excel_table_1 td:nth-child(18), /* TOTAL_WEIGHT column */
+            #excel_table_1 td:nth-child(19), /* TOTAL_PRICE_WEIGHT column */
 
-        @media only screen and (min-width: 768px) {
-            .mobile-content {
+            #excel_table_1 th:nth-child(5), /* Style header */
+            #excel_table_1 th:nth-child(12), /* WIDTH header */
+            #excel_table_1 th:nth-child(13), /* HEIGHT header */ 
+            #excel_table_1 th:nth-child(14), /* WEIGHT header */
+            #excel_table_1 th:nth-child(15), /* PRICE header */
+            #excel_table_1 th:nth-child(16), /* TOTAL header */
+            #excel_table_1 th:nth-child(17), /* TOTAL_PRICE header */
+            #excel_table_1 th:nth-child(18), /* TOTAL_WEIGHT header */
+            #excel_table_1 th:nth-child(19) /* TOTAL_PRICE_WEIGHT header */
+            
+            {
                 display: none;
+            }
+        }
+
+        @media (max-width: 767px) {
+            #excel_table_1 {
+                min-width: 1000px; /* Set minimum width */
+            }
+
+            .table-responsive {
+                overflow-x: auto; /* Enable horizontal scrolling */
             }
         }
         
@@ -305,6 +350,7 @@
                 <h4>Enter Input, separate by comma:</h4>
                 <p>You can put multiple SKUs like n1223 gy, N1551</p>
                 <p>Style only = all colors, with color = one color</p>
+                <p>fuzzy search , try %T3305 , %f24238, %-set%</p>
                 <button class="btn btn-info mb-3">
                     <a href="/location_service" class="text-center" style="color:#88ff00; text-decoration: none;">Quick Location Lookup</a>
                 </button>
@@ -363,13 +409,9 @@
                 {{ excel_html | safe }}
             </div>
         {% endif %}
+
     </div>
-    <!-- Mobile content rendering -->
-    <div class="mobile-content">
-        {% if excel_html %}
-            {{ excel_html | safe }}
-        {% endif %}
-    </div>
+
     {% include 'footer.html' %}
     <!-- Include jQuery only once -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -384,7 +426,7 @@
     <!-- Include Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript">
-       $(document).ready(function() {
+        $(document).ready(function() {
             var table = $('#excel_table_1').DataTable({
                 "paging": true,
                 "searching": true,
@@ -403,15 +445,15 @@
                         }
                     }
                 ],
-                responsive: true, // Disable responsive
+                responsive: true,
                 "columnDefs": [
                     {
-                        "targets": -1, // Last column (Update_Date)
-                        "visible": false, // Hide the 'Update_Date' column
+                        "targets": -1,
+                        "visible": false,
                         "searchable": false
                     },
                     {
-                        "targets": 4, // 5th column (Style)
+                        "targets": 4,
                         "render": function(data, type, row, meta) {
                             if(type === 'display' || type === 'filter') {
                                 var encodedStyle = encodeURIComponent(data.trim());
@@ -428,90 +470,104 @@
                 "order": [[0, 'asc']],
                 "displayStart": 0
             });
+            
             $('#excel_table_1 thead th').each(function() {
                 if ($(this).text() === 'box_wt (lb)') {
-                    $(this).html('box_wt<br>(lb)');  // Inject the line break
+                    $(this).html('box_wt<br>(lb)');
                 }
                 if ($(this).text() === 'pc_wt (lb)') {
-                    $(this).html('pc_wt<br>(lb)');  // Another example
+                    $(this).html('pc_wt<br>(lb)');
                 }
             });
-
-
+    
+            $('.img-container').on('mouseenter', function() {
+                // Hide all other hover messages before showing the new one
+                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
+    
+                var $msg = $(this).find('.hover-msg');
+                $msg.stop(true, true).fadeIn(200).css('opacity', '1');
+    
+                // Use setTimeout to fade out the hover message after 1 second
+                setTimeout(function() {
+                    $msg.fadeOut(200).css('opacity', '0');
+                }, 1000);
+            });
+    
+            $('.img-container').on('mouseleave', function() {
+                var $msg = $(this).find('.hover-msg');
+                $msg.stop(true, true).fadeOut(200).css('opacity', '0');
+            });
+    
+            // Clear hover messages when clicking to edit
+            $('#excel_table_1').on('click', 'td .editable', function() {
+                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
+            });
+    
             // Initialize Bootstrap tooltips for elements with 'title' attribute
             $('[data-toggle="tooltip"]').tooltip({
-                html:true
+                html: true
             });
             $('[title]').tooltip({
-                html:true
+                html: true
             });
-
+    
             $.fn.dataTable.ext.search.push(
-                function( settings, data, dataIndex ) {
+                function(settings, data, dataIndex) {
                     var hideZero = table.button(3).active();
-                    var available = parseFloat( data[8] ) || 0; // Adjust the index if 'Available' is not the 8th column
-                    if ( hideZero ) {
+                    var available = parseFloat(data[8]) || 0;
+                    if (hideZero) {
                         return available > 0;
                     }
                     return true;
                 }
             );
-
+    
             $('#collapseOne').on('shown.bs.collapse', function () {
                 $('#headingOne i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
             }).on('hidden.bs.collapse', function () {
                 $('#headingOne i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
             });
-
-            // Implement top scroll synchronization
+    
             var $tableResponsive = $('#table-responsive');
             var $topScroll = $('.top-scroll');
             var $topScrollInner = $('.top-scroll-inner');
-
-            // Function to update the top scroll bar width
+    
             function updateTopScrollWidth() {
                 var tableWidth = $tableResponsive.find('table').outerWidth();
                 $topScrollInner.css('width', tableWidth + 'px');
             }
-
-            // Initial width setup
+    
             updateTopScrollWidth();
-
-            // Sync scroll positions
+    
             $topScroll.on('scroll', function() {
                 $tableResponsive.scrollLeft($(this).scrollLeft());
             });
             $tableResponsive.on('scroll', function() {
                 $topScroll.scrollLeft($(this).scrollLeft());
             });
-
-            // Update the top scroll width if window is resized
+    
             $(window).on('resize', function(){
                 updateTopScrollWidth();
             });
         });
-
+    
         function redirectToResult(event) {
-            event.preventDefault(); // Prevent the form from submitting the traditional way
+            event.preventDefault();
             var userInput = document.getElementById("user_input").value.trim().toLowerCase();
             
             if (userInput) {
-                // Redirect to the new URL with the user input
                 window.location.href = "/item_lookup/" + encodeURIComponent(userInput);
             }
         }
     </script>
     <script type="text/javascript">
         $(document).ready(function() {
-            // Make the 4th column editable (including empty cells)
             $('#excel_table_1').on('click', 'td:nth-child(4) .editable', function() {
                 var $span = $(this);
                 
-                // Check if the span is already in edit mode
                 if (!$span.hasClass('editing')) {
-                    var currentText = $span.text().trim(); // This will be an empty string if the cell is empty
+                    var currentText = $span.text().trim();
                     
-                    // Convert the span to an input field with save and cancel buttons
                     $span.addClass('editing').html(
                         '<input type="text" value="' + currentText + '"/> ' +
                         '<span class="edit-buttons">' +
@@ -522,25 +578,23 @@
                     $span.find('input').focus();
                 }
             });
-
-            // Save changes when the save button is clicked
-            // Save changes when the save button is clicked
+    
             $('#excel_table_1').on('click', '.save-btn', function(e) {
                 e.stopPropagation();
-                var $editableSpan = $(this).closest('.editable'); // Correct selector
-                var newValue = $editableSpan.find('input').val().trim(); // Now correctly finds the input
-
-                // Safely access the SKU and Style values
-                var sku = $editableSpan.closest('tr').find('td:nth-child(3)').text().trim() || ''; // Ensure a default empty string
-                var style = $editableSpan.closest('tr').find('td:nth-child(5)').text().trim() || ''; // Ensure a default empty string
-
-                // Check if SKU and Style are present before proceeding
+                var $editableSpan = $(this).closest('.editable');
+                var newValue = $editableSpan.find('input').val().trim();
+    
+                // Hide all hover messages on Save click
+                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
+    
+                var sku = $editableSpan.closest('tr').find('td:nth-child(3)').text().trim() || '';
+                var style = $editableSpan.closest('tr').find('td:nth-child(5)').text().trim() || '';
+    
                 if (!sku || !style) {
                     alert('SKU or Style is missing.');
-                    return; // Stop if SKU or Style is undefined or empty
+                    return;
                 }
-
-                // Send AJAX request to update the location in the database
+    
                 $.ajax({
                     url: '/update_location',
                     method: 'POST',
@@ -548,7 +602,7 @@
                     data: JSON.stringify({ sku: sku, style: style, location: newValue }),
                     success: function(response) {
                         if (response.success) {
-                            $editableSpan.removeClass('editing').text(newValue || ''); // Update cell with new value or empty string
+                            $editableSpan.removeClass('editing').text(newValue || '');
                             alert('Location updated successfully.');
                         } else {
                             alert('Error updating location: ' + response.message);
@@ -559,13 +613,16 @@
                     }
                 });
             });
-
-            // Cancel editing when the cancel button is clicked
+    
             $('#excel_table_1').on('click', '.cancel-btn', function(e) {
                 e.stopPropagation();
-                var $editableSpan = $(this).closest('.editable'); // Correct selector
-                var originalText = $editableSpan.find('input').val() || ''; // Get the original text or empty string
-                $editableSpan.removeClass('editing').text(originalText); // Revert to the original text or empty if it was empty
+                var $editableSpan = $(this).closest('.editable');
+                var originalText = $editableSpan.find('input').val() || '';
+    
+                // Hide all hover messages on Cancel click
+                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
+    
+                $editableSpan.removeClass('editing').text(originalText);
             });
         });
     </script>

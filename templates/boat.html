@@ -94,43 +94,53 @@
     </div>
 
     {% include 'footer.html' %}
+      <script>
+          function formatDate(dateString) {
+              // Return empty string for empty or invalid dates
+              if (!dateString || dateString === 'NaT') {
+                  return '';
+              }
+              
+              // Parse the Excel date string and format it
+              const date = new Date(dateString);
+              if (isNaN(date.getTime())) {
+                  return '';
+              }
+              
+              return date.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+              });
+          }
 
-    <script>
-        // Apply conditional styling based on Status and MEMO1 column
-        $(document).ready(function() {
+          $(document).ready(function() {
             $('table.editable tr').each(function() {
-                var status = $(this).find('td:nth-child(7)').text().trim(); // Assuming 'Status' is in the 6th column
-                var memo1 = $(this).find('td:nth-child(6)').text().trim();  // Assuming 'MEMO1' is in the 5th column
-                var eta = $(this).find('td:nth-child(4)').text().trim();    // Assuming 'ETA' is in the 3rd column
-                var rcd = $(this).find('td:nth-child(5)').text().trim();    // Assuming 'RCD' is in the 4th column
+                var status = $(this).find('td:nth-child(7)').text().trim();
+                var memo1 = $(this).find('td:nth-child(6)').text().trim();
+                var eta = $(this).find('td:nth-child(4)').text().trim();
+                var rcd = $(this).find('td:nth-child(5)').text().trim();
                 var reserved = $(this).find('td:nth-child(1)').text().trim();
 
-                // Hide NaT or empty values for ETA and RCD columns
-                if (eta === 'NaT' || eta === '') {
-                    $(this).find('td:nth-child(4)').text('');
-                }
-                if (rcd === 'NaT' || rcd === '') {
-                    $(this).find('td:nth-child(5)').text('');
-                }
-    
-                // Apply background based on the status value
+                // Format dates
+                if (eta) $(this).find('td:nth-child(4)').text(formatDate(eta));
+                if (rcd) $(this).find('td:nth-child(5)').text(formatDate(rcd));
+
+                // Apply status classes
                 if (status === '🚢ocean🚢') {
                     $(this).addClass('status-ocean');
                 } else if (status === '📍landed📍') {
                     $(this).addClass('status-landed');
                 }
-    
-                // Apply red background if MEMO1 is not blank
+
                 if (memo1 !== '') {
                     $(this).addClass('status-memo');
                 }
                 if (reserved !== '') {
                     $(this).addClass('status-memo');
                 }
-                
             });
         });
-    </script>
-    
+      </script>
 </body>
 </html>

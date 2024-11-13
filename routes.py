@@ -268,14 +268,18 @@ def register_routes(app):
         # Get filenames matching the search terms
         file_names = []
         for term in search_terms:
+            # Check in CATALOG_ORIGINAL
             for filename in os.listdir(Config.CATALOG_ORIGINAL):
                 if filename.lower().startswith(term):
                     file_names.append(filename)
 
-            # Check in catalog_resized if not found in catalog_original
+            # Check in CATALOG_RESIZED if not found in CATALOG_ORIGINAL
             for filename in os.listdir(Config.CATALOG_RESIZED):
                 if filename.lower().startswith(term) and filename not in file_names:
                     file_names.append(filename)
+
+        # Remove duplicates from file_names
+        file_names = list(dict.fromkeys(file_names))
 
         # Get file information (size and modification date)
         file_info = []
@@ -832,15 +836,15 @@ def register_routes(app):
     def serve_file2(path):
         return send_from_directory(Config.CATALOG_ORIGINAL, path, as_attachment=False)
     
-    @app.route('/public/<path:path>', methods=['GET'])
-    def serve_file_pub(path):
-        app.logger.info("Serving file %s", path)
-        return send_from_directory(Config.FTP, path, as_attachment=True)
+    #@app.route('/public/<path:path>', methods=['GET'])
+    #def serve_file_pub(path):
+    #    app.logger.info("Serving file public path %s", path)
+    #    return send_from_directory(Config.FTP, path, as_attachment=True)
     
-    @app.route('/sizepic/<path:path>', methods=['GET'])
-    def serve_temp_size_pic(path):
-        app.logger.info("Serving file %s", path)
-        return send_from_directory(Config.Dimension_DIR, path, as_attachment=True)
+    #@app.route('/sizepic/<path:path>', methods=['GET'])
+    #def serve_temp_size_pic(path):
+    #    app.logger.info("Serving file sizepic %s", path)
+    #    return send_from_directory(Config.Dimension_DIR, path, as_attachment=True)
 
     @app.route('/download4/<filename>')
     def download_file4(filename):

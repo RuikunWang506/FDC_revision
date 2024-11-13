@@ -40,31 +40,27 @@ def boat_service():
     # Load data from the Excel file
     try:
         df = pd.read_excel(file_path, sheet_name='Sheet1')
-        df_cleaned = df[['Unnamed: 3','REF#', 'CONTAINER#', 'ETA', 'RCD', 'Unnamed: 6']].copy()
+        df_cleaned = df[['Unnamed: 3', 'REF#', 'CONTAINER#', 'ETA', 'RCD', 'Unnamed: 6']].copy()
         df_cleaned.columns = ['Reserved', 'container', 'link', 'ETA', 'RCD', 'MEMO']
 
-        # Correct the 'ETA' and 'RCD' columns
-        df_cleaned['ETA'] = pd.to_datetime(df_cleaned['ETA'], errors='coerce').fillna('')
-        df_cleaned['RCD'] = pd.to_datetime(df_cleaned['RCD'], errors='coerce').fillna('')
+        # Convert dates from Excel serial format
+        def convert_excel_date(serial):
+            if pd.notnull(serial) and isinstance(serial, (int, float)):
+                return pd.to_datetime('1899-12-30') + pd.to_timedelta(serial, 'D')
+            return pd.NaT
 
-        # Ensure that 'NaT' or any missing values are replaced with an empty string
-        df_cleaned['ETA'] = df_cleaned['ETA'].replace(['NaT', pd.NaT], '')
-        df_cleaned['RCD'] = df_cleaned['RCD'].replace(['NaT', pd.NaT], '')
-        df_cleaned = df_cleaned.tail(30)
+        df_cleaned['ETA'] = df['ETA'].apply(convert_excel_date).dt.strftime('%m/%d/%Y').fillna('')
+        df_cleaned['RCD'] = df['RCD'].apply(convert_excel_date).dt.strftime('%m/%d/%Y').fillna('')
 
-        # Add hyperlinks to container and link columns, but keep raw container value for SQL query
-        df_cleaned['container_raw'] = df_cleaned['container']  # Keep the raw container value
-        df_cleaned['container'] = df_cleaned['container_raw'].apply(
-            lambda x: f'<a href="/item_lookup/%25{x}" target="_blank">{x}</a>' if pd.notnull(x) else ''
-        )
-        df_cleaned['link'] = df_cleaned['link'].apply(
-            lambda x: f'<a href="https://www.searates.com/container/tracking/?number={x}&sealine=AUTO" target="_blank">{x}</a>' if pd.notnull(x) else ''
-        )
+        # Get the last 30 rows first, then sort by 'container' in descending order
+        df_cleaned = df_cleaned.tail(30).sort_values(by='container', ascending=False)
 
-        # SQL query to check `on_order_qty` for each container using the raw container value
+        # Store raw container values for SQL query use
+        df_cleaned['container_raw'] = df_cleaned['container']
+
+        # SQL query to check on_order_qty for each container using the raw container value
         for index, row in df_cleaned.iterrows():
-            container_raw = row['container_raw']  # Use the raw container value for the SQL query
-
+            container_raw = row['container_raw']
             cursor = conn.cursor()
             cursor.execute("SELECT SUM(on_order_qty) FROM dbo.inv_data WHERE descrip = ?", container_raw)
             result = cursor.fetchone()
@@ -81,12 +77,16 @@ def boat_service():
         # Drop the 'container_raw' column before rendering
         df_cleaned.drop('container_raw', axis=1, inplace=True)
 
-        # Clean and sort the dataframe
-        df_cleaned.dropna(how='all', inplace=True)
-        df_sorted = df_cleaned.sort_values(by='container', ascending=False)
+        # Add hyperlinks to container and link columns
+        df_cleaned['container'] = df_cleaned['container'].apply(
+            lambda x: f'<a href="/item_lookup/%25{x}" target="_blank">{x}</a>' if pd.notnull(x) else ''
+        )
+        df_cleaned['link'] = df_cleaned['link'].apply(
+            lambda x: f'<a href="https://www.searates.com/container/tracking/?number={x}&sealine=AUTO" target="_blank">{x}</a>' if pd.notnull(x) else ''
+        )
 
-        # Convert to HTML
-        data_html = df_sorted.to_html(
+        # Convert DataFrame to HTML for rendering
+        data_html = df_cleaned.to_html(
             index=False, 
             header=True, 
             classes="table table-bordered editable", 
@@ -98,7 +98,6 @@ def boat_service():
         )
     except Exception as e:
         print(f"Error processing Excel file: {e}")
-        # Create a complete table structure with headers and an error row
         data_html = """
         <table class="table table-bordered editable" id="boat_table">
             <thead>

@@ -186,10 +186,11 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 <script>
-    // JavaScript to process random strings and update user_input
+    // JavaScript to process random strings, remove duplicates, and update user_input
     document.getElementById('random_strings_input').addEventListener('input', function() {
         const randomStrings = this.value.split(/[\s,]+/).filter(Boolean);
-        const formattedInput = randomStrings.join(',');
+        const uniqueStrings = [...new Set(randomStrings)]; // Remove duplicates
+        const formattedInput = uniqueStrings.join(',');
         document.getElementById('user_input').value = formattedInput;
         updateItemCount(formattedInput);
     });

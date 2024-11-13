@@ -19,7 +19,7 @@ formatted_date = ""
 source_folder = None  # Correctly define and highlight the source_folder variable
     
 def main():
-    global user_input, formatted_date, user_input_type, source_folder,today
+    global user_input, formatted_date, user_input_type, source_folder, today
 
     today = datetime.datetime.now()
     formatted_date = today.strftime("List-%Y%m%d-%H%M%S")
@@ -39,15 +39,17 @@ def main():
             user_input = ','.join(user_input_list)
         else:
             raise ValueError("The provided directory path does not include 'Dropbox'.")
-
     else:
         # If it's already a list input
         if user_input.endswith(","):
             user_input = user_input[:-1].strip()
         user_input_list = [item.strip() for item in user_input.replace(" ", "").split(',')]
 
+    # Remove duplicates from user_input_list
+    user_input_list = list(dict.fromkeys(user_input_list))
+
     print("Processed user_input: " + str(user_input))
-    print("user_input_list: " + str(user_input_list))
+    print("user_input_list (duplicates removed): " + str(user_input_list))
 
     # Select the correct source folder based on image_option
     if image_option == "dropboxpic":

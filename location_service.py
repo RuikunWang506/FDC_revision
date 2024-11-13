@@ -362,15 +362,23 @@ def location_service():
 
                                 # Insert new data
                                 insert_query = """
-                                    INSERT INTO products (SKU, Style, Location, Update_Date)
-                                    VALUES (%s, %s, %s, NOW())
+                                    INSERT INTO products (SKU, Style, Location, Update_Date, TMHK_SKUID, TMUS_SKUID, TKUS_SKUID, TKUS_PICKID, TKUS_PNUM)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                                 """
+
                                 insert_data = []
                                 for _, row in df.iterrows():
                                     sku = str(row['SKU']).strip()
                                     style = str(row['Style']).strip()
                                     location = str(row['Location']).strip()
-                                    insert_data.append((sku, style, location))
+                                    update_date = str(row['Update_Date']).strip()
+                                    tmhk_skuid = str(row.get('TMHK_SKUID', '')).strip()
+                                    tmus_skuid = str(row.get('TMUS_SKUID', '')).strip()
+                                    tkus_skuid = str(row.get('TKUS_SKUID', '')).strip()
+                                    tkus_pickid = str(row.get('TKUS_PICKID', '')).strip()
+                                    tkus_pnum = str(row.get('TKUS_PNUM', '')).strip()
+
+                                    insert_data.append((sku, style, location, update_date, tmhk_skuid, tmus_skuid, tkus_skuid, tkus_pickid, tkus_pnum))
                                 
                                 cursor.executemany(insert_query, insert_data)
                                 connection.commit()

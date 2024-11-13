@@ -34,6 +34,7 @@ class Config:
         'erin':'7555',
         'dennis':'dennis',
         'jiayi':'1234',
+        'dahlia':'dahlia',
         'baiqiang':'1234'
     }
     
