@@ -8636,3 +8636,1152 @@ order_qty ,
 2024-11-13 14:08:17,096 - INFO - Received order_number: 1678
 2024-11-13 14:08:18,537 - INFO - [Download][labels]File 1678_label.xlsx downloaded from label output
 2024-11-13 14:12:01,783 - INFO - yeti request to create a list: n1223
+2024-11-13 18:36:57,710 - INFO - autobots, rolling out!
+2024-11-13 18:37:01,535 - INFO - autobots, rolling out!
+2024-11-13 18:57:08,021 - INFO - Location service accessed by user: Unknown
+2024-11-13 22:14:19,106 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-13 22:15:27,624 - INFO - Item lookup for ahua with input: l1851
+2024-11-13 22:21:02,854 - INFO - Item lookup for ahua with input: l1850
+2024-11-13 22:31:37,117 - INFO - Item lookup for ahua with input: s1460
+2024-11-14 00:59:41,582 - INFO - Item lookup for ahua with input: s1460
+2024-11-14 00:59:50,719 - INFO - Item lookup for ahua with input: n2229
+2024-11-14 10:18:51,533 - INFO - Location service accessed by user: Unknown
+2024-11-14 10:48:34,580 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-14 10:52:03,636 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-14 10:52:09,518 - INFO - Item lookup for yeti with input: s1505
+2024-11-14 10:52:12,935 - INFO - Processing data in Loris tool kit for yeti
+2024-11-14 10:52:16,829 - INFO - [Download][loris_barcode]File exact_stickers_2024-11-14_10_52_13.pdf downloaded from barcode output
+2024-11-14 11:05:36,703 - INFO - Item lookup for yeti with input: s1064
+2024-11-14 11:05:42,878 - INFO - Item lookup for yeti with input: n1931
+2024-11-14 11:10:18,934 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N1931 BK and Style=N1931
+2024-11-14 11:10:18,935 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N1931 BK and Style=N1931
+2024-11-14 11:10:18,946 - INFO - Location updated successfully for SKU=N1931 BK and Style=N1931
+2024-11-14 11:10:23,042 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N1931 BR and Style=N1931
+2024-11-14 11:10:23,044 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N1931 BR and Style=N1931
+2024-11-14 11:10:23,048 - INFO - Location updated successfully for SKU=N1931 BR and Style=N1931
+2024-11-14 11:10:23,714 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N1931 BR and Style=N1931
+2024-11-14 11:10:23,715 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=N1931 BR and Style=N1931
+2024-11-14 11:10:23,717 - INFO - Location updated successfully for SKU=N1931 BR and Style=N1931
+2024-11-14 11:10:27,675 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N1931 TN and Style=N1931
+2024-11-14 11:10:27,676 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N1931 TN and Style=N1931
+2024-11-14 11:10:27,680 - INFO - Location updated successfully for SKU=N1931 TN and Style=N1931
+2024-11-14 11:10:30,171 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N1931 PK and Style=N1931
+2024-11-14 11:10:30,173 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N1931 PK and Style=N1931
+2024-11-14 11:10:30,182 - INFO - Location updated successfully for SKU=N1931 PK and Style=N1931
+2024-11-14 11:10:33,057 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N1931 GY and Style=N1931
+2024-11-14 11:10:33,058 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N1931 GY and Style=N1931
+2024-11-14 11:10:33,061 - INFO - Location updated successfully for SKU=N1931 GY and Style=N1931
+2024-11-14 11:10:35,192 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N1931 DM and Style=N1931
+2024-11-14 11:10:35,193 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N1931 DM and Style=N1931
+2024-11-14 11:10:35,198 - INFO - Location updated successfully for SKU=N1931 DM and Style=N1931
+2024-11-14 11:17:53,801 - INFO - Processing data in Loris tool kit for yeti
+2024-11-14 11:20:56,259 - INFO - Processing data in Loris tool kit for yeti
+2024-11-14 11:21:34,193 - INFO - Processing data in Loris tool kit for yeti
+2024-11-14 11:21:35,682 - INFO - [Download][loris_barcode]File exact_stickers_2024-11-14_11_21_34.pdf downloaded from barcode output
+2024-11-14 11:40:59,806 - INFO - Item lookup for yeti with input: es1272
+2024-11-14 11:51:55,827 - INFO - Item lookup for yeti with input: t3243
+2024-11-14 12:10:00,843 - INFO - Item lookup for yeti with input: %f24242
+2024-11-14 14:35:21,805 - INFO - Processing data in Loris tool kit for yeti
+2024-11-14 14:35:24,071 - INFO - [Download][loris_barcode]File exact_stickers_2024-11-14_14_35_21.pdf downloaded from barcode output
+2024-11-14 18:13:00,825 - INFO - User nicye has logged in. IP: 115.223.184.46, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: https://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-11-14 18:13:07,787 - INFO - Item lookup for nicye with input: s1457
+2024-11-14 19:17:06,136 - INFO - Item lookup for nicye with input: s1458
+2024-11-14 20:16:00,882 - INFO - Location service accessed by user: Unknown
+2024-11-14 23:04:28,127 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 11:07:39,405 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 129.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 11:07:49,405 - INFO - yeti request to create a list: C:\Users\elaine.FDC\Dropbox\Elaine\FDC11.15.2024
+2024-11-15 11:07:49,405 - ERROR - An error occurred: 'charmap' codec can't encode character '\u7248' in position 545: character maps to <undefined>
+2024-11-15 11:08:37,496 - INFO - yeti request to create a list: C:\Users\elaine.FDC\Dropbox\Elaine\FDC11.15.2024
+2024-11-15 11:08:51,526 - INFO - [Download][List] yeti downloaded the file: List-20241115-110837.xlsx
+2024-11-15 11:09:07,082 - INFO - yeti request to create a list: C:\Users\elaine.FDC\Dropbox\Elaine\FDC11.15.2024
+2024-11-15 11:09:24,960 - INFO - [Download][List] yeti downloaded the file: List-20241115-110907.xlsx
+2024-11-15 11:23:47,655 - INFO - User jennifer has logged in. IP: 173.198.50.202, Browser: Chrome 97.0.4692, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 11:24:01,410 - INFO - jennifer is looking up order number: 33578
+2024-11-15 11:24:01,440 - INFO - jennifer searched for order number: 33578
+2024-11-15 11:24:03,627 - INFO - Received order_number: 33578
+2024-11-15 11:24:05,617 - INFO - [Download][labels]File 33578_label.xlsx downloaded from label output
+2024-11-15 11:42:46,194 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 11:42:49,623 - INFO - Item lookup for yeti with input: es1218
+2024-11-15 11:45:51,026 - INFO - yeti request to create a list: C:\Users\elaine.FDC\Dropbox\Elaine\E-FASHION-11.15.2024
+2024-11-15 11:46:05,642 - INFO - [Download][List] yeti downloaded the file: List-20241115-114551.xlsx
+2024-11-15 11:46:44,465 - INFO - yeti request to create a list: S1306,ES1313
+2024-11-15 11:46:46,941 - INFO - [Download][List] yeti downloaded the file: List-20241115-114644.xlsx
+2024-11-15 11:51:24,875 - INFO - yeti request to create a list: S1303,S1212,S1211,S1249,S1247,ES1313,L1687-S,L1694-S,L1627-S
+2024-11-15 11:51:28,813 - INFO - [Download][List] yeti downloaded the file: List-20241115-115124.xlsx
+2024-11-15 11:53:44,080 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 11:53:52,088 - INFO - Item lookup for yeti with input: n1223
+2024-11-15 12:00:22,858 - INFO - Item lookup for yeti with input: t3305
+2024-11-15 12:00:25,493 - INFO - User jennifer has logged in. IP: 173.198.50.202, Browser: Chrome 97.0.4692, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 12:00:44,903 - INFO - Item lookup for jennifer with input: n2298
+2024-11-15 12:08:41,550 - INFO - Item lookup for yeti with input: s1212
+2024-11-15 12:46:52,092 - INFO - Item lookup for yeti with input: n1978
+2024-11-15 12:49:08,213 - INFO - Item lookup for yeti with input: m0024
+2024-11-15 12:52:29,641 - INFO - Item lookup for yeti with input: n1845
+2024-11-15 12:53:08,697 - INFO - Item lookup for yeti with input: n2036
+2024-11-15 13:52:44,697 - INFO - Location service accessed by user: Unknown
+2024-11-15 17:14:42,194 - INFO - User jennifer has logged in. IP: 173.198.50.202, Browser: Chrome 97.0.4692, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 17:14:50,873 - INFO - jennifer is looking up order number: 33532
+2024-11-15 17:14:50,908 - INFO - jennifer searched for order number: 33532
+2024-11-15 17:14:52,239 - INFO - Received order_number: 33532
+2024-11-15 17:14:54,978 - INFO - [Download][labels]File 33532_label.xlsx downloaded from label output
+2024-11-15 19:01:26,334 - INFO - User nicye has logged in. IP: 115.223.184.46, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 19:03:17,457 - INFO - Item lookup for nicye with input: s1471
+2024-11-15 19:14:34,716 - INFO - Item lookup for nicye with input: s1472
+2024-11-15 21:50:41,449 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 21:50:51,415 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-15 21:51:09,856 - INFO - yeti request to create a list: https://venmo.com/code?user_id=2009307822424064600
+2024-11-15 22:30:57,140 - INFO - Location service accessed by user: Unknown
+2024-11-15 22:49:31,319 - INFO - Item lookup for nicye with input: s1478
+2024-11-15 22:54:17,676 - INFO - Item lookup for nicye with input: s1459
+2024-11-15 23:11:54,614 - INFO - Item lookup for nicye with input: s1472
+2024-11-15 23:36:01,643 - INFO - Item lookup for nicye with input: s1484
+2024-11-16 05:20:45,818 - INFO - Location service accessed by user: Unknown
+2024-11-16 23:04:29,982 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-16 23:04:36,414 - INFO - yeti request to create a list: 5UXCR6C03N9M30799
+2024-11-16 23:04:41,646 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-17 05:28:42,355 - INFO - Location service accessed by user: Unknown
+2024-11-17 18:54:10,996 - INFO - User nicye has logged in. IP: 122.240.234.134, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-17 18:55:01,661 - INFO - Item lookup for nicye with input: s1484
+2024-11-17 21:32:16,148 - INFO - Location service accessed by user: Unknown
+2024-11-17 21:33:58,090 - INFO - Item lookup for nicye with input: s1492
+2024-11-17 21:54:08,156 - INFO - Item lookup for nicye with input: t2806
+2024-11-17 23:11:09,287 - INFO - Item lookup for ahua with input: s1505
+2024-11-18 03:59:17,353 - INFO - User nicye has logged in. IP: 115.223.181.54, Browser: Mobile Safari 17.6, OS: iOS 17.6.1, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-18 03:59:29,847 - INFO - Item lookup for nicye with input: es1414
+2024-11-18 04:16:14,916 - INFO - Item lookup for nicye with input: s1412
+2024-11-18 04:16:21,356 - INFO - Item lookup for nicye with input: s1412
+2024-11-18 04:28:43,230 - INFO - Item lookup for nicye with input: s1112
+2024-11-18 07:53:02,037 - INFO - Item lookup for yeti with input: s1424
+2024-11-18 07:56:10,757 - INFO - Item lookup for yeti with input: n1928
+2024-11-18 07:56:45,242 - INFO - Item lookup for yeti with input: s1064
+2024-11-18 09:02:23,821 - INFO - Item lookup for yeti with input: n1324 bg
+2024-11-18 09:28:35,342 - INFO - Item lookup for yeti with input: s1064
+2024-11-18 09:28:52,308 - INFO - Item lookup for yeti with input: s1405
+2024-11-18 09:29:20,384 - INFO - Item lookup for yeti with input: n1928
+2024-11-18 09:29:32,876 - INFO - Item lookup for yeti with input: n1963
+2024-11-18 09:30:16,817 - INFO - Item lookup for yeti with input: s1424
+2024-11-18 09:30:38,716 - INFO - Item lookup for yeti with input: s1412
+2024-11-18 09:30:51,997 - INFO - Item lookup for yeti with input: s1505
+2024-11-18 09:32:01,718 - INFO - Item lookup for yeti with input: es1382
+2024-11-18 09:35:30,990 - INFO - Item lookup for yeti with input: n1831
+2024-11-18 09:35:41,730 - INFO - Item lookup for yeti with input: n1971
+2024-11-18 09:40:49,857 - INFO - Item lookup for yeti with input: s1412
+2024-11-18 09:49:03,868 - INFO - Item lookup for yeti with input: s1424
+2024-11-18 09:58:39,800 - INFO - User yeti has logged in. IP: 172.56.233.247, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-18 09:58:43,978 - INFO - Item lookup for yeti with input: n1928
+2024-11-18 10:18:45,651 - INFO - Item lookup for yeti with input: n1928
+2024-11-18 10:18:48,391 - INFO - Item lookup for yeti with input: n1928
+2024-11-18 10:18:48,821 - INFO - Location service accessed by user: yeti
+2024-11-18 10:18:51,408 - INFO - Location service accessed by user: yeti
+2024-11-18 10:19:12,686 - INFO - Location service accessed by user: yeti
+2024-11-18 10:19:16,080 - INFO - Location service accessed by user: yeti
+2024-11-18 10:19:26,939 - INFO - Location service accessed by user: yeti
+2024-11-18 10:19:44,800 - INFO - Location service accessed by user: yeti
+2024-11-18 10:19:46,275 - INFO - Location service accessed by user: yeti
+2024-11-18 10:19:48,118 - INFO - Starting sync to OMS
+2024-11-18 10:19:48,128 - INFO - Fetched 839 products from online database
+2024-11-18 10:19:48,133 - INFO - Updating location for SKU: EL1781 PL to OUT
+2024-11-18 10:19:48,219 - INFO - Updating location for SKU: EL1781 TP to OUT
+2024-11-18 10:19:48,238 - INFO - Updating location for SKU: EL1855 BK to L12D
+2024-11-18 10:19:48,283 - INFO - Updating location for SKU: EL1855 BR to L12D
+2024-11-18 10:19:48,303 - INFO - Updating location for SKU: EL1855 GY to L12D
+2024-11-18 10:19:48,328 - INFO - Updating location for SKU: EL1855 MV to L12D
+2024-11-18 10:19:48,348 - INFO - Updating location for SKU: EL1855 NV to L12D
+2024-11-18 10:19:48,383 - INFO - Updating location for SKU: EL1855 WN to L12D
+2024-11-18 10:19:48,408 - INFO - Updating location for SKU: EN1346 BK to L12D
+2024-11-18 10:19:48,428 - INFO - Updating location for SKU: EN1346 BP to L15
+2024-11-18 10:19:48,452 - INFO - Updating location for SKU: EN1346 CG to L12D
+2024-11-18 10:19:48,477 - INFO - Updating location for SKU: EN1346 GY to L12D
+2024-11-18 10:19:48,500 - INFO - Updating location for SKU: EN1346 TN to L12D
+2024-11-18 10:19:48,522 - INFO - Updating location for SKU: EN1346 WT to L12D
+2024-11-18 10:19:48,545 - INFO - Updating location for SKU: EN1460 BP to L18
+2024-11-18 10:19:48,579 - INFO - Updating location for SKU: EN1496 BK to WALL2
+2024-11-18 10:19:48,605 - INFO - Updating location for SKU: EN1759 BK to L13A
+2024-11-18 10:19:48,628 - INFO - Updating location for SKU: EN1765 to L6-I , (L18-C, L7-I TOP)
+2024-11-18 10:19:48,755 - ERROR - Error updating SKU EN1765: ('22001', '[22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]String or binary data would be truncated. (8152) (SQLExecDirectW); [22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2024-11-18 10:19:48,755 - INFO - Updating location for SKU: EN1765 BK to L6-I
+2024-11-18 10:19:48,780 - INFO - Updating location for SKU: EN1765 PK to L11A
+2024-11-18 10:19:48,800 - INFO - Updating location for SKU: EN1765 TN to L11A
+2024-11-18 10:19:48,820 - INFO - Updating location for SKU: EN1765 WT to L6-I
+2024-11-18 10:19:48,840 - INFO - Updating location for SKU: EN1766 BK to L8H BOT
+2024-11-18 10:19:48,865 - INFO - Updating location for SKU: EN1766 BR to L8H BOT
+2024-11-18 10:19:48,890 - INFO - Updating location for SKU: EN1766 PK to L8H BOT
+2024-11-18 10:19:48,910 - INFO - Updating location for SKU: EN1766 TL to L8H BOT
+2024-11-18 10:19:48,935 - INFO - Updating location for SKU: EN1766 TN to L8H BOT
+2024-11-18 10:19:48,954 - INFO - Updating location for SKU: EN1766 WT to L8H BOT
+2024-11-18 10:19:48,980 - INFO - Updating location for SKU: EN1789 BK to nan
+2024-11-18 10:19:49,002 - INFO - Updating location for SKU: EN1789 BL to L15A
+2024-11-18 10:19:49,025 - INFO - Updating location for SKU: EN1789 GY to nan
+2024-11-18 10:19:49,047 - INFO - Updating location for SKU: EN1789 PK to nan
+2024-11-18 10:19:49,066 - INFO - Updating location for SKU: EN1789 TN to nan
+2024-11-18 10:19:49,089 - INFO - Updating location for SKU: EN1789 WT to nan
+2024-11-18 10:19:49,115 - INFO - Updating location for SKU: EN2008 BK to L11H
+2024-11-18 10:19:49,156 - INFO - Updating location for SKU: EN2008 NV to L11H
+2024-11-18 10:19:49,181 - INFO - Updating location for SKU: EN2008 OL to L11H
+2024-11-18 10:19:49,201 - INFO - Updating location for SKU: EN2008 ST to L11H
+2024-11-18 10:19:49,226 - INFO - Updating location for SKU: EN2008 TP to L11H
+2024-11-18 10:19:49,246 - INFO - Updating location for SKU: EN2154 to L8-D TOP
+2024-11-18 10:19:49,409 - INFO - Updating location for SKU: EN2156 TP to L15
+2024-11-18 10:19:49,427 - INFO - Updating location for SKU: EN2159 BK to L12B MID , L10C-UP
+2024-11-18 10:19:49,452 - INFO - Updating location for SKU: EN2159 DM to L12B MID , L10C-UP
+2024-11-18 10:19:49,478 - INFO - Updating location for SKU: EN2159 PK to L12B MID , L10C-UP
+2024-11-18 10:19:49,498 - INFO - Updating location for SKU: EN2159 TN to L12B MID , L10C-UP
+2024-11-18 10:19:49,523 - INFO - Updating location for SKU: EN2159 TP to L12B MID , L10C-UP
+2024-11-18 10:19:49,543 - INFO - Updating location for SKU: EN2159 WT to L12B MID , L10C-UP
+2024-11-18 10:19:49,563 - INFO - Updating location for SKU: EN2209 BK to nan
+2024-11-18 10:19:49,588 - INFO - Updating location for SKU: EN2209 FLW to L10-G
+2024-11-18 10:19:49,749 - INFO - Updating location for SKU: EN2209 GY to nan
+2024-11-18 10:19:49,772 - INFO - Updating location for SKU: EN2209 LEO to L10-G
+2024-11-18 10:19:49,944 - INFO - Updating location for SKU: EN2209 TP to L15
+2024-11-18 10:19:49,964 - INFO - Updating location for SKU: EN2209 WT to L10-G
+2024-11-18 10:19:49,988 - INFO - Updating location for SKU: EN6064 BK to L20A BOT
+2024-11-18 10:19:50,011 - INFO - Updating location for SKU: EN6064 BR to L20A BOT
+2024-11-18 10:19:50,032 - INFO - Updating location for SKU: EN6064 GY to nan
+2024-11-18 10:19:50,052 - INFO - Updating location for SKU: EN6064 MV to nan
+2024-11-18 10:19:50,072 - INFO - Updating location for SKU: EN6064 RD to nan
+2024-11-18 10:19:50,092 - INFO - Updating location for SKU: EN6064 TL to nan
+2024-11-18 10:19:50,112 - INFO - Updating location for SKU: ES1096 LV to nan
+2024-11-18 10:19:50,152 - INFO - Updating location for SKU: ES1096 TN to WALL1
+2024-11-18 10:19:50,171 - INFO - Updating location for SKU: ES1096 WT to WALL2
+2024-11-18 10:19:50,196 - INFO - Updating location for SKU: ES1134 BK to L12A
+2024-11-18 10:19:50,216 - INFO - Updating location for SKU: ES1134 BL to L11A
+2024-11-18 10:19:50,238 - INFO - Updating location for SKU: ES1134 CG to nan
+2024-11-18 10:19:50,258 - INFO - Updating location for SKU: ES1134 FC to nan
+2024-11-18 10:19:50,283 - INFO - Updating location for SKU: ES1134 LV to L11E
+2024-11-18 10:19:50,301 - INFO - Updating location for SKU: ES1134 RD to L12A
+2024-11-18 10:19:50,327 - INFO - Updating location for SKU: ES1134 TL to L12A
+2024-11-18 10:19:50,349 - INFO - Updating location for SKU: ES1134 TN to L12A
+2024-11-18 10:19:50,371 - INFO - Updating location for SKU: ES1134 WT to WALL2
+2024-11-18 10:19:50,391 - INFO - Updating location for SKU: ES1134 YL to L11E
+2024-11-18 10:19:50,411 - INFO - Updating location for SKU: es1218 to L8-K, (L-8L mid)
+2024-11-18 10:19:50,624 - INFO - Updating location for SKU: ES1218 BK to L8-K, (L-8L mid)
+2024-11-18 10:19:50,656 - INFO - Updating location for SKU: ES1264 BG to nan
+2024-11-18 10:19:50,680 - INFO - Updating location for SKU: ES1264 BK to nan
+2024-11-18 10:19:50,725 - INFO - Updating location for SKU: ES1264 BR to nan
+2024-11-18 10:19:50,750 - INFO - Updating location for SKU: ES1264 TN to nan
+2024-11-18 10:19:50,770 - INFO - Updating location for SKU: ES1269 BK to L8-B MID
+2024-11-18 10:19:50,795 - INFO - Updating location for SKU: ES1271 to L18-A
+2024-11-18 10:19:50,951 - INFO - Updating location for SKU: ES1272 to L6-E MID
+2024-11-18 10:19:51,116 - INFO - Updating location for SKU: ES1323 to L10-B
+2024-11-18 10:19:51,276 - INFO - Updating location for SKU: ES1382 NV to L9-A MID
+2024-11-18 10:19:51,296 - INFO - Updating location for SKU: ES1382 OL to L9-A MID
+2024-11-18 10:19:51,316 - INFO - Updating location for SKU: ES1382 WM to L9-A MID
+2024-11-18 10:19:51,467 - INFO - Updating location for SKU: ES1386 BK to L11F
+2024-11-18 10:19:51,507 - INFO - Updating location for SKU: ES1386 BR to L11F
+2024-11-18 10:19:51,527 - INFO - Updating location for SKU: ES1386 NV to L11F
+2024-11-18 10:19:51,547 - INFO - Updating location for SKU: ES1386 OL to L7D
+2024-11-18 10:19:51,562 - INFO - Updating location for SKU: ES1386 TP to L11F
+2024-11-18 10:19:51,584 - INFO - Updating location for SKU: ES1386 WN to L11F
+2024-11-18 10:19:51,602 - INFO - Updating location for SKU: ES1394 BK to T-5
+2024-11-18 10:19:51,635 - INFO - Updating location for SKU: ES1394 BR to T-5 UP
+2024-11-18 10:19:51,660 - INFO - Updating location for SKU: ES1394 GN to T-5
+2024-11-18 10:19:51,681 - INFO - Updating location for SKU: ES1394 PK to T-5
+2024-11-18 10:19:51,701 - INFO - Updating location for SKU: ES1394 TN to T-5
+2024-11-18 10:19:51,720 - INFO - Updating location for SKU: ES1394 WT to T-5
+2024-11-18 10:19:51,737 - INFO - Updating location for SKU: ES1414 BK to L19
+2024-11-18 10:19:51,752 - INFO - Updating location for SKU: ES1414 BR to L19
+2024-11-18 10:19:51,772 - INFO - Updating location for SKU: ES1414 GY to L19
+2024-11-18 10:19:51,792 - INFO - Updating location for SKU: ES1414 OL to L19
+2024-11-18 10:19:51,812 - INFO - Updating location for SKU: ES1414 TP to L19
+2024-11-18 10:19:51,831 - INFO - Updating location for SKU: ES1414 WN to L19
+2024-11-18 10:19:51,851 - INFO - Updating location for SKU: ES1421 BK to L10-F
+2024-11-18 10:19:51,870 - INFO - Updating location for SKU: ES1421 BR to L10-F
+2024-11-18 10:19:51,888 - INFO - Updating location for SKU: ES1421 MV to T5-UP
+2024-11-18 10:19:51,905 - INFO - Updating location for SKU: ES1421 NY to nan
+2024-11-18 10:19:52,055 - INFO - Updating location for SKU: ES1421 OL to L10-F
+2024-11-18 10:19:52,075 - INFO - Updating location for SKU: ES1421 TP to L10-F
+2024-11-18 10:19:52,095 - INFO - Updating location for SKU: ES1447 BK to nan
+2024-11-18 10:19:52,116 - INFO - Updating location for SKU: ES1447 GN to nan
+2024-11-18 10:19:52,135 - INFO - Updating location for SKU: ES1447 GY to nan
+2024-11-18 10:19:52,155 - INFO - Updating location for SKU: ES1447 TN to nan
+2024-11-18 10:19:52,175 - INFO - Updating location for SKU: ES1447 TP to nan
+2024-11-18 10:19:52,195 - INFO - Updating location for SKU: ES1447 WT to nan
+2024-11-18 10:19:52,215 - INFO - Updating location for SKU: ET2408 BR to OUT
+2024-11-18 10:19:52,356 - INFO - Updating location for SKU: ET2408 DPL to WALL2
+2024-11-18 10:19:52,509 - INFO - Updating location for SKU: ET2408 WN to WALL2
+2024-11-18 10:19:52,659 - INFO - Updating location for SKU: ET2905 BK to nan
+2024-11-18 10:19:52,679 - INFO - Updating location for SKU: ET2949 ABL to lalala
+2024-11-18 10:19:52,704 - INFO - Updating location for SKU: ET2949 BK to HEHEHE
+2024-11-18 10:19:52,719 - INFO - Updating location for SKU: ET2949 BP to hohoho
+2024-11-18 10:19:52,741 - INFO - Updating location for SKU: ET2951 CG to L11C
+2024-11-18 10:19:52,758 - INFO - Updating location for SKU: ET2953 ABL to nan
+2024-11-18 10:19:52,781 - INFO - Updating location for SKU: ET2953 BK to L-20, 823 F1-6
+2024-11-18 10:19:52,801 - INFO - Updating location for SKU: ET2953 BP to L-20, 827,F1-5
+2024-11-18 10:19:52,820 - INFO - Updating location for SKU: ET2953 CG to nan
+2024-11-18 10:19:52,839 - INFO - Updating location for SKU: ET2953 MV to nan
+2024-11-18 10:19:52,859 - INFO - Updating location for SKU: ET2953 WN to nan
+2024-11-18 10:19:52,879 - INFO - Updating location for SKU: ET3167 BK to L12E
+2024-11-18 10:19:52,913 - INFO - Updating location for SKU: ET3167 BR to L12D
+2024-11-18 10:19:52,934 - INFO - Updating location for SKU: ET3167 MV to 823-B1-20
+2024-11-18 10:19:52,958 - INFO - Updating location for SKU: ET3167 NV to L12D
+2024-11-18 10:19:52,978 - INFO - Updating location for SKU: ET3167 OL to L12D
+2024-11-18 10:19:53,002 - INFO - Updating location for SKU: ET3167 TP to L12D
+2024-11-18 10:19:53,021 - INFO - Updating location for SKU: ET3313 GY to WALL1
+2024-11-18 10:19:53,040 - INFO - Updating location for SKU: gg to asdff
+2024-11-18 10:19:53,166 - INFO - Updating location for SKU: L0665 GD to WALL1
+2024-11-18 10:19:53,314 - INFO - Updating location for SKU: L0665 RD to 823 C1-21
+2024-11-18 10:19:53,474 - INFO - Updating location for SKU: L1162 PK to OUT
+2024-11-18 10:19:53,499 - INFO - Updating location for SKU: L1343 GD to WALL1
+2024-11-18 10:19:53,522 - INFO - Updating location for SKU: L1343 RD to WALL1
+2024-11-18 10:19:53,546 - INFO - Updating location for SKU: L1343 SL to WALL1
+2024-11-18 10:19:53,563 - INFO - Updating location for SKU: L1494 GY to 823-B1-20
+2024-11-18 10:19:53,587 - INFO - Updating location for SKU: L1494 TN to 823-B1-20
+2024-11-18 10:19:53,607 - INFO - Updating location for SKU: L1494 WT to nan
+2024-11-18 10:19:53,627 - INFO - Updating location for SKU: L1513 BL to OUT
+2024-11-18 10:19:53,782 - INFO - Updating location for SKU: L1513 TN to L7D
+2024-11-18 10:19:53,802 - INFO - Updating location for SKU: L1550-M OL to L13A
+2024-11-18 10:19:53,947 - INFO - Updating location for SKU: L1550-M PL to L13A
+2024-11-18 10:19:54,097 - INFO - Updating location for SKU: L1591 CF to OUT
+2024-11-18 10:19:54,117 - INFO - Updating location for SKU: L1591 NV to SHELF
+2024-11-18 10:19:54,137 - INFO - Updating location for SKU: L1622 RD to SHELF TOP ROW WALL1
+2024-11-18 10:19:54,162 - INFO - Updating location for SKU: L1632 BK to nan
+2024-11-18 10:19:54,183 - INFO - Updating location for SKU: L1632 LV to L15
+2024-11-18 10:19:54,203 - INFO - Updating location for SKU: L1676 BK to WALL2
+2024-11-18 10:19:54,223 - INFO - Updating location for SKU: L1687-M BK to 823
+2024-11-18 10:19:54,239 - INFO - Updating location for SKU: L1687-M BR to 823
+2024-11-18 10:19:54,260 - INFO - Updating location for SKU: L1687-S BK to WALL2
+2024-11-18 10:19:54,281 - INFO - Updating location for SKU: L1687-S BR to WALL2
+2024-11-18 10:19:54,299 - INFO - Updating location for SKU: L1687-S GY to WALL2
+2024-11-18 10:19:54,317 - INFO - Updating location for SKU: L1687-S TN to WALL2
+2024-11-18 10:19:54,335 - INFO - Updating location for SKU: L1687-S WT to WALL2
+2024-11-18 10:19:54,353 - INFO - Updating location for SKU: L1790 BK to L12C ,(823 C1-8)
+2024-11-18 10:19:54,374 - INFO - Updating location for SKU: L1790 BR to L12C ,(823 C1-8)
+2024-11-18 10:19:54,389 - INFO - Updating location for SKU: L1790 CF to L12C ,(823 C1-8)
+2024-11-18 10:19:54,409 - INFO - Updating location for SKU: L1790 NV to L12C ,(823 C1-8)
+2024-11-18 10:19:54,427 - INFO - Updating location for SKU: L1804 BK to L15
+2024-11-18 10:19:54,567 - INFO - Updating location for SKU: L1804 TN to L15
+2024-11-18 10:19:54,586 - INFO - Updating location for SKU: L1805 BL to L15
+2024-11-18 10:19:54,606 - INFO - Updating location for SKU: L1806 BK to L15
+2024-11-18 10:19:54,626 - INFO - Updating location for SKU: L1806 BL to L18
+2024-11-18 10:19:54,647 - INFO - Updating location for SKU: L1808 BK to L15
+2024-11-18 10:19:54,793 - INFO - Updating location for SKU: L1808 BL to L18
+2024-11-18 10:19:54,814 - INFO - Updating location for SKU: L1809 BK to L15
+2024-11-18 10:19:54,960 - INFO - Updating location for SKU: L1809 BL to L11A
+2024-11-18 10:19:54,980 - INFO - Updating location for SKU: L1815 GY to L15
+2024-11-18 10:19:55,001 - INFO - Updating location for SKU: L1827 NV to L15
+2024-11-18 10:19:55,041 - INFO - Updating location for SKU: L1830 BK to L12E
+2024-11-18 10:19:55,059 - INFO - Updating location for SKU: L1830 BR to L12E
+2024-11-18 10:19:55,080 - INFO - Updating location for SKU: L1838 BK to L11H
+2024-11-18 10:19:55,101 - INFO - Updating location for SKU: L1838 CG to L11H
+2024-11-18 10:19:55,120 - INFO - Updating location for SKU: L1838 DM to nan
+2024-11-18 10:19:55,138 - INFO - Updating location for SKU: L1838 GY to L12F
+2024-11-18 10:19:55,154 - INFO - Updating location for SKU: L1838 ST to L11H
+2024-11-18 10:19:55,170 - INFO - Updating location for SKU: L1850 to L5J
+2024-11-18 10:19:55,326 - INFO - Updating location for SKU: L1850 BK to nan
+2024-11-18 10:19:55,346 - INFO - Updating location for SKU: L1850 BR to nan
+2024-11-18 10:19:55,366 - INFO - Updating location for SKU: L1850 NV to nan
+2024-11-18 10:19:55,381 - INFO - Updating location for SKU: L1851 to L5J
+2024-11-18 10:19:55,541 - INFO - Updating location for SKU: L1851 BK to nan
+2024-11-18 10:19:55,562 - INFO - Updating location for SKU: L1851 BR to nan
+2024-11-18 10:19:55,582 - INFO - Updating location for SKU: L1851 NV to nan
+2024-11-18 10:19:55,602 - INFO - Updating location for SKU: L1862 BK to L12F
+2024-11-18 10:19:55,622 - INFO - Updating location for SKU: L1862 CF to L12F
+2024-11-18 10:19:55,642 - INFO - Updating location for SKU: L1862 GY to L12F
+2024-11-18 10:19:55,662 - INFO - Updating location for SKU: L1862 NV to L12F
+2024-11-18 10:19:55,682 - INFO - Updating location for SKU: L1862 ST to L12F
+2024-11-18 10:19:55,702 - INFO - Updating location for SKU: L1862 WN to L12F
+2024-11-18 10:19:55,721 - INFO - Updating location for SKU: L1863 BK to nan
+2024-11-18 10:19:55,740 - INFO - Updating location for SKU: L1863 NV to nan
+2024-11-18 10:19:55,758 - INFO - Updating location for SKU: L1863 RD to nan
+2024-11-18 10:19:55,773 - INFO - Updating location for SKU: L1864 BK to nan
+2024-11-18 10:19:55,793 - INFO - Updating location for SKU: L1864 BR to nan
+2024-11-18 10:19:55,811 - INFO - Updating location for SKU: L1864 NV to nan
+2024-11-18 10:19:55,829 - INFO - Updating location for SKU: L6050 BR to WALL2
+2024-11-18 10:19:55,846 - INFO - Updating location for SKU: M0024 BR to L13A
+2024-11-18 10:19:55,864 - INFO - Updating location for SKU: M0024 LV to L13A
+2024-11-18 10:19:55,881 - INFO - Updating location for SKU: M1044 BK to L12D
+2024-11-18 10:19:55,900 - INFO - Updating location for SKU: M1044 BR to L12D
+2024-11-18 10:19:55,916 - INFO - Updating location for SKU: M1044 TN to L12D
+2024-11-18 10:19:55,940 - INFO - Updating location for SKU: M1044 WT to L12D
+2024-11-18 10:19:55,959 - INFO - Updating location for SKU: M1068 PK to L15
+2024-11-18 10:19:55,979 - INFO - Updating location for SKU: M1121 BK to L12D
+2024-11-18 10:19:55,999 - INFO - Updating location for SKU: M1121 BR to L12D
+2024-11-18 10:19:56,019 - INFO - Updating location for SKU: M1121 PK to L12D
+2024-11-18 10:19:56,039 - INFO - Updating location for SKU: M1121 ST to L12D
+2024-11-18 10:19:56,056 - INFO - Updating location for SKU: M1121 WT to L14 WALL
+2024-11-18 10:19:56,080 - INFO - Updating location for SKU: M1141 BK to L11G
+2024-11-18 10:19:56,100 - INFO - Updating location for SKU: M1141 BR to L14 WALL
+2024-11-18 10:19:56,115 - INFO - Updating location for SKU: M1141 OL to L11G
+2024-11-18 10:19:56,135 - INFO - Updating location for SKU: M1141 TN to L11G
+2024-11-18 10:19:56,150 - INFO - Updating location for SKU: M1141 WN to L11G
+2024-11-18 10:19:56,170 - INFO - Updating location for SKU: M1149 to L9B MID
+2024-11-18 10:19:56,323 - INFO - Updating location for SKU: N0122 WN to L13A
+2024-11-18 10:19:56,338 - INFO - Updating location for SKU: N0370 BK to L15
+2024-11-18 10:19:56,358 - INFO - Updating location for SKU: N0370 BL to L15
+2024-11-18 10:19:56,373 - INFO - Updating location for SKU: N0469 BK to nan
+2024-11-18 10:19:56,393 - INFO - Updating location for SKU: N0469 BR to WALL2
+2024-11-18 10:19:56,408 - INFO - Updating location for SKU: N0680 to L-10 top
+2024-11-18 10:19:56,568 - INFO - Updating location for SKU: N0735 BK to L8-C
+2024-11-18 10:19:56,593 - INFO - Updating location for SKU: N0735 CG to L8-C
+2024-11-18 10:19:56,623 - INFO - Updating location for SKU: N0735 DM to L8-C
+2024-11-18 10:19:56,643 - INFO - Updating location for SKU: N0735 LV to L8-C
+2024-11-18 10:19:56,664 - INFO - Updating location for SKU: N0735 ST to L8-C
+2024-11-18 10:19:56,679 - INFO - Updating location for SKU: N0735 WT to L8-C
+2024-11-18 10:19:56,699 - INFO - Updating location for SKU: N0812 BK to L18
+2024-11-18 10:19:56,719 - INFO - Updating location for SKU: N0812 BP to L18
+2024-11-18 10:19:56,734 - INFO - Updating location for SKU: N1004B MD to L13A
+2024-11-18 10:19:56,754 - INFO - Updating location for SKU: N1030 MD to L13A
+2024-11-18 10:19:56,774 - INFO - Updating location for SKU: N1116 BK to nan
+2024-11-18 10:19:56,789 - INFO - Updating location for SKU: N1116 BP to nan
+2024-11-18 10:19:56,809 - INFO - Updating location for SKU: N1116 BR to nan
+2024-11-18 10:19:56,824 - INFO - Updating location for SKU: N1116 CO to nan
+2024-11-18 10:19:56,844 - INFO - Updating location for SKU: N1116 DM to nan
+2024-11-18 10:19:56,859 - INFO - Updating location for SKU: N1116 GY to nan
+2024-11-18 10:19:56,879 - INFO - Updating location for SKU: N1116 LV to nan
+2024-11-18 10:19:56,894 - INFO - Updating location for SKU: N1116 MG to nan
+2024-11-18 10:19:56,914 - INFO - Updating location for SKU: N1116 MV to nan
+2024-11-18 10:19:56,929 - INFO - Updating location for SKU: N1116 PK to nan
+2024-11-18 10:19:56,949 - INFO - Updating location for SKU: N1116 RD to nan
+2024-11-18 10:19:56,991 - INFO - Updating location for SKU: N1116 SG to nan
+2024-11-18 10:19:57,014 - INFO - Updating location for SKU: N1116 TN to nan
+2024-11-18 10:19:57,031 - INFO - Updating location for SKU: N1116 WN to nan
+2024-11-18 10:19:57,049 - INFO - Updating location for SKU: N1116 WT to nan
+2024-11-18 10:19:57,066 - INFO - Updating location for SKU: N1116 YL to nan
+2024-11-18 10:19:57,084 - INFO - Updating location for SKU: N1151 BK to TING
+2024-11-18 10:19:57,102 - INFO - Updating location for SKU: N1151 BP to TING
+2024-11-18 10:19:57,134 - INFO - Updating location for SKU: N1151 BR to L13A-MID
+2024-11-18 10:19:57,151 - INFO - Updating location for SKU: N1151 CO to TING
+2024-11-18 10:19:57,170 - INFO - Updating location for SKU: N1151 DM to TING
+2024-11-18 10:19:57,187 - INFO - Updating location for SKU: N1151 GY to TING
+2024-11-18 10:19:57,205 - INFO - Updating location for SKU: N1151 LV to TING
+2024-11-18 10:19:57,218 - INFO - Updating location for SKU: N1151 MG to TING
+2024-11-18 10:19:57,238 - INFO - Updating location for SKU: N1151 MV to TING
+2024-11-18 10:19:57,258 - INFO - Updating location for SKU: N1151 NV to nan
+2024-11-18 10:19:57,275 - INFO - Updating location for SKU: N1151 OL to nan
+2024-11-18 10:19:57,291 - INFO - Updating location for SKU: N1151 PK to nan
+2024-11-18 10:19:57,307 - INFO - Updating location for SKU: N1151 RD to TING
+2024-11-18 10:19:57,324 - INFO - Updating location for SKU: N1151 SG to nan
+2024-11-18 10:19:57,346 - INFO - Updating location for SKU: N1151 TN to TING
+2024-11-18 10:19:57,363 - INFO - Updating location for SKU: N1151 TP to nan
+2024-11-18 10:19:57,381 - INFO - Updating location for SKU: N1151 WN to nan
+2024-11-18 10:19:57,399 - INFO - Updating location for SKU: N1151 WT to TING
+2024-11-18 10:19:57,414 - INFO - Updating location for SKU: N1151 YL to TING
+2024-11-18 10:19:57,432 - INFO - Updating location for SKU: N1185 BR to L15
+2024-11-18 10:19:57,452 - INFO - Updating location for SKU: N1185 RD to L15
+2024-11-18 10:19:57,465 - INFO - Updating location for SKU: N1223 BG to L15
+2024-11-18 10:19:57,487 - INFO - Updating location for SKU: N1223 BK to L15
+2024-11-18 10:19:57,504 - INFO - Updating location for SKU: N1223 BK NEW to nan
+2024-11-18 10:19:57,657 - INFO - Updating location for SKU: N1223 BL to L15
+2024-11-18 10:19:57,675 - INFO - Updating location for SKU: N1223 BL NEW to nan
+2024-11-18 10:19:57,812 - INFO - Updating location for SKU: N1223 BP to L15
+2024-11-18 10:19:57,834 - INFO - Updating location for SKU: N1223 BP NEW to nan
+2024-11-18 10:19:57,972 - INFO - Updating location for SKU: N1223 BR to L15
+2024-11-18 10:19:57,992 - INFO - Updating location for SKU: N1223 BR NEW to nan
+2024-11-18 10:19:58,127 - INFO - Updating location for SKU: N1223 CO to nan
+2024-11-18 10:19:58,147 - INFO - Updating location for SKU: N1223 CO NEW to nan
+2024-11-18 10:19:58,287 - INFO - Updating location for SKU: N1223 DM to nan
+2024-11-18 10:19:58,307 - INFO - Updating location for SKU: N1223 DM NEW to nan
+2024-11-18 10:19:58,447 - INFO - Updating location for SKU: N1223 FL to L15
+2024-11-18 10:19:58,467 - INFO - Updating location for SKU: N1223 GN to L15
+2024-11-18 10:19:58,485 - INFO - Updating location for SKU: N1223 GN NEW to nan
+2024-11-18 10:19:58,626 - INFO - Updating location for SKU: N1223 GY to L15
+2024-11-18 10:19:58,639 - INFO - Updating location for SKU: N1223 GY NEW to nan
+2024-11-18 10:19:58,780 - INFO - Updating location for SKU: N1223 LEO to L15
+2024-11-18 10:19:58,803 - INFO - Updating location for SKU: N1223 LEO NEW to nan
+2024-11-18 10:19:58,950 - INFO - Updating location for SKU: N1223 LV to L15
+2024-11-18 10:19:58,970 - INFO - Updating location for SKU: N1223 LV NEW to nan
+2024-11-18 10:19:59,111 - INFO - Updating location for SKU: N1223 MV to L15
+2024-11-18 10:19:59,126 - INFO - Updating location for SKU: N1223 MV NEW to nan
+2024-11-18 10:19:59,280 - INFO - Updating location for SKU: N1223 NV to L15
+2024-11-18 10:19:59,316 - INFO - Updating location for SKU: N1223 NV NEW to nan
+2024-11-18 10:19:59,469 - INFO - Updating location for SKU: N1223 OR to L15
+2024-11-18 10:19:59,485 - INFO - Updating location for SKU: N1223 OR NEW to nan
+2024-11-18 10:19:59,631 - INFO - Updating location for SKU: N1223 OW to L15
+2024-11-18 10:19:59,652 - INFO - Updating location for SKU: N1223 OW NEW to nan
+2024-11-18 10:19:59,806 - INFO - Updating location for SKU: N1223 PK to L15
+2024-11-18 10:19:59,825 - INFO - Updating location for SKU: N1223 PK NEW to nan
+2024-11-18 10:19:59,971 - INFO - Updating location for SKU: N1223 PL to L15
+2024-11-18 10:19:59,991 - INFO - Updating location for SKU: N1223 PL NEW to nan
+2024-11-18 10:20:00,134 - INFO - Updating location for SKU: N1223 RD to L15
+2024-11-18 10:20:00,151 - INFO - Updating location for SKU: N1223 RD NEW to nan
+2024-11-18 10:20:00,299 - INFO - Updating location for SKU: N1223 RG to L15
+2024-11-18 10:20:00,315 - INFO - Updating location for SKU: N1223 RG NEW to nan
+2024-11-18 10:20:00,464 - INFO - Updating location for SKU: N1223 SG to L15
+2024-11-18 10:20:00,483 - INFO - Updating location for SKU: N1223 SG NEW to nan
+2024-11-18 10:20:00,630 - INFO - Updating location for SKU: N1223 ST to L15
+2024-11-18 10:20:00,648 - INFO - Updating location for SKU: N1223 ST NEW to nan
+2024-11-18 10:20:00,787 - INFO - Updating location for SKU: N1223 TN to L15
+2024-11-18 10:20:00,807 - INFO - Updating location for SKU: N1223 TP to L15
+2024-11-18 10:20:00,827 - INFO - Updating location for SKU: N1223 WT to L15
+2024-11-18 10:20:00,847 - INFO - Updating location for SKU: N1223 YL to L15
+2024-11-18 10:20:00,867 - INFO - Updating location for SKU: N1282 GY to nan
+2024-11-18 10:20:00,887 - INFO - Updating location for SKU: N1296 LV to L15
+2024-11-18 10:20:00,902 - INFO - Updating location for SKU: N1298 BG to WALL2
+2024-11-18 10:20:00,922 - INFO - Updating location for SKU: N1298 BK to WALL2
+2024-11-18 10:20:00,937 - INFO - Updating location for SKU: N1298 BR to WALL2
+2024-11-18 10:20:00,957 - INFO - Updating location for SKU: N1298 GY to WALL2
+2024-11-18 10:20:00,972 - INFO - Updating location for SKU: N1298 LV to WALL2
+2024-11-18 10:20:00,992 - INFO - Updating location for SKU: N1422 BK to L12C
+2024-11-18 10:20:01,007 - INFO - Updating location for SKU: N1422 BR to L12C
+2024-11-18 10:20:01,027 - INFO - Updating location for SKU: N1422 GY to L12C
+2024-11-18 10:20:01,042 - INFO - Updating location for SKU: N1422 PK to L12C, 823 B1-15
+2024-11-18 10:20:01,067 - INFO - Updating location for SKU: N1422 TN to L12C
+2024-11-18 10:20:01,087 - INFO - Updating location for SKU: N1422 WT to 823 B1-15
+2024-11-18 10:20:01,107 - INFO - Updating location for SKU: N1432 DM to L15
+2024-11-18 10:20:01,127 - INFO - Updating location for SKU: N1432 RD to L15
+2024-11-18 10:20:01,147 - INFO - Updating location for SKU: N1432 SG to L15
+2024-11-18 10:20:01,167 - INFO - Updating location for SKU: N1460 BR to L15
+2024-11-18 10:20:01,182 - INFO - Updating location for SKU: N1464 BK to L12C
+2024-11-18 10:20:01,202 - INFO - Updating location for SKU: N1464 BR to L12C
+2024-11-18 10:20:01,217 - INFO - Updating location for SKU: N1507 BP to L15
+2024-11-18 10:20:01,237 - INFO - Updating location for SKU: N1507 RD to L15
+2024-11-18 10:20:01,252 - INFO - Updating location for SKU: N1538 BK to WALL2
+2024-11-18 10:20:01,274 - INFO - Updating location for SKU: N1547 BK to L12C (823D1-19)
+2024-11-18 10:20:01,318 - INFO - Updating location for SKU: N1547 BR to L12C(823D1-19)
+2024-11-18 10:20:01,341 - INFO - Updating location for SKU: N1547 CF to L12C (823D1-19)
+2024-11-18 10:20:01,361 - INFO - Updating location for SKU: N1547 GY to L12C
+2024-11-18 10:20:01,381 - INFO - Updating location for SKU: N1547 NV to L12C(823D1-19)
+2024-11-18 10:20:01,401 - INFO - Updating location for SKU: N1553 LV RD SG to L15
+2024-11-18 10:20:01,571 - INFO - Updating location for SKU: N1571 BK to L15
+2024-11-18 10:20:01,586 - INFO - Updating location for SKU: N1616 PK to L15
+2024-11-18 10:20:01,606 - INFO - Updating location for SKU: N1616 WT to L15
+2024-11-18 10:20:01,626 - INFO - Updating location for SKU: N1632 RB to WALL1
+2024-11-18 10:20:01,651 - INFO - Updating location for SKU: N1655 SG to WALL2
+2024-11-18 10:20:01,671 - INFO - Updating location for SKU: N1745 BK to L12D
+2024-11-18 10:20:01,691 - INFO - Updating location for SKU: N1745 BL to L12D
+2024-11-18 10:20:01,709 - INFO - Updating location for SKU: N1745 BR to L12D
+2024-11-18 10:20:01,727 - INFO - Updating location for SKU: N1745 GN to L12D
+2024-11-18 10:20:01,746 - INFO - Updating location for SKU: N1745 PK to L12D
+2024-11-18 10:20:01,766 - INFO - Updating location for SKU: N1745 WT to nan
+2024-11-18 10:20:01,786 - INFO - Updating location for SKU: N1751 BR to WALL2
+2024-11-18 10:20:01,806 - INFO - Updating location for SKU: N1775 PK to L15
+2024-11-18 10:20:01,823 - INFO - Updating location for SKU: N1782 BK to L11F
+2024-11-18 10:20:01,876 - INFO - Updating location for SKU: N1782 BR to L11F
+2024-11-18 10:20:01,893 - INFO - Updating location for SKU: N1782 DM to L11F -2 LEFT
+2024-11-18 10:20:01,921 - INFO - Updating location for SKU: N1782 PK to L11F
+2024-11-18 10:20:01,941 - INFO - Updating location for SKU: N1782 TN to L11F
+2024-11-18 10:20:01,960 - INFO - Updating location for SKU: N1782 WT to L11F
+2024-11-18 10:20:01,979 - INFO - Updating location for SKU: N1798 to 823 T7B-Mid
+2024-11-18 10:20:02,146 - INFO - Updating location for SKU: N1806 to L10-A TOP
+2024-11-18 10:20:02,305 - INFO - Updating location for SKU: N1811 BK to L12C
+2024-11-18 10:20:02,323 - INFO - Updating location for SKU: N1811 TP to L12C
+2024-11-18 10:20:02,338 - INFO - Updating location for SKU: N1811 WT to L12C
+2024-11-18 10:20:02,358 - INFO - Updating location for SKU: N1812 BK to L15
+2024-11-18 10:20:02,388 - INFO - Updating location for SKU: N1812 TN to L15
+2024-11-18 10:20:02,403 - INFO - Updating location for SKU: N1814 BK to L12C
+2024-11-18 10:20:02,423 - INFO - Updating location for SKU: N1814 BR to L12C
+2024-11-18 10:20:02,443 - INFO - Updating location for SKU: N1814 GY to L12C
+2024-11-18 10:20:02,463 - INFO - Updating location for SKU: N1814 OL to L12C
+2024-11-18 10:20:02,483 - INFO - Updating location for SKU: N1814 ST to L12C
+2024-11-18 10:20:02,503 - INFO - Updating location for SKU: N1814 TN to L12C
+2024-11-18 10:20:02,518 - INFO - Updating location for SKU: N1819 to L8-F
+2024-11-18 10:20:02,681 - INFO - Updating location for SKU: N1819 WT to L8-F ( one on shelf )
+2024-11-18 10:20:02,694 - ERROR - Error updating SKU N1819 WT: ('22001', '[22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]String or binary data would be truncated. (8152) (SQLExecDirectW); [22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2024-11-18 10:20:02,694 - INFO - Updating location for SKU: N1835 BK to L12C
+2024-11-18 10:20:02,712 - INFO - Updating location for SKU: N1835 LV to L12C
+2024-11-18 10:20:02,729 - INFO - Updating location for SKU: N1835 PK to L12C
+2024-11-18 10:20:02,744 - INFO - Updating location for SKU: N1835 TN to L12C
+2024-11-18 10:20:02,765 - INFO - Updating location for SKU: N1835 WT to L12C
+2024-11-18 10:20:02,783 - INFO - Updating location for SKU: N1842 BK to nan
+2024-11-18 10:20:02,801 - INFO - Updating location for SKU: N1842 BR to L12E
+2024-11-18 10:20:02,818 - INFO - Updating location for SKU: N1842 DM to nan
+2024-11-18 10:20:02,834 - INFO - Updating location for SKU: N1842 TN to L12E
+2024-11-18 10:20:02,849 - INFO - Updating location for SKU: N1842 WT to L12E
+2024-11-18 10:20:02,871 - INFO - Updating location for SKU: N1842 YL to L12E
+2024-11-18 10:20:02,889 - INFO - Updating location for SKU: N1851 BK to L12F
+2024-11-18 10:20:02,906 - INFO - Updating location for SKU: N1851 BR to L12F
+2024-11-18 10:20:02,920 - INFO - Updating location for SKU: N1851 PK to L12F
+2024-11-18 10:20:02,942 - INFO - Updating location for SKU: N1851 TN to L12F
+2024-11-18 10:20:02,957 - INFO - Updating location for SKU: N1851 WT to L12F
+2024-11-18 10:20:02,977 - INFO - Updating location for SKU: N1853 BK to L15
+2024-11-18 10:20:02,995 - INFO - Updating location for SKU: N1853 WT to L15
+2024-11-18 10:20:03,012 - INFO - Updating location for SKU: N1866 BK to L9-END
+2024-11-18 10:20:03,033 - INFO - Updating location for SKU: N1866 GY to L9-END
+2024-11-18 10:20:03,051 - INFO - Updating location for SKU: N1866 LV to L9-END
+2024-11-18 10:20:03,069 - INFO - Updating location for SKU: N1866 TN to L9-END
+2024-11-18 10:20:03,086 - INFO - Updating location for SKU: N1866 WT to L9-END
+2024-11-18 10:20:03,104 - INFO - Updating location for SKU: N1914 BK to L12-L
+2024-11-18 10:20:03,130 - INFO - Updating location for SKU: N1914 BR to L12-L
+2024-11-18 10:20:03,148 - INFO - Updating location for SKU: N1914 GY to L12-L
+2024-11-18 10:20:03,168 - INFO - Updating location for SKU: N1914 LV to L12-L
+2024-11-18 10:20:03,183 - INFO - Updating location for SKU: N1914 ST to L12-L
+2024-11-18 10:20:03,207 - INFO - Updating location for SKU: N1914 TN to L12-L
+2024-11-18 10:20:03,228 - INFO - Updating location for SKU: N1955 to L11-E
+2024-11-18 10:20:03,395 - INFO - Updating location for SKU: N1962 to 823(f1-14 mid)
+2024-11-18 10:20:03,550 - INFO - Updating location for SKU: N1963 GN to 823 (E1-9 BOT) E1-7 MID
+2024-11-18 10:20:03,565 - ERROR - Error updating SKU N1963 GN: ('22001', '[22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]String or binary data would be truncated. (8152) (SQLExecDirectW); [22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2024-11-18 10:20:03,565 - INFO - Updating location for SKU: N1963 NV to 823 (E1-9 BOT) E1-7 MID
+2024-11-18 10:20:03,575 - ERROR - Error updating SKU N1963 NV: ('22001', '[22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]String or binary data would be truncated. (8152) (SQLExecDirectW); [22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2024-11-18 10:20:03,575 - INFO - Updating location for SKU: N1963 WN to 823 (E1-9 BOT) E1-7 MID
+2024-11-18 10:20:03,580 - ERROR - Error updating SKU N1963 WN: ('22001', '[22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]String or binary data would be truncated. (8152) (SQLExecDirectW); [22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2024-11-18 10:20:03,580 - INFO - Updating location for SKU: N1967 GN to L15
+2024-11-18 10:20:03,600 - INFO - Updating location for SKU: N1967 NV to L15
+2024-11-18 10:20:03,615 - INFO - Updating location for SKU: N1967 ST to L15
+2024-11-18 10:20:03,635 - INFO - Updating location for SKU: N1971 BK to L12H
+2024-11-18 10:20:03,655 - INFO - Updating location for SKU: N1971 SG to L12H
+2024-11-18 10:20:03,675 - INFO - Updating location for SKU: N1971 TL to L12H
+2024-11-18 10:20:03,695 - INFO - Updating location for SKU: N1971 TN to L12H
+2024-11-18 10:20:03,715 - INFO - Updating location for SKU: N1971 WT to L12H
+2024-11-18 10:20:03,735 - INFO - Updating location for SKU: N1972 BK to L11G
+2024-11-18 10:20:03,755 - INFO - Updating location for SKU: N1972 SG to L11G
+2024-11-18 10:20:03,775 - INFO - Updating location for SKU: N1972 TN to L11G
+2024-11-18 10:20:03,795 - INFO - Updating location for SKU: N1972 WT to L11G
+2024-11-18 10:20:03,815 - INFO - Updating location for SKU: N1978 BK to L11G
+2024-11-18 10:20:03,835 - INFO - Updating location for SKU: N1978 BR to L11G
+2024-11-18 10:20:03,850 - INFO - Updating location for SKU: N1978 NV to L11G
+2024-11-18 10:20:03,870 - INFO - Updating location for SKU: N1978 OL to L11G, LAST FEW PC
+2024-11-18 10:20:03,900 - INFO - Updating location for SKU: N1978 TP to L11G
+2024-11-18 10:20:03,920 - INFO - Updating location for SKU: N1978 WN to L11G
+2024-11-18 10:20:03,935 - INFO - Updating location for SKU: N1979 BK to L12C
+2024-11-18 10:20:03,955 - INFO - Updating location for SKU: N1979 BR to L12C
+2024-11-18 10:20:03,970 - INFO - Updating location for SKU: N1979 NV to L12C
+2024-11-18 10:20:03,987 - INFO - Updating location for SKU: N1979 TP to L12C
+2024-11-18 10:20:04,007 - INFO - Updating location for SKU: N1979 WN to L12C
+2024-11-18 10:20:04,022 - INFO - Updating location for SKU: N2013 BK to L14C
+2024-11-18 10:20:04,042 - INFO - Updating location for SKU: N2013 GY to L14C
+2024-11-18 10:20:04,057 - INFO - Updating location for SKU: N2013 NV to L14C
+2024-11-18 10:20:04,077 - INFO - Updating location for SKU: N2013 OL to L14C
+2024-11-18 10:20:04,092 - INFO - Updating location for SKU: N2013 TP to nan
+2024-11-18 10:20:04,112 - INFO - Updating location for SKU: N2013 WN to L14C
+2024-11-18 10:20:04,127 - INFO - Updating location for SKU: N2036 BK to 823 D1-17
+2024-11-18 10:20:04,147 - INFO - Updating location for SKU: N2036 CF to 823 D1-17
+2024-11-18 10:20:04,162 - INFO - Updating location for SKU: N2036 NV to 823 D1-17
+2024-11-18 10:20:04,184 - INFO - Updating location for SKU: N2036 OL to 823 D1-17
+2024-11-18 10:20:04,202 - INFO - Updating location for SKU: N2036 WN to 823 D1-17
+2024-11-18 10:20:04,219 - INFO - Updating location for SKU: N2071 BK to L12C
+2024-11-18 10:20:04,238 - INFO - Updating location for SKU: N2071 BR to L12C
+2024-11-18 10:20:04,251 - INFO - Updating location for SKU: N2071 OL to L12C
+2024-11-18 10:20:04,271 - INFO - Updating location for SKU: N2071 TN to L12C
+2024-11-18 10:20:04,287 - INFO - Updating location for SKU: N2071 WN to L12C
+2024-11-18 10:20:04,307 - INFO - Updating location for SKU: N2087 BK to L11G ,L14F
+2024-11-18 10:20:04,327 - INFO - Updating location for SKU: N2087 GN to L11G
+2024-11-18 10:20:04,348 - INFO - Updating location for SKU: N2087 GY to L11G ,L14F
+2024-11-18 10:20:04,367 - INFO - Updating location for SKU: N2087 PK to L11G,L14F
+2024-11-18 10:20:04,382 - INFO - Updating location for SKU: N2087 TN to L11G ,L14F
+2024-11-18 10:20:04,403 - INFO - Updating location for SKU: N2087 WT to L11G ,L14F
+2024-11-18 10:20:04,420 - INFO - Updating location for SKU: N2088 BG to 823 T-6
+2024-11-18 10:20:04,456 - INFO - Updating location for SKU: N2088 BK to nan
+2024-11-18 10:20:04,477 - INFO - Updating location for SKU: N2088 BR to nan
+2024-11-18 10:20:04,498 - INFO - Updating location for SKU: N2088 GN to nan
+2024-11-18 10:20:04,518 - INFO - Updating location for SKU: N2088 OR to nan
+2024-11-18 10:20:04,538 - INFO - Updating location for SKU: N2088 PK to nan
+2024-11-18 10:20:04,555 - INFO - Updating location for SKU: N2088 SL to nan
+2024-11-18 10:20:04,573 - INFO - Updating location for SKU: N2088 TN to nan
+2024-11-18 10:20:04,590 - INFO - Updating location for SKU: N2093 BK to L11G
+2024-11-18 10:20:04,605 - INFO - Updating location for SKU: N2093 GN to L11G
+2024-11-18 10:20:04,626 - INFO - Updating location for SKU: N2093 GY to L11G
+2024-11-18 10:20:04,643 - INFO - Updating location for SKU: N2093 PK to L11G
+2024-11-18 10:20:04,661 - INFO - Updating location for SKU: N2093 TN to L11G
+2024-11-18 10:20:04,678 - INFO - Updating location for SKU: N2093 WT to L11G
+2024-11-18 10:20:04,696 - INFO - Updating location for SKU: N2100 BK to L11-I
+2024-11-18 10:20:04,711 - INFO - Updating location for SKU: N2100 BL to L11-I
+2024-11-18 10:20:04,731 - INFO - Updating location for SKU: N2100 GN to L11-I
+2024-11-18 10:20:04,749 - INFO - Updating location for SKU: N2100 PK to L11-I
+2024-11-18 10:20:04,767 - INFO - Updating location for SKU: N2100 TN to L11-I
+2024-11-18 10:20:04,784 - INFO - Updating location for SKU: N2100 WT to L11-I
+2024-11-18 10:20:04,802 - INFO - Updating location for SKU: N2102 BK to L11-I
+2024-11-18 10:20:04,817 - INFO - Updating location for SKU: N2102 BL to L11-I
+2024-11-18 10:20:04,837 - INFO - Updating location for SKU: N2102 GN to L11-I
+2024-11-18 10:20:04,854 - INFO - Updating location for SKU: N2102 PK to L11-I
+2024-11-18 10:20:04,873 - INFO - Updating location for SKU: N2102 TN to L11-I
+2024-11-18 10:20:04,890 - INFO - Updating location for SKU: N2102 WT to L11-I
+2024-11-18 10:20:04,908 - INFO - Updating location for SKU: N2136 BK to L12D
+2024-11-18 10:20:04,921 - INFO - Updating location for SKU: N2136 SG to L12D
+2024-11-18 10:20:04,943 - INFO - Updating location for SKU: N2136 TL to L12D
+2024-11-18 10:20:04,959 - INFO - Updating location for SKU: N2136 TN to L12D
+2024-11-18 10:20:04,978 - INFO - Updating location for SKU: N2136 TP to L12D
+2024-11-18 10:20:04,993 - INFO - Updating location for SKU: N2141 to L9-End
+2024-11-18 10:20:05,158 - INFO - Updating location for SKU: N2149 to L20
+2024-11-18 10:20:05,313 - INFO - Updating location for SKU: N2149 BG to nan
+2024-11-18 10:20:05,328 - INFO - Updating location for SKU: N2149 BK to nan
+2024-11-18 10:20:05,348 - INFO - Updating location for SKU: N2149 BR to nan
+2024-11-18 10:20:05,368 - INFO - Updating location for SKU: N2149 TN to nan
+2024-11-18 10:20:05,385 - INFO - Updating location for SKU: N2152 BK to L20-RETURN BOX 32 BK
+2024-11-18 10:20:05,409 - INFO - Updating location for SKU: N2191 to L14
+2024-11-18 10:20:05,559 - INFO - Updating location for SKU: N2191 BK to L14-C
+2024-11-18 10:20:05,577 - INFO - Updating location for SKU: N2191 BR to L14-C
+2024-11-18 10:20:05,595 - INFO - Updating location for SKU: N2191 GY to L14-C
+2024-11-18 10:20:05,613 - INFO - Updating location for SKU: N2191 SG to L14-C
+2024-11-18 10:20:05,631 - INFO - Updating location for SKU: N2191 TN to nan
+2024-11-18 10:20:05,649 - INFO - Updating location for SKU: N2191 WT to L14-C
+2024-11-18 10:20:05,666 - INFO - Updating location for SKU: N2222 BK to nan
+2024-11-18 10:20:05,681 - INFO - Updating location for SKU: N2222 BL to nan
+2024-11-18 10:20:05,703 - INFO - Updating location for SKU: N2222 GN to nan
+2024-11-18 10:20:05,723 - INFO - Updating location for SKU: N2222 GY to nan
+2024-11-18 10:20:05,743 - INFO - Updating location for SKU: N2222 TN to nan
+2024-11-18 10:20:05,763 - INFO - Updating location for SKU: N2227 BK to L6-K Mid
+2024-11-18 10:20:05,781 - INFO - Updating location for SKU: N2227 GN to L6-K Mid
+2024-11-18 10:20:05,802 - INFO - Updating location for SKU: N2229 BK to GG
+2024-11-18 10:20:05,823 - INFO - Updating location for SKU: N2229 CF to GG
+2024-11-18 10:20:05,857 - INFO - Updating location for SKU: N3007 BK to 823 T-6
+2024-11-18 10:20:05,877 - INFO - Updating location for SKU: N3007 BR to 823 T-6
+2024-11-18 10:20:05,896 - INFO - Updating location for SKU: N3007 PK to 823 T-6
+2024-11-18 10:20:05,917 - INFO - Updating location for SKU: N3007 TN to L15
+2024-11-18 10:20:05,937 - INFO - Updating location for SKU: S1005 YL to WALL2
+2024-11-18 10:20:05,952 - INFO - Updating location for SKU: S1015 BK to L15(823D1-19)
+2024-11-18 10:20:05,992 - INFO - Updating location for SKU: S1015 PK to L15
+2024-11-18 10:20:06,012 - INFO - Updating location for SKU: S1017 RD to L15
+2024-11-18 10:20:06,028 - INFO - Updating location for SKU: S1017 TN to L15
+2024-11-18 10:20:06,051 - INFO - Updating location for SKU: S1034 SG to L15
+2024-11-18 10:20:06,071 - INFO - Updating location for SKU: S1042 BK to L13A
+2024-11-18 10:20:06,089 - INFO - Updating location for SKU: S1042 LV to L13A
+2024-11-18 10:20:06,107 - INFO - Updating location for SKU: S1042 PK to L13A
+2024-11-18 10:20:06,123 - INFO - Updating location for SKU: S1042 WT to L13A
+2024-11-18 10:20:06,146 - INFO - Updating location for SKU: S1044 BK to L15
+2024-11-18 10:20:06,166 - INFO - Updating location for SKU: S1045 BK to WALL2
+2024-11-18 10:20:06,185 - INFO - Updating location for SKU: S1045 CO to WALL2
+2024-11-18 10:20:06,200 - INFO - Updating location for SKU: S1045 LV to WALL2
+2024-11-18 10:20:06,220 - INFO - Updating location for SKU: S1045 PK to WALL2
+2024-11-18 10:20:06,240 - INFO - Updating location for SKU: S1045 WT to WALL2
+2024-11-18 10:20:06,260 - INFO - Updating location for SKU: S1045 YL to WALL2
+2024-11-18 10:20:06,280 - INFO - Updating location for SKU: S1057 BK to WALL2
+2024-11-18 10:20:06,300 - INFO - Updating location for SKU: S1057 PK to WALL2
+2024-11-18 10:20:06,320 - INFO - Updating location for SKU: S1058 TP to L13A
+2024-11-18 10:20:06,342 - INFO - Updating location for SKU: S1058 WT to L13A
+2024-11-18 10:20:06,452 - INFO - Updating location for SKU: S1074G BK to nan
+2024-11-18 10:20:06,592 - INFO - Updating location for SKU: S1074G TP to WALL2
+2024-11-18 10:20:06,727 - INFO - Updating location for SKU: S1094 BK to L15
+2024-11-18 10:20:06,747 - INFO - Updating location for SKU: S1094 LV to L15
+2024-11-18 10:20:06,767 - INFO - Updating location for SKU: S1094 TN to WALL2
+2024-11-18 10:20:06,782 - INFO - Updating location for SKU: S1108 WT to WALL2
+2024-11-18 10:20:06,802 - INFO - Updating location for SKU: S1110 BK to L15
+2024-11-18 10:20:06,822 - INFO - Updating location for SKU: S1110 GY to L15
+2024-11-18 10:20:06,842 - INFO - Updating location for SKU: S1110 RD to L15
+2024-11-18 10:20:06,862 - INFO - Updating location for SKU: S1110 SG to L15
+2024-11-18 10:20:06,882 - INFO - Updating location for SKU: S1110 ST to L15
+2024-11-18 10:20:06,897 - INFO - Updating location for SKU: S1110 YL to nan
+2024-11-18 10:20:06,917 - INFO - Updating location for SKU: S1112 BK to WALL2
+2024-11-18 10:20:06,932 - INFO - Updating location for SKU: S1112 GY to 823 D1-14
+2024-11-18 10:20:06,952 - INFO - Updating location for SKU: S1112 RD to 823 D1-14
+2024-11-18 10:20:06,967 - INFO - Updating location for SKU: S1112 SG to nan
+2024-11-18 10:20:06,987 - INFO - Updating location for SKU: S1112 YL to nan
+2024-11-18 10:20:07,002 - INFO - Updating location for SKU: S1113 GY to L15
+2024-11-18 10:20:07,023 - INFO - Updating location for SKU: S1113 RD to L15
+2024-11-18 10:20:07,039 - INFO - Updating location for SKU: S1113 ST to L15
+2024-11-18 10:20:07,059 - INFO - Updating location for SKU: S1121 PP to OUT
+2024-11-18 10:20:07,085 - INFO - Updating location for SKU: S1146 to L12-I
+2024-11-18 10:20:07,244 - INFO - Updating location for SKU: S1146 BK to L12-G MID
+2024-11-18 10:20:07,262 - INFO - Updating location for SKU: S1146 BR to L12-G MID
+2024-11-18 10:20:07,279 - INFO - Updating location for SKU: s1186 to 823(F1-21,E1-3 Top)
+2024-11-18 10:20:07,449 - INFO - Updating location for SKU: S1206 BK to L12-G
+2024-11-18 10:20:07,469 - INFO - Updating location for SKU: S1206 TN to L12-G
+2024-11-18 10:20:07,489 - INFO - Updating location for SKU: S1206 TP to L12-G
+2024-11-18 10:20:07,509 - INFO - Updating location for SKU: S1209 BK to L12A-MID
+2024-11-18 10:20:07,529 - INFO - Updating location for SKU: S1209 TN to L11A
+2024-11-18 10:20:07,548 - INFO - Updating location for SKU: S1209 TP to L12C UP
+2024-11-18 10:20:07,566 - INFO - Updating location for SKU: S1209 WT to nan
+2024-11-18 10:20:07,583 - INFO - Updating location for SKU: S1211 BK to L9-F
+2024-11-18 10:20:07,598 - INFO - Updating location for SKU: S1211 BR to L9-F
+2024-11-18 10:20:07,618 - INFO - Updating location for SKU: S1211 GY to L9-F
+2024-11-18 10:20:07,636 - INFO - Updating location for SKU: S1211 ST to L9-F
+2024-11-18 10:20:07,797 - INFO - Updating location for SKU: S1211 WT to L9-F
+2024-11-18 10:20:07,816 - INFO - Updating location for SKU: S1212 BK to T-5 UP
+2024-11-18 10:20:07,837 - INFO - Updating location for SKU: S1212 ST to L11C
+2024-11-18 10:20:07,853 - INFO - Updating location for SKU: S1212 TN to nan
+2024-11-18 10:20:07,876 - INFO - Updating location for SKU: S1212 WT to L11C~D
+2024-11-18 10:20:07,895 - INFO - Updating location for SKU: S1220 to L-20 TOP
+2024-11-18 10:20:08,058 - INFO - Updating location for SKU: S1225 BK to L11G
+2024-11-18 10:20:08,073 - INFO - Updating location for SKU: S1225 DM to L11H
+2024-11-18 10:20:08,093 - INFO - Updating location for SKU: S1225 LV to L11H
+2024-11-18 10:20:08,108 - INFO - Updating location for SKU: S1225 TN to L11G
+2024-11-18 10:20:08,128 - INFO - Updating location for SKU: S1225 WT to L11G
+2024-11-18 10:20:08,148 - INFO - Updating location for SKU: S1240 BK to L18D
+2024-11-18 10:20:08,163 - INFO - Updating location for SKU: S1240 BR to L18D
+2024-11-18 10:20:08,183 - INFO - Updating location for SKU: S1245 BK to nan
+2024-11-18 10:20:08,198 - INFO - Updating location for SKU: S1245 BR to nan
+2024-11-18 10:20:08,218 - INFO - Updating location for SKU: S1245 DM to nan
+2024-11-18 10:20:08,233 - INFO - Updating location for SKU: S1245 ST to nan
+2024-11-18 10:20:08,254 - INFO - Updating location for SKU: S1245 WT to nan
+2024-11-18 10:20:08,269 - INFO - Updating location for SKU: S1287 to L7C-Mid
+2024-11-18 10:20:08,418 - INFO - Updating location for SKU: S1290 BR to nan
+2024-11-18 10:20:08,438 - INFO - Updating location for SKU: S1290 WT to OUT
+2024-11-18 10:20:08,458 - INFO - Updating location for SKU: S1291 BK to nan
+2024-11-18 10:20:08,478 - INFO - Updating location for SKU: S1291 BR to nan
+2024-11-18 10:20:08,498 - INFO - Updating location for SKU: S1291 GY to nan
+2024-11-18 10:20:08,518 - INFO - Updating location for SKU: S1291 TP to nan
+2024-11-18 10:20:08,537 - INFO - Updating location for SKU: S1291 WT to nan
+2024-11-18 10:20:08,554 - INFO - Updating location for SKU: S1293 to L9-G MID
+2024-11-18 10:20:08,702 - INFO - Updating location for SKU: S1302 BK to OUT
+2024-11-18 10:20:08,720 - INFO - Updating location for SKU: S1306 BK to L13A
+2024-11-18 10:20:08,733 - INFO - Updating location for SKU: S1306 BR to L13A
+2024-11-18 10:20:08,755 - INFO - Updating location for SKU: S1306 PK to L13A
+2024-11-18 10:20:08,772 - INFO - Updating location for SKU: S1306 RD to L18
+2024-11-18 10:20:08,790 - INFO - Updating location for SKU: S1306 ST to L13A
+2024-11-18 10:20:08,808 - INFO - Updating location for SKU: S1306 WT to L13A
+2024-11-18 10:20:08,825 - INFO - Updating location for SKU: S1327 BG to L7D
+2024-11-18 10:20:08,843 - INFO - Updating location for SKU: S1327 BK to L7D
+2024-11-18 10:20:08,860 - INFO - Updating location for SKU: S1327 BR to L7D
+2024-11-18 10:20:08,878 - INFO - Updating location for SKU: S1327 GY to L7D
+2024-11-18 10:20:08,897 - INFO - Updating location for SKU: S1327 PK to L7D
+2024-11-18 10:20:08,916 - INFO - Updating location for SKU: S1327 RD to nan
+2024-11-18 10:20:08,936 - INFO - Updating location for SKU: S1327 YL to L7D
+2024-11-18 10:20:08,956 - INFO - Updating location for SKU: S1405 BK to L10D
+2024-11-18 10:20:08,976 - INFO - Updating location for SKU: S1405 GN to L10D
+2024-11-18 10:20:08,991 - INFO - Updating location for SKU: S1405 MV to L15
+2024-11-18 10:20:09,011 - INFO - Updating location for SKU: S1405 NV to L15
+2024-11-18 10:20:09,031 - INFO - Updating location for SKU: S1405 ST to nan
+2024-11-18 10:20:09,046 - INFO - Updating location for SKU: S1405 TN to nan
+2024-11-18 10:20:09,066 - INFO - Updating location for SKU: S1408 BK to nan
+2024-11-18 10:20:09,086 - INFO - Updating location for SKU: S1408 BR to nan
+2024-11-18 10:20:09,106 - INFO - Updating location for SKU: S1408 MV to nan
+2024-11-18 10:20:09,126 - INFO - Updating location for SKU: S1408 NV to nan
+2024-11-18 10:20:09,146 - INFO - Updating location for SKU: S1408 OL to nan
+2024-11-18 10:20:09,166 - INFO - Updating location for SKU: S1408 TP to nan
+2024-11-18 10:20:09,186 - INFO - Updating location for SKU: S1409 BK to nan
+2024-11-18 10:20:09,208 - INFO - Updating location for SKU: S1409 BR to nan
+2024-11-18 10:20:09,228 - INFO - Updating location for SKU: S1409 MV to nan
+2024-11-18 10:20:09,247 - INFO - Updating location for SKU: S1409 NV to nan
+2024-11-18 10:20:09,265 - INFO - Updating location for SKU: S1409 OL to nan
+2024-11-18 10:20:09,283 - INFO - Updating location for SKU: S1409 TP to L15
+2024-11-18 10:20:09,298 - INFO - Updating location for SKU: S1410 BK to nan
+2024-11-18 10:20:09,318 - INFO - Updating location for SKU: S1410 BR to nan
+2024-11-18 10:20:09,336 - INFO - Updating location for SKU: S1410 MV to nan
+2024-11-18 10:20:09,354 - INFO - Updating location for SKU: S1410 NV to nan
+2024-11-18 10:20:09,372 - INFO - Updating location for SKU: S1410 OL to nan
+2024-11-18 10:20:09,390 - INFO - Updating location for SKU: S1410 TP to nan
+2024-11-18 10:20:09,406 - INFO - Updating location for SKU: S1412 BK to L11BACK
+2024-11-18 10:20:09,425 - INFO - Updating location for SKU: S1412 BR to L11BACK
+2024-11-18 10:20:09,443 - INFO - Updating location for SKU: S1412 GN to nan
+2024-11-18 10:20:09,461 - INFO - Updating location for SKU: S1412 MV to L11BACK
+2024-11-18 10:20:09,481 - INFO - Updating location for SKU: S1412 NV to L11E
+2024-11-18 10:20:09,501 - INFO - Updating location for SKU: S1412 ST to L11BACK
+2024-11-18 10:20:09,581 - INFO - Updating location for SKU: S1424 OW to nan
+2024-11-18 10:20:09,601 - INFO - Updating location for SKU: S1426 BK to L15
+2024-11-18 10:20:09,621 - INFO - Updating location for SKU: S1426 BR to L15
+2024-11-18 10:20:09,641 - INFO - Updating location for SKU: S1426 GY to L15
+2024-11-18 10:20:09,656 - INFO - Updating location for SKU: S1426 OW to L15
+2024-11-18 10:20:09,677 - INFO - Updating location for SKU: S1426 TN to nan
+2024-11-18 10:20:09,692 - INFO - Updating location for SKU: S1428 BK to L12D
+2024-11-18 10:20:09,712 - INFO - Updating location for SKU: S1428 LV to L12D
+2024-11-18 10:20:09,727 - INFO - Updating location for SKU: S1428 NV to L12D ,L14F
+2024-11-18 10:20:09,747 - INFO - Updating location for SKU: S1428 PK to L12D
+2024-11-18 10:20:09,762 - INFO - Updating location for SKU: S1428 RD to L12D
+2024-11-18 10:20:09,782 - INFO - Updating location for SKU: S1431 to L15
+2024-11-18 10:20:09,931 - INFO - Updating location for SKU: S1431 BR to L7-D
+2024-11-18 10:20:09,946 - INFO - Updating location for SKU: S1431 CF to L15-A
+2024-11-18 10:20:09,968 - INFO - Updating location for SKU: S1431 GY to L7-D
+2024-11-18 10:20:09,985 - INFO - Updating location for SKU: S1431 OW to L15-A
+2024-11-18 10:20:10,004 - INFO - Updating location for SKU: S1431 TN to L7-D
+2024-11-18 10:20:10,023 - INFO - Updating location for SKU: S1460 BG to L11H
+2024-11-18 10:20:10,044 - INFO - Updating location for SKU: S1460 BK to L11H
+2024-11-18 10:20:10,063 - INFO - Updating location for SKU: S1460 BL to L11H
+2024-11-18 10:20:10,080 - INFO - Updating location for SKU: S1460 BR to L11H
+2024-11-18 10:20:10,101 - INFO - Updating location for SKU: S1460 OL to L11H
+2024-11-18 10:20:10,119 - INFO - Updating location for SKU: S1460 PK to nan
+2024-11-18 10:20:10,137 - INFO - Updating location for SKU: S1478 GY to nan
+2024-11-18 10:20:10,155 - INFO - Updating location for SKU: S1553 LV to L15
+2024-11-18 10:20:10,302 - INFO - Updating location for SKU: S1553 RD to L15
+2024-11-18 10:20:10,444 - INFO - Updating location for SKU: S1553 SG to L15
+2024-11-18 10:20:10,584 - INFO - Updating location for SKU: sku_value to location_value
+2024-11-18 10:20:10,740 - INFO - Updating location for SKU: T2522 GY to L15
+2024-11-18 10:20:10,759 - INFO - Updating location for SKU: T2653 PL to T-5
+2024-11-18 10:20:10,777 - INFO - Updating location for SKU: T2725 BR to WALL2
+2024-11-18 10:20:10,795 - INFO - Updating location for SKU: T2739 CF to L15
+2024-11-18 10:20:10,811 - INFO - Updating location for SKU: T2772 NV to WALL1
+2024-11-18 10:20:10,831 - INFO - Updating location for SKU: T2772 WN to WALL1
+2024-11-18 10:20:10,851 - INFO - Updating location for SKU: T2801 WT to WALL1
+2024-11-18 10:20:10,871 - INFO - Updating location for SKU: T2804 BK to SAMPLE
+2024-11-18 10:20:10,891 - INFO - Updating location for SKU: T2804 CF to L15
+2024-11-18 10:20:10,911 - INFO - Updating location for SKU: T2843 BK to L13A
+2024-11-18 10:20:10,926 - INFO - Updating location for SKU: T2874 WN to WALL1
+2024-11-18 10:20:10,946 - INFO - Updating location for SKU: T2886 ST to L15
+2024-11-18 10:20:10,961 - INFO - Updating location for SKU: T2887 RD to WALL1
+2024-11-18 10:20:10,981 - INFO - Updating location for SKU: T2890 BK to WALL2
+2024-11-18 10:20:10,996 - INFO - Updating location for SKU: T2890 GY to WALL2
+2024-11-18 10:20:11,016 - INFO - Updating location for SKU: T2890 ST to WALL2
+2024-11-18 10:20:11,031 - INFO - Updating location for SKU: T2899-SET CG to nan
+2024-11-18 10:20:11,056 - INFO - Updating location for SKU: T2899-SET RD to L15
+2024-11-18 10:20:11,076 - INFO - Updating location for SKU: T2902 RD to WALL1
+2024-11-18 10:20:11,216 - INFO - Updating location for SKU: T2902-SET BP to nan
+2024-11-18 10:20:11,236 - INFO - Updating location for SKU: T2902-SET RD to nan
+2024-11-18 10:20:11,256 - INFO - Updating location for SKU: T2907 GY to L13A
+2024-11-18 10:20:11,276 - INFO - Updating location for SKU: T2946 MV to WALL1
+2024-11-18 10:20:11,296 - INFO - Updating location for SKU: T2962 CF to L15
+2024-11-18 10:20:11,316 - INFO - Updating location for SKU: T2962 SL to nan
+2024-11-18 10:20:11,337 - INFO - Updating location for SKU: T2962 WN to OUT
+2024-11-18 10:20:11,354 - INFO - Updating location for SKU: T2966 BK to L13A
+2024-11-18 10:20:11,373 - INFO - Updating location for SKU: T2994 CG to L15
+2024-11-18 10:20:11,393 - INFO - Updating location for SKU: T3002 NV to L15
+2024-11-18 10:20:11,543 - INFO - Updating location for SKU: T3006 SG to WALL1
+2024-11-18 10:20:11,558 - INFO - Updating location for SKU: T3006 TN to WALL1
+2024-11-18 10:20:11,583 - INFO - Updating location for SKU: T3007 CG to WALL2
+2024-11-18 10:20:11,726 - INFO - Updating location for SKU: T3007 WN to WALL2
+2024-11-18 10:20:11,866 - INFO - Updating location for SKU: T3027 LV to L15
+2024-11-18 10:20:12,008 - INFO - Updating location for SKU: T3029 CO to L15
+2024-11-18 10:20:12,159 - INFO - Updating location for SKU: T3030 LV to L15(823D1-19)
+2024-11-18 10:20:12,320 - INFO - Updating location for SKU: T3095 BR to OUT
+2024-11-18 10:20:12,340 - INFO - Updating location for SKU: T3095 ST to OUT
+2024-11-18 10:20:12,360 - INFO - Updating location for SKU: T3095 WT to OUT
+2024-11-18 10:20:12,380 - INFO - Updating location for SKU: T3096 BK to L11J
+2024-11-18 10:20:12,400 - INFO - Updating location for SKU: T3096 BR to L11J
+2024-11-18 10:20:12,415 - INFO - Updating location for SKU: T3096 TN to L11J
+2024-11-18 10:20:12,435 - INFO - Updating location for SKU: T3109 BK to L12H-3 LEFT
+2024-11-18 10:20:12,455 - INFO - Updating location for SKU: T3109 SG to L12H
+2024-11-18 10:20:12,475 - INFO - Updating location for SKU: T3109 WT to L12H
+2024-11-18 10:20:12,490 - INFO - Updating location for SKU: T3112 DM to L15
+2024-11-18 10:20:12,510 - INFO - Updating location for SKU: T3116 BK to L12F
+2024-11-18 10:20:12,525 - INFO - Updating location for SKU: T3116 BR to L12F
+2024-11-18 10:20:12,545 - INFO - Updating location for SKU: T3116 GY to L12F
+2024-11-18 10:20:12,560 - INFO - Updating location for SKU: T3116 TN to OUT
+2024-11-18 10:20:12,581 - INFO - Updating location for SKU: T3117 BK to nan
+2024-11-18 10:20:12,599 - INFO - Updating location for SKU: T3117 BL to L4F
+2024-11-18 10:20:12,617 - INFO - Updating location for SKU: T3118 BK to L11-I
+2024-11-18 10:20:12,636 - INFO - Updating location for SKU: T3118 DM to L12H
+2024-11-18 10:20:12,653 - INFO - Updating location for SKU: T3118 GN to L11H
+2024-11-18 10:20:12,671 - INFO - Updating location for SKU: T3118 GY to L12H
+2024-11-18 10:20:12,689 - INFO - Updating location for SKU: T3118 ST to L11-I
+2024-11-18 10:20:12,707 - INFO - Updating location for SKU: T3118 WT to L11-I
+2024-11-18 10:20:12,725 - INFO - Updating location for SKU: T3129 BK to L12F
+2024-11-18 10:20:12,742 - INFO - Updating location for SKU: T3129 BR to L12F
+2024-11-18 10:20:12,760 - INFO - Updating location for SKU: T3129 GY to L12G
+2024-11-18 10:20:12,773 - INFO - Updating location for SKU: T3129 LV to L12F
+2024-11-18 10:20:12,795 - INFO - Updating location for SKU: T3129 ST to L12G
+2024-11-18 10:20:12,813 - INFO - Updating location for SKU: T3129 TN to L12G
+2024-11-18 10:20:12,831 - INFO - Updating location for SKU: T3131 BR to 823 TOP
+2024-11-18 10:20:12,849 - INFO - Updating location for SKU: T3132 BK to L11H (L3-G MID)
+2024-11-18 10:20:12,868 - INFO - Updating location for SKU: T3132 BR to L11H (L3-G MID)
+2024-11-18 10:20:12,888 - INFO - Updating location for SKU: T3132 DM to L11H (L3-G MID)
+2024-11-18 10:20:12,908 - INFO - Updating location for SKU: T3132 PK to L11H (L3-G MID)
+2024-11-18 10:20:12,928 - INFO - Updating location for SKU: T3132 TP to L11H (L3-G MID)
+2024-11-18 10:20:12,947 - INFO - Updating location for SKU: T3142 BK to L12E
+2024-11-18 10:20:12,963 - INFO - Updating location for SKU: T3142 BR to L12F
+2024-11-18 10:20:12,978 - INFO - Updating location for SKU: T3142 GY to L12F
+2024-11-18 10:20:13,000 - INFO - Updating location for SKU: T3142 TL to L12G
+2024-11-18 10:20:13,018 - INFO - Updating location for SKU: T3142 TN to L12F
+2024-11-18 10:20:13,035 - INFO - Updating location for SKU: T3172 BR to L12D
+2024-11-18 10:20:13,053 - INFO - Updating location for SKU: T3172 TN to nan
+2024-11-18 10:20:13,071 - INFO - Updating location for SKU: T3225 BK to L12C
+2024-11-18 10:20:13,088 - INFO - Updating location for SKU: T3225 BR to L12C,WALL1
+2024-11-18 10:20:13,106 - INFO - Updating location for SKU: T3225 OL to L12C
+2024-11-18 10:20:13,123 - INFO - Updating location for SKU: T3225 TN to L12C
+2024-11-18 10:20:13,141 - INFO - Updating location for SKU: T3225 WN to L12C
+2024-11-18 10:20:13,159 - INFO - Updating location for SKU: T3243 BK to L11J  ( L4-C UP)
+2024-11-18 10:20:13,176 - INFO - Updating location for SKU: T3243 GN to L11J  ( L4-C UP)
+2024-11-18 10:20:13,190 - INFO - Updating location for SKU: T3243 GY to L11J  ( L4-C UP)
+2024-11-18 10:20:13,212 - INFO - Updating location for SKU: T3243 PK to L11J  ( L4-C UP)
+2024-11-18 10:20:13,230 - INFO - Updating location for SKU: T3243 TN to L11J  ( L4-C UP)
+2024-11-18 10:20:13,247 - INFO - Updating location for SKU: T3243 WT to L11J  ( L4-C UP)
+2024-11-18 10:20:13,265 - INFO - Updating location for SKU: T3255 BK to L11J
+2024-11-18 10:20:13,283 - INFO - Updating location for SKU: T3255 BL to L11-I
+2024-11-18 10:20:13,296 - INFO - Updating location for SKU: T3255 GN to L11-I
+2024-11-18 10:20:13,316 - INFO - Updating location for SKU: T3255 PK to L11J
+2024-11-18 10:20:13,336 - INFO - Updating location for SKU: T3255 TN to L11-I
+2024-11-18 10:20:13,351 - INFO - Updating location for SKU: T3255 WT to L11J
+2024-11-18 10:20:13,368 - INFO - Updating location for SKU: T3279 BG to nan
+2024-11-18 10:20:13,388 - INFO - Updating location for SKU: T3279 BK to nan
+2024-11-18 10:20:13,407 - INFO - Updating location for SKU: T3279 BR to nan
+2024-11-18 10:20:13,425 - INFO - Updating location for SKU: T3280 BG to nan
+2024-11-18 10:20:13,441 - INFO - Updating location for SKU: T3280 BK to nan
+2024-11-18 10:20:13,460 - INFO - Updating location for SKU: T3280 BR to nan
+2024-11-18 10:20:13,484 - INFO - Updating location for SKU: T3280 TN to nan
+2024-11-18 10:20:13,504 - INFO - Updating location for SKU: T3305 BK to L5-B TOP, L5 END
+2024-11-18 10:20:13,523 - INFO - Updating location for SKU: T3305 BR to L5-B TOP, L5 END
+2024-11-18 10:20:13,542 - INFO - Updating location for SKU: T3305 GY to L5-B TOP, L5 END
+2024-11-18 10:20:13,560 - INFO - Updating location for SKU: T3305 NV to L5-B TOP, L5 END
+2024-11-18 10:20:13,578 - INFO - Updating location for SKU: T3305 PK to L5-B TOP, L5 END
+2024-11-18 10:20:13,593 - INFO - Updating location for SKU: T3305 SG to L5-B TOP, L5 END
+2024-11-18 10:20:13,613 - INFO - Updating location for SKU: T3305 TN to L5-B TOP, L5 END
+2024-11-18 10:20:13,628 - INFO - Updating location for SKU: T3305 WT to L5-B TOP, L5 END
+2024-11-18 10:20:13,648 - INFO - Updating location for SKU: EN1884 BR to L18-B MID
+2024-11-18 10:20:13,669 - INFO - Updating location for SKU: S1231 BK to L7c-top
+2024-11-18 10:20:13,689 - INFO - Updating location for SKU: N1868 BK to L9F-mid
+2024-11-18 10:20:13,709 - INFO - Updating location for SKU: N1868 CG to L9F-mid
+2024-11-18 10:20:13,729 - INFO - Updating location for SKU: N1868 GY to L9F-MID
+2024-11-18 10:20:13,744 - INFO - Updating location for SKU: N1868 LV to L9F-mid
+2024-11-18 10:20:13,764 - INFO - Updating location for SKU: N1868 TN to L9F-mid
+2024-11-18 10:20:13,779 - INFO - Updating location for SKU: N1868 WT to L9F-MID
+2024-11-18 10:20:13,799 - INFO - Updating location for SKU: ET2408-SET WN to wall2 one case
+2024-11-18 10:20:13,824 - INFO - Updating location for SKU: S1505 BK to L11L-TOP
+2024-11-18 10:20:13,839 - INFO - Updating location for SKU: S1505 ST to L11L-TOP
+2024-11-18 10:20:13,859 - INFO - Updating location for SKU: S1505 MV to L11L-TOP
+2024-11-18 10:20:13,879 - INFO - Updating location for SKU: S1505 WN to L11L-TOP
+2024-11-18 10:20:13,899 - INFO - Updating location for SKU: S1505 OL to L11L-TOP
+2024-11-18 10:20:13,919 - INFO - Updating location for SKU: S1505 GD to L11L-TOP
+2024-11-18 10:20:13,939 - INFO - Updating location for SKU: S1167 to L16.5
+2024-11-18 10:20:14,089 - INFO - Updating location for SKU: N1656 to 823 1ST END
+2024-11-18 10:20:14,262 - INFO - Updating location for SKU: n1845 to L19D mid
+2024-11-18 10:20:14,423 - INFO - Updating location for SKU: S1339 to L11H-mid
+2024-11-18 10:20:14,613 - INFO - Updating location for SKU: T3258 to L1AB MIDBOT
+2024-11-18 10:20:14,773 - INFO - Updating location for SKU: S1336 to 823 B1-9
+2024-11-18 10:20:14,921 - INFO - Updating location for SKU: N1939 BK to L7L-UP
+2024-11-18 10:20:14,941 - INFO - Updating location for SKU: N1939 BR to L7L-UP
+2024-11-18 10:20:14,954 - INFO - Updating location for SKU: N1939 GY to L7L-UP
+2024-11-18 10:20:14,978 - INFO - Updating location for SKU: N1939 PK to L7L-UP
+2024-11-18 10:20:14,995 - INFO - Updating location for SKU: N1939 TN to L7L-UP
+2024-11-18 10:20:15,013 - INFO - Updating location for SKU: N2184 BK to L7
+2024-11-18 10:20:15,031 - INFO - Updating location for SKU: N2184 LV to L7
+2024-11-18 10:20:15,048 - INFO - Updating location for SKU: N2184 NV to L7
+2024-11-18 10:20:15,066 - INFO - Updating location for SKU: N2184 RD to L7
+2024-11-18 10:20:15,079 - INFO - Updating location for SKU: N2184 PK to L7
+2024-11-18 10:20:15,099 - INFO - Updating location for SKU: N2184 PL to L7
+2024-11-18 10:20:15,119 - INFO - Updating location for SKU: s1228 to L7G-Mid
+2024-11-18 10:20:15,279 - INFO - Updating location for SKU: T3321 BR to L1E-MID
+2024-11-18 10:20:15,294 - INFO - Updating location for SKU: T3321 to L1E-Mid
+2024-11-18 10:20:15,484 - INFO - Updating location for SKU: N2234 BK to L14 TOP
+2024-11-18 10:20:15,507 - INFO - Updating location for SKU: N2234 BR to L14 TOP
+2024-11-18 10:20:15,524 - INFO - Updating location for SKU: N2234 MV to L14 TOP
+2024-11-18 10:20:15,548 - INFO - Updating location for SKU: N2234 NV to L14 TOP
+2024-11-18 10:20:15,568 - INFO - Updating location for SKU: N2234 WN to L14 TOP
+2024-11-18 10:20:15,588 - INFO - Updating location for SKU: N1931 BK to L10H-TOP
+2024-11-18 10:20:15,608 - INFO - Updating location for SKU: N1931 BR to L10H-TOP
+2024-11-18 10:20:15,627 - INFO - Updating location for SKU: N1931 TN to L10H-TOP
+2024-11-18 10:20:15,648 - INFO - Updating location for SKU: N1931 PK to L10H-TOP
+2024-11-18 10:20:15,667 - INFO - Updating location for SKU: N1931 GY to L10H-TOP
+2024-11-18 10:20:15,687 - INFO - Updating location for SKU: N1931 DM to L10H-TOP
+2024-11-18 10:20:15,705 - INFO - Updating location for SKU: N1928 to L12-H end bot
+2024-11-18 10:20:15,863 - INFO - Updating location for SKU: N1930 to 823 first row good luck
+2024-11-18 10:20:15,877 - ERROR - Error updating SKU N1930: ('22001', '[22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]String or binary data would be truncated. (8152) (SQLExecDirectW); [22001] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2024-11-18 10:20:15,888 - INFO - Sync completed successfully. Updated 1632 records.
+2024-11-18 10:24:29,751 - INFO - yeti request to create a list: C:\Users\elaine.FDC\Dropbox\Elaine\FDC-2025
+2024-11-18 10:24:29,751 - ERROR - An error occurred: 'charmap' codec can't encode character '\u7248' in position 182: character maps to <undefined>
+2024-11-18 10:26:58,012 - INFO - yeti request to create a list: C:\Users\elaine.FDC\Dropbox\Elaine\FDC-2025
+2024-11-18 10:27:11,250 - INFO - [Download][List] yeti downloaded the file: List-20241118-102658.xlsx
+2024-11-18 11:28:19,591 - INFO - Item lookup for yeti with input: t3142
+2024-11-18 11:42:19,673 - INFO - Item lookup for yeti with input: s1431
+2024-11-18 11:43:14,951 - INFO - Item lookup for yeti with input: l1394
+2024-11-18 11:48:33,251 - INFO - Item lookup for yeti with input: l1880
+2024-11-18 14:31:26,902 - INFO - User jennifer has logged in. IP: 173.198.50.202, Browser: Chrome 97.0.4692, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-18 14:31:40,221 - INFO - jennifer is looking up order number: 33694
+2024-11-18 14:31:40,271 - INFO - jennifer searched for order number: 33694
+2024-11-18 14:31:41,582 - INFO - Received order_number: 33694
+2024-11-18 14:31:43,198 - INFO - [Download][labels]File 33694_label.xlsx downloaded from label output
+2024-11-18 14:33:12,123 - INFO - [Download][labels]File 33694_label.xlsx downloaded from label output
+2024-11-18 14:36:39,001 - INFO - jennifer is looking up order number: 33596
+2024-11-18 14:36:39,031 - INFO - jennifer searched for order number: 33596
+2024-11-18 14:36:41,613 - INFO - Received order_number: 33596
+2024-11-18 14:36:44,339 - INFO - [Download][labels]File 33596_label.xlsx downloaded from label output
+2024-11-18 14:42:12,520 - INFO - jennifer is looking up order number: 33587
+2024-11-18 14:42:12,545 - INFO - jennifer searched for order number: 33587
+2024-11-18 14:42:13,623 - INFO - Received order_number: 33587
+2024-11-18 14:42:15,649 - INFO - [Download][labels]File 33587_label.xlsx downloaded from label output
+2024-11-18 14:46:19,354 - INFO - User jennifer has logged in. IP: 173.198.50.202, Browser: Chrome 97.0.4692, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-18 14:46:34,183 - INFO - jennifer is looking up order number: 33599
+2024-11-18 14:46:34,208 - INFO - jennifer searched for order number: 33599
+2024-11-18 14:46:35,881 - INFO - Received order_number: 33599
+2024-11-18 14:46:37,759 - INFO - [Download][labels]File 33599_label.xlsx downloaded from label output
+2024-11-18 14:49:11,759 - INFO - jennifer is looking up order number: 33588
+2024-11-18 14:49:11,789 - INFO - jennifer searched for order number: 33588
+2024-11-18 14:49:12,763 - INFO - Received order_number: 33588
+2024-11-18 14:49:15,162 - INFO - [Download][labels]File 33588_label.xlsx downloaded from label output
+2024-11-18 14:50:30,882 - INFO - jennifer is looking up order number: 33597
+2024-11-18 14:50:30,925 - INFO - jennifer searched for order number: 33597
+2024-11-18 14:50:32,007 - INFO - Received order_number: 33597
+2024-11-18 14:50:33,322 - INFO - [Download][labels]File 33597_label.xlsx downloaded from label output
+2024-11-18 14:52:09,424 - INFO - jennifer is looking up order number: 33597
+2024-11-18 14:52:09,449 - INFO - jennifer searched for order number: 33597
+2024-11-18 14:52:10,666 - INFO - Received order_number: 33597
+2024-11-18 14:52:13,895 - INFO - [Download][labels]File 33597_label.xlsx downloaded from label output
+2024-11-18 14:57:59,531 - INFO - jennifer is looking up order number: 33597
+2024-11-18 14:57:59,553 - INFO - jennifer searched for order number: 33597
+2024-11-18 14:58:01,897 - INFO - Received order_number: 33597
+2024-11-18 14:58:04,537 - INFO - [Download][labels]File 33597_label.xlsx downloaded from label output
+2024-11-18 14:58:44,442 - INFO - Received order_number: 33597
+2024-11-18 14:58:45,335 - INFO - jennifer is looking up order number: 33597
+2024-11-18 14:58:45,350 - INFO - jennifer searched for order number: 33597
+2024-11-18 14:59:47,043 - INFO - jennifer is looking up order number: 33597
+2024-11-18 14:59:47,058 - INFO - jennifer searched for order number: 33597
+2024-11-18 14:59:50,281 - INFO - Received order_number: 33597
+2024-11-18 15:00:05,773 - INFO - [Download][labels]File 33597_label.xlsx downloaded from label output
+2024-11-18 15:01:03,944 - INFO - jennifer is looking up order number: 33597
+2024-11-18 15:01:03,964 - INFO - jennifer searched for order number: 33597
+2024-11-18 15:01:16,540 - INFO - Received order_number: 33597
+2024-11-18 15:02:20,726 - INFO - [Download][labels]File 33597_label.xlsx downloaded from label output
+2024-11-18 17:28:48,718 - INFO - User nicye has logged in. IP: 122.240.234.134, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-18 17:30:43,379 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-18 17:30:48,192 - INFO - Item lookup for yeti with input: t3305
+2024-11-18 17:33:44,933 - INFO - Item lookup for nicye with input: t3258
+2024-11-18 17:55:50,831 - INFO - Location service accessed by user: Unknown
+2024-11-18 18:28:02,035 - INFO - Location service accessed by user: Unknown
+2024-11-18 20:36:30,525 - INFO - Location service accessed by user: Unknown
+2024-11-18 21:22:00,193 - INFO - Item lookup for nicye with input: t3262
+2024-11-18 23:27:38,361 - INFO - Item lookup for nicye with input: t3329
+2024-11-18 23:28:54,388 - INFO - Item lookup for nicye with input: t3319
+2024-11-19 07:22:39,316 - INFO - User nicye has logged in. IP: 115.223.181.54, Browser: Mobile Safari 17.6, OS: iOS 17.6.1, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-19 07:22:52,537 - INFO - Item lookup for nicye with input: n1745
+2024-11-19 07:30:59,665 - INFO - Item lookup for nicye with input: t3243
+2024-11-19 07:35:59,852 - INFO - Item lookup for nicye with input: n2189
+2024-11-19 10:11:10,544 - INFO - Item lookup for yeti with input: t3351
+2024-11-19 10:43:48,995 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-19 10:44:00,244 - INFO - Item lookup for yeti with input: n1745
+2024-11-19 10:44:14,600 - INFO - Item lookup for yeti with input: n2189
+2024-11-19 11:37:03,191 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-19 11:37:09,832 - INFO - Item lookup for yeti with input: es1272
+2024-11-19 12:13:59,951 - INFO - Item lookup for yeti with input: s1350
+2024-11-19 13:01:41,413 - INFO - Item lookup for yeti with input: s1350
+2024-11-19 13:01:43,201 - INFO - Location service accessed by user: yeti
+2024-11-19 13:01:44,809 - INFO - Location service accessed by user: yeti
+2024-11-19 13:01:45,445 - INFO - Location service accessed by user: yeti
+2024-11-19 13:01:55,031 - INFO - Location service accessed by user: yeti
+2024-11-19 17:20:05,597 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-19 17:20:23,336 - INFO - Item lookup for yeti with input: n2235
+2024-11-19 17:20:26,204 - INFO - Item lookup for yeti with input: n2223
+2024-11-19 17:20:29,376 - INFO - Item lookup for yeti with input: n2225
+2024-11-19 17:51:53,646 - INFO - User nicye has logged in. IP: 122.240.234.134, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-19 19:52:10,796 - INFO - Location service accessed by user: Unknown
+2024-11-20 05:50:08,163 - INFO - Location service accessed by user: Unknown
+2024-11-20 09:22:06,100 - INFO - Item lookup for yeti with input: en2229
+2024-11-20 09:22:08,331 - INFO - Item lookup for yeti with input: n2229
+2024-11-20 09:33:12,611 - INFO - Item lookup for yeti with input: n201037
+2024-11-20 09:33:43,051 - INFO - Item lookup for yeti with input: n2137
+2024-11-20 09:33:56,159 - INFO - Item lookup for yeti with input: es1272
+2024-11-20 09:52:11,290 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://173.198.50.202/login, Referrer: https://173.198.50.202/login, Query Params: ImmutableMultiDict([])
+2024-11-20 09:52:14,167 - INFO - Item lookup for yeti with input: s1405
+2024-11-20 09:52:43,468 - INFO - yeti is looking up order number: 33716
+2024-11-20 09:52:43,498 - INFO - yeti searched for order number: 33716
+2024-11-20 09:52:59,660 - INFO - yeti is looking up order number: 33716
+2024-11-20 09:52:59,675 - INFO - yeti searched for order number: 33716
+2024-11-20 09:53:02,089 - INFO - Received order_number: 33716
+2024-11-20 09:53:13,776 - INFO - [Download][labels]File 33716_label.xlsx downloaded from label output
+2024-11-20 09:54:05,140 - INFO - yeti is looking up order number: 33712
+2024-11-20 09:54:05,165 - INFO - yeti searched for order number: 33712
+2024-11-20 09:54:15,478 - INFO - Received order_number: 33712
+2024-11-20 09:54:25,283 - INFO - [Download][labels]File 33712_label.xlsx downloaded from label output
+2024-11-20 09:55:08,278 - INFO - yeti is looking up order number: 33719
+2024-11-20 09:55:08,303 - INFO - yeti searched for order number: 33719
+2024-11-20 09:55:11,783 - INFO - Received order_number: 33719
+2024-11-20 09:55:12,998 - INFO - [Download][labels]File 33719_label.xlsx downloaded from label output
+2024-11-20 09:55:23,972 - INFO - yeti is looking up order number: 33714
+2024-11-20 09:55:23,988 - INFO - yeti searched for order number: 33714
+2024-11-20 09:55:25,529 - INFO - Received order_number: 33714
+2024-11-20 09:55:27,027 - INFO - [Download][labels]File 33714_label.xlsx downloaded from label output
+2024-11-20 09:55:42,842 - INFO - yeti is looking up order number: 33709
+2024-11-20 09:55:42,857 - INFO - yeti searched for order number: 33709
+2024-11-20 09:55:45,190 - INFO - yeti is looking up order number: 33709
+2024-11-20 09:55:45,206 - INFO - yeti searched for order number: 33709
+2024-11-20 09:55:47,209 - INFO - Received order_number: 33709
+2024-11-20 09:55:52,767 - INFO - [Download][labels]File 33709_label.xlsx downloaded from label output
+2024-11-20 09:56:51,691 - INFO - yeti is looking up order number: 33708
+2024-11-20 09:56:51,714 - INFO - yeti searched for order number: 33708
+2024-11-20 09:56:53,919 - INFO - Received order_number: 33708
+2024-11-20 09:57:00,141 - INFO - [Download][labels]File 33708_label.xlsx downloaded from label output
+2024-11-20 10:48:32,546 - INFO - Item lookup for yeti with input: n2137
+2024-11-20 10:54:27,469 - INFO - Item lookup for yeti with input: n2137
+2024-11-20 10:54:29,961 - INFO - Item lookup for yeti with input: n2137
+2024-11-20 10:54:31,277 - INFO - Location service accessed by user: yeti
+2024-11-20 10:54:32,913 - INFO - Location service accessed by user: yeti
+2024-11-20 10:54:48,477 - INFO - Location service accessed by user: yeti
+2024-11-20 11:01:40,990 - INFO - Item lookup for yeti with input: en1654
+2024-11-20 11:05:21,467 - INFO - User yeti has logged in. IP: 172.56.232.177, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-20 11:05:27,908 - INFO - Item lookup for yeti with input: s1431
+2024-11-20 11:19:49,614 - INFO - Item lookup for yeti with input: n1963
+2024-11-20 11:21:16,690 - INFO - Item lookup for yeti with input: n0680
+2024-11-20 11:21:23,451 - INFO - Item lookup for yeti with input: n068n0813
+2024-11-20 11:21:28,876 - INFO - Item lookup for yeti with input: n0813
+2024-11-20 11:21:37,376 - INFO - Item lookup for yeti with input: s1173
+2024-11-20 11:21:48,874 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=S1173 BK and Style=S1173
+2024-11-20 11:21:48,874 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=S1173 BK and Style=S1173
+2024-11-20 11:21:48,874 - INFO - Location updated successfully for SKU=S1173 BK and Style=S1173
+2024-11-20 11:21:55,895 - INFO - Item lookup for yeti with input: n17456
+2024-11-20 11:21:58,143 - INFO - Item lookup for yeti with input: n1745
+2024-11-20 11:25:36,201 - INFO - Item lookup for yeti with input: n0813
+2024-11-20 11:25:49,305 - INFO - Item lookup for yeti with input: s1173
+2024-11-20 11:28:38,644 - INFO - Item lookup for yeti with input: n1223 co
+2024-11-20 11:40:10,358 - INFO - Item lookup for yeti with input: n0680
+2024-11-20 11:41:14,020 - INFO - Location service accessed by user: yeti
+2024-11-20 11:41:16,113 - INFO - Location service accessed by user: yeti
+2024-11-20 11:41:17,519 - INFO - Location service accessed by user: yeti
+2024-11-20 11:41:19,335 - INFO - Suggestions request received
+2024-11-20 11:41:20,513 - INFO - Location service accessed by user: yeti
+2024-11-20 11:41:33,689 - INFO - Location service accessed by user: yeti
+2024-11-20 11:58:33,980 - INFO - Suggestions request received
+2024-11-20 11:58:36,431 - INFO - Suggestions request received
+2024-11-20 11:58:36,917 - INFO - Location service accessed by user: yeti
+2024-11-20 12:49:02,247 - INFO - Item lookup for yeti with input: en1654
+2024-11-20 12:50:23,032 - INFO - yeti executed a custom SQL query: select * from orders where prod_cd="EN1654 BK"
+2024-11-20 13:07:19,493 - INFO - yeti request to create a list: L150,L1851,L1864,L1863,L1862,L1865
+2024-11-20 13:07:22,796 - INFO - [Download][List] yeti downloaded the file: List-20241120-130719.xlsx
+2024-11-20 13:07:58,822 - INFO - yeti request to create a list: L1850,L1851,L1863,L1864
+2024-11-20 13:08:00,927 - INFO - [Download][List] yeti downloaded the file: List-20241120-130758.xlsx
+2024-11-20 16:43:55,128 - INFO - Item lookup for yeti with input: et2953
+2024-11-20 16:44:15,390 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-20 16:53:23,011 - INFO - Item lookup for yeti with input: t3305
