@@ -1,10 +1,9 @@
 import pyodbc
 import openpyxl
 import os
-import datetime
 import pandas as pd
-from PIL import Image
-from flask import current_app as app  # Import current_app to use Flask's logger
+from flask import current_app as app
+import time
 
 # SQL Server connection details
 server = "192.168.254.204"
@@ -14,54 +13,73 @@ username = "tristen"
 password = 'Qwer1234##'
 driver = 'ODBC Driver 17 for SQL Server'
 
+def sort_filenames(file_names):
+    """Sort filenames alphabetically. Modify if custom sorting is needed."""
+    return sorted(file_names)
+
 def generate_excel(user_input):
     global file_path
-    image_urls = []
     try:
-        # Normalize the input to lowercase and strip extra spaces
+        # Normalize and split the user input
         user_input = ' '.join(user_input.lower().strip().split())
-
-        # Split the input by commas
         input_parts = [part.strip() for part in user_input.split(",")]
 
-        # Initialize conditions for each situation
+        # Initialize SQL conditions for inventory query
         prod_cd_conditions = []
         alt_cd_conditions = []
         descrip_conditions = []
 
-        
+        # Build dynamic conditions based on input for inventory
         for part in input_parts:
-            if "%" in part:  # Handle Situation 3: Wildcards or specific query command
-                prod_cd_conditions.append(f"i.PROD_CD LIKE '{part}'")
-                alt_cd_conditions.append(f"i.ALT_CD LIKE '{part}'")
-                descrip_conditions.append(f"i.DESCRIP LIKE '{part}'")
+            if "%" in part:
+                prod_cd_conditions.append("i.PROD_CD LIKE ?")
+                alt_cd_conditions.append("i.ALT_CD LIKE ?")
+                descrip_conditions.append("i.DESCRIP LIKE ?")
+            elif " " in part:
+                prod_cd_conditions.append("i.PROD_CD = ?")
+            else:
+                prod_cd_conditions.append("i.PROD_CD LIKE ?")
 
-            elif " " in part:  # Handle Situation 2: Full prod_cd with color code
-                prod_cd_conditions.append(f"i.PROD_CD = '{part}'")
-            else:  # Handle Situation 1: alt_cd, so match prod_cd using LIKE
-                prod_cd_conditions.append(f"i.PROD_CD LIKE '{part}%'")
+        combined_condition_inventory = " OR ".join(prod_cd_conditions + alt_cd_conditions + descrip_conditions)
 
-        # Combine all conditions
-        combined_condition = " OR ".join(prod_cd_conditions + alt_cd_conditions + descrip_conditions)
+        # Prepare SQL query parameters for inventory
+        inventory_query_params = []
+        for part in input_parts:
+            if "%" in part:
+                inventory_query_params.extend([part, part, part])
+            elif " " in part:
+                inventory_query_params.append(part)
+            else:
+                inventory_query_params.append(f"{part}%")
 
-        # Debug: Log the generated SQL WHERE condition
-        #app.logger.info(f"Generated SQL WHERE condition: {combined_condition}")
+        # Initialize SQL conditions for history query
+        history_conditions = []
+        history_query_params = []
 
-        # Establish connections to the SQL Server databases
+        # Build dynamic conditions based on input for history
+        for part in input_parts:
+            if "%" in part:
+                history_conditions.append("ol.prod_cd LIKE ?")
+                history_query_params.append(part)
+            else:
+                history_conditions.append("ol.prod_cd LIKE ?")
+                history_query_params.append(f"{part}%")
+
+        combined_condition_history = " OR ".join(history_conditions) if history_conditions else "1=1"
+
+        # Establish database connections
         conn_fdc = pyodbc.connect(
             f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}'
         )
-
         conn_oms_ef = pyodbc.connect(
             f'DRIVER={driver};SERVER={server};DATABASE={database_oms_ef};UID={username};PWD={password}'
         )
 
-        # Execute the SQL query with the combined conditions
+        # Query inventory data
         queries = []
-        for conn, cursor, database_name in [
-            (conn_fdc, conn_fdc.cursor(), 'omsdata_FDC'), 
-            (conn_oms_ef, conn_oms_ef.cursor(), 'oms_EF')
-        ]:
+        
+        for conn, database_name in [(conn_fdc, 'omsdata_FDC'), (conn_oms_ef, 'oms_EF')]:
+            cursor = conn.cursor()
             query = f"""
                 SELECT 
                     i.PROD_CD AS SKU,
@@ -98,88 +116,111 @@ def generate_excel(user_input):
                         CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR) AS create_dt
                     FROM wm_skufile
                 ) AS fcd ON i.PROD_CD = fcd.prod_cd
-                WHERE {combined_condition};
+                WHERE {combined_condition_inventory};
             """
-            
-            cursor.execute(query)
+            app.logger.debug(f"Executing inventory query on {database_name}: {query}")
+            app.logger.debug(f"With parameters: {inventory_query_params}")
+            cursor.execute(query, inventory_query_params)
             rows = cursor.fetchall()
             rows_with_database_name = [(database_name,) + tuple(row) for row in rows]
             queries.append(rows_with_database_name)
 
-        # Combine the results from both databases
         combined_results = queries[0] + queries[1]
 
-
-        # Process the combined result
+        # Process results to Excel
         workbook = openpyxl.Workbook()
         sheet = workbook.active
-
-        # Column headers for the Excel sheet
         column_headers = ['Database', 'SKU', 'Style', 'Descrip', 'Stock', 'Sold', 'Avail',
                           'Ocean', 'cost', 'MSRP', 'Case<br>Qty', 'box_wt<br>(lb)',
                           'pc_wt<br>(lb)', 'color', 'length', 'width', 'height', 'update<br>dt', 'create<br>dt']
-
-        # Write the column headers to the Excel sheet
         for col_index, header in enumerate(column_headers, start=1):
             sheet.cell(row=1, column=col_index, value=header)
 
-        # Write the data to the Excel sheet
         for row_index, row in enumerate(combined_results, start=2):
             for col_index, value in enumerate(row, start=1):
-                if col_index == 3:  # Check if it's the column with SKU_no_color
-                    hyperlink_value = value.strip()  # Remove trailing spaces
-
-                    # Split the hyperlink_value and get the base_sku, or use the full value if there's no space
-                    split_value = hyperlink_value.split()
-                    base_sku = split_value[0] if split_value else hyperlink_value
-
-                    local_resized_image_url = f"ftp/{base_sku}.jpg"
-                    backup_original_image_url = f"/ftp2/{base_sku}.jpg"
-
-                    # Add the image URL to the list if it's not already there
-                    if local_resized_image_url not in image_urls:
-                        image_urls.append(local_resized_image_url)
-
-                    # Check if the image exists in the ftp directory
-                    if os.path.exists(os.path.join('ftp', f'{base_sku}.jpg')):
-                        value = f'<a href="{local_resized_image_url}">{value}</a>'
-                    else:
-                        value = f'<a href="{backup_original_image_url}">{value}</a>'
-
-                # Write data to the Excel sheet
                 sheet.cell(row=row_index, column=col_index, value=value)
 
         # Save the Excel file
         output_directory = r"output\itemsearch_output"
-        if not os.path.exists(output_directory):
-            os.makedirs(output_directory)
-
+        os.makedirs(output_directory, exist_ok=True)
         first4user = user_input.split(',')[0].strip()
         file_path = os.path.join(output_directory, f"{first4user}.xlsx")
         workbook.save(file_path)
 
+        # Create HTML table
         df = pd.read_excel(file_path)
         html_table = df.to_html(
-        index=False,
-        classes="table table-bordered table-striped",
-        table_id="excel_table",
-        escape=False  # Allow HTML in headers
-    )
-        return html_table, image_urls, user_input
-    
+            index=False,
+            classes="table table-bordered table-striped",
+            table_id="excel_table",
+            escape=False
+        )
+
+        # History query
+        history_query = f"""
+            SELECT 
+                ol.prod_cd,
+                ol.ord_num,
+                RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                CAST(YEAR(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_olg_dt,
+                c.cus_nm AS cus_id,
+                ol.order_qty,
+                ol.unit_prs
+            FROM ord_log ol
+            JOIN customer c ON ol.cus_id = c.cus_id
+            WHERE {combined_condition_history}
+
+        """
+        app.logger.debug(f"Executing history query: {history_query}")
+        app.logger.debug(f"With parameters: {history_query_params}")
+
+        all_history_rows = []
+        for conn, database_name in [(conn_fdc, 'omsdata_FDC'), (conn_oms_ef, 'oms_EF')]:
+            cursor = conn.cursor()
+            cursor.execute(history_query, history_query_params)
+            rows = cursor.fetchall()
+            rows_with_db = [(database_name,) + tuple(row) for row in rows]
+            all_history_rows.extend(rows_with_db)
+
+        if all_history_rows:
+            history_columns = ['Database'] + [desc[0] for desc in cursor.description]
+            history_df = pd.DataFrame.from_records(all_history_rows, columns=history_columns)
+            # Format numeric columns
+            history_df['order_qty'] = pd.to_numeric(history_df['order_qty'], errors='coerce').fillna(0).astype(int)
+            history_df['unit_prs'] = pd.to_numeric(history_df['unit_prs'], errors='coerce').round(2)
+
+            # Optionally, rename columns for better display
+            history_df.rename(columns={
+                'prod_cd': 'Product Code',
+                'formatted_olg_dt': 'Order Date',
+                'ord_num': 'Order Number',
+                'cus_id': 'Customer ID',
+                'order_qty': 'Order Quantity',
+                'unit_prs': 'Unit Price'
+            }, inplace=True)
+
+            # Create HTML table
+            history_html_table = history_df.to_html(
+                index=False,
+                classes="table table-bordered table-striped",
+                table_id="history_table",
+                float_format="{:.2f}".format,
+                escape=False
+            )
+        else:
+            history_html_table = "<p>No item history found for the given input.</p>"
+
+        return html_table, history_html_table, [], user_input  # image_urls is handled in Flask route
+
     except pyodbc.Error as e:
         app.logger.error(f"Error connecting to SQL Server: {e}")
-
+        return None, None, [], user_input
     finally:
-        # Ensure that the connections are closed
-        if conn_fdc:
+        if 'conn_fdc' in locals() and conn_fdc:
             conn_fdc.close()
-        if conn_oms_ef:
+        if 'conn_oms_ef' in locals() and conn_oms_ef:
             conn_oms_ef.close()
 
 def get_file_path():
     return file_path
-
-if __name__ == "__main__":
-    user_input = input("Enter User Input: ")
-    generate_excel(user_input)

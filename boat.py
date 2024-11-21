@@ -79,7 +79,7 @@ def boat_service():
 
         # Add hyperlinks to container and link columns
         df_cleaned['container'] = df_cleaned['container'].apply(
-            lambda x: f'<a href="/item_lookup/%25{x}" target="_blank">{x}</a>' if pd.notnull(x) else ''
+            lambda x: f'<a href="/item_lookup/%25{x}%25" target="_blank">{x}</a>' if pd.notnull(x) else ''
         )
         df_cleaned['link'] = df_cleaned['link'].apply(
             lambda x: f'<a href="https://www.searates.com/container/tracking/?number={x}&sealine=AUTO" target="_blank">{x}</a>' if pd.notnull(x) else ''

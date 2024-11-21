@@ -229,12 +229,13 @@ def register_routes(app):
     @app.route("/item_lookup", methods=["GET", "POST"])
     @app.route("/item_lookup/<string:user_input>", methods=["GET"])
     def item_lookup(user_input=None):
-        if 'username' not in session:
+        if 'username' not in session or not session['username']:
             session['next'] = request.url
             return redirect(url_for("login"))
 
         current_user = session['username']
         excel_html = None
+        history_html = None  # Initialize history_html
 
         if request.method == "POST":
             # Handle the case where user input is submitted via the form
@@ -249,34 +250,99 @@ def register_routes(app):
 
         # Handle cases where user_input is empty
         if not user_input:
-            return render_template("Item_lookup.html", excel_html=None, current_user=current_user, user_input=user_input)
+            return render_template("Item_lookup.html", excel_html=None, history_html=None, current_user=current_user, user_input=user_input)
 
         # Continue with the rest of the logic if user_input is valid
         if user_input.endswith(","):
             user_input = user_input[:-1]
 
-        # Generate Excel and image URLs
-        excel_html, image_urls, user_input = SQL_connector.generate_excel(user_input)
+        # Generate Excel and history HTML
+        app.logger.info("Processing user input: %s", user_input)
+        excel_html, history_html, _, user_input = SQL_connector.generate_excel(user_input)
 
-        if not excel_html:  # If no valid data is found
+        if not excel_html and not history_html:  # If no valid data is found
             app.logger.info("No valid data to display for input: %s", user_input)
-            return render_template("Item_lookup.html", excel_html=None, current_user=current_user, user_input=user_input)
+            return render_template("Item_lookup.html", excel_html=None, history_html=None, current_user=current_user, user_input=user_input)
 
-        # Normalize input parts by stripping color suffixes for image lookup
+        # Process excel_html to add Location and Update_Date columns
+        if excel_html:
+            from io import StringIO
+            df = pd.read_html(StringIO(excel_html))[0]  # Convert HTML to DataFrame
+
+            # Add a row number column
+            df.insert(0, '#', range(1, len(df) + 1))
+
+            # Fetch SKUs and update location and date columns
+            if 'SKU' in df.columns:
+                skus = df['SKU'].astype(str).str.lower().tolist()
+            else:
+                app.logger.error("SKU column not found in the DataFrame.")
+                skus = []
+
+            # Fetch locations and update dates using the helper function
+            location_dict, updated_date_dict = fetch_locations(skus)
+
+            # Add the 'Location' and 'Update_Date' columns
+            df['Location'] = df['SKU'].astype(str).str.lower().map(location_dict).fillna('')
+            df['Update_Date'] = df['SKU'].astype(str).str.lower().map(updated_date_dict).fillna('no data')
+            if 'Database' in df.columns:
+                replacement_dict = {
+                    'oms_ef': 'E_FAS',
+                    'omsdata_fdc': 'FDC'
+                }
+                # Perform case-insensitive replacement
+                df['Database'] = df['Database'].str.lower().replace(replacement_dict)
+            else:
+                app.logger.warning("Database column not found in the DataFrame.")
+                
+            # Modify the 'Location' column to include tooltips
+            if 'Location' in df.columns and 'Update_Date' in df.columns:
+                df['Location'] = df.apply(
+                    lambda row: (
+                        f'<span class="editable" title="Update: {row["Update_Date"]}">'
+                        f'{row["Location"] if pd.notnull(row["Location"]) and row["Location"] != "" else "✨ADD✨"}</span>'
+                    ),
+                    axis=1
+                )
+
+            # Adjust column order to place 'Location' after the third column
+            if 'Location' in df.columns:
+                cols = list(df.columns)
+                loc_index = 3  # After the third column
+                cols.insert(loc_index, cols.pop(cols.index('Location')))
+                df = df[cols]
+
+            # Replace '<br>' in column headers with spaces
+            df.columns = df.columns.str.replace('<br>', ' ')
+            df.columns = df.columns.str.replace('\n', '<br>')
+
+            # Convert DataFrame back to HTML for rendering
+            excel_html = df.to_html(
+                index=False,
+                classes="table table-bordered table-striped",
+                table_id="excel_table",
+                escape=False  # Allow HTML in headers and cells
+            )
+
+        # Prepare image and file information
         search_terms = [term.split()[0].strip() for term in user_input.split(",")]
-
-        # Get filenames matching the search terms
         file_names = []
         for term in search_terms:
             # Check in CATALOG_ORIGINAL
-            for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                if filename.lower().startswith(term):
-                    file_names.append(filename)
+            try:
+                for filename in os.listdir(Config.CATALOG_ORIGINAL):
+                    if filename.lower().startswith(term):
+                        file_names.append(filename)
+            except FileNotFoundError:
+                app.logger.error("Directory not found: %s", Config.CATALOG_ORIGINAL)
 
             # Check in CATALOG_RESIZED if not found in CATALOG_ORIGINAL
-            for filename in os.listdir(Config.CATALOG_RESIZED):
-                if filename.lower().startswith(term) and filename not in file_names:
-                    file_names.append(filename)
+            try:
+                for filename in os.listdir(Config.CATALOG_RESIZED):
+                    if filename.lower().startswith(term) and filename not in file_names:
+                        file_names.append(filename)
+            except FileNotFoundError:
+                app.logger.error("Directory not found: %s", Config.CATALOG_RESIZED)
 
         # Remove duplicates from file_names
         file_names = list(dict.fromkeys(file_names))
@@ -293,101 +359,37 @@ def register_routes(app):
                 modified_time = os.path.getmtime(file_path)
                 modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
                 file_info.append((filename, size, modified_date))
-
-        if excel_html:
-            # Convert the HTML back to a DataFrame
-            df = pd.read_html(StringIO(excel_html))[0]
-
-            # Add a row number column to the DataFrame
-            df.insert(0, '#', range(1, len(df) + 1))
-
-            # Fetch SKUs from the DataFrame
-            if 'SKU' in df.columns:
-                skus = df['SKU'].astype(str).str.lower().tolist()
             else:
-                app.logger.error("SKU column not found in the DataFrame.")
-                skus = []
+                app.logger.warning("File not found: %s", file_path)
 
-            # Fetch locations and update dates using the helper function
-            location_dict, updated_date_dict = fetch_locations(skus)
-
-            # Add the 'Location' column based on SKU matching
-            # Replace 'N/A' with empty string "" for unmatched locations
-            df['Location'] = df['SKU'].astype(str).str.lower().map(location_dict).fillna('')
-
-            # Add the 'Update_Date' column based on SKU matching
-            df['Update_Date'] = df['SKU'].astype(str).str.lower().map(updated_date_dict).fillna('no data')
-
-            # **Replacement Logic for 'Database' Column**
-            if 'Database' in df.columns:
-                replacement_dict = {
-                    'oms_ef': 'E_FAS',
-                    'omsdata_fdc': 'FDC'
-                }
-                # Perform case-insensitive replacement
-                df['Database'] = df['Database'].str.lower().replace(replacement_dict)
+        # Prepare image URLs based on file_info
+        sorted_file_names = sort_filenames(file_names)
+        sorted_image_urls = []
+        for filename in sorted_file_names:
+            original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+            resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
+            if os.path.exists(original_path):
+                image_url = os.path.join('/ftp', filename)
+            elif os.path.exists(resized_path):
+                image_url = os.path.join('/ftp', filename)  # Adjust if needed
             else:
-                app.logger.warning("Database column not found in the DataFrame.")
+                image_url = '/static/no_image_available.jpg'  # Placeholder image
 
-            # Handle case for user 'fdc' and remove sensitive columns
-            if current_user == 'fdc':
-                sensitive_columns = ['cost', 'Container', 'create<br>dt', 'update<br>dt']
-                # Only drop columns that exist in the DataFrame
-                existing_sensitive = [col for col in sensitive_columns if col in df.columns]
-                if existing_sensitive:
-                    df.drop(columns=existing_sensitive, inplace=True)
+            sorted_image_urls.append(image_url)
 
-            # Sort filenames and prepare image URLs
-            sorted_file_names = sort_filenames(file_names)
-            sorted_image_urls = [os.path.join('/ftp', fn) for fn in sorted_file_names]
+        app.logger.info("Lookup completed for user: %s, input: %s", current_user, user_input)
+        return render_template(
+            "Item_lookup.html",
+            excel_html=excel_html,
+            history_html=history_html,  # Pass the history_html to the template
+            image_urls=sorted_image_urls,
+            file_names=sorted_file_names,
+            file_info=file_info,
+            current_user=current_user,
+            user_input=user_input.capitalize()  # Pass user_input back to the template to avoid "None"
+        )
 
-            # Convert DataFrame back to HTML for display
-            # Specify the desired column order if needed
-            # For example, inserting 'Location' after the third column (index 2)
-            if 'Location' in df.columns:
-                cols = list(df.columns)
-                loc_index = 3  # After the third column
-                cols.insert(loc_index, cols.pop(cols.index('Location')))
-                df = df[cols]
-
-            # Modify 'Location' cells to include 'title' attribute with 'Update_Date'
-            if 'Location' in df.columns and 'Update_Date' in df.columns:
-                df['Location'] = df.apply(
-                    lambda row: (
-                        f'<span class="editable" title="Update: {row["Update_Date"]}">'
-                        
-                        f'{row["Location"] if pd.notnull(row["Location"]) and row["Location"] != "" else "✨ADD✨"}</span>'
-                    ),
-                    axis=1
-                )
-            df.columns = df.columns.str.replace('<br>', ' ')  # Remove any unwanted <br> in column headers
-            df.columns = df.columns.str.replace('\n', '<br>')  # Replace newline with <br> in column headers
-
-
-
-            # Convert DataFrame to HTML without escaping to allow HTML content
-            excel_html = df.to_html(
-                classes='table text-center',
-                escape=False,  # Allow HTML tags like <br> in headers
-                table_id="excel_table_1",
-                index=False  # Avoid showing the DataFrame index in the table
-            )
-
-            app.logger.info("Item lookup for %s with input: %s", current_user, user_input)
-            return render_template(
-                "Item_lookup.html",
-                excel_html=excel_html,
-                image_urls=sorted_image_urls,
-                file_names=sorted_file_names,
-                file_info=file_info,
-                current_user=current_user,
-                user_input=user_input.capitalize()  # Pass user_input back to the template to avoid "None"
-            )
-
-        else:
-            # No valid data, return the template without data
-            return render_template("Item_lookup.html", excel_html=None, current_user=current_user, user_input=user_input.capitalize())
-        
+    
     @app.route('/update_location', methods=['POST'])
     def update_location():
         data = request.get_json()

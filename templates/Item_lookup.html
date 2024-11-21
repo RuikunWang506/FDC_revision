@@ -13,6 +13,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
     <!-- Include Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <style>
         /* General Styles */
         body {
@@ -150,25 +151,25 @@
         }
         @media (max-width: 1500px) {
             /* Hide specific columns by their position in the table */
-            #excel_table_1 td:nth-child(5), /* Style column */
-            #excel_table_1 td:nth-child(12), /* WIDTH column */
-            #excel_table_1 td:nth-child(13), /* HEIGHT column */
-            #excel_table_1 td:nth-child(14), /* WEIGHT column */
-            #excel_table_1 td:nth-child(15), /* PRICE column */
-            #excel_table_1 td:nth-child(16), /* TOTAL column */
-            #excel_table_1 td:nth-child(17), /* TOTAL_PRICE column */
-            #excel_table_1 td:nth-child(18), /* TOTAL_WEIGHT column */
-            #excel_table_1 td:nth-child(19), /* TOTAL_PRICE_WEIGHT column */
+            #excel_table td:nth-child(5), /* Style column */
+            #excel_table td:nth-child(12), /* WIDTH column */
+            #excel_table td:nth-child(13), /* HEIGHT column */
+            #excel_table td:nth-child(14), /* WEIGHT column */
+            #excel_table td:nth-child(15), /* PRICE column */
+            #excel_table td:nth-child(16), /* TOTAL column */
+            #excel_table td:nth-child(17), /* TOTAL_PRICE column */
+            #excel_table td:nth-child(18), /* TOTAL_WEIGHT column */
+            #excel_table td:nth-child(19), /* TOTAL_PRICE_WEIGHT column */
 
-            #excel_table_1 th:nth-child(5), /* Style header */
-            #excel_table_1 th:nth-child(12), /* WIDTH header */
-            #excel_table_1 th:nth-child(13), /* HEIGHT header */ 
-            #excel_table_1 th:nth-child(14), /* WEIGHT header */
-            #excel_table_1 th:nth-child(15), /* PRICE header */
-            #excel_table_1 th:nth-child(16), /* TOTAL header */
-            #excel_table_1 th:nth-child(17), /* TOTAL_PRICE header */
-            #excel_table_1 th:nth-child(18), /* TOTAL_WEIGHT header */
-            #excel_table_1 th:nth-child(19) /* TOTAL_PRICE_WEIGHT header */
+            #excel_table th:nth-child(5), /* Style header */
+            #excel_table th:nth-child(12), /* WIDTH header */
+            #excel_table th:nth-child(13), /* HEIGHT header */ 
+            #excel_table th:nth-child(14), /* WEIGHT header */
+            #excel_table th:nth-child(15), /* PRICE header */
+            #excel_table th:nth-child(16), /* TOTAL header */
+            #excel_table th:nth-child(17), /* TOTAL_PRICE header */
+            #excel_table th:nth-child(18), /* TOTAL_WEIGHT header */
+            #excel_table th:nth-child(19) /* TOTAL_PRICE_WEIGHT header */
             
             {
                 display: none;
@@ -176,7 +177,7 @@
         }
 
         @media (max-width: 767px) {
-            #excel_table_1 {
+            #excel_table {
                 min-width: 1000px; /* Set minimum width */
             }
 
@@ -285,8 +286,30 @@
 
         /* Horizontal Scroll */
         .table-responsive {
-            overflow-x: visible;
-            -webkit-overflow-scrolling: touch;
+            overflow-x: auto;
+            overflow-y: hidden; /* Hide vertical scrollbar */
+            width: 100%;
+            box-sizing: border-box; /* Include padding and border in width */
+        }
+        /* Hide native bottom scrollbar */
+        .table-responsive::-webkit-scrollbar {
+            display: none;
+        }
+        .top-scroll {
+            overflow-x: auto;
+            overflow-y: hidden;
+            height: 20px; /* Height to show scrollbar */
+            margin-bottom: -20px; /* Adjust margin to overlap the bottom scrollbar */
+        }
+        .top-scroll-inner {
+            height: 1px;
+            width: 100%; /* Ensure this matches the table width */
+        }
+
+        #excel_table {
+            width: 100%; /* Ensure the table takes up the full width */
+            table-layout: fixed; /* Avoid table exceeding container width */
+            word-wrap: break-word; /* Wrap long text within cells */
         }
 
         table.dataTable {
@@ -305,7 +328,7 @@
         .top-scroll-inner {
             height: 1px; /* Minimal height */
         }
-        #excel_table_1 {
+        #excel_table {
             width: 99% !important; /* Ensures the table takes up the full width */
             margin-right: 0px !important; /* Reinforces no right margin */
         }
@@ -350,7 +373,7 @@
                 <h4>Enter Input, separate by comma:</h4>
                 <p>You can put multiple SKUs like n1223 gy, N1551</p>
                 <p>Style only = all colors, with color = one color</p>
-                <p>fuzzy search , try %T3305 , %f24238, %-set%</p>
+                <p>fuzzy search , try %T330 , %f24238%, %-set%</p>
                 <button class="btn btn-info mb-3">
                     <a href="/location_service" class="text-center" style="color:#88ff00; text-decoration: none;">Quick Location Lookup</a>
                 </button>
@@ -369,22 +392,22 @@
     {% if image_urls %}
     <div class="text-center"> <!-- Center the container -->
         <div class="row justify-content-center"> <!-- Center the row content -->
-            {% for (image_url, file_info) in image_urls | zip(file_info) %}
+            {% for image_url, info in image_urls | zip(file_info) %}
             <div class="col-6 col-md-4 col-lg-2 mb-3"> <!-- Adjusted column sizes for 6 per row -->
                 <div class="img-container text-center">
                     <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block"> <!-- Center the image -->
                     <div class="hover-msg">Download Original Below</div>
                     <p>
-                        <a href="/ftp2/{{ file_info[0] }}" target="_blank">{{ file_info[0] }}</a>
+                        <a href="/ftp2/{{ info[0] }}" target="_blank">{{ info[0] }}</a>
                         {% if current_user == 'yetimaster' %}
                         <br>Original Size: 
-                        {% if file_info[1] > 1000000 %}
-                            {{ (file_info[1] / (1024 * 1024)) | round(2) }} MB
+                        {% if info[1] > 1000000 %}
+                            {{ (info[1] / (1024 * 1024)) | round(2) }} MB
                         {% else %}
-                            {{ (file_info[1] / 1024) | round(2) }} KB
+                            {{ (info[1] / 1024) | round(2) }} KB
                         {% endif %}
-                        <br>Modified: {{ file_info[2] }}
-                        <button class="btn btn-danger btn-sm delete-button" data-file-name="{{ file_info[0] }}">Delete</button>
+                        <br>Modified: {{ info[2] }}
+                        <button class="btn btn-danger btn-sm delete-button" data-file-name="{{ info[0] }}">Delete</button>
                         {% endif %}
                     </p>
                 </div>
@@ -409,6 +432,23 @@
                 {{ excel_html | safe }}
             </div>
         {% endif %}
+        {% if history_html and 'No item history' not in history_html %}
+            <h3 class="mt-5 text-center">Item History</h3>
+            <div class="table-responsive">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-md-16 col-lg-12"> <!-- Adjust column sizes as needed -->
+                            {{ history_html | safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% elif history_html %}
+            <h3 class="mt-5 text-center">Item History</h3>
+            <div class="alert alert-info text-center">
+                {{ history_html | safe }}
+            </div>
+        {% endif %}
 
     </div>
 
@@ -426,83 +466,117 @@
     <!-- Include Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript">
+        $.fn.dataTable.moment = function(format, locale) {
+            var types = $.fn.dataTable.ext.type;
+            types.detect.unshift(function(d) {
+                return moment(d, format, locale, true).isValid() ? 'moment-' + format : null;
+            });
+            types.order['moment-' + format + '-pre'] = function(d) {
+                return moment(d, format, locale, true).valueOf();
+            };
+        };
+
+        // Apply the custom sorting for your specific date format (e.g., MM/DD/YYYY):
+        $.fn.dataTable.moment('MM/DD/YYYY');
         $(document).ready(function() {
-            var table = $('#excel_table_1').DataTable({
-                "paging": true,
-                "searching": true,
-                "autoWidth": true,
-                "pageLength": 50,
-                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
-                buttons: [
-                    'copy', 'excel', 'pdf',
-                    {
-                        text: 'HIDE 0 OR LESS',
-                        className: 'btn-custom-color',
-                        action: function ( e, dt, node, config ) {
-                            this.active( !this.active() );
-                            table.draw();
-                        }
-                    }
-                ],
-                responsive: true,
-                "columnDefs": [
-                    {
-                        "targets": -1,
-                        "visible": false,
-                        "searchable": false
-                    },
-                    {
-                        "targets": 4,
-                        "render": function(data, type, row, meta) {
-                            if(type === 'display' || type === 'filter') {
-                                var encodedStyle = encodeURIComponent(data.trim());
-                                return '<a href="/ftp2/' + encodedStyle + '.jpg">' + data + '</a>';
+            // Initialize DataTable for the first table
+            if ($('#excel_table').length) {
+                var table1 = $('#excel_table').DataTable({
+                    "paging": true,
+                    "searching": true,
+                    "autoWidth": true,
+                    "pageLength": 50,
+                    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                    buttons: [
+                        'copy', 'excel', 'pdf',
+                        {
+                            text: 'HIDE 0 OR LESS',
+                            className: 'btn-custom-color',
+                            action: function ( e, dt, node, config ) {
+                                this.active( !this.active() );
+                                table1.draw();
                             }
-                            return data;
                         }
-                    },
-                    {
-                        "targets": '_all',
-                        "className": 'dt-body-center'
-                    }
-                ],
-                "order": [[0, 'asc']],
-                "displayStart": 0
-            });
-            
-            $('#excel_table_1 thead th').each(function() {
-                if ($(this).text() === 'box_wt (lb)') {
-                    $(this).html('box_wt<br>(lb)');
-                }
-                if ($(this).text() === 'pc_wt (lb)') {
-                    $(this).html('pc_wt<br>(lb)');
-                }
-            });
-    
+                    ],
+                    responsive: true,
+                    "columnDefs": [
+                        {
+                            "targets": -1,
+                            "visible": false,
+                            "searchable": false
+                        },
+                        {
+                            "targets": 4,
+                            "render": function(data, type, row, meta) {
+                                if(type === 'display' || type === 'filter') {
+                                    var encodedStyle = encodeURIComponent(data.trim());
+                                    return '<a href="/ftp2/' + encodedStyle + '.jpg">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            "targets": '_all',
+                            "className": 'dt-body-center'
+                        }
+                    ],
+                    "order": [[0, 'asc']],
+                    "displayStart": 0
+                });
+            }
+
+            // Initialize DataTable for the second table
+            if ($('#history_table').length) {
+                var table2 = $('#history_table').DataTable({
+                    paging: true,
+                    searching: true,
+                    autoWidth: true,
+                    pageLength: 50,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                    buttons: ['copy', 'excel', 'pdf'],
+                    responsive: true,
+                    columnDefs: [
+                        {
+                            targets: 3, // Assuming the date column is the 4th column (index starts at 0)
+                            type: 'moment-MM/DD/YYYY',
+                            className: 'dt-body-center'
+                        },
+                        {
+                            targets: '_all',
+                            className: 'dt-body-center'
+                        }
+                    ],
+                    order: [[3, 'desc']], // Sort by the date column (descending order)
+                    displayStart: 0
+                });
+            }
+
+            // Hover messages and other scripts
             $('.img-container').on('mouseenter', function() {
                 // Hide all other hover messages before showing the new one
                 $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
-    
+
                 var $msg = $(this).find('.hover-msg');
                 $msg.stop(true, true).fadeIn(200).css('opacity', '1');
-    
+
                 // Use setTimeout to fade out the hover message after 1 second
                 setTimeout(function() {
                     $msg.fadeOut(200).css('opacity', '0');
                 }, 1000);
             });
-    
+
             $('.img-container').on('mouseleave', function() {
                 var $msg = $(this).find('.hover-msg');
                 $msg.stop(true, true).fadeOut(200).css('opacity', '0');
             });
-    
+
             // Clear hover messages when clicking to edit
-            $('#excel_table_1').on('click', 'td .editable', function() {
+            $('#excel_table').on('click', 'td .editable', function() {
                 $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
             });
-    
+
             // Initialize Bootstrap tooltips for elements with 'title' attribute
             $('[data-toggle="tooltip"]').tooltip({
                 html: true
@@ -510,47 +584,50 @@
             $('[title]').tooltip({
                 html: true
             });
-    
+
             $.fn.dataTable.ext.search.push(
                 function(settings, data, dataIndex) {
-                    var hideZero = table.button(3).active();
-                    var available = parseFloat(data[8]) || 0;
-                    if (hideZero) {
-                        return available > 0;
+                    if ($('#excel_table').length) {
+                        var hideZero = table1.button(3).active();
+                        var available = parseFloat(data[8]) || 0;
+                        if (hideZero) {
+                            return available > 0;
+                        }
+                        return true;
                     }
                     return true;
                 }
             );
-    
+
             $('#collapseOne').on('shown.bs.collapse', function () {
                 $('#headingOne i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
             }).on('hidden.bs.collapse', function () {
                 $('#headingOne i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
             });
-    
+
             var $tableResponsive = $('#table-responsive');
             var $topScroll = $('.top-scroll');
             var $topScrollInner = $('.top-scroll-inner');
-    
+
             function updateTopScrollWidth() {
                 var tableWidth = $tableResponsive.find('table').outerWidth();
                 $topScrollInner.css('width', tableWidth + 'px');
             }
-    
+
             updateTopScrollWidth();
-    
+
             $topScroll.on('scroll', function() {
                 $tableResponsive.scrollLeft($(this).scrollLeft());
             });
             $tableResponsive.on('scroll', function() {
                 $topScroll.scrollLeft($(this).scrollLeft());
             });
-    
+
             $(window).on('resize', function(){
                 updateTopScrollWidth();
             });
         });
-    
+
         function redirectToResult(event) {
             event.preventDefault();
             var userInput = document.getElementById("user_input").value.trim().toLowerCase();
@@ -562,7 +639,7 @@
     </script>
     <script type="text/javascript">
         $(document).ready(function() {
-            $('#excel_table_1').on('click', 'td:nth-child(4) .editable', function() {
+            $('#excel_table').on('click', 'td:nth-child(4) .editable', function() {
                 var $span = $(this);
                 
                 if (!$span.hasClass('editing')) {
@@ -579,7 +656,7 @@
                 }
             });
     
-            $('#excel_table_1').on('click', '.save-btn', function(e) {
+            $('#excel_table').on('click', '.save-btn', function(e) {
                 e.stopPropagation();
                 var $editableSpan = $(this).closest('.editable');
                 var newValue = $editableSpan.find('input').val().trim();
@@ -614,7 +691,7 @@
                 });
             });
     
-            $('#excel_table_1').on('click', '.cancel-btn', function(e) {
+            $('#excel_table').on('click', '.cancel-btn', function(e) {
                 e.stopPropagation();
                 var $editableSpan = $(this).closest('.editable');
                 var originalText = $editableSpan.find('input').val() || '';
