@@ -539,7 +539,18 @@
                     responsive: true,
                     columnDefs: [
                         {
-                            targets: 3, // Assuming the date column is the 4th column (index starts at 0)
+                            targets: 2, // Order Number column (3rd column)
+                            className: 'dt-body-center',
+                            render: function(data, type, row, meta) {
+                                if(type === 'display') {
+                                    // Assuming 'data' contains the order number
+                                    return '<a href="/order_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            targets: 3, // Date column
                             type: 'moment-MM/DD/YYYY',
                             className: 'dt-body-center'
                         },
@@ -548,7 +559,7 @@
                             className: 'dt-body-center'
                         }
                     ],
-                    order: [[3, 'desc']], // Sort by the date column (descending order)
+                    order: [[3, 'desc']], // Sort by date column descending
                     displayStart: 0
                 });
             }

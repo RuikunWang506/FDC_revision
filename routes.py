@@ -444,13 +444,13 @@ def register_routes(app):
                                             
 
     @app.route("/order_lookup", methods=["GET", "POST"])
-    def order_lookup():
+    @app.route("/order_lookup/<string:order_number>", methods=["GET"])
+    def order_lookup(order_number=None):
         if 'username' not in session:
             return redirect(url_for("login"))
         
         current_user = session['username']
         excel_html = None
-        order_number = None
 
         if request.method == "POST":
             # Handle the order lookup submission
@@ -465,7 +465,7 @@ def register_routes(app):
 
             if current_user == 'fdc':
                 app.logger.info("User %s does not have permission to view order details", current_user)
-                return render_template("order_lookup.html", excel_html=None)
+                return render_template("order_lookup.html", excel_html=None, current_user=current_user)
 
             excel_html = order_search.generate_order(order_number)
             
@@ -475,8 +475,28 @@ def register_routes(app):
                 app.logger.info("No data found for order number: %s", order_number)
                 excel_html = None
 
-        return render_template("order_lookup.html", excel_html=excel_html, order_number=order_number, current_user=current_user)
+        elif order_number:
+            # Handle GET request with order_number in the URL
+            app.logger.info("%s is looking up order number from URL: %s", current_user, order_number)
+            
+            if current_user == 'fdc':
+                app.logger.info("User %s does not have permission to view order details", current_user)
+                return render_template("order_lookup.html", excel_html=None, current_user=current_user)
+            
+            excel_html = order_search.generate_order(order_number)
+            
+            if excel_html:
+                app.logger.info("%s searched for order number: %s via URL", current_user, order_number)
+            else:
+                app.logger.info("No data found for order number: %s via URL", order_number)
+                excel_html = None
 
+        return render_template(
+            "order_lookup.html",
+            excel_html=excel_html,
+            order_number=order_number,
+            current_user=current_user
+        )
     @app.route('/label_maker_from_order_lookup', methods=['POST'])
     def label_maker_from_order_lookup():
         try:
