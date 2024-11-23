@@ -25,6 +25,7 @@ from user_agents import parse
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from io import StringIO
+from PIL import Image
 
 
 # Application-specific imports
@@ -41,6 +42,7 @@ import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from macy_special import process_order
 from loris_sticker import main, process_input_data
 from products import products_bp
+from util import resize_image  # Import the master resizing function
 
 
 
@@ -130,11 +132,7 @@ def register_routes(app):
         file_name = request.form.get("file_name")
         if file_name:
             try:
-                resized_path = os.path.join(Config.CATALOG_RESIZED, file_name)
                 original_path = os.path.join(Config.CATALOG_ORIGINAL, file_name)
-                if os.path.exists(resized_path):
-                    os.remove(resized_path)
-                    app.logger.info(f"{current_user} deleted {resized_path}")
                 if os.path.exists(original_path):
                     os.remove(original_path)
                     app.logger.info(f"{current_user} deleted {original_path}")
@@ -336,14 +334,6 @@ def register_routes(app):
             except FileNotFoundError:
                 app.logger.error("Directory not found: %s", Config.CATALOG_ORIGINAL)
 
-            # Check in CATALOG_RESIZED if not found in CATALOG_ORIGINAL
-            try:
-                for filename in os.listdir(Config.CATALOG_RESIZED):
-                    if filename.lower().startswith(term) and filename not in file_names:
-                        file_names.append(filename)
-            except FileNotFoundError:
-                app.logger.error("Directory not found: %s", Config.CATALOG_RESIZED)
-
         # Remove duplicates from file_names
         file_names = list(dict.fromkeys(file_names))
 
@@ -351,8 +341,7 @@ def register_routes(app):
         file_info = []
         for filename in file_names:
             original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-            resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
-            file_path = original_path if os.path.exists(original_path) else resized_path
+            file_path = original_path 
 
             if os.path.exists(file_path):
                 size = os.path.getsize(file_path)
@@ -367,11 +356,8 @@ def register_routes(app):
         sorted_image_urls = []
         for filename in sorted_file_names:
             original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-            resized_path = os.path.join(Config.CATALOG_RESIZED, filename)
             if os.path.exists(original_path):
                 image_url = os.path.join('/ftp', filename)
-            elif os.path.exists(resized_path):
-                image_url = os.path.join('/ftp', filename)  # Adjust if needed
             else:
                 image_url = '/static/no_image_available.jpg'  # Placeholder image
 
@@ -554,15 +540,26 @@ def register_routes(app):
         
         current_user = session['username']
         filename = None
-        user_input = None  # Initialize user_input to prevent UnboundLocalError
-        user_input_list = None  # Initialize user_input_list to store the list of files
-        user_input_directory = None  # Initialize user_input_directory to pass it to the template
-        file_count = 0  # Initialize file_count
+        user_input = None
+        user_input_list = None
+        user_input_directory = None
+        file_count = 0
+        file_size_kb = None  # Initialize file_size_kb
+        image_size = 800  # Default image size
 
         if request.method == "POST":
             user_input = request.form.get("user_input").strip()
             image_option = request.form.get("image_option")
+            image_size_input = request.form.get("image_size", "800")  # Get image size from form
+
+            # Check if the image size is set to "full"
+            if image_size_input.lower() == "full":
+                image_size = None  # Use None or another indicator to signify full size
+            else:
+                image_size = int(image_size_input)
+
             app.logger.info(f"{current_user} request to create a list: {user_input}")
+
 
             # Check if user_input was provided
             if user_input:
@@ -589,51 +586,49 @@ def register_routes(app):
                 # If input is a list, force image option to be 'resizedpic'
                 if user_input_type == "list":
                     image_option = "resizedpic"
-
+ 
                 # Pass these to the v5_Listcreator.py
                 try:
                     V5_Listcreator.user_input = user_input_directory if user_input_type == "directory" else ','.join(user_input_list)
                     V5_Listcreator.image_option = image_option
                     V5_Listcreator.user_input_type = user_input_type
-                    V5_Listcreator.main()
+                    V5_Listcreator.main(image_size)  # Pass image size to main
                     filename = f"{V5_Listcreator.formatted_date}.xlsx"
+                    file_size_kb = os.path.getsize(os.path.join("output", "list_output", filename)) / 1024  # Calculate file size
                 except Exception as e:
                     app.logger.error("An error occurred: %s", str(e))
                     return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message=f"An error occurred: {str(e)}", current_user=current_user)
-            else:
-                # Handle the case where user_input is not provided
-                app.logger.warning("No user input provided.")
-                return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message="Please provide input.", current_user=current_user)
 
-        return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, current_user=current_user)
-    
+        # Ensure that the function always returns a response
+        return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, file_size_kb=file_size_kb, image_size=image_size, current_user=current_user)
+            
     @app.route('/download_images', methods=['POST'])
     def download_images():
         image_type = request.form.get('image_type')  # Expecting 'resized' or 'original'
         user_input = request.form.get('user_input')
         image_list = [item.strip().upper() + ".jpg" for item in user_input.split(',')]
-        
-        # Determine the correct folder based on the image_type
-        if image_type == 'resized':
-            source_folder = Config.CATALOG_RESIZED
-            zip_filename = "clean_resized_images.zip"
-        elif image_type == 'original':
-            source_folder = Config.CATALOG_ORIGINAL
-            zip_filename = "clean_original_images.zip"
-        else:
-            return "Invalid image type specified.", 400
-        
+
         memory_file = io.BytesIO()
-        
+
         with zipfile.ZipFile(memory_file, 'w') as zf:
             for image_name in image_list:
-                image_path = os.path.join(source_folder, image_name)
+                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_name)
+
                 if os.path.exists(image_path):
-                    zf.write(image_path, arcname=image_name)
-        
+                    if image_type == 'resized':
+                        # Use the master resizing function
+                        with open(image_path, 'rb') as img_file:
+                            resized_img = resize_image(img_file, 1000)  # Example dimensions
+                            zf.writestr(image_name, resized_img.read())
+                    elif image_type == 'original':
+                        # Write the original image to the zip file
+                        zf.write(image_path, arcname=image_name)
+                else:
+                    return f"Image {image_name} not found.", 404
+
         memory_file.seek(0)
+        zip_filename = "clean_resized_images.zip" if image_type == 'resized' else "clean_original_images.zip"
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-    
 
     @app.route("/run_fast_script", methods=["POST"])
     def run_fast_script():
@@ -852,11 +847,8 @@ def register_routes(app):
 
     @app.route('/ftp/<path:path>', methods=['GET'])
     def serve_file(path):
-        return send_from_directory(Config.CATALOG_RESIZED, path, as_attachment=False)
-
-    @app.route('/ftp2/<path:path>', methods=['GET'])
-    def serve_file2(path):
         return send_from_directory(Config.CATALOG_ORIGINAL, path, as_attachment=False)
+
     
     #@app.route('/public/<path:path>', methods=['GET'])
     #def serve_file_pub(path):

@@ -10348,3 +10348,279 @@ order_qty ,
 2024-11-21 16:41:16,100 - INFO - Location service accessed by user: local_user
 2024-11-21 16:41:16,790 - INFO - Location service accessed by user: local_user
 2024-11-21 16:41:33,835 - INFO - Location service accessed by user: local_user
+2024-11-21 17:06:21,165 - INFO - Location service accessed by user: yeti
+2024-11-21 17:10:09,753 - INFO - Processing user input: n0991
+2024-11-21 17:10:09,918 - INFO - Lookup completed for user: yeti, input: n0991
+2024-11-21 17:10:18,187 - INFO - Processing user input: n099
+2024-11-21 17:10:18,456 - INFO - Lookup completed for user: yeti, input: n099
+2024-11-21 17:15:04,454 - INFO - Location service accessed by user: local_user
+2024-11-21 17:16:48,238 - INFO - Processing user input: t3305
+2024-11-21 17:16:48,431 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-21 17:18:36,819 - INFO - Processing user input: l1853
+2024-11-21 17:18:36,947 - INFO - Lookup completed for user: yeti, input: l1853
+2024-11-21 17:18:40,153 - INFO - Processing user input: n1853
+2024-11-21 17:18:40,338 - INFO - Lookup completed for user: yeti, input: n1853
+2024-11-21 17:18:50,983 - INFO - Processing user input: l1853
+2024-11-21 17:18:51,098 - INFO - Lookup completed for user: yeti, input: l1853
+2024-11-21 17:18:56,010 - INFO - Processing user input: l1863
+2024-11-21 17:18:56,199 - INFO - Lookup completed for user: yeti, input: l1863
+2024-11-21 17:19:11,539 - INFO - Processing user input: t3305
+2024-11-21 17:19:11,725 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-21 19:30:21,014 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-21 19:30:21,190 - INFO - Processing user input: s1460
+2024-11-21 19:30:21,398 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 19:30:21,398 - INFO - Lookup completed for user: ahua, input: s1460
+2024-11-21 19:31:58,637 - INFO - Processing user input: n1151
+2024-11-21 19:31:58,882 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 19:31:58,882 - INFO - Lookup completed for user: ahua, input: n1151
+2024-11-21 21:26:44,369 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-21 21:26:49,964 - INFO - Processing user input: t3305
+2024-11-21 21:26:50,166 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:26:50,166 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-21 21:31:45,645 - INFO - Processing user input: t3305
+2024-11-21 21:31:45,849 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:31:45,854 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-21 21:31:53,820 - INFO - Processing user input: t3305
+2024-11-21 21:31:54,021 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:31:54,021 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-21 21:34:08,665 - INFO - autobots, rolling out!
+2024-11-21 21:34:08,666 - INFO - autobots, rolling out!
+2024-11-21 21:34:10,185 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-21 21:34:14,701 - INFO - Processing user input: en1765
+2024-11-21 21:34:14,919 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:34:14,919 - INFO - Lookup completed for user: yeti, input: en1765
+2024-11-21 21:35:24,449 - INFO - autobots, rolling out!
+2024-11-21 21:35:24,449 - INFO - autobots, rolling out!
+2024-11-21 21:36:08,268 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Mobile Safari 16.6, OS: iOS 16.6, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-21 21:36:15,271 - INFO - Processing user input: en1765
+2024-11-21 21:36:15,472 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:36:15,472 - INFO - Lookup completed for user: yeti, input: en1765
+2024-11-21 21:36:21,503 - INFO - Processing user input: n1223
+2024-11-21 21:36:21,851 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:36:21,852 - INFO - Lookup completed for user: yeti, input: n1223
+2024-11-21 21:37:07,262 - INFO - yeti request to create a list: n1223
+2024-11-21 21:37:08,765 - INFO - [Download][List] yeti downloaded the file: List-20241121-213707.xlsx
+2024-11-21 21:37:38,960 - INFO - Processing user input: %f24249%
+2024-11-21 21:37:39,985 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:37:39,985 - INFO - Lookup completed for user: yeti, input: %f24249%
+2024-11-21 21:37:49,587 - INFO - Processing user input: t3471
+2024-11-21 21:37:49,733 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-21 21:37:49,733 - INFO - Lookup completed for user: yeti, input: t3471
+2024-11-22 03:06:59,334 - INFO - Location service accessed by user: Unknown
+2024-11-22 09:55:10,675 - INFO - Location service accessed by user: Unknown
+2024-11-22 10:38:13,140 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 10:38:19,486 - INFO - Processing user input: %f24249%
+2024-11-22 10:38:20,476 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 10:38:20,476 - INFO - Lookup completed for user: yeti, input: %f24249%
+2024-11-22 10:39:59,588 - INFO - Processing user input: t3243
+2024-11-22 10:39:59,762 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 10:39:59,762 - INFO - Lookup completed for user: yeti, input: t3243
+2024-11-22 10:55:26,562 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 10:55:34,526 - INFO - Processing user input: en1789
+2024-11-22 10:55:34,732 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 10:55:34,732 - INFO - Lookup completed for user: yeti, input: en1789
+2024-11-22 10:55:58,405 - INFO - Processing user input: n0735
+2024-11-22 10:55:58,559 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 10:55:58,559 - INFO - Lookup completed for user: yeti, input: n0735
+2024-11-22 11:03:32,118 - INFO - Processing user input: en1654
+2024-11-22 11:03:32,273 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 11:03:32,273 - INFO - Lookup completed for user: yeti, input: en1654
+2024-11-22 11:03:39,036 - INFO - Processing user input: en1765
+2024-11-22 11:03:39,214 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 11:03:39,214 - INFO - Lookup completed for user: yeti, input: en1765
+2024-11-22 11:21:29,209 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 11:21:32,969 - INFO - Processing user input: s1173
+2024-11-22 11:21:33,128 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 11:21:33,128 - INFO - Lookup completed for user: yeti, input: s1173
+2024-11-22 11:21:49,191 - INFO - Processing user input: s1172
+2024-11-22 11:21:49,339 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 11:21:49,339 - INFO - Lookup completed for user: yeti, input: s1172
+2024-11-22 12:42:31,242 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 12:42:31,408 - INFO - Location service accessed by user: yeti
+2024-11-22 12:42:36,619 - INFO - Processing user input: n0735
+2024-11-22 12:42:36,777 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 12:42:36,782 - INFO - Lookup completed for user: yeti, input: n0735
+2024-11-22 12:45:26,292 - INFO - Processing user input: n01845
+2024-11-22 12:45:26,415 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 12:45:26,415 - INFO - Lookup completed for user: yeti, input: n01845
+2024-11-22 12:45:29,432 - INFO - Processing user input: n1845
+2024-11-22 12:45:29,576 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 12:45:29,576 - INFO - Lookup completed for user: yeti, input: n1845
+2024-11-22 12:45:41,576 - INFO - Processing user input: en1789
+2024-11-22 12:45:41,769 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 12:45:41,770 - INFO - Lookup completed for user: yeti, input: en1789
+2024-11-22 12:46:23,975 - INFO - Location service accessed by user: Unknown
+2024-11-22 13:44:52,073 - INFO - Processing user input: en1789
+2024-11-22 13:44:52,284 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 13:44:52,284 - INFO - Lookup completed for user: yeti, input: en1789
+2024-11-22 13:45:10,131 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1789 BK and Style=EN1789
+2024-11-22 13:45:10,131 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1789 BK and Style=EN1789
+2024-11-22 13:45:10,136 - INFO - Location updated successfully for SKU=EN1789 BK and Style=EN1789
+2024-11-22 13:45:14,186 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1789 BL and Style=EN1789
+2024-11-22 13:45:14,186 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1789 BL and Style=EN1789
+2024-11-22 13:45:14,191 - INFO - Location updated successfully for SKU=EN1789 BL and Style=EN1789
+2024-11-22 13:45:17,393 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1789 TN and Style=EN1789
+2024-11-22 13:45:17,393 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1789 TN and Style=EN1789
+2024-11-22 13:45:17,399 - INFO - Location updated successfully for SKU=EN1789 TN and Style=EN1789
+2024-11-22 13:45:18,621 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1789 TN and Style=EN1789
+2024-11-22 13:45:18,621 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1789 TN and Style=EN1789
+2024-11-22 13:45:18,633 - INFO - Location updated successfully for SKU=EN1789 TN and Style=EN1789
+2024-11-22 13:45:21,396 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1789 WT and Style=EN1789
+2024-11-22 13:45:21,401 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1789 WT and Style=EN1789
+2024-11-22 13:45:21,401 - INFO - Location updated successfully for SKU=EN1789 WT and Style=EN1789
+2024-11-22 13:45:25,978 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1789 PK and Style=EN1789
+2024-11-22 13:45:25,978 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1789 PK and Style=EN1789
+2024-11-22 13:45:25,983 - INFO - Location updated successfully for SKU=EN1789 PK and Style=EN1789
+2024-11-22 13:45:28,295 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1789 GY and Style=EN1789
+2024-11-22 13:45:28,295 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1789 GY and Style=EN1789
+2024-11-22 13:45:28,306 - INFO - Location updated successfully for SKU=EN1789 GY and Style=EN1789
+2024-11-22 13:45:29,306 - INFO - Processing user input: en1789
+2024-11-22 13:45:29,502 - ERROR - Directory not found: D:\Catalog_pictures\catalog_resized
+2024-11-22 13:45:29,502 - INFO - Lookup completed for user: yeti, input: en1789
+2024-11-22 15:03:34,758 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 15:12:52,265 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 15:15:46,939 - INFO - Processing data in Loris tool kit for yeti
+2024-11-22 15:15:48,707 - INFO - [Download][loris_barcode]File 30_stickers_2024-11-22_15_15_46.pdf downloaded from barcode output
+2024-11-22 15:41:57,904 - INFO - autobots, rolling out!
+2024-11-22 15:41:57,904 - INFO - autobots, rolling out!
+2024-11-22 15:57:54,704 - INFO - autobots, rolling out!
+2024-11-22 15:57:58,284 - INFO - autobots, rolling out!
+2024-11-22 15:57:59,922 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 15:58:02,563 - INFO - Processing user input: t3305
+2024-11-22 15:58:02,783 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 15:58:35,853 - INFO - Processing user input: t3305
+2024-11-22 15:58:36,043 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 15:59:07,274 - INFO - Processing user input: t3305
+2024-11-22 15:59:07,462 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 15:59:38,485 - INFO - Processing user input: n1223
+2024-11-22 15:59:38,799 - INFO - Lookup completed for user: yeti, input: n1223
+2024-11-22 15:59:46,695 - INFO - Processing user input: n1223
+2024-11-22 15:59:47,011 - INFO - Lookup completed for user: yeti, input: n1223
+2024-11-22 16:00:15,049 - INFO - yeti is looking up order number: 1567
+2024-11-22 16:00:15,335 - INFO - yeti searched for order number: 1567
+2024-11-22 16:00:24,223 - INFO - yeti request to create a list: n1223
+2024-11-22 16:00:24,223 - ERROR - An error occurred: type object 'Config' has no attribute 'CATALOG_RESIZED'
+2024-11-22 16:03:35,618 - INFO - autobots, rolling out!
+2024-11-22 16:03:37,706 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 16:03:41,070 - INFO - yeti request to create a list: n1223
+2024-11-22 16:03:42,938 - INFO - [Download][List] yeti downloaded the file: List-20241122-160341.xlsx
+2024-11-22 17:23:09,343 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 17:23:12,792 - INFO - Processing user input: t3305
+2024-11-22 17:23:13,000 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 17:23:23,619 - INFO - yeti request to create a list: n1324
+2024-11-22 17:23:26,954 - INFO - [Download][List] yeti downloaded the file: List-20241122-172323.xlsx
+2024-11-22 18:36:43,814 - INFO - autobots, rolling out!
+2024-11-22 18:36:47,426 - INFO - autobots, rolling out!
+2024-11-22 21:17:36,522 - INFO - autobots, rolling out!
+2024-11-22 21:17:39,733 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:17:42,663 - INFO - Processing user input: t3305
+2024-11-22 21:17:42,873 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 21:17:45,091 - INFO - autobots, rolling out!
+2024-11-22 21:18:11,073 - INFO - autobots, rolling out!
+2024-11-22 21:18:11,668 - INFO - autobots, rolling out!
+2024-11-22 21:18:35,146 - INFO - autobots, rolling out!
+2024-11-22 21:18:35,560 - INFO - autobots, rolling out!
+2024-11-22 21:18:44,510 - INFO - autobots, rolling out!
+2024-11-22 21:18:44,915 - INFO - autobots, rolling out!
+2024-11-22 21:18:49,495 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:18:52,323 - INFO - Processing user input: t3305
+2024-11-22 21:18:52,543 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 21:21:42,475 - INFO - autobots, rolling out!
+2024-11-22 21:21:42,855 - INFO - autobots, rolling out!
+2024-11-22 21:21:58,480 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:22:01,295 - INFO - Processing user input: en1765
+2024-11-22 21:22:01,500 - INFO - Lookup completed for user: yeti, input: en1765
+2024-11-22 21:23:19,548 - INFO - yeti request to create a list: en1765
+2024-11-22 21:23:45,166 - INFO - autobots, rolling out!
+2024-11-22 21:23:45,937 - INFO - autobots, rolling out!
+2024-11-22 21:23:48,952 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:23:55,399 - INFO - yeti request to create a list: n1223
+2024-11-22 21:23:57,017 - INFO - [Download][List] yeti downloaded the file: List-20241122-212355.xlsx
+2024-11-22 21:24:30,795 - INFO - autobots, rolling out!
+2024-11-22 21:24:30,960 - INFO - autobots, rolling out!
+2024-11-22 21:24:32,914 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:24:37,239 - INFO - yeti request to create a list: n1223
+2024-11-22 21:24:38,613 - INFO - [Download][List] yeti downloaded the file: List-20241122-212437.xlsx
+2024-11-22 21:25:50,496 - INFO - yeti request to create a list: en1765,s1220,es1323
+2024-11-22 21:25:53,661 - INFO - [Download][List] yeti downloaded the file: List-20241122-212550.xlsx
+2024-11-22 21:28:06,273 - INFO - Processing user input: t3305
+2024-11-22 21:28:06,488 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 21:28:12,698 - INFO - Processing user input: n1223
+2024-11-22 21:28:13,038 - INFO - Lookup completed for user: yeti, input: n1223
+2024-11-22 21:30:43,411 - INFO - Processing user input: n1223
+2024-11-22 21:30:43,756 - INFO - Lookup completed for user: yeti, input: n1223
+2024-11-22 21:32:48,390 - INFO - Processing user input: n1223.n1116.t3305,en1765
+2024-11-22 21:32:48,766 - INFO - Lookup completed for user: yeti, input: n1223.n1116.t3305,en1765
+2024-11-22 21:33:01,226 - INFO - Processing user input: n1223,n1116,t3305,en1765
+2024-11-22 21:33:03,468 - INFO - Lookup completed for user: yeti, input: n1223,n1116,t3305,en1765
+2024-11-22 21:38:17,678 - INFO - autobots, rolling out!
+2024-11-22 21:38:18,419 - INFO - autobots, rolling out!
+2024-11-22 21:38:21,133 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:38:21,147 - INFO - Processing user input: n1223.n1116.t3305,en1765
+2024-11-22 21:38:21,412 - INFO - Lookup completed for user: yeti, input: n1223.n1116.t3305,en1765
+2024-11-22 21:38:22,682 - INFO - Processing user input: n1223.n1116.t3305,en1765
+2024-11-22 21:38:22,904 - INFO - Lookup completed for user: yeti, input: n1223.n1116.t3305,en1765
+2024-11-22 21:42:41,965 - INFO - yeti request to create a list: n1116
+2024-11-22 21:45:31,445 - INFO - yeti request to create a list: n1116
+2024-11-22 21:47:39,694 - INFO - autobots, rolling out!
+2024-11-22 21:47:40,294 - INFO - autobots, rolling out!
+2024-11-22 21:49:10,514 - INFO - autobots, rolling out!
+2024-11-22 21:49:10,868 - INFO - autobots, rolling out!
+2024-11-22 21:49:39,142 - INFO - autobots, rolling out!
+2024-11-22 21:49:39,494 - INFO - autobots, rolling out!
+2024-11-22 21:49:57,570 - INFO - autobots, rolling out!
+2024-11-22 21:49:57,925 - INFO - autobots, rolling out!
+2024-11-22 21:51:04,843 - INFO - autobots, rolling out!
+2024-11-22 21:51:05,568 - INFO - autobots, rolling out!
+2024-11-22 21:51:54,341 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:53:21,489 - INFO - autobots, rolling out!
+2024-11-22 21:53:22,211 - INFO - autobots, rolling out!
+2024-11-22 21:53:28,256 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:53:48,837 - INFO - autobots, rolling out!
+2024-11-22 21:53:49,027 - INFO - autobots, rolling out!
+2024-11-22 21:55:29,022 - INFO - autobots, rolling out!
+2024-11-22 21:55:32,629 - INFO - autobots, rolling out!
+2024-11-22 21:55:35,103 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:56:10,499 - INFO - autobots, rolling out!
+2024-11-22 21:57:08,197 - INFO - autobots, rolling out!
+2024-11-22 21:57:10,615 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 21:57:14,146 - INFO - Processing user input: t3305
+2024-11-22 21:57:14,367 - INFO - Lookup completed for user: yeti, input: t3305
+2024-11-22 21:57:29,657 - INFO - yeti request to create a list: n1223
+2024-11-22 21:57:38,857 - INFO - yeti request to create a list: n1223
+2024-11-22 21:57:43,916 - INFO - yeti request to create a list: n1223
+2024-11-22 21:57:49,591 - INFO - [Download][List] yeti downloaded the file: List-20241122-215743.xlsx
+2024-11-22 21:58:05,795 - INFO - yeti request to create a list: n1223
+2024-11-22 21:58:11,368 - INFO - [Download][List] yeti downloaded the file: List-20241122-215805.xlsx
+2024-11-22 21:59:14,831 - INFO - yeti request to create a list: L1871,L1873,T3404,ET3314,T3450,T3451,T3351,T3353,T3452,T3455,T3388,T3393,T3392,ET3167,ET3424,ET3426,T3449,T3405,M1149,EN2239,N2178,N2086,N0720,S1151,N1675,N1971,ES1500,L1867,T3164,T3181,T3009,T3135,M1137,N0735,N1267,N1780,S1508,ES1499,EN2329,S1512,S1510,N2270,L1687-M,N2222,ES1470,S1235,S1459,S1426,S1290,L1687-S,L1850,L1851,L1863,L1864
+2024-11-22 21:59:29,801 - INFO - [Download][List] yeti downloaded the file: List-20241122-215914.xlsx
+2024-11-22 21:59:51,198 - INFO - yeti request to create a list: L1871,L1873,T3404,ET3314,T3450,T3451,T3351,T3353,T3452,T3455,T3388,T3393,T3392,ET3167,ET3424,ET3426,T3449,T3405,M1149,EN2239,N2178,N2086,N0720,S1151,N1675,N1971,ES1500,L1867,T3164,T3181,T3009,T3135,M1137,N0735,N1267,N1780,S1508,ES1499,EN2329,S1512,S1510,N2270,L1687-M,N2222,ES1470,S1235,S1459,S1426,S1290,L1687-S,L1850,L1851,L1863,L1864
+2024-11-22 22:00:03,550 - INFO - [Download][List] yeti downloaded the file: List-20241122-215951.xlsx
+2024-11-22 22:00:22,346 - INFO - yeti request to create a list: L1871,L1873,T3404,ET3314,T3450,T3451,T3351,T3353,T3452,T3455,T3388,T3393,T3392,ET3167,ET3424,ET3426,T3449,T3405,M1149,EN2239,N2178,N2086,N0720,S1151,N1675,N1971,ES1500,L1867,T3164,T3181,T3009,T3135,M1137,N0735,N1267,N1780,S1508,ES1499,EN2329,S1512,S1510,N2270,L1687-M,N2222,ES1470,S1235,S1459,S1426,S1290,L1687-S,L1850,L1851,L1863,L1864
+2024-11-22 22:00:32,491 - INFO - [Download][List] yeti downloaded the file: List-20241122-220022.xlsx
+2024-11-22 22:01:36,405 - INFO - autobots, rolling out!
+2024-11-22 22:02:31,434 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 22:06:06,248 - INFO - autobots, rolling out!
+2024-11-22 22:06:53,802 - INFO - autobots, rolling out!
+2024-11-22 22:06:55,794 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 22:07:08,473 - INFO - yeti request to create a list: n1223
+2024-11-22 22:07:15,021 - INFO - [Download][List] yeti downloaded the file: List-20241122-220708.xlsx
+2024-11-22 22:07:33,254 - INFO - yeti request to create a list: en1765
+2024-11-22 22:07:36,934 - INFO - [Download][List] yeti downloaded the file: List-20241122-220733.xlsx
+2024-11-22 22:07:55,553 - INFO - yeti request to create a list: en1765
+2024-11-22 22:09:37,611 - INFO - autobots, rolling out!
+2024-11-22 22:09:42,611 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 22:09:47,260 - INFO - yeti request to create a list: n1223
+2024-11-22 22:09:52,439 - INFO - yeti request to create a list: en1765
+2024-11-22 22:09:58,138 - INFO - [Download][List] yeti downloaded the file: List-20241122-220952.xlsx
+2024-11-22 22:10:36,324 - INFO - yeti request to create a list: en1765
+2024-11-22 22:10:38,191 - INFO - [Download][List] yeti downloaded the file: List-20241122-221036.xlsx
+2024-11-22 22:11:56,138 - INFO - autobots, rolling out!
+2024-11-22 22:11:59,111 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-11-22 22:12:04,105 - INFO - yeti request to create a list: n1223
+2024-11-22 22:13:07,469 - INFO - yeti request to create a list: n1223
+2024-11-22 22:13:29,038 - INFO - yeti request to create a list: n1223
+2024-11-22 22:14:50,829 - INFO - yeti request to create a list: n1223
+2024-11-22 22:16:08,374 - INFO - yeti request to create a list: n1223
+2024-11-22 22:22:15,015 - INFO - Processing user input: n1223
+2024-11-22 22:22:15,358 - INFO - Lookup completed for user: yeti, input: n1223

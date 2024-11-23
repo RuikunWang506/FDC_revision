@@ -10,6 +10,8 @@ import io
 from config import Config
 from openpyxl.utils.datetime import from_excel
 from datetime import datetime as dt
+from util import resize_image  # Import the master resizing function
+
 
 # Define global variables
 user_input_type = None
@@ -18,7 +20,7 @@ user_input = "en2209"
 formatted_date = ""
 source_folder = None  # Correctly define and highlight the source_folder variable
     
-def main():
+def main(image_size=400):
     global user_input, formatted_date, user_input_type, source_folder, today
 
     today = datetime.datetime.now()
@@ -55,7 +57,7 @@ def main():
     if image_option == "dropboxpic":
         source_folder = user_input_directory
     else:
-        source_folder = Config.CATALOG_RESIZED
+        source_folder = Config.CATALOG_ORIGINAL
 
     # Continue with the existing logic...
     # Database connection details
@@ -170,7 +172,7 @@ def main():
         conn_oms_ef.close()
 
         create_and_save_pivot(excel_file_path)
-        generate_image_sheet(combined_results, user_input_list)
+        generate_image_sheet(combined_results, user_input_list,image_size)
 
     except pyodbc.Error as e:
         print("Error connecting to SQL Server:", e)
@@ -212,15 +214,23 @@ def reduce_image_quality(image_path, quality=20):
     buffer.seek(0)
     return buffer
 
-def add_data_to_excel_sheet(sku_name, ws, row, existing_wb):
+def add_data_to_excel_sheet(sku_name, ws, row, existing_wb, image_size):
     global source_folder  # Use the source_folder determined in the main function
     picfile = sku_name + ".jpg"
-    image_path = os.path.join(source_folder, picfile)
-    
+    image_path = os.path.join(Config.CATALOG_ORIGINAL, picfile)  # Fetch from catalog_original
+
     if not os.path.exists(image_path):
         image_path = os.path.join(source_folder, "nopic.jpg")
-    
-    buffer = reduce_image_quality(image_path)
+
+    # Open the original image and handle it based on image_size
+    with open(image_path, 'rb') as img_file:
+        if image_size is None:
+            # If image_size is None, use the original image without resizing
+            buffer = io.BytesIO(img_file.read())
+            buffer.seek(0)  # Ensure the buffer is at the start
+        else:
+            buffer = resize_image(img_file, image_size)  # Use the image_size parameter
+
     excelImg = openpyxl.drawing.image.Image(buffer)
     excelImg.height = 150
     excelImg.width = 200
@@ -313,10 +323,9 @@ def add_data_to_excel_sheet(sku_name, ws, row, existing_wb):
     ws['F' + str(row)].alignment = Alignment(horizontal='center', vertical='center')
     row += 8 if detail_row_num < 8 else detail_row_num
 
+    return row
 
-    return row  
-
-def generate_image_sheet(combined_results, user_input_list):
+def generate_image_sheet(combined_results, user_input_list, image_size):
     existing_wb = load_workbook(os.path.join("output", "list_output", formatted_date + ".xlsx"))
     new_ws = existing_wb.create_sheet(title="list")
     new_ws.freeze_panes = 'A3'
@@ -343,7 +352,7 @@ def generate_image_sheet(combined_results, user_input_list):
     row = 3
     for sku in user_input_list:
         sku_capitalize = sku.upper()
-        row = add_data_to_excel_sheet(sku_capitalize, new_ws, row, existing_wb)
+        row = add_data_to_excel_sheet(sku_capitalize, new_ws, row, existing_wb, image_size)
 
     highlight_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     new_ws['A1'].fill = highlight_fill

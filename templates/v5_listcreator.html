@@ -27,6 +27,14 @@
             background-color: #88ff00; /* Slightly different green for variety */
             text-align: center;
         }
+        .select-container {
+            display: flex;
+            justify-content: center; /* Center the select box horizontally */
+        }
+
+        .select-container .form-control {
+            width: 25%; /* Set the width to 25% */
+        }
     </style>
     <style>
         /* Modal styles */
@@ -119,6 +127,19 @@
                     </label>
                 </div>
                 <form method="POST" action="/v5_listcreator">
+                    <div class="form-group text-center">
+                        <label for="image_size">Select Image Size:</label>
+                        <div class="select-container">
+                            <select class="form-control" name="image_size" id="image_size">
+                                <option value="400">400</option>
+                                <option value="600">600</option>
+                                <option value="800" selected>800</option>
+                                <option value="1000">1000</option>
+                                <option value="full">100%</option>
+                                <!-- Add more options as needed -->
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <input type="text" class="form-control" name="user_input" id="user_input" required>
                     </div>
@@ -157,6 +178,8 @@
         {% if filename %}
             <div class="mt-3 text-center">
                 <h5>Your List is Generated: {{ filename }}</h5>
+                <p>File size: {{ file_size_kb }} KB</p>
+                <p>Image height: {{ image_size }}</p>
                 <div class="btn-group mt-2">
                     <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success mx-2">Download The List</a>
                     <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">

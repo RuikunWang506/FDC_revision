@@ -395,10 +395,10 @@
             {% for image_url, info in image_urls | zip(file_info) %}
             <div class="col-6 col-md-4 col-lg-2 mb-3"> <!-- Adjusted column sizes for 6 per row -->
                 <div class="img-container text-center">
-                    <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block"> <!-- Center the image -->
+                    <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block" loading="lazy"> <!-- Center the image -->
                     <div class="hover-msg">Download Original Below</div>
                     <p>
-                        <a href="/ftp2/{{ info[0] }}" target="_blank">{{ info[0] }}</a>
+                        <a href="/ftp/{{ info[0] }}" target="_blank">{{ info[0] }}</a>
                         {% if current_user == 'yetimaster' %}
                         <br>Original Size: 
                         {% if info[1] > 1000000 %}
@@ -511,7 +511,7 @@
                             "render": function(data, type, row, meta) {
                                 if(type === 'display' || type === 'filter') {
                                     var encodedStyle = encodeURIComponent(data.trim());
-                                    return '<a href="/ftp2/' + encodedStyle + '.jpg">' + data + '</a>';
+                                    return '<a href="/ftp/' + encodedStyle + '.jpg">' + data + '</a>';
                                 }
                                 return data;
                             }

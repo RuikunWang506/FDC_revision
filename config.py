@@ -1,7 +1,6 @@
 import os
 
 class Config:
-    CATALOG_RESIZED = r"D:\Catalog_pictures\catalog_resized"
     CATALOG_ORIGINAL = r"D:\Catalog_pictures\catalog_original"
     BIG_PICTURE_DIR  = r"D:\Individual_big_picture"
     LOCAL_DROPBOX_DIR = r"C:\users\stream\dropbox"
