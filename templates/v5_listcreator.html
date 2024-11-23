@@ -182,10 +182,8 @@
                 <p>Image height: {{ image_size }}</p>
                 <div class="btn-group mt-2">
                     <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success mx-2">Download The List</a>
-                    <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">
-                        <input type="hidden" name="user_input" value="{{ user_input }}">
-                        <button type="submit" name="image_type" value="resized" class="btn btn-info mx-2">Download Clean Resized Image (small)</button>
-                        <button type="submit" name="image_type" value="original" class="btn btn-warning mx-2">Download Clean Original Image (Large)</button>
+                    <form method="POST" action="/download_images">
+                        <button type="submit" class="btn btn-success">Download Selected Images</button>
                     </form>
                     <button type="button" class="btn btn-primary mx-2" id="download-dropbox-btn">Download Dropbox Image</button>
                 </div>
@@ -198,6 +196,40 @@
                     <h1 class="cool-effect">Do it yourself!!!</h1>
                     <p class="cool-effect">You have the Dropbox link, bro!!</p>
                 </div>
+            </div>
+        {% endif %}
+        {% if images %}
+            <div class="container mt-5" id="imageSelectionForm">
+                <h3>Select One Image for Excel</h3>
+                <form method="POST" action="/v5_listcreator/finalize">
+                    <div class="row">
+                        {% for sku, image_set in images.items() %}
+                            <div class="col-md-12 mb-4">
+                                <div class="card">
+                                    <div class="card-header">{{ sku }}</div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            {% for image in image_set %}
+                                            <div class="col-md-2">
+                                                <img src="{{ url_for('serve_file', path=image['path']) }}" class="img-thumbnail">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="radio"
+                                                           name="selected_images_{{ sku }}"
+                                                           value="{{ image['filename'] }}"
+                                                           {% if image['filename'] in selected_images or (loop.first and not selected_images) %}checked{% endif %}>
+                                                    <label class="form-check-label">{{ image['filename'] }}</label>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-success">Submit Final Decision</button>
+                </form>
             </div>
         {% endif %}
     </div>

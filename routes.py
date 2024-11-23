@@ -544,8 +544,10 @@ def register_routes(app):
         user_input_list = None
         user_input_directory = None
         file_count = 0
-        file_size_kb = None  # Initialize file_size_kb
+        file_size_kb = None
         image_size = 800  # Default image size
+        images = {}
+        selected_images = []
 
         if request.method == "POST":
             user_input = request.form.get("user_input").strip()
@@ -560,58 +562,103 @@ def register_routes(app):
 
             app.logger.info(f"{current_user} request to create a list: {user_input}")
 
-
-            # Check if user_input was provided
             if user_input:
-                # Look for the 'Dropbox' in the path and construct the local directory path
-                dropbox_index = user_input.lower().find('dropbox')
-                if (dropbox_index != -1):
-                    relative_path = user_input[dropbox_index + len('dropbox') + 1:].strip()  # +1 to skip the backslash and strip spaces
-                    user_input_directory = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path).strip()
+                user_input_list = [item.strip() for item in user_input.split(',')]
+                images = get_images_for_selection(user_input_list)
 
-                    if os.path.isdir(user_input_directory):
-                        user_input_type = "directory"
-                        # Create a list of file names without extensions from the directory
-                        user_input_list = [os.path.splitext(f)[0] for f in os.listdir(user_input_directory) if f.endswith('.jpg')]
-                        # Count the number of files
-                        file_count = len(user_input_list)
-                        # Join the list into a comma-separated string
-                        user_input = ','.join(user_input_list).strip()
-                    else:
-                        raise ValueError(f"The directory {user_input_directory} does not exist.")
-                else:
-                    user_input_type = "list"
-                    user_input_list = [item.strip() for item in user_input.split(',')]
+            # Handle image selection
+            selected_images = request.form.getlist('selected_images')
 
-                # If input is a list, force image option to be 'resizedpic'
-                if user_input_type == "list":
-                    image_option = "resizedpic"
- 
-                # Pass these to the v5_Listcreator.py
-                try:
-                    V5_Listcreator.user_input = user_input_directory if user_input_type == "directory" else ','.join(user_input_list)
-                    V5_Listcreator.image_option = image_option
-                    V5_Listcreator.user_input_type = user_input_type
-                    V5_Listcreator.main(image_size)  # Pass image size to main
-                    filename = f"{V5_Listcreator.formatted_date}.xlsx"
-                    file_size_kb = os.path.getsize(os.path.join("output", "list_output", filename)) / 1024  # Calculate file size
-                except Exception as e:
-                    app.logger.error("An error occurred: %s", str(e))
-                    return render_template("v5_listcreator.html", filename=None, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, error_message=f"An error occurred: {str(e)}", current_user=current_user)
+        return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, file_size_kb=file_size_kb, image_size=image_size, current_user=current_user, images=images, selected_images=selected_images)
 
-        # Ensure that the function always returns a response
-        return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, file_size_kb=file_size_kb, image_size=image_size, current_user=current_user)
+    def get_images_for_selection(sku_list):
+        images = {}
+        for sku in sku_list:
+            image_set = []
+            base_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}.jpg")
+            if os.path.exists(base_image_path):
+                image_set.append({'filename': f"{sku}.jpg", 'path': f"{sku}.jpg", 'default': True})
             
+            version = 2
+            while True:
+                versioned_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}_v{version}.jpg")
+                if os.path.exists(versioned_image_path):
+                    image_set.append({'filename': f"{sku}_v{version}.jpg", 'path': f"{sku}_v{version}.jpg", 'default': False})
+                    version += 1
+                else:
+                    break
+            
+            images[sku] = image_set
+        return images
+    
+    @app.route("/v5_listcreator/finalize", methods=["POST"])
+    def finalize_v5_listcreator():
+        if 'username' not in session:
+            session['next'] = request.url
+            return redirect(url_for("login"))
+
+        current_user = session['username']
+        
+        # Get all form data including image size
+        form_data = request.form
+        image_size_input = form_data.get("image_size", "800")
+        
+        # Process image size
+        if image_size_input.lower() == "full":
+            image_size = None
+        else:
+            image_size = int(image_size_input)
+        
+        # Extract selected images for each SKU
+        selected_images = []
+        clean_skus = []
+        
+        # Process each selected image from the form
+        for key in form_data:
+            if key.startswith('selected_images_'):
+                selected_image = form_data[key]
+                selected_images.append(selected_image)
+                sku_base = selected_image.split('_v')[0].replace('.jpg', '')
+                clean_skus.append(sku_base)
+        
+        user_input = ','.join(clean_skus)
+        
+        # Set up V5_Listcreator parameters
+        V5_Listcreator.user_input = user_input
+        V5_Listcreator.selected_images = selected_images
+        V5_Listcreator.image_option = "resizedpic"
+        V5_Listcreator.user_input_type = "list"
+
+        try:
+            V5_Listcreator.main(image_size)  # Pass image_size to main
+            filename = f"{V5_Listcreator.formatted_date}.xlsx"
+            file_size_kb = os.path.getsize(os.path.join("output", "list_output", filename)) / 1024
+
+            images = get_images_for_selection(clean_skus)
+
+            return render_template("v5_listcreator.html",
+                                filename=filename,
+                                user_input=user_input,
+                                file_size_kb=file_size_kb,
+                                current_user=current_user,
+                                images=images,
+                                selected_images=selected_images,
+                                image_size=image_size)
+
+        except Exception as e:
+            app.logger.error(f"Error in finalize_v5_listcreator: {str(e)}")
+            flash(f"An error occurred: {str(e)}")
+            return redirect(url_for("v5_listcreator"))
+        
     @app.route('/download_images', methods=['POST'])
     def download_images():
+        selected_images = request.form.getlist('selected_images')  # Get the list of selected images
         image_type = request.form.get('image_type')  # Expecting 'resized' or 'original'
-        user_input = request.form.get('user_input')
-        image_list = [item.strip().upper() + ".jpg" for item in user_input.split(',')]
 
         memory_file = io.BytesIO()
 
         with zipfile.ZipFile(memory_file, 'w') as zf:
-            for image_name in image_list:
+            for image_name in selected_images:
                 image_path = os.path.join(Config.CATALOG_ORIGINAL, image_name)
 
                 if os.path.exists(image_path):
@@ -627,7 +674,7 @@ def register_routes(app):
                     return f"Image {image_name} not found.", 404
 
         memory_file.seek(0)
-        zip_filename = "clean_resized_images.zip" if image_type == 'resized' else "clean_original_images.zip"
+        zip_filename = "selected_images_resized.zip" if image_type == 'resized' else "selected_images_original.zip"
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
 
     @app.route("/run_fast_script", methods=["POST"])

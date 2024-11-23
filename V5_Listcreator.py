@@ -19,6 +19,7 @@ image_option = None
 user_input = "en2209"
 formatted_date = ""
 source_folder = None  # Correctly define and highlight the source_folder variable
+selected_image = []  # To store the selected image version
     
 def main(image_size=400):
     global user_input, formatted_date, user_input_type, source_folder, today
@@ -215,13 +216,22 @@ def reduce_image_quality(image_path, quality=20):
     return buffer
 
 def add_data_to_excel_sheet(sku_name, ws, row, existing_wb, image_size):
-    global source_folder  # Use the source_folder determined in the main function
-    picfile = sku_name + ".jpg"
-    image_path = os.path.join(Config.CATALOG_ORIGINAL, picfile)  # Fetch from catalog_original
-
+    global source_folder, selected_images  # Change from selected_image to selected_images
+    
+    # Find the matching selected image for this SKU
+    matching_image = None
+    if selected_images:
+        for image in selected_images:
+            if image.lower().startswith(sku_name.lower()):
+                matching_image = image
+                break
+    
+    # Use the matching selected image if found, otherwise use default
+    picfile = matching_image if matching_image else sku_name + ".jpg"
+    
+    image_path = os.path.join(Config.CATALOG_ORIGINAL, picfile)
     if not os.path.exists(image_path):
         image_path = os.path.join(source_folder, "nopic.jpg")
-
     # Open the original image and handle it based on image_size
     with open(image_path, 'rb') as img_file:
         if image_size is None:
