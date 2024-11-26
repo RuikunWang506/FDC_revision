@@ -370,10 +370,12 @@
     <div class="container mt-5">
         <div class="row justify-content-center text-center">
             <form id="orderLookupForm" onsubmit="redirectToResult(event)">
+                {% if not image_urls %}
                 <h4>Enter Input, separate by comma:</h4>
                 <p>You can put multiple SKUs like n1223 gy, N1551</p>
                 <p>Style only = all colors, with color = one color</p>
                 <p>fuzzy search , try %T330 , %f24238%, %-set%</p>
+                {% endif %}
                 <button class="btn btn-info mb-3">
                     <a href="/location_service" class="text-center" style="color:#88ff00; text-decoration: none;">Quick Location Lookup</a>
                 </button>
@@ -507,11 +509,31 @@
                             "searchable": false
                         },
                         {
+                            "targets": 2,
+                            "render": function(data, type, row, meta) {
+                                if(type === 'display' || type === 'filter') {
+                                    var encodedStyle = encodeURIComponent(data.trim());
+                                    return '<a href="/item_lookup/' + encodedStyle + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
                             "targets": 4,
                             "render": function(data, type, row, meta) {
                                 if(type === 'display' || type === 'filter') {
                                     var encodedStyle = encodeURIComponent(data.trim());
-                                    return '<a href="/ftp/' + encodedStyle + '.jpg">' + data + '</a>';
+                                    return '<a href="/item_lookup/' + encodedStyle + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            "targets": 5,
+                            "render": function(data, type, row, meta) {
+                                if(type === 'display' || type === 'filter') {
+                                    var encodedStyle = encodeURIComponent(data.trim());
+                                    return '<a href="/item_lookup/%25' + encodedStyle + '%25">' + data + '</a>';
                                 }
                                 return data;
                             }
@@ -545,6 +567,17 @@
                                 if(type === 'display') {
                                     // Assuming 'data' contains the order number
                                     return '<a href="/order_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            targets: 1, // Order Number column (3rd column)
+                            className: 'dt-body-center',
+                            render: function(data, type, row, meta) {
+                                if(type === 'display') {
+                                    // Assuming 'data' contains the order number
+                                    return '<a href="/item_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
                                 }
                                 return data;
                             }

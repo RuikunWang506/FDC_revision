@@ -130,9 +130,9 @@ def generate_excel(user_input):
         # Process results to Excel
         workbook = openpyxl.Workbook()
         sheet = workbook.active
-        column_headers = ['Database', 'SKU', 'Style', 'Descrip', 'Stock', 'Sold', 'Avail',
-                          'Ocean', 'cost', 'MSRP', 'Case<br>Qty', 'box_wt<br>(lb)',
-                          'pc_wt<br>(lb)', 'color', 'length', 'width', 'height', 'update<br>dt', 'create<br>dt']
+        column_headers = ['DB', 'SKU', 'Style', 'Descrip', 'Stock', 'Sold', 'Avail',
+                          '🚢', 'cost', 'MSRP', 'CaseQty', 'box_wt',
+                          'pc_wt', 'color', 'len', 'wid', 'hei', 'update dt', 'create dt']
         for col_index, header in enumerate(column_headers, start=1):
             sheet.cell(row=1, column=col_index, value=header)
 
@@ -180,7 +180,8 @@ def generate_excel(user_input):
             cursor = conn.cursor()
             cursor.execute(history_query, history_query_params)
             rows = cursor.fetchall()
-            rows_with_db = [(database_name,) + tuple(row) for row in rows]
+            updated_db_name = database_name.replace('omsdata_FDC', 'FDC').replace('oms_EF', 'E_FAS')
+            rows_with_db = [(updated_db_name,) + tuple(row) for row in rows]
             all_history_rows.extend(rows_with_db)
 
         if all_history_rows:

@@ -283,13 +283,13 @@ def register_routes(app):
             # Add the 'Location' and 'Update_Date' columns
             df['Location'] = df['SKU'].astype(str).str.lower().map(location_dict).fillna('')
             df['Update_Date'] = df['SKU'].astype(str).str.lower().map(updated_date_dict).fillna('no data')
-            if 'Database' in df.columns:
+            if 'DB' in df.columns:
                 replacement_dict = {
                     'oms_ef': 'E_FAS',
                     'omsdata_fdc': 'FDC'
                 }
                 # Perform case-insensitive replacement
-                df['Database'] = df['Database'].str.lower().replace(replacement_dict)
+                df['DB'] = df['DB'].str.lower().replace(replacement_dict)
             else:
                 app.logger.warning("Database column not found in the DataFrame.")
                 
@@ -541,54 +541,105 @@ def register_routes(app):
         current_user = session['username']
         filename = None
         user_input = None
-        user_input_list = None
-        user_input_directory = None
-        file_count = 0
-        file_size_kb = None
-        image_size = 800  # Default image size
         images = {}
         selected_images = []
+        show_input_form = True
+        error_message = None  # Initialize error_message to avoid UnboundLocalError
 
         if request.method == "POST":
-            user_input = request.form.get("user_input").strip()
+            user_input = request.form.get("user_input", "").strip()
             image_option = request.form.get("image_option")
-            image_size_input = request.form.get("image_size", "800")  # Get image size from form
-
-            # Check if the image size is set to "full"
-            if image_size_input.lower() == "full":
-                image_size = None  # Use None or another indicator to signify full size
-            else:
-                image_size = int(image_size_input)
-
-            app.logger.info(f"{current_user} request to create a list: {user_input}")
-
+            
             if user_input:
-                user_input_list = [item.strip() for item in user_input.split(',')]
+                # Set the global variables in V5_Listcreator.py
+                V5_Listcreator.user_input = user_input
+                V5_Listcreator.image_option = image_option
+                
+                if image_option == "dropboxpic" and "dropbox" in user_input.lower():
+                    # Handle directory input with encoding
+                    V5_Listcreator.user_input_type = "directory"
+                    dropbox_path = os.path.join(Config.LOCAL_DROPBOX_DIR, user_input[user_input.lower().find('dropbox')+8:])
+                    
+                    # Use os.listdir() with proper encoding handling
+                    user_input_list = []
+                    if not os.path.exists(dropbox_path):
+                        error_message = f"Path not found, check your path"
+                        show_input_form = True
+                        return render_template(
+                            "v5_listcreator.html",
+                            filename=filename,
+                            user_input=user_input,
+                            images=images,
+                            selected_images=selected_images,
+                            current_user=current_user,
+                            show_input_form=show_input_form,
+                            error_message=error_message
+                        )
+
+                    for filename in os.listdir(dropbox_path):
+                        try:
+                            if filename.endswith('.jpg'):
+                                user_input_list.append(filename.encode('utf-8').decode('utf-8'))
+                        except UnicodeEncodeError:
+                            continue
+                else:
+                    # Handle list input
+                    V5_Listcreator.user_input_type = "list"
+                    user_input_list = [item.strip() for item in user_input.split(',')]
+                
+                # Get images for selection
                 images = get_images_for_selection(user_input_list)
-
-            # Handle image selection
-            selected_images = request.form.getlist('selected_images')
-
-        return render_template("v5_listcreator.html", filename=filename, user_input=user_input, user_input_directory=user_input_directory, file_count=file_count, file_size_kb=file_size_kb, image_size=image_size, current_user=current_user, images=images, selected_images=selected_images)
-
+                show_input_form = False
+                    
+        return render_template(
+            "v5_listcreator.html",
+            filename=filename,
+            user_input=user_input,
+            images=images,
+            selected_images=selected_images,
+            current_user=current_user,
+            show_input_form=show_input_form,
+            error_message=error_message
+        )
     def get_images_for_selection(sku_list):
         images = {}
+        
         for sku in sku_list:
-            image_set = []
-            base_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}.jpg")
-            if os.path.exists(base_image_path):
-                image_set.append({'filename': f"{sku}.jpg", 'path': f"{sku}.jpg", 'default': True})
-            
-            version = 2
-            while True:
-                versioned_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}_v{version}.jpg")
-                if os.path.exists(versioned_image_path):
-                    image_set.append({'filename': f"{sku}_v{version}.jpg", 'path': f"{sku}_v{version}.jpg", 'default': False})
-                    version += 1
-                else:
-                    break
-            
-            images[sku] = image_set
+            try:
+                # Extract pattern: 1-2 letters followed by exactly 4 numbers
+                match = re.match(r'([A-Za-z]{1,2}\d{4})', sku)
+                if match:
+                    sku = match.group(1).upper()
+                    image_set = []
+                    base_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}.jpg")
+                    
+                    if os.path.exists(base_image_path):
+                        image_set.append({
+                            'filename': f"{sku}.jpg",
+                            'path': f"{sku}.jpg",
+                            'default': True
+                        })
+                    
+                    # Check for versioned images
+                    version = 2
+                    while True:
+                        versioned_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}_v{version}.jpg")
+                        if os.path.exists(versioned_image_path):
+                            image_set.append({
+                                'filename': f"{sku}_v{version}.jpg",
+                                'path': f"{sku}_v{version}.jpg",
+                                'default': False
+                            })
+                            version += 1
+                        else:
+                            break
+                    
+                    if image_set:  # Only add SKUs that have images
+                        images[sku] = image_set
+                        
+            except UnicodeEncodeError:
+                continue
+                
         return images
     
     @app.route("/v5_listcreator/finalize", methods=["POST"])
