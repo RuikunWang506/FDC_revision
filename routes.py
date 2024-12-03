@@ -39,7 +39,7 @@ from container import container_bp
 from boat import boat_service_bp
 from chatgpt import chatgpt_bp
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
-from macy_special import process_order
+from macy_special import process_orders
 from loris_sticker import main, process_input_data
 from products import products_bp
 from util import resize_image  # Import the master resizing function
@@ -805,21 +805,21 @@ def register_routes(app):
         filename = None
         error_message = None
         po_num = request.form.get("po_num", "")
-        bol = request.form.get("bol", "")
+        order_number = request.form.get("order_number", "")
         apt = request.form.get("apt", "")
         carrier = request.form.get("carrier", "")
         project = request.form.get("project", "")
 
         if request.method == "POST":
-            app.logger.info("%s is processing Macy Order: %s", current_user, bol)
-            filename, error_message = process_order(po_num, bol, apt, carrier, project)
+            app.logger.info("%s is processing Macy Order: %s", current_user, order_number)
+            filename, error_message, total_labels, duplicate_numbers, label_ref, address, warnings = process_orders(po_num, order_number, apt, carrier, project)
             if filename is None and error_message is None:
-                error_message = f"Order : {bol} not found, maybe wrong?"
-                app.logger.warning("Order number %s not found for %s", bol, current_user)
+                error_message = f"Order : {order_number} not found, maybe wrong?"
+                app.logger.warning("Order number %s not found for %s", order_number, current_user)
             elif filename:
                 filename = os.path.basename(filename)
 
-        return render_template("macy.html", filename=filename, error_message=error_message, current_user=current_user, po_num=po_num, bol=bol, apt=apt, carrier=carrier, project=project)
+        return render_template("macy.html", filename=filename, error_message=error_message, current_user=current_user, po_num=po_num, order_number=order_number, apt=apt, carrier=carrier, project=project)
 
     @app.route("/loris", methods=["GET", "POST"])
     def loris():

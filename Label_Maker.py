@@ -415,7 +415,7 @@ def create_label(ws, from_address, to_address, output_line_number, sku, color, p
     """
     print(f"create_label: Creating label for label number {label_number} with quantity {quantity}.")
 
-    # Add from_address
+
     for address in from_address:
         cell = f"A{output_line_number}"
         ws[cell] = address
@@ -479,7 +479,7 @@ def create_label(ws, from_address, to_address, output_line_number, sku, color, p
     ws.merge_cells(f"A{output_line_number}:C{output_line_number}")
     ws[f"A{output_line_number}"].alignment = Alignment(horizontal="left", vertical="center")
     ws[f"A{output_line_number}"].font = ft_bold
-    ws[f"D{output_line_number}"] = quantity
+    ws[f"D{output_line_number}"] = f"=D{output_line_number-4}"
     ws[f"D{output_line_number}"].font = ft
     ws[f"E{output_line_number}"] = ""
     ws[f"E{output_line_number}"].font = ft
