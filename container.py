@@ -107,16 +107,14 @@ def process_container_file(file, container_number):
     os.makedirs(output_dir, exist_ok=True)
 
     # Define file paths
-    output_step3_path = os.path.join(output_dir, f"{container_number}-styles.xlsx")
-    output_step4_path = os.path.join(output_dir, f"{container_number}-items.xlsx")
+    output_step3_path = os.path.join(output_dir, f"{container_number}-styles.csv")
+    output_step4_path = os.path.join(output_dir, f"{container_number}-PO.csv")
 
     # Write Step 3 (styles.xlsx) to 'output/container/'
-    with pd.ExcelWriter(output_step3_path, engine='xlsxwriter') as writer:
-        df_step3.to_excel(writer, index=False)
+    df_step3.to_csv(output_step3_path, index=False)
 
-    # Write Step 4 (items.xlsx) to 'output/container/'
-    with pd.ExcelWriter(output_step4_path, engine='xlsxwriter') as writer:
-        df_step4.to_excel(writer, index=False)
+    # Write Step 4 to CSV
+    df_step4.to_csv(output_step4_path, index=False)
 
     # Return file paths and DataFrames
     return output_step3_path, output_step4_path, df_step3, df_step4

@@ -24,16 +24,15 @@ class Config:
         'yeti': '5788',
         'ken': '2843',
         'ahua':'5788',
-        'derrick': '0914',
         'jennifer': '123456',
         'nicye':'dick',
         'ting':'827',
         'helen':'827',
         'kx':'200',
-        'erin':'7555',
         'dennis':'dennis',
         'jiayi':'1234',
-        'dahlia':'dahlia',
+        'xj':'88',
+        'wh':'1234',
         'baiqiang':'1234'
     }
     

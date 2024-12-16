@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Tools</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="https://www.4seller.com/favicon.ico">
+    <style>
+        .icon-btn img {
+            height: 20px;
+            margin-right: 8px;
+        }
+    </style>
+    <script>
+        function openAllLinks() {
+            const links = [
+                'https://www.4seller.com/web/dashboard.html',
+                'https://seller-us.tiktok.com/order',
+                'https://seller.temu.com/orders.html',
+                'https://sellerhub.shein.com/#/gsp/order-management/list',
+                'https://ship13.shipstation.com'
+            ];
+            links.forEach(link => window.open(link, '_blank'));
+        }
+    </script>
+</head>
+<body>
+    <!-- Include Navbar -->
+    {% include 'navbar.html' %}
+
+    <div class="container my-5">
+        <h2 class="mb-4">Quick Access Links</h2>
+        <!-- Button to Open All Links -->
+        <button class="btn btn-primary btn-block mb-3" onclick="openAllLinks()">
+            Open All Links
+        </button>
+
+        <!-- Individual Links -->
+        <div class="list-group">
+            <a href="https://www.4seller.com/web/dashboard.html" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.4seller.com/favicon.ico" alt="4Seller Logo"> 4Seller Dashboard
+            </a>
+            <a href="https://seller-us.tiktok.com/order" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.tiktok.com/favicon.ico" alt="TikTok Logo"> TikTok Orders
+            </a>
+            <a href="https://seller.temu.com/orders.html" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.temu.com/favicon.ico" alt="Temu Logo"> Temu Orders
+            </a>
+            <a href="https://sellerhub.shein.com/#/gsp/order-management/list" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.shein.com/favicon.ico" alt="Shein Logo"> Shein Orders
+            </a>
+            <a href="https://ship13.shipstation.com" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.shipstation.com/favicon.ico" alt="ShipStation Logo"> ShipStation
+            </a>
+            <a href="superbrowser://open" target="_self">Open SuperBrowser</a>
+
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -525,7 +525,7 @@ def create_label(ws, from_address, to_address, output_line_number, sku, color, p
     ws[f"D{output_line_number}"] = total_labels
     ws[f"D{output_line_number}"].fill = Yellow_fill
     ws[f"D{output_line_number}"].font = ft
-    output_line_number += 1  # Blank line
+    output_line_number += 2  # Blank line
 
     print(f"create_label: Label for label number {label_number} created at line {output_line_number}.")
     return output_line_number

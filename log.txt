@@ -12104,3 +12104,1380 @@ WHERE prod_cd = 'N2149 BR';
 2024-12-02 22:28:49,767 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
 2024-12-02 22:28:51,231 - INFO - yeti is processing Macy Order: 33698
 2024-12-02 22:28:52,985 - INFO - [Download][macy_label]File macyset_33698_new.xlsx downloaded from label output
+2024-12-02 23:36:47,524 - INFO - User nicye has logged in. IP: 115.223.137.158, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-02 23:36:47,688 - INFO - Processing user input: l1866
+2024-12-02 23:36:47,870 - INFO - Lookup completed for user: nicye, input: l1866
+2024-12-02 23:36:50,581 - INFO - Processing user input: l1867
+2024-12-02 23:36:50,739 - INFO - Lookup completed for user: nicye, input: l1867
+2024-12-03 00:42:00,472 - INFO - User nicye has logged in. IP: 115.223.137.158, Browser: Chrome 125.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 00:42:00,643 - INFO - Processing user input: s1458
+2024-12-03 00:42:00,809 - INFO - Lookup completed for user: nicye, input: s1458
+2024-12-03 00:42:06,265 - INFO - Processing user input: s1472
+2024-12-03 00:42:06,414 - INFO - Lookup completed for user: nicye, input: s1472
+2024-12-03 00:47:25,989 - INFO - Processing user input: n1835
+2024-12-03 00:47:26,162 - INFO - Lookup completed for user: nicye, input: n1835
+2024-12-03 00:52:22,064 - INFO - Processing user input: n1868
+2024-12-03 00:52:22,223 - INFO - Lookup completed for user: nicye, input: n1868
+2024-12-03 00:54:14,640 - INFO - Processing user input: n0233
+2024-12-03 00:54:14,873 - INFO - Lookup completed for user: nicye, input: n0233
+2024-12-03 00:58:30,988 - INFO - Processing user input: n0370
+2024-12-03 00:58:31,165 - INFO - Lookup completed for user: nicye, input: n0370
+2024-12-03 10:02:54,174 - INFO - User jennifer has logged in. IP: 173.198.50.202, Browser: Chrome 97.0.4692, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 10:03:16,865 - INFO - jennifer is looking up order number: 33715
+2024-12-03 10:03:16,937 - INFO - jennifer searched for order number: 33715
+2024-12-03 10:03:17,927 - INFO - Received order_number: 33715
+2024-12-03 10:03:19,739 - INFO - [Download][labels]File 33715_label.xlsx downloaded from label output
+2024-12-03 10:04:37,801 - INFO - jennifer is looking up order number: 33710
+2024-12-03 10:04:37,829 - INFO - jennifer searched for order number: 33710
+2024-12-03 10:04:38,699 - INFO - Received order_number: 33710
+2024-12-03 10:04:40,569 - INFO - [Download][labels]File 33710_label.xlsx downloaded from label output
+2024-12-03 10:06:39,024 - INFO - jennifer is looking up order number: 33763
+2024-12-03 10:06:39,052 - INFO - jennifer searched for order number: 33763
+2024-12-03 10:06:40,158 - INFO - Received order_number: 33763
+2024-12-03 10:06:44,671 - INFO - [Download][labels]File 33763_label.xlsx downloaded from label output
+2024-12-03 10:08:17,873 - INFO - jennifer is looking up order number: 33711
+2024-12-03 10:08:17,908 - INFO - jennifer searched for order number: 33711
+2024-12-03 10:08:19,787 - INFO - Received order_number: 33711
+2024-12-03 10:08:22,423 - INFO - [Download][labels]File 33711_label.xlsx downloaded from label output
+2024-12-03 10:12:37,052 - INFO - jennifer is looking up order number: 33717
+2024-12-03 10:12:37,079 - INFO - jennifer searched for order number: 33717
+2024-12-03 10:12:37,413 - INFO - jennifer is looking up order number: 33717
+2024-12-03 10:12:37,435 - INFO - jennifer searched for order number: 33717
+2024-12-03 10:12:38,265 - INFO - Received order_number: 33717
+2024-12-03 10:12:40,238 - INFO - [Download][labels]File 33717_label.xlsx downloaded from label output
+2024-12-03 10:21:22,531 - INFO - jennifer is looking up order number: 33713
+2024-12-03 10:21:22,557 - INFO - jennifer searched for order number: 33713
+2024-12-03 10:21:24,510 - INFO - Received order_number: 33713
+2024-12-03 10:21:26,879 - INFO - [Download][labels]File 33713_label.xlsx downloaded from label output
+2024-12-03 10:36:31,095 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 10:38:26,408 - INFO - yeti is processing Macy Order: 33698
+2024-12-03 10:38:28,205 - INFO - [Download][macy_label]File macyset_33698_new.xlsx downloaded from label output
+2024-12-03 10:39:47,842 - INFO - autobots, rolling out!
+2024-12-03 10:39:53,078 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 10:39:54,608 - INFO - yeti is processing Macy Order: 33698
+2024-12-03 10:39:56,149 - INFO - [Download][macy_label]File macyset_33698_new.xlsx downloaded from label output
+2024-12-03 10:41:48,058 - INFO - autobots, rolling out!
+2024-12-03 10:42:26,085 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 10:42:27,744 - INFO - yeti is processing Macy Order: 33698
+2024-12-03 10:42:31,030 - INFO - [Download][macy_label]File macyset_33698_new.xlsx downloaded from label output
+2024-12-03 10:44:01,668 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 10:44:24,974 - INFO - [Download][List] yeti downloaded the file: T3481.jpg
+2024-12-03 10:44:28,967 - INFO - [Download][List] yeti downloaded the file: T3481.jpg
+2024-12-03 10:47:02,873 - INFO - autobots, rolling out!
+2024-12-03 10:47:47,636 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 10:49:09,538 - INFO - [Download][List] yeti downloaded the file: T3481.jpg
+2024-12-03 10:50:41,022 - INFO - [Download][List] yeti downloaded the file: List-20241203-104954.xlsx
+2024-12-03 10:51:12,443 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 11:05:19,055 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 11:05:25,326 - INFO - Processing user input: n2227
+2024-12-03 11:05:25,489 - INFO - Lookup completed for user: yeti, input: n2227
+2024-12-03 11:24:06,037 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 11:24:11,889 - INFO - Processing user input: s1146
+2024-12-03 11:24:12,055 - INFO - Lookup completed for user: yeti, input: s1146
+2024-12-03 11:26:39,882 - INFO - Processing user input: s1245
+2024-12-03 11:26:40,050 - INFO - Lookup completed for user: yeti, input: s1245
+2024-12-03 11:31:32,981 - INFO - Processing user input: n1724
+2024-12-03 11:31:33,158 - INFO - Lookup completed for user: yeti, input: n1724
+2024-12-03 11:32:39,937 - INFO - Processing user input: en1817
+2024-12-03 11:32:40,089 - INFO - Lookup completed for user: yeti, input: en1817
+2024-12-03 12:08:07,280 - INFO - Processing user input: t3480
+2024-12-03 12:08:07,436 - INFO - Lookup completed for user: yeti, input: t3480
+2024-12-03 12:12:51,400 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 12:17:42,790 - INFO - [Download][List] xj downloaded the file: List-20241203-121733.xlsx
+2024-12-03 12:26:09,852 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1817 TN and Style=EN1817
+2024-12-03 12:26:09,853 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=EN1817 TN and Style=EN1817
+2024-12-03 12:26:09,863 - INFO - Location updated successfully for SKU=EN1817 TN and Style=EN1817
+2024-12-03 12:26:12,715 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1817 BK and Style=EN1817
+2024-12-03 12:26:12,716 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=EN1817 BK and Style=EN1817
+2024-12-03 12:26:12,719 - INFO - Location updated successfully for SKU=EN1817 BK and Style=EN1817
+2024-12-03 12:26:15,938 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1817 WT and Style=EN1817
+2024-12-03 12:26:15,939 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=EN1817 WT and Style=EN1817
+2024-12-03 12:26:15,942 - INFO - Location updated successfully for SKU=EN1817 WT and Style=EN1817
+2024-12-03 12:26:17,115 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1817 WT and Style=EN1817
+2024-12-03 12:26:17,116 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1817 WT and Style=EN1817
+2024-12-03 12:26:17,120 - INFO - Location updated successfully for SKU=EN1817 WT and Style=EN1817
+2024-12-03 12:26:19,888 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1817 ST and Style=EN1817
+2024-12-03 12:26:19,889 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=EN1817 ST and Style=EN1817
+2024-12-03 12:26:19,899 - INFO - Location updated successfully for SKU=EN1817 ST and Style=EN1817
+2024-12-03 12:26:22,126 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1817 PK and Style=EN1817
+2024-12-03 12:26:22,127 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=EN1817 PK and Style=EN1817
+2024-12-03 12:26:22,137 - INFO - Location updated successfully for SKU=EN1817 PK and Style=EN1817
+2024-12-03 12:26:23,403 - INFO - Processing user input: en1817
+2024-12-03 12:26:23,550 - INFO - Lookup completed for user: yeti, input: en1817
+2024-12-03 13:01:06,997 - INFO - [Download][List] xj downloaded the file: List-20241203-130059.xlsx
+2024-12-03 13:03:03,681 - INFO - Processing user input: n0815
+2024-12-03 13:03:03,867 - INFO - Lookup completed for user: yeti, input: n0815
+2024-12-03 13:03:10,255 - INFO - Location service accessed by user: yeti
+2024-12-03 13:03:11,595 - INFO - Location service accessed by user: yeti
+2024-12-03 13:03:30,460 - INFO - Location service accessed by user: yeti
+2024-12-03 13:03:49,391 - INFO - Location service accessed by user: Unknown
+2024-12-03 13:03:52,282 - INFO - Location service accessed by user: Unknown
+2024-12-03 13:29:48,816 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 13:29:54,973 - INFO - Processing user input: t3480
+2024-12-03 13:29:55,124 - INFO - Lookup completed for user: yeti, input: t3480
+2024-12-03 13:44:24,632 - INFO - [Download][List] xj downloaded the file: List-20241203-134414.xlsx
+2024-12-03 13:50:45,087 - INFO - Processing user input: l1871,l1873,t3387,t3407,t3430,t3351,t3353,t3452,t3455,t3388,t3408,t3484,et3411,et3412,et3437,et3443,et3457,t3447,l1867,t3449,m1151,m1148,en2332,en2161,n0896,n1123,n2193,n2246,n2280,es1500,en2322,en2326,t2790,t3181,n1267,en2334,en2329,n2270,en2045,n2272,en2330,n2318,es1374,n2262,s1510,n2276,n2312,s1507,s1235,s1459,s1426,s1290,l1687-s,l1850,l1851,l1863,l1864
+2024-12-03 13:50:48,845 - INFO - Lookup completed for user: xj, input: l1871,l1873,t3387,t3407,t3430,t3351,t3353,t3452,t3455,t3388,t3408,t3484,et3411,et3412,et3437,et3443,et3457,t3447,l1867,t3449,m1151,m1148,en2332,en2161,n0896,n1123,n2193,n2246,n2280,es1500,en2322,en2326,t2790,t3181,n1267,en2334,en2329,n2270,en2045,n2272,en2330,n2318,es1374,n2262,s1510,n2276,n2312,s1507,s1235,s1459,s1426,s1290,l1687-s,l1850,l1851,l1863,l1864
+2024-12-03 13:51:20,166 - INFO - Processing user input: t3305
+2024-12-03 13:51:20,352 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-03 13:53:19,592 - INFO - autobots, rolling out!
+2024-12-03 13:53:39,275 - INFO - autobots, rolling out!
+2024-12-03 13:56:12,220 - INFO - autobots, rolling out!
+2024-12-03 13:56:15,829 - INFO - autobots, rolling out!
+2024-12-03 13:56:17,946 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 13:56:20,575 - INFO - Processing user input: t3305
+2024-12-03 13:56:20,931 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-03 13:56:48,271 - INFO - [Download][List] yeti downloaded the file: List-20241203-135646.xlsx
+2024-12-03 13:57:53,043 - INFO - Processing user input: t3305
+2024-12-03 13:57:53,239 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-03 13:59:40,387 - INFO - Processing user input: t3305
+2024-12-03 13:59:40,589 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-03 14:01:24,249 - INFO - Processing user input: t3396
+2024-12-03 14:01:24,423 - INFO - Lookup completed for user: yeti, input: t3396
+2024-12-03 14:02:57,039 - INFO - autobots, rolling out!
+2024-12-03 14:03:00,221 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:03:00,242 - INFO - Processing user input: t3396
+2024-12-03 14:03:00,410 - INFO - Lookup completed for user: yeti, input: t3396
+2024-12-03 14:05:56,893 - INFO - autobots, rolling out!
+2024-12-03 14:06:01,316 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:06:03,367 - INFO - Processing user input: t3396
+2024-12-03 14:06:03,538 - INFO - Lookup completed for user: yeti, input: t3396
+2024-12-03 14:06:10,819 - INFO - Processing user input: n1223
+2024-12-03 14:06:11,144 - INFO - Lookup completed for user: yeti, input: n1223
+2024-12-03 14:08:57,446 - INFO - [Download][List] yeti downloaded the file: List-20241203-140807.xlsx
+2024-12-03 14:17:11,140 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:17:11,178 - INFO - Processing user input: t3480
+2024-12-03 14:17:11,339 - INFO - Lookup completed for user: yeti, input: t3480
+2024-12-03 14:17:15,317 - INFO - Processing user input: n1724
+2024-12-03 14:17:15,479 - INFO - Lookup completed for user: yeti, input: n1724
+2024-12-03 14:26:00,865 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:26:00,874 - INFO - Processing user input: l1871,l1873,t3387,t3407,t3430,t3351,t3353,t3452,t3455,t3388,t3408,t3484,et3411,et3412,et3437,et3443,et3457,t3447,l1867,t3449,m1151,m1148,en2332,en2161,n0896,n1123,n2193,n2246,n2280,es1500,en2322,en2326,t2790,t3181,n1267,en2334,en2329,n2270,en2045,n2272,en2330,n2318,es1374,n2262,s1510,n2276,n2312,s1507,s1235,s1459,s1426,s1290,l1687-s,l1850,l1851,l1863,l1864
+2024-12-03 14:26:04,913 - INFO - Lookup completed for user: xj, input: l1871,l1873,t3387,t3407,t3430,t3351,t3353,t3452,t3455,t3388,t3408,t3484,et3411,et3412,et3437,et3443,et3457,t3447,l1867,t3449,m1151,m1148,en2332,en2161,n0896,n1123,n2193,n2246,n2280,es1500,en2322,en2326,t2790,t3181,n1267,en2334,en2329,n2270,en2045,n2272,en2330,n2318,es1374,n2262,s1510,n2276,n2312,s1507,s1235,s1459,s1426,s1290,l1687-s,l1850,l1851,l1863,l1864
+2024-12-03 14:38:32,561 - INFO - Location service accessed by user: yeti
+2024-12-03 14:38:35,177 - INFO - Location service accessed by user: yeti
+2024-12-03 14:38:35,485 - INFO - Location service accessed by user: yeti
+2024-12-03 14:38:47,203 - INFO - Location service accessed by user: yeti
+2024-12-03 14:38:54,594 - INFO - Location service accessed by user: yeti
+2024-12-03 14:39:28,319 - INFO - Suggestions request received
+2024-12-03 14:39:28,947 - INFO - Suggestions request received
+2024-12-03 14:39:30,304 - INFO - Suggestions request received
+2024-12-03 14:39:31,228 - INFO - Location service accessed by user: yeti
+2024-12-03 14:46:23,658 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:46:34,695 - INFO - [Download][List] xj downloaded the file: T3378.jpg
+2024-12-03 14:46:54,814 - INFO - [Download][List] xj downloaded the file: List-20241203-144642.xlsx
+2024-12-03 14:47:08,481 - INFO - Processing user input: t3305
+2024-12-03 14:47:08,673 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-03 14:52:18,758 - INFO - autobots, rolling out!
+2024-12-03 14:52:20,793 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:53:08,443 - INFO - autobots, rolling out!
+2024-12-03 14:53:22,664 - INFO - autobots, rolling out!
+2024-12-03 14:53:52,359 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:54:38,666 - INFO - Location service accessed by user: Unknown
+2024-12-03 14:54:38,717 - INFO - Suggestions request received
+2024-12-03 14:54:46,199 - INFO - Processing user input: n0815
+2024-12-03 14:54:46,383 - INFO - Lookup completed for user: local_user, input: n0815
+2024-12-03 14:54:50,869 - INFO - Processing user input: n2204
+2024-12-03 14:54:51,030 - INFO - Lookup completed for user: local_user, input: n2204
+2024-12-03 14:54:53,944 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 14:56:24,439 - INFO - Processing user input: l1871,l1873,t3387,t3407,t3430,t3351,t3353,t3452,t3455,t3388,t3408,t3484,et3411,et3412,et3437,et3443,et3457,t3447,l1867,t3449,m1151,m1148,en2332,en2161,n0896,n1123,n2193,n2246,n2280,es1500,en2322,en2326,t2790,t3181,n1267,en2334,en2329,n2270,en2045,n2272,en2330,n2318,es1374,n2262,s1510,n2276,n2312,s1507,s1235,s1459,s1426,s1290,l1687-s,l1850,l1851,l1863,l1864
+2024-12-03 14:56:27,753 - INFO - Lookup completed for user: xj, input: l1871,l1873,t3387,t3407,t3430,t3351,t3353,t3452,t3455,t3388,t3408,t3484,et3411,et3412,et3437,et3443,et3457,t3447,l1867,t3449,m1151,m1148,en2332,en2161,n0896,n1123,n2193,n2246,n2280,es1500,en2322,en2326,t2790,t3181,n1267,en2334,en2329,n2270,en2045,n2272,en2330,n2318,es1374,n2262,s1510,n2276,n2312,s1507,s1235,s1459,s1426,s1290,l1687-s,l1850,l1851,l1863,l1864
+2024-12-03 14:57:17,052 - INFO - Processing user input: t3305
+2024-12-03 14:57:17,242 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-03 14:59:48,951 - INFO - Processing user input: f25101
+2024-12-03 14:59:49,074 - INFO - Lookup completed for user: yeti, input: f25101
+2024-12-03 14:59:54,182 - INFO - Processing user input: %f25101%
+2024-12-03 14:59:55,220 - INFO - Lookup completed for user: yeti, input: %f25101%
+2024-12-03 15:01:24,434 - INFO - Processing user input: %f25105%
+2024-12-03 15:01:25,629 - INFO - Lookup completed for user: yeti, input: %f25105%
+2024-12-03 15:08:12,775 - INFO - Location service accessed by user: Unknown
+2024-12-03 15:24:14,184 - INFO - autobots, rolling out!
+2024-12-03 15:24:16,192 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 15:35:31,071 - INFO - autobots, rolling out!
+2024-12-03 15:35:33,002 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 15:38:53,519 - INFO - Processing user input: %f25105
+2024-12-03 15:38:54,496 - INFO - Lookup completed for user: yeti, input: %f25105
+2024-12-03 15:38:55,969 - INFO - Processing user input: %f25105%
+2024-12-03 15:38:56,954 - INFO - Lookup completed for user: yeti, input: %f25105%
+2024-12-03 15:41:23,279 - INFO - Processing user input: n2337 bk
+2024-12-03 15:41:23,403 - INFO - Lookup completed for user: yeti, input: n2337 bk
+2024-12-03 15:41:27,698 - INFO - Processing user input: n2337
+2024-12-03 15:41:27,846 - INFO - Lookup completed for user: yeti, input: n2337
+2024-12-03 15:41:31,515 - INFO - Processing user input: %f25106%
+2024-12-03 15:41:33,014 - INFO - Processing user input: %f25106%
+2024-12-03 15:41:36,126 - INFO - Lookup completed for user: yeti, input: %f25106%
+2024-12-03 15:41:37,032 - INFO - Lookup completed for user: yeti, input: %f25106%
+2024-12-03 15:43:01,469 - INFO - Processing user input: f25106
+2024-12-03 15:43:01,589 - INFO - Lookup completed for user: yeti, input: f25106
+2024-12-03 15:43:10,183 - INFO - Processing user input: %f25105%
+2024-12-03 15:43:11,168 - INFO - Lookup completed for user: yeti, input: %f25105%
+2024-12-03 15:45:46,364 - INFO - Processing user input: %f25106%
+2024-12-03 15:45:47,376 - INFO - Lookup completed for user: yeti, input: %f25106%
+2024-12-03 15:45:59,801 - INFO - Processing user input: %f25105%
+2024-12-03 15:46:00,769 - INFO - Lookup completed for user: yeti, input: %f25105%
+2024-12-03 15:46:05,320 - INFO - Processing user input: %f25104%
+2024-12-03 15:46:06,311 - INFO - Lookup completed for user: yeti, input: %f25104%
+2024-12-03 15:46:10,961 - INFO - Processing user input: %f25105%
+2024-12-03 15:46:11,928 - INFO - Lookup completed for user: yeti, input: %f25105%
+2024-12-03 16:27:44,858 - INFO - Processing user input: n2381
+2024-12-03 16:27:44,981 - INFO - Lookup completed for user: yeti, input: n2381
+2024-12-03 16:27:47,976 - INFO - Processing user input: n0381
+2024-12-03 16:27:48,135 - INFO - Lookup completed for user: yeti, input: n0381
+2024-12-03 16:43:44,899 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 16:43:47,116 - INFO - Location service accessed by user: yeti
+2024-12-03 16:43:48,196 - INFO - Location service accessed by user: yeti
+2024-12-03 16:43:49,585 - INFO - Location service accessed by user: yeti
+2024-12-03 16:43:51,002 - INFO - Location service accessed by user: yeti
+2024-12-03 16:43:54,530 - INFO - Location service accessed by user: yeti
+2024-12-03 16:43:56,613 - INFO - Suggestions request received
+2024-12-03 16:44:01,242 - INFO - Location service accessed by user: yeti
+2024-12-03 16:44:02,622 - INFO - Location service accessed by user: yeti
+2024-12-03 16:44:17,567 - INFO - Location service accessed by user: yeti
+2024-12-03 16:44:29,459 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 16:49:41,757 - INFO - Location service accessed by user: Unknown
+2024-12-03 16:49:46,459 - INFO - Processing user input: %25106%
+2024-12-03 16:49:47,411 - INFO - Lookup completed for user: yeti, input: %25106%
+2024-12-03 16:49:49,298 - INFO - Processing user input: %25107%
+2024-12-03 16:49:50,173 - INFO - Lookup completed for user: yeti, input: %25107%
+2024-12-03 16:51:02,562 - INFO - Processing user input: %25107%
+2024-12-03 16:51:03,483 - INFO - Lookup completed for user: yeti, input: %25107%
+2024-12-03 16:51:09,298 - INFO - Processing user input: %25108%
+2024-12-03 16:51:10,229 - INFO - Lookup completed for user: yeti, input: %25108%
+2024-12-03 16:51:17,145 - INFO - Processing user input: %25109%
+2024-12-03 16:51:18,070 - INFO - Lookup completed for user: yeti, input: %25109%
+2024-12-03 16:59:21,322 - INFO - User jennifer has logged in. IP: 173.198.50.202, Browser: Chrome 97.0.4692, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 16:59:29,758 - INFO - jennifer is looking up order number: 33770
+2024-12-03 16:59:30,437 - INFO - jennifer searched for order number: 33770
+2024-12-03 16:59:31,419 - INFO - Received order_number: 33770
+2024-12-03 16:59:32,587 - INFO - [Download][labels]File 33770_label.xlsx downloaded from label output
+2024-12-03 17:03:15,305 - INFO - jennifer is looking up order number: 33768
+2024-12-03 17:03:15,328 - INFO - jennifer searched for order number: 33768
+2024-12-03 17:03:16,376 - INFO - Received order_number: 33768
+2024-12-03 17:03:23,463 - INFO - [Download][labels]File 33768_label.xlsx downloaded from label output
+2024-12-03 17:06:57,327 - INFO - jennifer is looking up order number: 33771
+2024-12-03 17:06:57,350 - INFO - jennifer searched for order number: 33771
+2024-12-03 17:06:58,323 - INFO - Received order_number: 33771
+2024-12-03 17:07:00,070 - INFO - [Download][labels]File 33771_label.xlsx downloaded from label output
+2024-12-03 17:23:07,671 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-03 17:23:07,848 - INFO - Processing user input: n2306
+2024-12-03 17:23:08,261 - INFO - Lookup completed for user: ahua, input: n2306
+2024-12-03 17:23:53,667 - INFO - Processing user input: s1505
+2024-12-03 17:23:53,826 - INFO - Lookup completed for user: ahua, input: s1505
+2024-12-03 17:52:51,913 - INFO - Processing user input: m1148
+2024-12-03 17:52:52,083 - INFO - Lookup completed for user: ahua, input: m1148
+2024-12-03 18:36:43,555 - INFO - autobots, rolling out!
+2024-12-03 18:36:47,413 - INFO - autobots, rolling out!
+2024-12-04 01:11:48,383 - INFO - User nicye has logged in. IP: 115.223.137.158, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 01:11:51,752 - INFO - Processing user input: t3321
+2024-12-04 01:11:51,941 - INFO - Lookup completed for user: nicye, input: t3321
+2024-12-04 01:22:37,394 - INFO - Processing user input: n1782
+2024-12-04 01:22:37,565 - INFO - Lookup completed for user: nicye, input: n1782
+2024-12-04 01:25:06,227 - INFO - Processing user input: s1405
+2024-12-04 01:25:06,408 - INFO - Lookup completed for user: nicye, input: s1405
+2024-12-04 01:26:44,045 - INFO - Processing user input: n1547
+2024-12-04 01:26:44,222 - INFO - Lookup completed for user: nicye, input: n1547
+2024-12-04 01:28:01,152 - INFO - Processing user input: g24110622505
+2024-12-04 01:28:01,450 - INFO - Lookup completed for user: nicye, input: g24110622505
+2024-12-04 01:28:16,856 - INFO - Processing user input: n1724
+2024-12-04 01:28:17,015 - INFO - Lookup completed for user: nicye, input: n1724
+2024-12-04 01:28:58,362 - INFO - Processing user input: s1112
+2024-12-04 01:28:58,542 - INFO - Lookup completed for user: nicye, input: s1112
+2024-12-04 06:42:02,592 - INFO - User nicye has logged in. IP: 122.239.104.229, Browser: Mobile Safari 17.6, OS: iOS 17.6.1, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 06:42:15,479 - INFO - Processing user input: t3321
+2024-12-04 06:42:15,637 - INFO - Lookup completed for user: nicye, input: t3321
+2024-12-04 06:42:16,611 - INFO - Processing user input: t3321
+2024-12-04 06:42:16,755 - INFO - Lookup completed for user: nicye, input: t3321
+2024-12-04 09:21:44,661 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 09:22:40,911 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 09:22:40,959 - INFO - Processing user input: n2204
+2024-12-04 09:22:41,124 - INFO - Lookup completed for user: yeti, input: n2204
+2024-12-04 09:22:45,609 - INFO - Processing user input: et3167
+2024-12-04 09:22:45,776 - INFO - Lookup completed for user: yeti, input: et3167
+2024-12-04 10:29:51,374 - INFO - autobots, rolling out!
+2024-12-04 10:30:02,662 - INFO - autobots, rolling out!
+2024-12-04 10:33:32,560 - INFO - autobots, rolling out!
+2024-12-04 10:33:41,407 - INFO - autobots, rolling out!
+2024-12-04 10:42:36,844 - INFO - autobots, rolling out!
+2024-12-04 10:42:40,512 - INFO - autobots, rolling out!
+2024-12-04 10:43:58,076 - INFO - autobots, rolling out!
+2024-12-04 10:44:01,994 - INFO - autobots, rolling out!
+2024-12-04 10:44:14,945 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 10:44:18,436 - INFO - Processing user input: t3305
+2024-12-04 10:44:18,797 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-04 10:44:33,904 - INFO - [Download][List] yeti downloaded the file: List-20241204-104432.xlsx
+2024-12-04 10:44:44,447 - INFO - [Download][List] yeti downloaded the file: List-20241204-104442.xlsx
+2024-12-04 10:48:24,904 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 10:48:24,919 - INFO - Processing user input: n2204
+2024-12-04 10:48:25,089 - INFO - Lookup completed for user: yeti, input: n2204
+2024-12-04 10:48:31,755 - INFO - Processing user input: en1849
+2024-12-04 10:48:31,953 - INFO - Lookup completed for user: yeti, input: en1849
+2024-12-04 10:48:47,065 - INFO - Processing user input: n1929
+2024-12-04 10:48:47,253 - INFO - Lookup completed for user: yeti, input: n1929
+2024-12-04 11:49:30,837 - INFO - Location service accessed by user: yeti
+2024-12-04 11:49:32,929 - INFO - Location service accessed by user: yeti
+2024-12-04 11:49:41,244 - INFO - Location service accessed by user: yeti
+2024-12-04 11:52:20,393 - INFO - Suggestions request received
+2024-12-04 11:52:21,273 - INFO - Location service accessed by user: yeti
+2024-12-04 11:54:38,554 - INFO - User yeti has logged in. IP: 172.56.233.33, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 11:54:42,811 - INFO - Processing user input: et3167
+2024-12-04 11:54:43,194 - INFO - Lookup completed for user: yeti, input: et3167
+2024-12-04 12:51:04,517 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 12:51:07,963 - INFO - Processing user input: n2289
+2024-12-04 12:51:08,219 - INFO - Lookup completed for user: yeti, input: n2289
+2024-12-04 12:51:18,946 - INFO - Processing user input: n2298
+2024-12-04 12:51:19,102 - INFO - Lookup completed for user: yeti, input: n2298
+2024-12-04 12:52:26,966 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 12:52:33,521 - INFO - Processing user input: et3167
+2024-12-04 12:52:33,715 - INFO - Lookup completed for user: yeti, input: et3167
+2024-12-04 13:26:22,380 - INFO - autobots, rolling out!
+2024-12-04 13:26:31,779 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 14:25:05,290 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 14:25:15,084 - INFO - [Download][List] xj downloaded the file: T3472.jpg
+2024-12-04 14:28:26,978 - INFO - [Download][List] xj downloaded the file: List-20241204-142815.xlsx
+2024-12-04 14:55:30,651 - INFO - [Download][List] xj downloaded the file: List-20241204-145526.xlsx
+2024-12-04 16:06:55,953 - INFO - Location service accessed by user: Unknown
+2024-12-04 16:07:01,581 - INFO - Processing user input: n0720
+2024-12-04 16:07:01,758 - INFO - Lookup completed for user: local_user, input: n0720
+2024-12-04 16:37:10,507 - INFO - [Download][List] xj downloaded the file: List-20241204-163626.xlsx
+2024-12-04 17:38:50,619 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 17.6.1, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 17:39:04,107 - INFO - Processing user input: en1860
+2024-12-04 17:39:04,281 - INFO - Lookup completed for user: xj, input: en1860
+2024-12-04 17:39:55,902 - INFO - Processing user input: en1860,n1864
+2024-12-04 17:39:56,306 - INFO - Lookup completed for user: xj, input: en1860,n1864
+2024-12-04 17:40:10,681 - INFO - Processing user input: en1860,n1854
+2024-12-04 17:40:10,903 - INFO - Lookup completed for user: xj, input: en1860,n1854
+2024-12-04 17:48:27,849 - INFO - Processing user input: es1218
+2024-12-04 17:48:28,239 - INFO - Lookup completed for user: xj, input: es1218
+2024-12-04 17:48:30,121 - INFO - Processing user input: es1218
+2024-12-04 17:48:30,286 - INFO - Lookup completed for user: xj, input: es1218
+2024-12-04 17:52:53,138 - INFO - [Download][List] xj downloaded the file: List-20241204-175251.xlsx
+2024-12-04 18:09:59,281 - INFO - User nicye has logged in. IP: 115.223.137.158, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 18:10:24,344 - INFO - Processing user input: n0370
+2024-12-04 18:10:24,538 - INFO - Lookup completed for user: nicye, input: n0370
+2024-12-04 18:10:56,809 - INFO - Processing user input: n0370
+2024-12-04 18:10:56,981 - INFO - Lookup completed for user: nicye, input: n0370
+2024-12-04 18:22:56,300 - INFO - Processing user input: n0385
+2024-12-04 18:22:56,488 - INFO - Lookup completed for user: nicye, input: n0385
+2024-12-04 18:36:57,774 - INFO - autobots, rolling out!
+2024-12-04 18:37:01,469 - INFO - autobots, rolling out!
+2024-12-04 18:48:53,884 - INFO - Processing user input: n0529
+2024-12-04 18:48:54,086 - INFO - Lookup completed for user: nicye, input: n0529
+2024-12-04 23:09:15,275 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-04 23:09:15,659 - INFO - Processing user input: s1505
+2024-12-04 23:09:15,818 - INFO - Lookup completed for user: ahua, input: s1505
+2024-12-04 23:59:05,347 - INFO - Location service accessed by user: Unknown
+2024-12-05 07:38:40,281 - INFO - User nicye has logged in. IP: 122.239.104.229, Browser: MiuiBrowser 14.10.16, OS: Linux , Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-05 07:38:40,446 - INFO - Processing user input: n1547
+2024-12-05 07:38:40,811 - INFO - Lookup completed for user: nicye, input: n1547
+2024-12-05 07:38:51,045 - INFO - Processing user input: s1547
+2024-12-05 07:38:51,163 - INFO - Lookup completed for user: nicye, input: s1547
+2024-12-05 07:38:51,947 - INFO - Location service accessed by user: nicye
+2024-12-05 07:39:05,111 - INFO - Processing user input: s1547
+2024-12-05 07:39:05,231 - INFO - Lookup completed for user: nicye, input: s1547
+2024-12-05 07:39:12,082 - INFO - Processing user input: s1457
+2024-12-05 07:39:12,233 - INFO - Lookup completed for user: nicye, input: s1457
+2024-12-05 07:41:30,312 - INFO - Processing user input: n2216
+2024-12-05 07:41:30,487 - INFO - Lookup completed for user: nicye, input: n2216
+2024-12-05 07:41:31,166 - INFO - Processing user input: n2216
+2024-12-05 07:41:31,312 - INFO - Lookup completed for user: nicye, input: n2216
+2024-12-05 07:42:36,676 - INFO - Processing user input: n2200
+2024-12-05 07:42:36,820 - INFO - Lookup completed for user: nicye, input: n2200
+2024-12-05 07:44:03,713 - INFO - Processing user input: s1472
+2024-12-05 07:44:03,879 - INFO - Lookup completed for user: nicye, input: s1472
+2024-12-05 08:25:07,048 - INFO - Processing user input: s1112
+2024-12-05 08:25:07,403 - INFO - Lookup completed for user: nicye, input: s1112
+2024-12-05 11:01:56,316 - INFO - Processing user input: s1431
+2024-12-05 11:01:56,485 - INFO - Lookup completed for user: local_user, input: s1431
+2024-12-05 11:05:29,316 - INFO - Processing user input: n1963
+2024-12-05 11:05:29,477 - INFO - Lookup completed for user: local_user, input: n1963
+2024-12-05 11:09:22,467 - INFO - User yeti has logged in. IP: 172.56.234.247, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-05 11:10:28,666 - INFO - Processing user input: n1963
+2024-12-05 11:10:28,821 - INFO - Lookup completed for user: yeti, input: n1963
+2024-12-05 16:31:05,165 - INFO - Processing user input: n0720
+2024-12-05 16:31:05,324 - INFO - Lookup completed for user: local_user, input: n0720
+2024-12-05 17:29:50,377 - INFO - Processing user input: l1804
+2024-12-05 17:29:50,559 - INFO - Lookup completed for user: local_user, input: l1804
+2024-12-05 17:34:25,785 - INFO - Processing user input: l1808
+2024-12-05 17:34:25,965 - INFO - Lookup completed for user: local_user, input: l1808
+2024-12-05 17:34:48,267 - INFO - Processing user input: l1808,t3407
+2024-12-05 17:34:48,651 - INFO - Lookup completed for user: local_user, input: l1808,t3407
+2024-12-05 17:34:59,983 - INFO - Processing user input: l1808
+2024-12-05 17:35:00,146 - INFO - Lookup completed for user: local_user, input: l1808
+2024-12-05 17:38:43,410 - INFO - Processing user input: l180
+2024-12-05 17:38:43,790 - INFO - Lookup completed for user: local_user, input: l180
+2024-12-05 18:54:42,378 - INFO - User xj has logged in. IP: 172.222.145.230, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 17.6.1, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-05 18:54:56,839 - INFO - Processing user input: %f25104%
+2024-12-05 18:54:57,848 - INFO - Lookup completed for user: xj, input: %f25104%
+2024-12-05 18:55:27,394 - INFO - Processing user input: %f25105%
+2024-12-05 18:55:28,376 - INFO - Lookup completed for user: xj, input: %f25105%
+2024-12-05 18:55:38,959 - INFO - Processing user input: %f25106%
+2024-12-05 18:55:40,441 - INFO - Lookup completed for user: xj, input: %f25106%
+2024-12-05 18:55:40,551 - INFO - Processing user input: %f25106%
+2024-12-05 18:55:41,746 - INFO - Lookup completed for user: xj, input: %f25106%
+2024-12-05 19:04:11,624 - INFO - User yeti has logged in. IP: 172.222.145.230, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-05 19:04:18,589 - INFO - Processing user input: l180
+2024-12-05 19:04:18,853 - INFO - Lookup completed for user: yeti, input: l180
+2024-12-05 21:04:31,266 - INFO - User nicye has logged in. IP: 115.223.137.158, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-05 21:04:37,407 - INFO - Processing user input: l1804
+2024-12-05 21:04:37,609 - INFO - Lookup completed for user: nicye, input: l1804
+2024-12-05 21:04:48,346 - INFO - Processing user input: l1806
+2024-12-05 21:04:48,516 - INFO - Lookup completed for user: nicye, input: l1806
+2024-12-05 21:05:04,554 - INFO - Processing user input: l1808
+2024-12-05 21:05:04,735 - INFO - Lookup completed for user: nicye, input: l1808
+2024-12-05 21:05:16,291 - INFO - Processing user input: l1809
+2024-12-05 21:05:18,737 - INFO - Lookup completed for user: nicye, input: l1809
+2024-12-05 22:19:25,174 - INFO - Processing user input: m1148
+2024-12-05 22:19:25,520 - INFO - Lookup completed for user: ahua, input: m1148
+2024-12-05 22:19:42,722 - INFO - Processing user input: m1148
+2024-12-05 22:19:42,867 - INFO - Lookup completed for user: ahua, input: m1148
+2024-12-05 22:19:46,876 - INFO - Processing user input: t3377
+2024-12-05 22:19:47,027 - INFO - Lookup completed for user: ahua, input: t3377
+2024-12-05 22:19:55,228 - INFO - Processing user input: t3451
+2024-12-05 22:19:55,424 - INFO - Lookup completed for user: ahua, input: t3451
+2024-12-05 22:20:02,979 - INFO - Processing user input: t3349
+2024-12-05 22:20:03,162 - INFO - Lookup completed for user: ahua, input: t3349
+2024-12-06 00:10:39,777 - INFO - Location service accessed by user: Unknown
+2024-12-06 01:05:19,865 - INFO - Processing user input: n0529
+2024-12-06 01:05:20,067 - INFO - Lookup completed for user: nicye, input: n0529
+2024-12-06 07:18:19,352 - INFO - Processing user input: s1472
+2024-12-06 07:18:19,424 - INFO - Processing user input: s1472
+2024-12-06 07:18:19,514 - INFO - Lookup completed for user: nicye, input: s1472
+2024-12-06 07:18:19,613 - INFO - Lookup completed for user: nicye, input: s1472
+2024-12-06 07:21:47,706 - INFO - Processing user input: n1422
+2024-12-06 07:21:47,898 - INFO - Lookup completed for user: nicye, input: n1422
+2024-12-06 07:22:30,372 - INFO - Processing user input: n2187
+2024-12-06 07:22:30,531 - INFO - Lookup completed for user: nicye, input: n2187
+2024-12-06 07:31:36,311 - INFO - Processing user input: n2173
+2024-12-06 07:31:36,480 - INFO - Lookup completed for user: nicye, input: n2173
+2024-12-06 07:33:56,593 - INFO - Location service accessed by user: Unknown
+2024-12-06 10:40:45,444 - INFO - Location service accessed by user: Unknown
+2024-12-06 10:40:46,388 - INFO - Location service accessed by user: Unknown
+2024-12-06 11:44:23,528 - INFO - autobots, rolling out!
+2024-12-06 11:44:23,528 - INFO - autobots, rolling out!
+2024-12-06 11:44:41,610 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-06 12:25:39,983 - INFO - Processing user input: es1323
+2024-12-06 12:25:40,204 - INFO - Lookup completed for user: yeti, input: es1323
+2024-12-06 12:27:04,201 - INFO - Processing user input: l1851
+2024-12-06 12:27:04,376 - INFO - Lookup completed for user: yeti, input: l1851
+2024-12-06 12:27:40,622 - INFO - Processing user input: s1336
+2024-12-06 12:27:40,778 - INFO - Lookup completed for user: yeti, input: s1336
+2024-12-06 12:52:46,796 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-06 12:52:46,826 - INFO - Processing user input: l180
+2024-12-06 12:52:47,162 - INFO - Lookup completed for user: yeti, input: l180
+2024-12-06 12:52:51,094 - INFO - Processing user input: n1963
+2024-12-06 12:52:51,270 - INFO - Lookup completed for user: yeti, input: n1963
+2024-12-06 12:53:07,182 - INFO - Processing user input: s1336
+2024-12-06 12:53:07,325 - INFO - Lookup completed for user: yeti, input: s1336
+2024-12-06 12:53:22,913 - INFO - Processing user input: n2173
+2024-12-06 12:53:23,065 - INFO - Lookup completed for user: yeti, input: n2173
+2024-12-06 12:53:30,323 - INFO - Processing user input: n1422
+2024-12-06 12:53:30,499 - INFO - Lookup completed for user: yeti, input: n1422
+2024-12-06 12:53:38,420 - INFO - Processing user input: n2187
+2024-12-06 12:53:38,567 - INFO - Lookup completed for user: yeti, input: n2187
+2024-12-06 13:24:20,831 - INFO - yeti is looking up order number from URL: 33773
+2024-12-06 13:24:21,715 - INFO - yeti searched for order number: 33773 via URL
+2024-12-06 13:57:36,448 - INFO - Processing user input: s1112
+2024-12-06 13:57:36,621 - INFO - Lookup completed for user: yeti, input: s1112
+2024-12-06 14:01:15,482 - INFO - Processing user input: s1336
+2024-12-06 14:01:15,639 - INFO - Lookup completed for user: yeti, input: s1336
+2024-12-06 14:19:25,522 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-06 14:19:30,830 - INFO - Processing user input: s1112 yl
+2024-12-06 14:19:30,961 - INFO - Lookup completed for user: yeti, input: s1112 yl
+2024-12-06 14:19:51,310 - INFO - Processing user input: n2187
+2024-12-06 14:19:51,450 - INFO - Lookup completed for user: yeti, input: n2187
+2024-12-06 14:24:42,594 - INFO - Processing user input: s1112
+2024-12-06 14:24:42,765 - INFO - Lookup completed for user: yeti, input: s1112
+2024-12-06 14:53:26,013 - INFO - Processing user input: n2187
+2024-12-06 14:53:26,163 - INFO - Lookup completed for user: yeti, input: n2187
+2024-12-06 14:54:36,094 - INFO - Processing user input: s1112
+2024-12-06 14:54:36,269 - INFO - Lookup completed for user: yeti, input: s1112
+2024-12-06 17:21:22,453 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-06 17:21:22,623 - INFO - Processing user input: t3349
+2024-12-06 17:21:22,822 - INFO - Lookup completed for user: ahua, input: t3349
+2024-12-06 17:21:26,655 - INFO - Processing user input: n2191
+2024-12-06 17:21:26,824 - INFO - Lookup completed for user: ahua, input: n2191
+2024-12-06 19:16:50,932 - INFO - User nicye has logged in. IP: 115.223.141.103, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-06 19:16:57,377 - INFO - Processing user input: n2173
+2024-12-06 19:16:58,199 - INFO - Lookup completed for user: nicye, input: n2173
+2024-12-06 19:23:09,999 - INFO - Processing user input: t3255
+2024-12-06 19:23:10,176 - INFO - Lookup completed for user: nicye, input: t3255
+2024-12-06 23:49:29,948 - INFO - Processing user input: n0680
+2024-12-06 23:49:30,125 - INFO - Lookup completed for user: nicye, input: n0680
+2024-12-08 01:04:12,723 - INFO - Location service accessed by user: Unknown
+2024-12-08 23:32:45,707 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-08 23:32:50,534 - INFO - Processing user input: t3305
+2024-12-08 23:32:53,542 - INFO - Lookup completed for user: ahua, input: t3305
+2024-12-09 00:18:32,514 - INFO - Processing user input: l1864
+2024-12-09 00:18:32,686 - INFO - Lookup completed for user: ahua, input: l1864
+2024-12-09 00:21:25,176 - INFO - Processing user input: l1863
+2024-12-09 00:21:25,325 - INFO - Lookup completed for user: ahua, input: l1863
+2024-12-09 00:28:55,390 - INFO - Processing user input: n2227
+2024-12-09 00:28:55,545 - INFO - Lookup completed for user: ahua, input: n2227
+2024-12-09 01:11:27,476 - INFO - Location service accessed by user: Unknown
+2024-12-09 03:37:53,648 - INFO - Location service accessed by user: Unknown
+2024-12-09 06:58:01,325 - INFO - User nicye has logged in. IP: 115.223.186.133, Browser: MiuiBrowser 14.10.16, OS: Linux , Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-09 06:58:22,997 - INFO - Processing user input: n1745
+2024-12-09 06:58:23,190 - INFO - Lookup completed for user: nicye, input: n1745
+2024-12-09 06:59:22,057 - INFO - Processing user input: s1412
+2024-12-09 06:59:22,246 - INFO - Lookup completed for user: nicye, input: s1412
+2024-12-09 09:43:30,547 - INFO - Processing user input: t3305
+2024-12-09 09:43:30,743 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-09 09:45:56,636 - INFO - Processing user input: el1854
+2024-12-09 09:45:56,881 - INFO - Lookup completed for user: yeti, input: el1854
+2024-12-09 09:46:24,011 - INFO - Processing user input: l1874
+2024-12-09 09:46:24,186 - INFO - Lookup completed for user: yeti, input: l1874
+2024-12-09 09:46:58,098 - INFO - Processing user input: l1845
+2024-12-09 09:46:58,284 - INFO - Lookup completed for user: yeti, input: l1845
+2024-12-09 09:47:14,129 - INFO - Processing user input: l1841
+2024-12-09 09:47:14,286 - INFO - Lookup completed for user: yeti, input: l1841
+2024-12-09 09:48:23,670 - INFO - Processing user input: en1765
+2024-12-09 09:48:23,832 - INFO - Lookup completed for user: yeti, input: en1765
+2024-12-09 10:29:15,829 - INFO - Processing user input: s1064
+2024-12-09 10:29:15,998 - INFO - Lookup completed for user: yeti, input: s1064
+2024-12-09 10:29:37,312 - INFO - Processing user input: es1134
+2024-12-09 10:29:37,689 - INFO - Lookup completed for user: yeti, input: es1134
+2024-12-09 10:30:08,520 - INFO - Processing user input: n1939
+2024-12-09 10:30:08,743 - INFO - Lookup completed for user: yeti, input: n1939
+2024-12-09 10:30:24,299 - INFO - Processing user input: s1401
+2024-12-09 10:30:24,455 - INFO - Lookup completed for user: yeti, input: s1401
+2024-12-09 10:30:51,800 - INFO - Processing user input: t3142
+2024-12-09 10:30:51,970 - INFO - Lookup completed for user: yeti, input: t3142
+2024-12-09 10:32:17,215 - INFO - Processing user input: n2234
+2024-12-09 10:32:17,373 - INFO - Lookup completed for user: yeti, input: n2234
+2024-12-09 11:06:10,913 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-09 11:06:15,114 - INFO - Processing user input: n2187
+2024-12-09 11:06:15,320 - INFO - Lookup completed for user: yeti, input: n2187
+2024-12-09 11:07:05,173 - INFO - Processing user input: n1422 br
+2024-12-09 11:07:05,365 - INFO - Lookup completed for user: yeti, input: n1422 br
+2024-12-09 11:25:30,745 - INFO - Location service accessed by user: yeti
+2024-12-09 11:25:36,513 - INFO - Processing user input: n2187
+2024-12-09 11:25:36,667 - INFO - Lookup completed for user: yeti, input: n2187
+2024-12-09 11:25:43,382 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2187 NV and Style=N2187
+2024-12-09 11:25:43,382 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2187 NV and Style=N2187
+2024-12-09 11:25:43,387 - INFO - Location updated successfully for SKU=N2187 NV and Style=N2187
+2024-12-09 11:25:46,497 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2187 LV and Style=N2187
+2024-12-09 11:25:46,497 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2187 LV and Style=N2187
+2024-12-09 11:25:46,501 - INFO - Location updated successfully for SKU=N2187 LV and Style=N2187
+2024-12-09 11:25:49,031 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2187 RD and Style=N2187
+2024-12-09 11:25:49,031 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2187 RD and Style=N2187
+2024-12-09 11:25:49,044 - INFO - Location updated successfully for SKU=N2187 RD and Style=N2187
+2024-12-09 11:25:52,048 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2187 BK and Style=N2187
+2024-12-09 11:25:52,048 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2187 BK and Style=N2187
+2024-12-09 11:25:52,059 - INFO - Location updated successfully for SKU=N2187 BK and Style=N2187
+2024-12-09 11:25:53,174 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2187 BK and Style=N2187
+2024-12-09 11:25:53,174 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=N2187 BK and Style=N2187
+2024-12-09 11:25:53,185 - INFO - Location updated successfully for SKU=N2187 BK and Style=N2187
+2024-12-09 11:25:55,595 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2187 FU and Style=N2187
+2024-12-09 11:25:55,600 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2187 FU and Style=N2187
+2024-12-09 11:25:55,603 - INFO - Location updated successfully for SKU=N2187 FU and Style=N2187
+2024-12-09 11:25:57,939 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2187 PL and Style=N2187
+2024-12-09 11:25:57,939 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2187 PL and Style=N2187
+2024-12-09 11:25:57,944 - INFO - Location updated successfully for SKU=N2187 PL and Style=N2187
+2024-12-09 11:25:58,810 - INFO - Processing user input: n2187
+2024-12-09 11:25:58,949 - INFO - Lookup completed for user: yeti, input: n2187
+2024-12-09 13:10:03,752 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Safari 11.1.1, OS: Mac OS X 10.15.7, Device: Mac, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-09 13:10:04,408 - INFO - Processing user input: t3305
+2024-12-09 13:10:04,653 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-09 13:10:14,174 - INFO - Processing user input: s1412
+2024-12-09 13:10:14,334 - INFO - Lookup completed for user: yeti, input: s1412
+2024-12-09 13:24:53,372 - INFO - Processing user input: n1939
+2024-12-09 13:24:53,569 - INFO - Lookup completed for user: yeti, input: n1939
+2024-12-09 13:25:50,519 - INFO - Processing user input: t3142
+2024-12-09 13:25:50,683 - INFO - Lookup completed for user: yeti, input: t3142
+2024-12-09 13:28:46,360 - INFO - Processing user input: s1401
+2024-12-09 13:28:46,544 - INFO - Lookup completed for user: yeti, input: s1401
+2024-12-09 13:34:43,824 - INFO - Processing user input: es1382
+2024-12-09 13:34:43,977 - INFO - Lookup completed for user: yeti, input: es1382
+2024-12-09 13:47:04,508 - INFO - Processing user input: es1382
+2024-12-09 13:47:04,658 - INFO - Lookup completed for user: yeti, input: es1382
+2024-12-09 13:50:06,039 - INFO - Processing user input: es1382
+2024-12-09 13:50:06,204 - INFO - Lookup completed for user: yeti, input: es1382
+2024-12-09 13:50:12,675 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=ES1382 NV and Style=ES1382
+2024-12-09 13:50:12,675 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=ES1382 NV and Style=ES1382
+2024-12-09 13:50:12,680 - INFO - Location updated successfully for SKU=ES1382 NV and Style=ES1382
+2024-12-09 13:50:14,848 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=ES1382 BK and Style=ES1382
+2024-12-09 13:50:14,848 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=ES1382 BK and Style=ES1382
+2024-12-09 13:50:14,848 - INFO - Location updated successfully for SKU=ES1382 BK and Style=ES1382
+2024-12-09 13:50:17,113 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=ES1382 TP and Style=ES1382
+2024-12-09 13:50:17,113 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=ES1382 TP and Style=ES1382
+2024-12-09 13:50:17,118 - INFO - Location updated successfully for SKU=ES1382 TP and Style=ES1382
+2024-12-09 13:50:19,284 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=ES1382 WN and Style=ES1382
+2024-12-09 13:50:19,284 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=ES1382 WN and Style=ES1382
+2024-12-09 13:50:19,284 - INFO - Location updated successfully for SKU=ES1382 WN and Style=ES1382
+2024-12-09 13:50:22,146 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=ES1382 BR and Style=ES1382
+2024-12-09 13:50:22,146 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=ES1382 BR and Style=ES1382
+2024-12-09 13:50:22,149 - INFO - Location updated successfully for SKU=ES1382 BR and Style=ES1382
+2024-12-09 13:50:23,625 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=ES1382 BR and Style=ES1382
+2024-12-09 13:50:23,625 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=ES1382 BR and Style=ES1382
+2024-12-09 13:50:23,625 - INFO - Location updated successfully for SKU=ES1382 BR and Style=ES1382
+2024-12-09 13:50:25,864 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=ES1382 OL and Style=ES1382
+2024-12-09 13:50:25,864 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=ES1382 OL and Style=ES1382
+2024-12-09 13:50:25,869 - INFO - Location updated successfully for SKU=ES1382 OL and Style=ES1382
+2024-12-09 13:50:26,940 - INFO - Processing user input: es1382
+2024-12-09 13:50:27,078 - INFO - Lookup completed for user: yeti, input: es1382
+2024-12-09 14:13:43,711 - INFO - Processing user input: s1401
+2024-12-09 14:13:43,871 - INFO - Lookup completed for user: yeti, input: s1401
+2024-12-09 14:13:43,883 - INFO - Processing user input: s1401
+2024-12-09 14:13:44,016 - INFO - Lookup completed for user: yeti, input: s1401
+2024-12-09 14:48:24,839 - INFO - Processing user input: t2739
+2024-12-09 14:48:25,359 - INFO - Lookup completed for user: yeti, input: t2739
+2024-12-09 14:56:08,193 - INFO - Processing user input: t2t3243
+2024-12-09 14:56:08,413 - INFO - Lookup completed for user: yeti, input: t2t3243
+2024-12-09 14:56:13,429 - INFO - Processing user input: t3243
+2024-12-09 14:56:13,591 - INFO - Lookup completed for user: yeti, input: t3243
+2024-12-09 15:03:32,324 - INFO - Processing user input: t2843
+2024-12-09 15:03:32,536 - INFO - Lookup completed for user: yeti, input: t2843
+2024-12-09 15:03:56,137 - INFO - Processing user input: l2001
+2024-12-09 15:03:56,289 - INFO - Lookup completed for user: yeti, input: l2001
+2024-12-09 15:07:44,852 - INFO - Processing user input: t2890
+2024-12-09 15:07:45,033 - INFO - Lookup completed for user: yeti, input: t2890
+2024-12-09 15:08:04,439 - INFO - Processing user input: t3006
+2024-12-09 15:08:04,609 - INFO - Lookup completed for user: yeti, input: t3006
+2024-12-09 15:14:46,870 - INFO - Processing user input: s1401
+2024-12-09 15:14:47,019 - INFO - Lookup completed for user: yeti, input: s1401
+2024-12-09 15:15:01,367 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=S1401 BR and Style=S1401
+2024-12-09 15:15:01,367 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=S1401 BR and Style=S1401
+2024-12-09 15:15:01,367 - INFO - Location updated successfully for SKU=S1401 BR and Style=S1401
+2024-12-09 15:15:06,673 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=S1401 NV and Style=S1401
+2024-12-09 15:15:06,673 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=S1401 NV and Style=S1401
+2024-12-09 15:15:06,673 - INFO - Location updated successfully for SKU=S1401 NV and Style=S1401
+2024-12-09 15:15:13,617 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=S1401 BK and Style=S1401
+2024-12-09 15:15:13,622 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=S1401 BK and Style=S1401
+2024-12-09 15:15:13,622 - INFO - Location updated successfully for SKU=S1401 BK and Style=S1401
+2024-12-09 15:15:14,392 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=S1401 BK and Style=S1401
+2024-12-09 15:15:14,392 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=S1401 BK and Style=S1401
+2024-12-09 15:15:14,397 - INFO - Location updated successfully for SKU=S1401 BK and Style=S1401
+2024-12-09 15:15:23,010 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=S1401 ST and Style=S1401
+2024-12-09 15:15:23,010 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=S1401 ST and Style=S1401
+2024-12-09 15:15:23,015 - INFO - Location updated successfully for SKU=S1401 ST and Style=S1401
+2024-12-09 15:15:28,365 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=S1401 OL and Style=S1401
+2024-12-09 15:15:28,365 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=S1401 OL and Style=S1401
+2024-12-09 15:15:28,377 - INFO - Location updated successfully for SKU=S1401 OL and Style=S1401
+2024-12-09 15:17:31,024 - INFO - Processing user input: t3224
+2024-12-09 15:17:31,201 - INFO - Lookup completed for user: yeti, input: t3224
+2024-12-09 15:18:33,791 - INFO - Processing user input: l1747
+2024-12-09 15:18:33,965 - INFO - Lookup completed for user: yeti, input: l1747
+2024-12-09 15:20:16,662 - INFO - Processing user input: t3081
+2024-12-09 15:20:16,827 - INFO - Lookup completed for user: yeti, input: t3081
+2024-12-09 15:20:58,519 - INFO - Processing user input: t3281
+2024-12-09 15:20:58,680 - INFO - Lookup completed for user: yeti, input: t3281
+2024-12-09 15:21:20,059 - INFO - Processing user input: l1632
+2024-12-09 15:21:20,248 - INFO - Lookup completed for user: yeti, input: l1632
+2024-12-09 15:21:43,951 - INFO - Processing user input: t2945
+2024-12-09 15:21:44,065 - INFO - Lookup completed for user: yeti, input: t2945
+2024-12-09 15:21:45,949 - INFO - Processing user input: t2946
+2024-12-09 15:21:46,180 - INFO - Lookup completed for user: yeti, input: t2946
+2024-12-09 15:22:22,611 - INFO - Processing user input: t2804
+2024-12-09 15:22:22,795 - INFO - Lookup completed for user: yeti, input: t2804
+2024-12-09 15:23:31,396 - INFO - Processing user input: t3196
+2024-12-09 15:23:31,561 - INFO - Lookup completed for user: yeti, input: t3196
+2024-12-09 15:45:24,189 - INFO - [Download][List] yeti downloaded the file: List-20241209-154519.xlsx
+2024-12-09 15:55:16,743 - INFO - Processing user input: t2804
+2024-12-09 15:55:16,933 - INFO - Lookup completed for user: yeti, input: t2804
+2024-12-09 15:55:25,753 - INFO - Processing user input: t2946
+2024-12-09 15:55:25,920 - INFO - Lookup completed for user: yeti, input: t2946
+2024-12-09 15:55:31,828 - INFO - Processing user input: l1632
+2024-12-09 15:55:31,998 - INFO - Lookup completed for user: yeti, input: l1632
+2024-12-09 15:55:38,669 - INFO - Processing user input: l1747
+2024-12-09 15:55:38,835 - INFO - Lookup completed for user: yeti, input: l1747
+2024-12-09 15:55:45,254 - INFO - Processing user input: t3224
+2024-12-09 15:55:45,485 - INFO - Lookup completed for user: yeti, input: t3224
+2024-12-09 15:58:38,173 - INFO - Processing user input: %-set%
+2024-12-09 15:58:44,386 - INFO - Lookup completed for user: yeti, input: %-set%
+2024-12-09 15:59:39,485 - INFO - Processing user input: s1478-set bk
+2024-12-09 15:59:39,639 - INFO - Lookup completed for user: yeti, input: s1478-set bk
+2024-12-09 15:59:44,144 - INFO - Processing user input: s1478-set
+2024-12-09 15:59:44,450 - INFO - Lookup completed for user: yeti, input: s1478-set
+2024-12-09 15:59:46,243 - INFO - Processing user input: s1478
+2024-12-09 15:59:46,415 - INFO - Lookup completed for user: yeti, input: s1478
+2024-12-09 16:10:43,227 - INFO - Processing user input: t3231
+2024-12-09 16:10:43,379 - INFO - Lookup completed for user: yeti, input: t3231
+2024-12-09 16:11:06,958 - INFO - Processing user input: l6035
+2024-12-09 16:11:07,140 - INFO - Lookup completed for user: yeti, input: l6035
+2024-12-09 16:11:26,515 - INFO - Processing user input: l1823
+2024-12-09 16:11:26,697 - INFO - Lookup completed for user: yeti, input: l1823
+2024-12-09 16:11:47,650 - INFO - Processing user input: t3002
+2024-12-09 16:11:47,827 - INFO - Lookup completed for user: yeti, input: t3002
+2024-12-09 16:21:59,525 - INFO - Processing user input: t3348
+2024-12-09 16:21:59,685 - INFO - Lookup completed for user: yeti, input: t3348
+2024-12-09 16:24:11,216 - INFO - Processing user input: t3029
+2024-12-09 16:24:11,412 - INFO - Lookup completed for user: yeti, input: t3029
+2024-12-09 16:24:19,732 - INFO - Processing user input: el1855
+2024-12-09 16:24:19,903 - INFO - Lookup completed for user: yeti, input: el1855
+2024-12-09 16:24:37,837 - INFO - Processing user input: l1616
+2024-12-09 16:24:38,037 - INFO - Lookup completed for user: yeti, input: l1616
+2024-12-09 16:25:14,785 - INFO - Processing user input: et2928
+2024-12-09 16:25:14,959 - INFO - Lookup completed for user: yeti, input: et2928
+2024-12-09 16:25:41,902 - INFO - Processing user input: t3027
+2024-12-09 16:25:42,056 - INFO - Lookup completed for user: yeti, input: t3027
+2024-12-09 16:25:57,930 - INFO - Processing user input: t3027
+2024-12-09 16:25:58,075 - INFO - Lookup completed for user: yeti, input: t3027
+2024-12-09 16:26:30,853 - INFO - Processing user input: t3173
+2024-12-09 16:26:31,026 - INFO - Lookup completed for user: yeti, input: t3173
+2024-12-09 16:34:46,221 - INFO - Processing user input: t3196
+2024-12-09 16:34:46,388 - INFO - Lookup completed for user: yeti, input: t3196
+2024-12-09 17:35:09,066 - INFO - Processing user input: t3224
+2024-12-09 17:35:09,240 - INFO - Lookup completed for user: yeti, input: t3224
+2024-12-09 17:57:26,160 - INFO - User nicye has logged in. IP: 115.223.141.103, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-09 17:57:30,244 - INFO - Processing user input: t3243
+2024-12-09 17:57:30,412 - INFO - Lookup completed for user: nicye, input: t3243
+2024-12-09 18:16:26,131 - INFO - Processing user input: en1765
+2024-12-09 18:16:26,322 - INFO - Lookup completed for user: yeti, input: en1765
+2024-12-09 18:16:30,577 - INFO - Processing user input: en176
+2024-12-09 18:16:30,854 - INFO - Lookup completed for user: yeti, input: en176
+2024-12-10 01:26:57,150 - INFO - Location service accessed by user: Unknown
+2024-12-10 10:06:06,117 - INFO - Processing user input: en1765
+2024-12-10 10:06:06,289 - INFO - Lookup completed for user: yeti, input: en1765
+2024-12-10 10:11:02,761 - INFO - Processing user input: n2227
+2024-12-10 10:11:02,908 - INFO - Lookup completed for user: yeti, input: n2227
+2024-12-10 10:31:25,582 - INFO - User yeti has logged in. IP: 172.56.235.21, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-10 10:31:29,890 - INFO - Processing user input: en1766
+2024-12-10 10:31:30,045 - INFO - Lookup completed for user: yeti, input: en1766
+2024-12-10 10:31:32,383 - INFO - Processing user input: en1765
+2024-12-10 10:31:32,553 - INFO - Lookup completed for user: yeti, input: en1765
+2024-12-10 10:37:30,101 - INFO - Location service accessed by user: Unknown
+2024-12-10 10:41:43,384 - INFO - Processing user input: t3255
+2024-12-10 10:41:43,551 - INFO - Lookup completed for user: yeti, input: t3255
+2024-12-10 12:00:48,397 - INFO - Processing user input: en1765
+2024-12-10 12:00:48,577 - INFO - Lookup completed for user: yeti, input: en1765
+2024-12-10 12:00:56,324 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=EN1765 BK and Style=EN1765
+2024-12-10 12:00:56,324 - INFO - Executing UPDATE query: UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s for SKU=EN1765 BK and Style=EN1765
+2024-12-10 12:00:56,329 - INFO - Location updated successfully for SKU=EN1765 BK and Style=EN1765
+2024-12-10 12:02:28,728 - INFO - yeti is looking up order number: 1888
+2024-12-10 12:02:28,757 - INFO - yeti searched for order number: 1888
+2024-12-10 12:03:27,160 - INFO - Processing user input: t3305
+2024-12-10 12:03:27,401 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-10 12:20:40,565 - INFO - Processing user input: l1845
+2024-12-10 12:20:40,741 - INFO - Lookup completed for user: yeti, input: l1845
+2024-12-10 12:20:47,015 - INFO - Processing user input: %f231113%
+2024-12-10 12:20:48,154 - INFO - Lookup completed for user: yeti, input: %f231113%
+2024-12-10 12:25:13,825 - INFO - [Download][List] yeti downloaded the file: List-20241210-122510.xlsx
+2024-12-10 14:11:15,641 - INFO - Processing user input: t3305
+2024-12-10 14:11:15,845 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-10 15:21:56,739 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-10 15:23:10,450 - INFO - [Download][List] xj downloaded the file: List-20241210-152250.xlsx
+2024-12-10 15:26:35,960 - INFO - Processing user input: es1313
+2024-12-10 15:26:36,139 - INFO - Lookup completed for user: yeti, input: es1313
+2024-12-10 16:07:26,182 - INFO - Processing user input: et3167
+2024-12-10 16:07:26,350 - INFO - Lookup completed for user: yeti, input: et3167
+2024-12-10 16:07:29,588 - INFO - Processing user input: et31
+2024-12-10 16:07:29,891 - INFO - Lookup completed for user: yeti, input: et31
+2024-12-10 16:07:33,757 - INFO - Processing user input: et32
+2024-12-10 16:07:33,948 - INFO - Lookup completed for user: yeti, input: et32
+2024-12-10 16:07:38,437 - INFO - Processing user input: et30
+2024-12-10 16:07:38,691 - INFO - Lookup completed for user: yeti, input: et30
+2024-12-10 16:12:10,554 - INFO - Processing user input: et27
+2024-12-10 16:12:10,714 - INFO - Lookup completed for user: yeti, input: et27
+2024-12-10 16:12:13,857 - INFO - Processing user input: et27%
+2024-12-10 16:12:14,176 - INFO - Lookup completed for user: yeti, input: et27%
+2024-12-10 16:12:19,166 - INFO - Processing user input: et27%
+2024-12-10 16:12:19,492 - INFO - Lookup completed for user: yeti, input: et27%
+2024-12-10 16:12:23,747 - INFO - Processing user input: et2735
+2024-12-10 16:12:23,869 - INFO - Lookup completed for user: yeti, input: et2735
+2024-12-10 16:12:31,815 - INFO - Processing user input: t3305
+2024-12-10 16:12:32,287 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-10 16:12:35,673 - INFO - Processing user input: et2725
+2024-12-10 16:12:36,089 - INFO - Lookup completed for user: yeti, input: et2725
+2024-12-10 16:12:38,169 - INFO - [Download][List] yeti downloaded the file: List-20241210-161156.xlsx
+2024-12-10 16:14:37,309 - INFO - Processing user input: t3109
+2024-12-10 16:14:37,585 - INFO - Lookup completed for user: yeti, input: t3109
+2024-12-10 16:15:05,221 - INFO - Processing user input: t310
+2024-12-10 16:15:05,574 - INFO - Lookup completed for user: yeti, input: t310
+2024-12-10 16:15:41,844 - INFO - Processing user input: t3108
+2024-12-10 16:15:42,017 - INFO - Lookup completed for user: yeti, input: t3108
+2024-12-10 16:18:48,885 - INFO - yeti is looking up order number: 31780
+2024-12-10 16:18:49,014 - INFO - yeti searched for order number: 31780
+2024-12-10 16:18:54,029 - INFO - yeti is looking up order number: 33359
+2024-12-10 16:18:54,064 - INFO - yeti searched for order number: 33359
+2024-12-10 16:18:56,599 - INFO - yeti is looking up order number: 33354
+2024-12-10 16:18:56,619 - INFO - yeti searched for order number: 33354
+2024-12-10 16:18:59,948 - INFO - yeti is looking up order number: 33377
+2024-12-10 16:18:59,968 - INFO - yeti searched for order number: 33377
+2024-12-10 16:19:05,855 - INFO - yeti is looking up order number: 33399
+2024-12-10 16:19:05,874 - INFO - yeti searched for order number: 33399
+2024-12-10 16:19:10,928 - INFO - yeti is looking up order number: 33455
+2024-12-10 16:19:10,953 - INFO - yeti searched for order number: 33455
+2024-12-10 16:19:14,126 - INFO - yeti is looking up order number: 33666
+2024-12-10 16:19:14,142 - INFO - yeti searched for order number: 33666
+2024-12-10 16:19:18,463 - INFO - yeti is looking up order number: 34000
+2024-12-10 16:19:18,478 - INFO - yeti searched for order number: 34000
+2024-12-10 16:19:23,879 - INFO - yeti is looking up order number: 33999
+2024-12-10 16:19:23,894 - INFO - yeti searched for order number: 33999
+2024-12-10 16:19:26,582 - INFO - yeti is looking up order number: 3398
+2024-12-10 16:19:26,602 - INFO - yeti searched for order number: 3398
+2024-12-10 16:19:28,319 - INFO - yeti is looking up order number: 33986
+2024-12-10 16:19:28,334 - INFO - yeti searched for order number: 33986
+2024-12-10 16:19:30,327 - INFO - yeti is looking up order number: 3395
+2024-12-10 16:19:30,347 - INFO - yeti searched for order number: 3395
+2024-12-10 16:19:50,726 - INFO - yeti is looking up order number: 33087
+2024-12-10 16:19:50,746 - INFO - yeti searched for order number: 33087
+2024-12-10 16:19:53,239 - INFO - yeti is looking up order number: 33807
+2024-12-10 16:19:53,255 - INFO - yeti searched for order number: 33807
+2024-12-10 16:19:58,926 - INFO - yeti is looking up order number: 33806
+2024-12-10 16:19:58,951 - INFO - yeti searched for order number: 33806
+2024-12-10 16:20:03,632 - INFO - yeti is looking up order number: 33805
+2024-12-10 16:20:03,652 - INFO - yeti searched for order number: 33805
+2024-12-10 16:23:45,076 - INFO - Processing user input: t3167
+2024-12-10 16:23:45,192 - INFO - Lookup completed for user: yeti, input: t3167
+2024-12-10 16:23:47,287 - INFO - Processing user input: et
+2024-12-10 16:23:48,553 - INFO - Lookup completed for user: yeti, input: et
+2024-12-10 16:23:51,469 - INFO - Processing user input: et3167
+2024-12-10 16:23:51,627 - INFO - Lookup completed for user: yeti, input: et3167
+2024-12-10 16:26:41,753 - INFO - yeti is looking up order number from URL: 1792
+2024-12-10 16:26:41,799 - INFO - yeti searched for order number: 1792 via URL
+2024-12-10 16:26:58,499 - INFO - Processing user input: n1811
+2024-12-10 16:26:58,677 - INFO - Lookup completed for user: yeti, input: n1811
+2024-12-10 18:39:08,507 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-10 18:39:15,462 - INFO - Processing user input: s1306
+2024-12-10 18:39:15,635 - INFO - Lookup completed for user: ahua, input: s1306
+2024-12-10 18:39:23,860 - INFO - Processing user input: n0469
+2024-12-10 18:39:24,066 - INFO - Lookup completed for user: ahua, input: n0469
+2024-12-10 18:39:57,515 - INFO - Processing user input: el1781
+2024-12-10 18:39:57,680 - INFO - Lookup completed for user: ahua, input: el1781
+2024-12-10 18:41:03,955 - INFO - Processing user input: el1781
+2024-12-10 18:41:04,116 - INFO - Processing user input: el1781
+2024-12-10 18:41:04,156 - INFO - Lookup completed for user: ahua, input: el1781
+2024-12-10 18:41:04,291 - INFO - Lookup completed for user: ahua, input: el1781
+2024-12-10 18:41:10,058 - INFO - Processing user input: el1855
+2024-12-10 18:41:10,253 - INFO - Lookup completed for user: ahua, input: el1855
+2024-12-10 18:44:23,436 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-10 18:44:29,659 - INFO - Processing user input: %f25109%
+2024-12-10 18:44:30,667 - INFO - Lookup completed for user: yeti, input: %f25109%
+2024-12-10 18:44:45,412 - INFO - Processing user input: %f25110%
+2024-12-10 18:44:46,284 - INFO - Lookup completed for user: yeti, input: %f25110%
+2024-12-10 20:12:18,872 - INFO - Processing user input: %l202411%
+2024-12-10 20:12:19,880 - INFO - Lookup completed for user: yeti, input: %l202411%
+2024-12-10 20:15:38,352 - INFO - Processing user input: %l202411%
+2024-12-10 20:15:39,375 - INFO - Lookup completed for user: yeti, input: %l202411%
+2024-12-10 20:20:55,532 - INFO - yeti executed a custom SQL query: select * from inv_data where Descrip='L202411'
+2024-12-10 20:21:16,898 - INFO - yeti executed a custom SQL query: DELETE FROM inv_data WHERE Descrip = 'L202411';
+2024-12-10 20:21:32,324 - INFO - yeti executed a custom SQL query: SELECT * FROM inv_data WHERE Descrip = 'L202411';
+2024-12-10 20:23:03,842 - INFO - Processing user input: %l202411%
+2024-12-10 20:23:04,903 - INFO - Lookup completed for user: yeti, input: %l202411%
+2024-12-10 20:23:56,545 - INFO - Processing user input: %l202411%
+2024-12-10 20:23:57,431 - INFO - Lookup completed for user: yeti, input: %l202411%
+2024-12-10 20:27:44,854 - INFO - Processing user input: %l202411%
+2024-12-10 20:27:45,881 - INFO - Lookup completed for user: yeti, input: %l202411%
+2024-12-10 22:30:34,917 - INFO - autobots, rolling out!
+2024-12-10 22:30:46,354 - INFO - autobots, rolling out!
+2024-12-10 23:11:48,431 - INFO - autobots, rolling out!
+2024-12-10 23:11:53,220 - INFO - autobots, rolling out!
+2024-12-10 23:13:47,547 - INFO - autobots, rolling out!
+2024-12-10 23:13:51,142 - INFO - autobots, rolling out!
+2024-12-10 23:14:38,039 - INFO - autobots, rolling out!
+2024-12-10 23:14:41,669 - INFO - autobots, rolling out!
+2024-12-10 23:15:49,509 - INFO - autobots, rolling out!
+2024-12-10 23:15:53,520 - INFO - autobots, rolling out!
+2024-12-10 23:18:34,383 - INFO - autobots, rolling out!
+2024-12-10 23:18:41,911 - INFO - autobots, rolling out!
+2024-12-10 23:19:34,527 - INFO - User yeti has logged in. IP: 127.0.0.1, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://localhost:5555/login, Referrer: http://localhost:5555/login, Query Params: ImmutableMultiDict([])
+2024-12-10 23:20:56,279 - INFO - autobots, rolling out!
+2024-12-10 23:21:00,069 - INFO - autobots, rolling out!
+2024-12-10 23:30:47,212 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://173.198.50.202:5555/login, Referrer: http://173.198.50.202:5555/login, Query Params: ImmutableMultiDict([])
+2024-12-10 23:30:51,185 - INFO - Processing user input: t3304
+2024-12-10 23:30:51,535 - INFO - Lookup completed for user: yeti, input: t3304
+2024-12-11 09:58:37,577 - INFO - User yeti has logged in. IP: 192.168.254.20, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://192.168.254.30:5555/login, Referrer: http://192.168.254.30:5555/login, Query Params: ImmutableMultiDict([])
+2024-12-11 10:00:16,234 - INFO - Processing user input: t3305
+2024-12-11 10:00:16,472 - INFO - Lookup completed for user: yeti, input: t3305
+2024-12-11 10:13:48,137 - INFO - Processing user input: s1505
+2024-12-11 10:13:48,300 - INFO - Lookup completed for user: yeti, input: s1505
+2024-12-11 10:14:33,686 - INFO - Processing user input: l1850
+2024-12-11 10:14:33,846 - INFO - Lookup completed for user: yeti, input: l1850
+2024-12-11 10:14:51,716 - INFO - Processing user input: n1798
+2024-12-11 10:14:51,872 - INFO - Lookup completed for user: yeti, input: n1798
+2024-12-11 10:15:48,715 - INFO - Processing user input: s1291
+2024-12-11 10:15:48,886 - INFO - Lookup completed for user: yeti, input: s1291
+2024-12-11 10:17:32,614 - INFO - Processing user input: n1798
+2024-12-11 10:17:32,783 - INFO - Lookup completed for user: yeti, input: n1798
+2024-12-11 10:23:12,096 - INFO - User yeti has logged in. IP: 192.168.254.88, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://192.168.254.30:5555/login, Referrer: http://192.168.254.30:5555/login, Query Params: ImmutableMultiDict([])
+2024-12-11 10:23:18,385 - INFO - Processing user input: n2227
+2024-12-11 10:23:18,551 - INFO - Lookup completed for user: yeti, input: n2227
+2024-12-11 10:24:02,097 - INFO - Processing user input: s1146
+2024-12-11 10:24:02,271 - INFO - Lookup completed for user: yeti, input: s1146
+2024-12-11 10:36:33,433 - INFO - User yeti has logged in. IP: 192.168.254.8, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://192.168.254.30:5555/login, Referrer: http://192.168.254.30:5555/login, Query Params: ImmutableMultiDict([])
+2024-12-11 10:36:40,546 - INFO - Processing user input: n1798
+2024-12-11 10:36:40,702 - INFO - Lookup completed for user: yeti, input: n1798
+2024-12-11 14:40:46,013 - INFO - yeti is looking up order number: 1815
+2024-12-11 14:40:46,876 - INFO - yeti searched for order number: 1815
+2024-12-11 14:40:48,017 - INFO - Received order_number: 1815
+2024-12-11 14:40:49,708 - INFO - [Download][labels]File 1815_label.xlsx downloaded from label output
+2024-12-11 14:58:20,372 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-11 15:43:29,923 - INFO - yeti is looking up order number: 33523
+2024-12-11 15:43:30,378 - INFO - yeti searched for order number: 33523
+2024-12-11 15:43:36,044 - INFO - Received order_number: 33523
+2024-12-11 15:43:39,221 - INFO - yeti is looking up order number: 33523
+2024-12-11 15:43:39,236 - INFO - yeti searched for order number: 33523
+2024-12-11 15:43:50,311 - INFO - yeti is looking up order number: 33523
+2024-12-11 15:43:50,332 - INFO - yeti searched for order number: 33523
+2024-12-11 15:44:17,556 - INFO - Received order_number: 33523
+2024-12-11 15:44:24,491 - INFO - yeti is looking up order number: 33523
+2024-12-11 15:44:24,505 - INFO - yeti searched for order number: 33523
+2024-12-11 15:53:39,059 - INFO - Received order_number: 33523
+2024-12-11 15:53:42,628 - INFO - [Download][labels]File 33523_label.xlsx downloaded from label output
+2024-12-11 15:54:31,677 - INFO - yeti is looking up order number: 33521
+2024-12-11 15:54:31,697 - INFO - yeti searched for order number: 33521
+2024-12-11 15:54:33,832 - INFO - yeti is looking up order number: 33521
+2024-12-11 15:54:33,848 - INFO - yeti searched for order number: 33521
+2024-12-11 15:54:35,517 - INFO - Received order_number: 33521
+2024-12-11 15:54:36,930 - INFO - [Download][labels]File 33521_label.xlsx downloaded from label output
+2024-12-11 15:55:32,917 - INFO - yeti is looking up order number: 33775
+2024-12-11 15:55:32,932 - INFO - yeti searched for order number: 33775
+2024-12-11 15:55:40,347 - INFO - Received order_number: 33775
+2024-12-11 15:55:41,674 - INFO - [Download][labels]File 33775_label.xlsx downloaded from label output
+2024-12-11 15:56:13,987 - INFO - yeti is looking up order number: 33777
+2024-12-11 15:56:14,004 - INFO - yeti searched for order number: 33777
+2024-12-11 15:56:15,333 - INFO - Received order_number: 33777
+2024-12-11 15:56:17,292 - INFO - [Download][labels]File 33777_label.xlsx downloaded from label output
+2024-12-11 15:57:24,450 - INFO - yeti is looking up order number: 33779
+2024-12-11 15:57:24,465 - INFO - yeti searched for order number: 33779
+2024-12-11 15:57:25,722 - INFO - Received order_number: 33779
+2024-12-11 15:57:27,849 - INFO - [Download][labels]File 33779_label.xlsx downloaded from label output
+2024-12-11 15:59:26,692 - INFO - yeti is looking up order number: 33772
+2024-12-11 15:59:26,717 - INFO - yeti searched for order number: 33772
+2024-12-11 15:59:27,829 - INFO - Received order_number: 33772
+2024-12-11 15:59:29,006 - INFO - [Download][labels]File 33772_label.xlsx downloaded from label output
+2024-12-11 16:00:39,168 - INFO - yeti is looking up order number: 33773
+2024-12-11 16:00:39,189 - INFO - yeti searched for order number: 33773
+2024-12-11 16:00:41,132 - INFO - Received order_number: 33773
+2024-12-11 16:00:42,626 - INFO - [Download][labels]File 33773_label.xlsx downloaded from label output
+2024-12-11 16:01:05,245 - INFO - yeti is looking up order number: 33774
+2024-12-11 16:01:05,270 - INFO - yeti searched for order number: 33774
+2024-12-11 16:01:08,784 - INFO - Received order_number: 33774
+2024-12-11 16:01:10,735 - INFO - [Download][labels]File 33774_label.xlsx downloaded from label output
+2024-12-11 16:03:36,763 - INFO - yeti is looking up order number: 33778
+2024-12-11 16:03:36,793 - INFO - yeti searched for order number: 33778
+2024-12-11 16:03:38,002 - INFO - Received order_number: 33778
+2024-12-11 16:03:40,746 - INFO - [Download][labels]File 33778_label.xlsx downloaded from label output
+2024-12-11 16:04:16,719 - INFO - yeti is looking up order number: 33776
+2024-12-11 16:04:16,739 - INFO - yeti searched for order number: 33776
+2024-12-11 16:04:43,753 - INFO - Received order_number: 33776
+2024-12-11 16:04:45,273 - INFO - [Download][labels]File 33776_label.xlsx downloaded from label output
+2024-12-11 16:05:10,839 - INFO - yeti is looking up order number: 33750
+2024-12-11 16:05:10,854 - INFO - yeti searched for order number: 33750
+2024-12-11 16:05:12,340 - INFO - Received order_number: 33750
+2024-12-11 16:05:13,523 - INFO - [Download][labels]File 33750_label.xlsx downloaded from label output
+2024-12-11 16:52:12,074 - INFO - User helen has logged in. IP: 173.198.50.202, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-11 16:57:03,186 - INFO - [Download][List] helen downloaded the file: List-20241211-165653.xlsx
+2024-12-11 17:57:58,515 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-11 18:27:02,790 - INFO - User nicye has logged in. IP: 122.240.238.205, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-11 18:27:17,424 - INFO - Processing user input: n0702
+2024-12-11 18:27:17,625 - INFO - Lookup completed for user: nicye, input: n0702
+2024-12-11 18:27:43,128 - INFO - Processing user input: n0731
+2024-12-11 18:27:43,330 - INFO - Lookup completed for user: nicye, input: n0731
+2024-12-11 18:28:08,946 - INFO - Processing user input: n0851
+2024-12-11 18:28:09,102 - INFO - Lookup completed for user: nicye, input: n0851
+2024-12-11 18:28:35,662 - INFO - Processing user input: n1000
+2024-12-11 18:28:35,847 - INFO - Lookup completed for user: nicye, input: n1000
+2024-12-11 18:29:14,000 - INFO - Processing user input: n1265
+2024-12-11 18:29:14,203 - INFO - Lookup completed for user: nicye, input: n1265
+2024-12-11 18:29:22,494 - INFO - Processing user input: n1324
+2024-12-11 18:29:22,707 - INFO - Lookup completed for user: nicye, input: n1324
+2024-12-11 18:29:30,769 - INFO - Processing user input: n1422
+2024-12-11 18:29:30,957 - INFO - Lookup completed for user: nicye, input: n1422
+2024-12-11 18:33:23,332 - INFO - Processing user input: n1000
+2024-12-11 18:33:23,508 - INFO - Lookup completed for user: nicye, input: n1000
+2024-12-11 18:36:58,371 - INFO - autobots, rolling out!
+2024-12-11 18:37:02,045 - INFO - autobots, rolling out!
+2024-12-11 19:41:09,470 - INFO - User ahua has logged in. IP: 34.102.76.90, Browser: Chrome 120.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-11 22:25:33,095 - INFO - Processing user input: el1871
+2024-12-11 22:25:33,234 - INFO - Lookup completed for user: ahua, input: el1871
+2024-12-11 22:25:33,313 - INFO - Processing user input: el1871
+2024-12-11 22:25:33,427 - INFO - Lookup completed for user: ahua, input: el1871
+2024-12-11 22:25:43,402 - INFO - Processing user input: el1781
+2024-12-11 22:25:43,580 - INFO - Lookup completed for user: ahua, input: el1781
+2024-12-11 23:32:07,941 - INFO - Processing user input: n1033
+2024-12-11 23:32:08,154 - INFO - Lookup completed for user: nicye, input: n1033
+2024-12-11 23:33:18,544 - INFO - Processing user input: n1265
+2024-12-11 23:33:18,749 - INFO - Lookup completed for user: nicye, input: n1265
+2024-12-11 23:39:28,390 - INFO - Processing user input: n1423
+2024-12-11 23:39:28,592 - INFO - Lookup completed for user: nicye, input: n1423
+2024-12-11 23:39:38,862 - INFO - Processing user input: n1512
+2024-12-11 23:39:39,018 - INFO - Lookup completed for user: nicye, input: n1512
+2024-12-11 23:39:46,640 - INFO - Processing user input: n1464
+2024-12-11 23:39:46,823 - INFO - Lookup completed for user: nicye, input: n1464
+2024-12-11 23:39:55,124 - INFO - Processing user input: n1423
+2024-12-11 23:39:55,311 - INFO - Lookup completed for user: nicye, input: n1423
+2024-12-11 23:40:00,311 - INFO - Processing user input: n1464
+2024-12-11 23:40:00,491 - INFO - Lookup completed for user: nicye, input: n1464
+2024-12-12 10:41:50,705 - INFO - [Download][List] helen downloaded the file: List-20241212-104145.xlsx
+2024-12-12 10:51:21,061 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-12 10:51:24,673 - INFO - Processing user input: es1147
+2024-12-12 10:51:25,033 - INFO - Lookup completed for user: yeti, input: es1147
+2024-12-12 10:56:38,090 - INFO - yeti is looking up order number: 33521
+2024-12-12 10:56:38,175 - INFO - yeti searched for order number: 33521
+2024-12-12 11:35:36,558 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-12 11:35:44,120 - INFO - Processing user input: n2227
+2024-12-12 11:35:44,270 - INFO - Lookup completed for user: yeti, input: n2227
+2024-12-12 11:35:51,196 - INFO - Processing user input: n0735
+2024-12-12 11:35:51,357 - INFO - Lookup completed for user: yeti, input: n0735
+2024-12-12 15:00:01,418 - INFO - Processing user input: s1146
+2024-12-12 15:00:01,581 - INFO - Lookup completed for user: yeti, input: s1146
+2024-12-12 15:00:30,426 - INFO - Location service accessed by user: Unknown
+2024-12-12 16:42:06,025 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-12 16:42:08,420 - INFO - Processing user input: s1306
+2024-12-12 16:42:08,597 - INFO - Lookup completed for user: yeti, input: s1306
+2024-12-12 16:43:40,181 - INFO - Timestamp 2024/12/12 - 16:43:39 updated successfully.
+2024-12-12 16:43:47,500 - INFO - Inventory data at 2024/12/12 - 16:43:47:
+2024-12-12 16:44:12,317 - INFO - Timestamp 2024/12/12 - 16:44:12 updated successfully.
+2024-12-12 16:44:19,437 - INFO - Inventory data at 2024/12/12 - 16:44:19:
+2024-12-12 16:44:42,717 - INFO - Timestamp 2024/12/12 - 16:44:42 updated successfully.
+2024-12-12 16:44:49,917 - INFO - Inventory data at 2024/12/12 - 16:44:49:
+2024-12-12 16:52:51,839 - INFO - Processing user input: s1045 pk
+2024-12-12 16:52:51,970 - INFO - Lookup completed for user: yeti, input: s1045 pk
+2024-12-12 16:53:17,828 - INFO - Processing user input: s1005 yl
+2024-12-12 16:53:17,954 - INFO - Lookup completed for user: yeti, input: s1005 yl
+2024-12-12 16:53:43,855 - INFO - Processing user input: n1775 pk
+2024-12-12 16:53:43,983 - INFO - Lookup completed for user: yeti, input: n1775 pk
+2024-12-12 16:56:03,265 - INFO - Processing user input: es1414
+2024-12-12 16:56:03,443 - INFO - Lookup completed for user: yeti, input: es1414
+2024-12-12 16:56:42,309 - INFO - Processing user input: es1134 lv
+2024-12-12 16:56:42,447 - INFO - Lookup completed for user: yeti, input: es1134 lv
+2024-12-12 16:59:56,748 - INFO - Processing user input: en2008
+2024-12-12 16:59:56,955 - INFO - Lookup completed for user: yeti, input: en2008
+2024-12-12 17:00:17,079 - INFO - Processing user input: s1112 yl
+2024-12-12 17:00:17,202 - INFO - Lookup completed for user: yeti, input: s1112 yl
+2024-12-12 17:00:51,219 - INFO - Processing user input: t3006 sg
+2024-12-12 17:00:51,346 - INFO - Lookup completed for user: yeti, input: t3006 sg
+2024-12-12 17:01:00,359 - INFO - Processing user input: t2890
+2024-12-12 17:01:00,526 - INFO - Lookup completed for user: yeti, input: t2890
+2024-12-12 17:01:18,622 - INFO - Processing user input: n1655 sg
+2024-12-12 17:01:18,745 - INFO - Lookup completed for user: yeti, input: n1655 sg
+2024-12-12 17:01:36,960 - INFO - Processing user input: es1421 mv
+2024-12-12 17:01:37,082 - INFO - Lookup completed for user: yeti, input: es1421 mv
+2024-12-12 17:01:44,813 - INFO - Processing user input: es1134 bl
+2024-12-12 17:01:44,933 - INFO - Lookup completed for user: yeti, input: es1134 bl
+2024-12-12 17:01:53,945 - INFO - User xj has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-12 17:01:54,688 - INFO - Processing user input: t2801 wt
+2024-12-12 17:01:54,809 - INFO - Lookup completed for user: yeti, input: t2801 wt
+2024-12-12 17:02:57,820 - INFO - Processing user input: s1015 pk
+2024-12-12 17:02:57,988 - INFO - Lookup completed for user: yeti, input: s1015 pk
+2024-12-12 17:03:28,660 - INFO - Processing user input: n1842 wt
+2024-12-12 17:03:28,792 - INFO - Lookup completed for user: yeti, input: n1842 wt
+2024-12-12 17:04:09,972 - INFO - Processing user input: n1853 wt
+2024-12-12 17:04:10,091 - INFO - Lookup completed for user: yeti, input: n1853 wt
+2024-12-12 17:04:12,333 - INFO - Processing user input: n1853
+2024-12-12 17:04:12,493 - INFO - Lookup completed for user: yeti, input: n1853
+2024-12-12 17:05:08,576 - INFO - Processing user input: s1211 st
+2024-12-12 17:05:08,692 - INFO - Lookup completed for user: yeti, input: s1211 st
+2024-12-12 17:05:12,649 - INFO - Processing user input: s1211
+2024-12-12 17:05:12,809 - INFO - Lookup completed for user: yeti, input: s1211
+2024-12-12 17:05:46,218 - INFO - Processing user input: t2772 nv
+2024-12-12 17:05:46,799 - INFO - Lookup completed for user: yeti, input: t2772 nv
+2024-12-12 17:06:24,353 - INFO - Processing user input: t3007 wn
+2024-12-12 17:06:24,459 - INFO - Lookup completed for user: yeti, input: t3007 wn
+2024-12-12 17:06:29,992 - INFO - Processing user input: t3007
+2024-12-12 17:06:30,208 - INFO - Lookup completed for user: yeti, input: t3007
+2024-12-12 17:11:57,335 - INFO - Location service accessed by user: Unknown
+2024-12-12 23:34:16,861 - INFO - User yeti has logged in. IP: 47.159.214.29, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 03:34:43,416 - INFO - User nicye has logged in. IP: 115.223.132.172, Browser: Mobile Safari 17.6, OS: iOS 17.6.1, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 03:34:54,582 - INFO - Processing user input: en2159
+2024-12-13 03:34:55,998 - INFO - Lookup completed for user: nicye, input: en2159
+2024-12-13 07:32:46,348 - INFO - Location service accessed by user: Unknown
+2024-12-13 10:17:44,051 - INFO - [Download][List] xj downloaded the file: List-20241213-101738.xlsx
+2024-12-13 10:45:31,865 - INFO - [Download][List] xj downloaded the file: List-20241213-104518.xlsx
+2024-12-13 13:03:50,348 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 13:39:40,285 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 13:39:44,560 - INFO - Processing user input: n2234
+2024-12-13 13:39:44,909 - INFO - Lookup completed for user: yeti, input: n2234
+2024-12-13 14:23:38,618 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 14:23:43,195 - INFO - Processing user input: s1064
+2024-12-13 14:23:43,527 - INFO - Lookup completed for user: yeti, input: s1064
+2024-12-13 14:25:21,231 - INFO - Processing user input: s1293
+2024-12-13 14:25:21,390 - INFO - Lookup completed for user: yeti, input: s1293
+2024-12-13 14:27:00,993 - INFO - Processing user input: s1064
+2024-12-13 14:27:01,160 - INFO - Lookup completed for user: yeti, input: s1064
+2024-12-13 14:33:57,349 - INFO - User yeti has logged in. IP: 172.56.232.88, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 14:34:01,027 - INFO - Processing user input: s1293
+2024-12-13 14:34:01,177 - INFO - Lookup completed for user: yeti, input: s1293
+2024-12-13 14:51:22,226 - INFO - Processing user input: t2992
+2024-12-13 14:51:22,401 - INFO - Lookup completed for user: yeti, input: t2992
+2024-12-13 14:53:09,651 - INFO - Processing user input: t2992
+2024-12-13 14:53:09,819 - INFO - Lookup completed for user: yeti, input: t2992
+2024-12-13 15:03:38,023 - INFO - Processing user input: s1293
+2024-12-13 15:03:38,233 - INFO - Lookup completed for user: yeti, input: s1293
+2024-12-13 15:03:50,833 - INFO - Processing user input: s1405
+2024-12-13 15:03:51,079 - INFO - Lookup completed for user: yeti, input: s1405
+2024-12-13 15:20:27,687 - INFO - User yeti has logged in. IP: 172.56.183.205, Browser: Chrome Mobile 126.0.0, OS: Android 10, Device: K, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 15:39:01,632 - INFO - Processing user input: en2159
+2024-12-13 15:39:01,862 - INFO - Lookup completed for user: yeti, input: en2159
+2024-12-13 16:37:32,609 - INFO - autobots, rolling out!
+2024-12-13 16:37:32,609 - INFO - autobots, rolling out!
+2024-12-13 16:38:37,934 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 17:51:25,723 - INFO - User nicye has logged in. IP: 38.92.25.46, Browser: Chrome 125.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-13 17:51:42,290 - INFO - Processing user input: s1494
+2024-12-13 17:51:42,449 - INFO - Lookup completed for user: nicye, input: s1494
+2024-12-13 17:51:47,196 - INFO - Processing user input: s1494
+2024-12-13 17:51:47,317 - INFO - Lookup completed for user: nicye, input: s1494
+2024-12-13 17:51:53,724 - INFO - Processing user input: s1494
+2024-12-13 17:51:53,837 - INFO - Lookup completed for user: nicye, input: s1494
+2024-12-13 17:52:03,067 - INFO - Processing user input: n2071
+2024-12-13 17:52:03,292 - INFO - Lookup completed for user: nicye, input: n2071
+2024-12-13 17:52:11,499 - INFO - Processing user input: s1494
+2024-12-13 17:52:11,618 - INFO - Lookup completed for user: nicye, input: s1494
+2024-12-13 17:52:55,160 - INFO - Processing user input: s1491
+2024-12-13 17:52:55,308 - INFO - Lookup completed for user: nicye, input: s1491
+2024-12-13 19:21:56,321 - INFO - Location service accessed by user: Unknown
+2024-12-14 03:48:25,450 - INFO - Location service accessed by user: Unknown
+2024-12-15 00:04:30,990 - INFO - Location service accessed by user: Unknown
+2024-12-15 00:04:32,330 - INFO - Location service accessed by user: Unknown
+2024-12-15 10:31:12,296 - INFO - Location service accessed by user: Unknown
+2024-12-15 11:21:25,831 - INFO - Processing user input: n2191
+2024-12-15 11:21:30,812 - INFO - Lookup completed for user: yeti, input: n2191
+2024-12-15 11:27:44,900 - INFO - Processing user input: n2141
+2024-12-15 11:27:45,065 - INFO - Lookup completed for user: yeti, input: n2141
+2024-12-15 11:28:42,657 - INFO - Processing user input: s1186
+2024-12-15 11:28:42,867 - INFO - Lookup completed for user: yeti, input: s1186
+2024-12-15 11:29:08,566 - INFO - Processing user input: l0665
+2024-12-15 11:29:08,790 - INFO - Lookup completed for user: yeti, input: l0665
+2024-12-15 11:29:30,442 - INFO - Processing user input: n1963
+2024-12-15 11:29:30,599 - INFO - Lookup completed for user: yeti, input: n1963
+2024-12-15 11:47:28,244 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-15 11:47:28,438 - INFO - Processing user input: s1293
+2024-12-15 11:47:28,647 - INFO - Lookup completed for user: yeti, input: s1293
+2024-12-15 11:47:35,163 - INFO - Processing user input: es1382
+2024-12-15 11:47:35,398 - INFO - Lookup completed for user: yeti, input: es1382
+2024-12-15 12:59:05,096 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-15 12:59:11,665 - INFO - Processing user input: s1186
+2024-12-15 12:59:11,823 - INFO - Lookup completed for user: yeti, input: s1186
+2024-12-15 12:59:25,354 - INFO - Processing user input: n1931
+2024-12-15 12:59:25,535 - INFO - Lookup completed for user: yeti, input: n1931
+2024-12-15 12:59:45,913 - INFO - Processing user input: n2141
+2024-12-15 12:59:46,060 - INFO - Lookup completed for user: yeti, input: n2141
+2024-12-15 13:00:01,866 - INFO - Processing user input: n2191
+2024-12-15 13:00:02,026 - INFO - Lookup completed for user: yeti, input: n2191
+2024-12-15 13:00:24,293 - INFO - Processing user input: es1272
+2024-12-15 13:00:24,465 - INFO - Lookup completed for user: yeti, input: es1272
+2024-12-15 13:00:37,604 - INFO - Processing user input: n1963
+2024-12-15 13:00:37,748 - INFO - Lookup completed for user: yeti, input: n1963
+2024-12-15 13:00:54,886 - INFO - Processing user input: es1382
+2024-12-15 13:00:55,028 - INFO - Lookup completed for user: yeti, input: es1382
+2024-12-15 16:25:33,220 - INFO - Location service accessed by user: Unknown
+2024-12-15 17:22:15,370 - INFO - User ahua has logged in. IP: 219.135.198.131, Browser: Chrome 130.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-15 18:14:10,662 - INFO - Location service accessed by user: Unknown
+2024-12-15 22:01:51,123 - INFO - User nicye has logged in. IP: 122.240.210.101, Browser: Chrome 123.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-15 22:01:55,075 - INFO - Processing user input: n1782
+2024-12-15 22:02:13,863 - INFO - Lookup completed for user: nicye, input: n1782
+2024-12-15 22:03:33,776 - INFO - Processing user input: n2071
+2024-12-15 22:03:34,235 - INFO - Lookup completed for user: nicye, input: n2071
+2024-12-15 22:06:04,459 - INFO - Processing user input: el1855
+2024-12-15 22:06:04,629 - INFO - Lookup completed for user: nicye, input: el1855
+2024-12-15 22:08:08,325 - INFO - Processing user input: n2136
+2024-12-15 22:08:08,503 - INFO - Lookup completed for user: nicye, input: n2136
+2024-12-15 22:08:40,194 - INFO - Processing user input: es1386
+2024-12-15 22:08:42,748 - INFO - Lookup completed for user: nicye, input: es1386
+2024-12-15 23:53:26,741 - INFO - Processing user input: n1547
+2024-12-15 23:53:26,925 - INFO - Lookup completed for user: nicye, input: n1547
+2024-12-16 00:37:26,134 - INFO - Processing user input: t3243
+2024-12-16 00:37:26,327 - INFO - Lookup completed for user: nicye, input: t3243
+2024-12-16 00:38:24,653 - INFO - Processing user input: en2159
+2024-12-16 00:38:24,924 - INFO - Lookup completed for user: nicye, input: en2159
+2024-12-16 00:39:00,367 - INFO - Processing user input: n3007
+2024-12-16 00:39:00,587 - INFO - Lookup completed for user: nicye, input: n3007
+2024-12-16 00:39:18,332 - INFO - Processing user input: n1745
+2024-12-16 00:39:18,504 - INFO - Lookup completed for user: nicye, input: n1745
+2024-12-16 00:39:50,710 - INFO - Processing user input: s1412
+2024-12-16 00:39:50,874 - INFO - Lookup completed for user: nicye, input: s1412
+2024-12-16 00:40:21,096 - INFO - Processing user input: n2173
+2024-12-16 00:40:21,252 - INFO - Lookup completed for user: nicye, input: n2173
+2024-12-16 00:41:10,206 - INFO - Processing user input: s1112
+2024-12-16 00:41:10,379 - INFO - Lookup completed for user: nicye, input: s1112
+2024-12-16 00:42:02,652 - INFO - Processing user input: t3321
+2024-12-16 00:42:02,802 - INFO - Lookup completed for user: nicye, input: t3321
+2024-12-16 00:42:23,474 - INFO - Processing user input: l1851
+2024-12-16 00:42:23,640 - INFO - Lookup completed for user: nicye, input: l1851
+2024-12-16 00:42:43,576 - INFO - Processing user input: l1866
+2024-12-16 00:42:43,732 - INFO - Lookup completed for user: nicye, input: l1866
+2024-12-16 00:43:47,369 - INFO - Processing user input: l1865
+2024-12-16 00:43:47,531 - INFO - Lookup completed for user: nicye, input: l1865
+2024-12-16 00:44:10,881 - INFO - Processing user input: t3319
+2024-12-16 00:44:11,064 - INFO - Lookup completed for user: nicye, input: t3319
+2024-12-16 00:44:29,317 - INFO - Processing user input: m1121
+2024-12-16 00:44:29,484 - INFO - Lookup completed for user: nicye, input: m1121
+2024-12-16 00:44:42,736 - INFO - Processing user input: n1547
+2024-12-16 00:44:42,916 - INFO - Lookup completed for user: nicye, input: n1547
+2024-12-16 00:45:05,000 - INFO - Processing user input: n1782
+2024-12-16 00:45:05,160 - INFO - Lookup completed for user: nicye, input: n1782
+2024-12-16 00:45:27,027 - INFO - Processing user input: n1724
+2024-12-16 00:45:27,194 - INFO - Lookup completed for user: nicye, input: n1724
+2024-12-16 00:45:45,022 - INFO - Processing user input: s1405
+2024-12-16 00:45:45,186 - INFO - Lookup completed for user: nicye, input: s1405
+2024-12-16 00:46:31,757 - INFO - Processing user input: en1881
+2024-12-16 00:46:31,977 - INFO - Lookup completed for user: nicye, input: en1881
+2024-12-16 00:46:52,541 - INFO - Processing user input: en2154
+2024-12-16 00:46:52,807 - INFO - Lookup completed for user: nicye, input: en2154
+2024-12-16 00:47:04,774 - INFO - Processing user input: en1885
+2024-12-16 00:47:04,954 - INFO - Lookup completed for user: nicye, input: en1885
+2024-12-16 00:47:58,563 - INFO - Processing user input: s1249
+2024-12-16 00:47:58,748 - INFO - Lookup completed for user: nicye, input: s1249
+2024-12-16 00:48:09,547 - INFO - Processing user input: n1819
+2024-12-16 00:48:09,740 - INFO - Lookup completed for user: nicye, input: n1819
+2024-12-16 00:48:26,836 - INFO - Processing user input: es1464
+2024-12-16 00:48:26,995 - INFO - Lookup completed for user: nicye, input: es1464
+2024-12-16 00:48:51,314 - INFO - Processing user input: t3262
+2024-12-16 00:48:51,466 - INFO - Lookup completed for user: nicye, input: t3262
+2024-12-16 00:49:09,586 - INFO - Processing user input: t2806
+2024-12-16 00:49:09,778 - INFO - Lookup completed for user: nicye, input: t2806
+2024-12-16 00:49:53,192 - INFO - Processing user input: s1492
+2024-12-16 00:49:53,343 - INFO - Lookup completed for user: nicye, input: s1492
+2024-12-16 00:50:09,061 - INFO - Processing user input: n2189
+2024-12-16 00:50:09,244 - INFO - Lookup completed for user: nicye, input: n2189
+2024-12-16 00:50:29,085 - INFO - Processing user input: s1472
+2024-12-16 00:50:29,275 - INFO - Lookup completed for user: nicye, input: s1472
+2024-12-16 00:50:51,137 - INFO - Processing user input: s1458
+2024-12-16 00:50:51,289 - INFO - Lookup completed for user: nicye, input: s1458
+2024-12-16 00:51:05,207 - INFO - Processing user input: s1457
+2024-12-16 00:51:05,362 - INFO - Lookup completed for user: nicye, input: s1457
+2024-12-16 00:51:33,321 - INFO - Processing user input: n1242
+2024-12-16 00:51:33,482 - INFO - Lookup completed for user: nicye, input: n1242
+2024-12-16 00:51:58,863 - INFO - Processing user input: n2216
+2024-12-16 00:51:59,025 - INFO - Lookup completed for user: nicye, input: n2216
+2024-12-16 00:52:12,481 - INFO - Processing user input: n1283
+2024-12-16 00:52:12,647 - INFO - Lookup completed for user: nicye, input: n1283
+2024-12-16 00:52:23,105 - INFO - Processing user input: et3284
+2024-12-16 00:52:23,258 - INFO - Lookup completed for user: nicye, input: et3284
+2024-12-16 00:52:55,641 - INFO - Processing user input: n2200
+2024-12-16 00:52:55,791 - INFO - Lookup completed for user: nicye, input: n2200
+2024-12-16 00:53:15,902 - INFO - Processing user input: t3096
+2024-12-16 00:53:16,127 - INFO - Lookup completed for user: nicye, input: t3096
+2024-12-16 00:53:32,146 - INFO - Processing user input: s1493
+2024-12-16 00:53:32,320 - INFO - Lookup completed for user: nicye, input: s1493
+2024-12-16 00:53:45,475 - INFO - Processing user input: et2949
+2024-12-16 00:53:45,685 - INFO - Lookup completed for user: nicye, input: et2949
+2024-12-16 00:53:56,037 - INFO - Processing user input: n0812
+2024-12-16 00:53:56,239 - INFO - Lookup completed for user: nicye, input: n0812
+2024-12-16 00:54:14,092 - INFO - Processing user input: el1855
+2024-12-16 00:54:14,250 - INFO - Lookup completed for user: nicye, input: el1855
+2024-12-16 00:54:51,684 - INFO - Processing user input: t3255
+2024-12-16 00:54:51,856 - INFO - Lookup completed for user: nicye, input: t3255
+2024-12-16 00:55:19,871 - INFO - Processing user input: n0720
+2024-12-16 00:55:20,025 - INFO - Lookup completed for user: nicye, input: n0720
+2024-12-16 00:55:54,316 - INFO - Processing user input: es1414
+2024-12-16 00:55:54,478 - INFO - Lookup completed for user: nicye, input: es1414
+2024-12-16 00:56:19,167 - INFO - Processing user input: n1835
+2024-12-16 00:56:19,334 - INFO - Lookup completed for user: nicye, input: n1835
+2024-12-16 00:56:46,765 - INFO - Processing user input: t3255
+2024-12-16 00:56:46,930 - INFO - Lookup completed for user: nicye, input: t3255
+2024-12-16 00:57:09,023 - INFO - Processing user input: es1467
+2024-12-16 00:57:09,180 - INFO - Lookup completed for user: nicye, input: es1467
+2024-12-16 00:57:29,207 - INFO - Processing user input: t3132
+2024-12-16 00:57:29,377 - INFO - Lookup completed for user: nicye, input: t3132
+2024-12-16 00:57:47,778 - INFO - Processing user input: es1449
+2024-12-16 00:57:47,989 - INFO - Lookup completed for user: nicye, input: es1449
+2024-12-16 00:58:01,576 - INFO - Processing user input: en2164
+2024-12-16 00:58:01,724 - INFO - Lookup completed for user: nicye, input: en2164
+2024-12-16 00:58:18,833 - INFO - Processing user input: s1428
+2024-12-16 00:58:18,993 - INFO - Lookup completed for user: nicye, input: s1428
+2024-12-16 00:58:51,338 - INFO - Processing user input: s1424
+2024-12-16 00:58:51,498 - INFO - Lookup completed for user: nicye, input: s1424
+2024-12-16 00:59:42,499 - INFO - Processing user input: s1327
+2024-12-16 00:59:42,678 - INFO - Lookup completed for user: nicye, input: s1327
+2024-12-16 01:00:35,240 - INFO - Processing user input: t3274
+2024-12-16 01:00:35,392 - INFO - Lookup completed for user: nicye, input: t3274
+2024-12-16 01:00:59,390 - INFO - Processing user input: n2196
+2024-12-16 01:00:59,544 - INFO - Lookup completed for user: nicye, input: n2196
+2024-12-16 01:01:19,977 - INFO - Processing user input: s1491
+2024-12-16 01:01:20,125 - INFO - Lookup completed for user: nicye, input: s1491
+2024-12-16 01:01:42,708 - INFO - Processing user input: n2187
+2024-12-16 01:01:42,917 - INFO - Lookup completed for user: nicye, input: n2187
+2024-12-16 01:01:58,525 - INFO - Processing user input: n2077
+2024-12-16 01:01:58,684 - INFO - Lookup completed for user: nicye, input: n2077
+2024-12-16 01:02:23,296 - INFO - Processing user input: et3167
+2024-12-16 01:02:23,465 - INFO - Lookup completed for user: nicye, input: et3167
+2024-12-16 01:02:35,873 - INFO - Processing user input: n1814
+2024-12-16 01:02:36,039 - INFO - Lookup completed for user: nicye, input: n1814
+2024-12-16 01:02:50,653 - INFO - Processing user input: n2071
+2024-12-16 01:02:50,808 - INFO - Lookup completed for user: nicye, input: n2071
+2024-12-16 01:04:06,335 - INFO - Processing user input: n2136
+2024-12-16 01:04:06,501 - INFO - Lookup completed for user: nicye, input: n2136
+2024-12-16 01:04:26,873 - INFO - Processing user input: t3142
+2024-12-16 01:04:27,040 - INFO - Lookup completed for user: nicye, input: t3142
+2024-12-16 01:04:48,472 - INFO - Processing user input: n1811
+2024-12-16 01:04:48,639 - INFO - Lookup completed for user: nicye, input: n1811
+2024-12-16 01:05:08,442 - INFO - Processing user input: s1245
+2024-12-16 01:05:08,605 - INFO - Lookup completed for user: nicye, input: s1245
+2024-12-16 01:05:27,133 - INFO - Processing user input: s1426
+2024-12-16 01:05:27,309 - INFO - Lookup completed for user: nicye, input: s1426
+2024-12-16 01:05:46,884 - INFO - Processing user input: t3279
+2024-12-16 01:05:47,174 - INFO - Lookup completed for user: nicye, input: t3279
+2024-12-16 01:06:00,970 - INFO - Processing user input: m1141
+2024-12-16 01:06:01,127 - INFO - Lookup completed for user: nicye, input: m1141
+2024-12-16 01:06:24,670 - INFO - Processing user input: n1971
+2024-12-16 01:06:24,855 - INFO - Lookup completed for user: nicye, input: n1971
+2024-12-16 01:06:42,907 - INFO - Processing user input: s1240
+2024-12-16 01:06:43,084 - INFO - Lookup completed for user: nicye, input: s1240
+2024-12-16 01:07:10,977 - INFO - Processing user input: t3056
+2024-12-16 01:07:11,136 - INFO - Lookup completed for user: nicye, input: t3056
+2024-12-16 01:07:32,715 - INFO - Processing user input: l1689
+2024-12-16 01:07:32,947 - INFO - Lookup completed for user: nicye, input: l1689
+2024-12-16 01:07:42,760 - INFO - Processing user input: s1306
+2024-12-16 01:07:42,921 - INFO - Lookup completed for user: nicye, input: s1306
+2024-12-16 01:08:00,138 - INFO - Processing user input: n2013
+2024-12-16 01:08:00,297 - INFO - Lookup completed for user: nicye, input: n2013
+2024-12-16 01:08:13,529 - INFO - Processing user input: es1386
+2024-12-16 01:08:13,687 - INFO - Lookup completed for user: nicye, input: es1386
+2024-12-16 01:08:33,074 - INFO - Processing user input: s1110
+2024-12-16 01:08:33,240 - INFO - Lookup completed for user: nicye, input: s1110
+2024-12-16 01:09:29,080 - INFO - Processing user input: l1830
+2024-12-16 01:09:29,271 - INFO - Lookup completed for user: nicye, input: l1830
+2024-12-16 01:09:38,529 - INFO - Processing user input: es1421
+2024-12-16 01:09:38,695 - INFO - Lookup completed for user: nicye, input: es1421
+2024-12-16 06:24:22,524 - INFO - User nicye has logged in. IP: 115.223.176.114, Browser: MiuiBrowser 14.10.16, OS: Linux , Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-16 06:24:22,685 - INFO - Processing user input: s1412
+2024-12-16 06:24:22,847 - INFO - Lookup completed for user: nicye, input: s1412
+2024-12-16 06:24:29,048 - INFO - Processing user input: s1491
+2024-12-16 06:24:29,195 - INFO - Lookup completed for user: nicye, input: s1491
+2024-12-16 06:27:52,072 - INFO - Processing user input: n2200
+2024-12-16 06:27:52,227 - INFO - Lookup completed for user: nicye, input: n2200
+2024-12-16 06:42:27,086 - INFO - Processing user input: n1745
+2024-12-16 06:42:27,277 - INFO - Lookup completed for user: nicye, input: n1745
+2024-12-16 06:42:57,899 - INFO - Processing user input: s1240
+2024-12-16 06:42:58,065 - INFO - Lookup completed for user: nicye, input: s1240
+2024-12-16 06:43:45,521 - INFO - Processing user input: s1112
+2024-12-16 06:43:45,688 - INFO - Lookup completed for user: nicye, input: s1112
+2024-12-16 10:07:37,234 - INFO - Processing user input: t3449
+2024-12-16 10:07:37,429 - INFO - Lookup completed for user: yeti, input: t3449
+2024-12-16 10:13:30,014 - INFO - Processing user input: s1350
+2024-12-16 10:13:30,181 - INFO - Lookup completed for user: yeti, input: s1350
+2024-12-16 11:12:48,437 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-16 11:12:54,647 - INFO - Processing user input: n2200
+2024-12-16 11:12:54,790 - INFO - Lookup completed for user: yeti, input: n2200
+2024-12-16 11:13:03,370 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2200 WT and Style=N2200
+2024-12-16 11:13:03,371 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2200 WT and Style=N2200
+2024-12-16 11:13:03,376 - INFO - Location updated successfully for SKU=N2200 WT and Style=N2200
+2024-12-16 11:13:05,644 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2200 BK and Style=N2200
+2024-12-16 11:13:05,645 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2200 BK and Style=N2200
+2024-12-16 11:13:05,648 - INFO - Location updated successfully for SKU=N2200 BK and Style=N2200
+2024-12-16 11:13:07,652 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2200 TN and Style=N2200
+2024-12-16 11:13:07,652 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2200 TN and Style=N2200
+2024-12-16 11:13:07,652 - INFO - Location updated successfully for SKU=N2200 TN and Style=N2200
+2024-12-16 11:13:09,685 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2200 PK and Style=N2200
+2024-12-16 11:13:09,686 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2200 PK and Style=N2200
+2024-12-16 11:13:09,691 - INFO - Location updated successfully for SKU=N2200 PK and Style=N2200
+2024-12-16 11:13:11,698 - INFO - Executing SELECT query: SELECT * FROM products WHERE SKU = %s AND Style = %s with SKU=N2200 GY and Style=N2200
+2024-12-16 11:13:11,700 - INFO - Executing INSERT query: INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW()) for SKU=N2200 GY and Style=N2200
+2024-12-16 11:13:11,702 - INFO - Location updated successfully for SKU=N2200 GY and Style=N2200
+2024-12-16 11:13:12,461 - INFO - Processing user input: n2200
+2024-12-16 11:13:12,602 - INFO - Lookup completed for user: yeti, input: n2200
+2024-12-16 11:17:40,892 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: iPhone, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-16 11:17:46,069 - INFO - Processing user input: s1350
+2024-12-16 11:17:46,216 - INFO - Lookup completed for user: yeti, input: s1350
+2024-12-16 11:18:03,347 - INFO - Processing user input: n2234
+2024-12-16 11:18:03,591 - INFO - Lookup completed for user: yeti, input: n2234
+2024-12-16 11:18:25,238 - INFO - Processing user input: t3449
+2024-12-16 11:18:25,412 - INFO - Lookup completed for user: yeti, input: t3449
+2024-12-16 11:18:42,597 - INFO - Processing user input: %2191
+2024-12-16 11:18:43,598 - INFO - Lookup completed for user: yeti, input: %2191
+2024-12-16 11:19:20,168 - INFO - Processing user input: n1745
+2024-12-16 11:19:20,343 - INFO - Lookup completed for user: yeti, input: n1745
+2024-12-16 11:49:08,324 - INFO - Processing user input: %2191%
+2024-12-16 11:49:09,418 - INFO - Lookup completed for user: yeti, input: %2191%
+2024-12-16 11:49:35,555 - INFO - Processing user input: n2191
+2024-12-16 11:49:35,719 - INFO - Lookup completed for user: yeti, input: n2191
+2024-12-16 11:51:45,333 - INFO - Processing user input: s1240
+2024-12-16 11:51:45,508 - INFO - Lookup completed for user: yeti, input: s1240
+2024-12-16 12:19:07,731 - INFO - yeti is looking up order number: 1781
+2024-12-16 12:19:08,418 - INFO - yeti searched for order number: 1781
+2024-12-16 12:42:30,212 - INFO - Processing user input: l0665
+2024-12-16 12:42:30,429 - INFO - Lookup completed for user: yeti, input: l0665
+2024-12-16 14:05:07,099 - INFO - User yeti has logged in. IP: 173.198.50.202, Browser: Chrome 131.0.0, OS: Windows 10, Device: Other, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login, Query Params: ImmutableMultiDict([])
+2024-12-16 14:05:13,148 - INFO - Processing user input: t3258
+2024-12-16 14:05:13,314 - INFO - Lookup completed for user: yeti, input: t3258

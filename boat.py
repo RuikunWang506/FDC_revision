@@ -27,7 +27,7 @@ def boat_service():
     if 'username' not in session:
         return redirect(url_for("login"))
 
-    file_path = 'C:/Users/stream/Dropbox/Pictures-China (1)/container catalog/Container/container catalog/container import/Copy of container import.xlsb.xlsx'
+    file_path = 'C:/Users/stream/Dropbox/Pictures-China (1)/container catalog/Container/container catalog/container import/container import.xlsb.xlsx'
     
     # Get the last modified date of the file
     try:

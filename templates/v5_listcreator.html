@@ -186,7 +186,9 @@
                 <p>Image height: {{ image_size }}</p>
                 <div class="btn-group mt-2">
                     <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success mx-2">Download The List</a>
-                    <form method="POST" action="/download_images">
+                    <form method="POST" action="{{ url_for('download_images') }}">
+                        <input type="hidden" name="user_input" value="{{ user_input|default('', true) }}">
+                        <input type="hidden" name="image_type" value="resized">
                         <button type="submit" class="btn btn-success">Download Selected Images</button>
                     </form>
                     <button type="button" class="btn btn-primary mx-2" id="download-dropbox-btn">Download Dropbox Image</button>

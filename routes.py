@@ -703,29 +703,60 @@ def register_routes(app):
         
     @app.route('/download_images', methods=['POST'])
     def download_images():
-        selected_images = request.form.getlist('selected_images')  # Get the list of selected images
-        image_type = request.form.get('image_type')  # Expecting 'resized' or 'original'
-
+        user_input = request.form.get('user_input', '')  # Add default empty string
+        image_type = request.form.get('image_type', 'resized')  # Add default value
+        
+        if not user_input:
+            return jsonify({'error': 'No SKUs provided'}), 400
+        # Parse SKUs from user input
+        skus = [sku.strip().upper() for sku in user_input.split(',')]
         memory_file = io.BytesIO()
-
         with zipfile.ZipFile(memory_file, 'w') as zf:
-            for image_name in selected_images:
-                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_name)
-
-                if os.path.exists(image_path):
-                    if image_type == 'resized':
-                        # Use the master resizing function
-                        with open(image_path, 'rb') as img_file:
-                            resized_img = resize_image(img_file, 1000)  # Example dimensions
-                            zf.writestr(image_name, resized_img.read())
-                    elif image_type == 'original':
-                        # Write the original image to the zip file
-                        zf.write(image_path, arcname=image_name)
-                else:
-                    return f"Image {image_name} not found.", 404
+            for sku in skus:
+                # Extract pattern: 1-2 letters followed by exactly 4 numbers
+                match = re.match(r'([A-Za-z]{1,2}\d{4})', sku)
+                if match:
+                    sku = match.group(1).upper()
+                    base_image = f"{sku}.jpg"
+                    base_path = os.path.join(Config.CATALOG_ORIGINAL, base_image)
+                    
+                    if os.path.exists(base_path):
+                        if image_type == 'resized':
+                            with Image.open(base_path) as img:
+                                # Create a buffer for the resized image
+                                buffer = io.BytesIO()
+                                # Convert to RGB if needed
+                                if img.mode != 'RGB':
+                                    img = img.convert('RGB')
+                                # Save with reduced quality
+                                img.save(buffer, format='JPEG', quality=20)
+                                buffer.seek(0)
+                                zf.writestr(base_image, buffer.getvalue())
+                        else:
+                            zf.write(base_path, arcname=base_image)
+                            
+                    # Check for versioned images
+                    version = 2
+                    while True:
+                        versioned_image = f"{sku}_v{version}.jpg"
+                        versioned_path = os.path.join(Config.CATALOG_ORIGINAL, versioned_image)
+                        if os.path.exists(versioned_path):
+                            if image_type == 'resized':
+                                with Image.open(versioned_path) as img:
+                                    buffer = io.BytesIO()
+                                    if img.mode != 'RGB':
+                                        img = img.convert('RGB')
+                                    img.save(buffer, format='JPEG', quality=20)
+                                    buffer.seek(0)
+                                    zf.writestr(versioned_image, buffer.getvalue())
+                            else:
+                                zf.write(versioned_path, arcname=versioned_image)
+                            version += 1
+                        else:
+                            break
 
         memory_file.seek(0)
-        zip_filename = "selected_images_resized.zip" if image_type == 'resized' else "selected_images_original.zip"
+        zip_filename = "resized_images.zip" if image_type == 'resized' else "original_images.zip"
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
 
     @app.route("/run_fast_script", methods=["POST"])
@@ -1149,6 +1180,12 @@ def register_routes(app):
         if 'username' not in session:
             return redirect(url_for("login"))
         return render_template("geek_tools.html")
+    
+    @app.route("/shipping_center", methods=["GET"])
+    def shipping_center():
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        return render_template("shipping_center.html")
 
     def sort_filenames(filenames):
         base_files = {}
