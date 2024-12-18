@@ -1,10 +1,13 @@
 import pandas as pd
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for,current_app
 import pyodbc
 import os
 from datetime import datetime
+import logging
+
 
 boat_service_bp = Blueprint('boat_service', __name__, template_folder='../templates')
+
 
 # Database connection details
 server = "192.168.254.204"
@@ -26,10 +29,12 @@ conn = pyodbc.connect(conn_str)
 def boat_service():
     if 'username' not in session:
         return redirect(url_for("login"))
-
+    current_user = session['username']
+    current_app.logger.info(f"***{current_user}***__@@@checked boat page@@@")
     file_path = 'C:/Users/stream/Dropbox/Pictures-China (1)/container catalog/Container/container catalog/container import/container import.xlsb.xlsx'
     
-    # Get the last modified date of the file
+    # Get the last modified date of the filefrom flask import current_app
+    
     try:
         modified_time = os.path.getmtime(file_path)
         last_modified_date = datetime.fromtimestamp(modified_time).strftime('%Y-%m-%d %H:%M:%S')
@@ -116,5 +121,5 @@ def boat_service():
             </tbody>
         </table>
         """
-
+    
     return render_template('boat.html', table_data=data_html, last_modified_date=last_modified_date)

@@ -3,117 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Navbar</title>
+    <title>Responsive Fixed Navbar - Animated Gradient</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        .navbar-custom .nav-link {
-            display: flex;
-            align-items: center;
+        /* Adjust body padding to accommodate fixed navbar height */
+        body {
+            padding-top: 70px; /* Adjust based on navbar height */
+            background-color: #f8f9fa; /* Optional background color */
         }
+
+        /* Dynamic gradient animation keyframes */
+        @keyframes gradientAnimation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Dynamic gradient navbar style */
+        .navbar-custom {
+            background: linear-gradient(-75deg, #ee76526b, #e73c7e62, #23a5d577, #23d5ab70, #51b32a70);
+            background-size: 400% 100%;
+            animation: gradientAnimation 15s ease infinite;
+            color: #ffffff; /* White text */
+            text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5); /* Text shadow */
+            transition: background 0.3s ease;
+            z-index: 1030; /* Ensure navbar is above other content */
+        }
+
+        /* Navbar link and brand text styles */
+        .navbar-custom .nav-link,
+        .navbar-custom .navbar-brand {
+            color: #ffffff; /* White text */
+            text-decoration: none; /* Remove underline */
+            font-weight: bold; /* Bold text */
+        }
+
+        /* Lighter text color on hover */
+        .navbar-custom .nav-link:hover,
+        .navbar-custom .navbar-brand:hover {
+            color: #f1f1f1;
+        }
+
+        /* Adjust icon styles in navbar links */
         .navbar-custom .nav-link img {
             margin-right: 8px;
-            width: 30px; /* Set a consistent width for all icons */
-            height: 30px; /* Set a consistent height for all icons */
+            width: 30px; /* Consistent width for all icons */
+            height: 30px; /* Consistent height for all icons */
         }
-        .navbar-custom .nav-link:hover {
-            text-decoration: underline;
+
+        /* Adjust Logout icon size to match others */
+        .navbar-custom .nav-link img.logout-icon {
+            width: 30px;
+            height: 30px;
         }
-        /* Add a border around the three items */
-        .custom-box {
-            border: 5px solid; /* Make the border thicker to show the rainbow effect */
-            border-image-slice: 1;
-            border-image-source: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); /* Rainbow gradient */
-            padding: 10px; /* Add some padding inside the box */
-            border-radius: 8px; /* Optional: Rounded corners */
-            background-color: #f9f9f9; /* Light background */
-            display: flex; /* Ensure it stays inline with the other navbar items */
-        }
+
+        /* Center-align navbar content */
         .navbar-nav {
             display: flex;
             align-items: center;
         }
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                position: fixed;
+                top: 70px;
+                left: 0;
+                width: 50%;
+                height: calc(100vh - 70px);
+                background: linear-gradient(-75deg, #ee76526b, #e73c7e62, #23a5d577, #23d5ab70, #51b32a70);
+                background-size: 400% 100%;
+                animation: gradientAnimation 15s ease infinite;
+                padding: 1rem;
+                transition: transform 0.3s ease-in-out;
+                transform: translateX(-100%);
+                overflow-y: auto;
+            }
+
+            .navbar-collapse.show {
+                transform: translateX(0);
+            }
+
+            .navbar-nav {
+                flex-direction: column;
+            }
+
+            .navbar-nav .nav-item {
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+        }
+        .scroll-to-top {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: none;
+            cursor: pointer;
+            background: linear-gradient(-75deg, #ee76526b, #e73c7e62, #23a5d577, #23d5ab70, #51b32a70);
+            background-size: 400% 100%;
+            animation: gradientAnimation 15s ease infinite;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .scroll-to-top img {
+            width: 30px;
+            height: 30px;
+        }
+
+        /* Optional: Customize toggler icon color if needed */
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-custom">
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
         <a class="navbar-brand" href="/">Home</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon">menu</span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" href="/item_lookup">
-                        <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup">
-                        SKU
+                        <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup">SKU
                     </a>
                 </li>
                 {% if current_user != 'fdc' and current_user != 'local_user' %}
                 <li class="nav-item">
                     <a class="nav-link" href="/boat">
-                        <img src="https://www.svgrepo.com/show/217702/cargo-ship.svg" alt="boat">
-                        Boat
+                        <img src="https://www.svgrepo.com/show/217702/cargo-ship.svg" alt="boat">Boat
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/order_lookup">
-                        <img src="/static/icons/document.svg" alt="Order Lookup">
-                        Orders
+                        <img src="/static/icons/document.svg" alt="Order Lookup">Orders
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/v5_listcreator">
-                        <img src="/static/icons/handbag.svg" alt="v5 List Creator">
-                        List
+                        <img src="/static/icons/handbag.svg" alt="v5 List Creator">List
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/geek_tools">
-                        <img src="/static/icons/geek.svg" alt="Geek_Tools">
-                        Tools
+                        <img src="/static/icons/geek.svg" alt="Geek_Tools">Tools
                     </a>
                 </li>
-
-                <!-- Custom Box Around These Items -->
-                
+                <li class="nav-item">
                     <a class="nav-link" href="/temu">
-                        <img src="https://seller.temu.com/favicon.ico" alt="temu">
-                        Temu
+                        <img src="https://seller.temu.com/favicon.ico" alt="temu">Temu
                     </a>
-    
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/upload_center">
-                        <img src="https://img.icons8.com/clouds/200/upload.png" alt="图片处理">
-                        图片处理
+                        <img src="https://img.icons8.com/clouds/200/upload.png" alt="图片处理">图片处理
                     </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/big_img">
-                        <img src="/static/icons/bigimg.png" alt="big_img">
-                        STOCK_IMG
+                        <img src="/static/icons/bigimg.png" alt="big_img">STOCK_IMG
                     </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/chatgpt">
-                        <img src="https://cdn.worldvectorlogo.com/logos/chatgpt-6.svg" alt="chatgpt">
-                        chatgpt(Beta)
+                        <img src="https://cdn.worldvectorlogo.com/logos/chatgpt-6.svg" alt="chatgpt">chatgpt(Beta)
                     </a>
-                    
-                    
-                 
+                </li>
                 {% endif %}
             </ul>
             <ul class="navbar-nav ml-auto">
-                
+
+                <li class="nav-item">
                     <a class="nav-link" href="/help">
-                        <img src="https://www.svgrepo.com/show/493520/person-reading-a-book-question-mark.svg" alt="help">
-                        HELP
+                        <img src="https://www.svgrepo.com/show/493520/person-reading-a-book-question-mark.svg" alt="help">HELP
                     </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/logout">
-                        <img src="/static/icons/logout.svg" alt="OUT" style="width: 40px; height: 40px;">
-                        Logout
+                        <img src="/static/icons/logout.svg" alt="OUT" class="logout-icon">Logout
                     </a>
-                
+                </li>
             </ul>
         </div>
     </nav>
+    <div class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <img src="https://www.svgrepo.com/show/434126/index-pointing-up.svg" alt="Back to top">
+    </div>
+
+    <!-- JavaScript Dependencies -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <!-- Updated Popper.js for Bootstrap 4.5.2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Close navbar when clicking a nav link on mobile
+            $('.navbar-nav a.nav-link').on('click', function(){
+                $('.navbar-collapse').collapse('hide');
+            });
+            
+            // Close navbar when clicking outside
+            $(document).click(function(event) {
+                if (!$(event.target).closest('.navbar').length) {
+                    $('.navbar-collapse').collapse('hide');
+                }
+            });
+        });
+    </script>
+    <script>
+        window.addEventListener('scroll', function() {
+            var scrollButton = document.querySelector('.scroll-to-top');
+            if (window.scrollY > 300) {
+                scrollButton.style.display = 'block';
+            } else {
+                scrollButton.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

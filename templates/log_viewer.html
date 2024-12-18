@@ -15,7 +15,7 @@
             bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(255, 255, 255, 0.9); /* Slight background to improve readability */
+            background-color: rgba(255, 255, 255, 0.9);
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
@@ -36,14 +36,55 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
+
+
+        /* New styles for highlighted text */
+        .highlight-blue {
+            color: blue;
+            font-weight: bold;
+        }
+
+        .highlight-purple {
+            color: purple;
+            font-weight: bold;
+        }
+        .highlight-red {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Optional: Styles for capitalized text */
+        .capitalized {
+            text-transform: uppercase;
+        }
+        .log-legend {
+            display: flex; /* Arrange elements horizontally */
+            justify-content: center; /* Center horizontally */
+            gap: 20px; /* Space between elements */
+            align-items: center; /* Center vertically */
+            text-align: center; /* Ensure text is centered */
+            padding-bottom: 10px;
+
+        }
+
+        h3 {
+            margin: 0; /* Remove default margins */
+            font-size: 1.2em; /* Adjust font size */
+        }
     </style>
 </head>
 <body>
-    <h1>Log Viewer</h1>
-    <div>
-        {% for line in log_lines %}
-            <div class="log-entry {{ line[0] }}">
-                <span class="timestamp">{{ line[1] }}</span> - {{ line[2] }}
+    <h1 style="color: black; font-size: 2em; text-align: center; display: block;">Log Viewer</h1>
+
+    <div class="log-legend">
+        <h3 class="highlight-blue">User is Blue</h3>
+        <h3 class="highlight-purple">Action is Purple</h3>
+        <h3 class="highlight-red">Order and SKU are Red</h3>
+    </div>
+    <div id="log-container">
+        {% for log_class, line in log_lines %}
+            <div class="log-entry {{ log_class }}">
+                {{ line | safe }}
             </div>
         {% endfor %}
     </div>
@@ -68,5 +109,46 @@
             <a class="disabled">Last</a>
         {% endif %}
     </div>
+
+    <script>
+        const logContainer = document.getElementById("log-container");
+
+        function connectEventSource() {
+            const evtSource = new EventSource("/log/stream");
+
+            evtSource.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    const { log_class, formatted_line } = data;
+
+                    if (formatted_line) {
+                        const logEntry = document.createElement("div");
+                        logEntry.className = "log-entry";
+
+                        if (log_class === 'error') {
+                            logEntry.classList.add('error');
+                        } else if (log_class === 'info') {
+                            logEntry.classList.add('info');
+                        }
+
+                        logEntry.innerHTML = formatted_line;
+                        
+                        // Prepend the new line at the top
+                        logContainer.insertBefore(logEntry, logContainer.firstChild);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse log line:", e);
+                }
+            };
+
+            evtSource.onerror = function(err) {
+                console.error("EventSource error, reconnecting...", err);
+                evtSource.close();
+                setTimeout(connectEventSource, 3000); // Retry connection after 3 seconds
+            };
+        }
+
+        connectEventSource();
+    </script>
 </body>
 </html>

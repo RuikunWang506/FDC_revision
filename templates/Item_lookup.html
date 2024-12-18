@@ -363,6 +363,38 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
+        .image-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .image-popup img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #bbb;
+        }
     </style>
 </head>
 <body>
@@ -397,8 +429,7 @@
             {% for image_url, info in image_urls | zip(file_info) %}
             <div class="col-6 col-md-4 col-lg-2 mb-3"> <!-- Adjusted column sizes for 6 per row -->
                 <div class="img-container text-center">
-                    <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block" loading="lazy"> <!-- Center the image -->
-                    <div class="hover-msg">Download Original Below</div>
+                    <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block" loading="lazy" onclick="enlargeImage(this, '{{ image_url }}')" style="cursor: pointer;">
                     <p>
                         <a href="/ftp/{{ info[0] }}" target="_blank">{{ info[0] }}</a>
                         {% if current_user == 'yetimaster' %}
@@ -453,7 +484,10 @@
         {% endif %}
 
     </div>
-
+    <div id="imagePopup" class="image-popup" onclick="closePopup(event)">
+        <span class="close-btn">&times;</span>
+        <img id="popupImage" src="" alt="Enlarged Image">
+    </div>
     {% include 'footer.html' %}
     <!-- Include jQuery only once -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -597,28 +631,11 @@
                 });
             }
 
-            // Hover messages and other scripts
-            $('.img-container').on('mouseenter', function() {
-                // Hide all other hover messages before showing the new one
-                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
-
-                var $msg = $(this).find('.hover-msg');
-                $msg.stop(true, true).fadeIn(200).css('opacity', '1');
-
-                // Use setTimeout to fade out the hover message after 1 second
-                setTimeout(function() {
-                    $msg.fadeOut(200).css('opacity', '0');
-                }, 1000);
-            });
-
-            $('.img-container').on('mouseleave', function() {
-                var $msg = $(this).find('.hover-msg');
-                $msg.stop(true, true).fadeOut(200).css('opacity', '0');
-            });
 
             // Clear hover messages when clicking to edit
             $('#excel_table').on('click', 'td .editable', function() {
-                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
+                // Hide all hover messages in the document
+                $('.hover-msg').stop(true, true).fadeOut(100).css('opacity', '0');
             });
 
             // Initialize Bootstrap tooltips for elements with 'title' attribute
@@ -746,5 +763,22 @@
                 $editableSpan.removeClass('editing').text(originalText);
             });
         });
+    </script>
+    <script>
+        function enlargeImage(imgElement, url) {
+            var popup = document.getElementById("imagePopup");
+            var popupImg = document.getElementById("popupImage");
+            var formattedUrl = url.replace('/ftp', '/ftp/');
+
+            popupImg.src = formattedUrl;
+            popup.style.display = "flex";
+        }
+    
+        function closePopup(event) {
+            var popup = document.getElementById("imagePopup");
+            if (event.target === popup || event.target.classList.contains('close-btn')) {
+                popup.style.display = "none";
+            }
+        }
     </script>
 </body></html>

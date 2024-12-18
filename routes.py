@@ -1,5 +1,5 @@
 from flask import (request, render_template, jsonify, redirect, url_for, 
-                   session, flash, send_from_directory, send_file)
+                   session, flash, send_from_directory, send_file, Response)
 from werkzeug.utils import secure_filename
 
 # Standard library imports
@@ -69,7 +69,7 @@ def register_routes(app):
         query_params = request.args
 
         app.logger.info(
-            "User %s has logged in. IP: %s, Browser: %s %s, OS: %s %s, Device: %s, "
+            "User ***%s*** has logged in. IP: ***%s***, Browser: %s %s, OS: %s %s, Device: %s, "
             "Method: %s, URL: %s, Referrer: %s, Query Params: %s",
             username, client_ip, user_agent.browser.family, user_agent.browser.version_string,
             user_agent.os.family, user_agent.os.version_string, user_agent.device.family,
@@ -82,8 +82,16 @@ def register_routes(app):
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
+        # If user is already logged in, redirect to home
         if 'username' in session:
             return redirect(url_for("home"))
+        
+        # Get the next page from query parameters or referrer
+        next_page = request.args.get('next') or request.referrer
+        
+        # Store the next page in session
+        if next_page and not next_page.endswith('/login'):
+            session['next'] = next_page
         
         client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         location_data = get_location(client_ip)
@@ -95,14 +103,13 @@ def register_routes(app):
                 session['username'] = username
                 flash(f"Logged in as {username}")
                 log_user_activity(username)
-                next_page = session.pop('next', url_for("home"))
-                return redirect(next_page)
+                
+                # Redirect to stored next page or home
+                redirect_url = session.pop('next', url_for("home"))
+                return redirect(redirect_url)
             else:
                 flash("Invalid credentials")
         
-        session['next'] = request.args.get('next') or request.referrer or url_for("home")
-        
-        # Pass additional location data to the template if available
         return render_template("login.html", client_ip=client_ip, location=location_data)
 
     @app.route("/logout")
@@ -255,7 +262,6 @@ def register_routes(app):
             user_input = user_input[:-1]
 
         # Generate Excel and history HTML
-        app.logger.info("Processing user input: %s", user_input)
         excel_html, history_html, _, user_input = SQL_connector.generate_excel(user_input)
 
         if not excel_html and not history_html:  # If no valid data is found
@@ -363,7 +369,7 @@ def register_routes(app):
 
             sorted_image_urls.append(image_url)
 
-        app.logger.info("Lookup completed for user: %s, input: %s", current_user, user_input)
+        app.logger.info("***%s***__@@@search SKU@@@__ %s",current_user, user_input)
         return render_template(
             "Item_lookup.html",
             excel_html=excel_html,
@@ -395,28 +401,37 @@ def register_routes(app):
                 app.logger.error("Failed to connect to the database.")
                 return jsonify({'success': False, 'message': 'Failed to connect to the database.'}), 500
 
-            cursor = connection.cursor()
+            cursor = connection.cursor(dictionary=True)  # Use dictionary=True to access columns by name
 
             # Check if the product exists
             select_query = "SELECT * FROM products WHERE SKU = %s AND Style = %s"
-            app.logger.info(f"Executing SELECT query: {select_query} with SKU={sku} and Style={style}")
+            app.logger.debug(f"Executing SELECT query: {select_query} with SKU={sku} and Style={style}")
             cursor.execute(select_query, (sku, style))
             product = cursor.fetchone()
 
             if product:
+                old_location = product.get('Location')  # Extract the old location
                 # Update existing product
                 update_query = "UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s"
-                app.logger.info(f"Executing UPDATE query: {update_query} for SKU={sku} and Style={style}")
+                app.logger.debug(f"Executing UPDATE query: {update_query} for SKU={sku} and Style={style}")
                 cursor.execute(update_query, (location, sku, style))
+                connection.commit()
+                app.logger.info(
+                    f"Location updated successfully for SKU={sku}, Style={style} "
+                    f"from '{old_location}' to '{location}'."
+                )
+                return jsonify({'success': True, 'message': 'Location updated successfully.'})
             else:
                 # Insert new product
                 insert_query = "INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW())"
-                app.logger.info(f"Executing INSERT query: {insert_query} for SKU={sku} and Style={style}")
+                app.logger.debug(f"Executing INSERT query: {insert_query} for SKU={sku} and Style={style}")
                 cursor.execute(insert_query, (sku, style, location))
-
-            connection.commit()
-            app.logger.info(f"Location updated successfully for SKU={sku} and Style={style}")
-            return jsonify({'success': True, 'message': 'Location updated successfully.'})
+                connection.commit()
+                app.logger.info(
+                    f"New product inserted successfully with SKU={sku}, Style={style}, "
+                    f"Location='{location}'."
+                )
+                return jsonify({'success': True, 'message': 'Location updated successfully.'})
 
         except Error as e:
             app.logger.error(f"Database error during location update for SKU={sku} and Style={style}: {e}")
@@ -443,11 +458,9 @@ def register_routes(app):
             order_number = request.form.get("order_number", "").strip()
             
             if not order_number:
-                app.logger.info("No order number provided by %s", current_user)
                 return render_template("order_lookup.html", excel_html=None, current_user=current_user)
 
             session['order_number'] = order_number
-            app.logger.info("%s is looking up order number: %s", current_user, order_number)
 
             if current_user == 'fdc':
                 app.logger.info("User %s does not have permission to view order details", current_user)
@@ -456,14 +469,12 @@ def register_routes(app):
             excel_html = order_search.generate_order(order_number)
             
             if excel_html:
-                app.logger.info("%s searched for order number: %s", current_user, order_number)
+                app.logger.info("***%s***__@@@search order@@@__ %s",current_user, order_number)
             else:
-                app.logger.info("No data found for order number: %s", order_number)
                 excel_html = None
 
         elif order_number:
             # Handle GET request with order_number in the URL
-            app.logger.info("%s is looking up order number from URL: %s", current_user, order_number)
             
             if current_user == 'fdc':
                 app.logger.info("User %s does not have permission to view order details", current_user)
@@ -472,7 +483,7 @@ def register_routes(app):
             excel_html = order_search.generate_order(order_number)
             
             if excel_html:
-                app.logger.info("%s searched for order number: %s via URL", current_user, order_number)
+                app.logger.info("***%s***__@@@search order@@@__ %s",current_user, order_number)
             else:
                 app.logger.info("No data found for order number: %s via URL", order_number)
                 excel_html = None
@@ -485,12 +496,13 @@ def register_routes(app):
         )
     @app.route('/label_maker_from_order_lookup', methods=['POST'])
     def label_maker_from_order_lookup():
+        current_user = session['username']
         try:
             order_number = session.get('order_number')
             if not order_number:
                 return "Order number is missing.", 400
 
-            app.logger.info("Received order_number: %s", order_number)
+            app.logger.info("***%s***__@@@made labels@@@__ %s",current_user, order_number)
             filename, error_message, number_of_labels, duplicate_numbers, info_list, addresslist, warnings = Label_Maker.process_orders(order_number)
 
             if error_message:
@@ -590,7 +602,8 @@ def register_routes(app):
                 # Get images for selection
                 images = get_images_for_selection(user_input_list)
                 show_input_form = False
-                    
+            app.logger.info("***%s***__@@@v5_listcreator@@@__%s",current_user,user_input)
+                     
         return render_template(
             "v5_listcreator.html",
             filename=filename,
@@ -686,6 +699,7 @@ def register_routes(app):
             file_size_kb = os.path.getsize(os.path.join("output", "list_output", filename)) / 1024
 
             images = get_images_for_selection(clean_skus)
+            app.logger.info("***%s***__@@@v5_listcreator_pictures@@@__%s",current_user,selected_images)
 
             return render_template("v5_listcreator.html",
                                 filename=filename,
@@ -782,28 +796,6 @@ def register_routes(app):
             app.logger.error("Error running fast script: %s", e)
             return jsonify(str(e))
 
-    @app.route("/run_get_tk_sheet", methods=["POST"])
-    def run_get_tk_sheet():
-        try:
-            app.logger.info("Running get_tk_sheet script")
-            process = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(__file__), 'get_tk_sheet.py')],
-                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            output_lines = []
-            while True:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
-                    break
-                if output:
-                    output_lines.append(output.strip())
-            return_code = process.poll()
-            if return_code == 0:
-                output = "\n".join(output_lines)
-            else:
-                output = "\n".join(output_lines) + "\nError: " + process.stderr.read().strip()
-            return jsonify(output)
-        except Exception as e:
-            app.logger.error("Error running get_tk_sheet script: %s", e)
-            return jsonify(str(e))
 
     @app.route("/label_maker", methods=["GET", "POST"])
     def label_maker():
@@ -925,7 +917,7 @@ def register_routes(app):
             return redirect(url_for("login"))
 
         try:
-            with open(Config.LOG_FILE, 'r') as file:
+            with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
                 lines = file.readlines()
             formatted_lines = format_logs(lines)
             reversed_lines = list(reversed(formatted_lines))
@@ -944,29 +936,92 @@ def register_routes(app):
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
+        
+    @app.route('/log/stream', methods=['GET'])
+    def stream_log():
+        def generate():
+            with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
+                file.seek(0, 2)  # Move to the end of the file
+                while True:
+                    line = file.readline()
+                    if not line:
+                        time.sleep(1)  # Wait for new log lines
+                        continue
 
+                    # Format the new log line
+                    formatted_line_tuple = format_logs([line.strip()])
+
+                    # format_logs returns a list of tuples, take the first tuple
+                    if formatted_line_tuple:
+                        log_class, formatted_line = formatted_line_tuple[0]
+                    else:
+                        log_class, formatted_line = '', line.strip()
+
+                    # Prepare the formatted line as a single string
+                    # You can choose to send both log_class and formatted_line or just the formatted_line
+                    # For simplicity, we'll send a JSON string with both
+                    import json
+                    data = json.dumps({
+                        'log_class': log_class,
+                        'formatted_line': formatted_line
+                    })
+
+                    yield f"data: {data}\n\n"  # SSE format: data:<line>
+        return Response(generate(), mimetype='text/event-stream')
+    
     def format_logs(lines):
         formatted = []
         for line in lines:
-            if 'INFO' in line:
-                formatted.append(('info', line[:23], line[31:].strip()))
-            elif 'ERROR' in line:
-                formatted.append(('error', line[:23], line[31:].strip()))
+            # Determine log class
+            if 'ERROR' in line:
+                log_class = 'error'
+            elif 'INFO' in line:
+                log_class = 'info'
             else:
-                formatted.append(('', '', line.strip()))
+                log_class = ''
+
+            # Strip newline characters
+            stripped_line = line.strip()
+
+            # Highlight ***text*** in blue and remove ***
+            stripped_line = re.sub(
+                r'\*\*\*(.*?)\*\*\*',  # Match text between ***
+                lambda m: f'<span class="highlight-blue">{m.group(1).upper()}</span>',  # Apply highlight and exclude ***
+                stripped_line
+            )
+
+            # Highlight @@@text@@@ in purple and remove @@@
+            stripped_line = re.sub(
+                r'@@@(.*?)@@@',  # Match text between @@@
+                r'<span class="highlight-purple">\1</span>',  # Apply highlight and exclude @@@
+                stripped_line
+            )
+
+            # Highlight and capitalize the word after __
+            stripped_line = re.sub(
+                r'__(.*?)__\s*(.*)',  # Match the second occurrence of __ and capture everything after it
+                lambda m: f'__{m.group(1)}__ <span class="highlight-red">{m.group(2).upper()}</span>',
+                stripped_line
+            )
+
+            # Append the formatted line as a two-element tuple
+            formatted.append((log_class, stripped_line))
+        
         return formatted
+        
 
     @app.route('/download/<filename>')
     def download_file(filename):
         if 'username' not in session:
             return redirect(url_for("login"))
         current_user = session['username']
-        app.logger.info("[Download][List] %s downloaded the file: %s", current_user, filename)
+        app.logger.info("***%s***__@@@[Download][List]@@@__ %s", current_user,filename)
         return send_from_directory("output/list_output", filename, as_attachment=False)
 
     @app.route('/download2/<filename>')
     def download_file2(filename):
-        app.logger.info("[Download][labels]File %s downloaded from label output", filename)
+        current_user = session['username']
+        app.logger.info("***%s***__@@@[Download][labels]@@@__ %s", current_user,filename)
         return send_from_directory("output/label_output/", filename, as_attachment=False)
 
     @app.route('/download3/<filename>')
@@ -978,22 +1033,13 @@ def register_routes(app):
     def serve_file(path):
         return send_from_directory(Config.CATALOG_ORIGINAL, path, as_attachment=False)
 
-    
-    #@app.route('/public/<path:path>', methods=['GET'])
-    #def serve_file_pub(path):
-    #    app.logger.info("Serving file public path %s", path)
-    #    return send_from_directory(Config.FTP, path, as_attachment=True)
-    
-    #@app.route('/sizepic/<path:path>', methods=['GET'])
-    #def serve_temp_size_pic(path):
-    #    app.logger.info("Serving file sizepic %s", path)
-    #    return send_from_directory(Config.Dimension_DIR, path, as_attachment=True)
 
     @app.route('/download4/<filename>')
     def download_file4(filename):
         if 'username' not in session:
             return redirect(url_for("login"))
-        app.logger.info("[Download][macy_label]File %s downloaded from label output", filename)
+        current_user = session['username']
+        app.logger.info("***%s***__@@@[Download][labels]@@@__ %s", current_user,filename)
         return send_from_directory("output/macy_label/", filename, as_attachment=False)
 
     @app.route("/report_bug", methods=["GET", "POST"])
@@ -1022,7 +1068,7 @@ def register_routes(app):
                 bug_file.save(os.path.join(bug_dir, filename))
 
             app.logger.info(f"Bug report {bug_id} submitted by {current_user}")
-
+            
             slack_message = {
                 "text": f"A new bug report has been submitted.\n\n*Type:* {bug_type}\n*Description:* {bug_description}\n*Submitted by:* {current_user}\n*Bug ID:* {bug_id}"
             }
@@ -1241,18 +1287,6 @@ def register_routes(app):
 
 
         return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, current_user=current_user, sql_query=sql_query)
-
-    @app.route("/log")
-    def display_log():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        try:
-            with open(Config.LOG_FILE, 'r') as file:
-                lines = file.readlines()
-            return jsonify(log_content=lines), 200
-        except Exception as e:
-            app.logger.error('Error accessing log file: %s', e)
-            return jsonify(error=str(e)), 500
 
 
     def load_credentials():

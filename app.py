@@ -23,7 +23,7 @@ app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
     try:
-        app.logger.info("autobots, rolling out!")
+        app.logger.info("--------------------------------------------------------------------system restarted--------------------------------------------------------------------")
         app.run(host='0.0.0.0', port=5555, debug=True)
     except Exception as e:
         app.logger.error("Error starting Flask application: %s", e)

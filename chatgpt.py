@@ -4,7 +4,7 @@ from openai import OpenAI
 import json
 import time
 import logging
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify,session,redirect,url_for
 from openai import RateLimitError, OpenAIError
 
 # Initialize logging
@@ -64,6 +64,8 @@ def get_gpt_response(message, retries=5, backoff_factor=2):
 
 @chatgpt_bp.route('/chatgpt', methods=['GET'])
 def chat_page():
+    if 'username' not in session:
+            return redirect(url_for("login"))
     """Serve the ChatGPT interface page."""
     return render_template('chatgpt.html')  # Ensure 'chatgpt.html' is in your templates folder
 
