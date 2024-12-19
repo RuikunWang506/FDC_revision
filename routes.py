@@ -178,29 +178,26 @@ def register_routes(app):
             dict: A dictionary mapping SKU to Location.
         """
         location_dict = {}
-        updated_date_dict = {}
 
         if not skus:
-            return location_dict, updated_date_dict
+            return location_dict
 
         try:
             connection = get_db_connection()
             if connection is None:
                 app.logger.error("Failed to connect to the database for fetching locations.")
-                return location_dict, updated_date_dict
+                return location_dict
 
             cursor = connection.cursor()
             # Prepare the query to fetch Location based on SKUs
             placeholders = ', '.join(['%s'] * len(skus))
-            query = f"SELECT SKU, Location, Update_Date FROM products WHERE SKU IN ({placeholders})"
+            query = f"SELECT SKU, Location FROM products WHERE SKU IN ({placeholders})"
             cursor.execute(query, skus)
             results = cursor.fetchall()
 
             # Populate the dictionary
-            for sku, location, updated_date in results:
+            for sku, location in results:
                 location_dict[sku.lower()] = location  # Assuming SKU matching is case-insensitive
-                updated_date_dict[sku.lower()] = updated_date.strftime('%Y-%m-%d') + "<br>location by sku" 
-
             # Handle SKUs without locations
             for sku in skus:
                 if sku.lower() not in location_dict or not location_dict[sku.lower()]:
@@ -214,7 +211,6 @@ def register_routes(app):
                         result = cursor.fetchone()
                         if result:
                             location_dict[sku.lower()] = result[1]
-                            updated_date_dict[sku.lower()] =  result[2].strftime('%Y-%m-%d') + "<br>accurate location by style" 
 
 
         except Error as e:
@@ -225,7 +221,7 @@ def register_routes(app):
             if 'connection' in locals() and connection and connection.is_connected():
                 connection.close()
 
-        return location_dict, updated_date_dict
+        return location_dict
 
     # Ensure the output directory exists
     OUTPUT_DIR = os.path.join(os.getcwd(), 'output', 'location_DB')
@@ -284,11 +280,10 @@ def register_routes(app):
                 skus = []
 
             # Fetch locations and update dates using the helper function
-            location_dict, updated_date_dict = fetch_locations(skus)
+            location_dict = fetch_locations(skus)
 
             # Add the 'Location' and 'Update_Date' columns
             df['Location'] = df['SKU'].astype(str).str.lower().map(location_dict).fillna('')
-            df['Update_Date'] = df['SKU'].astype(str).str.lower().map(updated_date_dict).fillna('no data')
             if 'DB' in df.columns:
                 replacement_dict = {
                     'oms_ef': 'E_FAS',
@@ -299,12 +294,11 @@ def register_routes(app):
             else:
                 app.logger.warning("Database column not found in the DataFrame.")
                 
-            # Modify the 'Location' column to include tooltips
-            if 'Location' in df.columns and 'Update_Date' in df.columns:
+            if 'Location' in df.columns:
                 df['Location'] = df.apply(
                     lambda row: (
-                        f'<span class="editable" title="Update: {row["Update_Date"]}">'
-                        f'{row["Location"] if pd.notnull(row["Location"]) and row["Location"] != "" else "✨ADD✨"}</span>'
+                        f'<span class="editable">'
+                        f'{row["Location"] if pd.notnull(row["Location"]) and row["Location"] != "" else "*"}</span>'
                     ),
                     axis=1
                 )
@@ -393,52 +387,61 @@ def register_routes(app):
             app.logger.warning(f"Missing SKU or Style in update_location request: SKU={sku}, Style={style}")
             return jsonify({'success': False, 'message': 'SKU or Style is missing.'}), 400
 
-        connection = None
-        cursor = None
-        try:
-            connection = get_db_connection()
-            if connection is None:
-                app.logger.error("Failed to connect to the database.")
-                return jsonify({'success': False, 'message': 'Failed to connect to the database.'}), 500
+        def connect_to_db():
+            """Helper to establish a database connection."""
+            try:
+                return get_db_connection()
+            except Error as e:
+                app.logger.error(f"Database connection error: {e}")
+                return None
 
-            cursor = connection.cursor(dictionary=True)  # Use dictionary=True to access columns by name
-
-            # Check if the product exists
+        def check_product_exists(cursor, sku, style):
+            """Check if the product exists in the database."""
             select_query = "SELECT * FROM products WHERE SKU = %s AND Style = %s"
             app.logger.debug(f"Executing SELECT query: {select_query} with SKU={sku} and Style={style}")
             cursor.execute(select_query, (sku, style))
-            product = cursor.fetchone()
+            return cursor.fetchone()
+
+        def update_product_location(cursor, location, sku, style):
+            """Update the location for an existing product."""
+            update_query = "UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s"
+            app.logger.debug(f"Executing UPDATE query: {update_query} for SKU={sku}, Style={style}")
+            cursor.execute(update_query, (location, sku, style))
+
+        def insert_new_product(cursor, sku, style, location):
+            """Insert a new product into the database."""
+            insert_query = "INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW())"
+            app.logger.debug(f"Executing INSERT query: {insert_query} for SKU={sku}, Style={style}")
+            cursor.execute(insert_query, (sku, style, location))
+
+        connection = connect_to_db()
+        if connection is None:
+            return jsonify({'success': False, 'message': 'Failed to connect to the database.'}), 500
+
+        try:
+            cursor = connection.cursor(dictionary=True)
+
+            # Check if the product exists
+            product = check_product_exists(cursor, sku, style)
 
             if product:
-                old_location = product.get('Location')  # Extract the old location
-                # Update existing product
-                update_query = "UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s"
-                app.logger.debug(f"Executing UPDATE query: {update_query} for SKU={sku} and Style={style}")
-                cursor.execute(update_query, (location, sku, style))
+                old_location = product.get('Location', 'N/A')  # Default to 'N/A' if Location is None
+                update_product_location(cursor, location, sku, style)
                 connection.commit()
-                app.logger.info(
-                    f"Location updated successfully for SKU={sku}, Style={style} "
-                    f"from '{old_location}' to '{location}'."
-                )
-                return jsonify({'success': True, 'message': 'Location updated successfully.'})
+                app.logger.info(f"Location updated for SKU={sku}, Style={style} from '{old_location}' to '{location}'.")
             else:
-                # Insert new product
-                insert_query = "INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW())"
-                app.logger.debug(f"Executing INSERT query: {insert_query} for SKU={sku} and Style={style}")
-                cursor.execute(insert_query, (sku, style, location))
+                insert_new_product(cursor, sku, style, location)
                 connection.commit()
-                app.logger.info(
-                    f"New product inserted successfully with SKU={sku}, Style={style}, "
-                    f"Location='{location}'."
-                )
-                return jsonify({'success': True, 'message': 'Location updated successfully.'})
+                app.logger.info(f"New product inserted with SKU={sku}, Style={style}, Location='{location}'.")
+
+            return jsonify({'success': True, 'message': 'Location updated successfully.'})
 
         except Error as e:
-            app.logger.error(f"Database error during location update for SKU={sku} and Style={style}: {e}")
+            app.logger.error(f"Database error during location update: {e}")
             return jsonify({'success': False, 'message': 'An error occurred while updating the location.'}), 500
 
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
             if connection and connection.is_connected():
                 connection.close()
@@ -663,21 +666,17 @@ def register_routes(app):
 
         current_user = session['username']
         
-        # Get all form data including image size
         form_data = request.form
         image_size_input = form_data.get("image_size", "800")
         
-        # Process image size
-        if image_size_input.lower() == "full":
-            image_size = None
-        else:
-            image_size = int(image_size_input)
+        # Keep the original input value for display
+        display_image_size = image_size_input
+        # Convert to None only for processing
+        processing_image_size = None if image_size_input == "full" else int(image_size_input)
         
-        # Extract selected images for each SKU
         selected_images = []
         clean_skus = []
         
-        # Process each selected image from the form
         for key in form_data:
             if key.startswith('selected_images_'):
                 selected_image = form_data[key]
@@ -686,17 +685,18 @@ def register_routes(app):
                 clean_skus.append(sku_base)
         
         user_input = ','.join(clean_skus)
+        style_count = len(clean_skus)  # Count unique styles
         
-        # Set up V5_Listcreator parameters
         V5_Listcreator.user_input = user_input
         V5_Listcreator.selected_images = selected_images
         V5_Listcreator.image_option = "resizedpic"
         V5_Listcreator.user_input_type = "list"
 
         try:
-            V5_Listcreator.main(image_size)  # Pass image_size to main
+            V5_Listcreator.main(processing_image_size)
             filename = f"{V5_Listcreator.formatted_date}.xlsx"
-            file_size_kb = os.path.getsize(os.path.join("output", "list_output", filename)) / 1024
+            file_size_kb = round(os.path.getsize(os.path.join("output", "list_output", filename)) / 1024, 2)
+            file_size_mb = round(file_size_kb / 1024, 2)
 
             images = get_images_for_selection(clean_skus)
             app.logger.info("***%s***__@@@v5_listcreator_pictures@@@__%s",current_user,selected_images)
@@ -705,10 +705,12 @@ def register_routes(app):
                                 filename=filename,
                                 user_input=user_input,
                                 file_size_kb=file_size_kb,
+                                file_size_mb=file_size_mb,
                                 current_user=current_user,
                                 images=images,
                                 selected_images=selected_images,
-                                image_size=image_size)
+                                image_size=display_image_size,
+                                style_count=style_count)  # Added style count to template
 
         except Exception as e:
             app.logger.error(f"Error in finalize_v5_listcreator: {str(e)}")
@@ -717,62 +719,60 @@ def register_routes(app):
         
     @app.route('/download_images', methods=['POST'])
     def download_images():
-        user_input = request.form.get('user_input', '')  # Add default empty string
-        image_type = request.form.get('image_type', 'resized')  # Add default value
-        
-        if not user_input:
-            return jsonify({'error': 'No SKUs provided'}), 400
-        # Parse SKUs from user input
-        skus = [sku.strip().upper() for sku in user_input.split(',')]
+        user_input = request.form.get('user_input', '')
+        image_type = request.form.get('image_type', 'resized')
+        selected_images = request.form.get('selected_images', '')
+        image_size = request.form.get('image_size')
+
         memory_file = io.BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:
-            for sku in skus:
-                # Extract pattern: 1-2 letters followed by exactly 4 numbers
-                match = re.match(r'([A-Za-z]{1,2}\d{4})', sku)
-                if match:
-                    sku = match.group(1).upper()
-                    base_image = f"{sku}.jpg"
-                    base_path = os.path.join(Config.CATALOG_ORIGINAL, base_image)
-                    
-                    if os.path.exists(base_path):
-                        if image_type == 'resized':
-                            with Image.open(base_path) as img:
-                                # Create a buffer for the resized image
-                                buffer = io.BytesIO()
-                                # Convert to RGB if needed
-                                if img.mode != 'RGB':
-                                    img = img.convert('RGB')
-                                # Save with reduced quality
-                                img.save(buffer, format='JPEG', quality=20)
-                                buffer.seek(0)
-                                zf.writestr(base_image, buffer.getvalue())
-                        else:
-                            zf.write(base_path, arcname=base_image)
-                            
-                    # Check for versioned images
-                    version = 2
-                    while True:
-                        versioned_image = f"{sku}_v{version}.jpg"
-                        versioned_path = os.path.join(Config.CATALOG_ORIGINAL, versioned_image)
-                        if os.path.exists(versioned_path):
-                            if image_type == 'resized':
-                                with Image.open(versioned_path) as img:
-                                    buffer = io.BytesIO()
-                                    if img.mode != 'RGB':
-                                        img = img.convert('RGB')
-                                    img.save(buffer, format='JPEG', quality=20)
-                                    buffer.seek(0)
-                                    zf.writestr(versioned_image, buffer.getvalue())
+            if selected_images:
+                selected_files = selected_images.split(',')
+                for filename in selected_files:
+                    if filename:
+                        file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+                        if os.path.exists(file_path):
+                            # Skip resizing if image_size is 'full' or None
+                            if image_size and image_size != 'full':
+                                try:
+                                    with open(file_path, 'rb') as img_file:
+                                        resized_img = resize_image(img_file, int(image_size))
+                                        zf.writestr(filename, resized_img.getvalue())
+                                except (ValueError, TypeError):
+                                    # Fallback to original file if size conversion fails
+                                    zf.write(file_path, arcname=filename)
                             else:
-                                zf.write(versioned_path, arcname=versioned_image)
-                            version += 1
-                        else:
-                            break
+                                # Use original file for 'full' size or when size is not specified
+                                zf.write(file_path, arcname=filename)
+            else:
+                # Original logic for all images remains unchanged
+                search_terms = [term.split()[0].strip() for term in user_input.split(",")]
+                for term in search_terms:
+                    try:
+                        for filename in os.listdir(Config.CATALOG_ORIGINAL):
+                            if filename.lower().startswith(term.lower()):
+                                file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+                                if os.path.exists(file_path):
+                                    if image_type == 'resized':
+                                        with Image.open(file_path) as img:
+                                            buffer = io.BytesIO()
+                                            if img.mode != 'RGB':
+                                                img = img.convert('RGB')
+                                            img.save(buffer, format='JPEG', quality=20)
+                                            buffer.seek(0)
+                                            zf.writestr(filename, buffer.getvalue())
+                                    else:
+                                        zf.write(file_path, arcname=filename)
+                    except FileNotFoundError:
+                        app.logger.error("Directory not found: %s", Config.CATALOG_ORIGINAL)
 
         memory_file.seek(0)
-        zip_filename = "resized_images.zip" if image_type == 'resized' else "original_images.zip"
-        return send_file(memory_file, download_name=zip_filename, as_attachment=True)
-
+        zip_filename = "selected_images.zip" if selected_images else "images.zip"
+        return send_file(
+            memory_file,
+            download_name=zip_filename,
+            as_attachment=True
+        )
     @app.route("/run_fast_script", methods=["POST"])
     def run_fast_script():
         try:
