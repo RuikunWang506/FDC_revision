@@ -20,6 +20,7 @@ conn_str = (
     f"DRIVER={{{driver}}};"
     f"SERVER={server};"
     f"DATABASE={database_fdc};"
+    f"Trusted_Connection=yes;"
     f"UID={username};"
     f"PWD={password};"
 )

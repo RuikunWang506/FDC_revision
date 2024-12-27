@@ -38,6 +38,7 @@ from location_service import location_service_bp
 from container import container_bp
 from boat import boat_service_bp
 from chatgpt import chatgpt_bp
+from mobile_lite import mobile_lite_bp
 import V5_Listcreator, Label_Maker, order_search, SQL_connector
 from macy_special import process_orders
 from loris_sticker import main, process_input_data
@@ -57,6 +58,8 @@ def register_routes(app):
     app.register_blueprint(products_bp)
     app.register_blueprint(boat_service_bp)
     app.register_blueprint(chatgpt_bp)
+    app.register_blueprint(mobile_lite_bp)
+
 
 
     def check_credentials(username, password):
@@ -69,11 +72,11 @@ def register_routes(app):
         query_params = request.args
 
         app.logger.info(
-            "User ***%s*** has logged in. IP: ***%s***, Browser: %s %s, OS: %s %s, Device: %s, "
-            "Method: %s, URL: %s, Referrer: %s, Query Params: %s",
+            "***%s*** has logged in. IP: ***%s***, Browser: %s %s, OS: %s %s, Device: ***%s***, "
+            "Method: %s, URL: %s, Referrer: %s",
             username, client_ip, user_agent.browser.family, user_agent.browser.version_string,
             user_agent.os.family, user_agent.os.version_string, user_agent.device.family,
-            request.method, request.url, referrer, query_params
+            request.method, request.url, referrer
         )
 
     def get_location(ip):
@@ -167,60 +170,58 @@ def register_routes(app):
         return None
 
     def fetch_locations(skus):
-        """
-        Fetches the Location for each SKU from the database. If a location is not found,
-        it tries to remove the part after the first space in the SKU and retries the query.
-
-        Args:
-            skus (list): A list of SKU strings.
-
-        Returns:
-            dict: A dictionary mapping SKU to Location.
-        """
         location_dict = {}
-
+        
         if not skus:
+            app.logger.info("No SKUs provided to fetch_locations")
             return location_dict
-
+        
         try:
             connection = get_db_connection()
             if connection is None:
                 app.logger.error("Failed to connect to the database for fetching locations.")
                 return location_dict
-
+            
             cursor = connection.cursor()
-            # Prepare the query to fetch Location based on SKUs
             placeholders = ', '.join(['%s'] * len(skus))
             query = f"SELECT SKU, Location FROM products WHERE SKU IN ({placeholders})"
+            
+            app.logger.info(f"Executing query: {query}")
+            app.logger.info(f"With SKUs: {skus}")
+            
             cursor.execute(query, skus)
             results = cursor.fetchall()
-
-            # Populate the dictionary
+            app.logger.info(f"Initial query results: {results}")
+            
             for sku, location in results:
-                location_dict[sku.lower()] = location  # Assuming SKU matching is case-insensitive
-            # Handle SKUs without locations
+                location_dict[sku.lower()] = location
+                app.logger.info(f"Mapped SKU {sku.lower()} to location {location}")
+            
             for sku in skus:
                 if sku.lower() not in location_dict or not location_dict[sku.lower()]:
-                    # Modify SKU by removing everything after the first space
                     stripped_sku = sku.split(' ')[0]
-                    if stripped_sku != sku:  # Only retry if the SKU was modified
+                    if stripped_sku != sku:
+                        app.logger.info(f"Trying stripped SKU: {stripped_sku} for original SKU: {sku}")
                         cursor.execute(
                             "SELECT SKU, Location, Update_Date FROM products WHERE SKU = %s",
                             (stripped_sku,)
                         )
                         result = cursor.fetchone()
+                        app.logger.info(f"Stripped SKU query result: {result}")
                         if result:
                             location_dict[sku.lower()] = result[1]
-
-
+                            app.logger.info(f"Updated location for {sku.lower()} to {result[1]}")
+        
         except Error as e:
             app.logger.error(f"Error fetching locations: {e}")
         finally:
             if 'cursor' in locals() and cursor:
                 cursor.close()
-            if 'connection' in locals() and connection and connection.is_connected():
+            if connection and connection.is_connected():
                 connection.close()
-
+                app.logger.info("Database connection closed")
+        
+        app.logger.info(f"Final location dictionary: {location_dict}")
         return location_dict
 
     # Ensure the output directory exists
@@ -375,7 +376,8 @@ def register_routes(app):
             user_input=user_input.capitalize()  # Pass user_input back to the template to avoid "None"
         )
 
-    
+
+
     @app.route('/update_location', methods=['POST'])
     def update_location():
         data = request.get_json()

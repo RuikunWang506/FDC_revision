@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Lite Search</title>
+    
+    <!-- CSS Dependencies -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    
+    <style>
+        /* Existing Styles */
+        @media screen and (max-width: 428px) { /* Covers iPhone 14 Pro & 15 Pro Max */
+            .table-responsive-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 0 -20px;
+                padding: 0 20px;
+            }
+
+            .table {
+                font-size: 14px;
+                white-space: nowrap;
+            }
+
+            .table td, .table th {
+                padding: 8px 6px;
+            }
+
+            .card-body {
+                padding: 10px;
+            }
+
+            .nav-tabs .nav-link {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            .nested-nav-tabs .nav-link {
+                padding: 6px 8px;
+                font-size: 13px;
+            }
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: #4CAF50;
+            color: rgb(218, 97, 97);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .nav-tabs .nav-link {
+            color: #4CAF50;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .nested-nav-tabs .nav-link {
+            font-size: 0.9em;
+        }
+
+        .nested-nav-tabs .nav-link.active {
+            background-color: #f8f9fa;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table td {
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        .product-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .product-image:hover {
+            transform: scale(1.05);
+        }
+
+        .search-input {
+            font-size: 18px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #4CAF50;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+            border-color: #45a049;
+        }
+
+        .image-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .image-popup img {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #bbb;
+        }
+
+        .color-toggle {
+            display: inline-block;
+            margin: 2px;
+            padding: 4px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border: 1px solid rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+        }
+
+        .color-toggle.inactive {
+            opacity: 0.5;
+        }
+
+        /* For white or very light colors */
+        .light-text {
+            color: #000;
+            text-shadow: none;
+            border: 1px solid #ccc;
+        }
+
+        /* For dark colors */
+        .dark-text {
+            color: #fff;
+        }
+
+        .product-row {
+            display: table-row;
+        }
+
+        .product-row.hidden {
+            display: none;
+        }
+
+        .rainbow-toggle {
+            background: linear-gradient(
+                45deg,
+                #ff0000 0%,
+                #ff9a00 10%,
+                #d0de21 20%,
+                #4fdc4a 30%,
+                #3fdad8 40%,
+                #2fc9e2 50%,
+                #1c7fee 60%,
+                #5f15f2 70%,
+                #ba0cf8 80%,
+                #fb07d9 90%,
+                #ff0000 100%
+            );
+            background-size: 200% 200%;
+            animation: rainbow 2s linear infinite;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            border: none;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        @keyframes rainbow { 
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 25% }
+            100% { background-position: 0% 50% }
+        }
+
+        .rainbow-toggle:hover {
+            transform: scale(1.1);
+            transition: transform 0.2s ease;
+        }
+
+        .hide-zero-container {
+            display: flex !important; /* Ensure the button is always visible */
+            justify-content: flex-end;
+            padding: 5px;
+        }
+
+        .hide-zero-btn {
+            cursor: pointer; /* Ensure the cursor changes to pointer */
+            z-index: 10; /* Bring it above other overlapping elements */
+        }
+
+        .hide-zero-btn.active {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .nav-pills .nav-link {
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+            color: #4CAF50;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .nested-nav-tabs.flex-column {
+            border-right: 1px solid #dee2e6;
+            padding-right: 1rem;
+        }     
+        .nav-tabs.flex-column {
+            border-right: 1px solid #dee2e6;
+            border-bottom: none;
+        }
+
+        .nav-tabs.flex-column .nav-link {
+            border: 1px solid transparent;
+            border-right: 0;
+            border-radius: 0.25rem 0 0 0.25rem;
+            margin-bottom: 0.5rem;
+            color: #4CAF50;
+        }
+
+        .nav-tabs.flex-column .nav-link.active {
+            color: #333;
+            background-color: #fff;
+            border-color: #dee2e6;
+            border-right-color: #fff;
+            font-weight: bold;
+        }
+
+        .nav-tabs.flex-column .nav-link:hover:not(.active) {
+            border-color: #e9ecef;
+        }   
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Mobile Lite Search</h2>
+        
+        <form method="POST" class="mb-4">
+            <input type="text" 
+                   class="search-input" 
+                   name="user_input" 
+                   placeholder="Enter SKU or Style Number" 
+                   value="{{ user_input }}"
+                   required>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">View Data</button>
+            </div>
+        </form>
+
+        {% if data %}
+        {% for style, style_data in data.items() %}
+        <div class="card">
+            <!-- Store the current loop index in a variable -->
+            {% set current_index = loop.index %}
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Style: <a href="/item_lookup/{{ style }}">{{ style }}</a></h5>
+                    <div class="colors-container">
+                        <span class="color-toggle rainbow-toggle" onclick="clearAllColors(this, '{{ current_index }}')" title="Hide All Colors">
+                            clear
+                        </span>
+                        Colors: 
+                        {% set colors = [] %}
+                        {% for product in style_data.products %}
+                            {% set color = product.sku.upper().split()[-1] %}
+                            {% if color not in colors %}
+                                {% set _ = colors.append(color) %}
+                                <span class="color-toggle active" 
+                                    data-color="{{ color }}" 
+                                    onclick="toggleColor(this, '{{ current_index }}')"
+                                    style="background: {{ get_color_from_abbr(color) }}; {{ 'color: #000' if is_light_color(color) else 'color: #fff' }}">
+                                    {{ color }}
+                                </span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <img src="{{ style_data.image_url }}"
+                            class="product-image"
+                            alt="Product Image"
+                            onclick="enlargeImage(this, '{{ style_data.image_url }}')">
+                    </div>
+                    <div class="col-md-8">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-toggle="tab" href="#inventory{{ loop.index }}">Inventory</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#location{{ loop.index }}">Location</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#info{{ loop.index }}">Info</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#package{{ loop.index }}">Package</a>
+                            </li>
+                            <li class="nav-item ml-auto hide-zero-container" style="display: none;">
+                                <button class="btn btn-sm btn-primary hide-zero-btn active">Show All</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mt-3">
+                            
+                            <!-- Inventory Tab Pane with Nested Tabs -->
+                            <div id="inventory{{ loop.index }}" class="tab-pane active">
+                                <div class="row">
+                                    <!-- Left side tabs -->
+                                    <div class="col-md-3">
+                                        <div class="nav flex-column nav-tabs nested-nav-tabs" role="tablist">
+                                            <a class="nav-link active" data-toggle="tab" href="#combinedInventory{{ current_index }}">Combined</a>
+                                            <a class="nav-link" data-toggle="tab" href="#fdcInventory{{ current_index }}">FDC</a>
+                                            <a class="nav-link" data-toggle="tab" href="#omsEFInventory{{ current_index }}">E_F</a>
+                                            
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-9">
+                                        <div class="tab-content">
+                                        <!-- Combined Inventory Tab Pane -->
+                                        <div id="combinedInventory{{ current_index }}" class="tab-pane active">
+                                            <table class="table table-striped data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>SKU</th>
+                                                        <th>Stock</th>
+                                                        <th>Sold</th>
+                                                        <th>Avail</th>
+                                                        <th>ocean</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% set combined = {} %}
+                                                    {% for product in style_data.products %}
+                                                        {% set sku = product.sku.upper() %}
+                                                        {% if sku not in combined %}
+                                                            {% set _ = combined.update({
+                                                                sku: {
+                                                                    'stock': 0,
+                                                                    'sold': 0,
+                                                                    'available': 0,
+                                                                    'incoming': 0
+                                                                }
+                                                            }) %}
+                                                        {% endif %}
+                                                        {% set _ = combined[sku].update({
+                                                            'stock': combined[sku]['stock'] + product.inventory.stock,
+                                                            'sold': combined[sku]['sold'] + product.inventory.sold,
+                                                            'available': combined[sku]['available'] + product.inventory.available,
+                                                            'incoming': combined[sku]['incoming'] + product.inventory.incoming
+                                                        }) %}
+                                                    {% endfor %}
+                                                    
+                                                    {% for sku, totals in combined.items() %}
+                                                    <tr data-style-index="{{ current_index }}" data-color="{{ sku.split()[-1].strip().upper() }}" class="product-row">
+                                                        <td><a href="/item_lookup/{{ sku | replace(' ', '%20') }}">{{ sku }}</a></td>
+                                                    <td>{{ totals.stock }}</td>
+                                                    <td>{{ totals.sold }}</td>
+                                                    <td>{{ totals.available }}</td>
+                                                    <td>{{ totals.incoming }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- FDC Inventory Tab Pane -->
+                                        <div id="fdcInventory{{ current_index }}" class="tab-pane fade">
+                                            <table class="table table-striped data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>SKU</th>
+                                                        <th>Stock</th>
+                                                        <th>Sold</th>
+                                                        <th>Avail</th>
+                                                        <th>ocean</th>
+                                                        <th>perCase</th>
+                                                        <th>Updated</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for product in style_data.products %}
+                                                        {% if product.db == 'FDC' %}
+                                                        <tr data-style-index="{{ current_index }}" data-color="{{ product.sku.upper().split()[-1].strip() }}" class="product-row">
+
+                                                            <td><a href="/item_lookup/{{ product.sku.upper() | replace(' ', '%20') }}">{{ product.sku.upper() }}</a></td>
+                                                            <td>{{ product.inventory.stock }}</td>
+                                                            <td>{{ product.inventory.sold }}</td>
+                                                            <td>{{ product.inventory.available }}</td>
+                                                            <td>{{ product.inventory.incoming }}</td>
+                                                            <td>{{ product.inventory.case_qty }}</td>
+                                                            <td>{{ product.inventory.update_date }}</td>
+                                                        </tr>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- oms_EF Inventory Tab Pane -->
+                                        <div id="omsEFInventory{{ current_index }}" class="tab-pane fade">
+                                            <table class="table table-striped data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>SKU</th>
+                                                        <th>Stock</th>
+                                                        <th>Sold</th>
+                                                        <th>Avail</th>
+                                                        <th>ocean</th>
+                                                        <th>perCase</th>
+                                                        <th>Updated</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for product in style_data.products %}
+                                                        {% if product.db == 'oms_EF' %}
+                                                        <tr data-style-index="{{ current_index }}" data-color="{{ product.sku.upper().split()[-1].strip() }}" class="product-row">
+                                                            <td><a href="/item_lookup/{{ product.sku.upper() | replace(' ', '%20') }}">{{ product.sku.upper() }}</a></td>
+                                                            <td>{{ product.inventory.stock }}</td>
+                                                            <td>{{ product.inventory.sold }}</td>
+                                                            <td>{{ product.inventory.available }}</td>
+                                                            <td>{{ product.inventory.incoming }}</td>
+                                                            <td>{{ product.inventory.case_qty }}</td>
+                                                            <td>{{ product.inventory.update_date }}</td>
+                                                        </tr>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                            
+                            <!-- Location Tab Pane -->
+                            <div id="location{{ loop.index }}" class="tab-pane fade">
+                                <!-- Add this bulk update section at the top -->
+                                <div class="bulk-location-update mb-3">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bulk-location-input" placeholder="Enter location for all SKUs">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary bulk-update-btn">Update All Locations</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <table class="table table-striped data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Loc</th>
+                                            <th>Last</th>
+                                            <th>New</th>
+                                            <th>Update</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set unique_skus = [] %}
+                                        {% for product in style_data.products %}
+                                            {% if product.sku.upper() not in unique_skus %}
+                                                {% set _ = unique_skus.append(product.sku.upper()) %}
+                                                <tr data-style-index="{{ current_index }}" data-color="{{ product.sku.upper().split()[-1] }}" class="product-row">
+                                                    <td>{{ product.sku.upper() }}</td>
+                                                    <td>{{ product.location.current_location if product.location.current_location else 'No location set' }}</td>
+                                                    <td>{{ product.location.update_date if product.location.update_date else 'Never' }}</td>
+                                                    <td>
+                                                        <input type="text" class="form-control location-input" 
+                                                            placeholder="Enter new location" 
+                                                            data-sku="{{ product.sku.upper() }}">
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-primary btn-sm update-location-btn">Update</button>
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Info Tab Pane -->
+                            <div id="info{{ loop.index }}" class="tab-pane fade">
+                                <table class="table table-striped data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Boat</th>
+                                            <th>Cost</th>
+                                            <th>Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set unique_boats = [] %}
+                                        {% for product in style_data.products %}
+                                            {% if product.info.description | trim not in unique_boats %}
+                                                {% set _ = unique_boats.append(product.info.description | trim) %}
+                                                <tr data-style-index="{{ current_index }}" data-color="{{ product.sku.upper().split()[-1] }}" class="product-row">
+                                                    <td><a href="/item_lookup/%25{{ product.info.description | trim }}%25">{{ product.info.description | trim }}</a></td>
+                                                    <td>${{ "%.2f"|format(product.info.cost) }}</td>
+                                                    <td>${{ "%.2f"|format(product.info.price) }}</td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Package Tab Pane -->
+                            <div id="package{{ loop.index }}" class="tab-pane fade">
+                                <table class="table table-striped data-table">
+                                    <tr>
+                                        <th>Unit Weight</th>
+                                        <td>{{ style_data.measurements.pc_weights }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unit Dim</th>
+                                        <td>
+                                            <div class="dimensions-display">
+                                                {{ style_data.measurements.dimensions | safe }}
+                                                <button class="btn btn-sm btn-primary edit-dims-btn">Edit</button>
+                                            </div>
+                                            <div class="dimensions-edit" style="display:none;">
+                                                <div class="form-row">
+                                                    <div class="col">
+                                                        <input type="number" step="0.1" class="form-control length-input" placeholder="Length">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="number" step="0.1" class="form-control width-input" placeholder="Width">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="number" step="0.1" class="form-control height-input" placeholder="Height">
+                                                    </div>
+                                                    <div class="col">
+                                                        <button class="btn btn-success save-dims-btn">Save</button>
+                                                        <button class="btn btn-secondary cancel-dims-btn">Cancel</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Pkg Weight</th>
+                                        <td>{{ style_data.measurements.pkg_weights }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Pkg Dim</th>
+                                        <td>
+                                            <div class="pkg-dimensions-display">
+                                                {{ style_data.measurements.pkg_dimensions | safe }}
+                                                <button class="btn btn-sm btn-primary edit-pkg-dims-btn">Edit</button>
+                                            </div>
+                                            <div class="pkg-dimensions-edit" style="display:none;">
+                                                <div class="form-row">
+                                                    <div class="col">
+                                                        <input type="number" step="0.1" class="form-control box-length-input" placeholder="Length">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="number" step="0.1" class="form-control box-width-input" placeholder="Width">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="number" step="0.1" class="form-control box-height-input" placeholder="Height">
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="number" step="0.1" class="form-control box-weight-input" placeholder="Weight">
+                                                    </div>
+                                                    <div class="col">
+                                                        <button class="btn btn-success save-pkg-dims-btn">Save</button>
+                                                        <button class="btn btn-secondary cancel-pkg-dims-btn">Cancel</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <div id="imagePopup" class="image-popup" onclick="closePopup(event)">
+            <span class="close-btn">&times;</span>
+            <img id="popupImage" src="" alt="Enlarged Image">
+        </div>
+
+        <!-- JavaScript Dependencies -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- DataTables JS -->
+        <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+        
+        <script>
+            // Initialize DataTables
+            $(document).ready(function() {
+                $('.data-table').DataTable({
+                    "paging": false,
+                    "searching": false,
+                    "info": false,
+                    "ordering": true,
+                    "order": [[ 0, "asc" ]],
+                    "autoWidth": false,
+                    "responsive": true,
+                    "columns": "auto", // Automatically detect column count
+                    "columnDefs": [
+                        { "orderable": true, "targets": "_all" }
+                    ]
+                });
+            });
+
+            // Image popup functionality
+            function enlargeImage(imgElement, url) {
+                var popup = document.getElementById("imagePopup");
+                var popupImg = document.getElementById("popupImage");
+                popupImg.src = url;
+                popup.style.display = "flex";
+            }
+
+            function closePopup(event) {
+                var popup = document.getElementById("imagePopup");
+                if (event.target === popup || event.target.classList.contains('close-btn')) {
+                    popup.style.display = "none";
+                }
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    document.getElementById("imagePopup").style.display = "none";
+                }
+            });
+
+            // Color toggle functionality
+            function toggleColor(element, cardIndex) {
+                // Toggle button state
+                element.classList.toggle('active');
+                element.classList.toggle('inactive');
+                
+                // Get the color and find all product rows in this card
+                const targetColor = element.getAttribute('data-color').trim().toUpperCase();
+                const card = element.closest('.card');
+                const allRows = card.querySelectorAll('.product-row');
+                
+                // Check if the button is now active
+                const isActive = element.classList.contains('active');
+
+                // Toggle visibility based on color match
+                allRows.forEach(row => {
+                    const rowColor = row.getAttribute('data-color')?.trim().toUpperCase();
+                    if (rowColor === targetColor) {
+                        row.style.display = isActive ? 'table-row' : 'none';
+                    }
+                });
+            }
+            function clearAllColors(element, cardIndex) {
+                const colorToggles = element.parentElement.querySelectorAll('.color-toggle:not(.rainbow-toggle)');
+                const rows = document.querySelectorAll(`[data-style-index="${cardIndex}"]`);
+                
+                // Determine current state: Check if any color toggle is active
+                const isAnyActive = Array.from(colorToggles).some(toggle => toggle.classList.contains('active'));
+                
+                if (isAnyActive) {
+                    // Clear all colors (hide all rows and deactivate toggles)
+                    colorToggles.forEach(toggle => {
+                        toggle.classList.remove('active');
+                        toggle.classList.add('inactive');
+                    });
+                    rows.forEach(row => {
+                        row.style.display = 'none';
+                    });
+                    element.textContent = 'show'; // Update button text
+                } else {
+                    // Show all colors (show all rows and activate toggles)
+                    colorToggles.forEach(toggle => {
+                        toggle.classList.remove('inactive');
+                        toggle.classList.add('active');
+                    });
+                    rows.forEach(row => {
+                        row.style.display = 'table-row';
+                    });
+                    element.textContent = 'clear'; // Update button text
+                }
+            }
+
+            // Unit dimensions editing
+            document.querySelectorAll('.edit-dims-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    row.querySelector('.dimensions-display').style.display = 'none';
+                    row.querySelector('.dimensions-edit').style.display = 'block';
+                });
+            });
+
+            document.querySelectorAll('.save-dims-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const style = row.closest('.card').querySelector('.card-header h5 a').textContent;
+                    const length = row.querySelector('.length-input').value;
+                    const width = row.querySelector('.width-input').value;
+                    const height = row.querySelector('.height-input').value;
+
+                    fetch('/update_dimensions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `style=${encodeURIComponent(style)}&length=${encodeURIComponent(length)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            window.location.reload();
+                        } else {
+                            alert(`Failed to update: ${data.error || 'Unknown error'}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Network error occurred');
+                    });
+                });
+            });
+
+            document.querySelectorAll('.cancel-dims-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    row.querySelector('.dimensions-display').style.display = 'block';
+                    row.querySelector('.dimensions-edit').style.display = 'none';
+                });
+            });
+
+            // Package dimensions editing
+            document.querySelectorAll('.edit-pkg-dims-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    row.querySelector('.pkg-dimensions-display').style.display = 'none';
+                    row.querySelector('.pkg-dimensions-edit').style.display = 'block';
+                });
+            });
+
+            document.querySelectorAll('.save-pkg-dims-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const style = row.closest('.card').querySelector('.card-header h5 a').textContent;
+                    const boxLength = row.querySelector('.box-length-input').value;
+                    const boxWidth = row.querySelector('.box-width-input').value;
+                    const boxHeight = row.querySelector('.box-height-input').value;
+                    const boxWeight = row.querySelector('.box-weight-input').value;
+
+                    fetch('/update_package', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `style=${encodeURIComponent(style)}&box_len=${encodeURIComponent(boxLength)}&box_wi=${encodeURIComponent(boxWidth)}&box_hi=${encodeURIComponent(boxHeight)}&box_wt=${encodeURIComponent(boxWeight)}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error updating package dimensions');
+                        }
+                    });
+                });
+            });
+
+            document.querySelectorAll('.cancel-pkg-dims-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    row.querySelector('.pkg-dimensions-display').style.display = 'block';
+                    row.querySelector('.pkg-dimensions-edit').style.display = 'none';
+                });
+            });
+            
+            // Set default tab for specific users and ensure Combined Inventory is active by default
+            document.addEventListener('DOMContentLoaded', function() {
+                const username = '{{ session.username }}';
+                let activeTab = null;
+
+                // Determine which tab to activate based on the username
+                if (username === 'nicye') {
+                    activeTab = 'package';
+                } else if (username === 'yeti') {
+                    activeTab = 'location';
+                } else {
+                    activeTab = 'inventory'; // Default to inventory tab for other users
+                }
+
+                document.querySelectorAll('.card').forEach((card, index) => {
+                    // Remove all active classes from main tabs
+                    card.querySelectorAll('.nav-tabs .nav-link').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    // Remove all active classes from main tab panes
+                    card.querySelectorAll('.tab-content > .tab-pane').forEach(pane => {
+                        pane.classList.remove('active', 'show');
+                    });
+                    
+                    // Set the desired main tab as active
+                    const tabLink = card.querySelector(`[href="#${activeTab}${index + 1}"]`);
+                    const tabPane = card.querySelector(`[id="${activeTab}${index + 1}"]`);
+                    
+                    if (tabLink && tabPane) {
+                        tabLink.classList.add('active');
+                        tabPane.classList.add('active', 'show');
+                        
+                        // Always ensure Combined Inventory nested tab is active
+                        const nestedTabLink = card.querySelector(`[href="#combinedInventory${index + 1}"]`);
+                        const nestedTabPane = card.querySelector(`#combinedInventory${index + 1}`);
+                        
+                        if (nestedTabLink && nestedTabPane) {
+                            // Remove active classes from nested tabs
+                            card.querySelectorAll('.nested-nav-tabs .nav-link').forEach(nestedTab => {
+                                nestedTab.classList.remove('active');
+                            });
+                            card.querySelectorAll('.nested-nav-tabs .tab-pane').forEach(nestedPane => {
+                                nestedPane.classList.remove('active', 'show');
+                            });
+                            
+                            // Activate Combined Inventory tab
+                            nestedTabLink.classList.add('active');
+                            nestedTabPane.classList.add('active', 'show');
+                        }
+                    }
+                });
+            });
+
+            // Update location functionality
+            document.querySelectorAll('.update-location-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const sku = row.querySelector('.location-input').dataset.sku;
+                    const style = row.closest('.card').querySelector('.card-header h5 a').textContent;
+                    const newLocation = row.querySelector('.location-input').value.trim();
+
+                    if (!newLocation) {
+                        alert('Please enter a new location');
+                        return;
+                    }
+
+                    fetch('/update_location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `sku=${encodeURIComponent(sku)}&style=${encodeURIComponent(style)}&location=${encodeURIComponent(newLocation)}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error updating location');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to update location');
+                    });
+                });
+            });
+
+            // Hide zero available rows functionality
+            document.querySelectorAll('.tab-pane[id^="inventory"] table tbody tr').forEach(row => {
+                const availableCell = row.querySelector('td:nth-child(4)');
+                const availableValue = parseInt(availableCell.textContent) || 0;
+                
+                if (availableValue <= 0) {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Hide zero functionality - Updated
+            document.querySelectorAll('.hide-zero-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const card = this.closest('.card'); // Find the closest card
+                    const inventoryTabPane = card.querySelector(`[id^="inventory"]`); // Select the inventory tab-pane within the card
+                    if (!inventoryTabPane) {
+                        console.error('Inventory tab-pane not found for this card');
+                        return;
+                    }
+
+                    const tables = inventoryTabPane.querySelectorAll('table');
+                    const isHiding = this.classList.contains('active');
+
+                    // Toggle button state and text
+                    this.classList.toggle('active');
+                    this.textContent = isHiding ? 'Show All' : 'Hide 0';
+
+                    // Iterate through all rows and apply filtering
+                    tables.forEach(table => {
+                        const rows = table.querySelectorAll('tbody tr');
+                        rows.forEach(row => {
+                            const availableCell = row.querySelector('td:nth-child(4)');
+                            const availableValue = parseInt(availableCell.textContent) || 0;
+
+                            // Get the current color filter state
+                            const cardIndex = inventoryTabPane.id.replace('inventory', '');
+                            const colorToggles = card.querySelectorAll(`.color-toggle[data-color]`);
+                            const activeColors = Array.from(colorToggles)
+                                .filter(toggle => toggle.classList.contains('active'))
+                                .map(toggle => toggle.getAttribute('data-color').trim().toUpperCase());
+
+                            const rowColor = row.getAttribute('data-color')?.trim().toUpperCase();
+
+                            let shouldDisplay = true;
+
+                            // Apply color filter
+                            if (activeColors.length > 0 && !activeColors.includes(rowColor)) {
+                                shouldDisplay = false;
+                            }
+
+                            // Apply hide-zero filter
+                            if (isHiding && availableValue <= 0) {
+                                shouldDisplay = false;
+                            }
+
+                            row.style.display = shouldDisplay ? 'table-row' : 'none';
+                        });
+                    });
+                });
+            });
+            // Ensure hide-zero button stays visible for all inventory sub-tabs
+            document.addEventListener('DOMContentLoaded', function() {
+                // Show button for initial inventory tab load
+                document.querySelectorAll('.tab-pane[id^="inventory"]').forEach(pane => {
+                    const hideZeroBtn = pane.querySelector('.hide-zero-container');
+                    if (hideZeroBtn) {
+                        hideZeroBtn.style.display = 'block';
+                    }
+                });
+
+                // Keep button visible when switching between inventory sub-tabs
+                document.querySelectorAll('.nested-nav-tabs .nav-link').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const hideZeroBtn = this.closest('.tab-content').querySelector('.hide-zero-container');
+                        if (hideZeroBtn) {
+                            hideZeroBtn.style.display = 'block';
+                        }
+                    });
+                });
+            });
+
+            document.querySelectorAll('.nav-link').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const hideZeroBtn = this.closest('.nav-tabs').querySelector('.hide-zero-container');
+                    hideZeroBtn.style.display = this.getAttribute('href').includes('inventory') ? 'block' : 'none';
+                });
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.nav-link.active').forEach(tab => {
+                    if (tab.getAttribute('href').includes('inventory')) {
+                        const hideZeroBtn = tab.closest('.nav-tabs').querySelector('.hide-zero-container');
+                        hideZeroBtn.style.display = 'block';
+                    }
+                });
+            });
+            // Add this to your existing script section
+            document.querySelectorAll('.bulk-update-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.card');
+                    const style = card.querySelector('.card-header h5 a').textContent;
+                    const newLocation = this.closest('.bulk-location-update').querySelector('.bulk-location-input').value.trim();
+                    const skuElements = card.querySelectorAll('.location-input');
+                    
+                    if (!newLocation) {
+                        alert('Please enter a location');
+                        return;
+                    }
+
+                    const updatePromises = Array.from(skuElements).map(element => {
+                        const sku = element.dataset.sku;
+                        return fetch('/update_location', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `sku=${encodeURIComponent(sku)}&style=${encodeURIComponent(style)}&location=${encodeURIComponent(newLocation)}`
+                        }).then(response => response.json());
+                    });
+
+                    Promise.all(updatePromises)
+                        .then(() => {
+                            location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to update locations');
+                        });
+                });
+            });
+        </script>
+    </body>
+</html>

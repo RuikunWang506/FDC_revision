@@ -416,28 +416,39 @@
 <body>
     {% include 'navbar.html' %}
     <div class="container mt-5">
-        <div class="row justify-content-center text-center">
-            <form id="orderLookupForm" onsubmit="redirectToResult(event)">
+        <div class="row">
+            <div class="col-12 text-center">
                 {% if not image_urls %}
-                <h4>Enter Input, separate by comma:</h4>
-                <p>You can put multiple SKUs like n1223 gy, N1551</p>
-                <p>Style only = all colors, with color = one color</p>
-                <p>fuzzy search , try %T330 , %f24238%, %-set%</p>
-                {% endif %}
-                <button class="btn btn-info mb-3">
-                    <a href="/location_service" class="text-center" style="color:#88ff00; text-decoration: none;">Quick Location Lookup</a>
-                </button>
-                
-                <div class="form-group" style="padding-top: 20px;">
-                    <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}" placeholder="Enter SKUs or Styles">
-                </div>
-                <button type="submit" class="btn btn-primary">View Result</button>
-                {% if user_input %}
-                <div class="search-input">
-                    Your search input was: <br>{{ user_input }}
+                <div class="mb-4">
+                    <button type="button" class="btn btn-info mb-3 mx-2">
+                        <a href="/location_service" class="text-center" style="color:#88ff00; text-decoration: none;">Quick Location Lookup</a>
+                    </button>
+                    <button type="button" class="btn btn-info mb-3 mx-2">
+                        <a href="/mobile" class="text-center" style="color:#ffffff; text-decoration: none;">Mobile friendly site</a>
+                    </button>
                 </div>
                 {% endif %}
-            </form>
+    
+                <form id="orderLookupForm" onsubmit="redirectToResult(event)" class="mx-auto" style="max-width: 600px;">
+                    {% if not image_urls %}
+                    <h4 class="mb-3">Enter Input, separate by comma:</h4>
+                    <p class="mb-2">You can put multiple SKUs like n1223 gy, N1551</p>
+                    <p class="mb-2">Style only = all colors, with color = one color</p>
+                    <p class="mb-4">fuzzy search , try %T330 , %f24238%, %-set%</p>
+                    {% endif %}
+    
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}" placeholder="Enter SKUs or Styles">
+                    </div>
+                    <button type="submit" class="btn btn-primary">View Result</button>
+                    
+                    {% if user_input %}
+                    <div class="search-input mt-4">
+                        Your search input was: <br>{{ user_input }}
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
         </div>
     </div>
     {% if image_urls %}
