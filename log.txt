@@ -20630,3 +20630,622 @@ WHERE prod_cd = 'N2149 BR';
 2024-12-27 13:43:44,747 - INFO - Updating location for SKU: L1809 LV to TEST2
 2024-12-27 13:43:44,763 - INFO - Updating location for SKU: L1809 TN to TEST2
 2024-12-27 13:43:44,826 - INFO - Sync completed successfully. Updated 1872 records.
+2024-12-27 13:44:09,384 - INFO - ***yeti***__@@@mobile search@@@__ l1864
+2024-12-27 13:45:01,737 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-27 13:45:01,737 - INFO - With SKUs: ['t3305 br', 't3305 bg', 't3305 nv', 't3305 gy', 't3305 ol', 't3305 tn', 't3305 bk', 't3305 wt', 't3305 pk', 't3305 sg', 't3305 bk', 't3305 br', 't3305 gy', 't3305 nv', 't3305 ol', 't3305 tn', 't3305 ol', 't3305 tn', 't3305 bk', 't3305 br', 't3305 pk', 't3305 sg', 't3305 wt', 't3305 gy', 't3305 bg', 't3305 nv']
+2024-12-27 13:45:01,737 - INFO - Initial query results: [('T3305 BK', 'TEST'), ('T3305 BR', 'L5-B TOP, L5 END'), ('T3305 GY', 'L5-B TOP, L5 END'), ('T3305 NV', 'L5-B TOP, L5 END'), ('T3305 PK', 'L5-B TOP, L5 END'), ('T3305 SG', 'L5-B TOP, L5 END'), ('T3305 TN', 'L5-B TOP, L5 END'), ('T3305 WT', 'L5-B TOP, L5 END'), ('T3305 BG', 'TEST1')]
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 bk to location TEST
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 br to location L5-B TOP, L5 END
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 gy to location L5-B TOP, L5 END
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 nv to location L5-B TOP, L5 END
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 pk to location L5-B TOP, L5 END
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 sg to location L5-B TOP, L5 END
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 tn to location L5-B TOP, L5 END
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 wt to location L5-B TOP, L5 END
+2024-12-27 13:45:01,737 - INFO - Mapped SKU t3305 bg to location TEST1
+2024-12-27 13:45:01,737 - INFO - Trying stripped SKU: t3305 for original SKU: t3305 ol
+2024-12-27 13:45:01,737 - INFO - Stripped SKU query result: None
+2024-12-27 13:45:01,737 - INFO - Trying stripped SKU: t3305 for original SKU: t3305 ol
+2024-12-27 13:45:01,737 - INFO - Stripped SKU query result: None
+2024-12-27 13:45:01,737 - INFO - Trying stripped SKU: t3305 for original SKU: t3305 ol
+2024-12-27 13:45:01,737 - INFO - Stripped SKU query result: None
+2024-12-27 13:45:01,737 - INFO - Database connection closed
+2024-12-27 13:45:01,737 - INFO - Final location dictionary: {'t3305 bk': 'TEST', 't3305 br': 'L5-B TOP, L5 END', 't3305 gy': 'L5-B TOP, L5 END', 't3305 nv': 'L5-B TOP, L5 END', 't3305 pk': 'L5-B TOP, L5 END', 't3305 sg': 'L5-B TOP, L5 END', 't3305 tn': 'L5-B TOP, L5 END', 't3305 wt': 'L5-B TOP, L5 END', 't3305 bg': 'TEST1'}
+2024-12-27 13:45:01,753 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2024-12-27 13:45:02,961 - INFO - ***yeti***__@@@checked boat page@@@
+2024-12-27 13:45:35,424 - INFO - ***yeti***__@@@v5_listcreator@@@__l1864
+2024-12-27 13:45:39,506 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['L1864.jpg']
+2024-12-27 13:45:40,824 - INFO - ***yeti***__@@@[Download][List]@@@__ List-20241227-134539.xlsx
+2024-12-27 13:45:47,289 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['L1864.jpg']
+2024-12-27 13:45:49,204 - INFO - ***yeti***__@@@[Download][List]@@@__ List-20241227-134546.xlsx
+2024-12-27 18:57:35,800 - INFO - Location service accessed by user: Unknown
+2024-12-27 22:01:30,512 - INFO - ***yeti*** has logged in. IP: ***47.159.214.29***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-27 22:01:45,473 - INFO - ***yeti***__@@@checked boat page@@@
+2024-12-27 22:02:16,801 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s)
+2024-12-27 22:02:16,801 - INFO - With SKUs: ['en1654 wt', 'en1654 cg', 'en1654 bp', 'en1654 bk', 'en1654 tn', 'en1654 gy']
+2024-12-27 22:02:16,801 - INFO - Initial query results: []
+2024-12-27 22:02:16,801 - INFO - Trying stripped SKU: en1654 for original SKU: en1654 wt
+2024-12-27 22:02:16,801 - INFO - Stripped SKU query result: ('en1654', '823 wall about 3rd row', datetime.date(2024, 11, 21))
+2024-12-27 22:02:16,801 - INFO - Updated location for en1654 wt to 823 wall about 3rd row
+2024-12-27 22:02:16,801 - INFO - Trying stripped SKU: en1654 for original SKU: en1654 cg
+2024-12-27 22:02:16,801 - INFO - Stripped SKU query result: ('en1654', '823 wall about 3rd row', datetime.date(2024, 11, 21))
+2024-12-27 22:02:16,801 - INFO - Updated location for en1654 cg to 823 wall about 3rd row
+2024-12-27 22:02:16,801 - INFO - Trying stripped SKU: en1654 for original SKU: en1654 bp
+2024-12-27 22:02:16,801 - INFO - Stripped SKU query result: ('en1654', '823 wall about 3rd row', datetime.date(2024, 11, 21))
+2024-12-27 22:02:16,801 - INFO - Updated location for en1654 bp to 823 wall about 3rd row
+2024-12-27 22:02:16,801 - INFO - Trying stripped SKU: en1654 for original SKU: en1654 bk
+2024-12-27 22:02:16,817 - INFO - Stripped SKU query result: ('en1654', '823 wall about 3rd row', datetime.date(2024, 11, 21))
+2024-12-27 22:02:16,817 - INFO - Updated location for en1654 bk to 823 wall about 3rd row
+2024-12-27 22:02:16,817 - INFO - Trying stripped SKU: en1654 for original SKU: en1654 tn
+2024-12-27 22:02:16,817 - INFO - Stripped SKU query result: ('en1654', '823 wall about 3rd row', datetime.date(2024, 11, 21))
+2024-12-27 22:02:16,817 - INFO - Updated location for en1654 tn to 823 wall about 3rd row
+2024-12-27 22:02:16,817 - INFO - Trying stripped SKU: en1654 for original SKU: en1654 gy
+2024-12-27 22:02:16,817 - INFO - Stripped SKU query result: ('en1654', '823 wall about 3rd row', datetime.date(2024, 11, 21))
+2024-12-27 22:02:16,817 - INFO - Updated location for en1654 gy to 823 wall about 3rd row
+2024-12-27 22:02:16,817 - INFO - Database connection closed
+2024-12-27 22:02:16,817 - INFO - Final location dictionary: {'en1654 wt': '823 wall about 3rd row', 'en1654 cg': '823 wall about 3rd row', 'en1654 bp': '823 wall about 3rd row', 'en1654 bk': '823 wall about 3rd row', 'en1654 tn': '823 wall about 3rd row', 'en1654 gy': '823 wall about 3rd row'}
+2024-12-27 22:02:16,817 - INFO - ***yeti***__@@@search SKU@@@__ en1654
+2024-12-27 22:02:47,046 - INFO - ***yeti***__@@@search order@@@__ 32618
+2024-12-27 23:25:27,775 - INFO - ***nicye*** has logged in. IP: ***115.223.161.40***, Browser: Chrome 123.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-27 23:25:34,126 - INFO - No SKUs provided to fetch_locations
+2024-12-27 23:25:34,142 - INFO - ***nicye***__@@@search SKU@@@__ 33
+2024-12-27 23:25:38,639 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-27 23:25:38,639 - INFO - With SKUs: ['n1850 wt', 'n1850 bk', 'n1850 br', 'n1850 tn', 'n1850 pk', 'n1850 bk', 'n1850 br', 'n1850 pk', 'n1850 tn', 'n1850 wt']
+2024-12-27 23:25:38,639 - INFO - Initial query results: []
+2024-12-27 23:25:38,639 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 wt
+2024-12-27 23:25:38,639 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,639 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 bk
+2024-12-27 23:25:38,639 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,639 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 br
+2024-12-27 23:25:38,639 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,639 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 tn
+2024-12-27 23:25:38,651 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,651 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 pk
+2024-12-27 23:25:38,651 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,651 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 bk
+2024-12-27 23:25:38,651 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,651 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 br
+2024-12-27 23:25:38,651 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,651 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 pk
+2024-12-27 23:25:38,651 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,651 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 tn
+2024-12-27 23:25:38,651 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,651 - INFO - Trying stripped SKU: n1850 for original SKU: n1850 wt
+2024-12-27 23:25:38,651 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:38,656 - INFO - Database connection closed
+2024-12-27 23:25:38,656 - INFO - Final location dictionary: {}
+2024-12-27 23:25:38,656 - INFO - ***nicye***__@@@search SKU@@@__ n1850
+2024-12-27 23:25:59,343 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-27 23:25:59,343 - INFO - With SKUs: ['n1864 wt', 'n1864 gy', 'n1864 lv', 'n1864 bk', 'n1864 tn', 'n1864 cg', 'n1864 bk', 'n1864 cg', 'n1864 gy', 'n1864 lv', 'n1864 tn', 'n1864 wt']
+2024-12-27 23:25:59,356 - INFO - Initial query results: []
+2024-12-27 23:25:59,356 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 wt
+2024-12-27 23:25:59,356 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,356 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 gy
+2024-12-27 23:25:59,356 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,356 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 lv
+2024-12-27 23:25:59,356 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,356 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 bk
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 tn
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 cg
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 bk
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 cg
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 gy
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 lv
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 tn
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Trying stripped SKU: n1864 for original SKU: n1864 wt
+2024-12-27 23:25:59,359 - INFO - Stripped SKU query result: None
+2024-12-27 23:25:59,359 - INFO - Database connection closed
+2024-12-27 23:25:59,359 - INFO - Final location dictionary: {}
+2024-12-27 23:25:59,359 - INFO - ***nicye***__@@@search SKU@@@__ n1864
+2024-12-27 23:28:11,864 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s)
+2024-12-27 23:28:11,864 - INFO - With SKUs: ['n2173 gn', 'n2173 bk', 'n2173 tn', 'n2173 tp', 'n2173 pk', 'n2173 wt']
+2024-12-27 23:28:11,864 - INFO - Initial query results: []
+2024-12-27 23:28:11,875 - INFO - Trying stripped SKU: n2173 for original SKU: n2173 gn
+2024-12-27 23:28:11,875 - INFO - Stripped SKU query result: None
+2024-12-27 23:28:11,875 - INFO - Trying stripped SKU: n2173 for original SKU: n2173 bk
+2024-12-27 23:28:11,875 - INFO - Stripped SKU query result: None
+2024-12-27 23:28:11,875 - INFO - Trying stripped SKU: n2173 for original SKU: n2173 tn
+2024-12-27 23:28:11,875 - INFO - Stripped SKU query result: None
+2024-12-27 23:28:11,875 - INFO - Trying stripped SKU: n2173 for original SKU: n2173 tp
+2024-12-27 23:28:11,875 - INFO - Stripped SKU query result: None
+2024-12-27 23:28:11,875 - INFO - Trying stripped SKU: n2173 for original SKU: n2173 pk
+2024-12-27 23:28:11,875 - INFO - Stripped SKU query result: None
+2024-12-27 23:28:11,875 - INFO - Trying stripped SKU: n2173 for original SKU: n2173 wt
+2024-12-27 23:28:11,875 - INFO - Stripped SKU query result: None
+2024-12-27 23:28:11,880 - INFO - Database connection closed
+2024-12-27 23:28:11,880 - INFO - Final location dictionary: {}
+2024-12-27 23:28:11,880 - INFO - ***nicye***__@@@search SKU@@@__ n2173
+2024-12-27 23:32:34,130 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-27 23:32:34,130 - INFO - With SKUs: ['es1449 bk', 'es1449 tn', 'es1449 flower', 'es1449 gn', 'es1449 tp', 'es1449 wt', 'es1449 gy', 'es1449 leopard', 'es1449 bk', 'es1449 gn', 'es1449 gy', 'es1449 tn', 'es1449 tp', 'es1449 wt', 'es1449 flower', 'es1449 leopard']
+2024-12-27 23:32:34,130 - INFO - Initial query results: []
+2024-12-27 23:32:34,130 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 bk
+2024-12-27 23:32:34,130 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,130 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 tn
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 flower
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 gn
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 tp
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 wt
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 gy
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 leopard
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 bk
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 gn
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 gy
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 tn
+2024-12-27 23:32:34,139 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,139 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 tp
+2024-12-27 23:32:34,147 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,147 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 wt
+2024-12-27 23:32:34,147 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,147 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 flower
+2024-12-27 23:32:34,147 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,147 - INFO - Trying stripped SKU: es1449 for original SKU: es1449 leopard
+2024-12-27 23:32:34,147 - INFO - Stripped SKU query result: None
+2024-12-27 23:32:34,147 - INFO - Database connection closed
+2024-12-27 23:32:34,147 - INFO - Final location dictionary: {}
+2024-12-27 23:32:34,155 - INFO - ***nicye***__@@@search SKU@@@__ es1449
+2024-12-28 23:24:37,697 - INFO - Location service accessed by user: Unknown
+2024-12-29 15:18:39,441 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-29 17:08:09,175 - INFO - ***ahua*** has logged in. IP: ***219.135.198.131***, Browser: Chrome 130.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-29 17:09:40,382 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-29 17:09:40,382 - INFO - With SKUs: ['n1223 bk', 'n1223 tn', 'n1223 ow', 'n1223 gy', 'n1223 bl', 'n1223 fl', 'n1223 leo', 'n1223 pl', 'n1223 lv', 'n1223 br', 'n1223 rg', 'n1223 yl', 'n1223 flower', 'n1223 rd', 'n1223 co', 'n1223 wt', 'n1223 nv', 'n1223 leopard', 'n1223 tp', 'n1223 sg', 'n1223 or', 'n1223 dm', 'n1223 bg', 'n1223 bp', 'n1223 mv', 'n1223 st', 'n1223 pk', 'n1223 gn', 'n1223 bg', 'n1223 bk', 'n1223 bl', 'n1223 bp', 'n1223 br', 'n1223 co', 'n1223 dm', 'n1223 fl', 'n1223 gn', 'n1223 gy', 'n1223 leo', 'n1223 lv', 'n1223 mv', 'n1223 or', 'n1223 ow', 'n1223 pk', 'n1223 pl', 'n1223 rd', 'n1223 rg', 'n1223 sg', 'n1223 st', 'n1223 tn', 'n1223 tp', 'n1223 wt', 'n1223 yl', 'n1223 flower', 'n1223 leopard', 'n1223 nv']
+2024-12-29 17:09:40,398 - INFO - Initial query results: [('N1223 BG', 'L15'), ('N1223 BK', 'L15'), ('N1223 BL', 'L15'), ('N1223 BP', 'L15'), ('N1223 BR', 'L15'), ('N1223 CO', 'nan'), ('N1223 DM', 'nan'), ('N1223 FL', 'L15'), ('N1223 GN', 'L15'), ('N1223 GY', 'L15'), ('N1223 LEO', 'L15'), ('N1223 LV', 'L15'), ('N1223 MV', 'L15'), ('N1223 NV', 'L15'), ('N1223 OR', 'L15'), ('N1223 OW', 'L15'), ('N1223 PK', 'L15'), ('N1223 PL', 'L15'), ('N1223 RD', 'L15'), ('N1223 RG', 'L15'), ('N1223 SG', 'L15'), ('N1223 ST', 'L15'), ('N1223 TN', 'L15'), ('N1223 TP', 'L15'), ('N1223 WT', 'L15'), ('N1223 YL', 'L15')]
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 bg to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 bk to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 bl to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 bp to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 br to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 co to location nan
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 dm to location nan
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 fl to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 gn to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 gy to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 leo to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 lv to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 mv to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 nv to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 or to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 ow to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 pk to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 pl to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 rd to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 rg to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 sg to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 st to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 tn to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 tp to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 wt to location L15
+2024-12-29 17:09:40,398 - INFO - Mapped SKU n1223 yl to location L15
+2024-12-29 17:09:40,398 - INFO - Trying stripped SKU: n1223 for original SKU: n1223 flower
+2024-12-29 17:09:40,398 - INFO - Stripped SKU query result: None
+2024-12-29 17:09:40,398 - INFO - Trying stripped SKU: n1223 for original SKU: n1223 leopard
+2024-12-29 17:09:40,398 - INFO - Stripped SKU query result: None
+2024-12-29 17:09:40,398 - INFO - Trying stripped SKU: n1223 for original SKU: n1223 flower
+2024-12-29 17:09:40,398 - INFO - Stripped SKU query result: None
+2024-12-29 17:09:40,398 - INFO - Trying stripped SKU: n1223 for original SKU: n1223 leopard
+2024-12-29 17:09:40,398 - INFO - Stripped SKU query result: None
+2024-12-29 17:09:40,398 - INFO - Database connection closed
+2024-12-29 17:09:40,398 - INFO - Final location dictionary: {'n1223 bg': 'L15', 'n1223 bk': 'L15', 'n1223 bl': 'L15', 'n1223 bp': 'L15', 'n1223 br': 'L15', 'n1223 co': 'nan', 'n1223 dm': 'nan', 'n1223 fl': 'L15', 'n1223 gn': 'L15', 'n1223 gy': 'L15', 'n1223 leo': 'L15', 'n1223 lv': 'L15', 'n1223 mv': 'L15', 'n1223 nv': 'L15', 'n1223 or': 'L15', 'n1223 ow': 'L15', 'n1223 pk': 'L15', 'n1223 pl': 'L15', 'n1223 rd': 'L15', 'n1223 rg': 'L15', 'n1223 sg': 'L15', 'n1223 st': 'L15', 'n1223 tn': 'L15', 'n1223 tp': 'L15', 'n1223 wt': 'L15', 'n1223 yl': 'L15'}
+2024-12-29 17:09:40,414 - INFO - ***ahua***__@@@search SKU@@@__ n1223
+2024-12-29 21:52:18,036 - INFO - ***nicye*** has logged in. IP: ***115.223.182.61***, Browser: Chrome 123.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-29 21:52:23,461 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-29 21:52:23,461 - INFO - With SKUs: ['n1644 cg', 'n1644 pk', 'n1644 wt', 'n1644 abl', 'n1644 bk', 'n1644 st', 'n1644 gy', 'n1644 tn', 'n1644 br', 'n1644 abl', 'n1644 bk', 'n1644 cg', 'n1644 pk', 'n1644 st', 'n1644 wt']
+2024-12-29 21:52:23,473 - INFO - Initial query results: []
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 cg
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 pk
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 wt
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 abl
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 bk
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 st
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 gy
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 tn
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 br
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 abl
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 bk
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 cg
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 pk
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 st
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Trying stripped SKU: n1644 for original SKU: n1644 wt
+2024-12-29 21:52:23,473 - INFO - Stripped SKU query result: None
+2024-12-29 21:52:23,473 - INFO - Database connection closed
+2024-12-29 21:52:23,473 - INFO - Final location dictionary: {}
+2024-12-29 21:52:23,488 - INFO - ***nicye***__@@@search SKU@@@__ n1644
+2024-12-29 22:25:47,509 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-29 22:25:47,509 - INFO - With SKUs: ['n1656 lv', 'n1656 tq', 'n1656 gy', 'n1656 bk', 'n1656 br', 'n1656 pk', 'n1656 tn', 'n1656 nv', 'n1656 ol', 'n1656 bk', 'n1656 br']
+2024-12-29 22:25:47,509 - INFO - Initial query results: []
+2024-12-29 22:25:47,509 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 lv
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 lv to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 tq
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 tq to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 gy
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 gy to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 bk
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 bk to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 br
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 br to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 pk
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 pk to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 tn
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 tn to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 nv
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 nv to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Trying stripped SKU: n1656 for original SKU: n1656 ol
+2024-12-29 22:25:47,525 - INFO - Stripped SKU query result: ('N1656', '823 1ST END', datetime.date(2024, 10, 29))
+2024-12-29 22:25:47,525 - INFO - Updated location for n1656 ol to 823 1ST END
+2024-12-29 22:25:47,525 - INFO - Database connection closed
+2024-12-29 22:25:47,525 - INFO - Final location dictionary: {'n1656 lv': '823 1ST END', 'n1656 tq': '823 1ST END', 'n1656 gy': '823 1ST END', 'n1656 bk': '823 1ST END', 'n1656 br': '823 1ST END', 'n1656 pk': '823 1ST END', 'n1656 tn': '823 1ST END', 'n1656 nv': '823 1ST END', 'n1656 ol': '823 1ST END'}
+2024-12-29 22:25:47,525 - INFO - ***nicye***__@@@search SKU@@@__ n1656
+2024-12-29 23:22:41,226 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s)
+2024-12-29 23:22:41,226 - INFO - With SKUs: ['n2229 bk', 'n2229 br', 'n2229 cf', 'n2229 bg']
+2024-12-29 23:22:41,226 - INFO - Initial query results: [('N2229 BK', 'GG'), ('N2229 CF', 'GG'), ('N2229 BR', 'gone'), ('N2229 BG', 'no')]
+2024-12-29 23:22:41,226 - INFO - Mapped SKU n2229 bk to location GG
+2024-12-29 23:22:41,226 - INFO - Mapped SKU n2229 cf to location GG
+2024-12-29 23:22:41,226 - INFO - Mapped SKU n2229 br to location gone
+2024-12-29 23:22:41,226 - INFO - Mapped SKU n2229 bg to location no
+2024-12-29 23:22:41,226 - INFO - Database connection closed
+2024-12-29 23:22:41,226 - INFO - Final location dictionary: {'n2229 bk': 'GG', 'n2229 cf': 'GG', 'n2229 br': 'gone', 'n2229 bg': 'no'}
+2024-12-29 23:22:41,242 - INFO - ***ahua***__@@@search SKU@@@__ n2229
+2024-12-29 23:23:41,186 - INFO - Location service accessed by user: Unknown
+2024-12-30 01:21:54,573 - INFO - Location service accessed by user: Unknown
+2024-12-30 01:52:41,558 - INFO - ***yeti*** has logged in. IP: ***47.159.214.29***, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 01:54:00,951 - INFO - ***yeti***__@@@mobile search@@@__ N1864
+2024-12-30 07:36:38,393 - INFO - ***nicye*** has logged in. IP: ***1.1.1.1, 122.239.127.58***, Browser: Edge 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 07:36:54,546 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-30 07:36:54,546 - INFO - With SKUs: ['s1245 bk', 's1245 wt', 's1245 dm', 's1245 br', 's1245 st', 's1245 bk', 's1245 br', 's1245 dm', 's1245 st', 's1245 wt']
+2024-12-30 07:36:54,546 - INFO - Initial query results: [('S1245 BK', 'nan'), ('S1245 BR', 'nan'), ('S1245 DM', 'nan'), ('S1245 ST', 'nan'), ('S1245 WT', 'nan')]
+2024-12-30 07:36:54,546 - INFO - Mapped SKU s1245 bk to location nan
+2024-12-30 07:36:54,546 - INFO - Mapped SKU s1245 br to location nan
+2024-12-30 07:36:54,546 - INFO - Mapped SKU s1245 dm to location nan
+2024-12-30 07:36:54,546 - INFO - Mapped SKU s1245 st to location nan
+2024-12-30 07:36:54,557 - INFO - Mapped SKU s1245 wt to location nan
+2024-12-30 07:36:54,557 - INFO - Database connection closed
+2024-12-30 07:36:54,557 - INFO - Final location dictionary: {'s1245 bk': 'nan', 's1245 br': 'nan', 's1245 dm': 'nan', 's1245 st': 'nan', 's1245 wt': 'nan'}
+2024-12-30 07:36:54,557 - INFO - ***nicye***__@@@search SKU@@@__ s1245
+2024-12-30 07:55:52,165 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-30 07:55:52,165 - INFO - With SKUs: ['t3132 bk', 't3132 br', 't3132 tp', 't3132 dm', 't3132 pk', 't3132 bk', 't3132 br', 't3132 dm', 't3132 pk', 't3132 tp']
+2024-12-30 07:55:52,165 - INFO - Initial query results: [('T3132 BK', 'L11H (L3-G MID)'), ('T3132 BR', 'L11H (L3-G MID)'), ('T3132 DM', 'L11H (L3-G MID)'), ('T3132 PK', 'L11H (L3-G MID)'), ('T3132 TP', 'L11H (L3-G MID)')]
+2024-12-30 07:55:52,165 - INFO - Mapped SKU t3132 bk to location L11H (L3-G MID)
+2024-12-30 07:55:52,165 - INFO - Mapped SKU t3132 br to location L11H (L3-G MID)
+2024-12-30 07:55:52,165 - INFO - Mapped SKU t3132 dm to location L11H (L3-G MID)
+2024-12-30 07:55:52,165 - INFO - Mapped SKU t3132 pk to location L11H (L3-G MID)
+2024-12-30 07:55:52,165 - INFO - Mapped SKU t3132 tp to location L11H (L3-G MID)
+2024-12-30 07:55:52,165 - INFO - Database connection closed
+2024-12-30 07:55:52,165 - INFO - Final location dictionary: {'t3132 bk': 'L11H (L3-G MID)', 't3132 br': 'L11H (L3-G MID)', 't3132 dm': 'L11H (L3-G MID)', 't3132 pk': 'L11H (L3-G MID)', 't3132 tp': 'L11H (L3-G MID)'}
+2024-12-30 07:55:52,181 - INFO - ***nicye***__@@@search SKU@@@__ t3132
+2024-12-30 10:22:21,724 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 10:48:04,866 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 10:48:09,223 - INFO - Executing query: SELECT SKU, Location FROM products WHERE SKU IN (%s, %s, %s, %s, %s, %s, %s, %s)
+2024-12-30 10:48:09,223 - INFO - With SKUs: ['n2149 bk', 'n2149 tn', 'n2149 br', 'n2149 bg', 'n2149 bg', 'n2149 bk', 'n2149 br', 'n2149 tn']
+2024-12-30 10:48:09,223 - INFO - Initial query results: [('N2149 BG', 'nan'), ('N2149 BK', 'nan'), ('N2149 BR', 'nan'), ('N2149 TN', 'nan')]
+2024-12-30 10:48:09,223 - INFO - Mapped SKU n2149 bg to location nan
+2024-12-30 10:48:09,223 - INFO - Mapped SKU n2149 bk to location nan
+2024-12-30 10:48:09,223 - INFO - Mapped SKU n2149 br to location nan
+2024-12-30 10:48:09,223 - INFO - Mapped SKU n2149 tn to location nan
+2024-12-30 10:48:09,223 - INFO - Database connection closed
+2024-12-30 10:48:09,223 - INFO - Final location dictionary: {'n2149 bg': 'nan', 'n2149 bk': 'nan', 'n2149 br': 'nan', 'n2149 tn': 'nan'}
+2024-12-30 10:48:09,223 - INFO - ***yeti***__@@@search SKU@@@__ n2149
+2024-12-30 11:40:18,871 - INFO - ***jennifer*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 97.0.4692, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 11:40:48,896 - INFO - ***jennifer***__@@@search order@@@__ 33801
+2024-12-30 11:40:50,812 - INFO - ***jennifer***__@@@made labels@@@__ 33801
+2024-12-30 11:40:53,074 - INFO - ***jennifer***__@@@search order@@@__ 33801
+2024-12-30 11:41:03,875 - INFO - ***jennifer***__@@@made labels@@@__ 33801
+2024-12-30 11:41:06,558 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33801_label.xlsx
+2024-12-30 11:52:23,932 - INFO - ***jennifer***__@@@search order@@@__ 33803
+2024-12-30 11:52:26,137 - INFO - ***jennifer***__@@@made labels@@@__ 33803
+2024-12-30 11:52:28,071 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33803_label.xlsx
+2024-12-30 11:52:31,106 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33803_label.xlsx
+2024-12-30 11:56:51,958 - INFO - ***jennifer***__@@@search order@@@__ 33815
+2024-12-30 11:56:52,886 - INFO - ***jennifer***__@@@made labels@@@__ 33815
+2024-12-30 11:56:54,094 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33815_label.xlsx
+2024-12-30 11:59:57,752 - INFO - ***jennifer***__@@@search order@@@__ 33816
+2024-12-30 11:59:58,968 - INFO - ***jennifer***__@@@made labels@@@__ 33816
+2024-12-30 12:00:02,270 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33816_label.xlsx
+2024-12-30 12:02:33,642 - INFO - ***jennifer***__@@@search order@@@__ 33812
+2024-12-30 12:02:34,748 - INFO - ***jennifer***__@@@made labels@@@__ 33812
+2024-12-30 12:02:38,316 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33812_label.xlsx
+2024-12-30 12:06:02,070 - INFO - ***jennifer***__@@@search order@@@__ 33810
+2024-12-30 12:06:04,169 - INFO - ***jennifer***__@@@made labels@@@__ 33810
+2024-12-30 12:06:06,217 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33810_label.xlsx
+2024-12-30 12:08:37,504 - INFO - ***jennifer*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 97.0.4692, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:08:47,370 - INFO - ***jennifer***__@@@search order@@@__ 33813
+2024-12-30 12:08:48,821 - INFO - ***jennifer***__@@@made labels@@@__ 33813
+2024-12-30 12:08:50,255 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33813_label.xlsx
+2024-12-30 12:11:54,255 - INFO - Location service accessed by user: yeti
+2024-12-30 12:11:58,932 - INFO - ***yeti***__@@@mobile search@@@__ T3132
+2024-12-30 12:40:11,061 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:41:53,290 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:41:53,290 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:41:54,924 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:42:02,345 - INFO - Location service accessed by user: @@@yeti@@@
+2024-12-30 12:42:37,220 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:42:37,236 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:42:39,951 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:42:45,554 - INFO - Location service accessed by user: ***yeti***
+2024-12-30 12:44:11,706 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:44:11,706 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:44:11,728 - INFO - ***Unknown*** @@@Accessed@@@ ___Location Service___
+2024-12-30 12:44:12,984 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:45:04,693 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:45:04,693 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:45:06,011 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:45:07,450 - INFO - ***yeti***___@@@Accessed@@@___Location Service
+2024-12-30 12:45:36,451 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:45:36,451 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:45:37,530 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:45:40,578 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2024-12-30 12:48:14,681 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:48:14,691 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-30 12:48:16,598 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 12:48:26,048 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2024-12-30 12:48:38,048 - INFO - ***yeti***__@@@checked boat page@@@
+2024-12-30 12:48:46,182 - INFO - ***yeti***__@@@search order@@@__ 1567
+2024-12-30 12:48:49,817 - INFO - ***yeti***__@@@made labels@@@__ 1567
+2024-12-30 12:48:54,696 - INFO - ***yeti***__@@@[Download][labels]@@@__ 1567_label.xlsx
+2024-12-30 12:49:04,674 - INFO - ***yeti***__@@@v5_listcreator@@@__n1789
+2024-12-30 12:49:14,216 - INFO - ***yeti***__@@@v5_listcreator@@@__n1765
+2024-12-30 12:49:19,216 - INFO - ***yeti***__@@@v5_listcreator@@@__en1765
+2024-12-30 12:49:21,282 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['EN1765.jpg']
+2024-12-30 12:49:24,771 - INFO - ***yeti***__@@@checked boat page@@@
+2024-12-30 12:49:54,766 - INFO - ***yeti***__@@@mobile search@@@__ n1223
+2024-12-30 12:50:01,352 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2024-12-30 12:50:05,752 - INFO - ***yeti***__@@@mobile search@@@__ l1807
+2024-12-30 12:50:19,742 - INFO - ***yeti***__@@@mobile search@@@__ l1807
+2024-12-30 12:50:29,107 - INFO - ***yeti***__@@@mobile search@@@__ l1807
+2024-12-30 12:50:41,200 - INFO - ***yeti***__@@@mobile search@@@__ l1807
+2024-12-30 13:02:15,838 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 13:02:19,146 - INFO - ***yeti***__@@@mobile search@@@__ N2149 br
+2024-12-30 13:13:04,155 - INFO - ***yeti***__@@@mobile search@@@__ N2149 br
+2024-12-30 13:13:10,175 - INFO - ***yeti***__@@@mobile search@@@__ S1245
+2024-12-30 13:13:37,226 - INFO - ***yeti***__@@@mobile search@@@__ T3449
+2024-12-30 13:13:57,676 - INFO - ***yeti***__@@@mobile search@@@__ T3224
+2024-12-30 13:15:23,594 - INFO - ***jennifer*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 97.0.4692, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 13:15:38,245 - INFO - ***jennifer***__@@@search order@@@__ 33825
+2024-12-30 13:15:39,379 - INFO - ***jennifer***__@@@made labels@@@__ 33825
+2024-12-30 13:15:43,013 - INFO - ***jennifer***__@@@search order@@@__ 33825
+2024-12-30 13:15:48,011 - INFO - ***jennifer***__@@@made labels@@@__ 33825
+2024-12-30 13:15:57,319 - INFO - ***jennifer***__@@@search order@@@__ 33826
+2024-12-30 13:15:58,490 - INFO - ***jennifer***__@@@made labels@@@__ 33826
+2024-12-30 13:15:59,917 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33826_label.xlsx
+2024-12-30 13:17:06,263 - INFO - ***jennifer***__@@@search order@@@__ 33824
+2024-12-30 13:17:07,246 - INFO - ***jennifer***__@@@made labels@@@__ 33824
+2024-12-30 13:17:08,549 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33824_label.xlsx
+2024-12-30 13:20:14,150 - INFO - ***jennifer***__@@@search order@@@__ 33802
+2024-12-30 13:20:16,078 - INFO - ***jennifer***__@@@made labels@@@__ 33802
+2024-12-30 13:20:21,535 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:20:39,884 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:23:40,900 - INFO - ***yeti***__@@@mobile search@@@__ T3258,t3186
+2024-12-30 13:27:48,691 - INFO - ***jennifer*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 97.0.4692, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 13:28:03,825 - INFO - ***jennifer***__@@@search order@@@__ 33802
+2024-12-30 13:28:04,844 - INFO - ***jennifer***__@@@made labels@@@__ 33802
+2024-12-30 13:28:06,134 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:28:14,842 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:32:20,789 - INFO - ***jennifer***__@@@search order@@@__ 33802
+2024-12-30 13:32:22,563 - INFO - ***jennifer***__@@@made labels@@@__ 33802
+2024-12-30 13:32:23,797 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:33:33,381 - INFO - ***jennifer*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 97.0.4692, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 13:33:43,298 - INFO - ***jennifer***__@@@search order@@@__ 33802
+2024-12-30 13:33:44,667 - INFO - ***jennifer***__@@@made labels@@@__ 33802
+2024-12-30 13:33:46,548 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:37:16,644 - INFO - ***jennifer*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 97.0.4692, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 13:37:25,492 - INFO - ***jennifer***__@@@search order@@@__ 33802
+2024-12-30 13:37:26,609 - INFO - ***jennifer***__@@@made labels@@@__ 33802
+2024-12-30 13:37:31,217 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:39:27,021 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33802_label.xlsx
+2024-12-30 13:48:03,714 - INFO - ***jennifer***__@@@search order@@@__ 33814
+2024-12-30 13:48:04,749 - INFO - ***jennifer***__@@@made labels@@@__ 33814
+2024-12-30 13:48:05,892 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33814_label.xlsx
+2024-12-30 13:50:38,056 - INFO - ***jennifer***__@@@search order@@@__ 33811
+2024-12-30 13:50:39,289 - INFO - ***jennifer***__@@@made labels@@@__ 33811
+2024-12-30 13:50:40,800 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33811_label.xlsx
+2024-12-30 14:31:07,859 - INFO - ***yeti***__@@@mobile search@@@__ T3186
+2024-12-30 14:31:17,343 - INFO - ***yeti***__@@@search SKU@@@__ t3186
+2024-12-30 17:13:19,622 - INFO - ***ahua*** has logged in. IP: ***219.135.198.131***, Browser: Chrome 130.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 17:13:20,124 - INFO - ***ahua***__@@@search SKU@@@__ n1223
+2024-12-30 17:18:36,311 - INFO - ***ahua***__@@@search SKU@@@__ n1223
+2024-12-30 17:40:17,271 - INFO - ***nicye*** has logged in. IP: ***115.223.182.61***, Browser: Chrome 123.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 LV to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 TQ to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 GY to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 BK to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 BR to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 PK to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 TN to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 NV to 823 1ST END
+2024-12-30 17:40:29,389 - INFO - Updated location for N1656 OL to 823 1ST END
+2024-12-30 17:40:29,402 - INFO - ***nicye***__@@@search SKU@@@__ n1656
+2024-12-30 17:42:26,471 - INFO - ***nicye***__@@@search SKU@@@__ n2136
+2024-12-30 17:42:43,023 - INFO - Updated location for N1656 LV to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 TQ to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 GY to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 BK to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 BR to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 PK to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 TN to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 NV to 823 1ST END
+2024-12-30 17:42:43,027 - INFO - Updated location for N1656 OL to 823 1ST END
+2024-12-30 17:42:43,038 - INFO - ***nicye***__@@@search SKU@@@__ n1656
+2024-12-30 17:57:04,074 - INFO - ***ahua***__@@@search SKU@@@__ n2149
+2024-12-30 18:11:44,186 - INFO - ***nicye***__@@@search SKU@@@__ n1675
+2024-12-30 18:16:37,253 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2024-12-30 22:33:46,726 - INFO - ***nicye***__@@@search SKU@@@__ n1832
+2024-12-31 00:42:36,817 - INFO - ***nicye***__@@@search SKU@@@__ t3243
+2024-12-31 00:43:14,133 - INFO - ***nicye***__@@@search SKU@@@__ n1839
+2024-12-31 03:35:12,683 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2024-12-31 10:02:24,889 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 10:02:27,605 - INFO - ***yeti***__@@@checked boat page@@@
+2024-12-31 10:08:08,026 - INFO - ***yeti***__@@@search SKU@@@__ t2806
+2024-12-31 10:10:40,196 - INFO - ***yeti***__@@@search SKU@@@__ t2936,t2946
+2024-12-31 10:11:15,080 - INFO - ***yeti***__@@@search SKU@@@__ t2936,t2946
+2024-12-31 10:39:21,391 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 10:39:24,529 - INFO - Updated location for S1186 BK to 823(F1-21,E1-3 Top)
+2024-12-31 10:39:24,529 - INFO - Updated location for S1186 TN to 823(F1-21,E1-3 Top)
+2024-12-31 10:39:24,529 - INFO - Updated location for S1186 WT to 823(F1-21,E1-3 Top)
+2024-12-31 10:39:24,529 - INFO - Updated location for S1186 BL to 823(F1-21,E1-3 Top)
+2024-12-31 10:39:24,529 - INFO - Updated location for S1186 GY to 823(F1-21,E1-3 Top)
+2024-12-31 10:39:24,529 - INFO - Updated location for S1186 PK to 823(F1-21,E1-3 Top)
+2024-12-31 10:39:24,529 - INFO - ***yeti***__@@@search SKU@@@__ s1186
+2024-12-31 10:43:32,564 - INFO - ***yeti***__@@@search SKU@@@__ s1245 st
+2024-12-31 10:56:31,272 - INFO - ***yeti*** has logged in. IP: ***172.56.234.89***, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 10:56:35,985 - INFO - ***yeti***__@@@mobile search@@@__ S1186
+2024-12-31 11:21:44,406 - INFO - ***yeti***__@@@search SKU@@@__ t3186
+2024-12-31 12:20:56,800 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 12:21:41,695 - INFO - ***yeti***__@@@mobile search@@@__ s1186
+2024-12-31 12:21:47,583 - INFO - Updated location for S1186 PK to 823(F1-21,E1-3 Top)
+2024-12-31 12:21:47,583 - INFO - Updated location for S1186 BK to 823(F1-21,E1-3 Top)
+2024-12-31 12:21:47,583 - INFO - Updated location for S1186 TN to 823(F1-21,E1-3 Top)
+2024-12-31 12:21:47,583 - INFO - Updated location for S1186 WT to 823(F1-21,E1-3 Top)
+2024-12-31 12:21:47,583 - INFO - Updated location for S1186 BL to 823(F1-21,E1-3 Top)
+2024-12-31 12:21:47,594 - INFO - Updated location for S1186 GY to 823(F1-21,E1-3 Top)
+2024-12-31 12:21:47,599 - INFO - ***yeti***__@@@search SKU@@@__ s1186
+2024-12-31 12:22:40,561 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-31 12:22:40,561 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-31 14:18:10,224 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 14:18:13,299 - INFO - ***yeti***__@@@mobile search@@@__ T3186
+2024-12-31 14:18:41,456 - INFO - ***yeti***__@@@mobile search@@@__ T3186
+2024-12-31 14:20:09,082 - INFO - ***yeti***__@@@mobile search@@@__ S1286
+2024-12-31 14:20:19,327 - INFO - ***yeti***__@@@mobile search@@@__ S1245
+2024-12-31 14:20:33,975 - INFO - ***yeti***__@@@mobile search@@@__ Es1447
+2024-12-31 14:25:47,575 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 14:25:50,357 - INFO - ***yeti***__@@@checked boat page@@@
+2024-12-31 14:29:52,073 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 14:35:32,613 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-31 14:35:32,783 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2024-12-31 14:35:35,822 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 14:36:07,220 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 14:42:48,016 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 14:52:56,193 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 14:55:45,199 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 15:09:23,206 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2024-12-31 15:09:42,229 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 15:10:26,846 - INFO - ***yeti***__@@@checked boat page@@@
+2024-12-31 15:56:49,281 - INFO - ***yeti***__@@@mobile search@@@__ t3305
+2024-12-31 15:58:51,903 - INFO - ***yeti***__@@@mobile search@@@__ n1223
+2024-12-31 16:08:42,093 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2024-12-31 16:09:04,577 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2024-12-31 16:14:42,482 - INFO - ***yeti*** has logged in. IP: ***172.56.234.165***, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-01 03:46:37,662 - INFO - ***nicye*** has logged in. IP: ***1.1.1.1, 122.239.127.58***, Browser: Edge 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-01 03:46:50,945 - INFO - ***nicye***__@@@search SKU@@@__ t3262
+2025-01-01 03:47:35,177 - INFO - ***nicye***__@@@search SKU@@@__ s1492
+2025-01-01 07:02:28,724 - INFO - ***nicye*** has logged in. IP: ***1.1.1.1, 122.239.127.58***, Browser: Edge 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-01 07:02:37,691 - INFO - ***nicye***__@@@search SKU@@@__ t3243
+2025-01-01 18:12:29,135 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2025-01-02 00:26:08,279 - INFO - ***ahua*** has logged in. IP: ***219.135.198.131***, Browser: Chrome 130.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 00:26:08,688 - INFO - ***ahua***__@@@search SKU@@@__ n2149
+2025-01-02 00:30:44,351 - INFO - ***ahua***__@@@search SKU@@@__ n1223
+2025-01-02 00:36:14,177 - INFO - ***nicye*** has logged in. IP: ***38.92.25.46***, Browser: Chrome 125.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 00:36:43,924 - INFO - ***nicye***__@@@search SKU@@@__ t3298
+2025-01-02 00:41:32,231 - INFO - ***ahua***__@@@search SKU@@@__ n1324
+2025-01-02 01:01:47,878 - INFO - ***nicye*** has logged in. IP: ***115.223.190.14***, Browser: Chrome 123.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 01:01:55,712 - INFO - ***nicye***__@@@search SKU@@@__ n1839
+2025-01-02 01:13:37,157 - INFO - ***nicye***__@@@search SKU@@@__ n1840
+2025-01-02 02:01:36,810 - INFO - ***ahua***__@@@search SKU@@@__ n1324
+2025-01-02 06:06:02,391 - INFO - ***nicye*** has logged in. IP: ***1.1.1.1, 122.239.127.58***, Browser: Edge 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 06:06:07,395 - INFO - ***nicye***__@@@search SKU@@@__ s1492
+2025-01-02 10:38:49,419 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 10:41:28,264 - INFO - ***yeti***__@@@search SKU@@@__ s1209
+2025-01-02 11:06:42,174 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 131.0.6778, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 11:06:44,619 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-02 11:06:48,904 - INFO - ***yeti***__@@@mobile search@@@__ S1209
+2025-01-02 11:23:55,683 - INFO - ***xj*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 11:24:03,334 - INFO - ***xj***__@@@v5_listcreator@@@__L1871,L1873,T3387,T3407,T3430,T3351,T3353,T3452,T3455,T3388,T3408,T3484,ET3411,ET3412,ET3437,ET3443,ET3457,T3447,L1867,T3449,M1151,M1148,EN2332,EN2161,N0896,N1123,N2193,N2246,N2280,ES1500,EN2322,EN2326,T2790,T3181,N1267,EN2334,EN2329,N2270,EN2045,N2272,EN2330,N2318,ES1374,N2262,S1510,N2276,N2312,S1507,S1235,S1459,S1426,S1290,L1687-S,L1850,L1851,L1863,L1864
+2025-01-02 11:24:21,161 - INFO - ***xj***__@@@v5_listcreator_pictures@@@__['L1871.jpg', 'L1873.jpg', 'T3387.jpg', 'T3407.jpg', 'T3430.jpg', 'T3351.jpg', 'T3353.jpg', 'T3452.jpg', 'T3455.jpg', 'T3388.jpg', 'T3408.jpg', 'T3484.jpg', 'ET3411.jpg', 'ET3412.jpg', 'ET3437.jpg', 'ET3443.jpg', 'ET3457.jpg', 'T3447.jpg', 'L1867.jpg', 'T3449.jpg', 'M1151.jpg', 'M1148.jpg', 'EN2332.jpg', 'EN2161.jpg', 'N0896.jpg', 'N1123.jpg', 'N2193.jpg', 'N2246.jpg', 'N2280.jpg', 'ES1500.jpg', 'EN2322.jpg', 'EN2326.jpg', 'T2790.jpg', 'T3181.jpg', 'N1267.jpg', 'EN2334.jpg', 'EN2329.jpg', 'N2270.jpg', 'EN2045.jpg', 'N2272.jpg', 'EN2330.jpg', 'N2318.jpg', 'ES1374.jpg', 'N2262.jpg', 'S1510.jpg', 'N2276.jpg', 'N2312.jpg', 'S1507.jpg', 'S1235.jpg', 'S1459.jpg', 'S1426.jpg', 'S1290.jpg', 'L1687.jpg', 'L1850.jpg', 'L1851.jpg', 'L1863.jpg', 'L1864.jpg']
+2025-01-02 11:24:32,977 - INFO - ***xj***__@@@[Download][List]@@@__ List-20250102-112412.xlsx
+2025-01-02 11:29:16,975 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-02 11:30:41,501 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-02 11:31:50,763 - INFO - ***yeti***__@@@search SKU@@@__ %f25116%
+2025-01-02 11:32:32,860 - INFO - ***yeti***__@@@checked boat page@@@
+2025-01-02 11:32:41,361 - INFO - ***yeti***__@@@search SKU@@@__ %f25116%
+2025-01-02 11:32:54,429 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-02 11:32:59,092 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-02 11:33:16,437 - INFO - ***xj***__@@@v5_listcreator@@@__L1872,L1846,L1847,EL1855,L1871,L1873,L1875,L1876,L1877,T3387,T3430,T3453,T3454,L0665,T2806,T2899,T2902,T2903,T2936,T2946,T2975,T2995,T3394,T3398,T3401,T3432,T3433,T3435,T3436,T3450,T3476,T3478,T3485,T3487,L0941,ET3437,ET3440,ET3443,ET3458,ET3459,M1138,EN2320,EN2332,N2289,N2298,N2305,EN2329,EN2323,S1505,S1507,N2314,N2315,S1424,S1431,S1436
+2025-01-02 11:33:27,859 - INFO - ***xj***__@@@v5_listcreator_pictures@@@__['L1872.jpg', 'L1846.jpg', 'L1847.jpg', 'EL1855.jpg', 'L1871.jpg', 'L1873.jpg', 'L1875.jpg', 'L1876.jpg', 'L1877.jpg', 'T3387.jpg', 'T3430.jpg', 'T3453.jpg', 'T3454.jpg', 'L0665.jpg', 'T2806.jpg', 'T2899.jpg', 'T2902.jpg', 'T2903.jpg', 'T2936.jpg', 'T2946.jpg', 'T2975.jpg', 'T2995.jpg', 'T3394.jpg', 'T3398.jpg', 'T3401.jpg', 'T3432.jpg', 'T3433.jpg', 'T3435.jpg', 'T3436.jpg', 'T3450.jpg', 'T3476.jpg', 'T3478.jpg', 'T3485.jpg', 'T3487.jpg', 'L0941.jpg', 'ET3437.jpg', 'ET3440.jpg', 'ET3443.jpg', 'ET3458.jpg', 'ET3459.jpg', 'M1138.jpg', 'EN2320.jpg', 'EN2332.jpg', 'N2289.jpg', 'N2298.jpg', 'N2305.jpg', 'EN2329.jpg', 'EN2323.jpg', 'S1505.jpg', 'S1507.jpg', 'N2314.jpg', 'N2315.jpg', 'S1424.jpg', 'S1431.jpg', 'S1436.jpg']
+2025-01-02 11:33:34,720 - INFO - ***yeti***__@@@search SKU@@@__ t3343
+2025-01-02 11:33:35,444 - INFO - ***xj***__@@@[Download][List]@@@__ List-20250102-113319.xlsx
+2025-01-02 11:33:38,363 - INFO - ***yeti***__@@@search SKU@@@__ t334
+2025-01-02 11:33:42,807 - INFO - ***xj***__@@@v5_listcreator_pictures@@@__['L1872.jpg', 'L1846.jpg', 'L1847.jpg', 'EL1855.jpg', 'L1871.jpg', 'L1873.jpg', 'L1875.jpg', 'L1876.jpg', 'L1877.jpg', 'T3387.jpg', 'T3430.jpg', 'T3453.jpg', 'T3454.jpg', 'L0665.jpg', 'T2806.jpg', 'T2899.jpg', 'T2902.jpg', 'T2903.jpg', 'T2936.jpg', 'T2946.jpg', 'T2975.jpg', 'T2995.jpg', 'T3394.jpg', 'T3398.jpg', 'T3401.jpg', 'T3432.jpg', 'T3433.jpg', 'T3435.jpg', 'T3436.jpg', 'T3450.jpg', 'T3476.jpg', 'T3478.jpg', 'T3485.jpg', 'T3487.jpg', 'L0941.jpg', 'ET3437.jpg', 'ET3440.jpg', 'ET3443.jpg', 'ET3458.jpg', 'ET3459.jpg', 'M1138.jpg', 'EN2320.jpg', 'EN2332.jpg', 'N2289.jpg', 'N2298.jpg', 'N2305.jpg', 'EN2329.jpg', 'EN2323.jpg', 'S1505.jpg', 'S1507.jpg', 'N2314.jpg', 'N2315.jpg', 'S1424.jpg', 'S1431.jpg', 'S1436.jpg']
+2025-01-02 11:33:47,732 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-02 11:33:56,559 - INFO - ***yeti***__@@@search SKU@@@__ t33
+2025-01-02 11:34:21,698 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-02 11:34:46,140 - INFO - No SKUs provided to fetch_locations
+2025-01-02 11:34:46,156 - INFO - ***yeti***__@@@search SKU@@@__ t3423
+2025-01-02 11:35:13,641 - INFO - ***yeti***__@@@search SKU@@@__ et3423
+2025-01-02 11:35:18,189 - INFO - ***yeti***__@@@search SKU@@@__ et342
+2025-01-02 11:36:31,084 - INFO - No SKUs provided to fetch_locations
+2025-01-02 11:36:31,090 - INFO - ***yeti***__@@@search SKU@@@__ et3243
+2025-01-02 11:37:04,026 - INFO - No SKUs provided to fetch_locations
+2025-01-02 11:37:04,026 - INFO - ***yeti***__@@@search SKU@@@__ et3243
+2025-01-02 11:37:06,449 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-02 11:38:42,110 - INFO - No SKUs provided to fetch_locations
+2025-01-02 11:38:42,110 - INFO - ***yeti***__@@@search SKU@@@__ et3243
+2025-01-02 11:38:43,234 - INFO - ***yeti***__@@@checked boat page@@@
+2025-01-02 11:38:48,609 - INFO - ***yeti***__@@@mobile search@@@__ t3243
+2025-01-02 11:39:06,289 - INFO - ***xj***__@@@v5_listcreator@@@__C:\Users\elaine.FDC\Dropbox\Elaine\LOUS
+2025-01-02 11:39:11,510 - INFO - ***xj***__@@@v5_listcreator@@@__C:\Users\elaine.FDC\Dropbox\Elaine\LOUS
+2025-01-02 11:39:31,829 - INFO - ***xj***__@@@v5_listcreator_pictures@@@__['EN1512.jpg', 'EN1858.jpg', 'EN1860.jpg', 'EN2159.jpg', 'ET3283.jpg', 'N1812.jpg', 'N2122.jpg', 'S1472_v2.jpg', 'S1475.jpg', 'T3097_v2.jpg', 'T3247_v2.jpg', 'T3275.jpg']
+2025-01-02 11:39:33,260 - INFO - ***xj***__@@@[Download][List]@@@__ List-20250102-113929.xlsx
+2025-01-02 11:39:49,785 - INFO - ***yeti***__@@@mobile search@@@__ t3243
+2025-01-02 11:55:20,572 - INFO - ***yeti***__@@@mobile search@@@__ N2087
+2025-01-02 12:06:59,103 - INFO - ***xj***__@@@v5_listcreator_pictures@@@__['EN1512.jpg', 'EN1858.jpg', 'EN1860.jpg', 'EN2159.jpg', 'ET3283.jpg', 'N1812.jpg', 'N2122.jpg', 'S1472_v2.jpg', 'S1475.jpg', 'T3097_v2.jpg', 'T3247_v2.jpg', 'T3275.jpg']
+2025-01-02 12:44:38,687 - INFO - ***yeti***__@@@search SKU@@@__ s1350
+2025-01-02 14:03:59,136 - INFO - ***yeti***__@@@search SKU@@@__ n2142
+2025-01-02 14:04:11,222 - INFO - ***yeti***__@@@search SKU@@@__ n214
+2025-01-02 14:04:16,174 - INFO - No SKUs provided to fetch_locations
+2025-01-02 14:04:16,174 - INFO - ***yeti***__@@@search SKU@@@__ s21
+2025-01-02 14:04:19,235 - INFO - ***yeti***__@@@search SKU@@@__ s12
+2025-01-02 14:04:43,269 - INFO - ***yeti***__@@@search SKU@@@__ s142
+2025-01-02 14:08:25,724 - INFO - ***yeti***__@@@search SKU@@@__ s1350
+2025-01-02 14:08:30,699 - INFO - ***yeti***__@@@search SKU@@@__ en1888
+2025-01-02 14:08:33,041 - INFO - ***yeti***__@@@search SKU@@@__ en188
+2025-01-02 14:09:30,858 - INFO - ***yeti***__@@@search SKU@@@__ en2008
+2025-01-02 14:09:37,873 - INFO - ***yeti***__@@@search SKU@@@__ en2008 tp
+2025-01-02 14:11:35,005 - INFO - ***yeti***__@@@search SKU@@@__ n1464
+2025-01-02 14:13:08,945 - INFO - ***yeti***__@@@search SKU@@@__ n1632
+2025-01-02 14:14:16,530 - INFO - ***yeti***__@@@search SKU@@@__ s1112
+2025-01-02 14:17:40,361 - INFO - ***yeti***__@@@search SKU@@@__ n1978
+2025-01-02 14:25:31,450 - INFO - ***yeti***__@@@search SKU@@@__ n2247
+2025-01-02 14:26:29,690 - INFO - ***yeti***__@@@search SKU@@@__ s1482
+2025-01-02 14:27:49,128 - INFO - ***yeti***__@@@search SKU@@@__ n1105
+2025-01-02 14:28:44,311 - INFO - ***yeti***__@@@search SKU@@@__ es1171
+2025-01-02 14:30:04,101 - INFO - ***yeti***__@@@search SKU@@@__ n1100
+2025-01-02 15:12:33,982 - INFO - ***yeti***__@@@search SKU@@@__ es1171
+2025-01-02 15:12:39,727 - INFO - ***yeti***__@@@search SKU@@@__ n1105
+2025-01-02 16:19:06,802 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login

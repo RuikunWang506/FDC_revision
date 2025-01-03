@@ -44,7 +44,7 @@ from macy_special import process_orders
 from loris_sticker import main, process_input_data
 from products import products_bp
 from util import resize_image  # Import the master resizing function
-
+from datetime import timedelta
 
 
 client = WebClient(token=Config.SLACK_TOKEN)
@@ -59,6 +59,8 @@ def register_routes(app):
     app.register_blueprint(boat_service_bp)
     app.register_blueprint(chatgpt_bp)
     app.register_blueprint(mobile_lite_bp)
+
+    app.permanent_session_lifetime = timedelta(days=30)
 
 
 
@@ -80,8 +82,16 @@ def register_routes(app):
         )
 
     def get_location(ip):
-        response = requests.get(f'http://ip-api.com/json/{ip}')
-        return response.json()
+        try:
+            response = requests.get(f'http://ip-api.com/json/{ip}')
+            if response.status_code == 200:
+                return response.json()
+            else:
+                app.logger.warning(f"Failed to get location for IP: {ip}")
+                return {}
+        except Exception as e:
+            app.logger.error(f"Error fetching location data: {e}")
+            return {}
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
@@ -102,8 +112,15 @@ def register_routes(app):
         if request.method == "POST":
             username = request.form.get("username")
             password = request.form.get("password")
+            remember = request.form.get("remember")  # Retrieve 'remember' value
+            
             if check_credentials(username, password):
                 session['username'] = username
+                if remember:
+                    session.permanent = True  # Make the session permanent
+                else:
+                    session.permanent = False  # Session expires on browser close
+                
                 flash(f"Logged in as {username}")
                 log_user_activity(username)
                 
@@ -120,6 +137,7 @@ def register_routes(app):
         session.pop('username', None)
         flash("Logged out")
         return redirect(url_for("login"))
+
 
     @app.route("/", methods=["GET", "POST"])
     def home():
@@ -186,31 +204,24 @@ def register_routes(app):
             placeholders = ', '.join(['%s'] * len(skus))
             query = f"SELECT SKU, Location FROM products WHERE SKU IN ({placeholders})"
             
-            app.logger.info(f"Executing query: {query}")
-            app.logger.info(f"With SKUs: {skus}")
             
             cursor.execute(query, skus)
             results = cursor.fetchall()
-            app.logger.info(f"Initial query results: {results}")
             
             for sku, location in results:
                 location_dict[sku.lower()] = location
-                app.logger.info(f"Mapped SKU {sku.lower()} to location {location}")
             
             for sku in skus:
                 if sku.lower() not in location_dict or not location_dict[sku.lower()]:
                     stripped_sku = sku.split(' ')[0]
                     if stripped_sku != sku:
-                        app.logger.info(f"Trying stripped SKU: {stripped_sku} for original SKU: {sku}")
                         cursor.execute(
                             "SELECT SKU, Location, Update_Date FROM products WHERE SKU = %s",
                             (stripped_sku,)
                         )
                         result = cursor.fetchone()
-                        app.logger.info(f"Stripped SKU query result: {result}")
                         if result:
                             location_dict[sku.lower()] = result[1]
-                            app.logger.info(f"Updated location for {sku.lower()} to {result[1]}")
         
         except Error as e:
             app.logger.error(f"Error fetching locations: {e}")
@@ -219,9 +230,7 @@ def register_routes(app):
                 cursor.close()
             if connection and connection.is_connected():
                 connection.close()
-                app.logger.info("Database connection closed")
         
-        app.logger.info(f"Final location dictionary: {location_dict}")
         return location_dict
 
     # Ensure the output directory exists
@@ -262,7 +271,6 @@ def register_routes(app):
         excel_html, history_html, _, user_input = SQL_connector.generate_excel(user_input)
 
         if not excel_html and not history_html:  # If no valid data is found
-            app.logger.info("No valid data to display for input: %s", user_input)
             return render_template("Item_lookup.html", excel_html=None, history_html=None, current_user=current_user, user_input=user_input)
 
         # Process excel_html to add Location and Update_Date columns
@@ -277,7 +285,6 @@ def register_routes(app):
             if 'SKU' in df.columns:
                 skus = df['SKU'].astype(str).str.lower().tolist()
             else:
-                app.logger.error("SKU column not found in the DataFrame.")
                 skus = []
 
             # Fetch locations and update dates using the helper function
@@ -386,7 +393,6 @@ def register_routes(app):
         location = data.get('location')
 
         if not sku or not style:
-            app.logger.warning(f"Missing SKU or Style in update_location request: SKU={sku}, Style={style}")
             return jsonify({'success': False, 'message': 'SKU or Style is missing.'}), 400
 
         def connect_to_db():
@@ -394,26 +400,22 @@ def register_routes(app):
             try:
                 return get_db_connection()
             except Error as e:
-                app.logger.error(f"Database connection error: {e}")
                 return None
 
         def check_product_exists(cursor, sku, style):
             """Check if the product exists in the database."""
             select_query = "SELECT * FROM products WHERE SKU = %s AND Style = %s"
-            app.logger.debug(f"Executing SELECT query: {select_query} with SKU={sku} and Style={style}")
             cursor.execute(select_query, (sku, style))
             return cursor.fetchone()
 
         def update_product_location(cursor, location, sku, style):
             """Update the location for an existing product."""
             update_query = "UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s"
-            app.logger.debug(f"Executing UPDATE query: {update_query} for SKU={sku}, Style={style}")
             cursor.execute(update_query, (location, sku, style))
 
         def insert_new_product(cursor, sku, style, location):
             """Insert a new product into the database."""
             insert_query = "INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW())"
-            app.logger.debug(f"Executing INSERT query: {insert_query} for SKU={sku}, Style={style}")
             cursor.execute(insert_query, (sku, style, location))
 
         connection = connect_to_db()
@@ -430,7 +432,6 @@ def register_routes(app):
                 old_location = product.get('Location', 'N/A')  # Default to 'N/A' if Location is None
                 update_product_location(cursor, location, sku, style)
                 connection.commit()
-                app.logger.info(f"Location updated for SKU={sku}, Style={style} from '{old_location}' to '{location}'.")
             else:
                 insert_new_product(cursor, sku, style, location)
                 connection.commit()

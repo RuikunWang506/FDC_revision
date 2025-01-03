@@ -52,7 +52,7 @@ def allowed_file(filename):
 
 @location_service_bp.route('/location_service', methods=['GET', 'POST'])
 def location_service():
-    current_app.logger.info(f"Location service accessed by user: {session.get('username', 'Unknown')}")
+    current_app.logger.info(f"***{session.get('username', 'Unknown')}***___@@@Accessed@@@__Location Service")
 
     allowed_ip = '173.198.50.202'
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
