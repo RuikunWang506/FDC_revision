@@ -188,32 +188,24 @@
                 <p>Styles found: {{ style_count }}</p>
 
                 <div class="btn-group mt-2">
-                    <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success mx-2">Download The List</a>
+                    <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success mx-2">📋Download List📋</a>
                     <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">
                         <input type="hidden" name="user_input" value="{{ user_input|default('', true) }}">
                         <input type="hidden" name="image_type" value="resized">
                         <input type="hidden" name="selected_images" value="{{ selected_images|join(',') }}">
                         <input type="hidden" name="image_size" value="{{ image_size }}">
-                        <button type="submit" class="btn btn-success mx-2">Download Selected Images</button>
+                        <button type="submit" class="btn btn-warning mx-2">🖼️Download Images🖼️</button>
                     </form>
                     <form method="POST" action="{{ url_for('download_pdf') }}" style="display: inline;">
                         <input type="hidden" name="user_input" value="{{ user_input|default('', true) }}">
                         <input type="hidden" name="selected_images" value="{{ selected_images|join(',') }}">
                         <input type="hidden" name="image_size" value="{{ image_size }}">
-                        <button type="submit" class="btn btn-danger mx-2">Download PDF Catalog</button>
+                        <button type="submit" class="btn btn-danger mx-2">📕Download PDF📕</button>
                     </form>
-                    <button type="button" class="btn btn-primary mx-2" id="download-dropbox-btn">Download Dropbox Image</button>
                 </div>
             </div>
             
-            <!-- Pop-up Modal -->
-            <div id="dropboxModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h1 class="cool-effect">Do it yourself!!!</h1>
-                    <p class="cool-effect">You have the Dropbox link, bro!!</p>
-                </div>
-            </div>
+
         {% endif %}
         
         {% if images %}
@@ -303,24 +295,7 @@
         updateItemCount(this.value);
     });
 </script>
-<script>
-    document.getElementById('download-dropbox-btn').onclick = function() {
-        var modal = document.getElementById("dropboxModal");
-        modal.style.display = "block";
-    }
-    
-    document.getElementsByClassName("close")[0].onclick = function() {
-        var modal = document.getElementById("dropboxModal");
-        modal.style.display = "none";
-    }
-    
-    window.onclick = function(event) {
-        var modal = document.getElementById("dropboxModal");
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-    </script>
+
 
 
 </body>

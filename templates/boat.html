@@ -126,19 +126,22 @@
                 if (eta) $(this).find('td:nth-child(4)').text(formatDate(eta));
                 if (rcd) $(this).find('td:nth-child(5)').text(formatDate(rcd));
 
+                
+
                 // Apply status classes
                 if (status === '🚢ocean🚢') {
                     $(this).addClass('status-ocean');
+                        if (memo1 !== '') {
+                        $(this).addClass('status-memo');
+                    }
+                    if (reserved !== '') {
+                        $(this).addClass('status-memo');
+                    }
                 } else if (status === '📍landed📍') {
                     $(this).addClass('status-landed');
                 }
 
-                if (memo1 !== '') {
-                    $(this).addClass('status-memo');
-                }
-                if (reserved !== '') {
-                    $(this).addClass('status-memo');
-                }
+                
             });
         });
       </script>

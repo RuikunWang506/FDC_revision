@@ -728,33 +728,42 @@ def register_routes(app):
 
     @app.route('/download_pdf', methods=['POST'])
     def download_pdf():
-            if 'username' not in session:
-                return redirect(url_for("login"))
-            
-            selected_images = request.form.get('selected_images', '').split(',')
-            image_size = request.form.get('image_size')
-            
-            pdf_filename = f"catalog_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            pdf_path = os.path.join("output", "list_output", pdf_filename)
-            
-            processed_images = []
-            for image_name in selected_images:
-                if image_name:
-                    image_path = os.path.join(Config.CATALOG_ORIGINAL, image_name)
-                    if os.path.exists(image_path):
-                        with open(image_path, 'rb') as img_file:
-                            if image_size and image_size != 'full':
-                                buffer = resize_image(img_file, int(image_size))
-                                processed_images.append(buffer)
-                            else:
-                                processed_images.append(img_file.read())
-            
-            generate_catalog_pdf(processed_images, pdf_path, image_size, selected_images)
-            
-            return send_file(pdf_path, as_attachment=True, download_name=pdf_filename)
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        
+        selected_images = request.form.get('selected_images', '').split(',')
+        image_size = request.form.get('image_size')
+        
+        # Create PDF in memory
+        memory_file = io.BytesIO()
+        
+        processed_images = []
+        for image_name in selected_images:
+            if image_name:
+                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_name)
+                if os.path.exists(image_path):
+                    with open(image_path, 'rb') as img_file:
+                        if image_size and image_size != 'full':
+                            buffer = resize_image(img_file, int(image_size))
+                            processed_images.append(buffer)
+                        else:
+                            processed_images.append(img_file.read())
+        
+        generate_catalog_pdf(processed_images, memory_file, image_size, selected_images)
+        
+        # Prepare the memory file for reading
+        memory_file.seek(0)
+        
+        pdf_filename = f"catalog_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        return send_file(
+            memory_file,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=pdf_filename
+        )
 
-    def generate_catalog_pdf(image_data_list, output_path, image_size='full', selected_images=[]):
-        c = canvas.Canvas(output_path, pagesize=landscape(letter))
+    def generate_catalog_pdf(image_data_list, output_buffer, image_size='full', selected_images=[]):
+        c = canvas.Canvas(output_buffer, pagesize=landscape(letter))
         c.setTitle("Catalog Pictures")
         
         # Cover page
@@ -779,18 +788,16 @@ def register_routes(app):
             width = max_width
             height = width * aspect
             
-            # Center image horizontally and place it higher to make room for text
             x = (landscape(letter)[0] - width) / 2
-            y = (landscape(letter)[1] - height) / 2 + 50  # Move image up by 50 points
+            y = (landscape(letter)[1] - height) / 2 + 50
             
             c.drawImage(img, x, y, width=width, height=height)
             
-            # Add style text below the image
-            style_name = os.path.splitext(image_name)[0]  # Remove .jpg extension
+            style_name = os.path.splitext(image_name)[0]
             c.setFont("Helvetica-Bold", 20)
             text_width = c.stringWidth(style_name, "Helvetica-Bold", 20)
-            text_x = (landscape(letter)[0] - text_width) / 2  # Center text
-            text_y = y - 30  # Position text below image
+            text_x = (landscape(letter)[0] - text_width) / 2
+            text_y = y - 30
             c.drawString(text_x, text_y, style_name)
             
             c.showPage()
