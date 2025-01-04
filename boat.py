@@ -13,7 +13,7 @@ boat_service_bp = Blueprint('boat_service', __name__, template_folder='../templa
 server = "192.168.254.204"
 database_fdc = "omsdata_FDC"
 username = "tristen"
-password = 'Qwer1234##'
+password = 'Fdc2022!!'
 driver = 'ODBC Driver 17 for SQL Server'
 
 conn_str = (

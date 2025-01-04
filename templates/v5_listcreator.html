@@ -189,12 +189,18 @@
 
                 <div class="btn-group mt-2">
                     <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success mx-2">Download The List</a>
-                    <form method="POST" action="{{ url_for('download_images') }}">
+                    <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">
                         <input type="hidden" name="user_input" value="{{ user_input|default('', true) }}">
                         <input type="hidden" name="image_type" value="resized">
                         <input type="hidden" name="selected_images" value="{{ selected_images|join(',') }}">
                         <input type="hidden" name="image_size" value="{{ image_size }}">
-                        <button type="submit" class="btn btn-success">Download Selected Images</button>
+                        <button type="submit" class="btn btn-success mx-2">Download Selected Images</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('download_pdf') }}" style="display: inline;">
+                        <input type="hidden" name="user_input" value="{{ user_input|default('', true) }}">
+                        <input type="hidden" name="selected_images" value="{{ selected_images|join(',') }}">
+                        <input type="hidden" name="image_size" value="{{ image_size }}">
+                        <button type="submit" class="btn btn-danger mx-2">Download PDF Catalog</button>
                     </form>
                     <button type="button" class="btn btn-primary mx-2" id="download-dropbox-btn">Download Dropbox Image</button>
                 </div>
@@ -214,6 +220,10 @@
             <div class="container mt-5" id="imageSelectionForm">
                 <h3>Select One Image for Excel</h3>
                 <form method="POST" action="/v5_listcreator/finalize">
+                    <input type="hidden" name="user_input" value="{{ user_input }}">
+                    <input type="hidden" name="image_option" value="{{ image_option }}">
+                    <input type="hidden" name="original_filename" value="{{ filename }}">
+                    <input type="hidden" name="selected_images" value="{{ selected_images|join(',') if selected_images else '' }}">
                     <div class="row justify-content-center">
                         <div class="form-group text-center mb-8">
                             <label for="image_size" class="d-block"><h3>Select Image Size:</h3></label>

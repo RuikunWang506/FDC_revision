@@ -44,7 +44,12 @@ from macy_special import process_orders
 from loris_sticker import main, process_input_data
 from products import products_bp
 from util import resize_image  # Import the master resizing function
-from datetime import timedelta
+from datetime import timedelta,datetime
+
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.utils import ImageReader
 
 
 client = WebClient(token=Config.SLACK_TOKEN)
@@ -713,12 +718,84 @@ def register_routes(app):
                                 images=images,
                                 selected_images=selected_images,
                                 image_size=display_image_size,
-                                style_count=style_count)  # Added style count to template
+                                style_count=style_count,
+                                show_input_form=False)  # Add this line to prevent showing input form
 
         except Exception as e:
             app.logger.error(f"Error in finalize_v5_listcreator: {str(e)}")
             flash(f"An error occurred: {str(e)}")
             return redirect(url_for("v5_listcreator"))
+
+    @app.route('/download_pdf', methods=['POST'])
+    def download_pdf():
+            if 'username' not in session:
+                return redirect(url_for("login"))
+            
+            selected_images = request.form.get('selected_images', '').split(',')
+            image_size = request.form.get('image_size')
+            
+            pdf_filename = f"catalog_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            pdf_path = os.path.join("output", "list_output", pdf_filename)
+            
+            processed_images = []
+            for image_name in selected_images:
+                if image_name:
+                    image_path = os.path.join(Config.CATALOG_ORIGINAL, image_name)
+                    if os.path.exists(image_path):
+                        with open(image_path, 'rb') as img_file:
+                            if image_size and image_size != 'full':
+                                buffer = resize_image(img_file, int(image_size))
+                                processed_images.append(buffer)
+                            else:
+                                processed_images.append(img_file.read())
+            
+            generate_catalog_pdf(processed_images, pdf_path, image_size, selected_images)
+            
+            return send_file(pdf_path, as_attachment=True, download_name=pdf_filename)
+
+    def generate_catalog_pdf(image_data_list, output_path, image_size='full', selected_images=[]):
+        c = canvas.Canvas(output_path, pagesize=landscape(letter))
+        c.setTitle("Catalog Pictures")
+        
+        # Cover page
+        c.setFont("Helvetica-Bold", 36)
+        c.drawString(100, 550, "Catalog Pictures")
+        c.setFont("Helvetica-Bold", 24)
+        c.drawString(100, 500, "Product Catalog")
+        c.setFont("Helvetica", 16)
+        c.drawString(100, 450, f"Created Date: {datetime.now().strftime('%Y-%m-%d')}")
+        c.drawString(100, 400, "Exclusive Access – Please Refrain from Sharing outside of Company")
+        resolution_text = f"Image Resolution: {image_size}px" if image_size != 'full' else "Image Resolution: Original Size"
+        c.drawString(100, 350, resolution_text)
+        c.showPage()
+        
+        # Process each image and add style text
+        for img_data, image_name in zip(image_data_list, selected_images):
+            img = ImageReader(io.BytesIO(img_data.getvalue() if hasattr(img_data, 'getvalue') else img_data))
+            img_width, img_height = img.getSize()
+            aspect = img_height / float(img_width)
+            
+            max_width = 700
+            width = max_width
+            height = width * aspect
+            
+            # Center image horizontally and place it higher to make room for text
+            x = (landscape(letter)[0] - width) / 2
+            y = (landscape(letter)[1] - height) / 2 + 50  # Move image up by 50 points
+            
+            c.drawImage(img, x, y, width=width, height=height)
+            
+            # Add style text below the image
+            style_name = os.path.splitext(image_name)[0]  # Remove .jpg extension
+            c.setFont("Helvetica-Bold", 20)
+            text_width = c.stringWidth(style_name, "Helvetica-Bold", 20)
+            text_x = (landscape(letter)[0] - text_width) / 2  # Center text
+            text_y = y - 30  # Position text below image
+            c.drawString(text_x, text_y, style_name)
+            
+            c.showPage()
+        
+        c.save()
         
     @app.route('/download_images', methods=['POST'])
     def download_images():

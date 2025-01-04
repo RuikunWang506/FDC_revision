@@ -897,7 +897,7 @@
                         return;
                     }
 
-                    fetch('/update_location', {
+                    fetch('/update_mobile_location', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -1030,7 +1030,7 @@
 
                     const updatePromises = Array.from(skuElements).map(element => {
                         const sku = element.dataset.sku;
-                        return fetch('/update_location', {
+                        return fetch('/update_mobile_location', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',

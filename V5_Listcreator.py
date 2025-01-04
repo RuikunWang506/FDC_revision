@@ -66,7 +66,7 @@ def main(image_size=400):
     database_fdc = "omsdata_FDC"
     database_oms_ef = "oms_EF"
     username = "tristen"
-    password = 'Qwer1234##'
+    password = 'Fdc2022!!'
     driver = 'ODBC Driver 17 for SQL Server'
 
     try:
@@ -214,7 +214,7 @@ def reduce_image_quality(image_path, quality=20):
     image.save(buffer, format='JPEG', quality=quality)
     buffer.seek(0)
     return buffer
-
+ 
 def add_data_to_excel_sheet(sku_name, ws, row, existing_wb, image_size):
     global source_folder, selected_images  # Change from selected_image to selected_images
     
@@ -368,6 +368,10 @@ def generate_image_sheet(combined_results, user_input_list, image_size):
     new_ws['A1'].fill = highlight_fill
     set_border(new_ws, 'A1:L' + str(new_ws.max_row))
     existing_wb.save(os.path.join("output", "list_output", formatted_date + ".xlsx"))
+
+
+
+
 
 if __name__ == "__main__":
     main()

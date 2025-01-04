@@ -16,7 +16,7 @@ server = "192.168.254.204"
 database_fdc = "omsdata_FDC"
 database_oms_ef = "oms_EF"
 username = "tristen"
-password = 'Qwer1234##'
+password = 'Fdc2022!!'
 driver = 'ODBC Driver 17 for SQL Server'
 
 # MySQL Configuration
@@ -385,8 +385,8 @@ def update_package():
         for conn in connections:
             conn.close()
 
-@mobile_lite_bp.route('/update_location', methods=['POST'])
-def update_location():
+@mobile_lite_bp.route('/update_mobile_location', methods=['POST'])
+def update_mobile_location():
     # Strip leading/trailing spaces from input fields
     sku = request.form.get('sku', '').strip()
     style = request.form.get('style', '').strip()

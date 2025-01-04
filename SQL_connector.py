@@ -10,7 +10,7 @@ server = "192.168.254.204"
 database_fdc = "omsdata_FDC"
 database_oms_ef = "oms_EF"
 username = "tristen"
-password = 'Qwer1234##'
+password = 'Fdc2022!!'
 driver = 'ODBC Driver 17 for SQL Server'
 
 def sort_filenames(file_names):

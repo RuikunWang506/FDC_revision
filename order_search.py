@@ -5,7 +5,7 @@ import os
 # Replace these values with your actual SQL Server connection details for omsdata_FDC and oms_EF databases
 server = "192.168.254.204"
 username = "tristen"
-password = 'Qwer1234##'
+password = 'Fdc2022!!'
 
 driver = 'ODBC Driver 17 for SQL Server'  # Replace 'xx' with the appropriate version number
 

@@ -21249,3 +21249,577 @@ WHERE prod_cd = 'N2149 BR';
 2025-01-02 15:12:33,982 - INFO - ***yeti***__@@@search SKU@@@__ es1171
 2025-01-02 15:12:39,727 - INFO - ***yeti***__@@@search SKU@@@__ n1105
 2025-01-02 16:19:06,802 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 16:37:08,328 - INFO - ***yeti***__@@@v5_listcreator@@@__n2142,s1350,en1888,en2008,n1464,n1632,s1112,n1978,n2247,s1482,n1105,es1171,n1100,n1105
+2025-01-02 16:37:15,085 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['N2142.jpg', 'S1350.jpg', 'EN1888.jpg', 'EN2008.jpg', 'N1464.jpg', 'N1632.jpg', 'S1112.jpg', 'N1978.jpg', 'N2247.jpg', 'S1482.jpg', 'N1105.jpg', 'ES1171.jpg', 'N1100.jpg']
+2025-01-02 16:37:16,280 - INFO - ***yeti***__@@@[Download][List]@@@__ List-20250102-163712.xlsx
+2025-01-02 16:39:19,838 - INFO - ***yeti***__@@@search SKU@@@__ n2142,s1350,en1888,en2008,n1464,n1632,s1112,n1978,n2247,s1482,n1105,es1171,n1100,n1105
+2025-01-02 16:54:13,254 - WARNING - Failed to get location for IP: 172.253.216.56
+2025-01-02 16:54:13,254 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 16:54:13,271 - WARNING - Failed to get location for IP: 74.125.184.176
+2025-01-02 16:54:13,326 - WARNING - Failed to get location for IP: 172.253.192.118
+2025-01-02 16:54:13,337 - WARNING - Failed to get location for IP: 172.253.220.233
+2025-01-02 16:54:13,342 - WARNING - Failed to get location for IP: 172.253.220.225
+2025-01-02 16:54:13,342 - WARNING - Failed to get location for IP: 172.253.220.232
+2025-01-02 16:54:13,405 - WARNING - Failed to get location for IP: 172.253.192.240
+2025-01-02 16:54:13,405 - WARNING - Failed to get location for IP: 74.125.19.46
+2025-01-02 16:54:13,436 - WARNING - Failed to get location for IP: 172.253.216.50
+2025-01-02 16:54:13,451 - WARNING - Failed to get location for IP: 74.125.184.176
+2025-01-02 16:54:13,537 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:13,637 - WARNING - Failed to get location for IP: 172.253.220.226
+2025-01-02 16:54:13,643 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:13,643 - WARNING - Failed to get location for IP: 172.253.220.236
+2025-01-02 16:54:13,687 - WARNING - Failed to get location for IP: 172.253.192.125
+2025-01-02 16:54:13,707 - WARNING - Failed to get location for IP: 172.253.240.64
+2025-01-02 16:54:13,707 - WARNING - Failed to get location for IP: 172.253.192.243
+2025-01-02 16:54:13,707 - WARNING - Failed to get location for IP: 172.253.192.242
+2025-01-02 16:54:13,723 - WARNING - Failed to get location for IP: 172.253.15.234
+2025-01-02 16:54:13,755 - WARNING - Failed to get location for IP: 172.253.15.236
+2025-01-02 16:54:13,771 - WARNING - Failed to get location for IP: 172.253.234.249
+2025-01-02 16:54:13,771 - WARNING - Failed to get location for IP: 172.253.216.59
+2025-01-02 16:54:13,915 - WARNING - Failed to get location for IP: 172.253.220.234
+2025-01-02 16:54:13,915 - WARNING - Failed to get location for IP: 172.253.192.250
+2025-01-02 16:54:14,009 - WARNING - Failed to get location for IP: 74.125.184.185
+2025-01-02 16:54:14,025 - WARNING - Failed to get location for IP: 172.253.216.53
+2025-01-02 16:54:14,025 - WARNING - Failed to get location for IP: 74.125.19.47
+2025-01-02 16:54:14,041 - WARNING - Failed to get location for IP: 172.253.216.61
+2025-01-02 16:54:14,071 - WARNING - Failed to get location for IP: 172.253.220.226
+2025-01-02 16:54:14,121 - WARNING - Failed to get location for IP: 172.253.192.113
+2025-01-02 16:54:14,121 - WARNING - Failed to get location for IP: 172.253.234.248
+2025-01-02 16:54:14,171 - WARNING - Failed to get location for IP: 172.253.234.252
+2025-01-02 16:54:14,171 - WARNING - Failed to get location for IP: 74.125.184.180
+2025-01-02 16:54:14,171 - WARNING - Failed to get location for IP: 172.253.216.61
+2025-01-02 16:54:14,171 - WARNING - Failed to get location for IP: 172.253.221.69
+2025-01-02 16:54:14,184 - WARNING - Failed to get location for IP: 172.253.221.72
+2025-01-02 16:54:14,184 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:14,200 - WARNING - Failed to get location for IP: 172.253.221.74
+2025-01-02 16:54:14,204 - WARNING - Failed to get location for IP: 74.125.184.176
+2025-01-02 16:54:14,205 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 16:54:14,248 - WARNING - Failed to get location for IP: 74.125.184.188
+2025-01-02 16:54:14,254 - WARNING - Failed to get location for IP: 172.253.216.48
+2025-01-02 16:54:14,254 - WARNING - Failed to get location for IP: 172.253.216.60
+2025-01-02 16:54:14,254 - WARNING - Failed to get location for IP: 172.253.192.254
+2025-01-02 16:54:14,271 - WARNING - Failed to get location for IP: 74.125.184.179
+2025-01-02 16:54:14,287 - WARNING - Failed to get location for IP: 74.125.184.190
+2025-01-02 16:54:14,305 - WARNING - Failed to get location for IP: 172.253.221.69
+2025-01-02 16:54:14,312 - WARNING - Failed to get location for IP: 172.253.220.233
+2025-01-02 16:54:14,312 - WARNING - Failed to get location for IP: 172.253.216.50
+2025-01-02 16:54:14,312 - WARNING - Failed to get location for IP: 172.253.220.230
+2025-01-02 16:54:14,312 - WARNING - Failed to get location for IP: 74.125.184.188
+2025-01-02 16:54:14,312 - WARNING - Failed to get location for IP: 172.253.220.239
+2025-01-02 16:54:14,312 - WARNING - Failed to get location for IP: 172.253.221.78
+2025-01-02 16:54:14,337 - WARNING - Failed to get location for IP: 172.253.220.226
+2025-01-02 16:54:14,337 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:14,344 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 16:54:14,360 - WARNING - Failed to get location for IP: 172.253.220.227
+2025-01-02 16:54:14,376 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 16:54:14,376 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:14,376 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:14,376 - WARNING - Failed to get location for IP: 172.253.220.233
+2025-01-02 16:54:14,440 - WARNING - Failed to get location for IP: 172.253.220.234
+2025-01-02 16:54:14,440 - WARNING - Failed to get location for IP: 172.253.240.64
+2025-01-02 16:54:14,440 - WARNING - Failed to get location for IP: 172.253.216.60
+2025-01-02 16:54:14,471 - WARNING - Failed to get location for IP: 172.253.220.238
+2025-01-02 16:54:14,471 - WARNING - Failed to get location for IP: 74.125.184.182
+2025-01-02 16:54:14,471 - WARNING - Failed to get location for IP: 172.253.216.50
+2025-01-02 16:54:14,471 - WARNING - Failed to get location for IP: 172.253.220.224
+2025-01-02 16:54:14,487 - WARNING - Failed to get location for IP: 172.253.216.51
+2025-01-02 16:54:14,487 - WARNING - Failed to get location for IP: 74.125.184.184
+2025-01-02 16:54:14,518 - WARNING - Failed to get location for IP: 172.253.240.64
+2025-01-02 16:54:14,534 - WARNING - Failed to get location for IP: 74.125.184.188
+2025-01-02 16:54:14,534 - WARNING - Failed to get location for IP: 74.125.184.190
+2025-01-02 16:54:14,550 - WARNING - Failed to get location for IP: 74.125.184.186
+2025-01-02 16:54:14,565 - WARNING - Failed to get location for IP: 172.253.192.114
+2025-01-02 16:54:14,565 - WARNING - Failed to get location for IP: 172.253.216.63
+2025-01-02 16:54:14,565 - WARNING - Failed to get location for IP: 172.253.216.50
+2025-01-02 16:54:14,597 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 16:54:14,597 - WARNING - Failed to get location for IP: 172.253.192.118
+2025-01-02 16:54:14,606 - WARNING - Failed to get location for IP: 172.253.216.51
+2025-01-02 16:54:14,606 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 16:54:14,628 - WARNING - Failed to get location for IP: 172.253.221.72
+2025-01-02 16:54:14,628 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 16:54:14,628 - WARNING - Failed to get location for IP: 172.253.192.255
+2025-01-02 16:54:14,628 - WARNING - Failed to get location for IP: 172.253.220.236
+2025-01-02 16:54:14,644 - WARNING - Failed to get location for IP: 172.253.192.254
+2025-01-02 16:54:14,644 - WARNING - Failed to get location for IP: 172.253.234.210
+2025-01-02 16:54:14,644 - WARNING - Failed to get location for IP: 172.253.192.125
+2025-01-02 16:54:14,644 - WARNING - Failed to get location for IP: 172.253.220.236
+2025-01-02 16:54:14,708 - WARNING - Failed to get location for IP: 172.253.240.64
+2025-01-02 16:54:14,708 - WARNING - Failed to get location for IP: 172.253.234.248
+2025-01-02 16:54:14,708 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:14,708 - WARNING - Failed to get location for IP: 172.253.220.236
+2025-01-02 16:54:14,708 - WARNING - Failed to get location for IP: 74.125.184.185
+2025-01-02 16:54:14,724 - WARNING - Failed to get location for IP: 172.253.216.50
+2025-01-02 16:54:14,757 - WARNING - Failed to get location for IP: 172.253.240.64
+2025-01-02 16:54:14,773 - WARNING - Failed to get location for IP: 172.253.216.48
+2025-01-02 16:54:14,773 - WARNING - Failed to get location for IP: 74.125.19.47
+2025-01-02 16:54:14,773 - WARNING - Failed to get location for IP: 172.253.216.60
+2025-01-02 16:54:14,773 - WARNING - Failed to get location for IP: 172.253.192.247
+2025-01-02 16:54:14,773 - WARNING - Failed to get location for IP: 172.253.216.50
+2025-01-02 16:54:14,806 - WARNING - Failed to get location for IP: 74.125.19.34
+2025-01-02 16:54:14,806 - WARNING - Failed to get location for IP: 74.125.184.180
+2025-01-02 16:54:14,806 - WARNING - Failed to get location for IP: 172.253.234.247
+2025-01-02 16:54:14,837 - WARNING - Failed to get location for IP: 172.253.192.250
+2025-01-02 16:54:14,837 - WARNING - Failed to get location for IP: 172.253.216.57
+2025-01-02 16:54:14,852 - WARNING - Failed to get location for IP: 74.125.184.183
+2025-01-02 16:54:14,871 - WARNING - Failed to get location for IP: 74.125.184.182
+2025-01-02 16:54:14,900 - WARNING - Failed to get location for IP: 172.253.216.54
+2025-01-02 16:54:14,906 - WARNING - Failed to get location for IP: 74.125.184.186
+2025-01-02 16:54:14,932 - WARNING - Failed to get location for IP: 172.253.220.226
+2025-01-02 16:54:14,948 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:14,948 - WARNING - Failed to get location for IP: 172.253.192.255
+2025-01-02 16:54:14,963 - WARNING - Failed to get location for IP: 172.253.240.65
+2025-01-02 16:54:14,963 - WARNING - Failed to get location for IP: 172.253.216.58
+2025-01-02 16:54:14,995 - WARNING - Failed to get location for IP: 172.253.192.126
+2025-01-02 16:54:15,037 - WARNING - Failed to get location for IP: 74.125.184.186
+2025-01-02 16:54:15,171 - WARNING - Failed to get location for IP: 172.253.221.74
+2025-01-02 16:54:15,207 - WARNING - Failed to get location for IP: 172.253.216.60
+2025-01-02 16:54:15,207 - WARNING - Failed to get location for IP: 172.253.216.51
+2025-01-02 16:54:15,221 - WARNING - Failed to get location for IP: 172.253.234.247
+2025-01-02 16:54:15,238 - WARNING - Failed to get location for IP: 172.253.216.63
+2025-01-02 16:54:15,254 - WARNING - Failed to get location for IP: 172.253.192.254
+2025-01-02 16:54:15,254 - WARNING - Failed to get location for IP: 74.125.184.189
+2025-01-02 16:54:15,254 - WARNING - Failed to get location for IP: 172.253.192.118
+2025-01-02 16:54:15,287 - WARNING - Failed to get location for IP: 74.125.184.177
+2025-01-02 16:54:15,298 - WARNING - Failed to get location for IP: 172.253.240.64
+2025-01-02 16:54:15,378 - WARNING - Failed to get location for IP: 172.253.220.231
+2025-01-02 16:54:15,384 - WARNING - Failed to get location for IP: 172.253.216.54
+2025-01-02 16:54:15,425 - WARNING - Failed to get location for IP: 172.253.220.226
+2025-01-02 16:54:15,457 - WARNING - Failed to get location for IP: 172.253.220.239
+2025-01-02 16:54:15,537 - WARNING - Failed to get location for IP: 172.253.220.233
+2025-01-02 16:54:15,587 - WARNING - Failed to get location for IP: 172.253.192.124
+2025-01-02 16:54:15,587 - WARNING - Failed to get location for IP: 172.253.221.76
+2025-01-02 16:54:37,164 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,180 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,180 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,180 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,180 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,180 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,212 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,228 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,228 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,244 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,244 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,244 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,260 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,260 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,276 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,276 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:54:37,308 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Read timed out. (read timeout=None)
+2025-01-02 16:57:43,566 - INFO - ***yeti***__@@@mobile search@@@__ l1851
+2025-01-02 16:57:46,691 - INFO - ***yeti***__@@@mobile search@@@__ l1851,l1850
+2025-01-02 16:58:32,198 - INFO - ***yeti***__@@@mobile search@@@__ l1851,l1850
+2025-01-02 16:58:46,759 - INFO - ***yeti***__@@@mobile search@@@__ l1851,l1850
+2025-01-02 16:59:39,603 - INFO - ***yeti***__@@@mobile search@@@__ l1851,l1850
+2025-01-02 17:01:55,394 - INFO - ***yeti***__@@@checked boat page@@@
+2025-01-02 17:01:58,622 - ERROR - Error connecting to SQL Server: ('28000', "[28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user 'tristen'. (18456) (SQLDriverConnect); [28000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user 'tristen'. (18456)")
+2025-01-02 17:02:37,880 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:02:37,880 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:02:59,608 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:02:59,608 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:08,125 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:08,130 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:16,594 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:16,594 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:23,064 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:23,097 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:31,548 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:31,598 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:47,164 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:47,164 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-02 17:03:50,365 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 17:03:58,690 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-01-02 17:04:46,882 - INFO - ***yeti***__@@@search SKU@@@__ n1798
+2025-01-02 17:04:50,009 - INFO - No SKUs provided to fetch_locations
+2025-01-02 17:04:50,012 - INFO - ***yeti***__@@@search SKU@@@__ n1789
+2025-01-02 17:04:54,352 - INFO - ***yeti***__@@@search SKU@@@__ m1149
+2025-01-02 17:15:34,999 - INFO - ***ahua*** has logged in. IP: ***219.135.198.131***, Browser: Chrome 130.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 17:15:35,444 - INFO - ***ahua***__@@@search SKU@@@__ n1324
+2025-01-02 17:17:35,996 - INFO - ***ahua***__@@@search SKU@@@__ n1223
+2025-01-02 17:24:15,120 - WARNING - Failed to get location for IP: 172.253.192.115
+2025-01-02 17:24:15,170 - WARNING - Failed to get location for IP: 74.125.184.191
+2025-01-02 18:36:34,231 - INFO - ***nicye*** has logged in. IP: ***115.223.190.14***, Browser: Chrome 123.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-02 18:37:13,387 - INFO - ***nicye***__@@@search SKU@@@__ t3056
+2025-01-02 18:43:33,389 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2025-01-02 19:08:50,569 - INFO - ***nicye***__@@@search SKU@@@__ n1840
+2025-01-02 19:18:04,553 - INFO - ***ahua***__@@@search SKU@@@__ n1223
+2025-01-02 19:59:28,757 - INFO - ***ahua***__@@@search SKU@@@__ n1223
+2025-01-02 21:22:05,622 - INFO - ***nicye***__@@@search SKU@@@__ t3305
+2025-01-02 23:54:29,446 - INFO - ***nicye***__@@@search SKU@@@__ m1149
+2025-01-03 00:00:25,391 - INFO - Running re-indexing script
+2025-01-03 00:07:55,798 - INFO - ***nicye***__@@@search SKU@@@__ m1149
+2025-01-03 06:08:52,646 - INFO - ***nicye*** has logged in. IP: ***1.1.1.1, 122.239.111.84***, Browser: Edge 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 06:08:57,791 - INFO - ***nicye***__@@@search SKU@@@__ t3056
+2025-01-03 11:12:56,657 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 11:17:13,093 - INFO - ***yeti***__@@@mobile search@@@__ et3457
+2025-01-03 11:17:35,113 - INFO - ***yeti***__@@@search SKU@@@__ et3457 bk
+2025-01-03 11:17:40,738 - INFO - ***yeti***__@@@mobile search@@@__ et3457
+2025-01-03 12:00:56,092 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2025-01-03 12:01:08,408 - INFO - ***local_user***__@@@search SKU@@@__ t3056
+2025-01-03 12:09:18,152 - INFO - ***local_user***__@@@search SKU@@@__ t3056,et3457
+2025-01-03 12:11:34,781 - INFO - ***local_user***__@@@search SKU@@@__ et3457
+2025-01-03 12:11:41,081 - ERROR - Error updating location: Unread result found
+2025-01-03 12:11:41,098 - ERROR - Error updating location: Unread result found
+2025-01-03 12:11:47,229 - INFO - ***local_user***__@@@search SKU@@@__ et3457
+2025-01-03 12:11:58,353 - ERROR - Error updating location: Unread result found
+2025-01-03 12:11:58,353 - ERROR - Error updating location: Unread result found
+2025-01-03 12:11:58,353 - ERROR - Error updating location: Unread result found
+2025-01-03 12:11:58,353 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:00,131 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:00,131 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:00,131 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:00,131 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:01,232 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:01,232 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:01,265 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:01,265 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:02,850 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:02,850 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:02,850 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:02,850 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:04,732 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:04,732 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:04,732 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:04,732 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:06,150 - INFO - ***local_user***__@@@search SKU@@@__ et3457
+2025-01-03 12:12:11,748 - ERROR - Error updating location: Unread result found
+2025-01-03 12:12:30,665 - INFO - ***local_user***__@@@mobile search@@@__ Et3457
+2025-01-03 12:12:41,881 - INFO - ***local_user***__@@@mobile search@@@__ Et3457
+2025-01-03 13:22:29,692 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:22:29,692 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:22:32,037 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:23:10,648 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:23:10,648 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:23:49,520 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:23:49,520 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:23:57,694 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:24:24,263 - INFO - ***yeti***__@@@v5_listcreator@@@__N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2025-01-03 13:24:29,849 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['N1151.jpg', 'N1223.jpg', 'N1324.jpg', 'T2874.jpg', 'N3007.jpg', 'S1408.jpg', 'ET2949.jpg', 'N1782.jpg', 'S1426.jpg', 'N1835.jpg', 'L1494.jpg', 'L1513.jpg']
+2025-01-03 13:27:02,055 - INFO - ***yeti***__@@@search SKU@@@__ es1171
+2025-01-03 13:27:14,532 - INFO - ***yeti***__@@@search SKU@@@__ es1171
+2025-01-03 13:27:36,281 - ERROR - Error updating location: Unread result found
+2025-01-03 13:28:40,252 - INFO - ***yeti***__@@@v5_listcreator@@@__T3305,n1223,n1151,t2822
+2025-01-03 13:28:43,294 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg', 'N1223.jpg', 'N1151.jpg', 'T2822.jpg']
+2025-01-03 13:33:33,438 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:33:33,546 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:33:34,755 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:33:41,808 - INFO - ***yeti***__@@@v5_listcreator@@@__N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2025-01-03 13:33:46,155 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['N1151.jpg', 'N1223.jpg', 'N1324.jpg', 'T2874.jpg', 'N3007.jpg', 'S1408.jpg', 'ET2949.jpg', 'N1782.jpg', 'S1426.jpg', 'N1835.jpg', 'L1494.jpg', 'L1513.jpg']
+2025-01-03 13:33:46,171 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:34:04,642 - INFO - ***yeti***__@@@v5_listcreator@@@__T3305
+2025-01-03 13:34:06,978 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:34:06,978 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:34:31,606 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:34:31,606 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:34:32,563 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:34:37,461 - INFO - ***yeti***__@@@v5_listcreator@@@__N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2025-01-03 13:34:41,189 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['N1151.jpg', 'N1223.jpg', 'N1324.jpg', 'T2874.jpg', 'N3007.jpg', 'S1408.jpg', 'ET2949.jpg', 'N1782.jpg', 'S1426.jpg', 'N1835.jpg', 'L1494.jpg', 'L1513.jpg']
+2025-01-03 13:34:41,189 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:38:49,227 - INFO - ***yeti***__@@@v5_listcreator@@@__T3305
+2025-01-03 13:38:50,882 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:38:56,594 - INFO - ***yeti***__@@@[Download][List]@@@__ List-20250103-133850.xlsx
+2025-01-03 13:39:15,185 - INFO - ***yeti***__@@@v5_listcreator@@@__T3305
+2025-01-03 13:39:16,759 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:39:16,761 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:39:46,595 - INFO - ***yeti***__@@@v5_listcreator@@@__T3305
+2025-01-03 13:39:51,195 - INFO - ***yeti***__@@@v5_listcreator@@@__t3305
+2025-01-03 13:39:52,567 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:39:52,567 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:40:08,885 - INFO - ***yeti***__@@@v5_listcreator@@@__T3305
+2025-01-03 13:40:10,254 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:40:13,218 - INFO - ***yeti***__@@@[Download][List]@@@__ List-20250103-134009.xlsx
+2025-01-03 13:41:12,329 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:41:12,329 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:41:14,904 - INFO - ***yeti***__@@@v5_listcreator@@@__t3305
+2025-01-03 13:41:16,350 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:41:16,350 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:44:14,375 - INFO - ***yeti***__@@@v5_listcreator@@@__t3305
+2025-01-03 13:44:16,004 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:44:16,004 - ERROR - Error in finalize_v5_listcreator: Could not build url for endpoint 'download_pdf'. Did you mean 'download_file' instead?
+2025-01-03 13:46:16,678 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:46:16,678 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:46:32,270 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:46:32,270 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:46:37,788 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:46:40,286 - INFO - ***yeti***__@@@v5_listcreator@@@__t3305
+2025-01-03 13:46:41,826 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:47:46,527 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:47:46,527 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:47:54,513 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:47:56,296 - INFO - ***yeti***__@@@v5_listcreator@@@__T3305
+2025-01-03 13:47:57,954 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:49:41,039 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:49:44,726 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:49:46,949 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:49:52,912 - INFO - ***yeti***__@@@v5_listcreator@@@__t3305
+2025-01-03 13:49:54,073 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:50:55,657 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:50:56,862 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:50:57,057 - INFO - ***yeti***__@@@search SKU@@@__ es1171
+2025-01-03 13:55:39,835 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:55:41,162 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:55:46,786 - INFO - ***yeti***__@@@v5_listcreator@@@__t3305
+2025-01-03 13:55:50,333 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:55:56,342 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:56:04,338 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 13:56:23,396 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305_v3.jpg']
+2025-01-03 13:56:44,082 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:58:01,061 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 13:58:02,987 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 13:58:05,810 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305_v3.jpg']
+2025-01-03 13:58:11,815 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305_v3.jpg']
+2025-01-03 13:59:55,517 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:00:13,852 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:00:26,151 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:00:27,311 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:01:11,869 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:01:13,697 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:01:36,244 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:01:37,287 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:02:41,120 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:02:42,455 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:03:22,687 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:03:25,573 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:03:41,871 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305_v3.jpg']
+2025-01-03 14:05:13,311 - INFO - ***yeti***__@@@v5_listcreator@@@__N1151,N1223,n1324,t2874,n3007,s1408,et2949,n1782,s1426,n1835,l1494,l1513
+2025-01-03 14:05:19,266 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['N1151.jpg', 'N1223.jpg', 'N1324.jpg', 'T2874.jpg', 'N3007.jpg', 'S1408.jpg', 'ET2949.jpg', 'N1782.jpg', 'S1426.jpg', 'N1835.jpg', 'L1494.jpg', 'L1513.jpg']
+2025-01-03 14:05:31,489 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['N1151.jpg', 'N1223.jpg', 'N1324.jpg', 'T2874.jpg', 'N3007.jpg', 'S1408.jpg', 'ET2949.jpg', 'N1782.jpg', 'S1426.jpg', 'N1835.jpg', 'L1494.jpg', 'L1513.jpg']
+2025-01-03 14:11:52,226 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:11:55,881 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:11:57,314 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:12:00,134 - INFO - ***yeti***__@@@v5_listcreator@@@__t3305
+2025-01-03 14:12:01,524 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 14:12:10,224 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['T3305.jpg']
+2025-01-03 14:12:37,537 - INFO - ***yeti***__@@@v5_listcreator@@@__N1151,N1223,N1324,T2874,N3007,S1408,ET2949,N1782,S1426,N1835,L1494,L1513
+2025-01-03 14:12:43,131 - INFO - ***yeti***__@@@v5_listcreator_pictures@@@__['N1151.jpg', 'N1223.jpg', 'N1324.jpg', 'T2874.jpg', 'N3007.jpg', 'S1408.jpg', 'ET2949.jpg', 'N1782.jpg', 'S1426.jpg', 'N1835.jpg', 'L1494.jpg', 'L1513.jpg']
+2025-01-03 14:15:54,068 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:15:55,652 - INFO - Suggestions request received
+2025-01-03 14:16:00,054 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:16:04,135 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:16:06,499 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:16:15,152 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:16:19,804 - ERROR - Error updating location: Unread result found
+2025-01-03 14:16:21,851 - ERROR - Error updating location: Unread result found
+2025-01-03 14:18:16,359 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:18:20,004 - ERROR - Error updating location: Unread result found
+2025-01-03 14:18:21,799 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:18:25,487 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:18:29,870 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:18:30,837 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:18:35,078 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:19:34,229 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:21:20,476 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:21:22,879 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,891 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,906 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,907 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,907 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,907 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,907 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,907 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,907 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,922 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,924 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,924 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,924 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,924 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,924 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,924 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:22,940 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-01-03 14:21:23,907 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:21:25,040 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:28:33,667 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:28:38,990 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:38,990 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:38,990 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:38,990 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:38,990 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:39,006 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:39,006 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:39,006 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:39,015 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:39,023 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:39,023 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:39,032 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:40,150 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:28:43,819 - ERROR - Error updating location: Unread result found
+2025-01-03 14:28:46,235 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:30:18,828 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:30:20,200 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:30:23,110 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,110 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,110 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,117 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,117 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,126 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,126 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,133 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,133 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,133 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,142 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:23,142 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:24,050 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:30:26,967 - ERROR - Error updating location: Unread result found
+2025-01-03 14:30:30,075 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:30:40,134 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,152 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,152 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,157 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,157 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,157 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,168 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,168 - ERROR - Error updating location: Unread result found
+2025-01-03 14:31:45,177 - ERROR - Error updating location: Unread result found
+2025-01-03 14:32:34,653 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:37:46,644 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:37:52,525 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:38:46,517 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:40:13,944 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:40:18,636 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:40:23,298 - ERROR - Error updating location: Unread result found
+2025-01-03 14:40:26,011 - ERROR - Error updating location: Unread result found
+2025-01-03 14:40:27,928 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:40:54,906 - INFO - ***yeti***__@@@search SKU@@@__ t3251
+2025-01-03 14:40:58,545 - ERROR - Error updating location: Unread result found
+2025-01-03 14:41:12,392 - INFO - ***yeti***__@@@search SKU@@@__ t3251
+2025-01-03 14:41:17,415 - ERROR - Error updating location: Unread result found
+2025-01-03 14:41:19,338 - INFO - ***yeti***__@@@search SKU@@@__ t3251
+2025-01-03 14:42:19,493 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:42:21,063 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:42:21,267 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:42:24,099 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:42:32,452 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,452 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,452 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,452 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,452 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,452 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,499 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,499 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,499 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,499 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,499 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:32,499 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:43,396 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:42:49,119 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,135 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,151 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,151 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,151 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,164 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,164 - ERROR - Error updating location: Unread result found
+2025-01-03 14:42:49,181 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:35,133 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:44:37,567 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,567 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,567 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,567 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,567 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,582 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,582 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,582 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,582 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,598 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,599 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:37,599 - ERROR - Error updating location: Unread result found
+2025-01-03 14:44:47,326 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:44:53,815 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:44:54,005 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:44:58,281 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:45:02,588 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:04,599 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:45:15,949 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:45:21,385 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:45:24,287 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:45:33,668 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:45:41,398 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,398 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,398 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,398 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,398 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,421 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,421 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,429 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,429 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,429 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,445 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:41,445 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:45,949 - ERROR - Error updating location: Unread result found
+2025-01-03 14:45:59,357 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:46:07,869 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:46:10,656 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:46:22,616 - INFO - No SKUs provided to fetch_locations
+2025-01-03 14:46:22,620 - INFO - ***yeti***__@@@search SKU@@@__ ;1806
+2025-01-03 14:46:24,962 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:46:41,554 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:47:17,581 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:47:30,929 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 14:49:00,705 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 14:49:03,176 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:49:05,564 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:49:07,818 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:49:32,328 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 14:49:34,778 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:49:36,674 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 14:49:54,495 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:04:44,288 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 15:04:48,555 - INFO - ***yeti***__@@@search SKU@@@__ t3258
+2025-01-03 15:04:56,132 - INFO - ***yeti***__@@@search SKU@@@__ t3258
+2025-01-03 15:05:23,610 - INFO - ***yeti***__@@@search SKU@@@__ s1270
+2025-01-03 15:37:09,253 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 15:37:26,718 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-01-03 15:37:31,264 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:38:07,572 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:38:08,685 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:38:16,838 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:39:15,146 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 15:40:41,272 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 15:41:00,794 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 15:41:00,978 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:41:02,811 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:41:19,009 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:41:23,088 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 15:59:12,190 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 15:59:43,565 - INFO - ***None*** has logged in. IP: ***173.198.50.202***, Browser: PostmanRuntime 7.43.0, OS: Other , Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: None
+2025-01-03 16:03:16,695 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 16:04:10,904 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 16:04:13,325 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 16:04:19,553 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 16:04:22,004 - INFO - Received SKU: L1806 CO, Style: L1806, Location: TEST5
+2025-01-03 16:04:28,508 - INFO - Received SKU: L1806 PK, Style: L1806, Location: test3
+2025-01-03 16:04:28,508 - INFO - Received SKU: L1806 BL, Style: L1806, Location: test3
+2025-01-03 16:04:28,508 - INFO - Received SKU: L1806 BK, Style: L1806, Location: test3
+2025-01-03 16:04:28,508 - INFO - Received SKU: L1806 TN, Style: L1806, Location: test3
+2025-01-03 16:04:28,529 - INFO - Received SKU: L1806 CO, Style: L1806, Location: test3
+2025-01-03 16:04:28,540 - INFO - Received SKU: L1806 LV, Style: L1806, Location: test3
+2025-01-03 16:04:28,540 - INFO - Received SKU: L1806 BK, Style: L1806, Location: test3
+2025-01-03 16:04:28,540 - INFO - Received SKU: L1806 BL, Style: L1806, Location: test3
+2025-01-03 16:04:28,540 - INFO - Received SKU: L1806 CO, Style: L1806, Location: test3
+2025-01-03 16:04:28,540 - INFO - Received SKU: L1806 LV, Style: L1806, Location: test3
+2025-01-03 16:04:28,540 - INFO - Received SKU: L1806 PK, Style: L1806, Location: test3
+2025-01-03 16:04:28,555 - INFO - Received SKU: L1806 TN, Style: L1806, Location: test3
+2025-01-03 16:04:28,739 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 16:04:33,201 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 16:04:41,888 - INFO - ***yeti***__@@@search SKU@@@__ l1806
+2025-01-03 16:04:46,561 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 16:04:51,087 - INFO - ***yeti***__@@@mobile search@@@__ l1806
+2025-01-03 16:05:27,921 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-01-03 16:05:30,155 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 131.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-01-03 16:06:34,226 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-01-03 16:06:39,087 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-03 16:07:15,613 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-01-03 16:07:32,573 - INFO - ***yeti***__@@@search SKU@@@__ t3243
