@@ -45,6 +45,7 @@ from loris_sticker import main, process_input_data
 from products import products_bp
 from util import resize_image  # Import the master resizing function
 from datetime import timedelta,datetime
+from dailytodo import dailytodo
 
 
 from reportlab.pdfgen import canvas
@@ -64,6 +65,7 @@ def register_routes(app):
     app.register_blueprint(boat_service_bp)
     app.register_blueprint(chatgpt_bp)
     app.register_blueprint(mobile_lite_bp)
+    app.register_blueprint(dailytodo)
 
     app.permanent_session_lifetime = timedelta(days=30)
 
@@ -673,7 +675,8 @@ def register_routes(app):
             return redirect(url_for("login"))
 
         current_user = session['username']
-        
+        output_dir = os.path.join("output", "list_output")
+        os.makedirs(output_dir, exist_ok=True)
         form_data = request.form
         image_size_input = form_data.get("image_size", "800")
         

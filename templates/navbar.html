@@ -24,7 +24,7 @@
                 background-position: 0% 50%;
             }
         }
-
+ 
         /* Dynamic gradient navbar style */
         .navbar-custom {
             background: linear-gradient(-75deg, #ee76526b, #e73c7e62, #23a5d577, #23d5ab70, #51b32a70);
@@ -184,29 +184,28 @@
                         <img src="/static/icons/handbag.svg" alt="v5 List Creator">List
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/geek_tools">
-                        <img src="/static/icons/geek.svg" alt="Geek_Tools">Tools
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/temu">
-                        <img src="https://seller.temu.com/favicon.ico" alt="temu">Temu
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/upload_center">
-                        <img src="https://img.icons8.com/clouds/200/upload.png" alt="图片处理">图片处理
-                    </a>
-                </li>
+
                 <li class="nav-item">
                     <a class="nav-link" href="/big_img">
                         <img src="/static/icons/bigimg.png" alt="big_img">STOCK_IMG
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="/geek_tools">
+                        <img src="/static/icons/geek.svg" alt="Geek_Tools">Tools
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link" href="/chatgpt">
                         <img src="https://cdn.worldvectorlogo.com/logos/chatgpt-6.svg" alt="chatgpt">chatgpt(Beta)
+                    </a>
+                </li>
+                {% endif %}
+                {% if current_user != 'fdc'%}
+                <li class="nav-item">
+                    <a class="nav-link" href="/dailytodo">
+                        <img src="/static/icons/to-do-list.png" alt="dailytodo">dailytodo
                     </a>
                 </li>
                 {% endif %}

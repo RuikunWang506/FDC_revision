@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily To-Do List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="https://www.4seller.com/favicon.ico">
+    <style>
+        /* Set all icons within list-group-item to 100x100 pixels */
+        .list-group-item img {
+            width: 20px;
+            height: 20px;
+            margin-right: 20px;
+        }
+
+        /* Increase the font size for the link text */
+        .list-group-item .link-text {
+            font-size: 1.5rem; /* Adjust as needed */
+            font-weight: bold;
+        }
+
+        /* Ensure the list-group-item uses flexbox for proper alignment */
+        .list-group-item {
+            display: flex;
+            align-items: center;
+            padding: 20px; /* Increased padding for larger cells */
+        }
+
+        /* Optional: Add hover effect for better user experience */
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .list-group-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .list-group-item img {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            .list-group-item .link-text {
+                font-size: 1.25rem;
+            }
+        }
+        .table td, .table th {
+            padding: 0 !important;
+            vertical-align: top;
+            border-top: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <h1 class="align-items-center text-center">Daily To-Do List</h1>
+    <div class="container d-flex flex-column align-items-center justify-content-center">
+        <div class="d-flex align-items-center">
+            <button id="yesterdayBtn" class="btn btn-secondary me-2">Yesterday</button>
+            <input type="date" id="datePicker" value="{{ selected_date }}" class="form-control mb-3 me-3" style="width: 200px;">
+            <div class="mb-3">
+                <strong>Total Labels: </strong><span id="totalLabels">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="container my-5">
+        <form id="todoForm">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>Number of Labels</th>
+                        <th>Printed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- FDC Section -->
+                    <tr><td colspan="3"><strong>FDC</strong></td></tr>
+                    <tr>
+                        <td>FDC FBM</td>
+                        <td><input type="number" name="FDC_FBM_labels" id="FDC_FBM_labels"></td>
+                        <td><input type="checkbox" name="FDC_FBM_print" id="FDC_FBM_print"></td>
+                    </tr>
+                    <tr>
+                        <td>EF FBM</td>
+                        <td><input type="number" name="EF_FBM_labels" id="EF_FBM_labels"></td>
+                        <td><input type="checkbox" name="EF_FBM_print" id="EF_FBM_print"></td>
+                    </tr>
+                    <tr>
+                        <td>TEMU USA</td>
+                        <td><input type="number" name="TEMU_USA_labels" id="TEMU_USA_labels"></td>
+                        <td><input type="checkbox" name="TEMU_USA_print" id="TEMU_USA_print"></td>
+                    </tr>
+                    <tr>
+                        <td>TEMU HK</td>
+                        <td><input type="number" name="TEMU_HK_labels" id="TEMU_HK_labels"></td>
+                        <td><input type="checkbox" name="TEMU_HK_print" id="TEMU_HK_print"></td>
+                    </tr>
+                    <tr>
+                        <td>TIKTOK</td>
+                        <td><input type="number" name="TIKTOK_labels" id="TIKTOK_labels"></td>
+                        <td><input type="checkbox" name="TIKTOK_print" id="TIKTOK_print"></td>
+                    </tr>
+                    <tr>
+                        <td>SHEIN</td>
+                        <td><input type="number" name="SHEIN_labels" id="SHEIN_labels"></td>
+                        <td><input type="checkbox" name="SHEIN_print" id="SHEIN_print"></td>
+                    </tr>
+        
+                    <!-- ERWAN Section -->
+                    <tr><td colspan="3"><strong>ERWAN</strong></td></tr>
+                    <tr>
+                        <td>ERWAN DROPSHIP</td>
+                        <td><input type="number" name="ERWAN_DROPSHIP_labels" id="ERWAN_DROPSHIP_labels"></td>
+                        <td><input type="checkbox" name="ERWAN_DROPSHIP_print" id="ERWAN_DROPSHIP_print"></td>
+                    </tr>
+                    <!-- TMX Section -->
+                    <tr><td colspan="3"><strong>TMX</strong></td></tr>
+                    <tr>
+                        <td>TMX_GPG</td>
+                        <td><input type="number" name="TMX_GPG_labels" id="TMX_GPG_labels"></td>
+                        <td><input type="checkbox" name="TMX_GPG_print" id="TMX_GPG_print"></td>
+                    </tr>
+        
+                    <!-- MMY Section -->
+                    <tr><td colspan="3"><strong>MMY</strong></td></tr>
+                    <tr>
+                        <td>Wayfair</td>
+                        <td><input type="number" name="Wayfair_labels" id="Wayfair_labels"></td>
+                        <td><input type="checkbox" name="Wayfair_print" id="Wayfair_print"></td>
+                    </tr>
+                    <tr>
+                        <td>Walmart</td>
+                        <td><input type="number" name="Walmart_labels" id="Walmart_labels"></td>
+                        <td><input type="checkbox" name="Walmart_print" id="Walmart_print"></td>
+                    </tr>
+                    <tr>
+                        <td>MMY FBM</td>
+                        <td><input type="number" name="MMY_FBM_labels" id="MMY_FBM_labels"></td>
+                        <td><input type="checkbox" name="MMY_FBM_print" id="MMY_FBM_print"></td>
+                    </tr>
+                    <tr>
+                        <td>TEMU USA</td>
+                        <td><input type="number" name="TEMU_USA_mmy_labels" id="TEMU_USA_mmy_labels"></td>
+                        <td><input type="checkbox" name="TEMU_USA_mmy_print" id="TEMU_USA_mmy_print"></td>
+                    </tr>
+                    <tr>
+                        <td>TEMU China</td>
+                        <td><input type="number" name="TEMU_China_labels" id="TEMU_China_labels"></td>
+                        <td><input type="checkbox" name="TEMU_China_print" id="TEMU_China_print"></td>
+                    </tr>
+                    <tr>
+                        <td>Ebay</td>
+                        <td><input type="number" name="Ebay_labels" id="Ebay_labels"></td>
+                        <td><input type="checkbox" name="Ebay_print" id="Ebay_print"></td>
+                    </tr>
+                    <tr>
+                        <td>Etsy</td>
+                        <td><input type="number" name="Etsy_labels" id="Etsy_labels"></td>
+                        <td><input type="checkbox" name="Etsy_print" id="Etsy_print"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" id="saveButton" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+
+    <!-- Quick Access Links -->
+    <div class="container my-5">
+        <h2 class="mb-4">Quick Access Links</h2>
+        <!-- Button to Open All Links -->
+        <button class="btn btn-primary btn-block mb-4" onclick="openAllLinks()" aria-label="Open all seller dashboard links">
+            Open All Links
+        </button>
+
+        <!-- Individual Links -->
+        <div class="list-group">
+            <a href="https://www.4seller.com/web/dashboard.html" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://4seller-res.meiyunji.net/europe-erp-web/2024-12/favicon.ico?v=1.1" alt="4Seller Logo">
+                <span class="link-text">4Seller Dashboard</span>
+            </a>
+            <a href="https://seller-us.tiktok.com/order" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.tiktok.com/favicon.ico" alt="TikTok Logo">
+                <span class="link-text">TikTok Orders</span>
+            </a>
+            <a href="https://seller.temu.com/orders.html" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.temu.com/favicon.ico" alt="Temu Logo">
+                <span class="link-text">Temu Orders</span>
+            </a>
+            <a href="https://sellerhub.shein.com/#/gsp/order-management/list" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.shein.com/favicon.ico" alt="Shein Logo">
+                <span class="link-text">Shein Orders</span>
+            </a>
+            <a href="https://ship13.shipstation.com" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://www.shipstation.com/wp-content/uploads/2024/08/cropped-favicon-32x32.png" alt="ShipStation Logo">
+                <span class="link-text">ShipStation</span>
+            </a>
+            <a href="https://admin.genuinepartsgiant.com/HPD/pendingOrders/orderTypeId/-1" target="_blank" class="list-group-item list-group-item-action">
+                <img src="https://img.icons8.com/?size=100&id=12684&format=png&color=000000" alt="GPG">
+                <span class="link-text">GPG</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Function to save form data
+        function saveFormData() {
+            const selectedDate = document.getElementById('datePicker').value;
+            let formData = {
+                FDC: {
+                    FDC_FBM: {
+                        labels: document.getElementById('FDC_FBM_labels').value,
+                        print: document.getElementById('FDC_FBM_print').checked
+                    },
+                    EF_FBM: {
+                        labels: document.getElementById('EF_FBM_labels').value,
+                        print: document.getElementById('EF_FBM_print').checked
+                    },
+                    TEMU_USA: {
+                        labels: document.getElementById('TEMU_USA_labels').value,
+                        print: document.getElementById('TEMU_USA_print').checked
+                    },
+                    TEMU_HK: {
+                        labels: document.getElementById('TEMU_HK_labels').value,
+                        print: document.getElementById('TEMU_HK_print').checked
+                    },
+                    TIKTOK: {
+                        labels: document.getElementById('TIKTOK_labels').value,
+                        print: document.getElementById('TIKTOK_print').checked
+                    },
+                    SHEIN: {
+                        labels: document.getElementById('SHEIN_labels').value,
+                        print: document.getElementById('SHEIN_print').checked
+                    }
+                },
+                ERWAN: {
+                    ERWAN_DROPSHIP: {
+                        labels: document.getElementById('ERWAN_DROPSHIP_labels').value,
+                        print: document.getElementById('ERWAN_DROPSHIP_print').checked
+                    }
+                },
+                TMX: {
+                    TMX_GPG: {
+                        labels: document.getElementById('TMX_GPG_labels').value,
+                        print: document.getElementById('TMX_GPG_print').checked
+                    }
+                },
+                MMY: {
+                    Wayfair: {
+                        labels: document.getElementById('Wayfair_labels').value,
+                        print: document.getElementById('Wayfair_print').checked
+                    },
+                    Walmart: {
+                        labels: document.getElementById('Walmart_labels').value,
+                        print: document.getElementById('Walmart_print').checked
+                    },
+                    MMY_FBM: {
+                        labels: document.getElementById('MMY_FBM_labels').value,
+                        print: document.getElementById('MMY_FBM_print').checked
+                    },
+                    TEMU_USA: {
+                        labels: document.getElementById('TEMU_USA_mmy_labels').value,
+                        print: document.getElementById('TEMU_USA_mmy_print').checked
+                    },
+                    TEMU_China: {
+                        labels: document.getElementById('TEMU_China_labels').value,
+                        print: document.getElementById('TEMU_China_print').checked
+                    },
+                    Ebay: {
+                        labels: document.getElementById('Ebay_labels').value,
+                        print: document.getElementById('Ebay_print').checked
+                    },
+                    Etsy: {
+                        labels: document.getElementById('Etsy_labels').value,
+                        print: document.getElementById('Etsy_print').checked
+                    }
+                }
+            };
+    
+            fetch(`/dailytodo?date=${selectedDate}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+        }
+    
+        // Function to open all links
+        function openAllLinks() {
+            const linkElements = document.querySelectorAll('.list-group a');
+            let popups = [];
+            let totalLinks = 0;
+    
+            linkElements.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href.startsWith('http://') || href.startsWith('https://')) {
+                    totalLinks++;
+                    let newWindow = window.open(href, '_blank');
+                    if (newWindow) {
+                        popups.push(newWindow);
+                    }
+                }
+            });
+    
+            if (popups.length !== totalLinks) {
+                alert('Some popups were blocked. Please allow popups for this site.');
+            }
+        }
+    
+        // Initialize page and add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+    const data = {{ data|tojson|safe }};
+    
+    // Populate FDC section
+    if (data.FDC) {
+        for (const [platform, values] of Object.entries(data.FDC)) {
+            const labelsId = `${platform}_labels`;
+            const printId = `${platform}_print`;
+            if (document.getElementById(labelsId)) {
+                document.getElementById(labelsId).value = values.labels;
+                document.getElementById(printId).checked = values.print;
+            }
+        }
+    }
+    
+    // Populate ERWAN section
+    if (data.ERWAN) {
+        for (const [platform, values] of Object.entries(data.ERWAN)) {
+            const labelsId = `${platform}_labels`;
+            const printId = `${platform}_print`;
+            if (document.getElementById(labelsId)) {
+                document.getElementById(labelsId).value = values.labels;
+                document.getElementById(printId).checked = values.print;
+            }
+        }
+    }
+
+    // Populate TMX section
+    if (data.TMX) {
+        for (const [platform, values] of Object.entries(data.TMX)) {
+            const labelsId = `${platform}_labels`;
+            const printId = `${platform}_print`;
+            if (document.getElementById(labelsId)) {
+                document.getElementById(labelsId).value = values.labels;
+                document.getElementById(printId).checked = values.print;
+            }
+        }
+    }
+    
+    // Populate MMY section
+    if (data.MMY) {
+        for (const [platform, values] of Object.entries(data.MMY)) {
+            let labelsId = platform === 'TEMU_USA' ? 'TEMU_USA_mmy_labels' : `${platform}_labels`;
+            let printId = platform === 'TEMU_USA' ? 'TEMU_USA_mmy_print' : `${platform}_print`;
+            if (document.getElementById(labelsId)) {
+                document.getElementById(labelsId).value = values.labels;
+                document.getElementById(printId).checked = values.print;
+            }
+        }
+    }
+
+    // Add auto-save listeners to all inputs
+    const inputs = document.querySelectorAll('input[type="number"], input[type="checkbox"]');
+    inputs.forEach(input => {
+        input.addEventListener('change', saveFormData);
+    });
+});
+    </script>
+    <script>
+        document.getElementById('datePicker').addEventListener('change', function() {
+            window.location.href = '/dailytodo?date=' + this.value;
+        });
+    </script>
+    <script>
+                function updateTotalLabels() {
+            let total = 0;
+            const numberInputs = document.querySelectorAll('input[type="number"]');
+            numberInputs.forEach(input => {
+                total += parseInt(input.value) || 0;
+            });
+            document.getElementById('totalLabels').textContent = total;
+        }
+
+        // Add this to your DOMContentLoaded event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            // Existing code...
+            
+            // Calculate initial total
+            updateTotalLabels();
+            
+            // Update total when any number input changes
+            const numberInputs = document.querySelectorAll('input[type="number"]');
+            numberInputs.forEach(input => {
+                input.addEventListener('change', updateTotalLabels);
+            });
+        });
+    </script>
+    <script>
+        document.getElementById('yesterdayBtn').addEventListener('click', function() {
+            const currentDate = new Date(document.getElementById('datePicker').value);
+            currentDate.setDate(currentDate.getDate() - 1);
+            const yesterdayStr = currentDate.toISOString().split('T')[0];
+            window.location.href = '/dailytodo?date=' + yesterdayStr;
+        });
+    </script>
+</body>
+</html>
