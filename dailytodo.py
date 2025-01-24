@@ -72,4 +72,4 @@ def daily_todo():
             json.dump(data, f)  # Create the file with default data
     
     # Pass data to the template for rendering
-    return render_template('dailytodo.html', data=data, selected_date=selected_date)
+    return render_template('dailytodo.html', data=data, selected_date=selected_date, current_user=current_user)

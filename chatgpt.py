@@ -67,7 +67,8 @@ def chat_page():
     if 'username' not in session:
             return redirect(url_for("login"))
     """Serve the ChatGPT interface page."""
-    return render_template('chatgpt.html')  # Ensure 'chatgpt.html' is in your templates folder
+    current_user = session.get('username')
+    return render_template('chatgpt.html',  current_user=current_user)  # Ensure 'chatgpt.html' is in your templates folder
 
 @chatgpt_bp.route('/chatgpt', methods=['POST'])
 def chat():

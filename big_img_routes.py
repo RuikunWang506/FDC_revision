@@ -28,6 +28,7 @@ def register_big_img_routes(app):
     def big_img():
         if 'username' not in session:
             return redirect(url_for("login"))
+        current_user = session['username']
 
         image_data = []
 
@@ -64,7 +65,7 @@ def register_big_img_routes(app):
                 except Exception as e:
                     flash(f"Error processing image {file_path}: {str(e)}", "danger")
 
-        return render_template('big_img.html', image_data=image_data, quote=quote)
+        return render_template('big_img.html', image_data=image_data, quote=quote,current_user=current_user)
     @app.route('/get_image_data', methods=['GET'])
     def get_image_data():
         filename = request.args.get('filename')
@@ -103,6 +104,7 @@ def register_big_img_routes(app):
     def download_big_images():
         if 'username' not in session:
             return jsonify({"error": "Unauthorized"}), 401
+        current_user = session['username']
 
         search_str = request.args.get('search_str', '').lower() if request.method == 'GET' else None
         selected_images = request.form.getlist('selected_images') if request.method == 'POST' else None
@@ -143,6 +145,7 @@ def register_big_img_routes(app):
         memory_file.seek(0)
         zip_filename = f"{search_str or 'selected'}_{image_type}.zip"
         return send_file(memory_file, download_name=zip_filename, as_attachment=True)
+
 
     def resize_image(image_path, fixed_height=300):
         try:

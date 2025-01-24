@@ -322,7 +322,8 @@ def mobile_view():
                          data=data, 
                          user_input=user_input,
                          get_color_from_abbr=get_color_from_abbr,
-                         is_light_color=is_light_color)
+                         is_light_color=is_light_color,
+                         current_user=current_user)
 
 @mobile_lite_bp.route('/update_dimensions', methods=['POST'])
 def update_dimensions():

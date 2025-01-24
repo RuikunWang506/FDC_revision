@@ -100,7 +100,8 @@ def boat_service():
             na_rep="", 
             justify="center", 
             table_id="boat_table", 
-            border=0
+            border=0,
+            current_user=current_user
         )
     except Exception as e:
         print(f"Error processing Excel file: {e}")
@@ -123,4 +124,4 @@ def boat_service():
         </table>
         """
     
-    return render_template('boat.html', table_data=data_html, last_modified_date=last_modified_date)
+    return render_template('boat.html', table_data=data_html, last_modified_date=last_modified_date,current_user=current_user)

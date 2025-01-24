@@ -170,6 +170,8 @@
         </form>
     </div>
 
+    {% if current_user == 'yeti' %}
+
     <!-- Quick Access Links -->
     <div class="container my-5">
         <h2 class="mb-4">Quick Access Links</h2>
@@ -206,7 +208,7 @@
             </a>
         </div>
     </div>
-
+    {% endif %}
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
     <script>

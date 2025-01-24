@@ -10,6 +10,7 @@ def upload_container_file():
     if 'username' not in session:
             session['next'] = request.url
             return redirect(url_for("login"))
+    current_user = session['username']
     if request.method == 'POST':
         file = request.files.get('container_file')
         if file:
@@ -21,9 +22,9 @@ def upload_container_file():
             return render_template('container.html', 
                                    files=[step3_file_path, step4_file_path],  # Two generated file paths
                                    table1=df_step3.to_html(classes="table table-bordered", index=False), 
-                                   table2=df_step4.to_html(classes="table table-bordered", index=False))
+                                   table2=df_step4.to_html(classes="table table-bordered", index=False),current_user=current_user)
     # On GET request, just render the upload form
-    return render_template('container.html')
+    return render_template('container.html',current_user=current_user)
 
 def process_container_file(file, container_number):
     df_f24213 = pd.read_excel(file, sheet_name='System File', header=2)

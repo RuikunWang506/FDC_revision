@@ -527,7 +527,8 @@ def register_routes(app):
                     duplicate_numbers=None,
                     info_list=None,
                     error_message=error_message,
-                    order_number=order_number
+                    order_number=order_number,
+                    current_user=current_user
                 )
 
             base_filename = os.path.basename(filename)
@@ -542,7 +543,8 @@ def register_routes(app):
                 info_list=info_list,
                 addresslist=addresslist,
                 order_number=order_number,
-                warnings=warnings  # Pass warnings to the template
+                warnings=warnings,
+                current_user=current_user  # Pass warnings to the template
             )
         except Exception as e:
             app.logger.error("An error occurred: %s", str(e))
@@ -554,7 +556,8 @@ def register_routes(app):
                 duplicate_numbers=None,
                 info_list=None,
                 error_message=f"An error occurred: {str(e)}",
-                order_number=order_number
+                order_number=order_number,
+                current_user=current_user
             )
 
     @app.route("/v5_listcreator", methods=["GET", "POST"])
@@ -1005,6 +1008,7 @@ def register_routes(app):
     def display():
         if 'username' not in session:
             return redirect(url_for("login"))
+        current_user = session['username']
 
         try:
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
@@ -1022,13 +1026,15 @@ def register_routes(app):
             # Calculate total pages
             total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
 
-            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages), 200
+            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages,current_user=current_user), 200
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
         
     @app.route('/log/stream', methods=['GET'])
     def stream_log():
+        if 'username' not in session:
+            return redirect(url_for("login"))
         def generate():
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
                 file.seek(0, 2)  # Move to the end of the file
@@ -1098,7 +1104,7 @@ def register_routes(app):
             formatted.append((log_class, stripped_line))
         
         return formatted
-        
+         
 
     @app.route('/download/<filename>')
     def download_file(filename):
@@ -1136,6 +1142,7 @@ def register_routes(app):
     def report_bug():
         if 'username' not in session:
             return redirect(url_for("login"))
+        current_user = session['username']
         
         if request.method == "POST":
             current_user = session['username']
@@ -1169,19 +1176,21 @@ def register_routes(app):
 
             return f"Bug report {bug_id} submitted successfully!"
 
-        return render_template("report_bug.html")
+        return render_template("report_bug.html",current_user=current_user)
 
     @app.route('/shipping_receipt', methods=['GET'])
     def shipping_receipt():
         if 'username' not in session:
             return redirect(url_for("login"))
-        return render_template('upload_file.html')
+        current_user = session['username']
+        return render_template('upload_file.html', current_user=current_user)
     
     @app.route('/help', methods=['GET'])
     def help():
         if 'username' not in session:
             return redirect(url_for("login"))
-        return render_template('help.html')
+        current_user = session['username']
+        return render_template('help.html', current_user=current_user)
 
 
     @app.route('/send_shipping_receipt', methods=['POST'])
@@ -1197,7 +1206,8 @@ def register_routes(app):
             flash('Please provide either a memo or a file.')
             return redirect(request.url)
 
-        receipt_date = datetime.datetime.now().strftime('%m-%d-%Y')
+        receipt_date = datetime.now().strftime('%m-%d-%Y')
+
         receipt_dir = os.path.join('output', 'shipping_receipts', receipt_date)
         os.makedirs(receipt_dir, exist_ok=True)
 
@@ -1271,7 +1281,8 @@ def register_routes(app):
     def calculatorapp():
         if 'username' not in session:
             return redirect(url_for("login"))
-        return render_template("calculator2.html")
+        current_user = session['username']
+        return render_template("calculator2.html",  current_user=current_user)
     
     def get_temu_listings_data():
         creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
@@ -1308,20 +1319,23 @@ def register_routes(app):
         if 'username' not in session:
             return redirect(url_for("login"))
         sheet_data_html = get_temu_listings_data()
-        return render_template("temu.html", sheet_data_html=sheet_data_html)
+        current_user = session['username']
+        return render_template("temu.html", sheet_data_html=sheet_data_html, current_user=current_user)
 
 
     @app.route("/geek_tools", methods=["GET"])
     def geek_tools():
         if 'username' not in session:
             return redirect(url_for("login"))
-        return render_template("geek_tools.html")
+        current_user = session['username']
+        return render_template("geek_tools.html", current_user=current_user)
     
     @app.route("/shipping_center", methods=["GET"])
     def shipping_center():
         if 'username' not in session:
             return redirect(url_for("login"))
-        return render_template("shipping_center.html")
+        current_user = session['username']
+        return render_template("shipping_center.html", current_user=current_user)
 
     def sort_filenames(filenames):
         base_files = {}
@@ -1401,7 +1415,7 @@ def register_routes(app):
 
             return jsonify(output_urls)
 
-        return render_template('upload_center.html')
+        return render_template('upload_center.html', current_user=current_user)
     
     @app.route('/json_data')
     def get_json_data():
