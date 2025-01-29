@@ -1,18 +1,15 @@
 from flask import (request, render_template, jsonify, redirect, url_for, 
-                   session, flash, send_from_directory, send_file, Response)
+                   session, flash, send_from_directory,send_file, Response)
 from werkzeug.utils import secure_filename
 
 # Standard library imports
 import os
-import io
 import re
 import sys
 import time
 import json
 import datetime
 import subprocess
-import urllib.parse
-import zipfile
 import mysql.connector
 from mysql.connector import Error
 
@@ -24,14 +21,11 @@ from slack_sdk.errors import SlackApiError
 from user_agents import parse
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-from io import StringIO
-from PIL import Image
 
 
 # Application-specific imports
-from custom_query import execute_custom_query, allowed_file
+from custom_query import execute_custom_query
 from config import Config
-from logging_setup import configure_logging
 from upload_processor import process_upload
 from big_img_routes import register_big_img_routes
 from location_service import location_service_bp
@@ -39,18 +33,22 @@ from container import container_bp
 from boat import boat_service_bp
 from chatgpt import chatgpt_bp
 from mobile_lite import mobile_lite_bp
-import V5_Listcreator, Label_Maker, order_search, SQL_connector
+import Label_Maker, order_search, SQL_connector
 from macy_special import process_orders
 from loris_sticker import main, process_input_data
 from products import products_bp
-from util import resize_image  # Import the master resizing function
 from datetime import timedelta,datetime
 from dailytodo import dailytodo
 
+import io
+import zipfile
+from util import resize_image  # Import the master resizing function
+from PIL import Image
 
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.lib.utils import ImageReader
+from V6listcreator import v6_listcreator_bp
+
+
+
 
 
 client = WebClient(token=Config.SLACK_TOKEN)
@@ -66,6 +64,7 @@ def register_routes(app):
     app.register_blueprint(chatgpt_bp)
     app.register_blueprint(mobile_lite_bp)
     app.register_blueprint(dailytodo)
+    app.register_blueprint(v6_listcreator_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 
@@ -372,7 +371,7 @@ def register_routes(app):
         for filename in sorted_file_names:
             original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
             if os.path.exists(original_path):
-                image_url = os.path.join('/ftp', filename)
+                image_url = os.path.join('/image', filename)
             else:
                 image_url = '/static/no_image_available.jpg'  # Placeholder image
 
@@ -390,7 +389,30 @@ def register_routes(app):
             user_input=user_input.capitalize()  # Pass user_input back to the template to avoid "None"
         )
 
-
+    @app.route('/image/<path:filename>')
+    def serve_image(filename):
+        if 'username' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+            
+        image_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+        
+        # Check if image exists
+        if not os.path.exists(image_path):
+            return send_from_directory('static', 'no_image_available.jpg')
+        
+        # Get size parameter for optional resizing
+        size = request.args.get('size', 'full')
+        
+        if size == 'full':
+            return send_from_directory(Config.CATALOG_ORIGINAL, filename)
+        
+        try:
+            # Resize image on demand
+            buffer = resize_image(image_path, int(size) if size.isdigit() else 300)
+            return send_file(buffer, mimetype='image/jpeg')
+        except Exception as e:
+            app.logger.error(f"Error serving image {filename}: {e}")
+            return send_from_directory('static', 'no_image_available.jpg')
 
     @app.route('/update_location', methods=['POST'])
     def update_location():
@@ -560,312 +582,7 @@ def register_routes(app):
                 current_user=current_user
             )
 
-    @app.route("/v5_listcreator", methods=["GET", "POST"])
-    def v5_listcreator():
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("login"))
-        
-        current_user = session['username']
-        filename = None
-        user_input = None
-        images = {}
-        selected_images = []
-        show_input_form = True
-        error_message = None  # Initialize error_message to avoid UnboundLocalError
-
-        if request.method == "POST":
-            user_input = request.form.get("user_input", "").strip()
-            image_option = request.form.get("image_option")
-            
-            if user_input:
-                # Set the global variables in V5_Listcreator.py
-                V5_Listcreator.user_input = user_input
-                V5_Listcreator.image_option = image_option
-                
-                if image_option == "dropboxpic" and "dropbox" in user_input.lower():
-                    # Handle directory input with encoding
-                    V5_Listcreator.user_input_type = "directory"
-                    dropbox_path = os.path.join(Config.LOCAL_DROPBOX_DIR, user_input[user_input.lower().find('dropbox')+8:])
-                    
-                    # Use os.listdir() with proper encoding handling
-                    user_input_list = []
-                    if not os.path.exists(dropbox_path):
-                        error_message = f"Path not found, check your path"
-                        show_input_form = True
-                        return render_template(
-                            "v5_listcreator.html",
-                            filename=filename,
-                            user_input=user_input,
-                            images=images,
-                            selected_images=selected_images,
-                            current_user=current_user,
-                            show_input_form=show_input_form,
-                            error_message=error_message
-                        )
-
-                    for filename in os.listdir(dropbox_path):
-                        try:
-                            if filename.endswith('.jpg'):
-                                user_input_list.append(filename.encode('utf-8').decode('utf-8'))
-                        except UnicodeEncodeError:
-                            continue
-                else:
-                    # Handle list input
-                    V5_Listcreator.user_input_type = "list"
-                    user_input_list = [item.strip() for item in user_input.split(',')]
-                
-                # Get images for selection
-                images = get_images_for_selection(user_input_list)
-                show_input_form = False
-            app.logger.info("***%s***__@@@v5_listcreator@@@__%s",current_user,user_input)
-                     
-        return render_template(
-            "v5_listcreator.html",
-            filename=filename,
-            user_input=user_input,
-            images=images,
-            selected_images=selected_images,
-            current_user=current_user,
-            show_input_form=show_input_form,
-            error_message=error_message
-        )
-    def get_images_for_selection(sku_list):
-        images = {}
-        
-        for sku in sku_list:
-            try:
-                # Extract pattern: 1-2 letters followed by exactly 4 numbers
-                match = re.match(r'([A-Za-z]{1,2}\d{4})', sku)
-                if match:
-                    sku = match.group(1).upper()
-                    image_set = []
-                    base_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}.jpg")
-                    
-                    if os.path.exists(base_image_path):
-                        image_set.append({
-                            'filename': f"{sku}.jpg",
-                            'path': f"{sku}.jpg",
-                            'default': True
-                        })
-                    
-                    # Check for versioned images
-                    version = 2
-                    while True:
-                        versioned_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}_v{version}.jpg")
-                        if os.path.exists(versioned_image_path):
-                            image_set.append({
-                                'filename': f"{sku}_v{version}.jpg",
-                                'path': f"{sku}_v{version}.jpg",
-                                'default': False
-                            })
-                            version += 1
-                        else:
-                            break
-                    
-                    if image_set:  # Only add SKUs that have images
-                        images[sku] = image_set
-                        
-            except UnicodeEncodeError:
-                continue
-                
-        return images
     
-    @app.route("/v5_listcreator/finalize", methods=["POST"])
-    def finalize_v5_listcreator():
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("login"))
-
-        current_user = session['username']
-        output_dir = os.path.join("output", "list_output")
-        os.makedirs(output_dir, exist_ok=True)
-        form_data = request.form
-        image_size_input = form_data.get("image_size", "800")
-        
-        # Keep the original input value for display
-        display_image_size = image_size_input
-        # Convert to None only for processing
-        processing_image_size = None if image_size_input == "full" else int(image_size_input)
-        
-        selected_images = []
-        clean_skus = []
-        
-        for key in form_data:
-            if key.startswith('selected_images_'):
-                selected_image = form_data[key]
-                selected_images.append(selected_image)
-                sku_base = selected_image.split('_v')[0].replace('.jpg', '')
-                clean_skus.append(sku_base)
-        
-        user_input = ','.join(clean_skus)
-        style_count = len(clean_skus)  # Count unique styles
-        
-        V5_Listcreator.user_input = user_input
-        V5_Listcreator.selected_images = selected_images
-        V5_Listcreator.image_option = "resizedpic"
-        V5_Listcreator.user_input_type = "list"
-
-        try:
-            V5_Listcreator.main(processing_image_size)
-            filename = f"{V5_Listcreator.formatted_date}.xlsx"
-            file_size_kb = round(os.path.getsize(os.path.join("output", "list_output", filename)) / 1024, 2)
-            file_size_mb = round(file_size_kb / 1024, 2)
-
-            images = get_images_for_selection(clean_skus)
-            app.logger.info("***%s***__@@@v5_listcreator_pictures@@@__%s",current_user,selected_images)
-
-            return render_template("v5_listcreator.html",
-                                filename=filename,
-                                user_input=user_input,
-                                file_size_kb=file_size_kb,
-                                file_size_mb=file_size_mb,
-                                current_user=current_user,
-                                images=images,
-                                selected_images=selected_images,
-                                image_size=display_image_size,
-                                style_count=style_count,
-                                show_input_form=False)  # Add this line to prevent showing input form
-
-        except Exception as e:
-            app.logger.error(f"Error in finalize_v5_listcreator: {str(e)}")
-            flash(f"An error occurred: {str(e)}")
-            return redirect(url_for("v5_listcreator"))
-
-    @app.route('/download_pdf', methods=['POST'])
-    def download_pdf():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        
-        selected_images = request.form.get('selected_images', '').split(',')
-        image_size = request.form.get('image_size')
-        
-        # Create PDF in memory
-        memory_file = io.BytesIO()
-        
-        processed_images = []
-        for image_name in selected_images:
-            if image_name:
-                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_name)
-                if os.path.exists(image_path):
-                    with open(image_path, 'rb') as img_file:
-                        if image_size and image_size != 'full':
-                            buffer = resize_image(img_file, int(image_size))
-                            processed_images.append(buffer)
-                        else:
-                            processed_images.append(img_file.read())
-        
-        generate_catalog_pdf(processed_images, memory_file, image_size, selected_images)
-        
-        # Prepare the memory file for reading
-        memory_file.seek(0)
-        
-        pdf_filename = f"catalog_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        return send_file(
-            memory_file,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=pdf_filename
-        )
-
-    def generate_catalog_pdf(image_data_list, output_buffer, image_size='full', selected_images=[]):
-        c = canvas.Canvas(output_buffer, pagesize=landscape(letter))
-        c.setTitle("Catalog Pictures")
-        
-        # Cover page
-        c.setFont("Helvetica-Bold", 36)
-        c.drawString(100, 550, "Catalog Pictures")
-        c.setFont("Helvetica-Bold", 24)
-        c.drawString(100, 500, "Product Catalog")
-        c.setFont("Helvetica", 16)
-        c.drawString(100, 450, f"Created Date: {datetime.now().strftime('%Y-%m-%d')}")
-        c.drawString(100, 400, "Exclusive Access – Please Refrain from Sharing outside of Company")
-        resolution_text = f"Image Resolution: {image_size}px" if image_size != 'full' else "Image Resolution: Original Size"
-        c.drawString(100, 350, resolution_text)
-        c.showPage()
-        
-        # Process each image and add style text
-        for img_data, image_name in zip(image_data_list, selected_images):
-            img = ImageReader(io.BytesIO(img_data.getvalue() if hasattr(img_data, 'getvalue') else img_data))
-            img_width, img_height = img.getSize()
-            aspect = img_height / float(img_width)
-            
-            max_width = 700
-            width = max_width
-            height = width * aspect
-            
-            x = (landscape(letter)[0] - width) / 2
-            y = (landscape(letter)[1] - height) / 2 + 50
-            
-            c.drawImage(img, x, y, width=width, height=height)
-            
-            style_name = os.path.splitext(image_name)[0]
-            c.setFont("Helvetica-Bold", 20)
-            text_width = c.stringWidth(style_name, "Helvetica-Bold", 20)
-            text_x = (landscape(letter)[0] - text_width) / 2
-            text_y = y - 30
-            c.drawString(text_x, text_y, style_name)
-            
-            c.showPage()
-        
-        c.save()
-        
-    @app.route('/download_images', methods=['POST'])
-    def download_images():
-        user_input = request.form.get('user_input', '')
-        image_type = request.form.get('image_type', 'resized')
-        selected_images = request.form.get('selected_images', '')
-        image_size = request.form.get('image_size')
-
-        memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
-            if selected_images:
-                selected_files = selected_images.split(',')
-                for filename in selected_files:
-                    if filename:
-                        file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-                        if os.path.exists(file_path):
-                            # Skip resizing if image_size is 'full' or None
-                            if image_size and image_size != 'full':
-                                try:
-                                    with open(file_path, 'rb') as img_file:
-                                        resized_img = resize_image(img_file, int(image_size))
-                                        zf.writestr(filename, resized_img.getvalue())
-                                except (ValueError, TypeError):
-                                    # Fallback to original file if size conversion fails
-                                    zf.write(file_path, arcname=filename)
-                            else:
-                                # Use original file for 'full' size or when size is not specified
-                                zf.write(file_path, arcname=filename)
-            else:
-                # Original logic for all images remains unchanged
-                search_terms = [term.split()[0].strip() for term in user_input.split(",")]
-                for term in search_terms:
-                    try:
-                        for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                            if filename.lower().startswith(term.lower()):
-                                file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-                                if os.path.exists(file_path):
-                                    if image_type == 'resized':
-                                        with Image.open(file_path) as img:
-                                            buffer = io.BytesIO()
-                                            if img.mode != 'RGB':
-                                                img = img.convert('RGB')
-                                            img.save(buffer, format='JPEG', quality=20)
-                                            buffer.seek(0)
-                                            zf.writestr(filename, buffer.getvalue())
-                                    else:
-                                        zf.write(file_path, arcname=filename)
-                    except FileNotFoundError:
-                        app.logger.error("Directory not found: %s", Config.CATALOG_ORIGINAL)
-
-        memory_file.seek(0)
-        zip_filename = "selected_images.zip" if selected_images else "images.zip"
-        return send_file(
-            memory_file,
-            download_name=zip_filename,
-            as_attachment=True
-        )
     @app.route("/run_fast_script", methods=["POST"])
     def run_fast_script():
         try:
@@ -1006,9 +723,9 @@ def register_routes(app):
 
     @app.route('/log')
     def display():
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        current_user = session['username']
+        #if 'username' not in session:
+        #    return redirect(url_for("login"))
+        #current_user = session['username']
 
         try:
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
@@ -1026,15 +743,17 @@ def register_routes(app):
             # Calculate total pages
             total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
 
-            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages,current_user=current_user), 200
+            #return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages,current_user=current_user), 200
+            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages), 200
+
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
         
     @app.route('/log/stream', methods=['GET'])
     def stream_log():
-        if 'username' not in session:
-            return redirect(url_for("login"))
+       # if 'username' not in session:
+       #     return redirect(url_for("login"))
         def generate():
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
                 file.seek(0, 2)  # Move to the end of the file
@@ -1105,15 +824,6 @@ def register_routes(app):
         
         return formatted
          
-
-    @app.route('/download/<filename>')
-    def download_file(filename):
-        if 'username' not in session:
-            return redirect(url_for("login"))
-        current_user = session['username']
-        app.logger.info("***%s***__@@@[Download][List]@@@__ %s", current_user,filename)
-        return send_from_directory("output/list_output", filename, as_attachment=False)
-
     @app.route('/download2/<filename>')
     def download_file2(filename):
         current_user = session['username']
@@ -1124,10 +834,6 @@ def register_routes(app):
     def download_file3(filename):
         app.logger.info("[Download][loris_barcode]File %s downloaded from barcode output", filename)
         return send_from_directory("output/barcode_output/", filename, as_attachment=False)
-
-    @app.route('/ftp/<path:path>', methods=['GET'])
-    def serve_file(path):
-        return send_from_directory(Config.CATALOG_ORIGINAL, path, as_attachment=False)
 
 
     @app.route('/download4/<filename>')
@@ -1430,3 +1136,59 @@ def register_routes(app):
         
         return jsonify({"error": "Files not found"}), 404
     
+    @app.route('/download_images', methods=['POST'])
+    def download_images():
+        user_input = request.form.get('user_input', '')
+        image_type = request.form.get('image_type', 'resized')
+        selected_images = request.form.get('selected_images', '')
+        image_size = request.form.get('image_size')
+
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            if selected_images:
+                selected_files = selected_images.split(',')
+                for filename in selected_files:
+                    if filename:
+                        file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+                        if os.path.exists(file_path):
+                            # Skip resizing if image_size is 'full' or None
+                            if image_size and image_size != 'full':
+                                try:
+                                    with open(file_path, 'rb') as img_file:
+                                        resized_img = resize_image(img_file, int(image_size))
+                                        zf.writestr(filename, resized_img.getvalue())
+                                except (ValueError, TypeError):
+                                    # Fallback to original file if size conversion fails
+                                    zf.write(file_path, arcname=filename)
+                            else:
+                                # Use original file for 'full' size or when size is not specified
+                                zf.write(file_path, arcname=filename)
+            else:
+                # Original logic for all images remains unchanged
+                search_terms = [term.split()[0].strip() for term in user_input.split(",")]
+                for term in search_terms:
+                    try:
+                        for filename in os.listdir(Config.CATALOG_ORIGINAL):
+                            if filename.lower().startswith(term.lower()):
+                                file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+                                if os.path.exists(file_path):
+                                    if image_type == 'resized':
+                                        with Image.open(file_path) as img:
+                                            buffer = io.BytesIO()
+                                            if img.mode != 'RGB':
+                                                img = img.convert('RGB')
+                                            img.save(buffer, format='JPEG', quality=20)
+                                            buffer.seek(0)
+                                            zf.writestr(filename, buffer.getvalue())
+                                    else:
+                                        zf.write(file_path, arcname=filename)
+                    except FileNotFoundError:
+                        app.logger.error("Directory not found: %s", Config.CATALOG_ORIGINAL)
+
+        memory_file.seek(0)
+        zip_filename = "selected_images.zip" if selected_images else "images.zip"
+        return send_file(
+            memory_file,
+            download_name=zip_filename,
+            as_attachment=True
+        )

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V6_listcreator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .image-option img {
+            width: 150px; /* Set the width of images to 150px */
+        }
+        .style-card {
+            margin-bottom: 20px;
+        }
+        .merged-style {
+            vertical-align: middle !important;
+            text-align: center;
+            font-weight: bold;
+        }
+        .remove-row {
+            color: red;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .description-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            box-sizing: border-box; /* Ensure padding and border are included in the width and height */
+        }
+    </style>
+    <style>
+        .image-option {
+            display: inline-block;
+            margin: none;
+        }
+        .image-option input[type="radio"] {
+            display: none;
+        }
+        .image-option label {
+            cursor: pointer;
+            border: 2px solid transparent;
+            display: inline-block;
+            padding: 2px;
+        }
+        .image-option input[type="radio"]:checked + label {
+            border-color: #007bff;
+        }
+        
+    </style>
+    
+</head>
+<body>
+    <div class="container mt-4">
+        {% if error_message %}
+            <div class="alert alert-danger" role="alert">
+                {{ error_message }}
+            </div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('v6_listcreator.index') }}">
+            <div class="form-group">
+                <input type="text" class="form-control" id="list_input" name="list_input" placeholder="Styles or Dropboxlink">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-secondary" onclick="exportList()">Export List</button>
+            <button type="button" class="btn btn-danger float-right" onclick="deleteAllZero()">Delete All Zero</button>
+            <button type="button" class="btn btn-warning float-right" onclick="removeAllPcsBox()">Remove All PCS/BOX</button>
+            <button type="button" class="btn btn-warning float-right" onclick="removeAllDimensions()">Remove All Dimensions</button>
+        </form>
+
+        {% if pivot_data %}
+        <div class="mt-4">
+            {% for style_group in pivot_data %}
+            <div class="card style-card">
+                <div class="card-body">
+                    <!-- Display Style, Description, and Price separately -->
+                    <h5 class="card-title">{{ style_group[0].style }}</h5>
+                    <textarea class="description-input" placeholder="Enter description" style="width: 100%; height: 100%; resize: none; box-sizing: border-box;">{{ descriptions[style_group[0].style] }}</textarea>
+                    <p class="card-text">Price: ${{ style_group[0].selling_price }}</p>
+        
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Color</th>
+                                <th>Quantity</th>
+                                <th>Ocean</th>
+                                <th>PCS/BOX</th>
+                                <th>Dimensions</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in style_group %}
+                            <tr>
+                                <td>{{ row.color }}</td>
+                                <td contenteditable="true">{{ row.Available_now }}</td> <!-- Make Quantity editable -->
+                                <td>{{ row.incoming_quantity }}</td>
+                                <td>{{ row.QTY_in_box }}</td>
+                                <td>{{ row.dimensions }}</td>
+                                <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-success" onclick="addRow(this)">Add Row</button>
+
+                    <!-- Display Images for the Current Style -->
+                    <div class="d-flex flex-wrap">
+                        {% set style = style_group[0].style.strip() %}
+                        {% if style in dropbox_images %}
+                            <div class="image-option">
+                                <!-- Display Dropbox image if available -->
+                                <input type="radio" id="dropbox_image_{{ style }}" name="image_option_{{ style }}" value="{{ dropbox_images[style] }}" checked>
+                                <label for="dropbox_image_{{ style }}">
+                                    <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" alt="{{ style }}" class="img-thumbnail">
+                                </label>
+                            </div>
+                        {% endif %}
+                        <!-- Display catalog images -->
+                        {% for image in image_urls[style] %}
+                            <div class="image-option">
+                                <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
+                                <label for="catalog_image_{{ style }}_{{ loop.index }}">
+                                    <img src="{{ image['path'] }}" alt="{{ style }}" class="img-thumbnail">
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+</div>
+{% endif %}
+    </div>
+
+
+    <script>
+      function exportList() {
+    const cards = document.querySelectorAll('.style-card');
+    const exportData = [];
+
+    cards.forEach(card => {
+        const style = card.querySelector('.card-title').innerText.trim(); // Get style from card title
+        const descriptionElement = card.querySelector('.description-input');
+        const description = descriptionElement ? descriptionElement.value.trim() : "N/A"; // Get description
+        const priceElement = card.querySelector('.card-text'); // Get price
+        const price = priceElement ? priceElement.innerText.trim().replace('Price: $', '') : "N/A"; // Get price
+
+        const selectedImage = card.querySelector(`input[name="image_option_${style}"]:checked`);
+
+        if (!selectedImage) {
+            alert('Please select an image for the style: ' + style);
+            return; // Stop processing if no image is selected
+        }
+
+        const imagePath = selectedImage.value;
+        const rowData = {
+            style: style,
+            description: description,
+            price: price,
+            image: imagePath,
+            rows: []
+        };
+
+        const rows = card.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const rowDataObj = {
+                color: row.cells[0] ? row.cells[0].innerText.trim() : "N/A", // Color
+                availableNow: row.cells[1] ? row.cells[1].innerText.trim() : "N/A", // Available Now
+                incomingQuantity: row.cells[2] ? row.cells[2].innerText.trim() : "N/A", // Incoming Quantity
+                qtyInBox: row.cells[3] ? row.cells[3].innerText.trim() : "N/A", // QTY in Box
+                dimensions: row.cells[4] ? row.cells[4].innerText.trim() : "N/A" // Dimensions
+            };
+
+            rowData.rows.push(rowDataObj);
+        });
+
+        // Push the rowData for the first row
+        if (rows.length > 0) {
+            exportData.push(rowData);
+        }
+    });
+
+    // Send exportData to the backend
+    fetch('{{ url_for("v6_listcreator.export_list") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(exportData)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob(); // Get the response as a blob
+        } else {
+            throw new Error('Network response was not ok.');
+        }
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'exported_data.xlsx'; // Set the file name
+        document.body.appendChild(a);
+        a.click(); // Trigger the download
+        window.URL.revokeObjectURL(url); // Clean up
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Export failed!');
+    });
+}
+
+    </script>
+<script>
+    function deleteAllZero() {
+        const cards = document.querySelectorAll('.style-card');
+
+        cards.forEach(card => {
+            const rows = Array.from(card.querySelectorAll('tbody tr')); // Collect all rows
+            const rowsToDelete = []; // Store rows marked for deletion
+
+            // Identify rows to delete
+            rows.forEach(row => {
+                const quantityCell = row.querySelector('td:nth-child(2)'); // Get the Quantity cell (2nd column)
+                if (quantityCell) {
+                    const quantity = parseInt(quantityCell.innerText.trim(), 10);
+                    if (quantity <= 0) {
+                        rowsToDelete.push(row);
+                    }
+                }
+            });
+
+            // Remove marked rows
+            rowsToDelete.forEach(row => row.remove());
+
+            // If no rows are left in the table, remove the card
+            const remainingRows = card.querySelectorAll('tbody tr').length;
+            if (remainingRows === 0) {
+                card.remove();
+            }
+        });
+    }
+
+    function removeRow(element) {
+        const row = element.closest('tr'); // Get the closest row to the clicked element
+        const card = row.closest('.style-card'); // Get the card that contains the row
+
+        row.remove(); // Remove the row
+
+        // If no rows are left in the table, remove the card
+        const remainingRows = card.querySelectorAll('tbody tr').length;
+        if (remainingRows === 0) {
+            card.remove();
+        }
+    }
+</script>
+<script>
+    function removeAllPcsBox() {
+    const cards = document.querySelectorAll('.style-card');
+
+    cards.forEach(card => {
+        const rows = card.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const pcsBoxCell = row.querySelector('td:nth-child(4)'); // Assuming PCS/BOX is the 4th column
+            if (pcsBoxCell) {
+                pcsBoxCell.remove(); // Remove the PCS/BOX cell
+            }
+        });
+        
+        // Optionally, you may want to remove the header as well
+        const headerRow = card.querySelector('thead tr');
+        const pcsBoxHeader = headerRow.querySelector('th:nth-child(4)');
+        if (pcsBoxHeader) {
+            pcsBoxHeader.remove(); // Remove the PCS/BOX header
+        }
+    });
+}
+
+function removeAllDimensions() {
+    const cards = document.querySelectorAll('.style-card');
+
+    cards.forEach(card => {
+        const rows = card.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const dimensionsCell = row.querySelector('td:nth-child(5)'); // Assuming Dimensions is the 5th column
+            if (dimensionsCell) {
+                dimensionsCell.remove(); // Remove the Dimensions cell
+            }
+        });
+        
+        // Optionally, you may want to remove the header as well
+        const headerRow = card.querySelector('thead tr');
+        const dimensionsHeader = headerRow.querySelector('th:nth-child(5)');
+        if (dimensionsHeader) {
+            dimensionsHeader.remove(); // Remove the Dimensions header
+        }
+    });
+}
+</script>
+<script>
+    function addRow(button) {
+    const card = button.closest('.style-card'); // Get the closest card
+    const tableBody = card.querySelector('tbody'); // Get the tbody of the table
+
+    // Create a new row with contenteditable cells
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td contenteditable="true" placeholder="Color"></td>
+        <td contenteditable="true" placeholder="Quantity">0</td> <!-- Editable Quantity cell -->
+        <td contenteditable="true" placeholder="Ocean"></td>
+        <td contenteditable="true" placeholder="PCS/BOX"></td>
+        <td contenteditable="true" placeholder="Dimensions"></td>
+        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+    `;
+
+    // Append the new row to the table body
+    tableBody.appendChild(newRow);
+}
+</script>
+</body>
+</html>
