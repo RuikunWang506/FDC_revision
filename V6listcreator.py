@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, jsonify, current_app, send_file,send_from_directory
+from flask import Blueprint, render_template, request, jsonify, current_app, send_file,send_from_directory,redirect, url_for, flash, session
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, PatternFill, Border, Side
 from openpyxl.drawing.image import Image as OpenPyXLImage
+from openpyxl.utils import get_column_letter
 
 from io import BytesIO
 import os
@@ -15,9 +16,14 @@ import mysql.connector
 from mysql.connector import Error
 
 v6_listcreator_bp = Blueprint('v6_listcreator', __name__, template_folder='templates')
+server = "192.168.254.204"
+database_fdc = "omsdata_FDC"
+database_oms_ef = "oms_EF"
+username = "tristen"
+password = 'Fdc2022!!'
+driver = 'ODBC Driver 17 for SQL Server'
 
-
-
+ 
 
 selected_images = []  # This should be populated based on your application logic
 formatted_date = datetime.datetime.now().strftime("%Y%m%d")  # Example date formatting
@@ -66,15 +72,60 @@ def list_from_origin(list_input, current_user):
     current_app.logger.info(f"***{current_user}*** processing regular input: {style_list}")
     return style_list
 
+
+
+
 @v6_listcreator_bp.route('/v6_listcreator', methods=['GET', 'POST'])
 def index():
     current_user = "a"  # Replace with actual user logic if needed
     error_message = None  # Initialize error message
     dropbox_images = {}  # Initialize dropbox_images as a dictionary
+    missing_descriptions = []  # Initialize missing descriptions list
+    image_urls = {}  # Add this line to initialize image_urls
+
+    # Handle GET request with list_input parameter
+    if request.method == 'GET' and request.args.get('list_input'):
+        list_input = request.args.get('list_input')
+        current_app.logger.info(f"***{current_user}*** processing GET request with input: {list_input}")
+        
+        if 'dropbox' in list_input.lower():
+            result = list_from_dropbox(list_input, current_user)
+            if isinstance(result, dict) and 'error' in result:
+                error_message = result['error']
+                return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
+            style_list, dropbox_images = result
+        else:
+            style_list = list_from_origin(list_input, current_user)
+
+        if style_list:
+            image_urls = get_images_for_selection(style_list)
+            descriptions = {}
+            for style in style_list:
+                description = get_description_from_mysql(style)
+                descriptions[style] = description
+                if description == "No description available":
+                    missing_descriptions.append(style)
+
+            data = get_sql_data(style_list)
+            if data:
+                pivot_data = create_pivot_table(data)
+                context = {
+                    'current_user': current_user,
+                    'data': data,
+                    'pivot_data': pivot_data,
+                    'image_urls': image_urls,
+                    'dropbox_images': dropbox_images,
+                    'descriptions': descriptions,
+                    'error_message': error_message
+                }
+                return render_template('v6_listcreator.html', **context,list_input=list_input)
 
     if request.method == 'POST':
         list_input = request.form.get('list_input')
         current_app.logger.info(f"***{current_user}*** submitted input: {list_input}")
+        session['original_input'] = list_input  # Store the original input
+
+
 
         if 'dropbox' in list_input.lower():
             result = list_from_dropbox(list_input, current_user)
@@ -87,13 +138,50 @@ def index():
             style_list = list_from_origin(list_input, current_user)
 
         if style_list:
+            image_urls = get_images_for_selection(style_list)  # Get images for all styles
             descriptions = {}
-            for style in style_list:
-                descriptions[style] = get_description_from_mysql(style)  # Fetch description for each style
+             # Verify styles in database
+            conn_str = f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}'
+            conn = pyodbc.connect(conn_str)
+            cursor = conn.cursor()
 
+            style_list_str = ",".join([f"'{style}'" for style in style_list])
+            verify_query = f"""
+            SELECT DISTINCT ALT_CD 
+            FROM dbo.inv 
+            WHERE ALT_CD IN ({style_list_str})
+            """
+            
+            cursor.execute(verify_query)
+            verified_styles = [row[0].strip() for row in cursor.fetchall()]
+            current_app.logger.info(verify_query)
+            current_app.logger.info(f"****** verified styles: {verified_styles}")
+
+            cursor.close()
+            conn.close()
+            for style in verified_styles:
+                session[f'verified_{style.strip()}'] = True
+
+                
+            for style in style_list:
+                
+                description = get_description_from_mysql(style)  # Fetch description for each style
+                descriptions[style] = description
+                if description == "No description available":
+                    missing_descriptions.append(style)  # Collect styles with missing descriptions
+
+            # If there are missing descriptions, store them in the session
+            if missing_descriptions:
+                session['missing_descriptions'] = missing_descriptions
+                return render_template('v6_listcreator.html', 
+                    current_user=current_user, 
+                    missing_descriptions=missing_descriptions,
+                    image_urls=image_urls,
+                    dropbox_images=dropbox_images,
+                    list_input=list_input
+)
             # Continue with your existing logic...
             data = get_sql_data(style_list)  # Fetch style data
-            image_urls = get_images_for_selection(style_list)  # Fetch image URLs for styles
 
             if data:
                 pivot_data = create_pivot_table(data)  # Create pivot table
@@ -109,10 +197,37 @@ def index():
                     'error_message': error_message  # Pass error message if any
                 }
 
-                return render_template('v6_listcreator.html', **context)
+                return render_template('v6_listcreator.html', **context,list_input=list_input)
 
     # Render default view if no POST request
     return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
+
+
+@v6_listcreator_bp.route('/update_descriptions', methods=['POST'])
+def update_descriptions():
+    descriptions = {}
+    missing_descriptions = session.get('missing_descriptions', [])
+    original_input = session.get('original_input', '')
+
+    # Collect all style names that were updated
+    style_names = []
+    for key in request.form:
+        if key.startswith('description_'):
+            style_index = key.split('_')[1]
+            description = request.form[key]
+            style_name = missing_descriptions[int(style_index) - 1]
+            descriptions[style_name] = description
+            style_names.append(style_name)
+
+    # Update database for all styles and store verification status
+    for style_name, description in descriptions.items():
+        update_description_in_db(style_name, description)
+        current_app.logger.info(f"****** updated description for style {style_name} with: {description}")
+
+    session.pop('missing_descriptions', None)
+    
+    # Return to index with original input
+    return redirect(url_for('v6_listcreator.index', list_input=original_input))
 
 
 def get_mysql_connection():
@@ -147,16 +262,47 @@ def get_description_from_mysql(style):
             cursor.close()
             connection.close()
     return "No description available"
+    
+def update_description_in_db(style_index, description):
+    """Updates the description for a given style in the MySQL database.
+    If the style does not exist, a new row is created."""
+    connection = get_mysql_connection()  # Assuming this function is defined elsewhere to get the DB connection
 
+    if connection:
+        try:
+            cursor = connection.cursor()
 
+            # Prepare the SQL update query
+            update_query = "UPDATE onlinedb.description SET description = %s WHERE style = %s"
+            params = (description, style_index)
 
+            # Log the actual query and parameters
+            current_app.logger.info(f"Executing query: {update_query} with parameters: {params}")
+
+            # Update the description for the specified style
+            cursor.execute(update_query, params)
+
+            # Check the number of affected rows
+            if cursor.rowcount == 0:
+                current_app.logger.warning(f"No rows matched for style: {style_index}. Inserting a new row.")
+                
+                # Prepare the SQL insert query
+                insert_query = "INSERT INTO onlinedb.description (style, description) VALUES (%s, %s)"
+                cursor.execute(insert_query, (style_index, description))
+                connection.commit()  # Commit the changes to the database
+                current_app.logger.info(f"Inserted new description for style: {style_index}")
+            else:
+                connection.commit()  # Commit the changes to the database
+                current_app.logger.info(f"Description updated for style: {style_index}")
+
+        except Error as e:
+            current_app.logger.error(f"Error updating description: {e}")
+
+        finally:
+            cursor.close()
+            connection.close()
 def get_sql_data(style_list):
-    server = "192.168.254.204"
-    database_fdc = "omsdata_FDC"
-    database_oms_ef = "oms_EF"
-    username = "tristen"
-    password = 'Fdc2022!!'
-    driver = 'ODBC Driver 17 for SQL Server'
+
     
     query = """
     DECLARE @AltCDList NVARCHAR(MAX) = ?;
@@ -378,122 +524,73 @@ def set_border(ws, cell_range):
     for row in ws[cell_range]:
         for cell in row:
             cell.border = thin
+def set_border(ws, cell_range):
+    thin = Side(border_style="thin", color="000000")
+    for row in ws[cell_range]:
+        for cell in row:
+            cell.border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
-def add_data_to_excel_sheet(sku_name, ws, row, data, image_size):
-    global selected_images
-
-    # Find the matching selected image for this SKU
-    matching_image = None
-    for item in data:
-        if sku_name == item['style']:
-            matching_image = item['image']  # Get the selected image filename from the data
-            break
-
-    # Construct the full image path using CATALOG_ORIGINAL
-    if matching_image:
-        image_path = os.path.join(Config.CATALOG_ORIGINAL, matching_image)
-    else:
-        image_path = os.path.join('static', 'no_image_available.jpg')  # Fallback to placeholder
-
-    # Check if the image exists
-    if not os.path.exists(image_path):
-        image_path = os.path.join('static', 'no_image_available.jpg')  # Use placeholder if not found
-
-    # Open the original image and handle it based on image_size
-    with open(image_path, 'rb') as img_file:
-        if image_size is None:
-            buffer = BytesIO(img_file.read())
-            buffer.seek(0)
-        else:
-            buffer = resize_image(img_file, image_size)
-
-    excelImg = OpenPyXLImage(buffer)
-    excelImg.height = 150
-    excelImg.width = 200
-    excelImg.anchor = 'A' + str(row)
-    ws.add_image(excelImg)
-
-    ws['G' + str(row)] = sku_name
-    price = ""
-
-    # Find the price and other details from the provided data
-    for item in data:
-        if sku_name == item['style']:
-            price = item.get('price', '')
-            break
-
-    ws['F' + str(row)] = "$" + str(price)
-
-    detail_row_num = 0
-
-    # Assuming data contains a list of dictionaries with relevant details
-    for item in data:
-        if sku_name == item['style']:  # Check if the SKU matches
-            ws["H" + str(row + detail_row_num)] = item.get('color', '')
-            ws["I" + str(row + detail_row_num)] = item.get('quantity', '')
-            ws["N" + str(row + detail_row_num)] = item.get('sku', '')
-
-            # Collect last modified and created dates
-            last_modified = item.get('last_modified', 'No Date')
-            created_date = item.get('created_date', 'No Date')
-
-            ws["K" + str(row + detail_row_num)] = last_modified
-            ws["R" + str(row + detail_row_num)] = created_date
-
-            detail_row_num += 1
-
-    detail_row_num += 1
-
-    print(sku_name + " completed")
-    ws.merge_cells("A" + str(row) + ":" + "D" + str(row + (7 if detail_row_num < 8 else detail_row_num - 1)))
-    ws.merge_cells("E" + str(row) + ":" + "E" + str(row + (7 if detail_row_num < 8 else detail_row_num - 1)))
-    ws.merge_cells("F" + str(row) + ":" + "F" + str(row + (7 if detail_row_num < 8 else detail_row_num - 1)))
-    ws['F' + str(row)].alignment = Alignment(horizontal='center', vertical='center')
-
-    row += 8 if detail_row_num < 8 else detail_row_num
-
-    return row
 
 @v6_listcreator_bp.route('/export_list', methods=['POST'])
 def export_list():
     try:
-        data = request.get_json()
-        current_app.logger.info(f"Exported list data: {data}")
+        request_data = request.get_json()  # Get the JSON data from the request
+        data = request_data.get('exportData', [])  # Extract export data
+        image_size_input = request_data.get('image_size', "800")  # Get the image size from the request
+        display_image_size = image_size_input  # Initialize display_image_size
+        processing_image_size = None if image_size_input == "full" else int(image_size_input)
+
+        current_app.logger.info(f"Exporting list with image size: {processing_image_size}")
 
         # Create a new Excel workbook and select the active worksheet
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Exported Data"
 
-        # Define headers
-        headers = ["Image", "Style", "Description", "Color", "Available Now", "Incoming Quantity", "QTY in Box", "Dimensions"]
-        sheet.append(headers)
+        highlight_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+        sheet.column_dimensions[get_column_letter(1)].width = 30  # Column A is the first column
+        sheet.column_dimensions[get_column_letter(2)].width = 12  # Column B is the second column
+
+        # Get the current date in the desired format (YYYY-MM-DD)
+        formatted_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        # Create the filename using the formatted date
+        filename = f"exported_data_{formatted_date}.xlsx"
 
         # Populate the Excel sheet with data
+        headers = ["Image", "Description", "Price", "Style", "Color", "Quantity", "Ocean", "PCS/BOX", "Dimensions"]
+        sheet.append(headers)
+
         for item in data:
             style = item['style']
             description = item['description']
-            image_filename = item['image']  # This should be the filename without the '/list_image/' prefix
+            image_filename = item['image']
+            price = item['price']
 
             # Modify the image path if it contains 'list_image'
             if '/list_image/' in image_filename:
-                image_filename = re.sub(r'/list_image/', '', image_filename)  # Remove '/list_image/'
-                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)  # Construct the full path
+                image_filename = re.sub(r'/list_image/', '', image_filename)
+                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
             else:
-                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)  # Default path if no '/list_image/'
+                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
 
             # Check if the image exists
             if not os.path.exists(image_path):
                 current_app.logger.error(f"Image not found: {image_path}")
-                image_path = os.path.join('static', 'no_image_available.jpg')  # Use placeholder if not found
+                image_path = os.path.join('static', 'no_image_available.jpg')
+
+            # Resize image if necessary
+            if processing_image_size is not None:
+                image_path = resize_image(image_path, processing_image_size)
 
             # Add rows for each style
             rows = item['rows']
             for index, row in enumerate(rows):
                 row_data = [
                     "",  # Placeholder for the image column
-                    style if index == 0 else "",  # Only add style for the first row
-                    description if index == 0 else "",  # Only add description for the first row
+                    description if index == 0 else "",
+                    price if index == 0 else "",
+                    style if index == 0 else "",
                     row['color'],
                     row['availableNow'],
                     row['incomingQuantity'],
@@ -505,17 +602,39 @@ def export_list():
                 if index == 0:
                     # Insert the image in the first column for the first row
                     img = OpenPyXLImage(image_path)
-                    img.width = 100  # Set image width
-                    img.height = 100  # Set image height
+                    img.width = 200  # Set image width
+                    img.height = 150  # Set image height
                     sheet.add_image(img, f"A{sheet.max_row}")
+
+            # Ensure a minimum of 8 rows for each style
+            while len(rows) < 8:
+                empty_row_data = [""] * len(headers)  # Create an empty row
+                sheet.append(empty_row_data)
+                rows.append(empty_row_data)  # Keep track of the row count
+
+            # Merge cells in columns A, B, and C based on the number of rows
+            if len(rows) > 8:
+                sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=1, end_row=sheet.max_row, end_column=1)  # Merge A
+                sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=2, end_row=sheet.max_row, end_column=2)  # Merge B
+                sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=3, end_row=sheet.max_row, end_column=3)  # Merge C
+            else:
+                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=1, end_row=sheet.max_row, end_column=1)  # Merge A
+                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=2, end_row=sheet.max_row, end_column=2)  # Merge B
+                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=3, end_row=sheet.max_row, end_column=3)  # Merge C
+
+            for col in [2, 3]:  # Columns B and C
+                for row in range(sheet.max_row - len(rows) + 1, sheet.max_row + 1):
+                    sheet.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
+
+        set_border(sheet, 'A2:I' + str(sheet.max_row))
 
         # Save the workbook to a BytesIO object
         output = BytesIO()
         workbook.save(output)
         output.seek(0)
 
-        # Send the Excel file as a response
-        return send_file(output, download_name="exported_data.xlsx", as_attachment=True)
+        # Send the Excel file as a response with the new filename
+        return send_file(output, download_name=filename, as_attachment=True)
 
     except Exception as e:
         current_app.logger.error(f"Error in export_list: {e}")

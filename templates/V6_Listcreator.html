@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>V6_listcreator</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <style>
         .image-option img {
             width: 150px; /* Set the width of images to 150px */
@@ -23,12 +26,50 @@
             font-weight: bold;
         }
         .description-input {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: transparent;
-            box-sizing: border-box; /* Ensure padding and border are included in the width and height */
+            min-height: 40px; /* Minimum height */
+            max-height: 80px; /* Maximum height */
+            overflow-y: auto; /* Allow vertical scrolling if needed */
         }
+        .image-option {
+        position: relative;
+        }
+        .dropbox-overlay {
+            position: absolute;
+            height: 100px;
+            opacity: 0.2;
+            z-index: 1;element.style {
+    min-width: 10px;
+}
+        }
+    </style>
+    <style>
+        .table td, .table th {
+            padding: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .btn-sm {
+            padding: 0.2rem 0.5rem;
+            margin: 0.1rem !important;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+        
+        .style-card {
+            margin-bottom: 1rem;
+        }
+        
+        .description-input {
+            padding: 0.25rem;
+            margin: 0.25rem 0;
+        }
+        
+        .select2-container .select2-selection--single {
+            height: 31px;
+        }
+        
     </style>
     <style>
         .image-option {
@@ -49,110 +90,339 @@
         }
         
     </style>
+    <style>
+        .bookmark-sidebar {
+            position: fixed;
+            right: 0;
+            top: 10px;
+            width: 200px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 10px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            max-height: 70vh;
+        }
+    
+        .bookmark-sidebar h5 {
+            margin-bottom: 10px;
+        }
+    
+        .bookmark-sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+    
+        .bookmark-sidebar ul li {
+            margin: 5px 0;
+        }
+    
+        .bookmark-sidebar ul li a {
+            text-decoration: none;
+            color: #007bff;
+        }
+    
+        .bookmark-sidebar ul li a:hover {
+            text-decoration: underline;
+        }
+    
+        .sidebar-buttons {
+            margin-top: auto;
+            background-color: #f8f9fa;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .sidebar-buttons button {
+            width: 100%; /* Make buttons full width */
+            margin-bottom: 10px; /* Space between buttons */
+        }
+        #style-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+    </style>
+    <style>
+        .action-sidebar {
+            position: fixed;
+            left: 0;
+            top: 25%;
+            width: 150px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 10px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .action-sidebar button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .bookmark-sidebar {
+            position: fixed;
+            right: 0;
+            top: 25%;
+            width: 80%;
+            max-width: 300px;
+            background-color: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            padding: 10px;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        #style-list {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
     
 </head>
 <body>
+    
+    <div class="bookmark-sidebar">
+        <h5>Styles</h5>
+        <ul id="style-list">
+            {% for style_group in pivot_data %}
+                <li><a href="#{{ style_group[0].style|replace(' ', '_') }}">{{ style_group[0].style }}</a></li>
+            {% endfor %}
+        </ul>
+        
+        <div class="action-sidebar">
+            {% if not missing_descriptions and pivot_data %}
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#imageSizeModal">Export List</button>
+                <button type="button" class="btn btn-danger" onclick="deleteAllZero()">Delete All Zero</button>
+                <button type="button" class="btn btn-warning" onclick="removeAllPcsBox()">Remove All PCS/BOX</button>
+                <button type="button" class="btn btn-warning" onclick="removeAllDimensions()">Remove All Dimensions</button>
+            {% endif %}
+        </div>
+        
+        <div class="bookmark-sidebar">
+            <h5>Styles</h5>
+            <ul id="style-list">
+                {% for style_group in pivot_data %}
+                    <li><a href="#{{ style_group[0].style|replace(' ', '_') }}">{{ style_group[0].style }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <h5>base version 1-29 </h5>
     <div class="container mt-4">
         {% if error_message %}
             <div class="alert alert-danger" role="alert">
                 {{ error_message }}
             </div>
         {% endif %}
+    
         <form method="POST" action="{{ url_for('v6_listcreator.index') }}">
             <div class="form-group">
                 <input type="text" class="form-control" id="list_input" name="list_input" placeholder="Styles or Dropboxlink">
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
-            <button type="button" class="btn btn-secondary" onclick="exportList()">Export List</button>
-            <button type="button" class="btn btn-danger float-right" onclick="deleteAllZero()">Delete All Zero</button>
-            <button type="button" class="btn btn-warning float-right" onclick="removeAllPcsBox()">Remove All PCS/BOX</button>
-            <button type="button" class="btn btn-warning float-right" onclick="removeAllDimensions()">Remove All Dimensions</button>
         </form>
-
+        {% if list_input %}
+        <h5>your input was: {{list_input}}</h5>
+        {%endif%}
         {% if pivot_data %}
         <div class="mt-4">
             {% for style_group in pivot_data %}
-            <div class="card style-card">
+            <div class="card mb-3" id="{{ style_group[0].style|replace(' ', '_') }}">
                 <div class="card-body">
-                    <!-- Display Style, Description, and Price separately -->
-                    <h5 class="card-title">{{ style_group[0].style }}</h5>
-                    <textarea class="description-input" placeholder="Enter description" style="width: 100%; height: 100%; resize: none; box-sizing: border-box;">{{ descriptions[style_group[0].style] }}</textarea>
-                    <p class="card-text">Price: ${{ style_group[0].selling_price }}</p>
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px;">{{ style_group[0].style }}
+                            {% if session.get('verified_' + style_group[0].style) %}
+                                <span class="badge badge-success px-2">IN_OMS</span>
+                            {% endif %}
+                        </div>
+                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
+                            style="height: 40px;width:200px; resize: none;" rows="1">{{ descriptions[style_group[0].style] }}</textarea>
+                        <p class="card-text mb-0 font-weight-bold text-primary">
+                            ${{ style_group[0].selling_price }}
+                        </p>
+                    </div>
         
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Color</th>
-                                <th>Quantity</th>
-                                <th>Ocean</th>
-                                <th>PCS/BOX</th>
-                                <th>Dimensions</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in style_group %}
-                            <tr>
-                                <td>{{ row.color }}</td>
-                                <td contenteditable="true">{{ row.Available_now }}</td> <!-- Make Quantity editable -->
-                                <td>{{ row.incoming_quantity }}</td>
-                                <td>{{ row.QTY_in_box }}</td>
-                                <td>{{ row.dimensions }}</td>
-                                <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <button type="button" class="btn btn-success" onclick="addRow(this)">Add Row</button>
-
-                    <!-- Display Images for the Current Style -->
-                    <div class="d-flex flex-wrap">
-                        {% set style = style_group[0].style.strip() %}
-                        {% if style in dropbox_images %}
-                            <div class="image-option">
-                                <!-- Display Dropbox image if available -->
-                                <input type="radio" id="dropbox_image_{{ style }}" name="image_option_{{ style }}" value="{{ dropbox_images[style] }}" checked>
-                                <label for="dropbox_image_{{ style }}">
-                                    <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" alt="{{ style }}" class="img-thumbnail">
-                                </label>
+                    <div class="row">
+                        <div class="col-6">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Color</th>
+                                        <th>Quantity</th>
+                                        <th>Ocean</th>
+                                        <th>PCS/BOX</th>
+                                        <th>Dimensions</th>
+                                        <th>Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in style_group %}
+                                    <tr>
+                                        <td>{{ row.color }}</td>
+                                        <td contenteditable="true">{{ row.Available_now }}</td>
+                                        <td>{{ row.incoming_quantity }}</td>
+                                        <td>{{ row.QTY_in_box }}</td>
+                                        <td>{{ row.dimensions }}</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-success btn-sm" onclick="addRow(this)">Add Row</button>
+                        </div>
+        
+                        <div class="col-6">
+                            <div class="d-flex flex-wrap">
+                                {% set style = style_group[0].style.strip() %}
+                                {% if style in dropbox_images %}
+                                <div class="image-option">
+                                    <input type="radio" id="dropbox_image_{{ style }}" name="image_option_{{ style }}" value="{{ dropbox_images[style] }}" checked>
+                                    <label for="dropbox_image_{{ style }}">
+                                        <img src="/static/icons/dropbox.png" class="dropbox-overlay">
+                                        <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" alt="{{ style }}" class="img-thumbnail">
+                                    </label>
+                                </div>
+                                {% endif %}
+                                {% for image in image_urls[style] %}
+                                <div class="image-option">
+                                    <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
+                                    <label for="catalog_image_{{ style }}_{{ loop.index }}">
+                                        <img src="{{ image['path'] }}" alt="{{ style }}" class="img-thumbnail">
+                                    </label>
+                                </div>
+                                {% endfor %}
                             </div>
-                        {% endif %}
-                        <!-- Display catalog images -->
-                        {% for image in image_urls[style] %}
-                            <div class="image-option">
-                                <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
-                                <label for="catalog_image_{{ style }}_{{ loop.index }}">
-                                    <img src="{{ image['path'] }}" alt="{{ style }}" class="img-thumbnail">
-                                </label>
-                            </div>
-                        {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
-</div>
-{% endif %}
+        {% endif %}
     </div>
+
+    </div>
+    {% if missing_descriptions %}
+    <div class="mt-4 container">
+        <h5 class="text-center mb-4">Please select descriptions for the following styles:</h5>
+        <form method="POST" action="{{ url_for('v6_listcreator.update_descriptions') }}">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Image</th>
+                        <th style="width: 15%">Style</th>
+                        <th style="width: 50%">Quick Select</th>
+                        <th style="width: 20%">All Options</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for style in missing_descriptions %}
+                    <tr>
+                        <td>
+                            {% if style in dropbox_images %}
+                                <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" 
+                                     alt="{{ style }}" 
+                                     style="width: 150px; height: auto;">
+                            {% elif style in image_urls and image_urls[style] %}
+                                <img src="{{ image_urls[style][0]['path'] }}" 
+                                     alt="{{ style }}" 
+                                     style="width: 150px; height: auto;">
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/item_lookup/{{ style.lower() }}" target="_blank">
+                                {{ style }}
+                                {% if session.get('verified_' + style) %}
+                                    <span class="badge badge-success">(IN_OMS)</span>
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='SATCHEL'">SATCHEL</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">MINI SATCHEL</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">BACKPACK</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
+
+                        </td>
+                        <td>
+                            <select name="description_{{ loop.index }}" class="form-control">
+                                <option value="">Select a description</option>
+                                {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "BELT BAG", "BUCKET BAG", "CROSSBODY", "CROSSBODY 2-IN-1", "CROSSBODY SET", "FLAP BAG", "FRAME BAG", "GIFT SET", "HOBO", "JELLY BAG", "LARGE CROSSBODY", "LARGE NYLON CROSSBODY", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME BAG", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "NYLON BACKPACK", "NYLON CROSSBODY", "NYLON HOBO", "PATENT BAG", "PATENT MINI SATCHEL", "SATCHEL", "SLING", "STRAW BAG", "STRAW CROSSBODY", "TOTE", "WALLET"] %}
+                                    <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="text-center mt-3">
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+<div class="modal fade" id="imageSizeModal" tabindex="-1" role="dialog" aria-labelledby="imageSizeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageSizeModalLabel">Select Image Size</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h3 class="text-center">Select Image Size:</h3>
+                <h5 class="text-center">download will start shortly</h5>
+                <div class="d-flex justify-content-center align-items-center" style="gap: 10px; margin-top: 10px;">
+                    <button type="button" class="btn btn-primary" onclick="setImageSizeAndExport(400)">400</button>
+                    <button type="button" class="btn btn-primary" onclick="setImageSizeAndExport(600)">600</button>
+                    <button type="button" class="btn btn-primary" onclick="setImageSizeAndExport(800)">800</button>
+                    <button type="button" class="btn btn-primary" onclick="setImageSizeAndExport(1000)">1000</button>
+                    <button type="button" class="btn btn-primary" onclick="setImageSizeAndExport('full')">100%</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 
     <script>
-      function exportList() {
-    const cards = document.querySelectorAll('.style-card');
+      let selectedImageSize = null; // Global variable to store the selected image size
+
+function setImageSizeAndExport(size) {
+    selectedImageSize = size; // Set the selected image size
+    $('#imageSizeModal').modal('hide'); // Hide the modal
+    exportList(); // Call the export function
+}
+
+function exportList() {
+    const cards = document.querySelectorAll('.card');
     const exportData = [];
 
     cards.forEach(card => {
-        const style = card.querySelector('.card-title').innerText.trim(); // Get style from card title
+        const style = card.querySelector('.card-title').innerText.trim();
         const descriptionElement = card.querySelector('.description-input');
-        const description = descriptionElement ? descriptionElement.value.trim() : "N/A"; // Get description
-        const priceElement = card.querySelector('.card-text'); // Get price
-        const price = priceElement ? priceElement.innerText.trim().replace('Price: $', '') : "N/A"; // Get price
+        const description = descriptionElement ? descriptionElement.value.trim() : "N/A";
+        const priceElement = card.querySelector('.text-primary');
+        const price = priceElement ? priceElement.innerText.trim() : "N/A";
 
         const selectedImage = card.querySelector(`input[name="image_option_${style}"]:checked`);
-
         if (!selectedImage) {
             alert('Please select an image for the style: ' + style);
-            return; // Stop processing if no image is selected
+            return;
         }
 
         const imagePath = selectedImage.value;
@@ -161,166 +431,127 @@
             description: description,
             price: price,
             image: imagePath,
-            rows: []
+            rows: [],
+            image_size: selectedImageSize // Use the selected image size
         };
 
         const rows = card.querySelectorAll('tbody tr');
-
         rows.forEach(row => {
             const rowDataObj = {
-                color: row.cells[0] ? row.cells[0].innerText.trim() : "N/A", // Color
-                availableNow: row.cells[1] ? row.cells[1].innerText.trim() : "N/A", // Available Now
-                incomingQuantity: row.cells[2] ? row.cells[2].innerText.trim() : "N/A", // Incoming Quantity
-                qtyInBox: row.cells[3] ? row.cells[3].innerText.trim() : "N/A", // QTY in Box
-                dimensions: row.cells[4] ? row.cells[4].innerText.trim() : "N/A" // Dimensions
+                color: row.cells[0] ? row.cells[0].innerText.trim() : "N/A",
+                availableNow: row.cells[1] ? row.cells[1].innerText.trim() : "N/A",
+                incomingQuantity: row.cells[2] ? row.cells[2].innerText.trim() : "N/A",
+                qtyInBox: row.cells[3] ? row.cells[3].innerText.trim() : "N/A",
+                dimensions: row.cells[4] ? row.cells[4].innerText.trim() : "N/A"
             };
-
             rowData.rows.push(rowDataObj);
         });
 
-        // Push the rowData for the first row
         if (rows.length > 0) {
             exportData.push(rowData);
         }
     });
 
-    // Send exportData to the backend
     fetch('{{ url_for("v6_listcreator.export_list") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(exportData)
+        body: JSON.stringify({ exportData, image_size: selectedImageSize }) // Send both export data and image size
     })
     .then(response => {
-        if (response.ok) {
-            return response.blob(); // Get the response as a blob
-        } else {
-            throw new Error('Network response was not ok.');
-        }
+        if (response.ok) return response.blob();
+        throw new Error('Network response was not ok.');
     })
     .then(blob => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'exported_data.xlsx'; // Set the file name
+        a.download = 'List_output.xlsx';
         document.body.appendChild(a);
-        a.click(); // Trigger the download
-        window.URL.revokeObjectURL(url); // Clean up
+        a.click();
+        window.URL.revokeObjectURL(url);
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Export failed!');
     });
 }
-
     </script>
 <script>
     function deleteAllZero() {
-        const cards = document.querySelectorAll('.style-card');
-
-        cards.forEach(card => {
-            const rows = Array.from(card.querySelectorAll('tbody tr')); // Collect all rows
-            const rowsToDelete = []; // Store rows marked for deletion
-
-            // Identify rows to delete
-            rows.forEach(row => {
-                const quantityCell = row.querySelector('td:nth-child(2)'); // Get the Quantity cell (2nd column)
-                if (quantityCell) {
-                    const quantity = parseInt(quantityCell.innerText.trim(), 10);
-                    if (quantity <= 0) {
-                        rowsToDelete.push(row);
-                    }
-                }
-            });
-
-            // Remove marked rows
-            rowsToDelete.forEach(row => row.remove());
-
-            // If no rows are left in the table, remove the card
-            const remainingRows = card.querySelectorAll('tbody tr').length;
-            if (remainingRows === 0) {
-                card.remove();
-            }
-        });
-    }
-
-    function removeRow(element) {
-        const row = element.closest('tr'); // Get the closest row to the clicked element
-        const card = row.closest('.style-card'); // Get the card that contains the row
-
-        row.remove(); // Remove the row
-
-        // If no rows are left in the table, remove the card
-        const remainingRows = card.querySelectorAll('tbody tr').length;
-        if (remainingRows === 0) {
-            card.remove();
-        }
-    }
-</script>
-<script>
-    function removeAllPcsBox() {
-    const cards = document.querySelectorAll('.style-card');
-
+    const cards = document.querySelectorAll('.card');
     cards.forEach(card => {
-        const rows = card.querySelectorAll('tbody tr');
+        const rows = Array.from(card.querySelectorAll('tbody tr'));
+        const rowsToDelete = [];
         rows.forEach(row => {
-            const pcsBoxCell = row.querySelector('td:nth-child(4)'); // Assuming PCS/BOX is the 4th column
-            if (pcsBoxCell) {
-                pcsBoxCell.remove(); // Remove the PCS/BOX cell
+            const quantityCell = row.querySelector('td:nth-child(2)');
+            if (quantityCell) {
+                const quantity = parseInt(quantityCell.innerText.trim(), 10);
+                if (quantity <= 0) {
+                    rowsToDelete.push(row);
+                }
             }
         });
-        
-        // Optionally, you may want to remove the header as well
-        const headerRow = card.querySelector('thead tr');
-        const pcsBoxHeader = headerRow.querySelector('th:nth-child(4)');
-        if (pcsBoxHeader) {
-            pcsBoxHeader.remove(); // Remove the PCS/BOX header
+        rowsToDelete.forEach(row => row.remove());
+        if (card.querySelectorAll('tbody tr').length === 0) {
+            card.remove();
         }
     });
 }
 
-function removeAllDimensions() {
-    const cards = document.querySelectorAll('.style-card');
-
+function removeAllPcsBox() {
+    const cards = document.querySelectorAll('.card');
     cards.forEach(card => {
+        const headerCell = card.querySelector('th:nth-child(4)');
+        if (headerCell) headerCell.remove();
+        
         const rows = card.querySelectorAll('tbody tr');
         rows.forEach(row => {
-            const dimensionsCell = row.querySelector('td:nth-child(5)'); // Assuming Dimensions is the 5th column
-            if (dimensionsCell) {
-                dimensionsCell.remove(); // Remove the Dimensions cell
-            }
+            const cell = row.querySelector('td:nth-child(4)');
+            if (cell) cell.remove();
         });
+    });
+}
+
+function removeAllDimensions() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        const headerCell = card.querySelector('th:nth-child(5)');
+        if (headerCell) headerCell.remove();
         
-        // Optionally, you may want to remove the header as well
-        const headerRow = card.querySelector('thead tr');
-        const dimensionsHeader = headerRow.querySelector('th:nth-child(5)');
-        if (dimensionsHeader) {
-            dimensionsHeader.remove(); // Remove the Dimensions header
-        }
+        const rows = card.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cell = row.querySelector('td:nth-child(5)');
+            if (cell) cell.remove();
+        });
     });
 }
 </script>
 <script>
     function addRow(button) {
-    const card = button.closest('.style-card'); // Get the closest card
-    const tableBody = card.querySelector('tbody'); // Get the tbody of the table
-
-    // Create a new row with contenteditable cells
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-        <td contenteditable="true" placeholder="Color"></td>
-        <td contenteditable="true" placeholder="Quantity">0</td> <!-- Editable Quantity cell -->
-        <td contenteditable="true" placeholder="Ocean"></td>
-        <td contenteditable="true" placeholder="PCS/BOX"></td>
-        <td contenteditable="true" placeholder="Dimensions"></td>
-        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-    `;
-
-    // Append the new row to the table body
-    tableBody.appendChild(newRow);
-}
-</script>
+        const card = button.closest('.card'); // Get the closest card
+        const tableBody = card.querySelector('tbody'); // Get the tbody of the table
+    
+        // Create a new row with contenteditable cells
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td contenteditable="true" placeholder="Color"></td>
+            <td contenteditable="true" placeholder="Quantity">0</td>
+            <td contenteditable="true" placeholder="Ocean"></td>
+            <td contenteditable="true" placeholder="Dimensions"></td>
+            <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+        `;
+    
+        // Append the new row to the table body
+        tableBody.appendChild(newRow);
+    }
+    
+    function removeRow(button) {
+        const row = button.closest('tr'); // Get the closest row
+        row.remove(); // Remove the row from the table
+    }
+    </script>
 </body>
 </html>
