@@ -41,29 +41,31 @@ def list_from_dropbox(list_input, current_user):
             current_app.logger.error(f"***{current_user}*** directory not found: {dropbox_path}")
             return {"error": "Directory not found. Please check your URL."}
         
-        file_list = []
-        sku_to_image = {}  # Dictionary to map SKUs to their corresponding image paths
+        file_list = set()  # Changed to set to avoid duplicates
+        sku_to_image = {}
         
         for filename in os.listdir(dropbox_path):
             if filename.endswith('.jpg'):
                 sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
                 if sku_match:
-                    sku = sku_match.group(1).upper()
-                    file_list.append(sku)
-                    sku_to_image[sku] = os.path.join(dropbox_path, filename)  # Map SKU to image path
+                    sku = sku_match.group(1).upper()  # Just use the base SKU pattern
+                    file_list.add(sku)  # Add to set to ensure uniqueness
+                    sku_to_image[sku] = os.path.join(dropbox_path, filename)
                     current_app.logger.info(f"***{current_user}*** found SKU: {sku} from file: {filename}")
         
         if not file_list:
             current_app.logger.warning(f"***{current_user}*** no valid SKU patterns found in jpg files")
             return {"error": "No images found in the specified directory. Please check your URL."}
         
+        file_list = sorted(list(file_list))  # Convert set back to sorted list
+        
         current_app.logger.info(f"***{current_user}*** complete SKU list: {', '.join(file_list)}")
         current_app.logger.info(f"***{current_user}*** total SKUs found: {len(file_list)}")
         current_app.logger.info(f"***{current_user}*** total images found: {len(sku_to_image)}")
         
-        return file_list, sku_to_image  # Return both SKUs and the SKU-to-image mapping
+        return file_list, sku_to_image
 
-    return list_input, {}  # Return empty list and dictionary if not from Dropbox
+    return list_input, {}
 
 
 def list_from_origin(list_input, current_user):
@@ -392,8 +394,14 @@ def create_pivot_table(data):
                                      'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
                                      'last_activity', 'Created_dt'])
 
-    # Sort by SKU_no_color first
-    df = df.sort_values('SKU_no_color')
+    # Extract base SKU pattern (2 letters + 4 numbers) from SKU_no_color
+    df['base_sku'] = df['SKU_no_color'].str.extract(r'([A-Za-z]{1,2}\d{4})')
+    
+    # Filter rows where base_sku matches the original pattern
+    df = df[df['base_sku'].notna()]
+
+    # Sort by base_sku first
+    df = df.sort_values('base_sku')
 
     # Convert numeric columns to integers
     integer_columns = ['Available_now', 'incoming_quantity', 'QTY_in_box',
@@ -403,31 +411,27 @@ def create_pivot_table(data):
     # Create dimensions column
     df['dimensions'] = df['item_length'].astype(str) + ' x ' + df['item_width'].astype(str) + ' x ' + df['item_height'].astype(str)
 
-    # Group by SKU_no_color
-    style_groups = df.groupby('SKU_no_color')
+    # Group by base_sku instead of SKU_no_color
+    style_groups = df.groupby('base_sku')
 
     style_cards = []
     for style, group in style_groups:
-        # Get most common price and round to 2 decimals
         most_common_price = round(group['selling_price'].mode().iloc[0], 2)
 
-        # Create pivot table with sum aggregation for quantities
         style_data = group.pivot_table(
             values=['Available_now', 'incoming_quantity', 'QTY_in_box', 'dimensions'],
             index=['color'],
             aggfunc={
                 'Available_now': 'sum',
                 'incoming_quantity': 'sum',
-                'QTY_in_box': 'first',  # Assuming you want the first value for QTY_in_box
-                'dimensions': 'first'    # Assuming you want the first value for dimensions
+                'QTY_in_box': 'first',
+                'dimensions': 'first'
             }
         ).reset_index()
 
-        # Add style and selling price to the pivot table
         style_data['style'] = style
         style_data['selling_price'] = most_common_price
 
-        # Move rows with color starting with 'BK' to the top
         bk_rows = style_data[style_data['color'].str.startswith('BK')]
         other_rows = style_data[~style_data['color'].str.startswith('BK')]
         style_data = pd.concat([bk_rows, other_rows]).reset_index(drop=True)
@@ -530,6 +534,15 @@ def set_border(ws, cell_range):
         for cell in row:
             cell.border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
+@v6_listcreator_bp.app_template_filter('count_dropbox_files')
+def count_dropbox_files(dropbox_path):
+    match = re.search(r'dropbox\\(.+)', dropbox_path, re.IGNORECASE)
+    if match:
+        relative_path = match.group(1)
+        full_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
+        if os.path.exists(full_path):
+            return len([f for f in os.listdir(full_path) if f.endswith('.jpg')])
+    return 0
 
 @v6_listcreator_bp.route('/export_list', methods=['POST'])
 def export_list():

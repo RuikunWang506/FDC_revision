@@ -205,7 +205,7 @@
         </div>
         
         <div class="bookmark-sidebar">
-            <h5>Styles</h5>
+            <h5>Styles ({{ pivot_data|length }} styles / {{ list_input|count_dropbox_files if list_input else 0 }} pics)</h5>
             <ul id="style-list">
                 {% for style_group in pivot_data %}
                     <li><a href="#{{ style_group[0].style|replace(' ', '_') }}">{{ style_group[0].style }}</a></li>
