@@ -35,10 +35,8 @@ def list_from_dropbox(list_input, current_user):
         relative_path = match.group(1)
         dropbox_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
         
-        current_app.logger.info(f"***{current_user}*** processing dropbox path: {dropbox_path}")
         
         if not os.path.exists(dropbox_path):
-            current_app.logger.error(f"***{current_user}*** directory not found: {dropbox_path}")
             return {"error": "Directory not found. Please check your URL."}
         
         file_list = set()  # Changed to set to avoid duplicates
@@ -51,17 +49,11 @@ def list_from_dropbox(list_input, current_user):
                     sku = sku_match.group(1).upper()  # Just use the base SKU pattern
                     file_list.add(sku)  # Add to set to ensure uniqueness
                     sku_to_image[sku] = os.path.join(dropbox_path, filename)
-                    current_app.logger.info(f"***{current_user}*** found SKU: {sku} from file: {filename}")
         
         if not file_list:
-            current_app.logger.warning(f"***{current_user}*** no valid SKU patterns found in jpg files")
             return {"error": "No images found in the specified directory. Please check your URL."}
         
         file_list = sorted(list(file_list))  # Convert set back to sorted list
-        
-        current_app.logger.info(f"***{current_user}*** complete SKU list: {', '.join(file_list)}")
-        current_app.logger.info(f"***{current_user}*** total SKUs found: {len(file_list)}")
-        current_app.logger.info(f"***{current_user}*** total images found: {len(sku_to_image)}")
         
         return file_list, sku_to_image
 
@@ -88,7 +80,6 @@ def index():
     # Handle GET request with list_input parameter
     if request.method == 'GET' and request.args.get('list_input'):
         list_input = request.args.get('list_input')
-        current_app.logger.info(f"***{current_user}*** processing GET request with input: {list_input}")
         
         if 'dropbox' in list_input.lower():
             result = list_from_dropbox(list_input, current_user)
@@ -124,7 +115,6 @@ def index():
 
     if request.method == 'POST':
         list_input = request.form.get('list_input')
-        current_app.logger.info(f"***{current_user}*** submitted input: {list_input}")
         session['original_input'] = list_input  # Store the original input
 
 
@@ -156,8 +146,6 @@ def index():
             
             cursor.execute(verify_query)
             verified_styles = [row[0].strip() for row in cursor.fetchall()]
-            current_app.logger.info(verify_query)
-            current_app.logger.info(f"****** verified styles: {verified_styles}")
 
             cursor.close()
             conn.close()
@@ -257,7 +245,7 @@ def get_description_from_mysql(style):
             cursor = connection.cursor()
             cursor.execute("SELECT description FROM onlinedb.description WHERE style = %s", (style,))
             description_row = cursor.fetchone()
-            return description_row[0] if description_row else "No description available"
+            return description_row[0].upper() if description_row else "No description available"
         except Error as e:
             print(f"Error fetching description: {e}")
         finally:
@@ -273,29 +261,26 @@ def update_description_in_db(style_index, description):
     if connection:
         try:
             cursor = connection.cursor()
+            description = description.upper()
 
             # Prepare the SQL update query
             update_query = "UPDATE onlinedb.description SET description = %s WHERE style = %s"
             params = (description, style_index)
 
             # Log the actual query and parameters
-            current_app.logger.info(f"Executing query: {update_query} with parameters: {params}")
 
             # Update the description for the specified style
             cursor.execute(update_query, params)
 
             # Check the number of affected rows
             if cursor.rowcount == 0:
-                current_app.logger.warning(f"No rows matched for style: {style_index}. Inserting a new row.")
                 
                 # Prepare the SQL insert query
                 insert_query = "INSERT INTO onlinedb.description (style, description) VALUES (%s, %s)"
                 cursor.execute(insert_query, (style_index, description))
                 connection.commit()  # Commit the changes to the database
-                current_app.logger.info(f"Inserted new description for style: {style_index}")
             else:
                 connection.commit()  # Commit the changes to the database
-                current_app.logger.info(f"Description updated for style: {style_index}")
 
         except Error as e:
             current_app.logger.error(f"Error updating description: {e}")
@@ -367,7 +352,6 @@ def get_sql_data(style_list):
         for conn, database_name in [(conn_fdc, 'omsdata_FDC'), (conn_oms_ef, 'oms_EF')]:
             cursor = conn.cursor()
             mylist =  ",".join(style_list)
-            current_app.logger.info(f"SQL input list: {mylist}")
             cursor.execute(query, mylist)
             rows = cursor.fetchall()
             
@@ -386,7 +370,6 @@ def get_sql_data(style_list):
         conn_oms_ef.close()
 
 def create_pivot_table(data):
-    current_app.logger.info("Creating pivot table from data")
 
     # Create DataFrame
     df = pd.DataFrame(data, columns=['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
@@ -446,7 +429,6 @@ def get_images_from_dropbox(dropbox_path):
         for filename in os.listdir(dropbox_path):
             if filename.endswith('.jpg'):
                 image_paths.append(os.path.join(dropbox_path, filename))
-            current_app.logger.info(f"Found image: {filename}, path: {os.path.join(dropbox_path, filename)}")
     except Exception as e:
         current_app.logger.error(f"Error fetching images from Dropbox: {e}")
     
@@ -497,7 +479,6 @@ def serve_dropbox_image(filename):
     # Check if the image exists
     if not os.path.exists(dropbox_path):
         return send_from_directory('static', 'no_image_available.jpg')  # Fallback to placeholder if not found
-    current_app.logger.info(f"Serving image: {dropbox_path}")
     return send_file(dropbox_path)
 
 @v6_listcreator_bp.route('/list_image/<path:filename>')
@@ -553,7 +534,6 @@ def export_list():
         display_image_size = image_size_input  # Initialize display_image_size
         processing_image_size = None if image_size_input == "full" else int(image_size_input)
 
-        current_app.logger.info(f"Exporting list with image size: {processing_image_size}")
 
         # Create a new Excel workbook and select the active worksheet
         workbook = Workbook()

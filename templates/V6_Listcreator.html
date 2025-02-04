@@ -10,7 +10,35 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 
-
+    <style>
+        .image-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+        }
+    
+        .image-popup img {
+            max-width: 90%;
+            max-height: 90vh;
+        }
+    
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
     <style>
         .image-option img {
             width: 150px; /* Set the width of images to 150px */
@@ -203,7 +231,7 @@
     
 </head>
 <body>
-    
+    C:\Users\Kyle\Dropbox\Elaine\DDS2.5.2025
     <div class="bookmark-sidebar">
         <h5>Styles</h5>
         <ul id="style-list">
@@ -244,7 +272,6 @@
 </ul>
         </div>
     </div>
-    <h5>base version 1-29 </h5>
     <div class="container mt-4">
         {% if error_message %}
             <div class="alert alert-danger" role="alert">
@@ -275,8 +302,8 @@
 
     {# Then render each description group #}
     {% for description, style_groups in description_groups.items() %}
-        <h4 class="mt-5 mb-3">{{ description }}</h4>
         {% for style_group in style_groups %}
+        
             <div class="card mb-3" id="{{ style_group[0].style|replace(' ', '_') }}">
                 {# Rest of your existing card body code #}
                 <div class="card-body">
@@ -331,7 +358,10 @@
                                     <input type="radio" id="dropbox_image_{{ style }}" name="image_option_{{ style }}" value="{{ dropbox_images[style] }}" checked>
                                     <label for="dropbox_image_{{ style }}">
                                         <img src="/static/icons/dropbox.png" class="dropbox-overlay">
-                                        <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" alt="{{ style }}" class="img-thumbnail">
+                                        <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" 
+                                        alt="{{ style }}" 
+                                        class="img-thumbnail"
+                                        onclick="enlargeImage(this, this.src)">
                                     </label>
                                 </div>
                                 {% endif %}
@@ -339,7 +369,10 @@
                                 <div class="image-option">
                                     <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
                                     <label for="catalog_image_{{ style }}_{{ loop.index }}">
-                                        <img src="{{ image['path'] }}" alt="{{ style }}" class="img-thumbnail">
+                                        <img src="{{ image['path'] }}" 
+                                        alt="{{ style }}" 
+                                        class="img-thumbnail"
+                                        onclick="enlargeImage(this, this.src)">
                                     </label>
                                 </div>
                                 {% endfor %}
@@ -375,10 +408,12 @@
                             {% if style in dropbox_images %}
                                 <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" 
                                      alt="{{ style }}" 
+                                     onclick="enlargeImage(this, this.src)",
                                      style="width: 150px; height: auto;">
                             {% elif style in image_urls and image_urls[style] %}
                                 <img src="{{ image_urls[style][0]['path'] }}" 
                                      alt="{{ style }}" 
+                                     onclick="enlargeImage(this, this.src)",
                                      style="width: 150px; height: auto;">
                             {% endif %}
                         </td>
@@ -442,9 +477,29 @@
         </div>
     </div>
 </div>
+<div id="imagePopup" class="image-popup" onclick="closePopup(event)">
+    <span class="close-btn">&times;</span>
+    <img id="popupImage" src="" alt="Enlarged Image">
+</div>
 
+{% include 'footer.html' %}
+<script>
+    function enlargeImage(imgElement, url) {
+        var popup = document.getElementById("imagePopup");
+        var popupImg = document.getElementById("popupImage");
+        var formattedUrl = url
 
+        popupImg.src = formattedUrl;
+        popup.style.display = "flex";
+    }
 
+    function closePopup(event) {
+        var popup = document.getElementById("imagePopup");
+        if (event.target === popup || event.target.classList.contains('close-btn')) {
+            popup.style.display = "none";
+        }
+    }
+</script>
 
     <script>
       let selectedImageSize = null; // Global variable to store the selected image size
@@ -604,7 +659,28 @@ function removeAllDimensions() {
         new Sortable(document.getElementById('sortableDescriptions'), {
             animation: 150,
             draggable: '.list-group-item',
-            ghostClass: 'sortable-ghost'
+            ghostClass: 'sortable-ghost',
+            onEnd: function() {
+                // Get new order of descriptions
+                const descriptions = Array.from(document.querySelectorAll('#sortableDescriptions li'))
+                    .map(li => li.textContent.trim());
+                
+                const container = document.querySelector('.mt-4');
+                
+                // For each description in the new order
+                descriptions.forEach(description => {
+                    // Find all cards with this description
+                    const cards = Array.from(container.querySelectorAll('.card')).filter(card => {
+                        const descriptionInput = card.querySelector('.description-input');
+                        return descriptionInput && descriptionInput.value.trim() === description;
+                    });
+                    
+                    // Move all matching cards to the end of the container
+                    cards.forEach(card => {
+                        container.appendChild(card);
+                    });
+                });
+            }
         });
     </script>
 </body>
