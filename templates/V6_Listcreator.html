@@ -211,6 +211,18 @@
                     <li><a href="#{{ style_group[0].style|replace(' ', '_') }}">{{ style_group[0].style }}</a></li>
                 {% endfor %}
             </ul>
+
+            <h5 class="mt-3">Unique Descriptions</h5>
+    <ul>
+        {% set unique_descriptions = [] %}
+        {% for style_group in pivot_data %}
+            {% set description = descriptions[style_group[0].style]|default('') %}
+            {% if description and description not in unique_descriptions %}
+                {% set _ = unique_descriptions.append(description) %}
+                <li>{{ description }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
         </div>
     </div>
     <h5>base version 1-29 </h5>
