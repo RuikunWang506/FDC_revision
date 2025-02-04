@@ -35611,3 +35611,54 @@ WHERE prod_cd = 'N2149 BR';
 2025-02-03 17:36:32,057 - ERROR - Failed to connect to the database for fetching locations.
 2025-02-03 17:36:32,067 - INFO - ***yeti***__@@@search SKU@@@__ t3305
 2025-02-03 17:40:14,579 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-03 17:41:26,635 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-03 17:42:20,836 - INFO - ***a*** submitted input: t3305
+2025-02-03 17:42:20,836 - INFO - ***a*** processing regular input: ['T3305']
+2025-02-03 17:42:20,860 - INFO - 
+            SELECT DISTINCT ALT_CD 
+            FROM dbo.inv 
+            WHERE ALT_CD IN ('T3305')
+            
+2025-02-03 17:42:20,860 - INFO - ****** verified styles: ['T3305']
+2025-02-03 17:42:20,889 - INFO - SQL input list: T3305
+2025-02-03 17:42:21,107 - INFO - SQL input list: T3305
+2025-02-03 17:42:21,183 - INFO - Creating pivot table from data
+2025-02-03 17:42:30,446 - INFO - Exporting list with image size: 400
+2025-02-03 17:44:30,406 - INFO - ***a*** submitted input: t3305
+2025-02-03 17:44:30,407 - INFO - ***a*** processing regular input: ['T3305']
+2025-02-03 17:44:30,428 - INFO - 
+            SELECT DISTINCT ALT_CD 
+            FROM dbo.inv 
+            WHERE ALT_CD IN ('T3305')
+            
+2025-02-03 17:44:30,428 - INFO - ****** verified styles: ['T3305']
+2025-02-03 17:44:30,437 - INFO - SQL input list: T3305
+2025-02-03 17:44:30,622 - INFO - SQL input list: T3305
+2025-02-03 17:44:30,701 - INFO - Creating pivot table from data
+2025-02-03 17:44:34,173 - INFO - Exporting list with image size: 400
+2025-02-03 17:46:11,054 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-03 17:46:11,074 - INFO - ***a*** submitted input: t3305
+2025-02-03 17:46:11,074 - INFO - ***a*** processing regular input: ['T3305']
+2025-02-03 17:46:11,098 - INFO - 
+            SELECT DISTINCT ALT_CD 
+            FROM dbo.inv 
+            WHERE ALT_CD IN ('T3305')
+            
+2025-02-03 17:46:11,098 - INFO - ****** verified styles: ['T3305']
+2025-02-03 17:46:11,115 - INFO - SQL input list: T3305
+2025-02-03 17:46:11,298 - INFO - SQL input list: T3305
+2025-02-03 17:46:11,373 - INFO - Creating pivot table from data
+2025-02-03 17:46:15,045 - INFO - Exporting list with image size: 400
+2025-02-03 17:46:56,520 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-03 17:46:56,535 - INFO - Exporting list with image size: 400
+2025-02-03 17:47:26,545 - INFO - ***a*** submitted input: t3305,n1223
+2025-02-03 17:47:26,545 - INFO - ***a*** processing regular input: ['T3305', 'N1223']
+2025-02-03 17:47:26,583 - INFO - 
+            SELECT DISTINCT ALT_CD 
+            FROM dbo.inv 
+            WHERE ALT_CD IN ('T3305','N1223')
+            
+2025-02-03 17:47:26,583 - INFO - ****** verified styles: ['N1223', 'T3305']
+2025-02-03 17:47:26,604 - INFO - SQL input list: T3305,N1223
+2025-02-03 17:47:26,909 - INFO - SQL input list: T3305,N1223
+2025-02-03 17:47:27,064 - INFO - Creating pivot table from data

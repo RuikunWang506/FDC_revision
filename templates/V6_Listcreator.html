@@ -14,7 +14,7 @@
         }
         .style-card {
             margin-bottom: 20px;
-        }
+        } 
         .merged-style {
             vertical-align: middle !important;
             text-align: center;
@@ -236,7 +236,8 @@
             <div class="card mb-3" id="{{ style_group[0].style|replace(' ', '_') }}">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px;">{{ style_group[0].style }}
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px;">
+                            {{ style_group[0].style }}
                             {% if session.get('verified_' + style_group[0].style) %}
                                 <span class="badge badge-success px-2">IN_OMS</span>
                             {% endif %}
@@ -413,7 +414,7 @@ function exportList() {
     const exportData = [];
 
     cards.forEach(card => {
-        const style = card.querySelector('.card-title').innerText.trim();
+        const style = card.querySelector('.card-title').firstChild.textContent.trim();
         const descriptionElement = card.querySelector('.description-input');
         const description = descriptionElement ? descriptionElement.value.trim() : "N/A";
         const priceElement = card.querySelector('.text-primary');

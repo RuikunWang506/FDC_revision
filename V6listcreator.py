@@ -600,16 +600,16 @@ def export_list():
             rows = item['rows']
             for index, row in enumerate(rows):
                 row_data = [
-                    "",  # Placeholder for the image column
-                    description if index == 0 else "",
-                    price if index == 0 else "",
-                    style if index == 0 else "",
-                    row['color'],
-                    row['availableNow'],
-                    row['incomingQuantity'],
-                    row['qtyInBox'],
-                    row['dimensions']
-                ]
+                        "",  # Placeholder for the image column
+                        description if index == 0 else "",
+                        price if index == 0 else "",
+                        style if index == 0 else "",
+                        row['color'],
+                        int(float(row['availableNow'])) if row['availableNow'] else 0,
+                        int(float(row['incomingQuantity'])) if row['incomingQuantity'] else 0,
+                        int(float(row['qtyInBox'])) if row['qtyInBox'] else 0,
+                        row['dimensions']
+                    ]
                 sheet.append(row_data)
 
                 if index == 0:
