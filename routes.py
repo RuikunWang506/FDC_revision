@@ -48,7 +48,7 @@ from PIL import Image
 from V6listcreator import v6_listcreator_bp
 
 
-
+ 
 
 
 client = WebClient(token=Config.SLACK_TOKEN)

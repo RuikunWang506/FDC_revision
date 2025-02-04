@@ -63,6 +63,8 @@
         <div class="d-flex align-items-center">
             <button id="yesterdayBtn" class="btn btn-secondary me-2">Yesterday</button>
             <input type="date" id="datePicker" value="{{ selected_date }}" class="form-control mb-3 me-3" style="width: 200px;">
+            <button id="todayBtn" class="btn btn-primary me-2">Today</button>
+
             <div class="mb-3">
                 <strong>Total Labels: </strong><span id="totalLabels">0</span>
             </div>
@@ -120,50 +122,25 @@
                         <td><input type="checkbox" name="ERWAN_DROPSHIP_print" id="ERWAN_DROPSHIP_print"></td>
                     </tr>
                     <!-- TMX Section -->
-                    <tr><td colspan="3"><strong>TMX</strong></td></tr>
+                    <tr><td colspan="3"><strong>GPG_Autoparts</strong></td></tr>
                     <tr>
-                        <td>TMX_GPG</td>
-                        <td><input type="number" name="TMX_GPG_labels" id="TMX_GPG_labels"></td>
-                        <td><input type="checkbox" name="TMX_GPG_print" id="TMX_GPG_print"></td>
-                    </tr>
-        
-                    <!-- MMY Section -->
-                    <tr><td colspan="3"><strong>MMY</strong></td></tr>
-                    <tr>
-                        <td>Wayfair</td>
-                        <td><input type="number" name="Wayfair_labels" id="Wayfair_labels"></td>
-                        <td><input type="checkbox" name="Wayfair_print" id="Wayfair_print"></td>
+                        <td>TMX_HONDA</td>
+                        <td><input type="number" name="TMX_HONDA_labels" id="TMX_HONDA_labels"></td>
+                        <td><input type="checkbox" name="TMX_HONDA_print" id="TMX_HONDA_print"></td>
                     </tr>
                     <tr>
-                        <td>Walmart</td>
-                        <td><input type="number" name="Walmart_labels" id="Walmart_labels"></td>
-                        <td><input type="checkbox" name="Walmart_print" id="Walmart_print"></td>
+                        <td>TMX_HYNDAI</td>
+                        <td><input type="number" name="TMX_HYNDAI_labels" id="TMX_HYNDAI_labels"></td>
+                        <td><input type="checkbox" name="TMX_HYNDAI_print" id="TMX_HYNDAI_print"></td>
                     </tr>
+                    <!-- ELLO Section -->
+                    <tr><td colspan="3"><strong>Ello</strong></td></tr>
                     <tr>
-                        <td>MMY FBM</td>
-                        <td><input type="number" name="MMY_FBM_labels" id="MMY_FBM_labels"></td>
-                        <td><input type="checkbox" name="MMY_FBM_print" id="MMY_FBM_print"></td>
+                        <td>ELLO_DROPSHIP</td>
+                        <td><input type="number" name="ELLO_DROPSHIP_labels" id="ELLO_DROPSHIP_labels"></td>
+                        <td><input type="checkbox" name="ELLO_DROPSHIP_print" id="ELLO_DROPSHIP_print"></td>
                     </tr>
-                    <tr>
-                        <td>TEMU USA</td>
-                        <td><input type="number" name="TEMU_USA_mmy_labels" id="TEMU_USA_mmy_labels"></td>
-                        <td><input type="checkbox" name="TEMU_USA_mmy_print" id="TEMU_USA_mmy_print"></td>
-                    </tr>
-                    <tr>
-                        <td>TEMU China</td>
-                        <td><input type="number" name="TEMU_China_labels" id="TEMU_China_labels"></td>
-                        <td><input type="checkbox" name="TEMU_China_print" id="TEMU_China_print"></td>
-                    </tr>
-                    <tr>
-                        <td>Ebay</td>
-                        <td><input type="number" name="Ebay_labels" id="Ebay_labels"></td>
-                        <td><input type="checkbox" name="Ebay_print" id="Ebay_print"></td>
-                    </tr>
-                    <tr>
-                        <td>Etsy</td>
-                        <td><input type="number" name="Etsy_labels" id="Etsy_labels"></td>
-                        <td><input type="checkbox" name="Etsy_print" id="Etsy_print"></td>
-                    </tr>
+
                 </tbody>
             </table>
             <button type="button" id="saveButton" class="btn btn-primary">Submit</button>
@@ -248,42 +225,25 @@
                         print: document.getElementById('ERWAN_DROPSHIP_print').checked
                     }
                 },
-                TMX: {
-                    TMX_GPG: {
-                        labels: document.getElementById('TMX_GPG_labels').value,
-                        print: document.getElementById('TMX_GPG_print').checked
+                GPG_Autoparts: {
+                    TMX_HONDA: {
+                        labels: document.getElementById('TMX_HONDA_labels').value,
+                        print: document.getElementById('TMX_HONDA_print').checked
+                    },
+                    TMX_HYNDAI: {
+                        labels: document.getElementById('TMX_HYNDAI_labels').value,
+                        print: document.getElementById('TMX_HYNDAI_print').checked
                     }
                 },
-                MMY: {
-                    Wayfair: {
-                        labels: document.getElementById('Wayfair_labels').value,
-                        print: document.getElementById('Wayfair_print').checked
-                    },
-                    Walmart: {
-                        labels: document.getElementById('Walmart_labels').value,
-                        print: document.getElementById('Walmart_print').checked
-                    },
-                    MMY_FBM: {
-                        labels: document.getElementById('MMY_FBM_labels').value,
-                        print: document.getElementById('MMY_FBM_print').checked
-                    },
-                    TEMU_USA: {
-                        labels: document.getElementById('TEMU_USA_mmy_labels').value,
-                        print: document.getElementById('TEMU_USA_mmy_print').checked
-                    },
-                    TEMU_China: {
-                        labels: document.getElementById('TEMU_China_labels').value,
-                        print: document.getElementById('TEMU_China_print').checked
-                    },
-                    Ebay: {
-                        labels: document.getElementById('Ebay_labels').value,
-                        print: document.getElementById('Ebay_print').checked
-                    },
-                    Etsy: {
-                        labels: document.getElementById('Etsy_labels').value,
-                        print: document.getElementById('Etsy_print').checked
+
+                Ello: {
+                    ELLO_DROPSHIP: {
+                        labels: document.getElementById('ELLO_DROPSHIP_labels').value,
+                        print: document.getElementById('ELLO_DROPSHIP_print').checked
                     }
-                }
+                },
+
+
             };
     
             fetch(`/dailytodo?date=${selectedDate}`, {
@@ -344,10 +304,21 @@
             }
         }
     }
+    // Populate GPG_Autoparts section
+    if (data.GPG_Autoparts) {
+        for (const [platform, values] of Object.entries(data.GPG_Autoparts)) {
+            const labelsId = `${platform}_labels`;
+            const printId = `${platform}_print`;
+            if (document.getElementById(labelsId)) {
+                document.getElementById(labelsId).value = values.labels;
+                document.getElementById(printId).checked = values.print;
+            }
+        }
+    }
 
-    // Populate TMX section
-    if (data.TMX) {
-        for (const [platform, values] of Object.entries(data.TMX)) {
+    // Populate Ello section
+    if (data.Ello) {
+        for (const [platform, values] of Object.entries(data.Ello)) {
             const labelsId = `${platform}_labels`;
             const printId = `${platform}_print`;
             if (document.getElementById(labelsId)) {
@@ -357,17 +328,6 @@
         }
     }
     
-    // Populate MMY section
-    if (data.MMY) {
-        for (const [platform, values] of Object.entries(data.MMY)) {
-            let labelsId = platform === 'TEMU_USA' ? 'TEMU_USA_mmy_labels' : `${platform}_labels`;
-            let printId = platform === 'TEMU_USA' ? 'TEMU_USA_mmy_print' : `${platform}_print`;
-            if (document.getElementById(labelsId)) {
-                document.getElementById(labelsId).value = values.labels;
-                document.getElementById(printId).checked = values.print;
-            }
-        }
-    }
 
     // Add auto-save listeners to all inputs
     const inputs = document.querySelectorAll('input[type="number"], input[type="checkbox"]');
@@ -411,6 +371,10 @@
             currentDate.setDate(currentDate.getDate() - 1);
             const yesterdayStr = currentDate.toISOString().split('T')[0];
             window.location.href = '/dailytodo?date=' + yesterdayStr;
+        });
+        document.getElementById('todayBtn').addEventListener('click', function() {
+            const today = new Date().toISOString().split('T')[0];
+            window.location.href = '/dailytodo?date=' + today;
         });
     </script>
 </body>
