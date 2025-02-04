@@ -262,9 +262,23 @@
         <h5>your input was: {{list_input}}</h5>
         {%endif%}
         {% if pivot_data %}
-        <div class="mt-4">
-            {% for style_group in pivot_data %}
+<div class="mt-4">
+    {# First create groups by description #}
+    {% set description_groups = {} %}
+    {% for style_group in pivot_data %}
+        {% set description = descriptions[style_group[0].style]|default('') %}
+        {% if description not in description_groups %}
+            {% set _ = description_groups.update({description: []}) %}
+        {% endif %}
+        {% set _ = description_groups[description].append(style_group) %}
+    {% endfor %}
+
+    {# Then render each description group #}
+    {% for description, style_groups in description_groups.items() %}
+        <h4 class="mt-5 mb-3">{{ description }}</h4>
+        {% for style_group in style_groups %}
             <div class="card mb-3" id="{{ style_group[0].style|replace(' ', '_') }}">
+                {# Rest of your existing card body code #}
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
                         <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px;">
@@ -334,6 +348,7 @@
                     </div>
                 </div>
             </div>
+            {% endfor %}
             {% endfor %}
         </div>
         {% endif %}
