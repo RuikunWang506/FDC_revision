@@ -14,6 +14,10 @@ from util import resize_image
 import datetime
 import mysql.connector
 from mysql.connector import Error
+import zipfile
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 
 v6_listcreator_bp = Blueprint('v6_listcreator', __name__, template_folder='templates')
 server = "192.168.254.204"
@@ -314,8 +318,8 @@ def get_sql_data(style_list):
         i.ALT_CD AS SKU_no_color,
         id.in_stock AS in_stock,
         id.ORDER_QTY AS some_one_ordered,
-        (id.in_stock - id.order_qty) AS Available_now,
-        id.on_order_qty AS incoming_quantity,
+        (id.in_stock - id.order_qty) AS quantity,
+        id.on_order_qty AS ocean,
         i.RETAIL_PRS AS selling_price,
         i.PC_CASE AS QTY_in_box,
         i.UT_WT AS unit_weight,
@@ -373,7 +377,7 @@ def create_pivot_table(data):
 
     # Create DataFrame
     df = pd.DataFrame(data, columns=['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
-                                     'Available_now', 'incoming_quantity', 'selling_price', 'QTY_in_box',
+                                     'quantity', 'ocean', 'selling_price', 'pcsBox',
                                      'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
                                      'last_activity', 'Created_dt'])
 
@@ -387,7 +391,7 @@ def create_pivot_table(data):
     df = df.sort_values('base_sku')
 
     # Convert numeric columns to integers
-    integer_columns = ['Available_now', 'incoming_quantity', 'QTY_in_box',
+    integer_columns = ['quantity', 'ocean', 'pcsBox',
                        'item_length', 'item_width', 'item_height']
     df[integer_columns] = df[integer_columns].fillna(0).astype(int)
 
@@ -402,12 +406,12 @@ def create_pivot_table(data):
         most_common_price = round(group['selling_price'].mode().iloc[0], 2)
 
         style_data = group.pivot_table(
-            values=['Available_now', 'incoming_quantity', 'QTY_in_box', 'dimensions'],
+            values=['quantity', 'ocean', 'pcsBox', 'dimensions'],
             index=['color'],
             aggfunc={
-                'Available_now': 'sum',
-                'incoming_quantity': 'sum',
-                'QTY_in_box': 'first',
+                'quantity': 'sum',
+                'ocean': 'sum',
+                'pcsBox': 'first',
                 'dimensions': 'first'
             }
         ).reset_index()
@@ -525,34 +529,112 @@ def count_dropbox_files(dropbox_path):
             return len([f for f in os.listdir(full_path) if f.endswith('.jpg')])
     return 0
 
+
+@v6_listcreator_bp.route('/update_descriptions_bulk', methods=['POST'])
+def update_descriptions_bulk():
+    updates = request.json.get('updates', [])
+    connection = get_mysql_connection()
+    
+    if connection:
+        try:
+            cursor = connection.cursor()
+            
+            for update in updates:
+                style = update['style']
+                description = update['description'].upper()
+                
+                # Try update first
+                update_query = "UPDATE onlinedb.description SET description = %s WHERE style = %s"
+                cursor.execute(update_query, (description, style))
+                
+                # If no rows were updated, insert new record
+                if cursor.rowcount == 0:
+                    insert_query = "INSERT INTO onlinedb.description (style, description) VALUES (%s, %s)"
+                    cursor.execute(insert_query, (style, description))
+            
+            connection.commit()
+            return jsonify({"success": True, "message": "Descriptions updated successfully"})
+            
+        except Error as e:
+            current_app.logger.error(f"Error updating descriptions: {e}")
+            return jsonify({"success": False, "message": str(e)})
+            
+        finally:
+            cursor.close()
+            connection.close()
+            
+    return jsonify({"success": False, "message": "Could not connect to database"})
+
+@v6_listcreator_bp.route('/export_images', methods=['POST'])
+def export_images():
+    request_data = request.get_json()
+    image_paths = request_data.get('imagePaths', [])
+    image_size = request_data.get('imageSize')
+    
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        for item in image_paths:
+            style = item['style']
+            image_path = item['path']
+            
+            if '/list_image/' in image_path:
+                image_path = re.sub(r'/list_image/', '', image_path)
+                full_path = os.path.join(Config.CATALOG_ORIGINAL, image_path)
+            else:
+                # Handle dropbox path
+                full_path = image_path
+                
+            if os.path.exists(full_path):
+                if image_size != 'full':
+                    img_buffer = resize_image(full_path, int(image_size))
+                    img_buffer.seek(0)  # Important: Reset buffer position
+                    zf.writestr(f"{style}.jpg", img_buffer.getvalue())
+                else:
+                    with open(full_path, 'rb') as img_file:
+                        zf.writestr(f"{style}.jpg", img_file.read())
+    
+    memory_file.seek(0)
+    return send_file(
+        memory_file,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f'exported_images_{datetime.datetime.now().strftime("%Y%m%d")}.zip'
+    )
+
 @v6_listcreator_bp.route('/export_list', methods=['POST'])
 def export_list():
     try:
-        request_data = request.get_json()  # Get the JSON data from the request
-        data = request_data.get('exportData', [])  # Extract export data
-        image_size_input = request_data.get('image_size', "800")  # Get the image size from the request
-        display_image_size = image_size_input  # Initialize display_image_size
+        request_data = request.get_json()
+        data = request_data.get('exportData', [])
+        image_size_input = request_data.get('image_size', "800")
+        display_image_size = image_size_input
         processing_image_size = None if image_size_input == "full" else int(image_size_input)
+        removed_columns = request_data.get('removedColumns', {})
 
-
-        # Create a new Excel workbook and select the active worksheet
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Exported Data"
-
+        sheet.freeze_panes = 'A2'  # Freezes row 1
         highlight_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-        sheet.column_dimensions[get_column_letter(1)].width = 30  # Column A is the first column
-        sheet.column_dimensions[get_column_letter(2)].width = 12  # Column B is the second column
-
-        # Get the current date in the desired format (YYYY-MM-DD)
+        sheet.column_dimensions[get_column_letter(1)].width = 30
+        sheet.column_dimensions[get_column_letter(2)].width = 12
+        sheet.column_dimensions['B'].width = 15
+        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=2, max_col=2):
+            cell = row[0]
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         formatted_date = datetime.datetime.now().strftime("%Y-%m-%d")
-
-        # Create the filename using the formatted date
         filename = f"exported_data_{formatted_date}.xlsx"
-
-        # Populate the Excel sheet with data
-        headers = ["Image", "Description", "Price", "Style", "Color", "Quantity", "Ocean", "PCS/BOX", "Dimensions"]
+        
+        headers = ["Image", "Description", "Price", "Style", "Color", "Quantity"]
+        if not removed_columns.get('ocean'):
+            headers.append("Ocean")
+        if not removed_columns.get('pcsBox'):
+            headers.append("PCS/BOX")
+        if not removed_columns.get('dimensions'):
+            headers.append("Dimensions")
+            
         sheet.append(headers)
+      
 
         for item in data:
             style = item['style']
@@ -560,75 +642,206 @@ def export_list():
             image_filename = item['image']
             price = item['price']
 
-            # Modify the image path if it contains 'list_image'
             if '/list_image/' in image_filename:
                 image_filename = re.sub(r'/list_image/', '', image_filename)
                 image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
             else:
                 image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
 
-            # Check if the image exists
             if not os.path.exists(image_path):
                 current_app.logger.error(f"Image not found: {image_path}")
                 image_path = os.path.join('static', 'no_image_available.jpg')
 
-            # Resize image if necessary
             if processing_image_size is not None:
                 image_path = resize_image(image_path, processing_image_size)
 
-            # Add rows for each style
             rows = item['rows']
-            for index, row in enumerate(rows):
+            if not rows:
+                # Create a single row with header info when no color/quantity rows exist
                 row_data = [
-                        "",  # Placeholder for the image column
+                    "",  # Image placeholder
+                    description,
+                    price,
+                    style,
+                    "",  # Empty color
+                    "",   # Zero quantity
+                    ""    # Zero ocean
+                ]
+                
+                # Add optional columns
+                if not removed_columns.get('pcsBox'):
+                    row_data.append("")
+                if not removed_columns.get('dimensions'):
+                    row_data.append("")
+                    
+                sheet.append(row_data)
+                
+                # Add image for the empty row case
+                img = OpenPyXLImage(image_path)
+                img.width = 200
+                img.height = 150
+                sheet.add_image(img, f"A{sheet.max_row}")
+
+                # Add 7 empty rows to make it 8 rows total
+                for _ in range(7):
+                    empty_row_data = [""] * len(headers)
+                    sheet.append(empty_row_data)
+
+                # Merge cells for the 8 rows
+                sheet.merge_cells(start_row=sheet.max_row - 7, start_column=1, end_row=sheet.max_row, end_column=1)
+                sheet.merge_cells(start_row=sheet.max_row - 7, start_column=2, end_row=sheet.max_row, end_column=2)
+                sheet.merge_cells(start_row=sheet.max_row - 7, start_column=3, end_row=sheet.max_row, end_column=3)
+
+                # Center align merged cells
+                for col in [2, 3]:
+                    for row in range(sheet.max_row - 7, sheet.max_row + 1):
+                        sheet.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
+            if rows:    
+                for index, row in enumerate(rows):
+                    row_data = [
+                        "",  # Image placeholder
                         description if index == 0 else "",
                         price if index == 0 else "",
                         style if index == 0 else "",
                         row['color'],
-                        int(float(row['availableNow'])) if row['availableNow'] else 0,
-                        int(float(row['incomingQuantity'])) if row['incomingQuantity'] else 0,
-                        int(float(row['qtyInBox'])) if row['qtyInBox'] else 0,
-                        row['dimensions']
+                        int(float(row['quantity'])) if row['quantity'] else 0
                     ]
-                sheet.append(row_data)
+                    # Only add ocean if it's not removed
+                    if not removed_columns.get('ocean'):
+                        row_data.append(int(float(row['ocean'])) if row.get('ocean') else 0)
+                    
+                    # Only add PCS/BOX if not removed
+                    if not removed_columns.get('pcsBox'):
+                        row_data.append(int(float(row['pcsBox'])) if row.get('pcsBox') else 0)
+                    
+                    # Only add dimensions if not removed
+                    if not removed_columns.get('dimensions'):
+                        row_data.append(row.get('dimensions', ''))
+                        sheet.column_dimensions[get_column_letter(9)].width = 11
 
-                if index == 0:
-                    # Insert the image in the first column for the first row
-                    img = OpenPyXLImage(image_path)
-                    img.width = 200  # Set image width
-                    img.height = 150  # Set image height
-                    sheet.add_image(img, f"A{sheet.max_row}")
+                    sheet.append(row_data)
 
-            # Ensure a minimum of 8 rows for each style
-            while len(rows) < 8:
-                empty_row_data = [""] * len(headers)  # Create an empty row
-                sheet.append(empty_row_data)
-                rows.append(empty_row_data)  # Keep track of the row count
+                    if index == 0:
+                        img = OpenPyXLImage(image_path)
+                        img.width = 200
+                        img.height = 150
+                        sheet.add_image(img, f"A{sheet.max_row}")
 
-            # Merge cells in columns A, B, and C based on the number of rows
-            if len(rows) > 8:
-                sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=1, end_row=sheet.max_row, end_column=1)  # Merge A
-                sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=2, end_row=sheet.max_row, end_column=2)  # Merge B
-                sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=3, end_row=sheet.max_row, end_column=3)  # Merge C
-            else:
-                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=1, end_row=sheet.max_row, end_column=1)  # Merge A
-                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=2, end_row=sheet.max_row, end_column=2)  # Merge B
-                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=3, end_row=sheet.max_row, end_column=3)  # Merge C
+                while len(rows) < 8:
+                    empty_row_data = [""] * len(headers)
+                    sheet.append(empty_row_data)
+                    rows.append(empty_row_data)
 
-            for col in [2, 3]:  # Columns B and C
-                for row in range(sheet.max_row - len(rows) + 1, sheet.max_row + 1):
-                    sheet.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
+                if len(rows) > 8:
+                    sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=1, end_row=sheet.max_row, end_column=1)
+                    sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=2, end_row=sheet.max_row, end_column=2)
+                    sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=3, end_row=sheet.max_row, end_column=3)
+                else:
+                    sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=1, end_row=sheet.max_row, end_column=1)
+                    sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=2, end_row=sheet.max_row, end_column=2)
+                    sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=3, end_row=sheet.max_row, end_column=3)
 
-        set_border(sheet, 'A2:I' + str(sheet.max_row))
+                for col in [2, 3]:
+                        for row in range(sheet.max_row - len(rows) + 1, sheet.max_row + 1):
+                            sheet.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
+                
+        # Adjust the column range based on removed columns
+        last_col = 'G'  # Base columns
+        if not removed_columns.get('pcsBox'):
+            last_col = 'H'
+        if not removed_columns.get('dimensions'):
+            last_col = 'I'
+        
+            
+        set_border(sheet, f'A2:{last_col}{sheet.max_row}')
 
-        # Save the workbook to a BytesIO object
         output = BytesIO()
         workbook.save(output)
         output.seek(0)
 
-        # Send the Excel file as a response with the new filename
         return send_file(output, download_name=filename, as_attachment=True)
 
     except Exception as e:
         current_app.logger.error(f"Error in export_list: {e}")
         return jsonify({"error": "Internal Server Error"}), 500
+    
+@v6_listcreator_bp.route('/export_pdf', methods=['POST'])
+def export_pdf():
+    request_data = request.get_json()
+    image_paths = request_data.get('imagePaths', [])
+    image_size = request_data.get('imageSize')
+    
+    output_buffer = BytesIO()
+    image_data_list = []
+    selected_images = []
+    
+    for item in image_paths:
+        style = item['style']
+        image_path = item['path']
+        
+        if '/list_image/' in image_path:
+            image_path = re.sub(r'/list_image/', '', image_path)
+            full_path = os.path.join(Config.CATALOG_ORIGINAL, image_path)
+        else:
+            full_path = image_path
+            
+        if os.path.exists(full_path):
+            if image_size != 'full':
+                img_buffer = resize_image(full_path, int(image_size))
+                image_data_list.append(img_buffer)
+            else:
+                with open(full_path, 'rb') as img_file:
+                    image_data_list.append(BytesIO(img_file.read()))
+            selected_images.append(f"{style}.jpg")
+    
+    generate_catalog_pdf(image_data_list, output_buffer, image_size, selected_images)
+    
+    output_buffer.seek(0)
+    return send_file(
+        output_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'catalog_{datetime.datetime.now().strftime("%Y%m%d")}.pdf'
+    )
+
+def generate_catalog_pdf(image_data_list, output_buffer, image_size='full', selected_images=[]):
+        c = canvas.Canvas(output_buffer, pagesize=landscape(letter))
+        c.setTitle("Catalog Pictures")
+        
+        # Cover page
+        c.setFont("Helvetica-Bold", 36)
+        c.drawString(100, 550, "Catalog Pictures")
+        c.setFont("Helvetica-Bold", 24)
+        c.drawString(100, 500, "Product Catalog")
+        c.setFont("Helvetica", 16)
+        c.drawString(100, 450, f"Created Date: {datetime.datetime.now().strftime('%Y-%m-%d')}")
+        c.drawString(100, 400, "Exclusive Access – Please Refrain from Sharing outside of your company")
+        resolution_text = f"Image Resolution: {image_size}px" if image_size != 'full' else "Image Resolution: Original Size"
+        c.drawString(100, 350, resolution_text)
+        c.showPage()
+        
+        # Process each image and add style text
+        for img_data, image_name in zip(image_data_list, selected_images):
+            img = ImageReader(BytesIO(img_data.getvalue() if hasattr(img_data, 'getvalue') else img_data))
+            img_width, img_height = img.getSize()
+            aspect = img_height / float(img_width)
+            
+            max_width = 700
+            width = max_width
+            height = width * aspect
+            
+            x = (landscape(letter)[0] - width) / 2
+            y = (landscape(letter)[1] - height) / 2 + 50
+            
+            c.drawImage(img, x, y, width=width, height=height)
+            
+            style_name = os.path.splitext(image_name)[0]
+            c.setFont("Helvetica-Bold", 20)
+            text_width = c.stringWidth(style_name, "Helvetica-Bold", 20)
+            text_x = (landscape(letter)[0] - text_width) / 2
+            text_y = y - 30
+            c.drawString(text_x, text_y, style_name)
+            
+            c.showPage()
+        
+        c.save()
