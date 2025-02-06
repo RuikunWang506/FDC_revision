@@ -38106,7 +38106,10 @@ WHERE prod_cd = 'N2149 BR';
 2025-02-05 02:46:33,032 - INFO - ***a*** processing regular input: ['T3305']
 2025-02-05 02:46:38,164 - INFO - ***a*** processing regular input: ['T3305']
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 2025-02-05 10:27:03,096 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
 2025-02-05 10:27:06,692 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
 2025-02-05 10:33:12,359 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
@@ -38128,4 +38131,7 @@ WHERE prod_cd = 'N2149 BR';
 2025-02-05 14:19:02,104 - INFO - ***yeti***__@@@search SKU@@@__ l1850
 2025-02-05 14:25:40,961 - INFO - ***yeti*** has logged in. IP: ***172.56.233.44***, Browser: Chrome Mobile iOS 132.0.6834, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
 2025-02-05 16:05:06,569 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
