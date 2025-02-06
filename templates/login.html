@@ -2,586 +2,107 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FDC Toolkit Login - Happy New Year 2025</title>
-    
-    <!-- Bootstrap CSS -->
+    <title>Login</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Additional Styles for Festive Elements -->
-    <style>
-        /* Import Google Fonts */
-        @import url('https://fonts.googleapis.com/css?family=Montserrat:700|Pacifico');
-
-        /* Reset and Box-sizing */
-        *, *:after, *:before {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-          -webkit-transition: all 100ms ease-in;
-          transition: all 100ms ease-in;
-        }
-
-        /* Overall Layout */
-        html, body {
-            height: 100%;
-            background: #222048;
-            color: #fff;
-            font-family: 'Montserrat', sans-serif;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Festive Header */
-        .festive-header {
-            width: 100%;
-            height: 50vh; /* Adjust height as needed */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            z-index: 2;
-        }
-
-        .feliz {
-            padding-top: 100px;
-            font-family: 'Pacifico', cursive;
-            font-size: 100px;
-            font-weight: 700;
-            color: #f48fb1;
-            text-align: center;
-            opacity: 0;
-            animation: vem_feliz 2s ease-in-out 1s forwards;
-            margin-bottom: 20px;
-        }
-
-        .ano_novo {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            z-index: 2;
-            opacity: 0;
-            animation: fadeIn 2s ease-in-out 3s forwards;
-        }
-
-        .ano_novo > span {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 175px;
-            font-weight: 700;
-            color: #7a8fe8;
-            margin: 0 5px;
-            position: relative;
-            opacity: 0;
-        }
-
-        /* Specific Classes for Each Digit with Appropriate Animations */
-        .ano_novo > span.dois {
-            animation: aparece_2 1s ease-in-out 3.5s forwards;
-        }
-
-        .ano_novo > span.zero {
-            animation: aparece_0 1s ease-in-out 4s forwards;
-        }
-
-        .ano_novo > span.dois2 {
-            animation: aparece_2_2 1s ease-in-out 4.5s forwards;
-        }
-
-        .ano_novo > span.cinco {
-            animation: aparece_5 1s ease-in-out 5s forwards;
-        }
-
-        .ano_novo > .balao {
-            width: 100px;
-            height: 100px;
-            background: #e8d57a;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            right: -150px; /* Start off-screen */
-            margin-top: -50px;
-            animation: vem_e_vai_balao 10s ease-in-out 2s forwards;
-        }
-
-        .ano_novo > .balao::before {
-            content: '';
-            width: 0;
-            height: 0;
-            border-style: solid;
-            border-width: 0 10px 20px 10px;
-            border-color: transparent transparent #b19b32 transparent;
-            position: absolute;
-            left: 50%;
-            margin-left: -10px;
-            bottom: -10px;
-            z-index: -1;
-        }
-
-        .ano_novo > .balao::after {
-            content: '';
-            width: 4px;
-            height: 100px;
-            background: #fff;
-            border-radius: 0px 0px 3px 3px;
-            position: absolute;
-            left: 50%;
-            margin-left: -2px;
-            bottom: -110px;
-        }
-
-        /* Fireworks Overlay */
-        .fogos {
-            width: 100%;
-            height: 100%;
-            display: block;
-            position: fixed;
-            top: 0;
-            left: 0;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .fogos > div {
-            border: 2px solid #fff;
-            position: absolute;
-            opacity: 0;
-            animation: solta_fogos 1.5s ease-in-out infinite;
-        }
-
-        .fogos > div.f1 {
-            left: 20%;
-            top: 40%;
-            animation-delay: 0s;
-        }
-
-        .fogos > div.f2 {
-            left: 15%;
-            top: 70%;
-            animation-delay: 2s;
-        }
-
-        .fogos > div.f3 {
-            right: 20%;
-            top: 40%;
-            animation-delay: 4s;
-        }
-
-        .fogos > div.f4 {
-            right: 15%;
-            top: 70%;
-            animation-delay: 6s;
-        }
-
-        /* Optional: Add a fifth firework for enhanced festivity */
-        .fogos > div.f5 {
-            left: 50%;
-            top: 60%;
-            animation-delay: 8s;
-            animation: solta_fogos 1.5s ease-in-out infinite;
-        }
-
-        .fogos > div span {
-            width: 6px;
-            height: 6px;
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            animation: estoura_fogos 0.5s ease-in-out forwards;
-        }
-
-        .fogos > div span:nth-child(1) {
-            transform: rotate(0deg);
-            animation-delay: 1.5s;
-        }
-
-        .fogos > div span:nth-child(2) {
-            transform: rotate(120deg);
-            animation-delay: 1.6s;
-        }
-
-        .fogos > div span:nth-child(3) {
-            transform: rotate(240deg);
-            animation-delay: 1.7s;
-        }
-
-        .fogos > div span::before {
-            content: '';
-            width: 2px;
-            height: 50px;
-            background: #f5cc06;
-            position: absolute;
-            top: -60px;
-            left: 2px;
-        }
-
-        .fogos > div span::after {
-            content: '';
-            width: 2px;
-            height: 50px;
-            background: #f5cc06;
-            position: absolute;
-            bottom: -60px;
-            left: 2px;
-        }
-
-        .fogos > div span i:before {
-            content: '';
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background: #fff;
-            position: absolute;
-            top: -15px;
-            left: 10px;
-        }
-
-        .fogos > div span i:after {
-            content: '';
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background: #fff;
-            position: absolute;
-            top: -15px;
-            right: 10px;
-        }
-
-        /* Main Content (Login Form) */
-        .main-content {
-            flex: 1;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding: 20px;
-            z-index: 2;
-        }
-
-        /* Login Form Container */
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            z-index: 2;
-            position: relative;
-        }
-
-        .login-container h2 {
-            color: #fff;
-        }
-
-        .login-container a h5 {
-            color: #fff;
-            text-decoration: underline;
-        }
-
-        .login-container .form-control {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: #fff;
-        }
-
-        .login-container .form-control:focus {
-            background: rgba(255, 255, 255, 0.3);
-            color: #fff;
-        }
-
-        .login-container .btn-primary {
-            background-color: #f48fb1;
-            border: none;
-        }
-
-        /* Footer (Optional) */
-        .footer {
-            text-align: center;
-            padding: 10px 0;
-            position: relative;
-            z-index: 2;
-            color: #f47c7c;
-            font-size: 12px;
-        }
-
-        .footer img {
-            width: 30px;
-            height: 30px;
-        }
-
-        /* Animations */
-        @keyframes vem_feliz {
-            0% {
-                margin-top: 0px;
-                opacity: 0;
-            }
-            100% {
-                margin-top: -50px;
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes aparece_2 {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes aparece_0 {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes aparece_2_2 {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes aparece_5 {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes vem_e_vai_balao {
-            0% {
-                right: -150px;
-                opacity: 1;
-            }
-            100% {
-                right: 50%;
-                opacity: 0;
-            }
-        }
-
-        @keyframes solta_fogos {
-            0% {
-                margin-top: 100%;
-                opacity: 0;
-                width: 2px;
-                height: 30px;
-                display: block;
-                border-radius: 50%;
-            }
-            75% {
-                margin-top: 0%;
-                opacity: 1;
-                width: 2px;
-                height: 30px;
-                display: block;
-                border-radius: 50%;
-            }
-            80%{
-                margin-top: 0px;
-                margin-left: 0px;
-                opacity: 1;
-                width: 10px;
-                height: 10px;
-                display: block;
-                border-radius: 50%;
-                transform: scale(0.2);
-            }
-            100%{
-                opacity: 1;
-                width: 10px;
-                height: 10px;
-                display: block;
-                border-radius: 50%;
-                transform: scale(1);
-            }
-        }
-
-        @keyframes estoura_fogos {
-            0% {
-                opacity: 0;
-            }
-            100% {
-                opacity: 1;
-            }
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 576px) {
-            .feliz {
-                font-size: 3em;
-            }
-            .ano_novo > span {
-                font-size: 1.5em;
-            }
-            .login-container {
-                padding: 20px;
-            }
-        }
-
-        /* Updated CSS */
-
-        @media (max-width: 576px) {
-            .feliz {
-                font-size: 3em;
-            }
-            .ano_novo > span {
-                font-size: 6em; /* Increased font size for mobile */
-                margin: 0 1px;  /* Optional: Adjust margin for spacing */
-            }
-            .login-container {
-                padding: 20px;
-            }
-        }
-    </style>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </head>
 <body>
-    <!-- Festive Header -->
-    <div class="festive-header">
-        <div class="feliz">Happy New Year</div>
-        <div class="ano_novo">
-            <span class="dois">2</span>
-            <span class="zero">0</span>
-            <span class="dois2">2</span>
-            <span class="cinco">5</span>
-            <div class="balao"></div>
-        </div>
-    </div>
-
-    <!-- Fireworks Overlay -->
-    <div class="fogos">
-        <div class="f1">
-            <span><i></i></span>
-            <span><i></i></span>
-            <span><i></i></span>
-        </div>
-        <div class="f2">
-            <span><i></i></span>
-            <span><i></i></span>
-            <span><i></i></span>
-        </div>
-        <div class="f3">
-            <span><i></i></span>
-            <span><i></i></span>
-            <span><i></i></span>
-        </div>
-        <div class="f4">
-            <span><i></i></span>
-            <span><i></i></span>
-            <span><i></i></span>
-        </div>
-        <!-- Optional: Add a fifth firework for enhanced festivity -->
-        <div class="f5">
-            <span><i></i></span>
-            <span><i></i></span>
-            <span><i></i></span>
-        </div>
-    </div>
-
-    <!-- Main Content (Login Form) -->
-    <div class="main-content">
-        <div class="login-container">
-            <h2 class="text-center">FDC Toolkit Login</h2>
-            <a href="/location_service" class="text-center d-block mb-4"><h5>Quick Location</h5></a>
-            <form method="POST" action="{{ url_for('login') }}">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
-                </div>
-                <div class="form-group form-check">
-                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                    <label class="form-check-label" for="remember">Remember Me</label>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Login</button>
-            </form>
-            <!--
-            <div class="text-center mt-3">
-                
-                {% if location.status == 'success' %}
-                    
-                    <p>Your IP is: {{ client_ip }}</p>
-                    <p>City: {{ location.city }}</p>
-                    <p>Region: {{ location.regionName }}</p>
-                    <p>Country: {{ location.country }}</p>
-                    <p>Latitude: {{ location.lat }}</p>
-                    <p>Longitude: {{ location.lon }}</p>
-                    <h3>👁️ Am Watching You</h3>
-                    
-                    <div class="text-center" id="map" style="height: 400px"></div>
-                    
-                    
-                {% else %}
-                    <p>Location not found.</p>
-                {% endif %}
-            </div>
-            -->
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div class="alert alert-warning mt-3 text-center">
-                        {{ messages[0] }}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <h2 class="text-center">FDC Toolkit Login</h2>
+                <a href="/location_service" class="text-center"><h3>Quick_location</h3></a>
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
                     </div>
-                {% endif %}
-            {% endwith %}
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">Remember Me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                </form>
+                
+                
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="alert alert-warning mt-3 text-center">
+                            {{ messages[0] }}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                
+            </div>
         </div>
     </div>
-
-    <!-- Optional Footer -->
-    <div class="footer">
-        <!-- Uncomment and customize if you want a footer -->
-        <!--
-        <footer class="mt-5 py-1 bg-light">
-            <div class="container text-center">
-                <div style="margin-top: 10px;">
-                    <img src="/static/icons/giraffe.ico" alt="Giraffie_here" style="width: 30px; height: 30px;">
-                    <span class="text-muted"> Powered by FlamingYeti</span>
+    <div class="text-center">
+                    
+        {% if location.status == 'success' %}
+            
+            <p>Your IP is: {{ client_ip }}</p>
+            <p>City: {{ location.city }}</p>
+            <p>Region: {{ location.regionName }}</p>
+            <p>Country: {{ location.country }}</p>
+            <p>Latitude: {{ location.lat }}</p>
+            <p>Longitude: {{ location.lon }}</p>
+            <h3>👁️ Am Watching You</h3>
+            <!-- Map container -->
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <div class="text-center" id="map" style="height: 400px; width: 100%; margin: 0 auto;"></div>
+                    </div>
                 </div>
             </div>
-        </footer>
-        -->
-    </div>
-
-    <!-- jQuery and Bootstrap JS (required for Bootstrap 4) -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    
-    <!-- Custom Scripts -->
-    <script>
-        {% if location.status == 'success' %}
-            var lat = {{ location.lat }};
-            var lon = {{ location.lon }};
-            console.log('Latitude:', lat, 'Longitude:', lon);
-            var map = L.map('map').setView([lat, lon], 13);
             
+        {% else %}
+            <p>Location not found.</p>
+        {% endif %}
+    </div>
+</body>
+<footer class="footer mt-5 py-1 bg-light">
+    <div class="container text-center justify-content-between align-items-center">
+        <div style="margin-top: 10px;">
+            <img src="/static/icons/giraffe.ico" alt="Giraffie_here" style="width: 30px; height: 30px;">
+            <span class="text-muted"> Powered by FlamingYeti</span>
+        </div>
+    </div>
+</footer>
+<script>
+    // Fetch IP-based geolocation data from a third-party API
+    fetch('https://ipinfo.io/json?token=a1b80ee55f31f3')  // Replace with your actual IPinfo API token
+        .then(response => response.json())
+        .then(data => {
+            var loc = data.loc.split(',');  // Extract lat, lon
+            var lat = parseFloat(loc[0]);
+            var lon = parseFloat(loc[1]);
+            var city = data.city;
+            var region = data.region;
+            var country = data.country;
+
+            console.log('Latitude:', lat, 'Longitude:', lon);
+
+            // Initialize Leaflet map
+            var map = L.map('map').setView([lat, lon], 13);
+
+            // Add OpenStreetMap tile layer
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
-            
-            L.marker([lat, lon]).addTo(map)
-                .bindPopup('<b>Location:</b> {{ location.city }}, {{ location.regionName }}, {{ location.country }}')
-                .openPopup();
-        {% endif %}
-    </script>
 
-    <!-- Optional: Include any additional scripts for festive animations -->
-    <script>
-        // Example: Fireworks Animation Logic
-        // You can use existing libraries or custom JavaScript to animate the fireworks
-    </script>
-</body>
+            // Add marker with location details
+            L.marker([lat, lon]).addTo(map)
+                .bindPopup(`<b>Location:</b> ${city}, ${region}, ${country}`)
+                .openPopup();
+        })
+        .catch(error => console.error('Error fetching location:', error));
+</script>
+
 </html>

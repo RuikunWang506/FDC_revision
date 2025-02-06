@@ -723,9 +723,9 @@ def register_routes(app):
 
     @app.route('/log')
     def display():
-        #if 'username' not in session:
-        #    return redirect(url_for("login"))
-        #current_user = session['username']
+        if 'username' not in session:
+            return redirect(url_for("login"))
+        current_user = session['username']
 
         try:
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
@@ -744,7 +744,7 @@ def register_routes(app):
             total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
 
             #return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages,current_user=current_user), 200
-            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages), 200
+            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages,current_user=current_user), 200
 
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)

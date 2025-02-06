@@ -256,7 +256,7 @@ def get_product_data(user_input):
                 # Add image URL
                 style_number = style.split()[0].strip() if style else ''
                 image_path = os.path.join(current_app.config['CATALOG_ORIGINAL'], f"{style_number}.jpg")
-                product_data['image_url'] = f"/ftp/{style_number}.jpg" if os.path.exists(image_path) else "/static/no_image_available.jpg"
+                product_data['image_url'] = f"/image/{style_number}.jpg" if os.path.exists(image_path) else "/static/no_image_available.jpg"
 
                 results.append(product_data)
         

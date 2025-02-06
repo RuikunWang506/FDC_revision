@@ -75,7 +75,10 @@ def list_from_origin(list_input, current_user):
 
 @v6_listcreator_bp.route('/v6_listcreator', methods=['GET', 'POST'])
 def index():
-    current_user = "a"  # Replace with actual user logic if needed
+    if 'username' not in session:
+            session['next'] = request.url
+            return redirect(url_for("login"))
+    current_user = session['username']
     error_message = None  # Initialize error message
     dropbox_images = {}  # Initialize dropbox_images as a dictionary
     missing_descriptions = []  # Initialize missing descriptions list
