@@ -100,8 +100,7 @@ def boat_service():
             na_rep="", 
             justify="center", 
             table_id="boat_table", 
-            border=0,
-            current_user=current_user
+            border=0
         )
     except Exception as e:
         print(f"Error processing Excel file: {e}")

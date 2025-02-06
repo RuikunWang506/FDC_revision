@@ -455,24 +455,29 @@
     <div class="text-center"> <!-- Center the container -->
         <div class="row justify-content-center"> <!-- Center the row content -->
             {% for image_url, info in image_urls | zip(file_info) %}
-            <div class="col-6 col-md-4 col-lg-2 mb-3"> <!-- Adjusted column sizes for 6 per row -->
-                <div class="img-container text-center">
-                    <img src="{{ image_url }}" alt="Image" class="img-fluid mx-auto d-block" loading="lazy" onclick="enlargeImage(this, '{{ image_url }}')" style="cursor: pointer;">
-                    <p>
-                        <a href="/ftp/{{ info[0] }}" target="_blank">{{ info[0] }}</a>
-                        {% if current_user == 'yetimaster' %}
-                        <br>Original Size: 
-                        {% if info[1] > 1000000 %}
-                            {{ (info[1] / (1024 * 1024)) | round(2) }} MB
-                        {% else %}
-                            {{ (info[1] / 1024) | round(2) }} KB
-                        {% endif %}
-                        <br>Modified: {{ info[2] }}
-                        <button class="btn btn-danger btn-sm delete-button" data-file-name="{{ info[0] }}">Delete</button>
-                        {% endif %}
-                    </p>
+                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                    <div class="img-container text-center">
+                        <img src="{{ url_for('serve_image', filename=info[0], size=300) }}" 
+                            alt="Image" 
+                            class="img-fluid mx-auto d-block" 
+                            loading="lazy" 
+                            onclick="enlargeImage(this, '{{ url_for('serve_image', filename=info[0], size='full') }}')" 
+                            style="cursor: pointer;">
+                        <p>
+                            <a href="{{ url_for('serve_image', filename=info[0], size='full') }}" target="_blank">{{ info[0] }}</a>
+                            {% if current_user == 'yetimaster' %}
+                            <br>Original Size:
+                            {% if info[1] > 1000000 %}
+                                {{ (info[1] / (1024 * 1024)) | round(2) }} MB
+                            {% else %}
+                                {{ (info[1] / 1024) | round(2) }} KB
+                            {% endif %}
+                            <br>Modified: {{ info[2] }}
+                            <button class="btn btn-danger btn-sm delete-button" data-file-name="{{ info[0] }}">Delete</button>
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
-            </div>
             {% endfor %}
         </div>
         <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">
@@ -809,7 +814,7 @@
         function enlargeImage(imgElement, url) {
             var popup = document.getElementById("imagePopup");
             var popupImg = document.getElementById("popupImage");
-            var formattedUrl = url.replace('/ftp', '/ftp/');
+            var formattedUrl = url
 
             popupImg.src = formattedUrl;
             popup.style.display = "flex";

@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V6_listcreator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
+    <style>
+        /* Image popup and navigation */
+        .image-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+        }
+    
+        .image-popup img {
+            max-width: 90%;
+            max-height: 90vh;
+        }
+    
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 20px;
+            user-select: none;
+        }
+    
+        .prev-btn { left: 20px; }
+        .next-btn { right: 20px; }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    
+        /* Image options and layout */
+        .image-option {
+            position: relative;
+            display: inline-block;
+            margin: 0;
+        }
+    
+        .image-option img {
+            width: 150px;
+        }
+    
+        .image-option input[type="radio"] {
+            display: none;
+        }
+    
+        .image-option label {
+            cursor: pointer;
+            border: 2px solid transparent;
+            display: inline-block;
+            padding: 2px;
+        }
+    
+        .image-option input[type="radio"]:checked + label {
+            border-color: #007bff;
+        }
+    
+        .dropbox-overlay {
+            position: absolute;
+            height: 100px;
+            opacity: 0.2;
+            z-index: 1;
+            pointer-events: none;
+        }
+    
+        /* Table and card styles */
+        .table td, .table th {
+            padding: 0.5rem;
+            vertical-align: middle;
+        }
+    
+        .btn-sm {
+            padding: 0.2rem 0.5rem;
+            margin: 0.1rem !important;
+        }
+    
+        .card-body {
+            padding: 1rem;
+        }
+    
+        .style-card {
+            margin-bottom: 1rem;
+        }
+    
+        .description-input {
+            min-height: 40px;
+            max-height: 80px;
+            overflow-y: auto;
+            padding: 0.25rem;
+            margin: 0.25rem 0;
+        }
+    
+        /* Sidebar styles */
+        .bookmark-sidebar, .action-sidebar {
+            position: fixed;
+            background-color: #f8f9fa;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 8px;
+        }
+    
+        .bookmark-sidebar {
+            right: 0;
+            top: 5%;
+            width: 80%;
+            max-width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-left: 1px solid #dee2e6;
+        }
+    
+        .action-sidebar {
+            left: 0;
+            top: 25%;
+            width: 300px;
+            border-right: 1px solid #dee2e6;
+        }
+    
+        /* Style list */
+        #style-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        #style-list li {
+            display: block;
+            width: 100%;
+        }
+
+        #style-list li a {
+            display: block;
+            padding: 4px 4px;
+            background: #e0e5ff;
+            color: rgb(0, 0, 0);
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    
+        #style-list li a:hover {
+            background: #64d987;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+    
+        /* Section headers */
+        .section-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(145deg, #2196F3, #1976D2);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+    
+        .section-header h5 {
+            margin: 0;
+            font-size: 1rem;
+        }
+    
+        .collapse-icon {
+            color: white;
+            font-size: 18px;
+        }
+    
+        /* Sortable descriptions */
+        #sortableDescriptions .list-group-item {
+            cursor: move;
+            background: #f8f9fa;
+            margin: 2px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+    
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #c8ebfb !important;
+        }
+    
+        /* Misc */
+        [contenteditable=true]:empty:before {
+            content: attr(data-placeholder);
+            color: #808080;
+            font-style: italic;
+        }
+    
+        .remove-row {
+            color: red;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+    <style>
+        .sortable:hover {
+            background-color: #f5f5f5;
+        }
+        .sortable::after {
+            content: '↕';
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="bookmark-sidebar">
+        <h5>Styles</h5>
+
+        
+        <div class="action-sidebar">
+            {% if not missing_descriptions and pivot_data %}
+            <div class="d-flex flex-column">
+                <button type="button" class="btn btn-success mb-4" data-toggle="modal" data-target="#imageSizeModal">Export List</button>
+                <button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#editDescriptionModal">Edit Desc</button>
+                <button type="button" class="btn btn-danger mb-2" onclick="col_control_Stockonly()">Quantity: Stock NO OCEAN</button>
+                <button type="button" class="btn btn-danger mb-2" onclick="col_control_StockOcean()">Quantity: STOCK+OCEAN</button>
+                <button type="button" class="btn btn-warning mb-2" id="togglePcsBox" onclick="togglePcsBox()">Hide PCS/BOX</button>
+                <button type="button" class="btn btn-warning mb-2" id="toggleDimensions" onclick="toggleDimensions()">Hide Dimensions</button>
+                <button type="button" class="btn btn-info mb-2" onclick="selectNonDropboxImages()">No Dropbox Img</button>
+            </div>
+            {% endif %}
+            <ul>
+                <h5>Todo</h5>
+                <li>save work progress</li>
+                <h5>more advanced</h5>
+                <li>all avaliable inventory</li>
+                <li>all ocean</li>
+                <li>all avaliable before xxx date</li>
+                
+            </ul>
+        </div>
+        
+        <div class="bookmark-sidebar">
+            <div class="section-header" onclick="toggleSection('styles-section')">
+                <h5>Styles ({{ pivot_data|length }} styles / {{ list_input|count_dropbox_files if list_input else 0 }} pics)</h5>
+                <span class="collapse-icon">▼</span>
+            </div>
+            <div id="styles-section">
+                <ul id="style-list">
+                    {% for style_group in pivot_data %}
+                        <li><a href="#{{ style_group[0].style|replace(' ', '_') }}">{{ style_group[0].style }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        
+            <div class="section-header" onclick="toggleSection('descriptions-section')">
+                <h5>Unique Descriptions</h5>
+                <span class="collapse-icon">▼</span>
+            </div>
+            <div id="descriptions-section">
+                <ul id="sortableDescriptions" class="list-group">
+                    {% set unique_descriptions = [] %}
+                    {% for style_group in pivot_data %}
+                        {% set description = descriptions[style_group[0].style]|default('') %}
+                        {% if description and description not in unique_descriptions %}
+                            {% set _ = unique_descriptions.append(description) %}
+                            <li class="list-group-item">
+                                {{ description }}
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+        </div>
+    </div>
+    </div>
+    <div class="container mt-4">
+        {% if error_message %}
+            <div class="alert alert-danger" role="alert">
+                {{ error_message }}
+            </div>
+        {% endif %}
+        <h5>your input was: {{list_input}}</h5>
+        <form method="POST" action="{{ url_for('v6_listcreator.index') }}">
+            <div class="form-group">
+                <input type="text" class="form-control" id="list_input" name="list_input" placeholder="Styles or Dropboxlink">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        {% if list_input %}
+        
+        {%endif%}
+        {% if pivot_data %}
+<div class="mt-4">
+    {# First create groups by description #}
+    {% set description_groups = {} %}
+    {% for style_group in pivot_data %}
+        {% set description = descriptions[style_group[0].style]|default('') %}
+        {% if description not in description_groups %}
+            {% set _ = description_groups.update({description: []}) %}
+        {% endif %}
+        {% set _ = description_groups[description].append(style_group) %}
+    {% endfor %}
+
+    {# Then render each description group #}
+    {% for description, style_groups in description_groups.items() %}
+        {% for style_group in style_groups %}
+        
+            <div class="card mb-3" id="{{ style_group[0].style|replace(' ', '_') }}">
+                {# Rest of your existing card body code #}
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px;">
+                            {{ style_group[0].style }}
+                            {% if session.get('verified_' + style_group[0].style) %}
+                                <span class="badge badge-success px-2">IN_OMS</span>
+                            {% endif %}
+                        </div>
+                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
+                            style="height: 40px;width:200px; resize: none;" rows="1">{{ descriptions[style_group[0].style] }}</textarea>
+                        <p class="card-text mb-0 font-weight-bold text-primary">
+                            ${{ style_group[0].selling_price }}
+                        </p>
+                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
+                    </div>
+        
+                    <div class="row">
+                        <div class="col-6">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Color</th>
+                                        <th>Quantity</th>
+                                        <th>Ocean</th>
+                                        <th>PCS/BOX</th>
+                                        <th>Dimensions</th>
+                                        <th>Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in style_group %}
+                                    <tr>
+                                        <td>{{ row.color }}</td>
+                                        <td contenteditable="true">{{ row.quantity }}</td>
+                                        <td>{{ row.ocean }}</td>
+                                        <td>{{ row.pcsBox }}</td>
+                                        <td>{{ row.dimensions }}</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-success btn-sm" onclick="addRow(this)">Add Row</button>
+                        </div>
+        
+                        <div class="col-6">
+                            <div class="d-flex flex-wrap">
+                                {% set style = style_group[0].style.strip() %}
+                                {% if style in dropbox_images %}
+                                <div class="image-option">
+                                    <input type="radio" id="dropbox_image_{{ style }}" name="image_option_{{ style }}" value="{{ dropbox_images[style] }}" checked>
+                                    <label for="dropbox_image_{{ style }}" class="image-container">
+                                        <div class="image-wrapper" onclick="enlargeImage(this.querySelector('.img-thumbnail'), this.querySelector('.img-thumbnail').dataset.fullsize)">
+                                            <img src="/static/icons/dropbox.png" class="dropbox-overlay">
+                                            <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}?size=150" 
+                                                data-fullsize="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}"
+                                                alt="{{ style }}" 
+                                                class="img-thumbnail">
+                                        </div>
+                                    </label>
+                                </div>
+                                {% endif %}
+                                {% for image in image_urls[style] %}
+                                <div class="image-option">
+                                    <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
+                                    <label for="catalog_image_{{ style }}_{{ loop.index }}">
+                                        <img src="{{ image['path'] }}?size=150" 
+                                            data-fullsize="{{ image['path'] }}"
+                                            alt="{{ style }}" 
+                                            class="img-thumbnail"
+                                            onclick="enlargeImage(this, this.dataset.fullsize)">
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    </div>
+    {% if missing_descriptions %}
+    <div class="mt-4 container">
+        <h5 class="text-center mb-4">Please select descriptions for the following styles:</h5>
+        <form method="POST" action="{{ url_for('v6_listcreator.update_descriptions') }}">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Image</th>
+                        <th style="width: 15%">Style</th>
+                        <th style="width: 50%">Quick Select</th>
+                        <th style="width: 20%">All Options</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for style in missing_descriptions %}
+                    <tr>
+                        <td>
+                            {% if style in dropbox_images %}
+                                <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" 
+                                     alt="{{ style }}" 
+                                     onclick="enlargeImage(this, this.src)",
+                                     style="width: 150px; height: auto;">
+                            {% elif style in image_urls and image_urls[style] %}
+                                <img src="{{ image_urls[style][0]['path'] }}" 
+                                     alt="{{ style }}" 
+                                     onclick="enlargeImage(this, this.src)",
+                                     style="width: 150px; height: auto;">
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/item_lookup/{{ style.lower() }}" target="_blank">
+                                {{ style }}
+                                {% if session.get('verified_' + style) %}
+                                    <span class="badge badge-success">(IN_OMS)</span>
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='SATCHEL'">SATCHEL</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">MINI SATCHEL</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">BACKPACK</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
+
+                        </td>
+                        <td>
+                            <select name="description_{{ loop.index }}" class="form-control">
+                                <option value="">Select a description</option>
+                                {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "BELT BAG", "BUCKET BAG", "CROSSBODY", "CROSSBODY 2-IN-1", "CROSSBODY SET", "FLAP BAG", "FRAME BAG", "GIFT SET", "HOBO", "JELLY BAG", "LARGE CROSSBODY", "LARGE NYLON CROSSBODY", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME BAG", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "NYLON BACKPACK", "NYLON CROSSBODY", "NYLON HOBO", "PATENT BAG", "PATENT MINI SATCHEL", "SATCHEL", "SLING", "STRAW BAG", "STRAW CROSSBODY", "TOTE", "WALLET"] %}
+                                    <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="text-center mt-3">
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+<div class="modal fade" id="imageSizeModal" tabindex="-1" role="dialog" aria-labelledby="imageSizeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageSizeModalLabel">Select Image Size</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h3 class="text-center">Exporting Master:</h3>
+                <div class="d-flex justify-content-center align-items-center" style="gap: 10px; margin-top: 10px;">
+                    <button type="button" class="btn btn-outline-primary" onclick="selectImageSize(600)">600</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="selectImageSize(1200)">1200</button>
+                    <button type="button" class="btn btn-outline-primary active" onclick="selectImageSize(1800)">1800</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="selectImageSize(3000)">3000</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="selectImageSize('full')">100%</button>
+                </div>
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-success" onclick="exportWithSelectedSize()">Export List</button>
+                    <button type="button" class="btn btn-primary" onclick="exportSelectedImages()">Export Images</button>
+                    <button type="button" class="btn btn-warning" onclick="exportPDF()">Export PDF</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="imagePopup" class="image-popup" onclick="closePopup(event)">
+    <span class="close-btn">&times;</span>
+    <span class="nav-btn prev-btn" onclick="navigateImages(-1)">&lt;</span>
+    <img id="popupImage" src="" alt="Enlarged Image">
+    <span class="nav-btn next-btn" onclick="navigateImages(1)">&gt;</span>
+</div>
+<!-- Edit Description Modal -->
+<div class="modal fade" id="editDescriptionModal" tabindex="-1" role="dialog" aria-labelledby="editDescriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editDescriptionModalLabel">Edit Descriptions</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Style</th>
+                            <th>Current Description</th>
+                            <th>New Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for style_group in pivot_data %}
+                        <tr>
+                            <td>{{ style_group[0].style }}</td>
+                            <td>{{ descriptions[style_group[0].style] }}</td>
+                            <td><input type="text" class="form-control" name="new_desc_{{ style_group[0].style }}"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitDescriptions">Submit Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+<h5>C:\Users\Kyle\Dropbox\Elaine\DDS2.5.2025</h5>
+<h5>t3305,m1121,l1521,n1324,n2088,en2088</h5>
+<script>
+    const columnConfig = {
+    color: { index: 0, removable: false, name: 'Color', visible: true, required: true },
+    quantity: { index: 1, removable: false, name: 'quantity', visible: true, required: true },
+    ocean: { index: 2, removable: true, name: 'Ocean', visible: true },
+    pcsBox: { index: 3, removable: true, name: 'PCS/BOX', visible: true },
+    dimensions: { index: 4, removable: true, name: 'Dimensions', visible: true },
+    remove: { index: 5, removable: false, name: 'Remove', exportExclude: true, required: true }
+};
+
+let selectedImageSize = null;
+let pcsBoxHidden = false;
+let dimensionsHidden = false;
+let oceanHidden = false;
+
+// Image handling functions
+function enlargeImage(imgElement, url) {
+    var popup = document.getElementById("imagePopup");
+    var popupImg = document.getElementById("popupImage");
+    
+    const card = imgElement.closest('.card');
+    allImages = Array.from(card.querySelectorAll('.img-thumbnail'));
+    allRadios = Array.from(card.querySelectorAll('input[type="radio"]'));
+    currentImageIndex = allImages.indexOf(imgElement);
+    
+    imgElement.addEventListener('dblclick', function() {
+        popupImg.src = url;
+        popup.style.display = "flex";
+    });
+    document.addEventListener('keydown', handleKeyPress);
+}
+
+function navigateImages(direction) {
+    event.stopPropagation();
+    currentImageIndex = (currentImageIndex + direction + allImages.length) % allImages.length;
+    document.getElementById("popupImage").src = allImages[currentImageIndex].src;
+    if (allRadios[currentImageIndex]) {
+        allRadios[currentImageIndex].checked = true;
+    }
+}
+
+function handleKeyPress(event) {
+    if (document.getElementById("imagePopup").style.display === "flex") {
+        if (event.key === "ArrowLeft") navigateImages(-1);
+        if (event.key === "ArrowRight") navigateImages(1);
+        if (event.key === "Escape") closePopup(event);
+    }
+}
+
+function closePopup(event) {
+    var popup = document.getElementById("imagePopup");
+    if (event.target === popup || event.target.classList.contains('close-btn')) {
+        popup.style.display = "none";
+        document.removeEventListener('keydown', handleKeyPress);
+    }
+}
+
+// Column control functions
+function togglePcsBox() {
+    const button = document.getElementById('togglePcsBox');
+    pcsBoxHidden = !pcsBoxHidden;
+    columnConfig.pcsBox.visible = !pcsBoxHidden;
+    button.textContent = pcsBoxHidden ? 'Show PCS/BOX' : 'Hide PCS/BOX';
+    updateTableStructure();
+}
+
+function toggleDimensions() {
+    const button = document.getElementById('toggleDimensions');
+    dimensionsHidden = !dimensionsHidden;
+    columnConfig.dimensions.visible = !dimensionsHidden;
+    button.textContent = dimensionsHidden ? 'Show Dimensions' : 'Hide Dimensions';
+    updateTableStructure();
+}
+
+function col_control_Stockonly() {
+    oceanHidden = true;
+    columnConfig.ocean.visible = false;
+    updateTableStructure();
+    removeZeroQuantityRows();
+}
+
+function col_control_StockOcean() {
+    removeZeroStockAndOceanRows();
+}
+
+function updateTableStructure() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        const table = card.querySelector('table');
+        const headers = table.querySelectorAll('th');
+        const rows = table.querySelectorAll('tbody tr');
+        
+        Object.entries(columnConfig).forEach(([key, config]) => {
+            if (config.index < headers.length) {
+                // Only hide if not required and visibility is false
+                const shouldDisplay = config.required || config.visible;
+                headers[config.index].style.display = shouldDisplay ? '' : 'none';
+                rows.forEach(row => {
+                    if (row.cells[config.index]) {
+                        row.cells[config.index].style.display = shouldDisplay ? '' : 'none';
+                    }
+                });
+            }
+        });
+    });
+}
+
+// Row manipulation functions
+function addRow(button) {
+    const card = button.closest('.card');
+    const tableBody = card.querySelector('tbody');
+    const newRow = document.createElement('tr');
+    
+    let cellsHtml = '';
+    Object.entries(columnConfig).forEach(([key, config]) => {
+        if (!config.exportExclude) {
+            const display = config.visible ? '' : 'none';
+            const value = '';
+            const numberOnly = ['quantity', 'ocean', 'pcsBox'].includes(key) ? 
+                'onkeypress="return event.charCode >= 48 && event.charCode <= 57"' : '';
+            cellsHtml += `<td contenteditable="true" ${numberOnly} style="display: ${display}" data-placeholder="fill">${value}</td>`;
+        }
+    });
+    cellsHtml += '<td><span class="remove-row" onclick="removeRow(this)">X</span></td>';
+    
+    newRow.innerHTML = cellsHtml;
+    tableBody.appendChild(newRow);
+}
+
+function removeRow(button) {
+    button.closest('tr').remove();
+}
+
+function removeZeroQuantityRows() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const quantity = parseInt(row.cells[1].innerText) || 0;
+        if (quantity <= 0) {
+            row.remove();
+        }
+    });
+}
+
+function removeZeroStockAndOceanRows() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const quantity = parseInt(row.cells[1].innerText) || 0;
+        const ocean = parseInt(row.cells[2].innerText) || 0;
+        if (quantity <= 0 && ocean <= 0) {
+            row.remove();
+        }
+    });
+}
+
+// Export functions
+function setImageSizeAndExport(size) {
+    selectedImageSize = size;
+    $('#imageSizeModal').modal('hide');
+    exportList();
+}
+
+function exportList() {
+    const cards = document.querySelectorAll('.card');
+    const exportData = [];
+    
+    cards.forEach(card => {
+        const style = card.querySelector('.card-title').firstChild.textContent.trim();
+        const descriptionElement = card.querySelector('.description-input');
+        const description = descriptionElement ? descriptionElement.value.trim() : "N/A";
+        const priceElement = card.querySelector('.text-primary');
+        const price = priceElement ? priceElement.innerText.trim() : "N/A";
+        
+        const selectedImage = card.querySelector(`input[name="image_option_${style}"]:checked`);
+        if (!selectedImage) {
+            alert('Please select an image for the style: ' + style);
+            return;
+        }
+
+        const rowData = {
+            style: style,
+            description: description,
+            price: price,
+            image: selectedImage.value,
+            rows: []
+        };
+
+        const rows = card.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const rowDataObj = {};
+            Object.entries(columnConfig).forEach(([key, config]) => {
+                if (!config.exportExclude && config.visible) {
+                    rowDataObj[key] = row.cells[config.index].innerText.trim() || "0";
+                }
+            });
+            rowData.rows.push(rowDataObj);
+        });
+
+        exportData.push(rowData);
+    });
+
+    fetch('{{ url_for("v6_listcreator.export_list") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            exportData,
+            image_size: selectedImageSize,
+            removedColumns: {
+                pcsBox: pcsBoxHidden,
+                dimensions: dimensionsHidden,
+                ocean: oceanHidden
+            }
+        })
+    })
+    .then(response => response.ok ? response.blob() : Promise.reject('Export failed'))
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'List_output.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Export failed!');
+    });
+}
+
+// Initialize sortable descriptions
+new Sortable(document.getElementById('sortableDescriptions'), {
+    animation: 150,
+    draggable: '.list-group-item',
+    ghostClass: 'sortable-ghost',
+    onEnd: function() {
+        const descriptions = Array.from(document.querySelectorAll('#sortableDescriptions li'))
+            .map(li => li.textContent.trim());
+        
+        const container = document.querySelector('.mt-4');
+        descriptions.forEach(description => {
+            const cards = Array.from(container.querySelectorAll('.card')).filter(card => {
+                const descriptionInput = card.querySelector('.description-input');
+                return descriptionInput && descriptionInput.value.trim() === description;
+            });
+            cards.forEach(card => container.appendChild(card));
+        });
+    }
+});
+</script>
+<script>
+    function toggleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        const icon = section.previousElementSibling.querySelector('.collapse-icon');
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+            icon.textContent = '▼';
+        } else {
+            section.style.display = 'none';
+            icon.textContent = '▶';
+        }
+    }
+</script>
+<script>
+// Initialize sortable table when modal opens
+$('#editDescriptionModal').on('shown.bs.modal', function () {
+    const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+    
+    const comparer = (idx, asc) => (a, b) => {
+        const v1 = getCellValue(asc ? a : b, idx);
+        const v2 = getCellValue(asc ? b : a, idx);
+        return v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) 
+            ? v1 - v2 
+            : v1.toString().localeCompare(v2);
+    };
+
+    document.querySelectorAll('#editDescriptionModal th').forEach(th => {
+        if (th.cellIndex < 2) { // Only make Style and Current Description columns sortable
+            th.classList.add('sortable');
+            th.style.cursor = 'pointer';
+            th.addEventListener('click', () => {
+                const table = th.closest('table');
+                const tbody = table.querySelector('tbody');
+                Array.from(tbody.querySelectorAll('tr'))
+                    .sort(comparer(th.cellIndex, this.asc = !this.asc))
+                    .forEach(tr => tbody.appendChild(tr));
+            });
+        }
+    });
+});
+</script>
+    <script>
+    document.getElementById('submitDescriptions').addEventListener('click', function() {
+        const updates = [];
+        const rows = document.querySelectorAll('#editDescriptionModal tbody tr');
+        
+        rows.forEach(row => {
+            const style = row.cells[0].textContent;
+            const newDesc = row.querySelector('input').value.trim();
+            if (newDesc) {
+                updates.push({ style: style, description: newDesc });
+            }
+        });
+
+        if (updates.length > 0) {
+            fetch('/update_descriptions_bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ updates: updates })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    });
+</script>
+<script>
+let selectedSize = null;
+
+function selectImageSize(size) {
+    selectedSize = size;
+    // Highlight selected button
+    document.querySelectorAll('#imageSizeModal .btn-outline-primary').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === size.toString()) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+function exportWithSelectedSize() {
+    if (selectedSize) {
+        setImageSizeAndExport(selectedSize);
+    } else {
+        alert('Please select an image size first');
+    }
+}
+</script>
+<script>
+    function exportSelectedImages() {
+        if (!selectedSize) {
+            alert('Please select an image size first');
+            return;
+        }
+        
+        const selectedImages = [];
+        document.querySelectorAll('.card').forEach(card => {
+            const style = card.querySelector('.card-title').firstChild.textContent.trim();
+            const selectedRadio = card.querySelector('input[type="radio"]:checked');
+            if (selectedRadio) {
+                selectedImages.push({
+                    style: style,
+                    path: selectedRadio.value
+                });
+            }
+        });
+    
+        fetch('/export_images', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                imagePaths: selectedImages,
+                imageSize: selectedSize
+            })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `exported_images_${new Date().toISOString().split('T')[0]}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        });
+    }
+    </script>
+    <script>
+        function selectNonDropboxImages() {
+            document.querySelectorAll('.card').forEach(card => {
+                const radioButtons = card.querySelectorAll('input[type="radio"]');
+                const nonDropboxRadio = Array.from(radioButtons).find(radio => 
+                    !radio.id.includes('dropbox_image_') && radio.value.includes('/list_image/')
+                );
+                if (nonDropboxRadio) {
+                    nonDropboxRadio.checked = true;
+                }
+            });
+        }
+        </script>
+<script>
+    function deleteCard(button) {
+        // Get the parent card using the specific class combination we have in the template
+        const card = button.closest('div.card.mb-3');
+        if (card) {
+            // Get style and description before removal
+            const style = card.querySelector('.card-title').firstChild.textContent.trim();
+            const description = card.querySelector('.description-input').value.trim();
+            
+            // Remove style from style list
+            const styleLink = document.querySelector(`#style-list a[href="#${style.replace(' ', '_')}"]`);
+            if (styleLink) {
+                styleLink.parentElement.remove();
+            }
+            
+            // Check if this description exists in other cards
+            const otherCardsWithDescription = Array.from(document.querySelectorAll('.description-input'))
+                .filter(textarea => 
+                    textarea !== card.querySelector('.description-input') && 
+                    textarea.value.trim() === description
+                );
+                
+            // If this was the only card with this description, remove from unique descriptions
+            if (otherCardsWithDescription.length === 0) {
+                const descriptionItem = Array.from(document.querySelectorAll('#sortableDescriptions li'))
+                    .find(li => li.textContent.trim() === description);
+                if (descriptionItem) {
+                    descriptionItem.remove();
+                }
+            }
+            
+            // Remove the corresponding row from edit description modal
+            const modalTable = document.querySelector('#editDescriptionModal table tbody');
+            const modalRows = modalTable.querySelectorAll('tr');
+            modalRows.forEach(row => {
+                if (row.cells[0].textContent.trim() === style) {
+                    row.remove();
+                }
+            });
+            
+            // Remove the card
+            card.remove();
+        }
+    }
+    </script>
+    <script>
+        function exportPDF() {
+            if (!selectedSize) {
+                alert('Please select an image size first');
+                return;
+            }
+            
+            const selectedImages = [];
+            document.querySelectorAll('.card').forEach(card => {
+                const style = card.querySelector('.card-title').firstChild.textContent.trim();
+                const selectedRadio = card.querySelector('input[type="radio"]:checked');
+                if (selectedRadio) {
+                    selectedImages.push({
+                        style: style,
+                        path: selectedRadio.value
+                    });
+                }
+            });
+        
+            fetch('/export_pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    imagePaths: selectedImages,
+                    imageSize: selectedSize
+                })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `catalog_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            });
+        }
+        </script>
+</body>
+</html>
