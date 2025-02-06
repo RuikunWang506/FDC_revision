@@ -38105,3 +38105,27 @@ WHERE prod_cd = 'N2149 BR';
 2025-02-05 02:46:08,362 - INFO - ***a*** processing regular input: ['T3305']
 2025-02-05 02:46:33,032 - INFO - ***a*** processing regular input: ['T3305']
 2025-02-05 02:46:38,164 - INFO - ***a*** processing regular input: ['T3305']
+<<<<<<< Updated upstream
+=======
+2025-02-05 10:27:03,096 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-05 10:27:06,692 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-05 10:33:12,359 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-05 11:03:54,996 - INFO - ***xj*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-05 11:06:09,260 - INFO - Processing data in Loris tool kit for xj
+2025-02-05 11:06:14,198 - INFO - [Download][loris_barcode]File 30_stickers_2025-02-05_11_06_10.pdf downloaded from barcode output
+2025-02-05 11:06:27,159 - INFO - [Download][loris_barcode]File 30_stickers_2025-02-05_11_06_10.pdf downloaded from barcode output
+2025-02-05 11:15:28,232 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-05 11:15:31,212 - INFO - No SKUs provided to fetch_locations
+2025-02-05 11:15:33,293 - INFO - ***yeti***__@@@search SKU@@@__ l1850
+2025-02-05 11:24:22,512 - INFO - ***yeti***__@@@search SKU@@@__ n2149
+2025-02-05 11:29:19,953 - INFO - ***yeti***__@@@search SKU@@@__ t3243
+2025-02-05 11:33:46,463 - INFO - ***yeti***__@@@search SKU@@@__ t3224
+2025-02-05 12:25:27,978 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-05 12:25:33,260 - INFO - ***yeti***__@@@search SKU@@@__ n1978
+2025-02-05 13:06:32,748 - INFO - ***yeti***__@@@search SKU@@@__ n2191
+2025-02-05 13:12:15,983 - INFO - ***yeti***__@@@mobile search@@@__ n1861,s1288
+2025-02-05 13:20:25,290 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-05 14:19:02,104 - INFO - ***yeti***__@@@search SKU@@@__ l1850
+2025-02-05 14:25:40,961 - INFO - ***yeti*** has logged in. IP: ***172.56.233.44***, Browser: Chrome Mobile iOS 132.0.6834, OS: iOS 18.2.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-05 16:05:06,569 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+>>>>>>> Stashed changes
