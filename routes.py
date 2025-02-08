@@ -1192,3 +1192,29 @@ def register_routes(app):
             download_name=zip_filename,
             as_attachment=True
         )
+    
+    @app.route("/bookmarks", methods=["GET", "POST"])
+    def bookmarks_page():  # Renamed function
+        if 'username' not in session:
+            session['next'] = request.url
+            return redirect(url_for("login"))
+
+        current_user = session['username']
+        
+        if current_user != 'yeti':
+            return render_template("index.html", current_user=current_user)
+
+        bookmarks_list = [
+            {"title": "Passwords & Accounts", "category": "Passwords", "url": "https://docs.google.com/spreadsheets/d/1nkle6flS263CJ65b0G8YQf46a3aTUC8vP2r3exfdFms/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_TEMU-USA", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1-PzqDYddrHTzBZ-f0IdzZFgmQaBK_Hx_Y_IYgHCIGWw/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_TEMU-HK", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1n_ewjw68TLFIDouP11z-AJlI1PilObQfP3lan7DepUg/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "HR_Ashley Sign-in Sheet", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1ABTgQ4KmVkBX0KRFV9XuIH94irc3jtBlUtjjpB1HRgE/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_TIKTOK_AMBRA",  "year":"2024","category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1gwJVGsJVCpYY-LtimYCwj5_hCUc8xs1zoqzhAqO9XQ8/edit?gid=697444757#gid=697444757","linktype":"Google Sheet"},
+            {"title": "Channel_Old Dec-Mar TIKTOK", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/13xcqIjFSOrDBh7xHZFsr_P4LBCKt2uGsrohIMXfeUxg/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_Tiktok Accounting 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1aW4wmxQHtSXZPjgui0PhaKGszkttTKay6JVlNJflJ_M/edit?gid=462431388#gid=462431388","linktype":"Google Sheet"},
+            {"title": "HR_1099 Sheet 2024", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1bgCEWmdWmFTyAkpbOQkxDvEgBFUhPNLVJLRIOsgxWd0/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_ERWAN 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1vIG8VhrZTJmuuEjXFP7ZmdnsyhAbXMWnasIOH_v76Ok/edit?gid=572048210#gid=572048210","linktype":"Google Sheet"},
+            {"title": "Channel_ERWAN 2025","year": "2025","category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1nU0CIyAtQYGK9AKNBhc-l_Mr-qRaoWLen4g4oZsdaBw/edit?gid=0#gid=0","linktype":"Google Sheet"}
+        ]
+
+        return render_template("bookmark.html", current_user=current_user, bookmarks_list=bookmarks_list)

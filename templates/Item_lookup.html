@@ -558,7 +558,14 @@
                     "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                     dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
                     buttons: [
-                        'copy', 'excel', 'pdf',
+                        'copy', 'excel', {
+                            extend: 'pdf',
+                            orientation: 'landscape',
+                            pageSize: 'LETTER',  // Sets US Letter size (8.5" x 11")
+                            customize: function(doc) {
+                            doc.pageMargins = [1, 1, 1, 1]; // Optional: adjust margins if needed
+                        }
+                        },
                         {
                             text: 'HIDE 0 OR LESS',
                             className: 'btn-custom-color',
@@ -635,7 +642,16 @@
                     pageLength: 50,
                     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                     dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
-                    buttons: ['copy', 'excel', 'pdf'],
+                    buttons: [
+                        'copy', 
+                        'excel',
+                        {
+                            extend: 'pdf',
+                            orientation: 'landscape',
+                            pageSize: 'LETTER',  // Sets US Letter size (8.5" x 11")
+                            
+                        },
+                    ],
                     responsive: true,
                     columnDefs: [
                         {
