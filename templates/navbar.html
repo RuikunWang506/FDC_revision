@@ -217,7 +217,7 @@
                         <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup">SKU
                     </a>
                 </li>
-                {% if current_user != 'fdc' and current_user != 'local_user' %}
+                {% if current_user != 'fdc' and current_user != 'local_user' and current_user != 'tmx' %}
                 <li class="nav-item">
                     <a class="nav-link" href="/boat">
                         <img src="https://www.svgrepo.com/show/217702/cargo-ship.svg" alt="boat">Boat
@@ -251,12 +251,22 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if current_user != 'fdc'%}
-                <li class="nav-item">
-                    <a class="nav-link" href="/dailytodo">
-                        <img src="/static/icons/to-do-list.png" alt="dailytodo">dailytodo
-                    </a>
-                </li>
+
+                {% if current_user in ['yeti', 'ting', 'nicye', 'ahua', 'tmx', 'xj'] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dailytodo">
+                            <img src="/static/icons/to-do-list.png" alt="dailytodo">dailytodo
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if current_user in ['tmx', 'yeti'] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/gpginvoice">
+                            <img src="/static/icons/car.svg" alt="gpginvoice">
+                            gpginvoice
+                        </a>
+                    </li>
                 {% endif %}
             </ul>
             <ul class="navbar-nav ml-auto">
@@ -277,7 +287,7 @@
                             {% if current_user == 'nicye' %}
                                 赖酒王 Nic Ye
                             {% elif current_user == 'xj' %}
-                            👑尊贵的锦锦👑
+                            <div style="color: red;">👑尊贵的叉鸡👑</div>
                             {% else %}
                                 {{ current_user | upper }}
                             {% endif %}

@@ -1,5 +1,5 @@
 from flask import (request, render_template, jsonify, redirect, url_for, 
-                   session, flash, send_from_directory,send_file, Response)
+                   session, flash, send_from_directory,send_file, Response, make_response)
 from werkzeug.utils import secure_filename
 
 # Standard library imports
@@ -46,6 +46,7 @@ from util import resize_image  # Import the master resizing function
 from PIL import Image
 
 from V6listcreator import v6_listcreator_bp
+from flask_cors import CORS
 
 
  
@@ -56,6 +57,7 @@ client = WebClient(token=Config.SLACK_TOKEN)
 # Configure logging
 
 def register_routes(app):
+
     register_big_img_routes(app)
     app.register_blueprint(location_service_bp)
     app.register_blueprint(container_bp)
@@ -118,19 +120,23 @@ def register_routes(app):
         if request.method == "POST":
             username = request.form.get("username")
             password = request.form.get("password")
-            remember = request.form.get("remember")  # Retrieve 'remember' value
+            remember = request.form.get("remember")
             
             if check_credentials(username, password):
                 session['username'] = username
                 if remember:
-                    session.permanent = True  # Make the session permanent
+                    session.permanent = True
                 else:
-                    session.permanent = False  # Session expires on browser close
+                    session.permanent = False
                 
                 flash(f"Logged in as {username}")
                 log_user_activity(username)
                 
-                # Redirect to stored next page or home
+                # Redirect TMX users to gpginvoice page
+                if username == 'tmx':
+                    return redirect(url_for("gpginvoice"))
+                    
+                # For other users, redirect to stored next page or home
                 redirect_url = session.pop('next', url_for("home"))
                 return redirect(redirect_url)
             else:
@@ -1205,7 +1211,7 @@ def register_routes(app):
             return render_template("index.html", current_user=current_user)
 
         bookmarks_list = [
-            {"title": "Passwords & Accounts", "category": "Passwords", "url": "https://docs.google.com/spreadsheets/d/1nkle6flS263CJ65b0G8YQf46a3aTUC8vP2r3exfdFms/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Passwords & Accounts", "year":"8888", "category": "Passwords", "url": "https://docs.google.com/spreadsheets/d/1nkle6flS263CJ65b0G8YQf46a3aTUC8vP2r3exfdFms/edit?gid=0#gid=0","linktype":"Google Sheet"},
             {"title": "Channel_TEMU-USA", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1-PzqDYddrHTzBZ-f0IdzZFgmQaBK_Hx_Y_IYgHCIGWw/edit?gid=0#gid=0","linktype":"Google Sheet"},
             {"title": "Channel_TEMU-HK", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1n_ewjw68TLFIDouP11z-AJlI1PilObQfP3lan7DepUg/edit?gid=0#gid=0","linktype":"Google Sheet"},
             {"title": "HR_Ashley Sign-in Sheet", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1ABTgQ4KmVkBX0KRFV9XuIH94irc3jtBlUtjjpB1HRgE/edit?gid=0#gid=0","linktype":"Google Sheet"},
@@ -1214,7 +1220,143 @@ def register_routes(app):
             {"title": "Channel_Tiktok Accounting 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1aW4wmxQHtSXZPjgui0PhaKGszkttTKay6JVlNJflJ_M/edit?gid=462431388#gid=462431388","linktype":"Google Sheet"},
             {"title": "HR_1099 Sheet 2024", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1bgCEWmdWmFTyAkpbOQkxDvEgBFUhPNLVJLRIOsgxWd0/edit?gid=0#gid=0","linktype":"Google Sheet"},
             {"title": "Channel_ERWAN 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1vIG8VhrZTJmuuEjXFP7ZmdnsyhAbXMWnasIOH_v76Ok/edit?gid=572048210#gid=572048210","linktype":"Google Sheet"},
+            {"title": "Tiktok_2025", "year":"2025", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1v9nzwoMk3p9LAcztZOW4et2v51Wfx21VeTlJbF-X64M/edit?gid=0#gid=0","linktype":"Google Sheet"},
             {"title": "Channel_ERWAN 2025","year": "2025","category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1nU0CIyAtQYGK9AKNBhc-l_Mr-qRaoWLen4g4oZsdaBw/edit?gid=0#gid=0","linktype":"Google Sheet"}
         ]
 
         return render_template("bookmark.html", current_user=current_user, bookmarks_list=bookmarks_list)
+
+    def register_routes(app):
+        CORS(app, resources={
+            r"/gpginvoice": {
+                "origins": ["https://admin.genuinepartsgiant.com"],
+                "methods": ["POST", "OPTIONS"],
+                "allow_headers": ["Content-Type"],
+                "supports_credentials": True
+            }
+        })
+    @app.route("/gpg")
+    def gpg_redirect():
+        return redirect(url_for("gpginvoice"))
+    @app.route("/delete_gpg_row", methods=["POST"])
+    def delete_gpg_row():
+        if 'username' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        app.logger.info("Received request to delete GPG row")
+        try:
+            data = request.get_json()
+            row_data = data.get('rowData')
+            app.logger.info(f"Received rowData: {row_data}")
+
+            excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
+
+            if os.path.exists(excel_path):
+                df = pd.read_excel(excel_path, engine='openpyxl')
+                app.logger.info(f"Excel columns: {df.columns.tolist()}")
+
+                # Explicitly match columns
+                mask = (
+                    (df['orderNumber'].astype(str).str.strip() == str(row_data[0]).strip()) &
+                    (df['orderDate'].astype(str).str.strip() == str(row_data[1]).strip()) &
+                    (df['Line Number'].astype(str).astype(str).str.strip() == str(row_data[2]).strip()) &
+                    (df['Part Number'].astype(str).str.strip() == str(row_data[3]).strip()) &
+                    (df['Quantity'].astype(str).astype(str).str.strip() == str(row_data[4]).strip()) &
+                    (df['Price'].astype(str).astype(str).str.strip() == str(row_data[5]).strip())
+                )
+
+                if mask.any():
+                    df = df.loc[~mask]  # Remove matched row
+                    df.to_excel(excel_path, index=False, engine='openpyxl')
+                    app.logger.info("Row deleted successfully")
+                    return jsonify({"success": True})
+                else:
+                    app.logger.warning("No matching row found")
+                    return jsonify({"error": "No matching row found"}), 404
+
+            return jsonify({"error": "File not found"}), 404
+
+        except Exception as e:
+            app.logger.error(f"Error deleting row: {e}")
+            return jsonify({"error": str(e)}), 500
+
+        
+    @app.route("/gpginvoice", methods=["GET", "POST", "OPTIONS"])
+    def gpginvoice():
+        if 'username' not in session:
+            session['next'] = request.url
+            return redirect(url_for("login"))
+        
+        current_user = session['username']
+        excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
+        os.makedirs(os.path.dirname(excel_path), exist_ok=True)
+        
+        allowed_origins = [
+            "https://admin.genuinepartsgiant.com",
+            "chrome-extension://ffpfoekiibonojnidahneaclopidhoon"
+        ]
+        if request.method == "OPTIONS":
+            app.logger.info("Received OPTIONS request")
+            origin = request.headers.get("Origin")
+            app.logger.info(f"Origin: {origin}")
+            if origin is None or origin == "null":
+                app.logger.info("Origin is null; allowing as null")
+                allowed_origin = "null"
+            elif origin in allowed_origins:
+                app.logger.info("Origin is allowed")
+                allowed_origin = origin
+            else:
+                app.logger.info("Origin not allowed")
+                return make_response("Origin not allowed", 403)
+            
+            response = make_response()
+            response.headers.add("Access-Control-Allow-Origin", allowed_origin)
+            response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+            response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+            return response
+
+        if request.method == "POST":
+            app.logger.info("Received POST request")
+            try:
+                data = request.get_json()
+                app.logger.info(f"Data received: {data}")
+                excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
+                os.makedirs(os.path.dirname(excel_path), exist_ok=True)
+                new_rows = [
+                    [
+                        data['orderNumber'],
+                        data['orderDate'],
+                        item['lineNumber'],
+                        item['partNumber'], 
+                        item['qty'],
+                        item['price'].replace('$', '').strip()
+                    ]
+                    for item in data['lineItems']
+                ]
+                if os.path.exists(excel_path):
+                    df = pd.read_excel(excel_path)
+                else:
+                    df = pd.DataFrame(columns=['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price'])
+                df_new = pd.DataFrame(new_rows, columns=df.columns)
+                df = pd.concat([df, df_new], ignore_index=True)
+                df = df.reindex(columns=['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price'])
+                df.to_excel(excel_path, index=False)
+                response = jsonify({"success": True})
+                origin = request.headers.get("Origin")
+                if origin is None or origin == "null":
+                    response.headers.add("Access-Control-Allow-Origin", "null")
+                elif origin in allowed_origins:
+                    response.headers.add("Access-Control-Allow-Origin", origin)
+                return response
+            except Exception as e:
+                app.logger.error(f"Error processing POST: {e}")
+                return jsonify({"error": str(e)}), 500
+        if os.path.exists(excel_path):
+            df = pd.read_excel(excel_path)
+            # Ensure consistent column order without index
+            df = df[['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price']]
+            table_html = df.to_html(classes='table table-striped', table_id='gpgTable', index=False)
+        else:
+            table_html = "<p>No data available</p>"
+        return render_template('gpginvoice.html', table_html=table_html, current_user=current_user)    

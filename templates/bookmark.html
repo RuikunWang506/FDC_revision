@@ -11,7 +11,7 @@
 
 <div class="container mt-4">
     <h2 class="text-center">Bookmark Links</h2>
-    
+    {% include 'navbar.html' %}
     <table id="bookmarkTable" class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
@@ -41,18 +41,11 @@
 <script>
     $(document).ready(function() {
         $('#bookmarkTable').DataTable({
-            order: [[0, 'asc']],
+            order: [[0, 'desc']], // Changed 'asc' to 'desc' for descending order
             columnDefs: [{
                 targets: 0,
-                type: 'string',
-                orderData: [0],
-                orderSequence: ['asc'],
-                sortFunction: function(a, b) {
-                    if (!a && !b) return 0;
-                    if (!a) return -1;
-                    if (!b) return 1;
-                    return b.localeCompare(a);
-                }
+                type: 'num',     // Changed type to 'num' since we're dealing with years
+                orderData: [0]
             }]
         });
     });

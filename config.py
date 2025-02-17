@@ -32,7 +32,8 @@ class Config:
         'dennis':'dennis',
         'jiayi':'1234',
         'xj':'88',
-        'wh':'1234'
+        'wh':'1234',
+        'tmx':'qwe123'
 
     }
     

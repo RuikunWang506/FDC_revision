@@ -22,7 +22,7 @@ def daily_todo():
         return redirect(url_for("login"))
     current_user = session['username']
 
-    if current_user not in {'yeti', 'ting','nicye','ahua'}:
+    if current_user not in {'yeti', 'ting','nicye','ahua','tmx'}:
         flash("You're not authorized to access this page.", "error")
         return redirect(url_for("home"))
     selected_date = request.args.get('date', datetime.now().strftime("%Y-%m-%d"))
