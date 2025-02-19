@@ -39212,3 +39212,293 @@ WHERE prod_cd = 'N2149 BR';
 2025-02-17 11:44:00,427 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
 2025-02-17 11:46:50,053 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
 2025-02-17 11:48:05,846 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 12:02:19,788 - INFO - ***yeti***__@@@search SKU@@@__ n2071
+2025-02-17 12:22:28,075 - INFO - ***yeti***__@@@search SKU@@@__ t3451
+2025-02-17 13:11:22,749 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 13:18:04,056 - INFO - ***yeti***__@@@search SKU@@@__ n1806
+2025-02-17 13:18:28,055 - INFO - ***yeti***__@@@search SKU@@@__ s1034
+2025-02-17 13:19:07,216 - INFO - ***yeti***__@@@search SKU@@@__ t3280
+2025-02-17 13:29:13,089 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 13:30:49,019 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 13:38:23,306 - INFO - Received POST request
+2025-02-17 13:38:23,306 - INFO - Data received: {'orderDate': '02/14/2025', 'orderNumber': 'CH041328268', 'lineItems': [{'lineNumber': '1', 'partNumber': '37980-RNA-A01', 'qty': '1', 'price': '176.6'}]}
+2025-02-17 13:38:30,428 - INFO - Received request to delete GPG row
+2025-02-17 13:38:30,428 - INFO - Received rowData: ['CH041347799', '02/14/2025', '1', '31170-R0A-025', '1', '129.55']
+2025-02-17 13:38:30,433 - INFO - Excel columns: ['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price']
+2025-02-17 13:38:30,447 - INFO - Row deleted successfully
+2025-02-17 13:38:30,915 - INFO - Received request to delete GPG row
+2025-02-17 13:38:30,915 - INFO - Received rowData: ['CH041328268', '02/14/2025', '1', '37980-RNA-A01', '1', '176.60']
+2025-02-17 13:38:30,919 - INFO - Excel columns: ['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price']
+2025-02-17 13:38:30,921 - WARNING - No matching row found
+2025-02-17 13:38:33,758 - INFO - Received request to delete GPG row
+2025-02-17 13:38:33,758 - INFO - Received rowData: ['CH041328268', '02/14/2025', '1', '37980-RNA-A01', '1', '176.6']
+2025-02-17 13:38:33,762 - INFO - Excel columns: ['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price']
+2025-02-17 13:38:33,777 - INFO - Row deleted successfully
+2025-02-17 13:38:43,909 - INFO - Received POST request
+2025-02-17 13:38:43,910 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CU74222790', 'lineItems': [{'lineNumber': '1', 'partNumber': '24351-2GGA1', 'qty': '1', 'price': '26.48'}]}
+2025-02-17 13:43:23,496 - INFO - Received request to delete GPG row
+2025-02-17 13:43:23,496 - INFO - Received rowData: ['CU74222790', '02/15/2025', '1', '24351-2GGA1', '1', '26.48']
+2025-02-17 13:43:23,501 - INFO - Excel columns: ['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price']
+2025-02-17 13:43:23,508 - INFO - Row deleted successfully
+2025-02-17 13:47:04,523 - INFO - Received POST request
+2025-02-17 13:47:04,523 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CU74222790', 'lineItems': [{'lineNumber': '1', 'partNumber': '24351-2GGA1', 'qty': '1', 'price': '26.48'}]}
+2025-02-17 13:53:42,047 - INFO - Received POST request
+2025-02-17 13:53:42,047 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CU75224193', 'lineItems': [{'lineNumber': '1', 'partNumber': '24351-2GGA1', 'qty': '1', 'price': '26.48'}]}
+2025-02-17 13:56:24,232 - INFO - Received POST request
+2025-02-17 13:56:24,233 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CU75226385', 'lineItems': [{'lineNumber': '1', 'partNumber': '35313-2B110', 'qty': '4', 'price': '4.44'}]}
+2025-02-17 14:02:14,791 - INFO - Received POST request
+2025-02-17 14:02:14,791 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CU77228148', 'lineItems': [{'lineNumber': '1', 'partNumber': '25441-S1000', 'qty': '1', 'price': '3.86'}]}
+2025-02-17 14:05:37,370 - INFO - Received POST request
+2025-02-17 14:05:37,370 - INFO - Data received: {'orderDate': '02/14/2025', 'orderNumber': 'CH041347799', 'lineItems': [{'lineNumber': '1', 'partNumber': '31170-R0A-025', 'qty': '1', 'price': '129.55'}]}
+2025-02-17 14:06:56,513 - INFO - Received POST request
+2025-02-17 14:06:56,514 - INFO - Data received: {'orderDate': '02/14/2025', 'orderNumber': 'CH041328268', 'lineItems': [{'lineNumber': '1', 'partNumber': '37980-RNA-A01', 'qty': '1', 'price': '176.6'}]}
+2025-02-17 14:17:57,041 - INFO - Received POST request
+2025-02-17 14:17:57,041 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CH041349492', 'lineItems': [{'lineNumber': '1', 'partNumber': '14401-R40-A01', 'qty': '1', 'price': '97.93'}, {'lineNumber': '2', 'partNumber': '14510-R40-A01', 'qty': '1', 'price': '52.81'}]}
+2025-02-17 14:19:49,303 - INFO - Received POST request
+2025-02-17 14:19:49,304 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CH041369591', 'lineItems': [{'lineNumber': '1', 'partNumber': '14520-RCA-A01', 'qty': '1', 'price': '130.53'}]}
+2025-02-17 14:21:53,953 - INFO - Received POST request
+2025-02-17 14:21:53,954 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CH051330114', 'lineItems': [{'lineNumber': '1', 'partNumber': '19301-RNA-315', 'qty': '1', 'price': '39.68'}]}
+2025-02-17 14:24:01,668 - INFO - Received POST request
+2025-02-17 14:24:01,668 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CH051300355', 'lineItems': [{'lineNumber': '1', 'partNumber': '25430-PLR-003', 'qty': '1', 'price': '31.99'}]}
+2025-02-17 14:29:10,727 - INFO - Received POST request
+2025-02-17 14:29:10,728 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CH051391087', 'lineItems': [{'lineNumber': '1', 'partNumber': '22810-PPT-003', 'qty': '1', 'price': '60.49'}]}
+2025-02-17 14:30:39,283 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 14:30:50,508 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 14:31:08,898 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 14:31:15,771 - INFO - Received POST request
+2025-02-17 14:31:15,771 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CH051372356', 'lineItems': [{'lineNumber': '1', 'partNumber': '22821-PPP-000', 'qty': '1', 'price': '86.2'}]}
+2025-02-17 14:33:16,838 - INFO - Received POST request
+2025-02-17 14:33:16,838 - INFO - Data received: {'orderDate': '02/15/2025', 'orderNumber': 'CH051302846', 'lineItems': [{'lineNumber': '1', 'partNumber': '17130-59B-003', 'qty': '2', 'price': '30.43'}]}
+2025-02-17 14:35:50,694 - INFO - Received POST request
+2025-02-17 14:35:50,694 - INFO - Data received: {'orderDate': '02/16/2025', 'orderNumber': 'CH051314247', 'lineItems': [{'lineNumber': '1', 'partNumber': '19301-RAF-004', 'qty': '1', 'price': '65.03'}, {'lineNumber': '2', 'partNumber': '31170-RAA-A02', 'qty': '1', 'price': '98.11'}]}
+2025-02-17 14:45:54,586 - INFO - Received POST request
+2025-02-17 14:45:54,586 - INFO - Data received: {'orderDate': '02/16/2025', 'orderNumber': 'CH051364554', 'lineItems': [{'lineNumber': '1', 'partNumber': '30530-PPL-A01', 'qty': '1', 'price': '98.07'}]}
+2025-02-17 14:49:32,148 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 14:49:42,656 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 14:49:47,026 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 14:50:10,981 - INFO - Received POST request
+2025-02-17 14:50:10,981 - INFO - Data received: {'orderDate': '02/16/2025', 'orderNumber': 'CH051375696', 'lineItems': [{'lineNumber': '1', 'partNumber': '17130-PND-A01', 'qty': '1', 'price': '20.26'}]}
+2025-02-17 15:04:44,881 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 15:06:59,989 - INFO - Received POST request
+2025-02-17 15:06:59,989 - INFO - Data received: {'orderDate': '02/16/2025', 'orderNumber': 'CH051355918', 'lineItems': [{'lineNumber': '1', 'partNumber': '14401-R40-A01', 'qty': '1', 'price': '97.93'}]}
+2025-02-17 15:10:49,483 - INFO - Received POST request
+2025-02-17 15:10:49,483 - INFO - Data received: {'orderDate': '02/16/2025', 'orderNumber': 'CH051357337', 'lineItems': [{'lineNumber': '1', 'partNumber': '28820-PWR-013', 'qty': '1', 'price': '76.48'}]}
+2025-02-17 15:15:52,664 - INFO - Received POST request
+2025-02-17 15:15:52,664 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CH051308851', 'lineItems': [{'lineNumber': '1', 'partNumber': '19301-P08-316', 'qty': '1', 'price': '29.36'}]}
+2025-02-17 15:19:57,231 - INFO - Received POST request
+2025-02-17 15:19:57,231 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CH051398860', 'lineItems': [{'lineNumber': '1', 'partNumber': '30530-PPL-A01', 'qty': '1', 'price': '98.07'}]}
+2025-02-17 15:22:58,651 - INFO - Received POST request
+2025-02-17 15:22:58,651 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CH061350065', 'lineItems': [{'lineNumber': '1', 'partNumber': '51320-T2A-A01', 'qty': '1', 'price': '69.68'}, {'lineNumber': '2', 'partNumber': '51325-T2A-A01', 'qty': '1', 'price': '69.68'}]}
+2025-02-17 15:25:56,214 - INFO - Received POST request
+2025-02-17 15:25:56,214 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CH061380554', 'lineItems': [{'lineNumber': '1', 'partNumber': '30530-PPL-A01', 'qty': '1', 'price': '98.07'}]}
+2025-02-17 15:27:36,808 - INFO - Received POST request
+2025-02-17 15:27:36,808 - INFO - Data received: {'orderDate': '02/13/2025', 'orderNumber': 'CH041304872', 'lineItems': [{'lineNumber': '1', 'partNumber': '14401-R40-A01', 'qty': '1', 'price': '97.93'}, {'lineNumber': '2', 'partNumber': '14510-R40-A01', 'qty': '0', 'price': '52.81'}]}
+2025-02-17 15:34:53,510 - INFO - ***yeti***__@@@search SKU@@@__ t3280
+2025-02-17 15:35:08,280 - INFO - ***yeti***__@@@search SKU@@@__ t3280
+2025-02-17 15:56:47,891 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 15:57:40,802 - INFO - ***yeti***__@@@search SKU@@@__ n0813
+2025-02-17 15:58:12,759 - INFO - ***yeti***__@@@search SKU@@@__ t3451
+2025-02-17 15:58:38,934 - INFO - ***yeti***__@@@search SKU@@@__ n1806
+2025-02-17 15:58:48,953 - INFO - ***yeti***__@@@search SKU@@@__ s1034
+2025-02-17 15:59:09,354 - INFO - ***yeti***__@@@search SKU@@@__ es1271
+2025-02-17 15:59:18,395 - INFO - No SKUs provided to fetch_locations
+2025-02-17 15:59:18,400 - INFO - ***yeti***__@@@search SKU@@@__ s13503
+2025-02-17 15:59:21,701 - INFO - ***yeti***__@@@search SKU@@@__ s1350
+2025-02-17 16:01:08,296 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 16:01:19,072 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 16:41:01,775 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 16:41:02,150 - INFO - ***yeti***__@@@search SKU@@@__ s1350
+2025-02-17 16:41:06,858 - INFO - ***yeti***__@@@search SKU@@@__ s1034
+2025-02-17 17:06:15,662 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 17:06:32,763 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 17:08:32,433 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 17:08:59,928 - INFO - ***ahua*** has logged in. IP: ***219.135.198.131***, Browser: Chrome 130.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 17:09:11,783 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-02-17 17:09:12,748 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-02-17 17:09:15,299 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-02-17 17:31:19,787 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-17 17:31:21,407 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 17:33:04,908 - INFO - ***ahua*** has logged in. IP: ***219.135.198.131***, Browser: Chrome 130.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-17 17:37:37,973 - INFO - ***ahua***__@@@search SKU@@@__ t3243
+2025-02-17 19:19:28,762 - INFO - ***ahua***__@@@search SKU@@@__ t3243
+2025-02-17 19:48:25,559 - INFO - ***ahua***__@@@search SKU@@@__ t3243
+2025-02-18 10:20:38,380 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F47414F0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 10:20:43,900 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F47437A0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 10:20:43,902 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 133.0.6943, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 10:22:38,704 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F47471D0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 10:22:40,569 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4747A70>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 10:22:40,569 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 10:27:38,550 - INFO - ***yeti***__@@@checked boat page@@@
+2025-02-18 10:27:43,565 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-18 11:12:05,056 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4871280>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 11:12:09,259 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4742B40>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 11:12:09,261 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 11:12:09,538 - INFO - ***yeti***__@@@search SKU@@@__ s1034
+2025-02-18 11:12:13,738 - INFO - ***yeti***__@@@search SKU@@@__ n1802
+2025-02-18 11:18:06,603 - INFO - Received POST request
+2025-02-18 11:18:06,604 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CU77229776', 'lineItems': [{'lineNumber': '1', 'partNumber': '23133-2B000', 'qty': '1', 'price': '12.36'}]}
+2025-02-18 11:19:47,866 - INFO - Received POST request
+2025-02-18 11:19:47,866 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CH061332430', 'lineItems': [{'lineNumber': '1', 'partNumber': '14401-R40-A01', 'qty': '1', 'price': '97.93'}, {'lineNumber': '2', 'partNumber': '14510-R40-A01', 'qty': '1', 'price': '52.81'}, {'lineNumber': '3', 'partNumber': '14310-R40-A02', 'qty': '1', 'price': '208.33'}]}
+2025-02-18 11:28:05,640 - INFO - Received POST request
+2025-02-18 11:28:05,641 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CH061313579', 'lineItems': [{'lineNumber': '1', 'partNumber': '31170-R70-A01', 'qty': '1', 'price': '201.29'}, {'lineNumber': '2', 'partNumber': '90009-R70-A00', 'qty': '1', 'price': '8.21'}]}
+2025-02-18 11:32:48,062 - INFO - Received POST request
+2025-02-18 11:32:48,063 - INFO - Data received: {'orderDate': '02/17/2025', 'orderNumber': 'CH061313608', 'lineItems': [{'lineNumber': '1', 'partNumber': '90009-R70-A00', 'qty': '1', 'price': '8.21'}]}
+2025-02-18 11:37:42,746 - INFO - Received POST request
+2025-02-18 11:37:42,747 - INFO - Data received: {'orderDate': '02/18/2025', 'orderNumber': 'CH061364299', 'lineItems': [{'lineNumber': '1', 'partNumber': '28820-PWR-013', 'qty': '1', 'price': '80.69'}]}
+2025-02-18 11:40:27,900 - INFO - Received POST request
+2025-02-18 11:40:27,901 - INFO - Data received: {'orderDate': '02/18/2025', 'orderNumber': 'CH061324977', 'lineItems': [{'lineNumber': '1', 'partNumber': '14510-5A2-A02', 'qty': '1', 'price': '59.14'}]}
+2025-02-18 11:41:35,229 - INFO - Received POST request
+2025-02-18 11:41:35,229 - INFO - Data received: {'orderDate': '02/18/2025', 'orderNumber': 'CH061385086', 'lineItems': [{'lineNumber': '1', 'partNumber': '30530-PPL-A01', 'qty': '1', 'price': '102.49'}]}
+2025-02-18 11:51:30,100 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-18 12:00:10,995 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/159.203.117.225 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F489EF30>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 12:00:25,377 - INFO - ***yeti***__@@@search SKU@@@__ s1460
+2025-02-18 12:01:25,705 - INFO - ***yeti***__@@@search SKU@@@__ s1460
+2025-02-18 12:02:03,383 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/220.181.51.113 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F48838F0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 12:05:29,691 - INFO - ***yeti***__@@@search SKU@@@__ n1460
+2025-02-18 12:34:47,601 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/185.147.125.23 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4894BC0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 12:41:12,806 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.96.191.25 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4888890>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 12:47:09,679 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/43.135.135.57 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4843110>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 13:08:19,046 - INFO - ***yeti***__@@@search SKU@@@__ t3451
+2025-02-18 13:08:35,778 - INFO - New product inserted with SKU=T3451 BR, Style=T3451, Location='L1E mid'.
+2025-02-18 13:08:35,780 - INFO - New product inserted with SKU=T3451 MV, Style=T3451, Location='L1E mid'.
+2025-02-18 13:08:35,783 - INFO - New product inserted with SKU=T3451 NV, Style=T3451, Location='L1E mid'.
+2025-02-18 13:08:35,784 - INFO - New product inserted with SKU=T3451 WN, Style=T3451, Location='L1E mid'.
+2025-02-18 13:08:35,786 - INFO - New product inserted with SKU=T3451 BK, Style=T3451, Location='L1E mid'.
+2025-02-18 13:08:35,940 - INFO - ***yeti***__@@@search SKU@@@__ t3451
+2025-02-18 13:15:19,063 - INFO - ***yeti***__@@@search SKU@@@__ s1164
+2025-02-18 13:29:49,188 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/182.44.8.254 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4804DA0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 13:30:55,472 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/185.242.226.154 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F545F710>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 13:31:03,040 - INFO - ***yeti***__@@@search SKU@@@__ s1034
+2025-02-18 13:31:49,743 - INFO - New product inserted with SKU=S1034 TN, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:49,743 - INFO - New product inserted with SKU=S1034 BK, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:49,746 - INFO - New product inserted with SKU=S1034 TP, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:49,780 - INFO - New product inserted with SKU=S1034 PK, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:49,782 - INFO - New product inserted with SKU=S1034 BL, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:49,813 - INFO - New product inserted with SKU=S1034 WT, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:49,816 - INFO - New product inserted with SKU=S1034 BR, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:49,830 - INFO - New product inserted with SKU=S1034 GY, Style=S1034, Location='L6G top'.
+2025-02-18 13:31:50,480 - INFO - ***yeti***__@@@search SKU@@@__ s1034
+2025-02-18 13:31:58,712 - INFO - ***yeti***__@@@search SKU@@@__ n1460
+2025-02-18 13:39:37,473 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/167.94.138.121 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4DB21B0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 13:51:06,188 - INFO - ***yeti***__@@@search SKU@@@__ es1394
+2025-02-18 13:53:03,344 - INFO - ***yeti***__@@@search SKU@@@__ es1383
+2025-02-18 13:56:47,339 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/45.156.128.43 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4D86630>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:16:57,657 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/185.242.226.163 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4793800>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:17:53,692 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/167.94.138.198 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000274F4883DA0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:34:29,737 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 14:37:16,482 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001C72ED97AA0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:37:17,482 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001C72EDD5190>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:37:17,491 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 14:37:17,735 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-18 14:45:52,230 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 14:45:55,671 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 14:45:55,703 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EDC2D20>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:45:57,215 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EE818E0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:45:57,218 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 14:45:57,426 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-18 14:46:03,376 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:03,747 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:04,147 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:04,510 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:04,892 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:05,257 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:05,623 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:05,997 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:06,353 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:46:06,724 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:47:47,132 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.192.254 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001636017ADB0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:47:48,590 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.7.125 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EF66420>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:47:48,704 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.216.54 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EF729C0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:47:48,795 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.15.227 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EEBA990>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:47:48,796 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.15.230 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EF71940>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:47:48,811 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.15.239 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EF64A70>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:47:48,873 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.192.125 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635EEB93A0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:48:03,886 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001635F0963C0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:48:08,541 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001636017ADE0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:48:10,053 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000001636017AE10>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:48:10,054 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 14:48:18,084 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-18 14:48:23,949 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:24,308 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:24,680 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:25,034 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:25,405 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:25,802 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:26,152 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:26,523 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:26,893 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:48:27,250 - ERROR - Error fetching descriptions: Unable to find the server at oauth2.googleapis.com
+2025-02-18 14:49:26,057 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000163606AD100>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:49:27,409 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x0000016360734FE0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:49:27,412 - INFO - ***xj*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 14:50:32,399 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.192.247 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x0000016360737440>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:51:38,505 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 14:51:41,414 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361DE0F50>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:51:42,449 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361E991C0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:51:42,451 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 14:51:46,175 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361F00680>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:52:10,497 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361E9BB60>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:52:23,875 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.192.127 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361E6BC50>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:52:46,762 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.192.248 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A35A420620>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:54:02,666 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361E992B0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:54:04,410 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361E9A060>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:54:04,411 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 14:57:31,991 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361E6BCB0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:57:33,501 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002A361DE2780>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 14:57:33,502 - INFO - ***xj*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 14:57:38,853 - INFO - ***xj*** processing regular input: ['T3349', 'EM1153', 'M1146', 'M1148', 'T3375', 'N2253', 'EN2327', 'ES1498', 'N1464', 'N1872', 'N1970', 'N2083', 'N2087', 'N2187', 'N2278', 'N2305', 'N2147', 'N2192', 'N2227', 'ES1414', 'N2071', 'S1458', 'S1439', 'S1488', 'S1211', 'S1237', 'L1687-S', 'L1850', 'L1851', 'L1863', 'L1864']
+2025-02-18 14:58:24,246 - INFO - ****** updated description for style N2305 with: MINI SATCHEL
+2025-02-18 14:58:24,259 - INFO - ****** updated description for style L1850 with: TOTE
+2025-02-18 14:58:24,351 - INFO - ****** updated description for style L1851 with: TOTE
+2025-02-18 14:58:24,359 - INFO - ****** updated description for style L1863 with: TOTE
+2025-02-18 14:58:24,409 - INFO - ****** updated description for style L1864 with: TOTE
+2025-02-18 14:58:24,419 - INFO - ***xj*** processing regular input: ['T3349', 'EM1153', 'M1146', 'M1148', 'T3375', 'N2253', 'EN2327', 'ES1498', 'N1464', 'N1872', 'N1970', 'N2083', 'N2087', 'N2187', 'N2278', 'N2305', 'N2147', 'N2192', 'N2227', 'ES1414', 'N2071', 'S1458', 'S1439', 'S1488', 'S1211', 'S1237', 'L1687-S', 'L1850', 'L1851', 'L1863', 'L1864']
+2025-02-18 15:00:55,559 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 15:00:59,026 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 15:01:01,901 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x0000024223F4F380>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:01:04,185 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000242240B9790>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:01:04,187 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 15:01:12,936 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002422411EC30>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:01:14,027 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002422411FA10>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:03:42,836 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x000002422411C980>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:03:42,837 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 15:06:38,690 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-18 15:10:04,457 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 15:10:07,978 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 15:10:08,622 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000207610FB2C0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:10:10,492 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/173.198.50.202 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000207616E46B0>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:10:10,500 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 15:10:13,571 - INFO - ***yeti***__@@@search SKU@@@__ t3345
+2025-02-18 15:10:19,942 - INFO - ***yeti***__@@@search SKU@@@__ t3342
+2025-02-18 15:10:27,850 - INFO - ***yeti*** processing regular input: ['T3345', 'T3342']
+2025-02-18 15:10:31,868 - INFO - ****** updated description for style T3342 with: BACKPACK
+2025-02-18 15:10:31,874 - INFO - ***yeti*** processing regular input: ['T3345', 'T3342']
+2025-02-18 15:13:04,863 - INFO - ***yeti*** processing regular input: ['T3345', 'T3342']
+2025-02-18 15:13:07,123 - INFO - ***yeti*** processing regular input: ['T334']
+2025-02-18 15:13:12,865 - INFO - ***yeti*** processing regular input: ['T334%']
+2025-02-18 15:13:15,716 - INFO - ****** updated description for style T334% with: SATCHEL
+2025-02-18 15:13:15,723 - INFO - ***yeti*** processing regular input: ['T334%']
+2025-02-18 15:13:30,749 - INFO - ***yeti***__@@@search SKU@@@__ t334%
+2025-02-18 15:13:34,905 - INFO - ***yeti***__@@@search SKU@@@__ t334
+2025-02-18 15:15:47,860 - INFO - ***yeti***__@@@search SKU@@@__ t3342,t3345
+2025-02-18 15:22:36,293 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/172.253.192.123 (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x00000207617F2810>: Failed to resolve 'ip-api.com' ([Errno 11001] getaddrinfo failed)"))
+2025-02-18 15:58:15,069 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 15:58:33,314 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 15:59:07,013 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 16:01:27,707 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:02:36,565 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 16:06:49,258 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:06:54,284 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:06:57,689 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 16:11:04,265 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:11:05,671 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 16:15:45,555 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:15:47,334 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 16:18:17,106 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:19:06,607 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:19:52,018 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:19:53,569 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 16:22:30,498 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:23:08,574 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-18 16:25:02,711 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-18 16:25:03,827 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login

@@ -39,6 +39,7 @@ from loris_sticker import main, process_input_data
 from products import products_bp
 from datetime import timedelta,datetime
 from dailytodo import dailytodo
+from gpgtmx import gpgtmx_bp
 
 import io
 import zipfile
@@ -46,7 +47,7 @@ from util import resize_image  # Import the master resizing function
 from PIL import Image
 
 from V6listcreator import v6_listcreator_bp
-from flask_cors import CORS
+
 
 
  
@@ -67,6 +68,7 @@ def register_routes(app):
     app.register_blueprint(mobile_lite_bp)
     app.register_blueprint(dailytodo)
     app.register_blueprint(v6_listcreator_bp)
+    app.register_blueprint(gpgtmx_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 
@@ -1226,137 +1228,4 @@ def register_routes(app):
 
         return render_template("bookmark.html", current_user=current_user, bookmarks_list=bookmarks_list)
 
-    def register_routes(app):
-        CORS(app, resources={
-            r"/gpginvoice": {
-                "origins": ["https://admin.genuinepartsgiant.com"],
-                "methods": ["POST", "OPTIONS"],
-                "allow_headers": ["Content-Type"],
-                "supports_credentials": True
-            }
-        })
-    @app.route("/gpg")
-    def gpg_redirect():
-        return redirect(url_for("gpginvoice"))
-    @app.route("/delete_gpg_row", methods=["POST"])
-    def delete_gpg_row():
-        if 'username' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-
-        app.logger.info("Received request to delete GPG row")
-        try:
-            data = request.get_json()
-            row_data = data.get('rowData')
-            app.logger.info(f"Received rowData: {row_data}")
-
-            excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
-
-            if os.path.exists(excel_path):
-                df = pd.read_excel(excel_path, engine='openpyxl')
-                app.logger.info(f"Excel columns: {df.columns.tolist()}")
-
-                # Explicitly match columns
-                mask = (
-                    (df['orderNumber'].astype(str).str.strip() == str(row_data[0]).strip()) &
-                    (df['orderDate'].astype(str).str.strip() == str(row_data[1]).strip()) &
-                    (df['Line Number'].astype(str).astype(str).str.strip() == str(row_data[2]).strip()) &
-                    (df['Part Number'].astype(str).str.strip() == str(row_data[3]).strip()) &
-                    (df['Quantity'].astype(str).astype(str).str.strip() == str(row_data[4]).strip()) &
-                    (df['Price'].astype(str).astype(str).str.strip() == str(row_data[5]).strip())
-                )
-
-                if mask.any():
-                    df = df.loc[~mask]  # Remove matched row
-                    df.to_excel(excel_path, index=False, engine='openpyxl')
-                    app.logger.info("Row deleted successfully")
-                    return jsonify({"success": True})
-                else:
-                    app.logger.warning("No matching row found")
-                    return jsonify({"error": "No matching row found"}), 404
-
-            return jsonify({"error": "File not found"}), 404
-
-        except Exception as e:
-            app.logger.error(f"Error deleting row: {e}")
-            return jsonify({"error": str(e)}), 500
-
-        
-    @app.route("/gpginvoice", methods=["GET", "POST", "OPTIONS"])
-    def gpginvoice():
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("login"))
-        
-        current_user = session['username']
-        excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
-        os.makedirs(os.path.dirname(excel_path), exist_ok=True)
-        
-        allowed_origins = [
-            "https://admin.genuinepartsgiant.com",
-            "chrome-extension://ffpfoekiibonojnidahneaclopidhoon"
-        ]
-        if request.method == "OPTIONS":
-            app.logger.info("Received OPTIONS request")
-            origin = request.headers.get("Origin")
-            app.logger.info(f"Origin: {origin}")
-            if origin is None or origin == "null":
-                app.logger.info("Origin is null; allowing as null")
-                allowed_origin = "null"
-            elif origin in allowed_origins:
-                app.logger.info("Origin is allowed")
-                allowed_origin = origin
-            else:
-                app.logger.info("Origin not allowed")
-                return make_response("Origin not allowed", 403)
-            
-            response = make_response()
-            response.headers.add("Access-Control-Allow-Origin", allowed_origin)
-            response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-            response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-            response.headers.add("Access-Control-Allow-Credentials", "true")
-            return response
-
-        if request.method == "POST":
-            app.logger.info("Received POST request")
-            try:
-                data = request.get_json()
-                app.logger.info(f"Data received: {data}")
-                excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
-                os.makedirs(os.path.dirname(excel_path), exist_ok=True)
-                new_rows = [
-                    [
-                        data['orderNumber'],
-                        data['orderDate'],
-                        item['lineNumber'],
-                        item['partNumber'], 
-                        item['qty'],
-                        item['price'].replace('$', '').strip()
-                    ]
-                    for item in data['lineItems']
-                ]
-                if os.path.exists(excel_path):
-                    df = pd.read_excel(excel_path)
-                else:
-                    df = pd.DataFrame(columns=['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price'])
-                df_new = pd.DataFrame(new_rows, columns=df.columns)
-                df = pd.concat([df, df_new], ignore_index=True)
-                df = df.reindex(columns=['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price'])
-                df.to_excel(excel_path, index=False)
-                response = jsonify({"success": True})
-                origin = request.headers.get("Origin")
-                if origin is None or origin == "null":
-                    response.headers.add("Access-Control-Allow-Origin", "null")
-                elif origin in allowed_origins:
-                    response.headers.add("Access-Control-Allow-Origin", origin)
-                return response
-            except Exception as e:
-                app.logger.error(f"Error processing POST: {e}")
-                return jsonify({"error": str(e)}), 500
-        if os.path.exists(excel_path):
-            df = pd.read_excel(excel_path)
-            # Ensure consistent column order without index
-            df = df[['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Quantity', 'Price']]
-            table_html = df.to_html(classes='table table-striped', table_id='gpgTable', index=False)
-        else:
-            table_html = "<p>No data available</p>"
-        return render_template('gpginvoice.html', table_html=table_html, current_user=current_user)    
+    

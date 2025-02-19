@@ -15,6 +15,7 @@ class Config:
     SERVICE_ACCOUNT_FILE = r'C:/FDC_FLASK_APP/credentials.json'
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
     LOG_FILE = r'C:/FDC_FLASK_APP/log.txt'  # Log file path for better accessibility
+    TMX_sheet = 'https://docs.google.com/spreadsheets/d/1nNLDB4LruCniq6MiKXlBPeDhNu9IkoX3pZdNLUSPka8/edit?gid=2057295499#gid=2057295499'
 
     
     # Users dictionary

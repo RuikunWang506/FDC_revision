@@ -318,6 +318,10 @@
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
+        <div class="form-group">
+            <label for="random_strings_input"><h6>Paste your raw list, can be from excel, seperator is comma "," or new line "enter</p></h6></label>
+            <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5"></textarea>
+        </div>
         {% if list_input %}
         
         {%endif%}
@@ -561,8 +565,7 @@
     </div>
 </div>
 {% include 'footer.html' %}
-<h5>C:\Users\Kyle\Dropbox\Elaine\DDS2.5.2025</h5>
-<h5>t3305,m1121,l1521,n1324,n2088,en2088</h5>
+
 <script>
     const columnConfig = {
     color: { index: 0, removable: false, name: 'Color', visible: true, required: true },
@@ -1047,6 +1050,33 @@ function exportWithSelectedSize() {
                 a.remove();
             });
         }
+        </script>
+        <script>
+            // JavaScript to process random strings, remove duplicates, and update list_input
+            document.getElementById('random_strings_input').addEventListener('input', function() {
+                const randomStrings = this.value.split(/[\s,]+/).filter(Boolean);
+                const uniqueStrings = [...new Set(randomStrings)]; // Remove duplicates
+                const formattedInput = uniqueStrings.join(',');
+                document.getElementById('list_input').value = formattedInput;
+                updateItemCount(formattedInput);
+            });
+        
+            // Function to update the item count
+            function updateItemCount(input) {
+                const itemCount = input ? input.split(',').length : 0;
+                document.getElementById('item_count').textContent = `Items count: ${itemCount}`;
+            }
+        
+            // Initial item count update when the page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                const initialInput = document.getElementById('list_input').value;
+                updateItemCount(initialInput);
+            });
+        
+            // Update item count when user manually types in list_input
+            document.getElementById('list_input').addEventListener('input', function() {
+                updateItemCount(this.value);
+            });
         </script>
 </body>
 </html>

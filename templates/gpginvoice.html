@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
     <style>
+        .btn-finish {
+            background-color: #007bff !important;
+            color: white !important;
+        }
         body {
             padding: 20px;
             font-family: Arial, sans-serif;
@@ -28,9 +32,7 @@
             border-radius: 4px;
             min-width: 200px;
         }
-        .action-buttons {
-            margin: 20px 0;
-        }
+
         .btn {
             margin-right: 10px !important;
             padding: 8px 16px !important;
@@ -74,17 +76,7 @@
         tr:hover {
             background-color: #f1f1f1;
         }
-        .btn-delete {
-            background-color: transparent;
-            border: none;
-            color: #dc3545;
-            cursor: pointer;
-            padding: 0;
-            font-size: 16px;
-        }
-        .btn-delete:hover {
-            color: #c82333;
-        }
+
     </style>
 </head>
 <body>
@@ -101,6 +93,8 @@
         <div class="action-buttons">
             <button class="btn btn-export" onclick="exportToExcel()">Export to Excel</button>
             <button class="btn btn-copy" onclick="copyTable()">Copy Table</button>
+            <button class="btn btn-finish" onclick="finishAndExportQBO()">Finish</button>
+
         </div>
 
         <!-- Original Table -->
@@ -108,22 +102,7 @@
             {{ table_html|safe }}
         </div>
 
-        <!-- Pivot Table -->
-        <div class="table-container">
-            <h3>Sold Quantity</h3>
-
-            <table id="pivotTable" style="width: 50%;">
-                <thead>
-                    <tr>
-                        <th>Part Number</th>
-                        <th>Total Quantity</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Pivot table rows will be dynamically generated here -->
-                </tbody>
-            </table>
-        </div>
+        
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -132,109 +111,26 @@
     
     <script>
        $(document).ready(function() {
-    // Initialize DataTables for the original table
     let table = $('#gpgTable').DataTable({
-        order: [[0, 'desc']], // Order by Order Date column
+        order: [[0, 'desc']], 
         pageLength: 25,
         dom: 'Bfrtip',
         columnDefs: [
-            { targets: 0, className: 'dt-body-left' },   // Order Date
-            { targets: 1, className: 'dt-body-left' },   // Order Number
+            { targets: 0, className: 'dt-body-left' },   // orderNumber
+            { targets: 1, className: 'dt-body-left' },   // orderDate
             { targets: 2, className: 'dt-body-left' },   // Line Number
             { targets: 3, className: 'dt-body-left' },   // Part Number
-            { targets: 4, className: 'dt-body-right' },  // Quantity
-            { targets: 5, className: 'dt-body-right' },  // Price
+            { targets: 4, className: 'dt-body-left' },   // Description
+            { targets: 5, className: 'dt-body-right' },  // Quantity
+            { targets: 6, className: 'dt-body-right' },  // Price
         ]
     });
 
-    // Add Delete button column
-    let deleteHeader = $('<th>Action</th>');
-    $('#gpgTable thead tr').append(deleteHeader);
-    
-    $('#gpgTable tbody tr').each(function() {
-        let deleteCell = $('<td></td>');
-        let deleteButton = $('<button class="btn-delete"><i class="fas fa-trash"></i></button>');
-        deleteCell.append(deleteButton);
-        $(this).append(deleteCell);
-    });
-
-    // Handle delete button clicks
-    $('#gpgTable').on('click', '.btn-delete', function() {
-        deleteRow(this);
-    });
 
     // Filter for the original table
-    $('#dateFilter').on('keyup', function() {
-        table.column(0).search(this.value).draw();
-    });
 
-    $('#partFilter').on('keyup', function() {
-        table.column(3).search(this.value).draw();
-    });
-
-    // Filter for the pivot table
-    $('#pivotPartFilter').on('keyup', function() {
-        pivotTable.column(0).search(this.value).draw();
-    });
-
-    // Generate Pivot Table after the original table is rendered
-    generatePivotTable();
 });
 
-function generatePivotTable() {
-    const table = document.getElementById('gpgTable');
-    const pivotTableBody = document.querySelector('#pivotTable tbody');
-    const partQuantityMap = {};
-
-    // Log the original table data for debugging
-    console.log("Original Table Data:", table);
-
-    // Iterate through the rows of the original table
-    Array.from(table.querySelectorAll('tbody tr')).forEach(row => {
-        const partNumber = row.cells[3].textContent.trim(); // Part Number (Column 3)
-        const quantity = parseFloat(row.cells[4].textContent.trim()); // Quantity (Column 4)
-
-        // Log each row's data for debugging
-        console.log("Row Data:", { partNumber, quantity });
-
-        if (partNumber && !isNaN(quantity)) {
-            if (partQuantityMap[partNumber]) {
-                partQuantityMap[partNumber] += quantity;
-            } else {
-                partQuantityMap[partNumber] = quantity;
-            }
-        }
-    });
-
-    // Log the pivot data for debugging
-    console.log("Pivot Data:", partQuantityMap);
-
-    // Clear existing pivot table rows
-    pivotTableBody.innerHTML = '';
-
-    // Populate the pivot table
-    for (const [partNumber, totalQuantity] of Object.entries(partQuantityMap)) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${partNumber}</td>
-            <td>${totalQuantity}</td>
-        `;
-        pivotTableBody.appendChild(row);
-    }
-
-    // Reinitialize DataTables for the pivot table
-    if ($.fn.DataTable.isDataTable('#pivotTable')) {
-        $('#pivotTable').DataTable().destroy(); // Destroy existing instance
-    }
-    pivotTable = $('#pivotTable').DataTable({
-        pageLength: 25,
-        dom: 'Bfrtip',
-        columnDefs: [
-            { targets: 0, className: 'dt-body-left' },   // Part Number
-            { targets: 1, className: 'dt-body-right' }, // Total Quantity
-        ]
-    });
-}
 
 
         function exportToExcel() {
@@ -254,28 +150,72 @@ function generatePivotTable() {
             alert('Table copied to clipboard!');
         }
 
-        function deleteRow(button) {
-            const row = button.closest('tr');
-            const rowData = Array.from(row.cells).slice(0, 6).map(cell => cell.textContent);
-            
-            fetch('/delete_gpg_row', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({rowData: rowData}),
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    row.remove();
-                    generatePivotTable(); // Regenerate pivot table after deletion
-                } else {
-                    alert('Error deleting row');
-                }
-            });
+
+    </script>
+    <script>
+        function finishAndExportQBO() {
+        const table = document.getElementById('gpgTable');
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+        const csvData = [
+            ['InvoiceNo', 'Customer', 'InvoiceDate', 'DueDate', 'Terms', 'Location', 'Memo', 
+            'Item(Product/Service)', 'ItemDescription', 'ItemQuantity', 'ItemRate', 'ItemAmount', 'Service Date']
+        ];
+
+        rows.forEach(row => {
+            const cells = Array.from(row.cells);
+            if (cells.length < 7) return; // Skip incomplete rows
+
+            const invoiceNo = cells[0].textContent.trim();
+            const invoiceDate = cells[1].textContent.trim();
+            const partNumber = cells[3].textContent.trim();
+            const quantity = cells[5].textContent.trim();
+            const rate = cells[6].textContent.trim();
+
+            // Ensure valid numeric values
+            const quantityVal = parseFloat(quantity) || 0;
+            const rateVal = parseFloat(rate) || 0;
+            const amount = (quantityVal * rateVal).toFixed(2);
+
+            // Calculate due date (30 days from invoice date)
+            let dueDateStr = '';
+            if (invoiceDate) {
+                const dueDate = new Date(invoiceDate);
+                dueDate.setDate(dueDate.getDate() + 30);
+                dueDateStr = dueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            }
+
+            // Determine manufacturer prefix based on invoice number
+            const manufacturerPrefix = invoiceNo.startsWith('CU') ? 'Hyundai:' : 'Honda:';
+            const itemProductService = manufacturerPrefix + partNumber;
+
+            // Fallback if `getItemDescription` is missing
+            const itemDescription = cells[4]?.textContent.trim() || ''; 
+
+            csvData.push([
+                invoiceNo, 'GPG', invoiceDate, dueDateStr, 'Net 30', '', '', 
+                itemProductService, itemDescription, quantityVal, rateVal, amount, ''
+            ]);
+        });
+
+        if (csvData.length <= 1) {
+            alert("No data to export.");
+            return;
         }
+
+        // Convert to CSV format
+        const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+        // Create a temporary download link
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', 'qbo_import.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     </script>
 </body>
 </html>
