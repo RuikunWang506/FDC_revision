@@ -22,7 +22,7 @@
             color: #333;
         }
         .container {
-            max-width: auto;
+            max-width: auto;  /* Remove fixed width constraint */
             margin: 0 auto;
         }
         .container-fluid {
@@ -115,7 +115,8 @@
             opacity: 0; /* Start with 0 opacity for fade effect */
         }
         table.dataTable td {
-            text-align: left;
+            white-space: normal !important;
+            word-wrap: break-word !important;
         }
         table.dataTable thead th {
             text-align: center;
@@ -148,6 +149,12 @@
             th, td {
                 padding: 2px;
             }
+            .table-responsive {
+        width: 100% !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
         }
         @media (max-width: 1500px) {
             /* Hide specific columns by their position in the table */
@@ -174,16 +181,34 @@
             {
                 display: none;
             }
+            .table-responsive {
+                width: 100% !important;
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
         }
-
+        @media (min-width: 1501px) {
+            .table-responsive {
+                width: 60% !important;
+            }
+        }
         @media (max-width: 767px) {
             #excel_table {
                 min-width: 1000px; /* Set minimum width */
             }
 
             .table-responsive {
-                overflow-x: auto; /* Enable horizontal scrolling */
+                width: 100% !important;
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
             }
+        }
+        @media (max-width: 606px) {
+        .table-responsive {
+            width: 100% !important;
+        }
         }
         
         /* DataTables Buttons */
@@ -251,9 +276,11 @@
             overflow: auto;
         }
 
-        table.dataTable tbody th, table.dataTable tbody td {
-            padding: 0px 0px!important;
-        }
+        table.dataTable tbody th, 
+table.dataTable tbody td {
+    padding: 0px 1px !important;  /* Minimal padding for dense data */
+    text-align: center;
+}
 
         /* Tooltip Arrow Styling */
         .bs-tooltip-top .arrow::before,
@@ -279,18 +306,25 @@
             white-space: normal !important;
             word-wrap: break-word !important;
         }
-        table.dataTable thead th, table.dataTable thead td {
-            padding: 0px 0px;
-            border-bottom: 1px solid #111;
-        }
+        table.dataTable thead th, 
+table.dataTable thead td {
+    padding: 0px 0px !important;
+    text-align: center;
+    vertical-align: middle;
+}
 
         /* Horizontal Scroll */
         .table-responsive {
-            overflow-x: auto;
-            overflow-y: hidden; /* Hide vertical scrollbar */
-            width: 100%;
-            box-sizing: border-box; /* Include padding and border in width */
-        }
+    border: 2px dashed #4CAF50 !important;  
+    border-radius: 10px !important;         
+    padding: 20px !important;               
+    margin: 0px auto !important;           
+    background-color: #ffffff !important;   
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;  
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    box-sizing: border-box !important;
+}
         /* Hide native bottom scrollbar */
         .table-responsive::-webkit-scrollbar {
             display: none;
@@ -307,12 +341,13 @@
         }
 
         #excel_table {
-            width: 100%; /* Ensure the table takes up the full width */
-            table-layout: fixed; /* Avoid table exceeding container width */
-            word-wrap: break-word; /* Wrap long text within cells */
+            width: 60% !important; /* Ensures the table takes up the full width */
+            margin-right: 0px !important; /* Reinforces no right margin */
         }
 
         table.dataTable {
+            width: 99% !important;
+            margin: 0 auto !important;
             white-space: nowrap;
         }
 
@@ -411,10 +446,142 @@
             padding: 0 5px;
             cursor: pointer;
         }
+        .row {
+            margin: 20px 20px;
+        }
+    </style>
+    <style>
+        .sidebar-toggle {
+    display: none;
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    z-index: 1001;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: block;
+    }
+    
+    .sticky-nav {
+        transform: translateX(0); /* Visible by default */
+        transition: transform 0.3s ease;
+        display: block; /* Initially visible */
+    }
+    
+    .sticky-nav.hide {
+        transform: translateX(200%); /* Move off screen when hidden */
+        display: none;
+    }
+}
+        /* Add these styles */
+    .sticky-nav {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border: 1px solid #4CAF50;
+    }
+
+    .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .nav-list li {
+        margin: 10px 0;
+    }
+
+    .nav-list a {
+        color: #4CAF50;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 5px 10px;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .nav-list a:hover {
+        background: #4CAF50;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .top-link {
+        border-top: 1px solid #eee;
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+    /* Center align the Purchase History header */
+h3.mt-5.text-center {
+    text-align: center !important;
+    margin: 2rem 0 !important;
+    font-weight: bold !important;
+}
+
+/* Style consistency for all tables */
+#purchase_table {
+    width: 99% !important;
+    margin: 0 auto !important;
+}
+
+#purchase_table thead th {
+    text-align: center;
+    vertical-align: middle;
+    background-color: #4CAF50;
+    color: white;
+}
+.quantity-sum {
+    text-align: center;
+    margin: 20px 0;
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #4CAF50;
+    background-color: #f0f8f0;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: fit-content;
+    margin: 20px auto;
+}
+
+.sum-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #388e3c;
+}
+
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
+    <button id="sidebarToggle" class="sidebar-toggle">
+        <span>X</span>
+    </button>
+    <div class="sticky-nav" id="stickyNav">
+        <ul class="nav-list">
+            <li><a href="#inventory-section">Inventory</a></li>
+            <li><a href="#history-section">History</a></li>
+            <li><a href="#purchase-section">Purchase</a></li>
+            <li><a href="#top" class="top-link">↑ Top</a></li>
+
+        </ul>
+    </div>
     <div class="container mt-5">
         <div class="row">
             <div class="col-12 text-center">
@@ -491,16 +658,14 @@
     <div class="container-fluid">
         {% if excel_html %}
             <!-- Add top scroll bar -->
-            <div class="top-scroll">
-                <div class="top-scroll-inner"></div>
-            </div>
-            <div class="table-responsive" id="table-responsive">
-                {{ excel_html | safe }}
+
+            <div id="inventory-section" class="table-responsive">
+                            {{ excel_html | safe }}
             </div>
         {% endif %}
         {% if history_html and 'No item history' not in history_html %}
             <h3 class="mt-5 text-center">Item History</h3>
-            <div class="table-responsive">
+            <div id="history-section" class="table-responsive">
                 <div class="container">
                     <div class="row justify-content-center">
                         <div class="col-md-16 col-lg-12"> <!-- Adjust column sizes as needed -->
@@ -518,7 +683,7 @@
         <!-- Add this after the history table section -->
         {% if purchase_html %}
         <h3 class="mt-5 text-center">Purchase History</h3>
-        <div class="table-responsive">
+        <div id="purchase-section" class="table-responsive">
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-md-16 col-lg-12">
@@ -893,5 +1058,104 @@
             }
         });
     }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scroll for navigation links
+            document.querySelectorAll('.nav-list a').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (this.classList.contains('top-link')) {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                        return;
+                    }
+                    
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+        });
+        </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('sidebarToggle');
+        const stickyNav = document.getElementById('stickyNav');
+        
+        toggleButton.addEventListener('click', function() {
+            stickyNav.classList.toggle('hide');
+        });
+        
+        // Hide sidebar when clicking a link
+        document.querySelectorAll('.nav-list a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    stickyNav.classList.add('hide');
+                }
+            });
+        });
+    });
+    </script>
+    <script>
+if ($('#purchase_table').length) {
+    var purchaseTable = $('#purchase_table').DataTable({
+        paging: true,
+        searching: true,
+        autoWidth: true,
+        pageLength: 50,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+        buttons: [
+            'copy', 
+            'excel',
+            {
+                extend: 'pdf',
+                orientation: 'landscape',
+                pageSize: 'LETTER',
+                customize: function(doc) {
+                    doc.pageMargins = [1, 1, 1, 1];
+                }
+            }
+        ],
+        responsive: true,
+        columnDefs: [
+            {
+                targets: '_all',
+                className: 'dt-body-center'
+            }
+        ],
+        order: [[1, 'desc']], // Sort by date column descending
+        
+        "drawCallback": function(settings) {
+            var api = this.api();
+            // Get the filtered data
+            var filteredData = api.column(3, {search:'applied'}).data();
+            
+            // Calculate sum of quantities
+            var total = filteredData.reduce(function(acc, curr) {
+                return acc + parseInt(curr);
+            }, 0);
+            
+            // Display the sum
+            if (!$('#quantitySum').length) {
+                $('.dataTables_filter').after(
+                    '<div id="quantitySum" class="quantity-sum">' +
+                    'Sum: <span class="sum-value">' + total + '</span>' +
+                    '</div>'
+                );
+            } else {
+                $('.sum-value').text(total);
+            }
+        }
+    });
+}
     </script>
 </body></html>
