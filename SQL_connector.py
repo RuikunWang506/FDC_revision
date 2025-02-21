@@ -211,8 +211,10 @@ def generate_excel(user_input):
             )
         else:
             history_html_table = "<p>No item history found for the given input.</p>"
+        purchase_html = generate_purchase_history(input_parts)
 
-        return html_table, history_html_table, [], user_input  # image_urls is handled in Flask route
+
+        return html_table, history_html_table,purchase_html, [], user_input  # image_urls is handled in Flask route
 
     except pyodbc.Error as e:
         app.logger.error(f"Error connecting to SQL Server: {e}")
@@ -225,3 +227,51 @@ def generate_excel(user_input):
 
 def get_file_path():
     return file_path
+
+def generate_purchase_history(input_parts):
+    purchase_conditions = []
+    purchase_params = []
+    
+    for part in input_parts:
+        if "%" in part:
+            purchase_conditions.append("pl.prod_cd LIKE ?")
+            purchase_params.append(part)
+        else:
+            purchase_conditions.append("pl.prod_cd LIKE ?")
+            purchase_params.append(f"{part}%")
+
+    combined_condition_purchase = " OR ".join(purchase_conditions) if purchase_conditions else "1=1"
+
+    purchase_query = f"""
+        SELECT 
+            pl.prod_cd,
+            RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+            RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+            CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS log_date,
+            pl.pur_num,
+            pl.hdl_chg
+        FROM [omsdata_FDC].[dbo].[plog] pl
+        WHERE {combined_condition_purchase}
+        AND pl.hdl_chg > 0
+        ORDER BY pl.log_date DESC
+    """
+
+    purchase_rows = []
+    conn_fdc = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}')
+    cursor = conn_fdc.cursor()
+    cursor.execute(purchase_query, purchase_params)
+    rows = cursor.fetchall()
+    
+    if rows:
+        purchase_df = pd.DataFrame.from_records(rows, columns=['SKU', 'PO DATE', 'PO/Container', 'Quantity'])
+        # Convert Quantity column to integer
+        purchase_df['Quantity'] = pd.to_numeric(purchase_df['Quantity'], errors='coerce').fillna(0).astype(int)
+        purchase_html = purchase_df.to_html(
+            index=False,
+            classes="table table-bordered table-striped",
+            table_id="purchase_table"  # Removed float_format since we're using integers
+        )
+    else:
+        purchase_html = "<p>No purchase history found.</p>"
+        
+    return purchase_html

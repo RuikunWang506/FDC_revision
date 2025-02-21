@@ -515,7 +515,19 @@
                 {{ history_html | safe }}
             </div>
         {% endif %}
-
+        <!-- Add this after the history table section -->
+        {% if purchase_html %}
+        <h3 class="mt-5 text-center">Purchase History</h3>
+        <div class="table-responsive">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-16 col-lg-12">
+                        {{ purchase_html | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
     <div id="imagePopup" class="image-popup" onclick="closePopup(event)">
         <span class="close-btn">&times;</span>

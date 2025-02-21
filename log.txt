@@ -39502,3 +39502,174 @@ WHERE prod_cd = 'N2149 BR';
 2025-02-18 16:23:08,574 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
 2025-02-18 16:25:02,711 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
 2025-02-18 16:25:03,827 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 01:44:46,359 - INFO - ***Unknown***___@@@Accessed@@@__Location Service
+2025-02-19 10:48:14,652 - INFO - ***xj*** has logged in. IP: ***47.151.78.205***, Browser: Chrome Mobile iOS 133.0.6943, OS: iOS 18.3.1, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 10:48:26,999 - INFO - No SKUs provided to fetch_locations
+2025-02-19 10:48:27,004 - INFO - ***xj***__@@@search SKU@@@__ n1980
+2025-02-19 10:48:34,196 - INFO - ***xj***__@@@search SKU@@@__ n1978
+2025-02-19 10:48:39,713 - INFO - ***xj***__@@@search SKU@@@__ en1980
+2025-02-19 10:49:13,135 - INFO - ***xj***__@@@search SKU@@@__ %f23250%
+2025-02-19 10:55:16,937 - INFO - ***xj***__@@@search SKU@@@__ m1148
+2025-02-19 10:57:56,974 - INFO - ***xj*** processing regular input: ['M1148', 'EN1980', 'N1978', 'N1802']
+2025-02-19 11:28:08,484 - INFO - ***xj*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 11:28:29,177 - INFO - ***xj*** processing regular input: ['EN1980', 'N1978', 'M1148', 'N1802']
+2025-02-19 11:32:54,063 - INFO - ***yeti***__@@@search SKU@@@__ t3450
+2025-02-19 11:34:01,050 - INFO - ***xj*** processing regular input: ['EN1980', 'N1978', 'M1148', 'N1802']
+2025-02-19 11:34:05,761 - INFO - ***xj*** processing regular input: ['N1422']
+2025-02-19 13:14:32,418 - INFO - ***yeti*** has logged in. IP: ***172.56.235.175***, Browser: Chrome Mobile iOS 133.0.6943, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 13:14:38,690 - INFO - ***yeti***__@@@search SKU@@@__ t3450
+2025-02-19 13:23:45,322 - INFO - ***yeti***__@@@search SKU@@@__ l1864
+2025-02-19 14:04:04,520 - INFO - ***yeti***__@@@search SKU@@@__ n1802
+2025-02-19 14:38:57,660 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 132.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 14:39:01,970 - INFO - ***yeti***__@@@search SKU@@@__ n1812
+2025-02-19 14:41:37,915 - INFO - ***yeti***__@@@search SKU@@@__ n1546
+2025-02-19 14:42:38,758 - INFO - ***yeti***__@@@search SKU@@@__ s1407
+2025-02-19 14:48:23,435 - WARNING - Failed to get location for IP: 172.253.15.237
+2025-02-19 14:48:23,523 - WARNING - Failed to get location for IP: 172.253.234.255
+2025-02-19 14:48:23,635 - WARNING - Failed to get location for IP: 172.253.234.221
+2025-02-19 14:48:23,938 - WARNING - Failed to get location for IP: 172.253.234.250
+2025-02-19 14:48:23,992 - WARNING - Failed to get location for IP: 172.253.15.236
+2025-02-19 14:48:24,099 - WARNING - Failed to get location for IP: 172.253.15.225
+2025-02-19 14:48:24,404 - WARNING - Failed to get location for IP: 172.253.15.230
+2025-02-19 14:48:24,424 - WARNING - Failed to get location for IP: 172.253.15.227
+2025-02-19 14:48:24,559 - WARNING - Failed to get location for IP: 172.253.15.237
+2025-02-19 14:48:24,613 - WARNING - Failed to get location for IP: 74.125.19.43
+2025-02-19 14:48:25,380 - WARNING - Failed to get location for IP: 172.253.15.238
+2025-02-19 14:48:25,460 - WARNING - Failed to get location for IP: 172.253.234.208
+2025-02-19 14:48:25,540 - WARNING - Failed to get location for IP: 172.253.15.226
+2025-02-19 14:48:25,865 - WARNING - Failed to get location for IP: 74.125.19.43
+2025-02-19 14:48:25,974 - WARNING - Failed to get location for IP: 172.253.15.227
+2025-02-19 14:48:26,820 - WARNING - Failed to get location for IP: 172.253.15.239
+2025-02-19 14:48:27,655 - WARNING - Failed to get location for IP: 172.253.15.231
+2025-02-19 14:48:28,185 - WARNING - Failed to get location for IP: 172.253.15.239
+2025-02-19 14:48:28,449 - WARNING - Failed to get location for IP: 74.125.19.47
+2025-02-19 14:48:28,474 - WARNING - Failed to get location for IP: 172.253.15.232
+2025-02-19 14:48:28,640 - WARNING - Failed to get location for IP: 172.253.15.229
+2025-02-19 14:48:28,825 - WARNING - Failed to get location for IP: 74.125.19.43
+2025-02-19 14:48:28,863 - WARNING - Failed to get location for IP: 172.253.15.233
+2025-02-19 14:48:29,027 - WARNING - Failed to get location for IP: 172.253.234.221
+2025-02-19 14:48:29,785 - WARNING - Failed to get location for IP: 172.253.15.225
+2025-02-19 14:49:07,750 - WARNING - Failed to get location for IP: 172.253.192.245
+2025-02-19 15:28:08,465 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 15:28:32,434 - INFO - ****** updated description for style GN2368 with: SATCHEL
+2025-02-19 15:28:32,440 - INFO - ****** updated description for style GS1526 with: CROSSBODY
+2025-02-19 15:28:32,446 - INFO - ****** updated description for style N2377 with: SATCHEL
+2025-02-19 15:28:32,452 - INFO - ****** updated description for style T3293 with: SATCHEL
+2025-02-19 15:28:32,458 - INFO - ****** updated description for style T3515 with: SATCHEL
+2025-02-19 15:28:32,464 - INFO - ****** updated description for style T3521 with: SATCHEL
+2025-02-19 15:36:26,407 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 15:36:30,091 - INFO - ***yeti***__@@@search SKU@@@__ s1425
+2025-02-19 15:37:12,094 - INFO - No SKUs provided to fetch_locations
+2025-02-19 15:37:12,098 - INFO - ***yeti***__@@@search SKU@@@__ gs1526
+2025-02-19 17:43:20,915 - INFO - ***nicye*** has logged in. IP: ***38.92.25.49***, Browser: Chrome 123.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-19 17:43:25,394 - INFO - ***nicye***__@@@search SKU@@@__ l1851
+2025-02-20 11:11:24,583 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 11:16:10,418 - INFO - ***yeti***__@@@search SKU@@@__ l1851
+2025-02-20 11:17:31,957 - INFO - ***yeti***__@@@search SKU@@@__ l1864
+2025-02-20 11:17:35,737 - INFO - ***yeti***__@@@search SKU@@@__ l1864,l1863
+2025-02-20 11:26:59,737 - INFO - ***jennifer*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 97.0.4692, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 11:27:08,008 - INFO - ***jennifer***__@@@search order@@@__ 33949
+2025-02-20 11:27:09,162 - INFO - ***jennifer***__@@@made labels@@@__ 33949
+2025-02-20 11:27:11,022 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33949_label.xlsx
+2025-02-20 11:29:13,395 - INFO - ***jennifer***__@@@search order@@@__ 33944
+2025-02-20 11:29:14,287 - INFO - ***jennifer***__@@@made labels@@@__ 33944
+2025-02-20 11:29:16,054 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33944_label.xlsx
+2025-02-20 11:32:15,086 - INFO - ***jennifer***__@@@search order@@@__ 33943
+2025-02-20 11:32:16,192 - INFO - ***jennifer***__@@@made labels@@@__ 33943
+2025-02-20 11:32:17,702 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33943_label.xlsx
+2025-02-20 11:34:32,498 - INFO - ***jennifer***__@@@search order@@@__ 33942
+2025-02-20 11:34:33,655 - INFO - ***jennifer***__@@@made labels@@@__ 33942
+2025-02-20 11:34:36,146 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33942_label.xlsx
+2025-02-20 11:36:33,958 - INFO - ***jennifer***__@@@search order@@@__ 33941
+2025-02-20 11:36:35,243 - INFO - ***jennifer***__@@@made labels@@@__ 33941
+2025-02-20 11:36:36,809 - INFO - ***jennifer***__@@@[Download][labels]@@@__ 33941_label.xlsx
+2025-02-20 12:06:35,257 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 12:53:09,129 - INFO - ****** updated description for style N0385 with: CROSSBODY
+2025-02-20 12:53:09,135 - INFO - ****** updated description for style T3285 with: TOTE
+2025-02-20 13:10:18,505 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 133.0.6943, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 13:10:23,017 - INFO - ***yeti***__@@@search SKU@@@__ t3142
+2025-02-20 13:52:59,490 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 13:53:05,504 - INFO - ***yeti***__@@@search SKU@@@__ es1171
+2025-02-20 14:30:46,280 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 133.0.6943, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 14:30:49,493 - INFO - ***yeti***__@@@search SKU@@@__ n1546
+2025-02-20 14:42:25,933 - INFO - New product inserted with SKU=N1546 BK, Style=N1546, Location='823 E1-16 bot'.
+2025-02-20 14:42:25,935 - INFO - New product inserted with SKU=N1546 BR, Style=N1546, Location='823 E1-16 bot'.
+2025-02-20 14:42:25,950 - INFO - New product inserted with SKU=N1546 GY, Style=N1546, Location='823 E1-16 bot'.
+2025-02-20 14:42:25,955 - INFO - New product inserted with SKU=N1546 CF, Style=N1546, Location='823 E1-16 bot'.
+2025-02-20 14:42:25,957 - INFO - New product inserted with SKU=N1546 NV, Style=N1546, Location='823 E1-16 bot'.
+2025-02-20 14:42:26,256 - INFO - ***yeti***__@@@search SKU@@@__ n1546
+2025-02-20 14:44:42,669 - INFO - ***yeti***__@@@search SKU@@@__ en1346
+2025-02-20 14:44:59,483 - INFO - ***yeti***__@@@search SKU@@@__ en1346
+2025-02-20 14:45:07,318 - INFO - ***yeti***__@@@search SKU@@@__ t3262
+2025-02-20 14:45:16,992 - INFO - New product inserted with SKU=T3262 BK, Style=T3262, Location='823 E1-15'.
+2025-02-20 14:45:16,994 - INFO - New product inserted with SKU=T3262 TN, Style=T3262, Location='823 E1-15'.
+2025-02-20 14:45:16,997 - INFO - New product inserted with SKU=T3262 WT, Style=T3262, Location='823 E1-15'.
+2025-02-20 14:45:16,999 - INFO - New product inserted with SKU=T3262 GY, Style=T3262, Location='823 E1-15'.
+2025-02-20 14:45:17,001 - INFO - New product inserted with SKU=T3262 TP, Style=T3262, Location='823 E1-15'.
+2025-02-20 14:45:17,256 - INFO - ***yeti***__@@@search SKU@@@__ t3262
+2025-02-20 14:45:23,085 - INFO - ***yeti***__@@@search SKU@@@__ en1636
+2025-02-20 14:45:32,873 - INFO - New product inserted with SKU=EN1636 CG, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,875 - INFO - New product inserted with SKU=EN1636 TP, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,885 - INFO - New product inserted with SKU=EN1636 DM, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,887 - INFO - New product inserted with SKU=EN1636 BL, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,893 - INFO - New product inserted with SKU=EN1636 BK, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,894 - INFO - New product inserted with SKU=EN1636 SG, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,923 - INFO - New product inserted with SKU=EN1636 PK, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,925 - INFO - New product inserted with SKU=EN1636 TN, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,950 - INFO - New product inserted with SKU=EN1636 LV, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,953 - INFO - New product inserted with SKU=EN1636 WT, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:32,956 - INFO - New product inserted with SKU=EN1636 ST, Style=EN1636, Location='823 e1-16'.
+2025-02-20 14:45:33,216 - INFO - ***yeti***__@@@search SKU@@@__ en1636
+2025-02-20 14:56:04,536 - INFO - ***yeti***__@@@search SKU@@@__ n1978
+2025-02-20 15:12:05,203 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 15:12:38,784 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-20 15:20:56,305 - INFO - ***yeti***__@@@checked boat page@@@
+2025-02-20 15:44:28,006 - INFO - ***yeti***__@@@search SKU@@@__ n2290 bk
+2025-02-20 15:45:20,329 - INFO - ***yeti***__@@@search SKU@@@__ %f24206%
+2025-02-20 15:46:27,275 - INFO - ***yeti***__@@@search SKU@@@__ n2290
+2025-02-20 15:50:30,873 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-20 15:56:25,489 - INFO - ***yeti***__@@@search SKU@@@__ es1394
+2025-02-20 16:06:00,136 - INFO - ***yeti***__@@@search SKU@@@__ es1394 bk
+2025-02-20 16:06:15,532 - INFO - ***yeti***__@@@search SKU@@@__ %f231122%
+2025-02-20 16:09:23,363 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-20 16:10:57,092 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-20 16:11:22,744 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 16:11:23,207 - INFO - ***yeti***__@@@search SKU@@@__ es1394
+2025-02-20 16:12:47,965 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-20 16:13:06,129 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-20 16:13:07,667 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 16:13:07,891 - INFO - ***yeti***__@@@search SKU@@@__ es1394
+2025-02-20 16:13:20,193 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-20 16:13:55,484 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-02-20 16:13:56,447 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-02-20 16:14:00,832 - INFO - ***yeti***__@@@search SKU@@@__ n1151
+2025-02-20 16:14:06,396 - INFO - ***yeti***__@@@search SKU@@@__ n1151 bk
+2025-02-20 16:14:36,456 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:14:36,462 - INFO - ***yeti***__@@@search SKU@@@__ n2208
+2025-02-20 16:14:40,643 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-02-20 16:14:43,521 - INFO - ***yeti***__@@@search SKU@@@__ m1148
+2025-02-20 16:14:50,241 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:14:50,246 - INFO - ***yeti***__@@@search SKU@@@__ m1148 bk
+2025-02-20 16:14:54,962 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:14:54,967 - INFO - ***yeti***__@@@search SKU@@@__ m1148 bk
+2025-02-20 16:14:56,936 - INFO - ***yeti***__@@@search SKU@@@__ m1148
+2025-02-20 16:15:02,548 - INFO - ***yeti***__@@@search SKU@@@__ m1148 mv
+2025-02-20 16:15:06,863 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:15:06,868 - INFO - ***yeti***__@@@search SKU@@@__ m1148 bk
+2025-02-20 16:15:08,916 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:15:08,921 - INFO - ***yeti***__@@@search SKU@@@__ m1148 bk
+2025-02-20 16:15:10,874 - INFO - ***yeti***__@@@search SKU@@@__ m1148
+2025-02-20 16:15:15,518 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:15:15,523 - INFO - ***yeti***__@@@search SKU@@@__ m1148 bk
+2025-02-20 16:15:28,574 - INFO - ***yeti***__@@@search SKU@@@__ m1148 br
+2025-02-20 16:15:34,583 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:15:34,588 - INFO - ***yeti***__@@@search SKU@@@__ m1148 b
+2025-02-20 16:15:37,307 - INFO - ***yeti***__@@@search SKU@@@__ m1148
+2025-02-20 16:15:40,091 - INFO - No SKUs provided to fetch_locations
+2025-02-20 16:15:40,095 - INFO - ***yeti***__@@@search SKU@@@__ m1148 bk
+2025-02-20 16:15:52,968 - INFO - ***yeti***__@@@search SKU@@@__ l1809
+2025-02-20 16:15:56,852 - INFO - ***yeti***__@@@search SKU@@@__ l1809 bk
+2025-02-20 16:15:58,921 - INFO - ***yeti***__@@@search SKU@@@__ l1809 tn
+2025-02-20 16:16:00,362 - INFO - ***yeti***__@@@search SKU@@@__ l1809 co
+2025-02-20 16:16:01,729 - INFO - ***yeti***__@@@search SKU@@@__ l1809 pk
+2025-02-20 16:16:03,080 - INFO - ***yeti***__@@@search SKU@@@__ l1809 bl

@@ -282,7 +282,7 @@ def register_routes(app):
             user_input = user_input[:-1]
 
         # Generate Excel and history HTML
-        excel_html, history_html, _, user_input = SQL_connector.generate_excel(user_input)
+        excel_html, history_html, purchase_html, _, user_input = SQL_connector.generate_excel(user_input)
 
         if not excel_html and not history_html:  # If no valid data is found
             return render_template("Item_lookup.html", excel_html=None, history_html=None, current_user=current_user, user_input=user_input)
@@ -390,6 +390,7 @@ def register_routes(app):
             "Item_lookup.html",
             excel_html=excel_html,
             history_html=history_html,  # Pass the history_html to the template
+            purchase_html=purchase_html,  # Add this
             image_urls=sorted_image_urls,
             file_names=sorted_file_names,
             file_info=file_info,
