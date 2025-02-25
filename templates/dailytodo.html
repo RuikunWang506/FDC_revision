@@ -105,91 +105,113 @@
                         <th>Platform</th>
                         <th>Number of Labels</th>
                         <th>Printed</th>
+                        <th>Print Time</th>
                         <th>Finished</th>
+                        <th>Finish Time</th>
                         <th>Memo</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- FDC Section -->
-                    <tr><td colspan="5"><strong>FDC</strong></td></tr>
+                    <tr><td colspan="7"><strong>FDC</strong></td></tr>
                     <tr>
                         <td>FDC FBM</td>
-                        <td><input type="number" name="FDC_FBM_labels" id="FDC_FBM_labels" ></td>
+                        <td><input type="number" name="FDC_FBM_labels" id="FDC_FBM_labels"></td>
                         <td><input type="checkbox" name="FDC_FBM_print" id="FDC_FBM_print"></td>
+                        <td><span id="FDC_FBM_print_time"></span></td>
                         <td><input type="checkbox" name="FDC_FBM_finished" id="FDC_FBM_finished"></td>
+                        <td><span id="FDC_FBM_finished_time"></span></td>
                         <td><input type="text" placeholder="memo" name="FDC_FBM_memo" id="FDC_FBM_memo" class="form-control"></td>
                     </tr>
                     <tr>
                         <td>EF FBM</td>
                         <td><input type="number" name="EF_FBM_labels" id="EF_FBM_labels"></td>
                         <td><input type="checkbox" name="EF_FBM_print" id="EF_FBM_print"></td>
+                        <td><span id="EF_FBM_print_time"></span></td>
                         <td><input type="checkbox" name="EF_FBM_finished" id="EF_FBM_finished"></td>
-                        <td><input type="text" placeholder="memo"name="EF_FBM_memo" id="EF_FBM_memo" class="form-control"></td>
+                        <td><span id="EF_FBM_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="EF_FBM_memo" id="EF_FBM_memo" class="form-control"></td>
                     </tr>
                     <tr>
                         <td>TEMU USA</td>
                         <td><input type="number" name="TEMU_USA_labels" id="TEMU_USA_labels"></td>
                         <td><input type="checkbox" name="TEMU_USA_print" id="TEMU_USA_print"></td>
+                        <td><span id="TEMU_USA_print_time"></span></td>
                         <td><input type="checkbox" name="TEMU_USA_finished" id="TEMU_USA_finished"></td>
-                        <td><input type="text" placeholder="memo"name="TEMU_USA_memo" id="TEMU_USA_memo" class="form-control"></td>
+                        <td><span id="TEMU_USA_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="TEMU_USA_memo" id="TEMU_USA_memo" class="form-control"></td>
                     </tr>
                     <tr>
                         <td>TEMU HK</td>
                         <td><input type="number" name="TEMU_HK_labels" id="TEMU_HK_labels"></td>
                         <td><input type="checkbox" name="TEMU_HK_print" id="TEMU_HK_print"></td>
+                        <td><span id="TEMU_HK_print_time"></span></td>
                         <td><input type="checkbox" name="TEMU_HK_finished" id="TEMU_HK_finished"></td>
-                        <td><input type="text" placeholder="memo"name="TEMU_HK_memo" id="TEMU_HK_memo" class="form-control"></td>
+                        <td><span id="TEMU_HK_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="TEMU_HK_memo" id="TEMU_HK_memo" class="form-control"></td>
                     </tr>
                     <tr>
                         <td>TIKTOK</td>
                         <td><input type="number" name="TIKTOK_labels" id="TIKTOK_labels"></td>
                         <td><input type="checkbox" name="TIKTOK_print" id="TIKTOK_print"></td>
+                        <td><span id="TIKTOK_print_time"></span></td>
                         <td><input type="checkbox" name="TIKTOK_finished" id="TIKTOK_finished"></td>
-                        <td><input type="text" placeholder="memo"name="TIKTOK_memo" id="TIKTOK_memo" class="form-control"></td>
+                        <td><span id="TIKTOK_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="TIKTOK_memo" id="TIKTOK_memo" class="form-control"></td>
                     </tr>
                     <tr>
                         <td>SHEIN</td>
                         <td><input type="number" name="SHEIN_labels" id="SHEIN_labels"></td>
                         <td><input type="checkbox" name="SHEIN_print" id="SHEIN_print"></td>
+                        <td><span id="SHEIN_print_time"></span></td>
                         <td><input type="checkbox" name="SHEIN_finished" id="SHEIN_finished"></td>
-                        <td><input type="text" placeholder="memo"name="SHEIN_memo" id="SHEIN_memo" class="form-control"></td>
+                        <td><span id="SHEIN_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="SHEIN_memo" id="SHEIN_memo" class="form-control"></td>
                     </tr>
 
                     <!-- ERWAN Section -->
-                    <tr><td colspan="5"><strong>ERWAN</strong></td></tr>
+                    <tr><td colspan="7"><strong>ERWAN</strong></td></tr>
                     <tr>
                         <td>ERWAN DROPSHIP</td>
                         <td><input type="number" name="ERWAN_DROPSHIP_labels" id="ERWAN_DROPSHIP_labels"></td>
                         <td><input type="checkbox" name="ERWAN_DROPSHIP_print" id="ERWAN_DROPSHIP_print"></td>
+                        <td><span id="ERWAN_DROPSHIP_print_time"></span></td>
                         <td><input type="checkbox" name="ERWAN_DROPSHIP_finished" id="ERWAN_DROPSHIP_finished"></td>
-                        <td><input type="text" placeholder="memo"name="ERWAN_DROPSHIP_memo" id="ERWAN_DROPSHIP_memo" class="form-control"></td>
+                        <td><span id="ERWAN_DROPSHIP_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="ERWAN_DROPSHIP_memo" id="ERWAN_DROPSHIP_memo" class="form-control"></td>
                     </tr>
 
                     <!-- TMX Section -->
-                    <tr><td colspan="5"><strong>GPG_Autoparts</strong></td></tr>
+                    <tr><td colspan="7"><strong>GPG_Autoparts</strong></td></tr>
                     <tr>
                         <td>TMX_HONDA</td>
                         <td><input type="number" name="TMX_HONDA_labels" id="TMX_HONDA_labels"></td>
                         <td><input type="checkbox" name="TMX_HONDA_print" id="TMX_HONDA_print"></td>
+                        <td><span id="TMX_HONDA_print_time"></span></td>
                         <td><input type="checkbox" name="TMX_HONDA_finished" id="TMX_HONDA_finished"></td>
-                        <td><input type="text" placeholder="memo"name="TMX_HONDA_memo" id="TMX_HONDA_memo" class="form-control"></td>
+                        <td><span id="TMX_HONDA_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="TMX_HONDA_memo" id="TMX_HONDA_memo" class="form-control"></td>
                     </tr>
                     <tr>
                         <td>TMX_HYNDAI</td>
                         <td><input type="number" name="TMX_HYNDAI_labels" id="TMX_HYNDAI_labels"></td>
                         <td><input type="checkbox" name="TMX_HYNDAI_print" id="TMX_HYNDAI_print"></td>
+                        <td><span id="TMX_HYNDAI_print_time"></span></td>
                         <td><input type="checkbox" name="TMX_HYNDAI_finished" id="TMX_HYNDAI_finished"></td>
-                        <td><input type="text" placeholder="memo"name="TMX_HYNDAI_memo" id="TMX_HYNDAI_memo" class="form-control"></td>
+                        <td><span id="TMX_HYNDAI_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="TMX_HYNDAI_memo" id="TMX_HYNDAI_memo" class="form-control"></td>
                     </tr>
 
                     <!-- ELLO Section -->
-                    <tr><td colspan="5"><strong>Ello</strong></td></tr>
+                    <tr><td colspan="7"><strong>Ello</strong></td></tr>
                     <tr>
                         <td>ELLO_DROPSHIP</td>
                         <td><input type="number" name="ELLO_DROPSHIP_labels" id="ELLO_DROPSHIP_labels"></td>
                         <td><input type="checkbox" name="ELLO_DROPSHIP_print" id="ELLO_DROPSHIP_print"></td>
+                        <td><span id="ELLO_DROPSHIP_print_time"></span></td>
                         <td><input type="checkbox" name="ELLO_DROPSHIP_finished" id="ELLO_DROPSHIP_finished"></td>
-                        <td><input type="text" placeholder="memo"name="ELLO_DROPSHIP_memo" id="ELLO_DROPSHIP_memo" class="form-control"></td>
+                        <td><span id="ELLO_DROPSHIP_finished_time"></span></td>
+                        <td><input type="text" placeholder="memo" name="ELLO_DROPSHIP_memo" id="ELLO_DROPSHIP_memo" class="form-control"></td>
                     </tr>
                 </tbody>
             </table>
@@ -240,37 +262,49 @@
                     FDC_FBM: {
                         labels: document.getElementById('FDC_FBM_labels').value,
                         print: document.getElementById('FDC_FBM_print').checked,
+                        print_time: document.getElementById('FDC_FBM_print_time').textContent,
                         finished: document.getElementById('FDC_FBM_finished').checked,
+                        finished_time: document.getElementById('FDC_FBM_finished_time').textContent,
                         memo: document.getElementById('FDC_FBM_memo').value
                     },
                     EF_FBM: {
                         labels: document.getElementById('EF_FBM_labels').value,
                         print: document.getElementById('EF_FBM_print').checked,
+                        print_time: document.getElementById('EF_FBM_print_time').textContent,
                         finished: document.getElementById('EF_FBM_finished').checked,
+                        finished_time: document.getElementById('EF_FBM_finished_time').textContent,
                         memo: document.getElementById('EF_FBM_memo').value
                     },
                     TEMU_USA: {
                         labels: document.getElementById('TEMU_USA_labels').value,
                         print: document.getElementById('TEMU_USA_print').checked,
+                        print_time: document.getElementById('TEMU_USA_print_time').textContent,
                         finished: document.getElementById('TEMU_USA_finished').checked,
+                        finished_time: document.getElementById('TEMU_USA_finished_time').textContent,
                         memo: document.getElementById('TEMU_USA_memo').value
                     },
                     TEMU_HK: {
                         labels: document.getElementById('TEMU_HK_labels').value,
                         print: document.getElementById('TEMU_HK_print').checked,
+                        print_time: document.getElementById('TEMU_HK_print_time').textContent,
                         finished: document.getElementById('TEMU_HK_finished').checked,
+                        finished_time: document.getElementById('TEMU_HK_finished_time').textContent,
                         memo: document.getElementById('TEMU_HK_memo').value
                     },
                     TIKTOK: {
                         labels: document.getElementById('TIKTOK_labels').value,
                         print: document.getElementById('TIKTOK_print').checked,
+                        print_time: document.getElementById('TIKTOK_print_time').textContent,
                         finished: document.getElementById('TIKTOK_finished').checked,
+                        finished_time: document.getElementById('TIKTOK_finished_time').textContent,
                         memo: document.getElementById('TIKTOK_memo').value
                     },
                     SHEIN: {
                         labels: document.getElementById('SHEIN_labels').value,
                         print: document.getElementById('SHEIN_print').checked,
+                        print_time: document.getElementById('SHEIN_print_time').textContent,
                         finished: document.getElementById('SHEIN_finished').checked,
+                        finished_time: document.getElementById('SHEIN_finished_time').textContent,
                         memo: document.getElementById('SHEIN_memo').value
                     }
                 },
@@ -278,7 +312,9 @@
                     ERWAN_DROPSHIP: {
                         labels: document.getElementById('ERWAN_DROPSHIP_labels').value,
                         print: document.getElementById('ERWAN_DROPSHIP_print').checked,
+                        print_time: document.getElementById('ERWAN_DROPSHIP_print_time').textContent,
                         finished: document.getElementById('ERWAN_DROPSHIP_finished').checked,
+                        finished_time: document.getElementById('ERWAN_DROPSHIP_finished_time').textContent,
                         memo: document.getElementById('ERWAN_DROPSHIP_memo').value
                     }
                 },
@@ -286,13 +322,17 @@
                     TMX_HONDA: {
                         labels: document.getElementById('TMX_HONDA_labels').value,
                         print: document.getElementById('TMX_HONDA_print').checked,
+                        print_time: document.getElementById('TMX_HONDA_print_time').textContent,
                         finished: document.getElementById('TMX_HONDA_finished').checked,
+                        finished_time: document.getElementById('TMX_HONDA_finished_time').textContent,
                         memo: document.getElementById('TMX_HONDA_memo').value
                     },
                     TMX_HYNDAI: {
                         labels: document.getElementById('TMX_HYNDAI_labels').value,
                         print: document.getElementById('TMX_HYNDAI_print').checked,
+                        print_time: document.getElementById('TMX_HYNDAI_print_time').textContent,
                         finished: document.getElementById('TMX_HYNDAI_finished').checked,
+                        finished_time: document.getElementById('TMX_HYNDAI_finished_time').textContent,
                         memo: document.getElementById('TMX_HYNDAI_memo').value
                     }
                 },
@@ -300,7 +340,9 @@
                     ELLO_DROPSHIP: {
                         labels: document.getElementById('ELLO_DROPSHIP_labels').value,
                         print: document.getElementById('ELLO_DROPSHIP_print').checked,
+                        print_time: document.getElementById('ELLO_DROPSHIP_print_time').textContent,
                         finished: document.getElementById('ELLO_DROPSHIP_finished').checked,
+                        finished_time: document.getElementById('ELLO_DROPSHIP_finished_time').textContent,
                         memo: document.getElementById('ELLO_DROPSHIP_memo').value
                     }
                 }
@@ -314,28 +356,40 @@
                 body: JSON.stringify(formData)
             });
         }
-
-        function openAllLinks() {
-            const linkElements = document.querySelectorAll('.list-group a');
-            let popups = [];
-            let totalLinks = 0;
     
-            linkElements.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href.startsWith('http://') || href.startsWith('https://')) {
-                    totalLinks++;
-                    let newWindow = window.open(href, '_blank');
-                    if (newWindow) {
-                        popups.push(newWindow);
-                    }
-                }
-            });
-    
-            if (popups.length !== totalLinks) {
-                alert('Some popups were blocked. Please allow popups for this site.');
-            }
+        function getCurrentTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
         }
     
+        function updateTotalLabels() {
+            let total = 0;
+            const labelInputs = document.querySelectorAll('input[type="number"]');
+            
+            labelInputs.forEach(input => {
+                const value = parseInt(input.value) || 0;
+                total += value;
+            });
+            
+            document.getElementById('totalLabels').textContent = total;
+        }
+    
+        function updateWeekdayDisplay() {
+            const date = new Date(document.getElementById('datePicker').value);
+            const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const weekday = weekdays[date.getDay()];
+            document.getElementById('weekdayDisplay').textContent = weekday;
+        }
+    
+        function openAllLinks() {
+            const links = document.querySelectorAll('.list-group-item');
+            links.forEach(link => {
+                window.open(link.href, '_blank');
+            });
+        }
+    
+        // Add event listeners for checkboxes to update timestamps
         document.addEventListener('DOMContentLoaded', function() {
             const data = {{ data|tojson|safe }};
             
@@ -344,60 +398,86 @@
                 for (const [platform, values] of Object.entries(platforms)) {
                     const labelsId = `${platform}_labels`;
                     const printId = `${platform}_print`;
+                    const printTimeId = `${platform}_print_time`;
                     const finishedId = `${platform}_finished`;
+                    const finishedTimeId = `${platform}_finished_time`;
                     const memoId = `${platform}_memo`;
                     
                     if (document.getElementById(labelsId)) {
                         document.getElementById(labelsId).value = values.labels;
                         document.getElementById(printId).checked = values.print;
+                        if (document.getElementById(printTimeId)) {
+                            document.getElementById(printTimeId).textContent = values.print_time || '';
+                        }
                         document.getElementById(finishedId).checked = values.finished;
+                        if (document.getElementById(finishedTimeId)) {
+                            document.getElementById(finishedTimeId).textContent = values.finished_time || '';
+                        }
                         document.getElementById(memoId).value = values.memo;
                     }
                 }
             }
-
-            // Add auto-save listeners to all inputs
-            const inputs = document.querySelectorAll('input[type="number"], input[type="checkbox"], input[type="text"]');
-            inputs.forEach(input => {
-                input.addEventListener('change', saveFormData);
+    
+            // Add event listeners for checkboxes
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const id = this.id;
+                    const isChecked = this.checked;
+                    
+                    if (id.includes('_print')) {
+                        const timeSpanId = id + '_time';
+                        const timeSpan = document.getElementById(timeSpanId);
+                        if (isChecked && (!timeSpan.textContent || timeSpan.textContent === '')) {
+                            timeSpan.textContent = getCurrentTime();
+                        }
+                    } else if (id.includes('_finished')) {
+                        const timeSpanId = id + '_time';
+                        const timeSpan = document.getElementById(timeSpanId);
+                        if (isChecked && (!timeSpan.textContent || timeSpan.textContent === '')) {
+                            timeSpan.textContent = getCurrentTime();
+                        }
+                    }
+                    
+                    saveFormData();
+                });
             });
-
+    
+            // Add auto-save listeners to all inputs
+            const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    saveFormData();
+                    updateTotalLabels();
+                });
+            });
+    
             // Calculate initial total
             updateTotalLabels();
             updateWeekdayDisplay();
         });
-
-        function updateTotalLabels() {
-            let total = 0;
-            const numberInputs = document.querySelectorAll('input[type="number"]');
-            numberInputs.forEach(input => {
-                total += parseInt(input.value) || 0;
-            });
-            document.getElementById('totalLabels').textContent = total;
-        }
-
+    
         document.getElementById('datePicker').addEventListener('change', function() {
             updateWeekdayDisplay();
             window.location.href = '/dailytodo?date=' + this.value;
         });
-
+    
         document.getElementById('yesterdayBtn').addEventListener('click', function() {
             const currentDate = new Date(document.getElementById('datePicker').value);
             currentDate.setDate(currentDate.getDate() - 1);
             const yesterdayStr = currentDate.toISOString().split('T')[0];
             window.location.href = '/dailytodo?date=' + yesterdayStr;
         });
-
+    
         document.getElementById('todayBtn').addEventListener('click', function() {
             const today = new Date().toISOString().split('T')[0];
             window.location.href = '/dailytodo?date=' + today;
         });
-        function updateWeekdayDisplay() {
-            const date = new Date(document.getElementById('datePicker').value);
-            const weekdays = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday','Sunday'];
-            const weekday = weekdays[date.getDay()];
-            document.getElementById('weekdayDisplay').textContent = weekday;
-        }
+    
+        document.getElementById('saveButton').addEventListener('click', function() {
+            saveFormData();
+            alert('Data saved successfully!');
+        });
     </script>
 </body>
 </html>

@@ -451,26 +451,27 @@ table.dataTable thead td {
         }
     </style>
     <style>
-        .sidebar-toggle {
-    display: none;
-    position: fixed;
-    right: 20px;
-    top: 80px;
-    z-index: 1001;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
+        .nav-toggle {
+            width: 100%;
+            padding: 5px 10px;
+            margin-top: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .nav-toggle:hover {
+            background: #388e3c;
+        }
+
+        /* Remove the old floating button styles */
 
 @media (max-width: 768px) {
-    .sidebar-toggle {
-        display: block;
-    }
+
     
     .sticky-nav {
         transform: translateX(0); /* Visible by default */
@@ -570,18 +571,19 @@ h3.mt-5.text-center {
 </head>
 <body>
     {% include 'navbar.html' %}
-    <button id="sidebarToggle" class="sidebar-toggle">
-        <span>X</span>
-    </button>
+    {% if excel_html %}
+
     <div class="sticky-nav" id="stickyNav">
         <ul class="nav-list">
             <li><a href="#inventory-section">Inventory</a></li>
             <li><a href="#history-section">History</a></li>
             <li><a href="#purchase-section">Purchase</a></li>
             <li><a href="#top" class="top-link">↑ Top</a></li>
-
+            <!-- Add new toggle button here -->
+            <li><button id="sidebarToggle" class="nav-toggle">Hide Menu</button></li>
         </ul>
     </div>
+    {% endif %}
     <div class="container mt-5">
         <div class="row">
             <div class="col-12 text-center">
@@ -1087,22 +1089,15 @@ h3.mt-5.text-center {
         </script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const toggleButton = document.getElementById('sidebarToggle');
-        const stickyNav = document.getElementById('stickyNav');
-        
-        toggleButton.addEventListener('click', function() {
-            stickyNav.classList.toggle('hide');
-        });
-        
-        // Hide sidebar when clicking a link
-        document.querySelectorAll('.nav-list a').forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    stickyNav.classList.add('hide');
-                }
-            });
-        });
+    const toggleButton = document.getElementById('sidebarToggle');
+    const stickyNav = document.getElementById('stickyNav');
+    
+    toggleButton.addEventListener('click', function() {
+        stickyNav.classList.toggle('hide');
+        // Update button text based on state
+        this.textContent = stickyNav.classList.contains('hide') ? 'Show Menu' : 'Hide Menu';
     });
+});
     </script>
     <script>
 if ($('#purchase_table').length) {
