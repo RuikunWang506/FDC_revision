@@ -95,8 +95,9 @@ def ecaudit():
     else:
         historical_data = get_all_todo_data()
     
-    # Aggregate the historical data
-    aggregated_data = aggregate_labels(historical_data, platform_filter)
+    # Initialize default values
+    historical_table = "<p>No historical data available</p>"
+    platform_totals_html = "<p>No platform totals available</p>"
     
     # Get available platforms, years, months, and weeks for filters
     all_data = get_all_todo_data()
@@ -112,7 +113,9 @@ def ecaudit():
     months = sorted(set((date.year, date.month) for date in date_objects))
     weeks = sorted(set((date.year, date.isocalendar()[1]) for date in date_objects))
     
-    # Convert aggregated data to pandas DataFrame for easier display
+    # Aggregate the historical data
+    aggregated_data = aggregate_labels(historical_data, platform_filter)
+    
     if aggregated_data:
         df_data = []
         for platform, data in aggregated_data.items():
@@ -124,7 +127,6 @@ def ecaudit():
                 })
         
         df = pd.DataFrame(df_data)
-        # Create pivot table for display
         if not df.empty:
             pivot_df = df.pivot_table(
                 index='Date', 
@@ -133,21 +135,23 @@ def ecaudit():
                 aggfunc='sum', 
                 fill_value=0
             )
+            pivot_df = pivot_df.sort_index()
             pivot_df['Total'] = pivot_df.sum(axis=1)
             platform_totals = pivot_df.sum(axis=0)
-            
-            # Convert to HTML table
-            historical_table = pivot_df.to_html(classes="table table-striped table-bordered")
-            platform_totals_html = platform_totals.to_frame('Total Labels').to_html(
-                classes="table table-striped table-bordered"
+            platform_totals_df = platform_totals.to_frame(name='Total Labels')
+            platform_totals_df.index.name = 'Platform'
+            platform_totals_df = platform_totals_df.reset_index()
+            pivot_df.columns.name = None         # Remove the extra 'Platform' label
+            pivot_df.reset_index(inplace=True)   # Move 'Date' from index to a normal column
+            pivot_df['Day of Week'] = pivot_df['Date'].apply(lambda x: pd.to_datetime(x).strftime('%A'))
+            cols = ['Date', 'Day of Week', 'Total'] + [c for c in pivot_df.columns if c not in ('Date', 'Day of Week', 'Total')]
+            pivot_df = pivot_df[cols]
+            historical_table = pivot_df.to_html(classes="table table-bordered", index=False)
+            platform_totals_html = platform_totals_df.to_html(
+                classes="table table-bordered",
+                index=False
             )
-        else:
-            historical_table = "<p>No data available for selected filters</p>"
-            platform_totals_html = "<p>No platform totals available</p>"
-    else:
-        historical_table = "<p>No historical data available</p>"
-        platform_totals_html = "<p>No platform totals available</p>"
-    
+
     return render_template(
         'online_audit.html',
         historical_table=historical_table,

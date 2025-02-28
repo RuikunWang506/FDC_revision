@@ -18,6 +18,9 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
+        .table > tbody > tr.table-striped-row {
+        background-color: rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -76,9 +79,17 @@
                     <label for="platformSelect" class="form-label">Platform</label>
                     <select id="platformSelect" class="form-select">
                         <option value="">All Platforms</option>
-                        {% for platform in available_platforms %}
-                        <option value="{{ platform }}" {% if platform == current_platform %}selected{% endif %}>{{ platform }}</option>
-                        {% endfor %}
+                        <option value="EF_FBM">EF_FBM</option>
+                        <option value="ELLO_DROPSHIP">ELLO_DROPSHIP</option>
+                        <option value="ERWAN_DROPSHIP">ERWAN_DROPSHIP</option>
+                        <option value="FDC_FBM">FDC_FBM</option>
+                        <option value="SHEIN">SHEIN</option>
+                        <option value="TEMU_HK">TEMU_HK</option>
+                        <option value="TEMU_USA">TEMU_USA</option>
+                        <option value="TIKTOK">TIKTOK</option>
+                        <option value="TMX_GPG">TMX_GPG</option>
+                        <option value="TMX_HONDA">TMX_HONDA</option>
+                        <option value="TMX_HYNDAI">TMX_HYNDAI</option>
                     </select>
                 </div>
             </div>
@@ -90,7 +101,7 @@
                 </div>
             </div>
         </div>
-        
+    
         <!-- Platform Totals Table -->
         <div class="row mb-4">
             <div class="col-md-12">
@@ -106,7 +117,8 @@
                 </div>
             </div>
         </div>
-        
+    </div>
+    <div>
         <!-- Historical Data Table -->
         <div class="row mb-5">
             <div class="col-md-12">
@@ -200,6 +212,66 @@
             
             // Initialize the export link
             updateExportLink();
+        });
+
+        // Function to hide zero total rows in daily breakdown table
+        function hideZeroRows() {
+            const dailyTable = document.querySelector('.row.mb-5 .table');
+            if (!dailyTable) return;
+            const rows = dailyTable.querySelectorAll('tbody tr');
+            let visibleRowIndex = 0;
+            
+            // Remove any previous striped classes
+            rows.forEach(row => row.classList.remove('table-striped-row'));
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                // Use the third cell (index 2) as the Total column
+                const totalCell = cells[2];
+                if (totalCell && parseInt(totalCell.textContent) === 0) {
+                    row.style.display = 'none';
+                } else {
+                    row.style.display = '';
+                    if (visibleRowIndex % 2 === 0) {
+                        row.classList.add('table-striped-row');
+                    }
+                    visibleRowIndex++;
+                }
+            });
+        }
+        const platformTable = document.querySelector('.card .table-responsive .table');
+            if (platformTable) {
+                const rows = platformTable.querySelectorAll('tbody tr');
+                let visibleRowIndex = 0;
+                
+                rows.forEach(row => row.classList.remove('table-striped-row'));
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    const totalCell = cells[cells.length - 1]; // Last cell contains total
+                    if (totalCell && parseInt(totalCell.textContent) === 0) {
+                        row.style.display = 'none';
+                    } else {
+                        row.style.display = '';
+                        if (visibleRowIndex % 2 === 0) {
+                            row.classList.add('table-striped-row');
+                        }
+                        visibleRowIndex++;
+                    }
+                });
+            }
+
+        // Run when page loads
+        hideZeroRows();
+
+        // Run after filter changes
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+            setTimeout(hideZeroRows, 500);
+        });
+
+        // Run after view type changes
+        document.getElementById('viewType').addEventListener('change', () => {
+            setTimeout(hideZeroRows, 500);
         });
     </script>
 </body>

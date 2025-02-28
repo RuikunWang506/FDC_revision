@@ -95,7 +95,7 @@
     <h1 class="align-items-center text-center">Daily To-Do List</h1>
     <div class="container d-flex flex-column align-items-center justify-content-center">
         <div class="d-flex align-items-center">
-            <button id="yesterdayBtn" class="btn btn-secondary me-2">Yesterday</button>
+            <button id="yesterdayBtn" class="btn btn-success me-2">Yesterday</button>
             <input type="date" id="datePicker" value="{{ selected_date }}" class="form-control mb-3 me-3" style="width: 200px;">
             <button id="todayBtn" class="btn btn-primary me-2">Today</button>
             <div class="mb-3">
@@ -252,12 +252,13 @@
     {% if current_user == 'yeti' %}
     <div class="container my-5">
         <h2 class="mb-4">Quick Access Links</h2>
+        <button class="btn btn-success btn-block mb-4" onclick="window.location.href='/online_audit'" aria-label="Open audit tool">
+            Audit tool
+        </button>
         <button class="btn btn-primary btn-block mb-4" onclick="openAllLinks()" aria-label="Open all seller dashboard links">
             Open All Links
         </button>
-        <button class="btn btn-primary btn-block mb-4" onclick="window.location.href='/online_audit'" aria-label="Open audit tool">
-            Audit tool
-        </button>
+        
         <div class="list-group">
             <a href="https://www.4seller.com/web/dashboard.html" target="_blank" class="list-group-item list-group-item-action">
                 <img src="https://4seller-res.meiyunji.net/europe-erp-web/2024-12/favicon.ico?v=1.1" alt="4Seller Logo">
