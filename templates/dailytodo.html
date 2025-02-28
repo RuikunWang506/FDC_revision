@@ -80,6 +80,14 @@
             -webkit-appearance: none;
             margin: 0;
         }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: none;
+        }
+
+        /* Set first day of week to Monday using the lang attribute */
+        html[lang="en"] {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -247,6 +255,9 @@
         <button class="btn btn-primary btn-block mb-4" onclick="openAllLinks()" aria-label="Open all seller dashboard links">
             Open All Links
         </button>
+        <button class="btn btn-primary btn-block mb-4" onclick="window.location.href='/online_audit'" aria-label="Open audit tool">
+            Audit tool
+        </button>
         <div class="list-group">
             <a href="https://www.4seller.com/web/dashboard.html" target="_blank" class="list-group-item list-group-item-action">
                 <img src="https://4seller-res.meiyunji.net/europe-erp-web/2024-12/favicon.ico?v=1.1" alt="4Seller Logo">
@@ -381,8 +392,13 @@
     
         function getCurrentTime() {
             const now = new Date();
-            return now.getHours().toString().padStart(2, '0') + ':' + 
-                   now.getMinutes().toString().padStart(2, '0');
+            const options = { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: false,
+                timeZone: 'America/Los_Angeles' 
+            };
+            return new Intl.DateTimeFormat('en-US', options).format(now);
         }
     
         function updateTotalLabels() {
@@ -479,26 +495,75 @@
             updateWeekdayDisplay();
         });
     
-        document.getElementById('datePicker').addEventListener('change', function() {
-            updateWeekdayDisplay();
-            window.location.href = '/dailytodo?date=' + this.value;
+        document.getElementById('datePicker').addEventListener('input', function(e) {
+            const date = new Date(this.value);
+            const day = date.getDay();
+            
+            // If weekend (0 = Sunday, 6 = Saturday)
+            if (day === 0 || day === 6) {
+                // Show alert
+                alert('Weekends are not available for selection');
+                // Reset to previous valid date
+                this.value = this.dataset.lastValidValue || '';
+            } else {
+                // Store valid date
+                this.dataset.lastValidValue = this.value;
+                updateWeekdayDisplay();
+                window.location.href = '/dailytodo?date=' + this.value;
+            }
         });
-    
+
+        // Modify Yesterday button behavior
         document.getElementById('yesterdayBtn').addEventListener('click', function() {
             const currentDate = new Date(document.getElementById('datePicker').value);
-            currentDate.setDate(currentDate.getDate() - 1);
+            const currentDay = currentDate.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+            if (currentDay === 0) { // If Monday
+                currentDate.setDate(currentDate.getDate() - 3); // Go to Friday
+            } else {
+                currentDate.setDate(currentDate.getDate() - 1); // Normal case, go back one day
+            }
+            
             const yesterdayStr = currentDate.toISOString().split('T')[0];
             window.location.href = '/dailytodo?date=' + yesterdayStr;
         });
     
         document.getElementById('todayBtn').addEventListener('click', function() {
-            const today = new Date().toISOString().split('T')[0];
-            window.location.href = '/dailytodo?date=' + today;
+            // Get current date in Los Angeles timezone
+            const now = new Date();
+            const laOptions = { timeZone: 'America/Los_Angeles' };
+            const laDate = new Intl.DateTimeFormat('en-US', laOptions).format(now);
+            
+            // Parse the formatted date back to YYYY-MM-DD
+            const dateParts = laDate.split('/');
+            const todayLA = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+            
+            window.location.href = '/dailytodo?date=' + todayLA;
         });
     
         document.getElementById('saveButton').addEventListener('click', function() {
             saveFormData();
             alert('Data saved successfully!');
+        });
+        // Add to the end of your existing script
+        // Initialize date picker - Set first day of week to Monday
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set the locale to ensure week starts on Monday
+            document.documentElement.lang = 'en-US'; // British English uses Monday as first day
+            
+            // Disable past dates and weekends
+            const datePicker = document.getElementById('datePicker');
+            
+            // Initial check for current value
+            const initialDate = new Date(datePicker.value);
+            const initialDay = initialDate.getDay();
+            if (initialDay === 7 || initialDay === 6) {
+                // If weekend, find nearest Friday
+                while (initialDate.getDay() !== 5) {
+                    initialDate.setDate(initialDate.getDate() - 1);
+                }
+                datePicker.value = initialDate.toISOString().split('T')[0];
+                window.location.href = '/dailytodo?date=' + datePicker.value;
+            }
         });
     </script>
 </body>
