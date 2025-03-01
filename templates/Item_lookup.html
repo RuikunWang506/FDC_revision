@@ -666,7 +666,7 @@ h3.mt-5.text-center {
             </div>
         {% endif %}
         {% if history_html and 'No item history' not in history_html %}
-            <h3 class="mt-5 text-center">Item History</h3>
+            <h3 class="mt-5 text-center">Sold History</h3>
             <div id="history-section" class="table-responsive">
                 <div class="container">
                     <div class="row justify-content-center">
@@ -684,7 +684,7 @@ h3.mt-5.text-center {
         {% endif %}
         <!-- Add this after the history table section -->
         {% if purchase_html %}
-        <h3 class="mt-5 text-center">Purchase History</h3>
+        <h3 class="mt-5 text-center">Incoming History</h3>
         <div id="purchase-section" class="table-responsive">
             <div class="container">
                 <div class="row justify-content-center">
@@ -813,62 +813,84 @@ h3.mt-5.text-center {
             }
 
             // Initialize DataTable for the second table
-            if ($('#history_table').length) {
-                var table2 = $('#history_table').DataTable({
-                    paging: true,
-                    searching: true,
-                    autoWidth: true,
-                    pageLength: 50,
-                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
-                    buttons: [
-                        'copy', 
-                        'excel',
-                        {
-                            extend: 'pdf',
-                            orientation: 'landscape',
-                            pageSize: 'LETTER',  // Sets US Letter size (8.5" x 11")
-                            
-                        },
-                    ],
-                    responsive: true,
-                    columnDefs: [
-                        {
-                            targets: 2, // Order Number column (3rd column)
-                            className: 'dt-body-center',
-                            render: function(data, type, row, meta) {
-                                if(type === 'display') {
-                                    // Assuming 'data' contains the order number
-                                    return '<a href="/order_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
-                                }
-                                return data;
-                            }
-                        },
-                        {
-                            targets: 1, // Order Number column (3rd column)
-                            className: 'dt-body-center',
-                            render: function(data, type, row, meta) {
-                                if(type === 'display') {
-                                    // Assuming 'data' contains the order number
-                                    return '<a href="/item_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
-                                }
-                                return data;
-                            }
-                        },
-                        {
-                            targets: 3, // Date column
-                            type: 'moment-MM/DD/YYYY',
-                            className: 'dt-body-center'
-                        },
-                        {
-                            targets: '_all',
-                            className: 'dt-body-center'
-                        }
-                    ],
-                    order: [[3, 'desc']], // Sort by date column descending
-                    displayStart: 0
-                });
+            // Initialize DataTable for the second table
+if ($('#history_table').length) {
+    var table2 = $('#history_table').DataTable({
+        paging: true,
+        searching: true,
+        autoWidth: true,
+        pageLength: 50,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+        buttons: [
+            'copy', 
+            'excel',
+            {
+                extend: 'pdf',
+                orientation: 'landscape',
+                pageSize: 'LETTER'
+            },
+        ],
+        responsive: true,
+        columnDefs: [
+            {
+                targets: 2,
+                className: 'dt-body-center',
+                render: function(data, type, row, meta) {
+                    if(type === 'display') {
+                        return '<a href="/order_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
+                    }
+                    return data;
+                }
+            },
+            {
+                targets: 1,
+                className: 'dt-body-center',
+                render: function(data, type, row, meta) {
+                    if(type === 'display') {
+                        return '<a href="/item_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
+                    }
+                    return data;
+                }
+            },
+            {
+                targets: 3,
+                type: 'moment-MM/DD/YYYY',
+                className: 'dt-body-center'
+            },
+            {
+                targets: '_all',
+                className: 'dt-body-center'
             }
+        ],
+        order: [[3, 'desc']],
+        displayStart: 0,
+        "drawCallback": function(settings) {
+            var api = this.api();
+            // Get the filtered data - Order Quantity is in column 5 (6th column, 0-indexed)
+            var filteredData = api.column(5, {search:'applied'}).data();
+            
+            // Calculate sum of quantities with proper conversion to numbers
+            var total = 0;
+            filteredData.each(function(value) {
+                // Parse the value to integer, handling potential non-numeric values
+                var numValue = parseInt(value) || 0;
+                total += numValue;
+            });
+            
+            // Display the sum
+            if (!$('#historyQuantitySum').length) {
+                $('#history_table_wrapper .dataTables_filter').after(
+                    '<div id="historyQuantitySum" class="quantity-sum">' +
+                    'Total Quantity: <span class="sum-value">' + total + '</span>' +
+                    '</div>'
+                );
+            } else {
+                $('#historyQuantitySum .sum-value').text(total);
+            }
+        }
+    });
+}
 
 
             // Clear hover messages when clicking to edit
