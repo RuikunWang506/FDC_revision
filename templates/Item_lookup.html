@@ -666,7 +666,7 @@ h3.mt-5.text-center {
             </div>
         {% endif %}
         {% if history_html and 'No item history' not in history_html %}
-            <h3 class="mt-5 text-center">Sold History</h3>
+            <h3 class="mt-5 text-center">Item History</h3>
             <div id="history-section" class="table-responsive">
                 <div class="container">
                     <div class="row justify-content-center">
@@ -684,7 +684,7 @@ h3.mt-5.text-center {
         {% endif %}
         <!-- Add this after the history table section -->
         {% if purchase_html %}
-        <h3 class="mt-5 text-center">Incoming History</h3>
+        <h3 class="mt-5 text-center">Purchase History</h3>
         <div id="purchase-section" class="table-responsive">
             <div class="container">
                 <div class="row justify-content-center">
@@ -715,6 +715,7 @@ h3.mt-5.text-center {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript">
         $.fn.dataTable.moment = function(format, locale) {
+<<<<<<< HEAD
     var types = $.fn.dataTable.ext.type;
     types.detect.unshift(function(d) {
         return moment(d, format, locale, true).isValid() ? 'moment-' + format : null;
@@ -723,6 +724,162 @@ h3.mt-5.text-center {
         return moment(d, format, locale, true).valueOf();
     };
 };
+=======
+            var types = $.fn.dataTable.ext.type;
+            types.detect.unshift(function(d) {
+                return moment(d, format, locale, true).isValid() ? 'moment-' + format : null;
+            });
+            types.order['moment-' + format + '-pre'] = function(d) {
+                return moment(d, format, locale, true).valueOf();
+            };
+        };
+
+        // Apply the custom sorting for your specific date format (e.g., MM/DD/YYYY):
+        $.fn.dataTable.moment('MM/DD/YYYY');
+        $(document).ready(function() {
+            // Initialize DataTable for the first table
+            if ($('#excel_table').length) {
+                var table1 = $('#excel_table').DataTable({
+                    "paging": true,
+                    "searching": true,
+                    "autoWidth": true,
+                    "pageLength": 50,
+                    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                    buttons: [
+                        'copy', 'excel', {
+                            extend: 'pdf',
+                            orientation: 'landscape',
+                            pageSize: 'LETTER',  // Sets US Letter size (8.5" x 11")
+                            customize: function(doc) {
+                            doc.pageMargins = [1, 1, 1, 1]; // Optional: adjust margins if needed
+                        }
+                        },
+                        {
+                            text: 'HIDE 0 OR LESS',
+                            className: 'btn-custom-color',
+                            action: function ( e, dt, node, config ) {
+                                this.active( !this.active() );
+                                table1.draw();
+                            }
+                        },
+                        {
+                            text: '<input type="text" id="locationInput" placeholder="New Location" style="margin-right:5px;">',
+                            className: 'no-click',
+                            action: function () { return false; }
+                        },
+                        {
+                            text: 'UPDATE LOCATION',
+                            className: 'btn-success',
+                            action: function () { updateLocation(); }
+                        }
+                    ],
+                    
+                    responsive: true,
+                    "columnDefs": [
+                        {
+                            "targets": -1,
+                            "visible": false,
+                            "searchable": false
+                        },
+                        {
+                            "targets": 2,
+                            "render": function(data, type, row, meta) {
+                                if(type === 'display' || type === 'filter') {
+                                    var encodedStyle = encodeURIComponent(data.trim());
+                                    return '<a href="/item_lookup/' + encodedStyle + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            "targets": 4,
+                            "render": function(data, type, row, meta) {
+                                if(type === 'display' || type === 'filter') {
+                                    var encodedStyle = encodeURIComponent(data.trim());
+                                    return '<a href="/item_lookup/' + encodedStyle + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            "targets": 5,
+                            "render": function(data, type, row, meta) {
+                                if(type === 'display' || type === 'filter') {
+                                    var encodedStyle = encodeURIComponent(data.trim());
+                                    return '<a href="/item_lookup/%25' + encodedStyle + '%25">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            "targets": '_all',
+                            "className": 'dt-body-center'
+                        }
+                    ],
+                    "order": [[0, 'asc']],
+                    "displayStart": 0
+                });
+            }
+
+            // Initialize DataTable for the second table
+            if ($('#history_table').length) {
+                var table2 = $('#history_table').DataTable({
+                    paging: true,
+                    searching: true,
+                    autoWidth: true,
+                    pageLength: 50,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                    buttons: [
+                        'copy', 
+                        'excel',
+                        {
+                            extend: 'pdf',
+                            orientation: 'landscape',
+                            pageSize: 'LETTER',  // Sets US Letter size (8.5" x 11")
+                            
+                        },
+                    ],
+                    responsive: true,
+                    columnDefs: [
+                        {
+                            targets: 2, // Order Number column (3rd column)
+                            className: 'dt-body-center',
+                            render: function(data, type, row, meta) {
+                                if(type === 'display') {
+                                    // Assuming 'data' contains the order number
+                                    return '<a href="/order_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            targets: 1, // Order Number column (3rd column)
+                            className: 'dt-body-center',
+                            render: function(data, type, row, meta) {
+                                if(type === 'display') {
+                                    // Assuming 'data' contains the order number
+                                    return '<a href="/item_lookup/' + encodeURIComponent(data) + '">' + data + '</a>';
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            targets: 3, // Date column
+                            type: 'moment-MM/DD/YYYY',
+                            className: 'dt-body-center'
+                        },
+                        {
+                            targets: '_all',
+                            className: 'dt-body-center'
+                        }
+                    ],
+                    order: [[3, 'desc']], // Sort by date column descending
+                    displayStart: 0
+                });
+            }
+>>>>>>> parent of dca1826 (5.1.2 micro chagne ,sum for edit item)
 
 // Apply the custom sorting for your specific date format (e.g., MM/DD/YYYY):
 $.fn.dataTable.moment('MM/DD/YYYY');
