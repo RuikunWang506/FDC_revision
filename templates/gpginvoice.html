@@ -114,7 +114,8 @@
     let table = $('#gpgTable').DataTable({
         order: [[0, 'desc']], 
         pageLength: 25,
-        dom: 'Bfrtip',
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        dom: 'Blfrtip',  // Changed to include 'l' for length menu
         columnDefs: [
             { targets: 0, className: 'dt-body-left' },   // orderNumber
             { targets: 1, className: 'dt-body-left' },   // orderDate
@@ -126,9 +127,8 @@
         ]
     });
 
-
-    // Filter for the original table
-
+    // Store the table object globally so we can access it in other functions
+    window.dataTable = table;
 });
 
 
@@ -154,67 +154,63 @@
     </script>
     <script>
         function finishAndExportQBO() {
-        const table = document.getElementById('gpgTable');
-        const rows = Array.from(table.querySelectorAll('tbody tr'));
+    // Get a reference to the DataTable API object
+    const dataTable = window.dataTable;
+    
+    const csvData = [
+        ['InvoiceNo', 'Customer', 'InvoiceDate', 'DueDate', 'Terms', 'Location', 'Memo', 
+        'Item(Product/Service)', 'ItemDescription', 'ItemQuantity', 'ItemRate', 'ItemAmount', 'Service Date']
+    ];
 
-        const csvData = [
-            ['InvoiceNo', 'Customer', 'InvoiceDate', 'DueDate', 'Terms', 'Location', 'Memo', 
-            'Item(Product/Service)', 'ItemDescription', 'ItemQuantity', 'ItemRate', 'ItemAmount', 'Service Date']
-        ];
+    // Use DataTable API to get all rows data, not just visible rows
+    dataTable.data().each(function(rowData) {
+        const invoiceNo = rowData[0] || '';
+        const invoiceDate = rowData[1] || '';
+        const partNumber = rowData[3] || '';
+        const description = rowData[4] || '';
+        const quantity = rowData[5] || '';
+        const rate = rowData[6] || '';
 
-        rows.forEach(row => {
-            const cells = Array.from(row.cells);
-            if (cells.length < 7) return; // Skip incomplete rows
+        // Ensure valid numeric values
+        const quantityVal = parseFloat(quantity) || 0;
+        const rateVal = parseFloat(rate) || 0;
+        const amount = (quantityVal * rateVal).toFixed(2);
 
-            const invoiceNo = cells[0].textContent.trim();
-            const invoiceDate = cells[1].textContent.trim();
-            const partNumber = cells[3].textContent.trim();
-            const quantity = cells[5].textContent.trim();
-            const rate = cells[6].textContent.trim();
-
-            // Ensure valid numeric values
-            const quantityVal = parseFloat(quantity) || 0;
-            const rateVal = parseFloat(rate) || 0;
-            const amount = (quantityVal * rateVal).toFixed(2);
-
-            // Calculate due date (30 days from invoice date)
-            let dueDateStr = '';
-            if (invoiceDate) {
-                const dueDate = new Date(invoiceDate);
-                dueDate.setDate(dueDate.getDate() + 30);
-                dueDateStr = dueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            }
-
-            // Determine manufacturer prefix based on invoice number
-            const manufacturerPrefix = invoiceNo.startsWith('CU') ? 'Hyundai:' : 'Honda:';
-            const itemProductService = manufacturerPrefix + partNumber;
-
-            // Fallback if `getItemDescription` is missing
-            const itemDescription = cells[4]?.textContent.trim() || ''; 
-
-            csvData.push([
-                invoiceNo, 'GPG', invoiceDate, dueDateStr, 'Net 30', '', '', 
-                itemProductService, itemDescription, quantityVal, rateVal, amount, ''
-            ]);
-        });
-
-        if (csvData.length <= 1) {
-            alert("No data to export.");
-            return;
+        // Calculate due date (30 days from invoice date)
+        let dueDateStr = '';
+        if (invoiceDate) {
+            const dueDate = new Date(invoiceDate);
+            dueDate.setDate(dueDate.getDate() + 30);
+            dueDateStr = dueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
         }
 
-        // Convert to CSV format
-        const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        // Determine manufacturer prefix based on invoice number
+        const manufacturerPrefix = invoiceNo.startsWith('CU') ? 'Hyundai:' : 'Honda:';
+        const itemProductService = manufacturerPrefix + partNumber;
 
-        // Create a temporary download link
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', 'qbo_import.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        csvData.push([
+            invoiceNo, 'GPG', invoiceDate, dueDateStr, 'Net 30', '', '', 
+            itemProductService, description, quantityVal, rateVal, amount, ''
+        ]);
+    });
+
+    if (csvData.length <= 1) {
+        alert("No data to export.");
+        return;
     }
+
+    // Convert to CSV format
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // Create a temporary download link
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'qbo_import.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
     </script>
 </body>

@@ -34,7 +34,8 @@ class Config:
         'jiayi':'1234',
         'xj':'88',
         'wh':'1234',
-        'tmx':'qwe123'
+        'tmx':'qwe123',
+        'warehouse':'1234'
 
     }
     
