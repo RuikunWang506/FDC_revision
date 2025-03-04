@@ -248,5 +248,23 @@ function showStatusMessage(message, type) {
     }, 5000);
 }
     </script>
+    <script>
+        // Get initial timestamp from the server
+        let lastCheck = {{ current_time }};
+        
+        // Poll for updates every 5 seconds
+        setInterval(function() {
+            fetch(`/gpg_check_updates?last_check=${lastCheck}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.update_available) {
+                        console.log("New data available - refreshing page");
+                        window.location.reload();
+                    }
+                    lastCheck = data.last_update;
+                })
+                .catch(error => console.error('Error checking for updates:', error));
+        }, 3000);  // Check every 5 seconds
+    </script>
 </body>
 </html>

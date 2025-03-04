@@ -4,11 +4,13 @@ import pandas as pd
 import os
 import shutil
 from datetime import datetime
+import time
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from config import Config
 
 gpgtmx_bp = Blueprint('gpgtmx', __name__, template_folder='templates')
+last_data_update = time.time()
 
 def register_routes(app):
     CORS(app, resources={
@@ -19,6 +21,12 @@ def register_routes(app):
             "supports_credentials": True
         }
     })
+@gpgtmx_bp.route("/gpg_check_updates")
+def check_updates():
+    """Check if there have been updates since the client's last check"""
+    client_last_check = float(request.args.get('last_check', 0))
+    return jsonify({"update_available": last_data_update > client_last_check, 
+                   "last_update": last_data_update})
 
 def get_tmx_descriptions():
     """Fetch part descriptions from Google Sheets."""
@@ -48,6 +56,8 @@ def gpg_redirect():
 @gpgtmx_bp.route("/gpginvoice", methods=["GET", "POST", "OPTIONS"])
 def gpginvoice():
     """Main route for displaying and handling GPG invoice data."""
+    global last_data_update
+
     if 'username' not in session:
         session['next'] = request.url
         return redirect(url_for("login"))
@@ -106,6 +116,7 @@ def gpginvoice():
 
             # Save back to Excel
             df.to_excel(excel_path, index=False, engine='openpyxl')
+            last_data_update = time.time()
 
             return jsonify({"success": True})
 
@@ -128,8 +139,10 @@ def gpginvoice():
 
     else:
         table_html = "<p>No data available</p>"
-
-    return render_template('gpginvoice.html', table_html=table_html, current_user=current_user)
+    current_time = time.time()
+    return render_template('gpginvoice.html', table_html=table_html, 
+                          current_user=current_user, 
+                          current_time=current_time)
 
 @gpgtmx_bp.route("/gpg_finish", methods=["POST"])
 def gpg_finish():
