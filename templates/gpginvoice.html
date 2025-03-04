@@ -102,6 +102,8 @@
             {{ table_html|safe }}
         </div>
 
+        <!-- Status message area -->
+        <div id="statusMessage" class="alert" style="display: none;"></div>
         
     </div>
 
@@ -195,7 +197,7 @@
     });
 
     if (csvData.length <= 1) {
-        alert("No data to export.");
+        showStatusMessage("No data to export.", "danger");
         return;
     }
 
@@ -203,15 +205,48 @@
     const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
-    // Create a temporary download link
+    // Create a download link for the user
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.setAttribute('download', 'qbo_import.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    // Send the CSV content directly to the backend
+    fetch('/gpg_finish', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            csvContent: csvContent
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showStatusMessage(data.message, "success");
+        } else {
+            showStatusMessage(data.error, "danger");
+        }
+    })
+    .catch(error => {
+        showStatusMessage("Error: " + error.message, "danger");
+    });
 }
 
+function showStatusMessage(message, type) {
+    const statusDiv = document.getElementById('statusMessage');
+    statusDiv.textContent = message;
+    statusDiv.className = 'alert alert-' + type;
+    statusDiv.style.display = 'block';
+    
+    // Hide after 5 seconds
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, 5000);
+}
     </script>
 </body>
 </html>

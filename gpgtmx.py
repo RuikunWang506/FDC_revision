@@ -2,6 +2,8 @@ from flask import Blueprint, redirect, url_for, request, jsonify, session, rende
 from flask_cors import CORS
 import pandas as pd
 import os
+import shutil
+from datetime import datetime
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from config import Config
@@ -139,3 +141,48 @@ def gpginvoice():
         table_html = "<p>No data available</p>"
 
     return render_template('gpginvoice.html', table_html=table_html, current_user=current_user)
+
+@gpgtmx_bp.route("/gpg_finish", methods=["POST"])
+def gpg_finish():
+    """Handle the 'Finish' button click to archive data and prepare for QBO import."""
+    try:
+        # Get CSV content from request
+        data = request.get_json()
+        csv_content = data.get('csvContent')
+        
+        if not csv_content:
+            return jsonify({"error": "No CSV content provided"}), 400
+        
+        # Source and destination paths
+        src_excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
+        archive_dir = os.path.join('output', 'gpginvoice', 'gpg_qbo_exports_archive')
+        os.makedirs(archive_dir, exist_ok=True)
+        
+        # Generate filename with date
+        current_date = datetime.now().strftime("%m_%d_%Y")
+        dst_excel_path = os.path.join(archive_dir, f'gpg_orders_{current_date}.xlsx')
+        
+        # Save the CSV content to a file
+        qbo_csv_path = os.path.join('output', 'gpginvoice', 'qbo_import.csv')
+        with open(qbo_csv_path, 'w', newline='') as f:
+            f.write(csv_content)
+        
+        if not os.path.exists(src_excel_path):
+            return jsonify({"error": "No gpg_orders.xlsx file exists to archive"}), 404
+        
+        # Load the existing Excel file with engine specified
+        with pd.ExcelWriter(src_excel_path, engine='openpyxl', mode='a') as writer:
+            # Read the CSV and write it to a new sheet in the Excel file
+            qbo_df = pd.read_csv(qbo_csv_path)
+            qbo_df.to_excel(writer, sheet_name='for_qbo', index=False)
+        
+        # Move the updated file to the archive location
+        shutil.move(src_excel_path, dst_excel_path)
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Excel file archived as {dst_excel_path} with QBO data added"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
