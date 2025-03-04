@@ -56,22 +56,6 @@ def gpginvoice():
     excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
     os.makedirs(os.path.dirname(excel_path), exist_ok=True)
 
-    # Handle CORS for browser extensions
-    allowed_origins = [
-        "https://admin.genuinepartsgiant.com",
-        "chrome-extension://ffpfoekiibonojnidahneaclopidhoon"
-    ]
-    
-    if request.method == "OPTIONS":
-        origin = request.headers.get("Origin")
-        allowed_origin = origin if origin in allowed_origins else "null"
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", allowed_origin)
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
-
     if request.method == "POST":
         try:
             data = request.get_json()
@@ -79,9 +63,10 @@ def gpginvoice():
 
             new_rows = []
             for item in data['lineItems']:
-                order_number = data['orderNumber']
-                part_number = item['partNumber'].strip()
-                
+                order_number = data['orderNumber'].strip()
+                part_number = item['partNumber'].strip().upper()
+                line_number = str(item['lineNumber']).strip()
+
                 # Determine Manufacturer Prefix
                 if order_number.startswith("CH"):
                     prefixed_part_number = f"Honda:{part_number}"
@@ -90,19 +75,19 @@ def gpginvoice():
                 else:
                     prefixed_part_number = part_number  # No prefix
 
-                # Get description (if exists)
                 description = descriptions.get(prefixed_part_number, '')
 
                 new_rows.append([
                     order_number,
                     data['orderDate'],
-                    item['lineNumber'],
+                    line_number,
                     part_number,
-                    description,  # Now includes description lookup
+                    description,
                     item['qty'],
                     item['price'].replace('$', '').strip()
                 ])
 
+            # Load existing data
             if os.path.exists(excel_path):
                 df = pd.read_excel(excel_path, engine='openpyxl')
             else:
@@ -110,9 +95,16 @@ def gpginvoice():
 
             df_new = pd.DataFrame(new_rows, columns=df.columns)
 
-            # Merge and save
+            # Normalize Data for Deduplication
+            for col in ['orderNumber', 'Part Number', 'Line Number']:
+                df[col] = df[col].astype(str).str.strip().str.upper()
+                df_new[col] = df_new[col].astype(str).str.strip().str.upper()
+
+            # Merge & Remove Duplicates
             df = pd.concat([df, df_new], ignore_index=True)
-            df = df[['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Description', 'Quantity', 'Price']]
+            df = df.drop_duplicates(subset=['orderNumber', 'Part Number', 'Line Number'], keep='first')
+
+            # Save back to Excel
             df.to_excel(excel_path, index=False, engine='openpyxl')
 
             return jsonify({"success": True})
@@ -124,7 +116,6 @@ def gpginvoice():
     if os.path.exists(excel_path):
         df = pd.read_excel(excel_path, engine='openpyxl')
 
-        # Ensure descriptions are mapped correctly
         descriptions = get_tmx_descriptions()
         df['Description'] = df.apply(lambda row: descriptions.get(
             f"Honda:{row['Part Number']}" if row['orderNumber'].startswith("CH") else
@@ -133,8 +124,6 @@ def gpginvoice():
         ), axis=1)
 
         df = df[['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Description', 'Quantity', 'Price']]
-        
-        # Convert DataFrame to HTML and add action column
         table_html = df.to_html(classes='table table-striped', table_id='gpgTable', index=False)
 
     else:
@@ -146,43 +135,53 @@ def gpginvoice():
 def gpg_finish():
     """Handle the 'Finish' button click to archive data and prepare for QBO import."""
     try:
-        # Get CSV content from request
         data = request.get_json()
         csv_content = data.get('csvContent')
-        
+
         if not csv_content:
             return jsonify({"error": "No CSV content provided"}), 400
-        
-        # Source and destination paths
+
         src_excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')
         archive_dir = os.path.join('output', 'gpginvoice', 'gpg_qbo_exports_archive')
         os.makedirs(archive_dir, exist_ok=True)
-        
-        # Generate filename with date
-        current_date = datetime.now().strftime("%m_%d_%Y")
-        dst_excel_path = os.path.join(archive_dir, f'gpg_orders_{current_date}.xlsx')
-        
-        # Save the CSV content to a file
-        qbo_csv_path = os.path.join('output', 'gpginvoice', 'qbo_import.csv')
-        with open(qbo_csv_path, 'w', newline='') as f:
-            f.write(csv_content)
-        
+
+        current_datetime = datetime.now()
+        base_filename = f'gpg_orders_{current_datetime.strftime("%m_%d_%Y")}'
+        count = 0
+        dst_excel_path = os.path.join(archive_dir, f'{base_filename}.xlsx')
+
+        while os.path.exists(dst_excel_path):
+            count += 1
+            dst_excel_path = os.path.join(archive_dir, 
+                f'{base_filename}_{current_datetime.strftime("%H%M%S")}_{count}.xlsx')
+
         if not os.path.exists(src_excel_path):
             return jsonify({"error": "No gpg_orders.xlsx file exists to archive"}), 404
-        
-        # Load the existing Excel file with engine specified
+
+        import io
+        qbo_df = pd.read_csv(io.StringIO(csv_content))
+
+        # Ensure unique sheet name
+        sheet_name = 'for_qbo'
+        if os.path.exists(src_excel_path):
+            existing_sheets = pd.ExcelFile(src_excel_path).sheet_names
+            version = 1
+            temp_sheet_name = sheet_name
+            while temp_sheet_name in existing_sheets:
+                temp_sheet_name = f"{sheet_name}_v{version}"
+                version += 1
+            sheet_name = temp_sheet_name
+
+        # Save to a new sheet
         with pd.ExcelWriter(src_excel_path, engine='openpyxl', mode='a') as writer:
-            # Read the CSV and write it to a new sheet in the Excel file
-            qbo_df = pd.read_csv(qbo_csv_path)
-            qbo_df.to_excel(writer, sheet_name='for_qbo', index=False)
-        
-        # Move the updated file to the archive location
+            qbo_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
         shutil.move(src_excel_path, dst_excel_path)
-        
+
         return jsonify({
-            "success": True, 
-            "message": f"Excel file archived as {dst_excel_path} with QBO data added"
+            "success": True,
+            "message": f"Excel file archived as {os.path.basename(dst_excel_path)} with QBO data added to sheet '{sheet_name}'"
         })
-        
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
