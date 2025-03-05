@@ -380,12 +380,27 @@ def get_sql_data(style_list):
         conn_oms_ef.close()
 
 def create_pivot_table(data):
-    # Existing code...
-    df = pd.DataFrame(data, columns=['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
-                               'quantity', 'ocean', 'selling_price', 'pcsBox',
-                               'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
-                               'last_activity', 'Created_dt', 'in_oms_status'])
+    if not data:
+        return []
     
+    # Create DataFrame without specifying columns - let pandas infer them
+    df = pd.DataFrame(data)
+    
+    # Rename columns to match expected structure
+    # If we have 16 columns
+    if len(df.columns) == 16:
+        df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
+                     'quantity', 'ocean', 'selling_price', 'pcsBox',
+                     'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
+                     'last_activity', 'Created_dt']
+    # If we have 17 columns
+    elif len(df.columns) == 17:
+        df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
+                     'quantity', 'ocean', 'selling_price', 'pcsBox',
+                     'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
+                     'last_activity', 'Created_dt', 'in_oms_status']
+    
+    # Continue with existing functionality
     # Extract base SKU pattern (2 letters + 4 numbers) from SKU_no_color
     df['base_sku'] = df['SKU_no_color'].str.extract(r'([A-Za-z]{1,2}\d{4})')
     

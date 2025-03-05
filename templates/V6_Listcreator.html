@@ -309,9 +309,9 @@
                 {{ error_message }}
             </div>
         {% endif %}
-        <h1 style="color: red;">GRAND OPENDING</h1>
-        <h2 style="color: red;">超强无敌终极目录创造器6.0 版本</h2>
-        <h5>your input was: {{list_input}}</h5>
+        <h2 style="color: red; text-align:center">List Creator 6.0 </h2>
+        <h2 style="color: red; text-align:center">超强无敌终极目录创造器6.0 版本</h2>
+        {% if list_input %}<h5>your input was: {{list_input}}</h5>{%endif%}
         <form method="POST" action="{{ url_for('v6_listcreator.index') }}">
             <div class="form-group">
                 <input type="text" class="form-control" id="list_input" name="list_input" placeholder="Styles or Dropboxlink">
@@ -347,10 +347,12 @@
                 {# Rest of your existing card body code #}
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px;">
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
                             {{ style_group[0].style }}
                             {% if session.get('verified_' + style_group[0].style) %}
                                 <span class="badge badge-success px-2">IN_OMS</span>
+                            {% else %}
+                                <span class="badge badge-warning px-2">NOT_IN_OMS</span>
                             {% endif %}
                         </div>
                         <textarea class="description-input mx-3 form-control" placeholder="Enter description"
@@ -566,7 +568,6 @@
         </div>
     </div>
 </div>
-{% include 'footer.html' %}
 
 <script>
     const columnConfig = {
@@ -740,16 +741,17 @@ function exportList() {
         const price = priceElement ? priceElement.innerText.trim() : "N/A";
         
         const selectedImage = card.querySelector(`input[name="image_option_${style}"]:checked`);
-        if (!selectedImage) {
-            alert('Please select an image for the style: ' + style);
-            return;
+        let imagePath = '/static/no_image_available.jpg'; // Default fallback
+        
+        if (selectedImage) {
+            imagePath = selectedImage.value;
         }
 
         const rowData = {
             style: style,
             description: description,
             price: price,
-            image: selectedImage.value,
+            image: imagePath,
             rows: []
         };
 

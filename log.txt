@@ -41628,3 +41628,21 @@ WHERE prod_cd = 'N2149 BR';
 2025-03-05 15:01:48,309 - INFO - ***yeti*** processing regular input: ['T3305']
 2025-03-05 15:02:39,584 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
 2025-03-05 15:02:41,233 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-05 15:09:47,995 - INFO - ***yeti*** processing regular input: ['M1121']
+2025-03-05 15:09:53,604 - INFO - ***yeti*** processing regular input: ['T3305']
+2025-03-05 15:09:56,960 - INFO - ***yeti*** processing regular input: ['T3305']
+2025-03-05 15:12:02,883 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-05 15:12:03,838 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-05 15:12:05,809 - INFO - ***yeti*** processing regular input: ['T3305']
+2025-03-05 15:13:25,822 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-05 15:13:28,339 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-05 15:13:34,799 - INFO - ***yeti*** processing regular input: ['T3305']
+2025-03-05 15:15:02,019 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-05 15:15:03,207 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 133.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-05 15:15:05,299 - INFO - ***yeti*** processing regular input: ['T3305']
+2025-03-05 15:15:15,677 - INFO - ***yeti*** processing regular input: ['T3305', 'M1121']
+2025-03-05 15:15:20,783 - INFO - ***yeti*** processing regular input: ['T3305', 'M1121', 'M8888']
+2025-03-05 15:18:26,480 - INFO - ***yeti*** processing regular input: ['T3305', 'M1121', 'M8888']
+2025-03-05 15:18:31,108 - ERROR - Image not found: D:/static/no_image_available.jpg
+2025-03-05 15:19:08,736 - INFO - ***yeti*** processing regular input: ['T3305', 'M1121', 'M8888']
+2025-03-05 15:19:10,869 - ERROR - Image not found: D:/static/no_image_available.jpg
