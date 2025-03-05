@@ -318,10 +318,12 @@
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
+        {% if not list_input %}
         <div class="form-group">
             <label for="random_strings_input"><h6>Paste your raw list, can be from excel, seperator is comma "," or new line "enter</p></h6></label>
             <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5"></textarea>
         </div>
+        {% endif %}
         {% if list_input %}
         
         {%endif%}
@@ -385,7 +387,7 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                            <button type="button" class="btn btn-success btn-sm" onclick="addRow(this)">Add Row</button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
                         </div>
         
                         <div class="col-6">

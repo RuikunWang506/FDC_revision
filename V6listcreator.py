@@ -123,78 +123,81 @@ def index():
     if request.method == 'POST':
         list_input = request.form.get('list_input')
         session['original_input'] = list_input  # Store the original input
-
-
-
+        
         if 'dropbox' in list_input.lower():
             result = list_from_dropbox(list_input, current_user)
             if isinstance(result, dict) and 'error' in result:
                 error_message = result['error']  # Capture the error message
                 return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
-
+        
             style_list, dropbox_images = result  # Unpack the result correctly
         else:
             style_list = list_from_origin(list_input, current_user)
-
+        
         if style_list:
             image_urls = get_images_for_selection(style_list)  # Get images for all styles
             descriptions = {}
-             # Verify styles in database
-            conn_str = f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}'
-            conn = pyodbc.connect(conn_str)
-            cursor = conn.cursor()
-
-            style_list_str = ",".join([f"'{style}'" for style in style_list])
-            verify_query = f"""
-            SELECT DISTINCT ALT_CD 
-            FROM dbo.inv 
-            WHERE ALT_CD IN ({style_list_str})
-            """
             
-            cursor.execute(verify_query)
-            verified_styles = [row[0].strip() for row in cursor.fetchall()]
-
-            cursor.close()
-            conn.close()
-            for style in verified_styles:
-                session[f'verified_{style.strip()}'] = True
-
-                
+            # Get database data
+            data = get_sql_data(style_list)  # Fetch style data
+            
+            # Create a set of styles found in the database
+            db_styles = set()
+            if data:
+                for row in data:
+                    sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
+                    if sku_match:
+                        base_sku = sku_match.group(1).upper()
+                        db_styles.add(base_sku)
+                        # Set session variable for verified styles
+                        session[f'verified_{base_sku}'] = True
+            
+            # Handle styles not found in database by adding placeholder data
+            missing_styles = []
             for style in style_list:
-                
-                description = get_description_from_mysql(style)  # Fetch description for each style
+                if style not in db_styles:
+                    missing_styles.append(style)
+                    # Add placeholder data for database missing styles with in_oms tag
+                    placeholder_data = [
+                        ('N/A',        # DatabaseName
+                        f'{style}BK',  # SKU (adding BK color)
+                        style,         # SKU_no_color
+                        0, 0, 0, 0,    # in_stock, some_one_ordered, quantity, ocean
+                        999.0,         # selling_price (set to 999)
+                        0, 0,          # pcsBox, unit_weight
+                        'BK',          # color (default to BK)
+                        0, 0, 0,       # item dimensions
+                        'N/A', 'N/A',  # last_activity, Created_dt
+                        'Not in OMS')  # in_oms tag
+                    ]
+                    if data:
+                        data.extend(placeholder_data)
+                    else:
+                        data = placeholder_data
+            
+            # Get descriptions for all styles
+            for style in style_list:
+                description = get_description_from_mysql(style)
                 descriptions[style] = description
                 if description == "No description available":
-                    missing_descriptions.append(style)  # Collect styles with missing descriptions
-
-            # If there are missing descriptions, store them in the session
-            if missing_descriptions:
-                session['missing_descriptions'] = missing_descriptions
-                return render_template('v6_listcreator.html', 
-                    current_user=current_user, 
-                    missing_descriptions=missing_descriptions,
-                    image_urls=image_urls,
-                    dropbox_images=dropbox_images,
-                    list_input=list_input
-)
-            # Continue with your existing logic...
-            data = get_sql_data(style_list)  # Fetch style data
-
+                    missing_descriptions.append(style)
+            
+            # Continue with pivot table creation if we have data
             if data:
-                pivot_data = create_pivot_table(data)  # Create pivot table
-
+                pivot_data = create_pivot_table(data)
+                
                 # Prepare the context for rendering
                 context = {
                     'current_user': current_user,
                     'data': data,
                     'pivot_data': pivot_data,
                     'image_urls': image_urls,
-                    'dropbox_images': dropbox_images,  # Pass the SKU-to-image mapping
-                    'descriptions': descriptions,  # Pass the descriptions to the template
-                    'error_message': error_message  # Pass error message if any
+                    'dropbox_images': dropbox_images,
+                    'descriptions': descriptions,
+                    'error_message': error_message
                 }
-
-                return render_template('v6_listcreator.html', **context,list_input=list_input)
+                
+                return render_template('v6_listcreator.html', **context, list_input=list_input)
 
     # Render default view if no POST request
     return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
@@ -377,37 +380,39 @@ def get_sql_data(style_list):
         conn_oms_ef.close()
 
 def create_pivot_table(data):
-
-    # Create DataFrame
+    # Existing code...
     df = pd.DataFrame(data, columns=['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
-                                     'quantity', 'ocean', 'selling_price', 'pcsBox',
-                                     'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
-                                     'last_activity', 'Created_dt'])
-
+                               'quantity', 'ocean', 'selling_price', 'pcsBox',
+                               'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
+                               'last_activity', 'Created_dt', 'in_oms_status'])
+    
     # Extract base SKU pattern (2 letters + 4 numbers) from SKU_no_color
     df['base_sku'] = df['SKU_no_color'].str.extract(r'([A-Za-z]{1,2}\d{4})')
     
     # Filter rows where base_sku matches the original pattern
     df = df[df['base_sku'].notna()]
-
+    
+    # Get unique base_skus that we found in the database
+    found_skus = df['base_sku'].unique()
+    
     # Sort by base_sku first
     df = df.sort_values('base_sku')
-
+    
     # Convert numeric columns to integers
     integer_columns = ['quantity', 'ocean', 'pcsBox',
-                       'item_length', 'item_width', 'item_height']
+                     'item_length', 'item_width', 'item_height']
     df[integer_columns] = df[integer_columns].fillna(0).astype(int)
-
+    
     # Create dimensions column
     df['dimensions'] = df['item_length'].astype(str) + ' x ' + df['item_width'].astype(str) + ' x ' + df['item_height'].astype(str)
-
+    
     # Group by base_sku instead of SKU_no_color
     style_groups = df.groupby('base_sku')
-
+    
     style_cards = []
     for style, group in style_groups:
         most_common_price = round(group['selling_price'].mode().iloc[0], 2)
-
+        
         style_data = group.pivot_table(
             values=['quantity', 'ocean', 'pcsBox', 'dimensions'],
             index=['color'],
@@ -418,16 +423,16 @@ def create_pivot_table(data):
                 'dimensions': 'first'
             }
         ).reset_index()
-
+        
         style_data['style'] = style
         style_data['selling_price'] = most_common_price
-
+        
         bk_rows = style_data[style_data['color'].str.startswith('BK')]
         other_rows = style_data[~style_data['color'].str.startswith('BK')]
         style_data = pd.concat([bk_rows, other_rows]).reset_index(drop=True)
-
+        
         style_cards.append(style_data.to_dict('records'))
-
+    
     return style_cards
 
 def get_images_from_dropbox(dropbox_path):
