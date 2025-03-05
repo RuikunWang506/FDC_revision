@@ -78,10 +78,39 @@
         }
 
     </style>
+     <style>
+        .dropzone {
+            width: 1000px;
+            height: 200px;
+            border: 2px dashed #007bff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            color: #007bff;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .dropzone.dragover {
+            background-color: #e9ecef;
+        }
+        .hidden {
+            display: none;
+        }
+        .btn-convert {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
     {% include 'navbar.html' %}
-
+    
     <div class="container">
         <h2>GPG Invoice Data</h2>
         
@@ -96,7 +125,7 @@
             <button class="btn btn-finish" onclick="finishAndExportQBO()">Finish</button>
 
         </div>
-
+        
         <!-- Original Table -->
         <div class="table-container">
             {{ table_html|safe }}
@@ -106,7 +135,19 @@
         <div id="statusMessage" class="alert" style="display: none;"></div>
         
     </div>
+    <div class="container">
+        <h2>Upload AllPendingOrders PDF</h2>
 
+        <div class="dropzone" id="dropzone">Drag & Drop PDF Here or Click to Upload</div>
+        <div id="fileNameDisplay" style="margin-top: 10px; color: #007bff; text-align: center;"></div>
+        <input type="file" id="fileInput" accept="application/pdf" class="hidden">
+        <button class="btn-convert" id="convertBtn" disabled>Convert & Download</button>
+
+        <div id="downloadSection" class="hidden">
+            <p>Download your processed file:</p>
+            <a id="downloadLink" class="btn btn-primary" download>Download Excel</a>
+        </div>
+    </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -265,6 +306,63 @@ function showStatusMessage(message, type) {
                 })
                 .catch(error => console.error('Error checking for updates:', error));
         }, 3000);  // Check every 5 seconds
+    </script>
+    <script>
+        let uploadedFile = null;
+
+        document.getElementById("dropzone").addEventListener("click", () => {
+            document.getElementById("fileInput").click();
+        });
+
+        document.getElementById("fileInput").addEventListener("change", (event) => {
+    uploadedFile = event.target.files[0];
+    document.getElementById("convertBtn").disabled = !uploadedFile;
+    document.getElementById("fileNameDisplay").textContent = uploadedFile.name;
+});
+
+        document.getElementById("dropzone").addEventListener("dragover", (event) => {
+            event.preventDefault();
+            document.getElementById("dropzone").classList.add("dragover");
+        });
+
+        document.getElementById("dropzone").addEventListener("dragleave", () => {
+            document.getElementById("dropzone").classList.remove("dragover");
+        });
+
+        document.getElementById("dropzone").addEventListener("drop", (event) => {
+    event.preventDefault();
+    document.getElementById("dropzone").classList.remove("dragover");
+
+    if (event.dataTransfer.files.length > 0) {
+        uploadedFile = event.dataTransfer.files[0];
+        document.getElementById("convertBtn").disabled = false;
+        document.getElementById("fileNameDisplay").textContent = uploadedFile.name;
+    }
+});
+
+        document.getElementById("convertBtn").addEventListener("click", () => {
+            if (!uploadedFile) return alert("Please upload a file first!");
+
+            let formData = new FormData();
+            formData.append("file", uploadedFile);
+
+            fetch("/upload_pdf", {
+                method: "POST",
+                body: formData,
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Error processing file");
+                return response.blob();
+            })
+            .then(blob => {
+                let url = window.URL.createObjectURL(blob);
+                let a = document.getElementById("downloadLink");
+                a.href = url;
+                a.download = "pivot_table.xlsx";
+                document.getElementById("downloadSection").classList.remove("hidden");
+            })
+            .catch(error => alert(error.message));
+        });
     </script>
 </body>
 </html>

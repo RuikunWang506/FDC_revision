@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, url_for, request, jsonify, session, render_template, make_response, current_app
+from flask import Blueprint, redirect, url_for, request, jsonify, session, render_template, make_response, current_app, send_file
 from flask_cors import CORS
 import pandas as pd
 import os
@@ -8,6 +8,10 @@ import time
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from config import Config
+import fitz
+import io
+import re
+
 
 gpgtmx_bp = Blueprint('gpgtmx', __name__, template_folder='templates')
 last_data_update = time.time()
@@ -197,4 +201,126 @@ def gpg_finish():
         })
 
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+@gpgtmx_bp.route("/upload_pdf", methods=["POST"])
+def upload_pdf():
+    """Handle PDF upload, extract data, and generate a pivot table in Excel."""
+    try:
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"error": "No file uploaded"}), 400
+        
+        # Read PDF and extract text from each page
+        pdf_text = []
+        with fitz.open(stream=file.read(), filetype="pdf") as doc:
+            for page in doc:
+                pdf_text.append(page.get_text("text"))
+        
+        extracted_data = []
+        current_order = None
+        
+        # Regex for part numbers
+        part_number_pattern = re.compile(r"\b\d{5}-[A-Z0-9]{3}-[A-Z0-9]{3}\b")
+        
+        print("Processing PDF content...")
+        
+        for text in pdf_text:
+            lines = text.split("\n")
+            
+            for i, line in enumerate(lines):
+                line = line.strip()
+                
+                # Detect Order Number
+                if "Order#" in line:
+                    current_order = line.split("Order#")[1].strip()
+                    print(f"Detected Order #: {current_order}")
+                
+                # Look for part numbers
+                part_match = part_number_pattern.search(line)
+                if part_match and current_order:
+                    part_no = part_match.group()
+                    line_no = i  # Define line_no here at the part number detection level
+                    
+                    # Search for quantity in the next few lines
+                    # Looking for a line that contains just a number (quantity)
+                    for j in range(i+1, min(i+8, len(lines))):
+                        qty_line = lines[j].strip()
+                        # Check if the line is just a number (the quantity)
+                        if qty_line.isdigit():
+                            quantity = int(qty_line)
+                            
+                            # Then look for price in the next line
+                            if j+1 < len(lines) and j+2 < len(lines):
+                                # Check if next line has a decimal (price)
+                                if '.' in lines[j+1].strip():
+                                    price = lines[j+1].strip()
+                                    subtotal = lines[j+2].strip()  # The second price is the subtotal
+                                    
+                                    extracted_data.append([current_order, part_no, line_no, quantity, subtotal])
+                                    print(f"Extracted: {current_order}, {part_no}, {quantity}, {subtotal}")
+                                    break
+
+                    if quantity is not None:
+                        extracted_data.append([current_order, part_no, line_no, quantity, subtotal])
+                        print(f"Extracted: {current_order}, {part_no}, {quantity}, {subtotal}")
+                    else:
+                        print(f"Skipping: {part_no} (No valid quantity line found)")
+
+        print("Extracted Data:", extracted_data)
+
+        if not extracted_data:
+            return jsonify({"error": "No valid order data extracted from PDF."}), 400
+
+        # Create DataFrame from extracted data
+        df = pd.DataFrame(extracted_data, columns=["Order #", "Part No", "Line No", "Qty", "Subtotal"])
+        print("DataFrame Head:")
+        print(df.head())
+
+        # Create Pivot Table: Sum of Qty per Part No
+        if not df.empty:
+            pivot_df = df.pivot_table(index="Part No", values="Qty", aggfunc="sum")
+            print("Pivot Table Head:")
+            print(pivot_df.head())
+        else:
+            return jsonify({"error": "Failed to create pivot table, no valid data found."}), 400
+
+        # Convert the pivot table DataFrame to an Excel file in-memory
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            pivot_df.to_excel(writer, sheet_name="Pivot Table")
+            
+            # Get the workbook and sheet
+            workbook = writer.book
+            worksheet = writer.sheets['Pivot Table']
+            
+            # Set column A width to 15 inches (approximately 120 units in Excel's width system)
+            worksheet.column_dimensions['A'].width = 20
+            
+            # Set page setup for 4x6 inches with 0.25 inch margins
+            worksheet.page_setup.paperSize = worksheet.PAPERSIZE_LETTER
+            worksheet.page_margins.left = 0.25
+            worksheet.page_margins.right = 0.25
+            worksheet.page_margins.top = 0.25
+            worksheet.page_margins.bottom = 0.25
+            
+            # Set custom page size (4x6 inches)
+            worksheet.page_setup.paperHeight = "6in"
+            worksheet.page_setup.paperWidth = "4in"
+
+        output.seek(0)
+        print("Excel File Created Successfully with custom formatting!")
+        print("Excel File Created Successfully!")
+
+        # Send the Excel file for download
+        try:
+            response = send_file(output, as_attachment=True, download_name="pivot_table.xlsx",
+                                 mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            print("File Sent Successfully!")
+            return response
+        except Exception as e:
+            print("Error Sending File:", str(e))
+            return jsonify({"error": "Error generating download file."}), 500
+
+    except Exception as e:
+        print(f"General Error: {e}")
         return jsonify({"error": str(e)}), 500
