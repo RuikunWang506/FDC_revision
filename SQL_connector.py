@@ -250,26 +250,39 @@ def generate_purchase_history(input_parts):
             CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS log_date,
             pl.pur_num,
             pl.hdl_chg
-        FROM [omsdata_FDC].[dbo].[plog] pl
+        FROM [dbo].[plog] pl
         WHERE {combined_condition_purchase}
         AND pl.hdl_chg > 0
         ORDER BY pl.log_date DESC
     """
 
-    purchase_rows = []
-    conn_fdc = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}')
-    cursor = conn_fdc.cursor()
-    cursor.execute(purchase_query, purchase_params)
-    rows = cursor.fetchall()
+    all_purchase_rows = []
     
-    if rows:
-        purchase_df = pd.DataFrame.from_records(rows, columns=['SKU', 'PO DATE', 'PO/Container', 'Quantity'])
+    # Connect to both databases and fetch data
+    for db_name, db in [(database_fdc, 'omsdata_FDC'), (database_oms_ef, 'oms_EF')]:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            cursor.execute(purchase_query, purchase_params)
+            rows = cursor.fetchall()
+            
+            # Add database source column
+            display_db_name = 'FDC' if db == 'omsdata_FDC' else 'E_FAS'
+            rows_with_db = [(display_db_name,) + tuple(row) for row in rows]
+            all_purchase_rows.extend(rows_with_db)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error connecting to {db}: {e}")
+    
+    if all_purchase_rows:
+        purchase_df = pd.DataFrame.from_records(all_purchase_rows, columns=['Database', 'SKU', 'PO DATE', 'PO/Container', 'Quantity'])
         # Convert Quantity column to integer
         purchase_df['Quantity'] = pd.to_numeric(purchase_df['Quantity'], errors='coerce').fillna(0).astype(int)
         purchase_html = purchase_df.to_html(
             index=False,
             classes="table table-bordered table-striped",
-            table_id="purchase_table"  # Removed float_format since we're using integers
+            table_id="purchase_table"
         )
     else:
         purchase_html = "<p>No purchase history found.</p>"

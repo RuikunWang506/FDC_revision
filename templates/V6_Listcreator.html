@@ -723,7 +723,6 @@ function removeZeroStockAndOceanRows() {
 // Export functions
 function setImageSizeAndExport(size) {
     selectedImageSize = size;
-    $('#imageSizeModal').modal('hide');
     exportList();
 }
 
@@ -889,6 +888,11 @@ $('#editDescriptionModal').on('shown.bs.modal', function () {
 </script>
 <script>
 let selectedSize = null;
+$('#imageSizeModal').on('shown.bs.modal', function() {
+    if (selectedSize === null) {
+        selectedSize = 1800;
+    }
+});
 
 function selectImageSize(size) {
     selectedSize = size;

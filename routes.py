@@ -473,8 +473,8 @@ def register_routes(app):
             else:
                 insert_new_product(cursor, sku, style, location)
                 connection.commit()
-                app.logger.info(f"New product inserted with SKU={sku}, Style={style}, Location='{location}'.")
-
+                
+            app.logger.info(f"New product inserted with Style={style}, Location='{location}'.")
             return jsonify({'success': True, 'message': 'Location updated successfully.'})
 
         except Error as e:
