@@ -8,12 +8,31 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </head>
+<style>
+
+.rainbow-text {
+  background-image: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: rainbow-move 5s linear infinite;
+  background-size: 400% 100%;
+}
+
+@keyframes rainbow-move {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 400% 50%; }
+}
+
+
+</style>
 <body>
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
+                <h1 class="text-center rainbow-text">Good Luck in Vegas !!!!</h1>
+
                 <h2 class="text-center">FDC Toolkit Login</h2>
-                <a href="/location_service" class="text-center"><h3>Quick_location</h3></a>
+                
                 <form method="POST" action="{{ url_for('login') }}">
                     <div class="form-group">
                         <label for="username">Username</label>

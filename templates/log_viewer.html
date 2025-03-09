@@ -37,7 +37,6 @@
             cursor: not-allowed;
         }
 
-
         /* New styles for highlighted text */
         .highlight-blue {
             color: blue;
@@ -64,12 +63,60 @@
             align-items: center; /* Center vertically */
             text-align: center; /* Ensure text is centered */
             padding-bottom: 10px;
-
         }
 
         h3 {
             margin: 0; /* Remove default margins */
             font-size: 1.2em; /* Adjust font size */
+        }
+        
+        /* Search box styles */
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        
+        #search-input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 16px;
+        }
+        
+        #search-button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #search-button:hover {
+            background-color: #0056b3;
+        }
+        
+        #clear-search {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #clear-search:hover {
+            background-color: #5a6268;
+        }
+        
+        .highlight-search {
+            background-color: yellow;
+            color: black;
         }
     </style>
 </head>
@@ -81,6 +128,14 @@
         <h3 class="highlight-purple">Action is Purple</h3>
         <h3 class="highlight-red">Order and SKU are Red</h3>
     </div>
+    
+    <!-- Search Box -->
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search logs...">
+        <button id="search-button">Search</button>
+        <button id="clear-search">Clear</button>
+    </div>
+    
     <div id="log-container">
         {% for log_class, line in log_lines %}
             <div class="log-entry {{ log_class }}">
@@ -112,6 +167,62 @@
 
     <script>
         const logContainer = document.getElementById("log-container");
+        const searchInput = document.getElementById("search-input");
+        const searchButton = document.getElementById("search-button");
+        const clearSearchButton = document.getElementById("clear-search");
+        
+        // Store all log entries for filtering
+        const allLogEntries = Array.from(document.querySelectorAll('.log-entry'));
+        
+        // Search function
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                // If search term is empty, show all entries
+                allLogEntries.forEach(entry => {
+                    entry.style.display = '';
+                    entry.innerHTML = entry.innerHTML.replace(/<mark class="highlight-search">(.*?)<\/mark>/g, "$1");
+                });
+                return;
+            }
+            
+            // Filter and highlight entries
+            allLogEntries.forEach(entry => {
+                const textContent = entry.textContent.toLowerCase();
+                const htmlContent = entry.innerHTML;
+                
+                if (textContent.includes(searchTerm)) {
+                    entry.style.display = ''; // Show matching entries
+                    
+                    // Highlight the matching text
+                    const regex = new RegExp(searchTerm, 'gi');
+                    entry.innerHTML = htmlContent.replace(regex, match => 
+                        `<mark class="highlight-search">${match}</mark>`
+                    );
+                } else {
+                    entry.style.display = 'none'; // Hide non-matching entries
+                }
+            });
+        }
+        
+        // Clear search function
+        function clearSearch() {
+            searchInput.value = '';
+            allLogEntries.forEach(entry => {
+                entry.style.display = '';
+                entry.innerHTML = entry.innerHTML.replace(/<mark class="highlight-search">(.*?)<\/mark>/g, "$1");
+            });
+        }
+        
+        // Event listeners
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        clearSearchButton.addEventListener('click', clearSearch);
 
         function connectEventSource() {
             const evtSource = new EventSource("/log/stream");
@@ -133,8 +244,16 @@
 
                         logEntry.innerHTML = formatted_line;
                         
+                        // Add to our stored array of entries
+                        allLogEntries.unshift(logEntry);
+                        
                         // Prepend the new line at the top
                         logContainer.insertBefore(logEntry, logContainer.firstChild);
+                        
+                        // If we're currently searching, apply the filter to the new entry
+                        if (searchInput.value.trim() !== '') {
+                            performSearch();
+                        }
                     }
                 } catch (e) {
                     console.error("Failed to parse log line:", e);

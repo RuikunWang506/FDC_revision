@@ -474,8 +474,8 @@ def register_routes(app):
                 insert_new_product(cursor, sku, style, location)
                 connection.commit()
                 
-            app.logger.info(f"New product inserted with Style={style}, Location='{location}'.")
             return jsonify({'success': True, 'message': 'Location updated successfully.'})
+
 
         except Error as e:
             app.logger.error(f"Database error during location update: {e}")
@@ -486,7 +486,7 @@ def register_routes(app):
                 cursor.close()
             if connection and connection.is_connected():
                 connection.close()
-                                            
+                                    
 
     @app.route("/order_lookup", methods=["GET", "POST"])
     @app.route("/order_lookup/<string:order_number>", methods=["GET"])

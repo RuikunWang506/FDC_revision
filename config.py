@@ -36,6 +36,5 @@ class Config:
         'wh':'1234',
         'tmx':'qwe123',
         'warehouse':'1234'
-
     }
     
