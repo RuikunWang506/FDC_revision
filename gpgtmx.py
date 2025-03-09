@@ -193,11 +193,16 @@ def gpg_finish():
         with pd.ExcelWriter(src_excel_path, engine='openpyxl', mode='a') as writer:
             qbo_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
+        # Move the file to archive
         shutil.move(src_excel_path, dst_excel_path)
+        
+        # Update the last_data_update timestamp
+        global last_data_update
+        last_data_update = time.time()
 
         return jsonify({
             "success": True,
-            "message": f"Excel file archived as {os.path.basename(dst_excel_path)} with QBO data added to sheet '{sheet_name}'"
+            "message": f"Excel file archived as {os.path.basename(dst_excel_path)} with QBO data added to sheet '{sheet_name}'. Data table has been cleared."
         })
 
     except Exception as e:
