@@ -47,6 +47,7 @@ from util import resize_image  # Import the master resizing function
 from PIL import Image
 
 from V6listcreator import v6_listcreator_bp
+from lori_automation import lori_automation_bp
 
 
 
@@ -69,6 +70,8 @@ def register_routes(app):
     app.register_blueprint(dailytodo)
     app.register_blueprint(v6_listcreator_bp)
     app.register_blueprint(gpgtmx_bp)
+    app.register_blueprint(lori_automation_bp)
+
 
     app.permanent_session_lifetime = timedelta(days=30)
 

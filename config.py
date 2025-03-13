@@ -16,7 +16,8 @@ class Config:
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
     LOG_FILE = r'C:/FDC_FLASK_APP/log.txt'  # Log file path for better accessibility
     TMX_sheet = 'https://docs.google.com/spreadsheets/d/1nNLDB4LruCniq6MiKXlBPeDhNu9IkoX3pZdNLUSPka8/edit?gid=2057295499#gid=2057295499'
-
+    APIKEY = "85eceab058de496484e6ecf40ad0dc70"
+    APIPASS = "4bbd6743190b4cb3a950c2cebf7a2783"
     
     # Users dictionary
     USERS = {

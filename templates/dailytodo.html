@@ -182,7 +182,7 @@
                     <tr>
                         <td>
                             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Flag_of_Hong_Kong.svg/32px-Flag_of_Hong_Kong.svg.png" alt="USA Flag" style="width: 20px; height: 20px; margin-right: 1px; vertical-align: middle;">
-                            <img src="https://www.temu.com/favicon.ico" alt="Temu Logo" style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;">TEMU USA
+                            <img src="https://www.temu.com/favicon.ico" alt="Temu Logo" style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;">TEMU HK
                         </td>
                         <td><input type="number" name="TEMU_HK_labels" id="TEMU_HK_labels"></td>
                         <td><input type="checkbox" name="TEMU_HK_print" id="TEMU_HK_print"></td>
@@ -501,7 +501,7 @@
             const day = date.getDay();
             
             // If weekend (0 = Sunday, 6 = Saturday)
-            if (day === 0 || day === 6) {
+            if (day === 7 || day === 6) {
                 // Show alert
                 alert('Weekends are not available for selection');
                 // Reset to previous valid date

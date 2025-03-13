@@ -464,6 +464,7 @@
                             {% endif %}
                         </td>
                         <td>
+                            <input type="hidden" name="style_{{ loop.index }}" value="{{ style }}">
                             <a href="/item_lookup/{{ style.lower() }}" target="_blank">
                                 {{ style }}
                                 {% if session.get('verified_' + style) %}
@@ -476,7 +477,6 @@
                             <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">MINI SATCHEL</button>
                             <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">BACKPACK</button>
                             <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
-
                         </td>
                         <td>
                             <select name="description_{{ loop.index }}" class="form-control">
@@ -556,6 +556,14 @@
                             <td>{{ style_group[0].style }}</td>
                             <td>{{ descriptions[style_group[0].style] }}</td>
                             <td><input type="text" class="form-control" name="new_desc_{{ style_group[0].style }}"></td>
+                            <td>
+                                <input type="hidden" name="style_{{ loop.index }}" value="{{ style }}">
+                                <select name="description_{{ loop.index }}" class="form-control">
+                                    <option value="">Select a description</option>
+                                    {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "BELT BAG", "BUCKET BAG", "CROSSBODY", "CROSSBODY 2-IN-1", "CROSSBODY SET", "FLAP BAG", "FRAME BAG", "GIFT SET", "HOBO", "JELLY BAG", "LARGE CROSSBODY", "LARGE NYLON CROSSBODY", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME BAG", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "NYLON BACKPACK", "NYLON CROSSBODY", "NYLON HOBO", "PATENT BAG", "PATENT MINI SATCHEL", "SATCHEL", "SLING", "STRAW BAG", "STRAW CROSSBODY", "TOTE", "WALLET"] %}
+                                        <option value="{{ option }}">{{ option }}</option>
+                                    {% endfor %}
+                                </select>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -589,15 +597,25 @@ function enlargeImage(imgElement, url) {
     var popup = document.getElementById("imagePopup");
     var popupImg = document.getElementById("popupImage");
     
-    const card = imgElement.closest('.card');
-    allImages = Array.from(card.querySelectorAll('.img-thumbnail'));
-    allRadios = Array.from(card.querySelectorAll('input[type="radio"]'));
-    currentImageIndex = allImages.indexOf(imgElement);
+    // Get parent container (either card or modal)
+    const container = imgElement.closest('.card') || imgElement.closest('.modal');
     
+    if (container) {
+        allImages = Array.from(container.querySelectorAll('.img-thumbnail, img[onclick*="enlargeImage"]'));
+        allRadios = Array.from(container.querySelectorAll('input[type="radio"]'));
+        currentImageIndex = allImages.indexOf(imgElement);
+    } else {
+        allImages = [imgElement];
+        allRadios = [];
+        currentImageIndex = 0;
+    }
+    
+    // Add double click handler
     imgElement.addEventListener('dblclick', function() {
         popupImg.src = url;
         popup.style.display = "flex";
     });
+    
     document.addEventListener('keydown', handleKeyPress);
 }
 
@@ -835,6 +853,19 @@ new Sortable(document.getElementById('sortableDescriptions'), {
 <script>
 // Initialize sortable table when modal opens
 $('#editDescriptionModal').on('shown.bs.modal', function () {
+    const modal = document.getElementById('editDescriptionModal');
+    const selects = modal.querySelectorAll('select[name^="description_"]');
+    
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const style = row.cells[0].textContent.trim();
+            const newDescInput = row.querySelector(`input[name="new_desc_${style}"]`);
+            if (newDescInput) {
+                newDescInput.value = this.value;
+            }
+        });
+    });
     const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
     
     const comparer = (idx, asc) => (a, b) => {
@@ -862,33 +893,34 @@ $('#editDescriptionModal').on('shown.bs.modal', function () {
 </script>
     <script>
     document.getElementById('submitDescriptions').addEventListener('click', function() {
-        const updates = [];
-        const rows = document.querySelectorAll('#editDescriptionModal tbody tr');
-        
-        rows.forEach(row => {
-            const style = row.cells[0].textContent;
-            const newDesc = row.querySelector('input').value.trim();
-            if (newDesc) {
-                updates.push({ style: style, description: newDesc });
-            }
-        });
-
-        if (updates.length > 0) {
-            fetch('/update_descriptions_bulk', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ updates: updates })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                }
-            });
+    const updates = [];
+    // Get all rows from the modal table
+    const rows = document.querySelectorAll('#editDescriptionModal tbody tr');
+    
+    rows.forEach(row => {
+        const style = row.cells[0].textContent.trim();
+        const newDesc = row.querySelector('input[name="new_desc_' + style + '"]').value.trim();
+        if (newDesc) {
+            updates.push({ style: style, description: newDesc });
         }
     });
+
+    if (updates.length > 0) {
+        fetch('/update_descriptions_bulk', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ updates: updates })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+});
 </script>
 <script>
 let selectedSize = null;
@@ -1085,6 +1117,7 @@ function exportWithSelectedSize() {
             document.getElementById('list_input').addEventListener('input', function() {
                 updateItemCount(this.value);
             });
+            
         </script>
 </body>
 </html>

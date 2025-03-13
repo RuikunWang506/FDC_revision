@@ -6,6 +6,9 @@
     <title>Custom SQL Query and GPT Chat</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
     <style>
         body {
             padding: 15px;
@@ -176,12 +179,15 @@
     </div>
 
     {% if excel_html %}
-        <table id="excel_table">
-            <tbody>
-            {{ excel_html | safe }}
-            </tbody>
-        </table>
-    {% endif %}
+    <div class="text-right mb-3">
+        <button id="exportToExcel" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Export to Excel
+        </button>
+    </div>
+    <div id="table-container">
+        {{ excel_html | safe }}
+    </div>
+{% endif %}
 
     {% if error_message %}
         <div class="container">
@@ -263,6 +269,29 @@
     
 
 </script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+function exportTableToExcel() {
+    const timestamp = new Date().toISOString().slice(0,10);
+    const filename = `query_results_${timestamp}.xlsx`;
+    
+    // Get the first table in the container
+    const tables = document.getElementsByClassName('dataframe');
+    const table = tables[1];  // Select the second table
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    // Convert table to worksheet
+    const ws = XLSX.utils.table_to_sheet(table);
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Query Results');
+    
+    // Generate and download file
+    XLSX.writeFile(wb, filename);
+}
+
+// Add click handler for export button
+document.getElementById('exportToExcel').addEventListener('click', exportTableToExcel);
+</script>
 </body>
 </html>

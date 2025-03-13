@@ -100,13 +100,32 @@ def index():
         if style_list:
             image_urls = get_images_for_selection(style_list)
             descriptions = {}
+            data = get_sql_data(style_list)
+            db_styles = set()
+            if data:
+                for row in data:
+                    sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
+                    if sku_match:
+                        base_sku = sku_match.group(1).upper()
+                        db_styles.add(base_sku)
+                        session[f'verified_{base_sku}'] = True
+            # Handle styles not found in database
+            for style in style_list:
+                if style not in db_styles:
+                    placeholder_data = [
+                        ('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 'BK', 
+                        0, 0, 0, 'N/A', 'N/A', 'Not in OMS')
+                    ]
+                    if data:
+                        data.extend(placeholder_data)
+                    else:
+                        data = placeholder_data            
             for style in style_list:
                 description = get_description_from_mysql(style)
                 descriptions[style] = description
                 if description == "No description available":
                     missing_descriptions.append(style)
 
-            data = get_sql_data(style_list)
             if data:
                 pivot_data = create_pivot_table(data)
                 context = {
@@ -181,7 +200,13 @@ def index():
                 descriptions[style] = description
                 if description == "No description available":
                     missing_descriptions.append(style)
-            
+            if missing_descriptions:
+                return render_template('v6_listcreator.html',
+                                    current_user=current_user,
+                                    missing_descriptions=missing_descriptions,
+                                    image_urls=image_urls,
+                                    dropbox_images=dropbox_images,
+                                    list_input=list_input)    
             # Continue with pivot table creation if we have data
             if data:
                 pivot_data = create_pivot_table(data)
@@ -206,27 +231,18 @@ def index():
 @v6_listcreator_bp.route('/update_descriptions', methods=['POST'])
 def update_descriptions():
     descriptions = {}
-    missing_descriptions = session.get('missing_descriptions', [])
     original_input = session.get('original_input', '')
 
-    # Collect all style names that were updated
-    style_names = []
-    for key in request.form:
+    # Collect all style descriptions from form
+    for key, value in request.form.items():
         if key.startswith('description_'):
             style_index = key.split('_')[1]
-            description = request.form[key]
-            style_name = missing_descriptions[int(style_index) - 1]
-            descriptions[style_name] = description
-            style_names.append(style_name)
+            style = request.form.get(f'style_{style_index}', '')
+            if style:
+                descriptions[style] = value.upper()
+                update_description_in_db(style, value.upper())
 
-    # Update database for all styles and store verification status
-    for style_name, description in descriptions.items():
-        update_description_in_db(style_name, description)
-        current_app.logger.info(f"****** updated description for style {style_name} with: {description}")
-
-    session.pop('missing_descriptions', None)
-    
-    # Return to index with original input
+    # Redirect with the original input as a query parameter
     return redirect(url_for('v6_listcreator.index', list_input=original_input))
 
 
