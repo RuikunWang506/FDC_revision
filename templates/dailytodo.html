@@ -248,13 +248,13 @@
             <button type="button" id="saveButton" class="btn btn-primary">Submit</button>
         </form>
     </div>
-
-    {% if current_user == 'yeti' %}
     <div class="container my-5">
-        <h2 class="mb-4">Quick Access Links</h2>
         <button class="btn btn-success btn-block mb-4" onclick="window.location.href='/online_audit'" aria-label="Open audit tool">
             Audit tool
         </button>
+    </div>
+    {% if current_user == 'yeti' %}
+    <div class="container my-5">
         <button class="btn btn-primary btn-block mb-4" onclick="openAllLinks()" aria-label="Open all seller dashboard links">
             Open All Links
         </button>

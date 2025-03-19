@@ -82,19 +82,28 @@
             <h2>Sticker Maker</h2>
             <div class="textarea-container">
                 <div class="form-group">
-                    <label for="sku">SKU:</label>
+                    <label for="sku">SKU:</label><br>
+                    <label for="sku">N1237-S  (no space)</label>
                     <textarea id="sku" class="form-control" name="sku">{{ sku }}</textarea>
                 </div>
                 <div class="form-group">
-                    <label for="barcode">Barcode:</label>
+                    <label for="barcode">Barcode:</label><br>
+                    <label for="barcode">
+                        <a href="https://eancheck.com/" target="_blank">Check</a>
+                    </label>
+
                     <textarea id="barcode" class="form-control" name="barcode">{{ barcode }}</textarea>
                 </div>
                 <div class="form-group">
-                    <label for="quantity">Quantity:</label>
+                    <label for="quantity">Quantity:</label><br>
+                    <label for="quantity">100</label>
+
                     <textarea id="quantity" class="form-control" name="quantity">{{ quantity }}</textarea>
                 </div>
                 <div class="form-group" style="flex: 2;">
-                    <label for="input_data">Paste your list here:</label>
+                    <label for="input_data">Paste your list here:</label><br>
+                    <label for="input_data">one paste</label>
+
                     <textarea id="input_data" class="form-control" name="input_data" rows="14">{{ input_data }}</textarea>
                 </div>
             </div>

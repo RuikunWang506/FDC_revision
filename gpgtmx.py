@@ -55,7 +55,10 @@ def get_tmx_descriptions():
 
 @gpgtmx_bp.route("/gpg")
 def gpg_redirect():
-    return redirect(url_for("gpginvoice"))
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for("login"))
+    return redirect(url_for("gpgtmx.gpginvoice"))
 
 @gpgtmx_bp.route("/gpginvoice", methods=["GET", "POST", "OPTIONS"])
 def gpginvoice():
@@ -101,9 +104,13 @@ def gpginvoice():
                     item['price'].replace('$', '').strip()
                 ])
 
-            # Load existing data
+            # Load existing data with proper file handling
             if os.path.exists(excel_path):
-                df = pd.read_excel(excel_path, engine='openpyxl')
+                try:
+                    with pd.ExcelFile(excel_path) as xls:
+                        df = pd.read_excel(xls, engine='openpyxl')
+                except PermissionError:
+                    return jsonify({"error": "File is currently in use. Please try again."}), 503
             else:
                 df = pd.DataFrame(columns=['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Description', 'Quantity', 'Price'])
 
@@ -118,31 +125,39 @@ def gpginvoice():
             df = pd.concat([df, df_new], ignore_index=True)
             df = df.drop_duplicates(subset=['orderNumber', 'Part Number', 'Line Number'], keep='first')
 
-            # Save back to Excel
-            df.to_excel(excel_path, index=False, engine='openpyxl')
-            last_data_update = time.time()
+            # Save back to Excel with explicit file closing
+            try:
+                with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False)
+                last_data_update = time.time()
+            except PermissionError:
+                return jsonify({"error": "Cannot save file - it is being used by another process."}), 503
 
             return jsonify({"success": True})
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    # Load existing data
+    # Load existing data for GET request
     if os.path.exists(excel_path):
-        df = pd.read_excel(excel_path, engine='openpyxl')
+        try:
+            with pd.ExcelFile(excel_path) as xls:
+                df = pd.read_excel(xls, engine='openpyxl')
+            
+            descriptions = get_tmx_descriptions()
+            df['Description'] = df.apply(lambda row: descriptions.get(
+                f"Honda:{row['Part Number']}" if row['orderNumber'].startswith("CH") else
+                f"Hyundai:{row['Part Number']}" if row['orderNumber'].startswith("CU") else
+                row['Part Number'], ''
+            ), axis=1)
 
-        descriptions = get_tmx_descriptions()
-        df['Description'] = df.apply(lambda row: descriptions.get(
-            f"Honda:{row['Part Number']}" if row['orderNumber'].startswith("CH") else
-            f"Hyundai:{row['Part Number']}" if row['orderNumber'].startswith("CU") else
-            row['Part Number'], ''
-        ), axis=1)
-
-        df = df[['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Description', 'Quantity', 'Price']]
-        table_html = df.to_html(classes='table table-striped', table_id='gpgTable', index=False)
-
+            df = df[['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Description', 'Quantity', 'Price']]
+            table_html = df.to_html(classes='table table-striped', table_id='gpgTable', index=False)
+        except PermissionError:
+            table_html = "<p>Data file is currently in use. Please refresh the page.</p>"
     else:
         table_html = "<p>No data available</p>"
+        
     current_time = time.time()
     return render_template('gpginvoice.html', table_html=table_html, 
                           current_user=current_user, 
@@ -170,7 +185,7 @@ def gpg_finish():
         while os.path.exists(dst_excel_path):
             count += 1
             dst_excel_path = os.path.join(archive_dir, 
-                f'{base_filename}_{current_datetime.strftime("%H%M%S")}_{count}.xlsx')
+                f'{base_filename}_{count}.xlsx')
 
         if not os.path.exists(src_excel_path):
             return jsonify({"error": "No gpg_orders.xlsx file exists to archive"}), 404
@@ -180,16 +195,21 @@ def gpg_finish():
 
         # Ensure unique sheet name
         sheet_name = 'for_qbo'
-        if os.path.exists(src_excel_path):
-            existing_sheets = pd.ExcelFile(src_excel_path).sheet_names
-            version = 1
-            temp_sheet_name = sheet_name
-            while temp_sheet_name in existing_sheets:
-                temp_sheet_name = f"{sheet_name}_v{version}"
-                version += 1
-            sheet_name = temp_sheet_name
 
-        # Save to a new sheet
+        # Check if the sheet already exists and remove it before adding the new one
+        if os.path.exists(src_excel_path):
+            with pd.ExcelFile(src_excel_path) as xls:
+                existing_sheets = xls.sheet_names
+                
+            if sheet_name in existing_sheets:
+                # Load the workbook, remove the existing sheet, and save
+                from openpyxl import load_workbook
+                wb = load_workbook(src_excel_path)
+                if sheet_name in wb.sheetnames:
+                    del wb[sheet_name]
+                wb.save(src_excel_path)
+
+        # Save to the fixed sheet name
         with pd.ExcelWriter(src_excel_path, engine='openpyxl', mode='a') as writer:
             qbo_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
@@ -252,7 +272,7 @@ def upload_pdf():
                         qty_line = lines[j].strip()
                         # Check if the line is just a number (the quantity)
                         if qty_line.isdigit():
-                            quantity = int(qty_line)
+                            quantity = int(qty_line/4)
                             
                             # Then look for price in the next line
                             if j+1 < len(lines) and j+2 < len(lines):

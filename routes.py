@@ -139,7 +139,8 @@ def register_routes(app):
                 
                 # Redirect TMX users to gpginvoice page
                 if username == 'tmx':
-                    return redirect(url_for("gpginvoice"))
+                    return redirect(url_for("gpgtmx.gpginvoice"))
+
                     
                 # For other users, redirect to stored next page or home
                 redirect_url = session.pop('next', url_for("home"))
