@@ -256,6 +256,7 @@
                 <button type="button" class="btn btn-warning mb-2" id="togglePcsBox" onclick="togglePcsBox()">Hide PCS/BOX</button>
                 <button type="button" class="btn btn-warning mb-2" id="toggleDimensions" onclick="toggleDimensions()">Hide Dimensions</button>
                 <button type="button" class="btn btn-info mb-2" onclick="selectNonDropboxImages()">No Dropbox Img</button>
+                
             </div>
             {% endif %}
             <ul>
@@ -273,6 +274,16 @@
             <div class="section-header" onclick="toggleSection('styles-section')">
                 <h5>Styles ({{ pivot_data|length }} styles / {{ list_input|count_dropbox_files if list_input else 0 }} pics)</h5>
                 <span class="collapse-icon">▼</span>
+                <div class="dropdown mb-2">
+                    <button class="btn btn-danger dropdown-toggle" type="button" id="sortDropdownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Sort Cards
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="sortDropdownButton">
+                        <a class="dropdown-item" href="#" onclick="sortCards('az')">Sort by Style A-Z</a>
+                        <a class="dropdown-item" href="#" onclick="sortCards('za')">Sort by Style Z-A</a>
+                        <a class="dropdown-item" href="#" onclick="sortCards('input')">Sort by Input Order</a>
+                    </div>
+                </div>
             </div>
             <div id="styles-section">
                 <ul id="style-list">
@@ -1118,6 +1129,75 @@ function exportWithSelectedSize() {
                 updateItemCount(this.value);
             });
             
+        </script>
+        <script>
+            // Store the original input order when page loads
+            let originalInputOrder = [];
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get the input string from the template variable
+                const listInput = "{{ list_input }}";
+                if (listInput) {
+                    // Split by comma and clean up each style
+                    originalInputOrder = listInput.split(',').map(s => s.trim().toUpperCase());
+                } else {
+                    // If no input, get styles from cards
+                    const cards = document.querySelectorAll('.card');
+                    cards.forEach(card => {
+                        const style = card.querySelector('.card-title').firstChild.textContent.trim();
+                        originalInputOrder.push(style);
+                    });
+                }
+            });
+        
+            function sortCards(sortType) {
+                const container = document.querySelector('.mt-4');
+                const cards = Array.from(container.querySelectorAll('.card'));
+                
+                if (cards.length === 0) return;
+                
+                // Sort the cards based on the selected sort type
+                cards.sort((a, b) => {
+                    const styleA = a.querySelector('.card-title').firstChild.textContent.trim().toUpperCase();
+                    const styleB = b.querySelector('.card-title').firstChild.textContent.trim().toUpperCase();
+                    
+                    if (sortType === 'az') {
+                        return styleA.localeCompare(styleB);
+                    } else if (sortType === 'za') {
+                        return styleB.localeCompare(styleA);
+                    } else if (sortType === 'input') {
+                        // Sort by original input order
+                        // Find the best match in the input list for each style
+                        let indexA = -1;
+                        let indexB = -1;
+                        
+                        // Look for exact matches first
+                        indexA = originalInputOrder.findIndex(s => s === styleA);
+                        indexB = originalInputOrder.findIndex(s => s === styleB);
+                        
+                        // If not found, look for partial matches (style contains input or input contains style)
+                        if (indexA === -1) {
+                            indexA = originalInputOrder.findIndex(s => 
+                                styleA.includes(s) || s.includes(styleA));
+                        }
+                        if (indexB === -1) {
+                            indexB = originalInputOrder.findIndex(s => 
+                                styleB.includes(s) || s.includes(styleB));
+                        }
+                        
+                        // If still not found, put at the end
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+                        
+                        return indexA - indexB;
+                    }
+                });
+                
+                // Reappend the cards in the new order
+                cards.forEach(card => {
+                    container.appendChild(card);
+                });
+            }
         </script>
 </body>
 </html>

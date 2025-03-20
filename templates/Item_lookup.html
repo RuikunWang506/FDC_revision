@@ -1306,4 +1306,73 @@ function closePopup(event) {
     }
 });
         </script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $('#excel_table').on('click', 'td:nth-child(4)', function() {
+                    var $cell = $(this);
+                    var $span = $cell.find('.editable');
+                    
+                    if (!$span.hasClass('editing')) {
+                        var currentText = $span.text().trim();
+                        if (currentText === '*') currentText = '';
+                        
+                        $span.addClass('editing').html(
+                            '<input type="text" value="' + currentText + '"/> ' +
+                            '<span class="edit-buttons">' +
+                            '<button class="save-btn">✔</button> ' +
+                            '<button class="cancel-btn">✖</button>' +
+                            '</span>'
+                        );
+                        $span.find('input').focus();
+                    }
+                });
+        
+                $('#excel_table').on('click', '.save-btn', function(e) {
+                    e.stopPropagation();
+                    var $editableSpan = $(this).closest('.editable');
+                    var newValue = $editableSpan.find('input').val().trim();
+        
+                    // Hide all hover messages on Save click
+                    $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
+        
+                    var sku = $editableSpan.closest('tr').find('td:nth-child(3)').text().trim() || '';
+                    var style = $editableSpan.closest('tr').find('td:nth-child(5)').text().trim() || '';
+        
+                    if (!sku || !style) {
+                        alert('SKU or Style is missing.');
+                        return;
+                    }
+        
+                    $.ajax({
+                        url: '/update_location',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ sku: sku, style: style, location: newValue }),
+                        success: function(response) {
+                            if (response.success) {
+                                $editableSpan.removeClass('editing').text(newValue || '');
+                                alert('Location updated successfully.');
+                            } else {
+                                alert('Error updating location: ' + response.message);
+                            }
+                        },
+                        error: function() {
+                            alert('An error occurred while updating the location.');
+                        }
+                    });
+                });
+        
+                $('#excel_table').on('click', '.cancel-btn', function(e) {
+                    e.stopPropagation();
+                    var $editableSpan = $(this).closest('.editable');
+                    var originalText = $editableSpan.find('input').val() || '';
+        
+                    // Hide all hover messages on Cancel click
+                    $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
+        
+                    $editableSpan.removeClass('editing').text(originalText);
+                });
+            });
+        </script>
+        
 </body></html>

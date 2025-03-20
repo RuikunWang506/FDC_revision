@@ -43325,3 +43325,289 @@ EXEC sp_executesql @sql, N'@search_param NVARCHAR(255), @search_param_prefix NVA
 2025-03-19 13:23:18,115 - INFO - [Download][loris_barcode]File exact_stickers_2025-03-19_13_23_16.pdf downloaded from barcode output
 2025-03-19 13:23:24,722 - INFO - Processing data in Loris tool kit for yeti
 2025-03-19 13:23:25,758 - INFO - [Download][loris_barcode]File exact_stickers_2025-03-19_13_23_24.pdf downloaded from barcode output
+2025-03-19 13:31:49,334 - INFO - ***xj*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 14:02:37,277 - INFO - ***yeti*** has logged in. IP: ***47.147.6.133***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 14:02:42,388 - INFO - ***yeti*** processing regular input: ['L1880', 'EN2209', 'GN2073', 'GN2375', 'GN2423', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'T3108', 'T3362', 'T3539', 'GT3543', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'N2413', 'N2414', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3453', 'T3510', 'T3558']
+2025-03-19 14:05:22,917 - ERROR - Image not found: D:/static/no_image_available.jpg
+2025-03-19 14:08:24,327 - INFO - ***yeti***__@@@search SKU@@@__ n2305
+2025-03-19 14:09:36,224 - INFO - ***yeti*** processing regular input: ['L1880', 'EN2209', 'GN2073', 'GN2375', 'GN2423', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'T3108', 'T3362', 'T3539', 'GT3543', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'N2413', 'N2414', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3453', 'T3510', 'T3558']
+2025-03-19 14:10:07,291 - ERROR - Image not found: D:/static/no_image_available.jpg
+2025-03-19 14:21:47,961 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 14:21:51,086 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-03-19 14:39:10,141 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:39:20,362 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:39:22,193 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 14:39:45,156 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:39:52,007 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:39:54,132 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 14:39:55,302 - INFO - ***yeti***__@@@checked boat page@@@
+2025-03-19 14:39:59,652 - INFO - ***yeti***__@@@search order@@@__ 1567
+2025-03-19 14:40:23,808 - INFO - Processing data in Loris tool kit for yeti
+2025-03-19 14:41:50,346 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:42:00,117 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:42:22,602 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 14:42:27,189 - INFO - ***yeti***__@@@checked boat page@@@
+2025-03-19 14:42:35,211 - INFO - ***yeti***___@@@Accessed@@@__Location Service
+2025-03-19 14:44:15,728 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:44:22,696 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 14:44:25,825 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:07:12,666 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:07:19,463 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:07:51,631 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:11:02,374 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:11:09,149 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:11:10,852 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:20:18,051 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:20:24,796 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:20:26,968 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:24:16,832 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:24:23,637 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:24:24,772 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:28:11,677 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:28:18,496 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:28:20,382 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:28:47,089 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:28:53,851 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:28:58,842 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:29:43,721 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:29:44,959 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:29:44,969 - INFO - Processing item lookup for: None
+2025-03-19 15:30:47,700 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:30:49,386 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:30:49,393 - INFO - Processing item lookup for: None
+2025-03-19 15:30:49,393 - INFO - Received POST request for789
+2025-03-19 15:30:55,100 - INFO - Processing item lookup for: t3305
+2025-03-19 15:30:55,100 - INFO - Received POST request for456
+2025-03-19 15:34:24,733 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:34:31,564 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:34:34,979 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:34:34,986 - INFO - Processing item lookup for: None
+2025-03-19 15:34:34,986 - INFO - Received POST request for789
+2025-03-19 15:34:37,634 - INFO - Processing item lookup for: t3305
+2025-03-19 15:34:37,635 - INFO - Received POST request for456
+2025-03-19 15:34:37,635 - INFO - Starting generate_excel with input: t3305
+2025-03-19 15:34:37,635 - INFO - Normalized user input: t3305
+2025-03-19 15:34:37,635 - INFO - Split input parts: ['t3305']
+2025-03-19 15:34:37,635 - INFO - Inventory condition: i.PROD_CD LIKE ?
+2025-03-19 15:34:37,635 - INFO - Inventory query params: ['t3305%']
+2025-03-19 15:34:37,635 - INFO - History condition: ol.prod_cd LIKE ?
+2025-03-19 15:34:37,635 - INFO - History query params: ['t3305%']
+2025-03-19 15:34:37,635 - INFO - Attempting to connect to database FDC
+2025-03-19 15:34:37,642 - INFO - Successfully connected to database FDC
+2025-03-19 15:34:37,642 - INFO - Attempting to connect to database oms_EF
+2025-03-19 15:34:37,649 - INFO - Successfully connected to database oms_EF
+2025-03-19 15:36:25,072 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:36:34,865 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:36:57,890 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:36:57,903 - INFO - Processing item lookup for: None
+2025-03-19 15:36:57,903 - INFO - Received POST request for789
+2025-03-19 15:37:01,041 - INFO - Processing item lookup for: t3305
+2025-03-19 15:37:01,041 - INFO - Received POST request for456
+2025-03-19 15:37:01,041 - INFO - Starting generate_excel with input: t3305
+2025-03-19 15:37:01,042 - INFO - Normalized user input: t3305
+2025-03-19 15:37:01,042 - INFO - Split input parts: ['t3305']
+2025-03-19 15:37:01,042 - INFO - Inventory condition: i.PROD_CD LIKE ?
+2025-03-19 15:37:01,042 - INFO - Inventory query params: ['t3305%']
+2025-03-19 15:37:01,042 - INFO - History condition: ol.prod_cd LIKE ?
+2025-03-19 15:37:01,043 - INFO - History query params: ['t3305%']
+2025-03-19 15:37:01,043 - INFO - Attempting to connect to database FDC
+2025-03-19 15:37:01,057 - INFO - Successfully connected to database FDC
+2025-03-19 15:37:01,057 - INFO - Attempting to connect to database oms_EF
+2025-03-19 15:37:01,063 - INFO - Successfully connected to database oms_EF
+2025-03-19 15:37:01,064 - INFO - Starting to query inventory data
+2025-03-19 15:37:01,064 - INFO - Processing database: omsdata_FDC
+2025-03-19 15:37:01,064 - INFO - Executing inventory query on omsdata_FDC
+2025-03-19 15:37:01,103 - INFO - Query executed successfully on omsdata_FDC
+2025-03-19 15:37:01,104 - INFO - Fetched 11 rows from omsdata_FDC
+2025-03-19 15:37:01,104 - INFO - Processing database: oms_EF
+2025-03-19 15:37:01,105 - INFO - Executing inventory query on oms_EF
+2025-03-19 15:37:01,123 - INFO - Query executed successfully on oms_EF
+2025-03-19 15:37:01,124 - INFO - Fetched 16 rows from oms_EF
+2025-03-19 15:37:01,124 - INFO - Combining query results
+2025-03-19 15:37:01,124 - INFO - Combined results: 27 rows
+2025-03-19 15:37:01,124 - INFO - Creating Excel workbook
+2025-03-19 15:37:01,125 - INFO - Adding headers to Excel
+2025-03-19 15:37:01,125 - INFO - Adding data to Excel
+2025-03-19 15:37:01,127 - INFO - Saving Excel file
+2025-03-19 15:37:01,127 - INFO - Saving to output\itemsearch_output\t3305.xlsx
+2025-03-19 15:37:01,147 - INFO - Excel file saved successfully
+2025-03-19 15:37:01,147 - INFO - Creating HTML table from Excel
+2025-03-19 15:37:01,172 - INFO - HTML table created
+2025-03-19 15:37:01,172 - INFO - Starting history query
+2025-03-19 15:37:01,172 - INFO - Executing history query
+2025-03-19 15:37:01,172 - INFO - Executing history query on omsdata_FDC
+2025-03-19 15:37:01,236 - INFO - History query executed successfully on omsdata_FDC
+2025-03-19 15:37:01,237 - INFO - Fetched 263 history rows from omsdata_FDC
+2025-03-19 15:37:01,238 - INFO - Executing history query on oms_EF
+2025-03-19 15:37:01,248 - INFO - History query executed successfully on oms_EF
+2025-03-19 15:37:01,250 - INFO - Fetched 156 history rows from oms_EF
+2025-03-19 15:37:01,250 - INFO - Total history rows: 419
+2025-03-19 15:37:01,250 - INFO - Creating history HTML table
+2025-03-19 15:37:01,264 - INFO - History HTML table created
+2025-03-19 15:37:01,264 - INFO - Generating purchase history
+2025-03-19 15:37:01,306 - INFO - Purchase history generated
+2025-03-19 15:37:01,306 - INFO - Returning results
+2025-03-19 15:37:01,306 - INFO - Closing database connections
+2025-03-19 15:38:20,679 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:38:27,484 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:39:01,250 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:39:02,547 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:39:02,560 - INFO - Processing item lookup for: None
+2025-03-19 15:39:02,560 - INFO - Received POST request for789
+2025-03-19 15:39:02,560 - INFO - User input is empty, rendering template without data
+2025-03-19 15:39:06,237 - INFO - Processing item lookup for: t3305
+2025-03-19 15:39:06,237 - INFO - Received POST request for456
+2025-03-19 15:39:06,237 - INFO - Calling SQL_connector.generate_excel with user_input: t3305
+2025-03-19 15:39:06,462 - INFO - SQL_connector.generate_excel returned: excel_html=True, history_html=True, purchase_html=True
+2025-03-19 15:39:06,463 - INFO - Processing excel_html to add Location and Update_Date columns
+2025-03-19 15:39:06,470 - INFO - Successfully converted HTML to DataFrame with 27 rows
+2025-03-19 15:39:06,471 - INFO - Extracted 27 SKUs from DataFrame
+2025-03-19 15:39:06,471 - INFO - Fetching locations for 27 SKUs
+2025-03-19 15:41:42,336 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:41:49,076 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:41:50,176 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:41:50,188 - INFO - Processing item lookup for: None
+2025-03-19 15:41:50,188 - INFO - Received POST request for789
+2025-03-19 15:41:50,188 - INFO - User input is empty, rendering template without data
+2025-03-19 15:41:55,776 - INFO - Processing item lookup for: t3305
+2025-03-19 15:41:55,776 - INFO - Received POST request for456
+2025-03-19 15:41:55,776 - INFO - Calling SQL_connector.generate_excel with user_input: t3305
+2025-03-19 15:41:56,006 - INFO - SQL_connector.generate_excel returned: excel_html=True, history_html=True, purchase_html=True
+2025-03-19 15:41:56,006 - INFO - Processing excel_html to add Location and Update_Date columns
+2025-03-19 15:41:56,014 - INFO - Successfully converted HTML to DataFrame with 27 rows
+2025-03-19 15:41:56,015 - INFO - Extracted 27 SKUs from DataFrame
+2025-03-19 15:41:56,015 - INFO - Fetching locations for 27 SKUs
+2025-03-19 15:41:56,015 - INFO - Attempting to connect to MySQL database for 11 SKUs
+2025-03-19 15:41:56,015 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:06,310 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:43:13,137 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:43:14,660 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:43:14,667 - INFO - Processing item lookup for: None
+2025-03-19 15:43:14,667 - INFO - Received POST request for789
+2025-03-19 15:43:14,667 - INFO - User input is empty, rendering template without data
+2025-03-19 15:43:17,292 - INFO - Processing item lookup for: m1121
+2025-03-19 15:43:17,292 - INFO - Received POST request for456
+2025-03-19 15:43:17,292 - INFO - Calling SQL_connector.generate_excel with user_input: m1121
+2025-03-19 15:43:17,486 - INFO - SQL_connector.generate_excel returned: excel_html=True, history_html=True, purchase_html=True
+2025-03-19 15:43:17,486 - INFO - Processing excel_html to add Location and Update_Date columns
+2025-03-19 15:43:17,492 - INFO - Successfully converted HTML to DataFrame with 10 rows
+2025-03-19 15:43:17,493 - INFO - Extracted 10 SKUs from DataFrame
+2025-03-19 15:43:17,493 - INFO - Fetching locations for 10 SKUs
+2025-03-19 15:43:17,493 - INFO - Attempting to connect to MySQL database for 5 SKUs
+2025-03-19 15:43:17,493 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:17,525 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:17,525 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:17,525 - INFO - Executing query: SELECT SKU, Location, Update_Date FROM products WHERE SKU IN ('m1121 br', 'm1121 pk', 'm1121 wt', 'm1121 st', 'm1121 bk')
+2025-03-19 15:43:17,540 - INFO - Fetched 5 location results
+2025-03-19 15:43:17,540 - INFO - Found 0 missing SKUs, trying with stripped SKUs
+2025-03-19 15:43:17,541 - INFO - MySQL connection closed
+2025-03-19 15:43:17,541 - INFO - Returning location dictionary with 5 entries
+2025-03-19 15:43:17,541 - INFO - Fetched 5 locations
+2025-03-19 15:43:17,544 - INFO - Converting DataFrame back to HTML
+2025-03-19 15:43:17,547 - INFO - Successfully converted DataFrame to HTML
+2025-03-19 15:43:17,547 - INFO - Preparing image and file information
+2025-03-19 15:43:17,547 - INFO - Search terms: ['m1121']
+2025-03-19 15:43:17,721 - INFO - Found 1 image files
+2025-03-19 15:43:17,722 - INFO - ***yeti***__@@@search SKU@@@__ m1121
+2025-03-19 15:43:17,722 - INFO - Rendering template with data
+2025-03-19 15:43:51,896 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,897 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,898 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,898 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,899 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,900 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,901 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,902 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,902 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,903 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,921 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,928 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,932 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,934 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,936 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,937 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:51,937 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,938 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,939 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:51,940 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:53,089 - INFO - Processing item lookup for: m1121
+2025-03-19 15:43:53,089 - INFO - Received POST request for456
+2025-03-19 15:43:53,089 - INFO - Calling SQL_connector.generate_excel with user_input: m1121
+2025-03-19 15:43:53,275 - INFO - SQL_connector.generate_excel returned: excel_html=True, history_html=True, purchase_html=True
+2025-03-19 15:43:53,275 - INFO - Processing excel_html to add Location and Update_Date columns
+2025-03-19 15:43:53,278 - INFO - Successfully converted HTML to DataFrame with 10 rows
+2025-03-19 15:43:53,279 - INFO - Extracted 10 SKUs from DataFrame
+2025-03-19 15:43:53,279 - INFO - Fetching locations for 10 SKUs
+2025-03-19 15:43:53,279 - INFO - Attempting to connect to MySQL database for 5 SKUs
+2025-03-19 15:43:53,279 - INFO - Attempting to connect to MySQL database at 192.168.254.30:3306
+2025-03-19 15:43:53,283 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:53,283 - INFO - Successfully connected to MySQL database
+2025-03-19 15:43:53,283 - INFO - Executing query: SELECT SKU, Location, Update_Date FROM products WHERE SKU IN ('m1121 br', 'm1121 pk', 'm1121 wt', 'm1121 st', 'm1121 bk')
+2025-03-19 15:43:53,285 - INFO - Fetched 5 location results
+2025-03-19 15:43:53,285 - INFO - Found 0 missing SKUs, trying with stripped SKUs
+2025-03-19 15:43:53,285 - INFO - MySQL connection closed
+2025-03-19 15:43:53,285 - INFO - Returning location dictionary with 5 entries
+2025-03-19 15:43:53,285 - INFO - Fetched 5 locations
+2025-03-19 15:43:53,287 - INFO - Converting DataFrame back to HTML
+2025-03-19 15:43:53,291 - INFO - Successfully converted DataFrame to HTML
+2025-03-19 15:43:53,291 - INFO - Preparing image and file information
+2025-03-19 15:43:53,291 - INFO - Search terms: ['m1121']
+2025-03-19 15:43:53,293 - INFO - Found 1 image files
+2025-03-19 15:43:53,294 - INFO - ***yeti***__@@@search SKU@@@__ m1121
+2025-03-19 15:43:53,294 - INFO - Rendering template with data
+2025-03-19 15:44:15,138 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:44:16,455 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:44:18,814 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-03-19 15:44:26,549 - INFO - ***yeti***__@@@mobile search@@@__ t3305
+2025-03-19 15:46:06,581 - INFO - ***yeti*** processing regular input: ['L1879', 'L1886', 'L1888', 'L1878']
+2025-03-19 15:46:16,607 - INFO - ***yeti*** processing regular input: ['L1879', 'L1886', 'L1888', 'L1878']
+2025-03-19 15:54:58,685 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:55:05,745 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 15:55:07,533 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 15:58:08,579 - INFO - ***yeti***__@@@search SKU@@@__ t3305
+2025-03-19 15:58:36,112 - INFO - ***yeti*** processing regular input: ['L1878']
+2025-03-19 16:03:10,386 - INFO - ***yeti*** processing regular input: ['N1223', 'T3305', 'N1265', 'T3355']
+2025-03-19 16:07:04,105 - INFO - ***yeti*** processing regular input: ['T3305', 'M1121']
+2025-03-19 16:11:44,333 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 17:32:07,068 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 17:32:21,739 - INFO - --------------------------------------------------------------------system restarted--------------------------------------------------------------------
+2025-03-19 18:30:03,723 - ERROR - Error fetching location data: HTTPConnectionPool(host='ip-api.com', port=80): Max retries exceeded with url: /json/65.49.1.84 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000023D65853FD0>: Failed to establish a new connection: [Errno 11002] getaddrinfo failed'))
+2025-03-19 21:40:47,975 - INFO - ***yeti*** has logged in. IP: ***47.147.6.133***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 22:38:29,241 - INFO - ***yeti*** has logged in. IP: ***47.147.6.133***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 22:38:35,152 - INFO - ***yeti*** processing regular input: ['L1648', 'ET3283', 'ET3443', 'L1689', 'M1154', 'S1517', 'T3557', 'T3512', 'T3321']
+2025-03-19 22:38:52,515 - INFO - ***yeti*** processing regular input: ['L1648', 'ET3283', 'ET3443', 'L1689', 'M1154', 'S1517', 'T3557', 'T3512', 'T3321']
+2025-03-19 22:43:16,820 - INFO - No SKUs provided to fetch_locations
+2025-03-19 22:43:21,426 - INFO - ***yeti***__@@@search SKU@@@__ l1689
+2025-03-19 22:44:42,606 - INFO - ***yeti*** processing regular input: ['L1880', 'EN2209', 'GN2073', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'GT3543', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'L1343-M', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3453', 'T3510', 'T3558', 'ET3283', 'ET3443', 'L1648', 'L1689', 'T3321', 'M1154', 'S1517', 'T3512', 'T3557']
+2025-03-19 22:44:58,400 - INFO - ***yeti***__@@@search SKU@@@__ l1880,en2209,gn2073,n2203,n2305,n2378,et3424,et3425,gt3543,n0735,n1460,n1930,s1336,n2150,l1343-m,n2340,s1110,s1439,s1480,s1518,s1521,s1458,s1459,t2777,t3319,t3352,t3453,t3510,t3558,et3283,et3443,l1648,l1689,t3321,m1154,s1517,t3512,t3557
+2025-03-19 23:22:56,662 - INFO - ***yeti*** has logged in. IP: ***47.147.6.133***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-19 23:23:25,029 - INFO - ***yeti*** processing regular input: ['L1880', 'T3453', 'EN2209', 'GN2073', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'L1689', 'T3321', 'GT3543', 'ET3283', 'ET3443', 'L1648', 'T3558', 'T3557', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'L1343-M', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'S1517', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3512', 'T3510', 'M1154']
+2025-03-19 23:28:32,184 - INFO - ***yeti*** processing regular input: ['L1880', 'T3453', 'EN2209', 'GN2073', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'L1689', 'T3321', 'GT3543', 'ET3283', 'ET3443', 'L1648', 'T3558', 'T3557', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'L1343-M', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'S1517', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3512', 'T3510', 'M1154']
+2025-03-19 23:30:07,140 - INFO - ***yeti*** processing regular input: ['L1880', 'T3453', 'EN2209', 'GN2073', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'L1689', 'T3321', 'GT3543', 'ET3283', 'ET3443', 'L1648', 'T3558', 'T3557', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'L1343-M', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'S1517', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3512', 'T3510', 'M1154']
+2025-03-19 23:31:44,693 - INFO - ***yeti*** processing regular input: ['L1880', 'T3453', 'EN2209', 'GN2073', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'L1689', 'T3321', 'GT3543', 'ET3283', 'ET3443', 'L1648', 'T3558', 'T3557', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'L1343-M', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'S1517', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3512', 'T3510', 'M1154']
+2025-03-19 23:32:16,893 - INFO - ***yeti*** processing regular input: ['L1880', 'T3453', 'EN2209', 'GN2073', 'N2203', 'N2305', 'N2378', 'ET3424', 'ET3425', 'L1689', 'T3321', 'GT3543', 'ET3283', 'ET3443', 'L1648', 'T3558', 'T3557', 'N0735', 'N1460', 'N1930', 'S1336', 'N2150', 'L1343-M', 'N2340', 'S1110', 'S1439', 'S1480', 'S1518', 'S1521', 'S1517', 'S1458', 'S1459', 'T2777', 'T3319', 'T3352', 'T3512', 'T3510', 'M1154']
+2025-03-20 00:02:43,876 - INFO - ***yeti*** processing regular input: ['EL0961', 'EM1136', 'EN1321', 'EN1345', 'EN1346', 'EN1876', 'EN1877', 'EN3007', 'ES1065', 'ES1324', 'ES1331', 'ET3136', 'ET3168', 'L1408', 'L1849', 'L6023', 'M1043', 'M1044', 'M1128', 'M1129', 'M1137', 'M1138', 'N0680', 'N0702', 'N0735', 'N0812', 'N0815', 'N1110', 'N1267', 'N1357', 'N1460', 'N1546', 'N1656', 'N1657', 'N1745', 'N1798', 'N1824', 'N1891', 'N1897', 'N1920', 'N1928', 'N1929', 'N1930', 'N1931', 'N1973', 'N1974', 'N1981', 'N2012', 'N2081', 'N2253', 'N3007', 'N5010', 'S1167', 'S1172', 'S1174', 'S1175', 'S1220', 'S1221', 'S1336', 'S1359', 'S1402', 'T2773', 'T2790', 'T2891', 'T2961', 'T3001', 'T3004', 'T3009', 'T3031', 'T3045', 'T3045R', 'T3055', 'T3056', 'T3057', 'T3058', 'T3122', 'T3123', 'T3132', 'T3133', 'T3134', 'T3135', 'T3146', 'T3147', 'T3148', 'T3153', 'T3156', 'T3161', 'T3163', 'T3164', 'T3178', 'T3179', 'T3184', 'T3185', 'T3186', 'T3200', 'T3222', 'T3249', 'T3342', 'T3343', 'T3346', 'T3350', 'T3375', 'T3378', 'T3418', 'T3420', 'T3421', 'T3545', 'T3557', 'T3558']
+2025-03-20 00:04:37,985 - INFO - ***yeti*** processing regular input: ['EL0961', 'EM1136', 'EN1321', 'EN1345', 'EN1346', 'EN1876', 'EN1877', 'EN3007', 'ES1065', 'ES1324', 'ES1331', 'ET3136', 'ET3168', 'L1408', 'L1849', 'L6023', 'M1043', 'M1044', 'M1128', 'M1129', 'M1137', 'M1138', 'N0680', 'N0702', 'N0735', 'N0812', 'N0815', 'N1110', 'N1267', 'N1357', 'N1460', 'N1546', 'N1656', 'N1657', 'N1745', 'N1798', 'N1824', 'N1891', 'N1897', 'N1920', 'N1928', 'N1929', 'N1930', 'N1931', 'N1973', 'N1974', 'N1981', 'N2012', 'N2081', 'N2253', 'N3007', 'N5010', 'S1167', 'S1172', 'S1174', 'S1175', 'S1220', 'S1221', 'S1336', 'S1359', 'S1402', 'T2773', 'T2790', 'T2891', 'T2961', 'T3001', 'T3004', 'T3009', 'T3031', 'T3045', 'T3045R', 'T3055', 'T3056', 'T3057', 'T3058', 'T3122', 'T3123', 'T3132', 'T3133', 'T3134', 'T3135', 'T3146', 'T3147', 'T3148', 'T3153', 'T3156', 'T3161', 'T3163', 'T3164', 'T3178', 'T3179', 'T3184', 'T3185', 'T3186', 'T3200', 'T3222', 'T3249', 'T3342', 'T3343', 'T3346', 'T3350', 'T3375', 'T3378', 'T3418', 'T3420', 'T3421', 'T3545', 'T3557', 'T3558']
+2025-03-20 00:07:10,434 - INFO - ***yeti***__@@@search SKU@@@__ el0961,em1136,en1321,en1345,en1346,en1876,en1877,en3007,es1065,es1324,es1331,et3136,et3168,l1408,l1849,l6023,m1043,m1044,m1128,m1129,m1137,m1138,n0680,n0702,n0735,n0812,n0815,n1110,n1267,n1357,n1460,n1546,n1656,n1657,n1745,n1798,n1824,n1891,n1897,n1920,n1928,n1929,n1930,n1931,n1973,n1974,n1981,n2012,n2081,n2253,n3007,n5010,s1167,s1172,s1174,s1175,s1220,s1221,s1336,s1359,s1402,t2773,t2790,t2891,t2961,t3001,t3004,t3009,t3031,t3045,t3045r,t3055,t3056,t3057,t3058,t3122,t3123,t3132,t3133,t3134,t3135,t3146,t3147,t3148,t3153,t3156,t3161,t3163,t3164,t3178,t3179,t3184,t3185,t3186,t3200,t3222,t3249,t3342,t3343,t3346,t3350,t3375,t3378,t3418,t3420,t3421,t3545,t3557,t3558
+2025-03-20 09:56:53,708 - INFO - ***yeti*** has logged in. IP: ***47.147.6.133***, Browser: Chrome Mobile iOS 134.0.6998, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 11:03:12,795 - INFO - ***yeti*** has logged in. IP: ***172.56.235.16***, Browser: Chrome Mobile iOS 134.0.6998, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 12:07:53,749 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 12:11:22,902 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 12:15:55,656 - INFO - ***yeti***__@@@search SKU@@@__ s1405
+2025-03-20 12:27:35,120 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 12:27:39,268 - INFO - ***yeti***__@@@search SKU@@@__ t3452
+2025-03-20 12:53:47,331 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 134.0.6998, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 12:53:56,160 - INFO - ***yeti***__@@@checked boat page@@@
+2025-03-20 13:56:30,133 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome Mobile iOS 134.0.6998, OS: iOS 18.3.0, Device: ***iPhone***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 13:56:34,027 - INFO - ***yeti***__@@@search SKU@@@__ s1431
+2025-03-20 14:02:05,709 - INFO - ***yeti***__@@@search SKU@@@__ s1460
+2025-03-20 14:04:40,512 - INFO - ***yeti***__@@@search SKU@@@__ s1460 bk
+2025-03-20 14:11:06,203 - INFO - ***yeti***__@@@search SKU@@@__ t3452
+2025-03-20 14:11:39,711 - INFO - ***yeti***__@@@search SKU@@@__ s1426
+2025-03-20 14:13:10,086 - INFO - ***yeti***__@@@search SKU@@@__ es1382
+2025-03-20 14:13:27,761 - INFO - ***yeti***__@@@search SKU@@@__ s1293
+2025-03-20 14:13:42,261 - INFO - ***yeti***__@@@search SKU@@@__ s1034
+2025-03-20 14:21:55,787 - INFO - ***yeti*** has logged in. IP: ***173.198.50.202***, Browser: Chrome 134.0.0, OS: Windows 10, Device: ***Other***, Method: POST, URL: http://www.fdcef.com/login, Referrer: https://www.fdcef.com/login
+2025-03-20 14:22:02,088 - INFO - ***yeti***__@@@search SKU@@@__ t3452
+2025-03-20 15:04:26,806 - INFO - ***yeti***__@@@search SKU@@@__ t3452
+2025-03-20 15:08:51,022 - INFO - ***yeti***__@@@search SKU@@@__ t3305
