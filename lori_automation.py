@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, send_file, session, redirect, url_for, current_app
-import os,re
+import os, re
 import io
 import json
 import requests
@@ -9,9 +9,101 @@ from PyPDF2 import PdfReader, PdfMerger
 from openpyxl import load_workbook
 from decimal import Decimal
 import zipfile
+import mysql.connector
+from mysql.connector import Error
+import pyodbc
 
 lori_automation_bp = Blueprint('lori_automation', __name__)
 color_dict = {"TL":"Teal","ABL":"ASHY BLUE","FLOWER":"FLOWER","BG":"BEIGE","BK":"BLACK","BL":"BLUE","BP":"BLUSH PINK","BR":"BROWN","CF":"COFFEE","CG":"COGNAC","CO":"CORAL","DM":"DENIM BLUE","DPL":"DARK PLUM","FU":"FUSCHIA","GN":"GREEN","GY":"GREY","KH":"KHAKI","LBL":"LIGHT BLUE","LV":"LAVENDER","MD":"MUSTARD","MV":"MAUVE","NV":"NAVY","OL":"OLIVE","OR":"ORANGE","OW":"OFF WHITE","PK":"PINK","PL":"PLUM","PP":"PURPLE","RD":"RED","TN":"TAN","TP":"TAUPE","TQ":"TEQUISE","WN":"WINE","WT":"WHITE","YL":"YELLOW","ST":"STONE"}
+
+# MySQL Database configuration
+db_config = {
+    'host': '192.168.254.30',
+    'port': 3306,
+    'user': 'yeti',
+    'password': 'qwe123',
+    'database': 'onlinedb'
+}
+
+# SQL Server configuration
+sql_server_config = {
+    'server': '192.168.254.204',
+    'database': 'omsdata_FDC',
+    'username': 'tristen',
+    'password': 'Fdc2022!!',
+    'driver': 'ODBC Driver 17 for SQL Server'
+}
+
+def get_db_connection():
+    """Establishes a connection to the MySQL database."""
+    try:
+        connection = mysql.connector.connect(**db_config)
+        if connection.is_connected():
+            return connection
+    except Error as e:
+        print(f"Error connecting to MySQL: {e}")
+    return None
+
+def get_sql_server_connection():
+    """Establishes a connection to the SQL Server database."""
+    try:
+        connection_string = f"DRIVER={sql_server_config['driver']};SERVER={sql_server_config['server']};DATABASE={sql_server_config['database']};UID={sql_server_config['username']};PWD={sql_server_config['password']}"
+        connection = pyodbc.connect(connection_string)
+        return connection
+    except pyodbc.Error as e:
+        print(f"Error connecting to SQL Server: {e}")
+    return None
+
+def get_sku_price(sku):
+    """Query the MySQL database for the list price of a specific SKU."""
+    connection = get_db_connection()
+    if connection is None:
+        return None
+    
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = "SELECT SKU, listprice FROM onlinedb.loris WHERE SKU = %s"
+        cursor.execute(query, (sku,))
+        result = cursor.fetchone()
+        return result
+    except Error as e:
+        print(f"Error querying MySQL database: {e}")
+        return None
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+def get_sku_sold_price(sku):
+    """Query the SQL Server database for the sold price of a specific SKU using fuzzy matching."""
+    connection = get_sql_server_connection()
+    if connection is None:
+        return None
+    
+    try:
+        cursor = connection.cursor()
+        # Use LIKE operator for fuzzy matching
+        query = """
+            SELECT TOP 1 ol.prod_cd, ol.unit_prs
+            FROM ord_log ol
+            JOIN customer c ON ol.cus_id = c.cus_id
+            WHERE ol.prod_cd LIKE ? AND ol.cus_id = '00868'
+            ORDER BY ol.olg_dt DESC
+        """
+        # Add wildcard for fuzzy matching
+        search_pattern = f"%{sku}%"
+        cursor.execute(query, (search_pattern,))
+        row = cursor.fetchone()
+        if row:
+            return {"prod_cd": row[0], "unit_prs": row[1]}
+        return None
+    except pyodbc.Error as e:
+        print(f"Error querying SQL Server database: {e}")
+        return None
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
 
 def extract_clean_address(text_content):
     ship_to_match = re.search(r"SHIP TO\s*:\s*\d*\s*(.*?)(?:TOTAL UNITS:|Ship to Arrive:)", text_content, re.DOTALL)
@@ -144,6 +236,48 @@ def process_pdf(pdf_content):
         'address': address
     }
 
+@lori_automation_bp.route("/process_skus", methods=["POST"])
+def process_skus():
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    sku_list = data.get('skus', '')
+    
+    if not sku_list:
+        return jsonify({'error': 'No SKUs provided'}), 400
+    
+    # Replace newlines with commas and then split by comma
+    sku_list = sku_list.replace('\n', ',')
+    skus = [sku.strip() for sku in sku_list.split(',')]
+    
+    # Prepare data for table format
+    table_data = []
+    
+    # Process each SKU
+    for sku in skus:
+        if not sku:  # Skip empty SKUs
+            continue
+        
+        # Query the MySQL database for the list price
+        price_info = get_sku_price(sku)
+        list_price = f"${price_info['listprice']}" if price_info and 'listprice' in price_info else "Not found"
+        
+        # Query the SQL Server database for the sold price
+        sold_price_info = get_sku_sold_price(sku)
+        sold_price = f"${sold_price_info['unit_prs']:.2f}" if sold_price_info and 'unit_prs' in sold_price_info else "No recent sales"
+        
+        # Add to table data
+        table_data.append({
+            "sku": sku,
+            "list_price": list_price,
+            "sold_price": sold_price
+        })
+    
+    # Return the data in a format that can be rendered as a table
+    return jsonify({'table_data': table_data})
+
+
 @lori_automation_bp.route("/lori_automation", methods=["GET", "POST"])
 def lori_automation():
     if 'username' not in session:
@@ -275,3 +409,154 @@ def send_to_shipstation():
     current_app.logger.info(f"Response Content: {response.text}")
     
     return jsonify(response.json())
+
+
+@lori_automation_bp.route("/download_database", methods=["GET"])
+def download_database():
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT SKU, listprice FROM onlinedb.loris;")
+        rows = cursor.fetchall()
+        df = pd.DataFrame(rows)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='loris')
+        output.seek(0)
+        return send_file(output, as_attachment=True,
+                         download_name="loris_database.xlsx",
+                         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@lori_automation_bp.route("/upload_database", methods=["POST"])
+def upload_database():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    file = request.files['file']
+    try:
+        df = pd.read_excel(file)
+        if 'SKU' not in df.columns or 'listprice' not in df.columns:
+            return jsonify({'error': 'File must contain SKU and listprice columns.'}), 400
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM onlinedb.loris;")
+        for _, row in df.iterrows():
+            cursor.execute("INSERT INTO onlinedb.loris (SKU, listprice) VALUES (%s, %s);",
+                           (row['SKU'], row['listprice']))
+        connection.commit()
+        return jsonify({'message': 'Database updated successfully.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+
+@lori_automation_bp.route("/upload_otb", methods=["POST"])
+def upload_otb():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if not file.filename.endswith('.xlsx'):
+        return jsonify({'error': 'Only Excel (.xlsx) files are supported'}), 400
+    
+    try:
+        # Log the file being processed
+        current_app.logger.info(f"Processing OTB file: {file.filename}")
+        
+        # Read the Excel file
+        df = pd.read_excel(file, sheet_name=0, header=None)
+        
+        # Column A: index 0 (SKU), Column E: index 4 (listprice)
+        df_otb = df.iloc[:, [0, 4]].dropna(subset=[0])
+        df_otb.columns = ['SKU', 'listprice']
+        df_otb = df_otb.drop_duplicates(subset=['SKU'])
+        
+        # Get database connection
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Process each row in the OTB file
+        records_updated = 0
+        records_inserted = 0
+        records_skipped = 0
+        
+        for _, row in df_otb.iterrows():
+            try:
+                sku = str(row['SKU']).strip()
+                # Convert to string and ensure it's a valid number
+                try:
+                    new_price = float(row['listprice'])
+                    new_price_str = f"{new_price:.2f}"
+                except (ValueError, TypeError):
+                    new_price_str = str(row['listprice']).strip()
+                
+                # Skip empty SKUs
+                if not sku:
+                    continue
+                    
+                cursor.execute("SELECT listprice FROM onlinedb.loris WHERE SKU = %s;", (sku,))
+                result = cursor.fetchone()
+                
+                if result:
+                    # Parse existing prices into a list
+                    old_price_str = str(result['listprice'])
+                    old_prices = [p.strip() for p in old_price_str.split(',')]
+                    
+                    # Check if the new price already exists in the list
+                    if new_price_str not in old_prices:
+                        # Add the new price to the list
+                        old_prices.append(new_price_str)
+                        
+                        # Join the prices back into a string, limited to a reasonable length
+                        updated_price = ', '.join(old_prices)
+                        
+                        # Limit string length to avoid database column size issues
+                        max_length = 250  # Assuming VARCHAR(255)
+                        if len(updated_price) > max_length:
+                            # If too long, keep only the most recent prices
+                            updated_price = ', '.join(old_prices[-5:])  # Keep last 5 prices
+                        
+                        cursor.execute("UPDATE onlinedb.loris SET listprice = %s WHERE SKU = %s;", (updated_price, sku))
+                        records_updated += 1
+                    else:
+                        # Skip if price already exists
+                        records_skipped += 1
+                else:
+                    cursor.execute("INSERT INTO onlinedb.loris (SKU, listprice) VALUES (%s, %s);", (sku, new_price_str))
+                    records_inserted += 1
+            except Exception as row_error:
+                current_app.logger.error(f"Error processing row with SKU {sku}: {str(row_error)}")
+                records_skipped += 1
+                continue
+        
+        connection.commit()
+        
+        return jsonify({
+            'message': f'OTB file processed successfully. Updated: {records_updated}, Inserted: {records_inserted}, Skipped: {records_skipped} records.',
+            'updated': records_updated,
+            'inserted': records_inserted,
+            'skipped': records_skipped
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error processing OTB file: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()

@@ -137,6 +137,7 @@
                         <label for="dateconvert">Result</label><br>
                         <span id="dateconvert" class="result"></span>
                     </div>
+                    
                 </div>
                 <div class="row mt-3">
                     <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
@@ -152,6 +153,15 @@
                     <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
                         <label for="dateToNumberResult">Number Result</label><br>
                         <span id="dateToNumberResult" class="result"></span>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
+                        <label for="customerNameInput">Customer Name</label><br>
+                        <input type="text" id="customerNameInput" placeholder="Enter customer name" style="width: 100%;">
+                    </div>
+                    <div class="col-6" style="border: 1px solid #ccc; padding: 10px; height: 100px;">
+                        <button id="checkCustomerButton" class="btn btn-primary" onclick="checkCustomerId()">Check cus_id</button>
                     </div>
                 </div>
             </div>
@@ -177,6 +187,7 @@
             </form>
         </div>
     </div>
+    <div id="customerResults" class="mt-3"></div>
 
     {% if excel_html %}
     <div class="text-right mb-3">
@@ -196,6 +207,13 @@
             </div>
         </div>
     {% endif %}
+    <div>
+        SELECT 
+*
+FROM ord_log ol JOIN customer c ON ol.cus_id = c.cus_id WHERE ol.cus_id = '00028' ORDER BY ol.olg_dt DESC;
+
+select * from ord_log where cus_id=00028;
+    </div>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
@@ -292,6 +310,39 @@ function exportTableToExcel() {
 
 // Add click handler for export button
 document.getElementById('exportToExcel').addEventListener('click', exportTableToExcel);
+</script>
+<script type="text/javascript">
+    function checkCustomerId() {
+        const customerName = document.getElementById('customerNameInput').value;
+        if (!customerName) {
+            alert("Please enter a customer name.");
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "/check_customer",
+            data: JSON.stringify({ customer_name: customerName }),
+            contentType: "application/json",
+            success: function(response) {
+                const resultsDiv = document.getElementById('customerResults');
+                resultsDiv.innerHTML = ""; // Clear previous results
+                if (response.success) {
+                    let html = "<table class='table table-bordered'><tr><th>Customer Name</th><th>Customer ID</th><th>Database Origin</th></tr>";
+                    response.data.forEach(row => {
+                        html += `<tr><td>${row.cus_nm}</td><td>${row.cus_id}</td><td>${row.database_origin}</td></tr>`;
+                    });
+                    html += "</table>";
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class='alert alert-danger'>${response.message}</div>`;
+                }
+            },
+            error: function() {
+                alert("An error occurred while checking the customer ID.");
+            }
+        });
+    }
 </script>
 </body>
 </html>

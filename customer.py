@@ -1,0 +1,183 @@
+from flask import Blueprint, request, jsonify,redirect,session,render_template,url_for,current_app
+import pyodbc
+import pandas as pd
+
+# Define the blueprint
+customer_bp = Blueprint('customer', __name__)
+
+# SQL Server connection details
+server = "192.168.254.204"
+username = "tristen"
+password = 'Fdc2022!!'
+driver = 'ODBC Driver 17 for SQL Server'
+
+@customer_bp.route('/customer', methods=['GET'])
+def customer_home():
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for("login"))
+    current_user = session['username']
+    return render_template('customer.html',current_user=current_user)
+
+
+@customer_bp.route('/check_customer', methods=['POST'])
+def check_customer():
+    data = request.get_json()
+    customer_name = data.get('customer_name', '')
+
+    results = []
+    databases = ['omsdata_FDC', 'oms_EF']
+
+    for database in databases:
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+            )
+            cursor = conn.cursor()
+            query = "SELECT cus_nm, cus_id FROM customer WHERE cus_nm LIKE ?"
+            cursor.execute(query, ('%' + customer_name + '%',))
+            rows = cursor.fetchall()
+
+            for row in rows:
+                results.append({
+                    'cus_nm': row[0],
+                    'cus_id': row[1],
+                    'database_origin': database
+                })
+
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)})
+
+    return jsonify({"success": True, "data": results})
+
+@customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
+def customer_details(customer_id):
+    results = []
+    unique_order_numbers = {}
+    unique_product_data = {}
+
+    databases = ['omsdata_FDC', 'oms_EF']
+
+    for database in databases:
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+            )
+            cursor = conn.cursor()
+            query = f"""
+                SELECT 
+                ol.ord_num,
+                RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                CAST(YEAR(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_olg_dt,
+                ol.prod_cd,
+                ol.order_qty,
+                ol.unit_prs
+                FROM ord_log ol
+                JOIN customer c ON ol.cus_id = c.cus_id
+                WHERE c.cus_id = ?
+            """
+            cursor.execute(query, (customer_id,))
+            rows = cursor.fetchall()
+
+            for row in rows:
+                ord_num = row[0]
+                formatted_date = row[1]
+                prod_cd = row[2]
+                order_qty = int(row[3] or 0)
+                unit_prs = round(float(row[4]) if row[4] is not None else 0.0, 2)
+
+                # Append to results for order history
+                results.append((ord_num, formatted_date, prod_cd, order_qty, unit_prs))
+
+                # Calculate total for unique order numbers
+                if ord_num:
+                    if ord_num not in unique_order_numbers:
+                        # Query to get ord_amt and handl_fee for the current order number
+                        order_query = f"""
+                            SELECT ord_amt, handl_fee 
+                            FROM orders 
+                            WHERE ord_num = ?
+                        """
+                        cursor.execute(order_query, (ord_num,))
+                        order_row = cursor.fetchone()
+                        if order_row:
+                            ord_amt = order_row[0] or 0
+                            handl_fee = order_row[1] or 0
+                            total = ord_amt + handl_fee
+                            unique_order_numbers[ord_num] = {
+                                'date': formatted_date,
+                                'ord_amt': ord_amt,
+                                'handl_fee': handl_fee,
+                                'total': total
+                            }
+
+                if prod_cd:
+                    if prod_cd not in unique_product_data:
+                        unique_product_data[prod_cd] = {'total_qty': 0, 'prices': set()}
+                    unique_product_data[prod_cd]['total_qty'] += order_qty
+                    unique_product_data[prod_cd]['prices'].add(unit_prs)
+
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)})
+
+    # Prepare the DataFrame for order history
+    history_columns = ['order#', 'Date', 'sku', 'Quantity', 'Price']
+    history_df = pd.DataFrame.from_records(results, columns=history_columns)
+
+    # Add hyperlinks
+    history_df['order#'] = history_df['order#'].apply(lambda x: f'<a href="{url_for("order_lookup", order_number=x)}" target="_blank">{x}</a>')
+
+    # Modify the sku column to use the new URL format
+    history_df['sku'] = history_df['sku'].apply(lambda x: f'<a href="/item_lookup/{x}" target="_blank">{x}</a>')
+    history_html_table = history_df.to_html(
+        index=False,
+        classes="table table-bordered table-striped",
+        table_id="customer_details_table",
+        float_format="{:.2f}".format,
+        escape=False
+    )
+    product_summary_rows = []
+    for prod_cd, data in unique_product_data.items():
+        prices = ' ,'.join(map(str, data['prices']))
+        product_summary_rows.append(f"<tr><td><a href='/item_lookup/{prod_cd}' target='_blank'>{prod_cd}</a></td><td>{data['total_qty']}</td><td>{prices}</td></tr>")
+    
+    product_summary_html = f"""
+        <h4>Product Summary:</h4>
+        <table id='product_summary_table' class='table table-bordered table-striped'>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>ordered</th>
+                    <th>Prices</th>
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(product_summary_rows)}
+            </tbody>
+        </table>
+    """
+
+    # Prepare unique order numbers for response
+    unique_order_numbers_list = [
+    {
+        'order_number': ord_num,
+        'date': details['date'],
+        'ord_amt': details['ord_amt'],
+        'handl_fee': details['handl_fee'],
+        'total': details['total'],
+        'order_lookup_url': url_for('order_lookup', order_number=ord_num)  # Add URL for order lookup
+    }
+    for ord_num, details in unique_order_numbers.items()
+]
+    current_app.logger.info(unique_order_numbers_list)
+    return jsonify({
+        "success": True,
+        "data": history_html_table,
+        "product_summary": product_summary_html,
+        "unique_order_numbers": unique_order_numbers_list  # Send the correct structure
+    })

@@ -38,6 +38,7 @@ def list_from_dropbox(list_input, current_user):
     if match:
         relative_path = match.group(1)
         dropbox_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
+        current_app.logger.info(f"***{current_user}*** processing regular input: {relative_path}")
         
         
         if not os.path.exists(dropbox_path):
@@ -48,11 +49,12 @@ def list_from_dropbox(list_input, current_user):
         
         for filename in os.listdir(dropbox_path):
             if filename.endswith('.jpg'):
+                # Modified regex to extract just the base SKU pattern (1-2 letters followed by 4 digits)
                 sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
                 if sku_match:
-                    sku = sku_match.group(1).upper()  # Just use the base SKU pattern
-                    file_list.add(sku)  # Add to set to ensure uniqueness
-                    sku_to_image[sku] = os.path.join(dropbox_path, filename)
+                    base_sku = sku_match.group(1).upper()  # Capture just the base SKU
+                    file_list.add(base_sku)  # Add to set to ensure uniqueness
+                    sku_to_image[base_sku] = os.path.join(dropbox_path, filename)
         
         if not file_list:
             return {"error": "No images found in the specified directory. Please check your URL."}
@@ -66,23 +68,56 @@ def list_from_dropbox(list_input, current_user):
 
 def list_from_origin(list_input, current_user):
     # Convert input string to list of SKUs
-    style_list = [sku.strip().upper() for sku in list_input.split(',') if sku.strip()]
-    current_app.logger.info(f"***{current_user}*** processing regular input: {style_list}")
-    return style_list
+    current_app.logger.info(f"***{current_user}*** processing regular input: {list_input}")
 
+    # Split by commas and clean up each SKU
+    raw_styles = [sku.strip().upper() for sku in list_input.split(',') if sku.strip()]
+    style_list = []
+    
+    for style in raw_styles:
+        # Check if the style has a suffix (like M, L, etc.)
+        base_match = re.match(r'([A-Za-z]{1,2}\d{4})([-]?)([smlSML]*)', style)
+        
+        if base_match and base_match.group(3):  # If it has a suffix
+            base_style = base_match.group(1)    # The base part (e.g., "L1343")
+            has_dash = base_match.group(2) == '-'  # Whether it has a dash
+            suffix = base_match.group(3)        # The suffix part (e.g., "M")
+            
+            # For styles with suffix (L1343M or L1343-M), add both formats
+            if has_dash:
+                # If input had dash (L1343-M), use this as canonical form
+                style_list.append(style)
+                # Also add no-dash version for search
+                no_dash_style = base_style + suffix
+                style_list.append(no_dash_style)
+            else:
+                # If input had no dash (L1343M), use this as canonical form
+                style_list.append(style)
+                # Also add dash version for search
+                dash_style = base_style + '-' + suffix
+                style_list.append(dash_style)
+        else:
+            # For base styles without suffix (L1343), only add the exact style
+            style_list.append(style)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_style_list = [x for x in style_list if not (x in seen or seen.add(x))]
+    return unique_style_list
 
 
 
 @v6_listcreator_bp.route('/v6_listcreator', methods=['GET', 'POST'])
 def index():
     if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("login"))
+        session['next'] = request.url
+        return redirect(url_for("login"))
+    
     current_user = session['username']
     error_message = None  # Initialize error message
     dropbox_images = {}  # Initialize dropbox_images as a dictionary
     missing_descriptions = []  # Initialize missing descriptions list
-    image_urls = {}  # Add this line to initialize image_urls
+    image_urls = {}  # Initialize image_urls
 
     # Handle GET request with list_input parameter
     if request.method == 'GET' and request.args.get('list_input'):
@@ -104,11 +139,19 @@ def index():
             db_styles = set()
             if data:
                 for row in data:
-                    sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
-                    if sku_match:
-                        base_sku = sku_match.group(1).upper()
-                        db_styles.add(base_sku)
-                        session[f'verified_{base_sku}'] = True
+                    # Set verification for the exact style from the database
+                    exact_style = row[2].upper() if row[2] else ''
+                    if exact_style:
+                        db_styles.add(exact_style)
+                        session[f'verified_{exact_style}'] = True  # Set for exact style
+                        
+                        # Also extract and verify the base style
+                        sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
+                        if sku_match:
+                            base_sku = sku_match.group(1).upper()
+                            db_styles.add(base_sku)
+                            session[f'verified_{base_sku}'] = True  # Set for base style
+
             # Handle styles not found in database
             for style in style_list:
                 if style not in db_styles:
@@ -137,7 +180,10 @@ def index():
                     'descriptions': descriptions,
                     'error_message': error_message
                 }
-                return render_template('v6_listcreator.html', **context,list_input=list_input)
+                
+                # Add this line before rendering the template
+
+                return render_template('v6_listcreator.html', **context, list_input=list_input)
 
     if request.method == 'POST':
         list_input = request.form.get('list_input')
@@ -164,12 +210,18 @@ def index():
             db_styles = set()
             if data:
                 for row in data:
-                    sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
-                    if sku_match:
-                        base_sku = sku_match.group(1).upper()
-                        db_styles.add(base_sku)
-                        # Set session variable for verified styles
-                        session[f'verified_{base_sku}'] = True
+                    # Set verification for the exact style from the database
+                    exact_style = row[2].upper() if row[2] else ''
+                    if exact_style:
+                        db_styles.add(exact_style)
+                        session[f'verified_{exact_style}'] = True  # Set for exact style
+                        
+                        # Also extract and verify the base style
+                        sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
+                        if sku_match:
+                            base_sku = sku_match.group(1).upper()
+                            db_styles.add(base_sku)
+                            session[f'verified_{base_sku}'] = True  # Set for base style
             
             # Handle styles not found in database by adding placeholder data
             missing_styles = []
@@ -222,6 +274,8 @@ def index():
                     'error_message': error_message
                 }
                 
+                # Add this line before rendering the template
+
                 return render_template('v6_listcreator.html', **context, list_input=list_input)
 
     # Render default view if no POST request
@@ -315,59 +369,92 @@ def update_description_in_db(style_index, description):
             cursor.close()
             connection.close()
 def get_sql_data(style_list):
-
+    # Create two separate lists: one for exact base styles, one for styles with suffix
+    base_styles = []
+    suffix_styles = []
     
+    for style in style_list:
+        match = re.match(r'([A-Za-z]{1,2}\d{4})([-]?)([smlSML]*)', style)
+        if match and match.group(3):  # Has suffix
+            suffix_styles.append(style)
+        else:  # Base style only
+            base_styles.append(style)
+    
+    # Debug logging
+    
+    # Modify the query to handle exact matching for base styles
     query = """
     DECLARE @AltCDList NVARCHAR(MAX) = ?;
-    DECLARE @ProductList NVARCHAR(MAX);
+    DECLARE @ExactStyles NVARCHAR(MAX) = ?;
+    DECLARE @ProductList NVARCHAR(MAX) = '';
 
-    SET @AltCDList = REPLACE(@AltCDList, ',', '%,') + '%';
-    WITH SplitAltCD AS (
-        SELECT value
-        FROM dbo.SplitString(@AltCDList, ',')
-    )
-    SELECT @ProductList = COALESCE(@ProductList + ',', '') + PROD_CD
-    FROM dbo.inv
-    WHERE EXISTS (SELECT 1 FROM SplitAltCD WHERE alt_CD LIKE value);
+    -- For styles with suffix, use LIKE with wildcards
+    IF LEN(@AltCDList) > 0
+    BEGIN
+        SET @AltCDList = REPLACE(@AltCDList, ',', '%,') + '%';
+        WITH SplitAltCD AS (
+            SELECT value
+            FROM dbo.SplitString(@AltCDList, ',')
+        )
+        SELECT @ProductList = COALESCE(@ProductList + ',', '') + PROD_CD
+        FROM dbo.inv
+        WHERE EXISTS (SELECT 1 FROM SplitAltCD WHERE alt_CD LIKE value);
+    END
 
-    WITH SplitValues AS (
-        SELECT value
-        FROM dbo.SplitString(@ProductList, ',')
-    )
+    -- For exact base styles, use exact matching
+    IF LEN(@ExactStyles) > 0
+    BEGIN
+        WITH SplitExact AS (
+            SELECT value
+            FROM dbo.SplitString(@ExactStyles, ',')
+        )
+        SELECT @ProductList = COALESCE(@ProductList + ',', '') + PROD_CD
+        FROM dbo.inv
+        WHERE EXISTS (SELECT 1 FROM SplitExact WHERE alt_CD = value);
+    END
 
-    SELECT 
-        i.PROD_CD AS SKU,
-        i.ALT_CD AS SKU_no_color,
-        id.in_stock AS in_stock,
-        id.ORDER_QTY AS some_one_ordered,
-        (id.in_stock - id.order_qty) AS quantity,
-        id.on_order_qty AS ocean,
-        i.RETAIL_PRS AS selling_price,
-        i.PC_CASE AS QTY_in_box,
-        i.UT_WT AS unit_weight,
-        i.UNIT_COLOR AS color,
-        idt.ut_len AS item_length,
-        idt.ut_wi AS item_width,
-        idt.UT_hi AS item_height,
-        CASE 
-            WHEN LT_SL_DT = 0 THEN 'NEVER'
-            ELSE RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR)
-        END AS last_activity,
-        fcd.create_dt AS created_dt
-    FROM dbo.inv AS i
-    LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
-    LEFT JOIN inv_detl AS idt ON i.PROD_CD = idt.prod_cd
-    LEFT JOIN (
+    -- If we have products to query
+    IF LEN(@ProductList) > 0
+    BEGIN
+        WITH SplitValues AS (
+            SELECT value
+            FROM dbo.SplitString(@ProductList, ',')
+            WHERE value <> ''
+        )
         SELECT 
-            prod_cd,
-            RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-            RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-            CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR) AS create_dt
-        FROM wm_skufile
-    ) AS fcd ON i.PROD_CD = fcd.prod_cd
-    WHERE i.PROD_CD IN (SELECT value FROM SplitValues);
+            i.PROD_CD AS SKU,
+            i.ALT_CD AS SKU_no_color,
+            id.in_stock AS in_stock,
+            id.ORDER_QTY AS some_one_ordered,
+            (id.in_stock - id.order_qty) AS quantity,
+            id.on_order_qty AS ocean,
+            i.RETAIL_PRS AS selling_price,
+            i.PC_CASE AS QTY_in_box,
+            i.UT_WT AS unit_weight,
+            i.UNIT_COLOR AS color,
+            idt.ut_len AS item_length,
+            idt.ut_wi AS item_width,
+            idt.UT_hi AS item_height,
+            CASE 
+                WHEN LT_SL_DT = 0 THEN 'NEVER'
+                ELSE RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR)
+            END AS last_activity,
+            fcd.create_dt AS created_dt
+        FROM dbo.inv AS i
+        LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+        LEFT JOIN inv_detl AS idt ON i.PROD_CD = idt.prod_cd
+        LEFT JOIN (
+            SELECT 
+                prod_cd,
+                RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR) AS create_dt
+            FROM wm_skufile
+        ) AS fcd ON i.PROD_CD = fcd.prod_cd
+        WHERE i.PROD_CD IN (SELECT value FROM SplitValues);
+    END
     """
     
     queries = []
@@ -377,9 +464,15 @@ def get_sql_data(style_list):
         
         for conn, database_name in [(conn_fdc, 'omsdata_FDC'), (conn_oms_ef, 'oms_EF')]:
             cursor = conn.cursor()
-            mylist =  ",".join(style_list)
-            cursor.execute(query, mylist)
+            suffix_list = ",".join(suffix_styles)
+            base_list = ",".join(base_styles)
+            
+            # Debug logging
+            
+            cursor.execute(query, suffix_list, base_list)
             rows = cursor.fetchall()
+            
+            # Debug logging
             
             # Strip trailing spaces from each row's data
             rows_with_database_name = [
@@ -391,9 +484,15 @@ def get_sql_data(style_list):
             
         combined_results = queries[0] + queries[1] if len(queries) > 1 else queries[0]
         return combined_results
+    except Exception as e:
+        current_app.logger.error(f"Error in get_sql_data: {str(e)}")
+        return []
     finally:
         conn_fdc.close()
         conn_oms_ef.close()
+
+
+
 
 def create_pivot_table(data):
     if not data:
@@ -403,31 +502,26 @@ def create_pivot_table(data):
     df = pd.DataFrame(data)
     
     # Rename columns to match expected structure
-    # If we have 16 columns
     if len(df.columns) == 16:
         df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
                      'quantity', 'ocean', 'selling_price', 'pcsBox',
                      'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
                      'last_activity', 'Created_dt']
-    # If we have 17 columns
     elif len(df.columns) == 17:
         df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
                      'quantity', 'ocean', 'selling_price', 'pcsBox',
                      'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
                      'last_activity', 'Created_dt', 'in_oms_status']
     
-    # Continue with existing functionality
-    # Extract base SKU pattern (2 letters + 4 numbers) from SKU_no_color
-    df['base_sku'] = df['SKU_no_color'].str.extract(r'([A-Za-z]{1,2}\d{4})')
+    # Create a normalized style column that will be used for grouping
+    # This will remove dashes from styles with suffixes for grouping purposes
+    df['normalized_style'] = df['SKU_no_color'].apply(lambda x: normalize_style_for_grouping(x))
     
-    # Filter rows where base_sku matches the original pattern
-    df = df[df['base_sku'].notna()]
+    # Filter rows where normalized_style is not null
+    df = df[df['normalized_style'].notna()]
     
-    # Get unique base_skus that we found in the database
-    found_skus = df['base_sku'].unique()
-    
-    # Sort by base_sku first
-    df = df.sort_values('base_sku')
+    # Sort by normalized_style
+    df = df.sort_values('normalized_style')
     
     # Convert numeric columns to integers
     integer_columns = ['quantity', 'ocean', 'pcsBox',
@@ -437,12 +531,15 @@ def create_pivot_table(data):
     # Create dimensions column
     df['dimensions'] = df['item_length'].astype(str) + ' x ' + df['item_width'].astype(str) + ' x ' + df['item_height'].astype(str)
     
-    # Group by base_sku instead of SKU_no_color
-    style_groups = df.groupby('base_sku')
+    # Group by normalized_style
+    style_groups = df.groupby('normalized_style')
     
     style_cards = []
     for style, group in style_groups:
         most_common_price = round(group['selling_price'].mode().iloc[0], 2)
+        
+        # Use the first SKU_no_color as the display style
+        display_style = group['SKU_no_color'].iloc[0]
         
         style_data = group.pivot_table(
             values=['quantity', 'ocean', 'pcsBox', 'dimensions'],
@@ -455,7 +552,7 @@ def create_pivot_table(data):
             }
         ).reset_index()
         
-        style_data['style'] = style
+        style_data['style'] = display_style
         style_data['selling_price'] = most_common_price
         
         bk_rows = style_data[style_data['color'].str.startswith('BK')]
@@ -465,6 +562,29 @@ def create_pivot_table(data):
         style_cards.append(style_data.to_dict('records'))
     
     return style_cards
+
+def normalize_style_for_grouping(style):
+    """
+    Normalizes style codes for grouping purposes:
+    - For base styles (L1343), returns the exact style
+    - For styles with suffix (L1343M or L1343-M), returns the no-dash version (L1343M)
+    """
+    if not style:
+        return None
+        
+    # Check if the style has a suffix - Fixed the unbalanced parenthesis
+    match = re.match(r'([A-Za-z]{1,2}\d{4})([-]?)([smlSML]*)', style)
+    if not match:
+        return style
+        
+    base = match.group(1)
+    suffix = match.group(3)
+    
+    if suffix:  # If it has a suffix
+        return base + suffix  # Return without dash
+    else:
+        return base  # Return base style as is
+
 
 def get_images_from_dropbox(dropbox_path):
     image_paths = []
@@ -482,39 +602,90 @@ def get_images_for_selection(sku_list):
 
     for sku in sku_list:
         try:
-            # Extract pattern: 1-2 letters followed by exactly 4 numbers
-            match = re.match(r'([A-Za-z]{1,2}\d{4})', sku)
-            if match:
-                sku = match.group(1).upper()
+            # Extract pattern: 1-2 letters followed by exactly 4 numbers, optionally followed by dash and suffix
+            base_match = re.match(r'([A-Za-z]{1,2}\d{4})(?:-[A-Za-z0-9]+)?', sku)
+            if base_match:
+                base_sku = base_match.group(1).upper()  # Base SKU without suffix
+                full_sku = sku.upper()  # Full SKU including any suffix
+                
                 image_set = []
-
-                # Fetch base image
-                base_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{sku}.jpg")
-                if os.path.exists(base_image_path):
+                
+                # Check for exact match with full SKU (with or without dash)
+                full_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{full_sku}.jpg")
+                if os.path.exists(full_image_path):
                     image_set.append({
-                        'filename': f"{sku}.jpg",
-                        'path': f"/list_image/{sku}.jpg",
+                        'filename': f"{full_sku}.jpg",
+                        'path': f"/list_image/{full_sku}.jpg",
                         'default': True
                     })
-
-                # Dynamically fetch all versioned images
+                
+                # If the SKU contains a dash, also check for the no-dash version
+                if '-' in full_sku:
+                    no_dash_sku = full_sku.replace('-', '')
+                    no_dash_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{no_dash_sku}.jpg")
+                    if os.path.exists(no_dash_image_path):
+                        image_set.append({
+                            'filename': f"{no_dash_sku}.jpg",
+                            'path': f"/list_image/{no_dash_sku}.jpg",
+                            'default': len(image_set) == 0  # Default if no other image found
+                        })
+                
+                # If the SKU doesn't contain a dash, also check for the dash version
+                if '-' not in full_sku and len(full_sku) > len(base_sku):
+                    # Extract suffix and create dash version
+                    suffix = full_sku[len(base_sku):]
+                    dash_sku = f"{base_sku}-{suffix}"
+                    dash_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{dash_sku}.jpg")
+                    if os.path.exists(dash_image_path):
+                        image_set.append({
+                            'filename': f"{dash_sku}.jpg",
+                            'path': f"/list_image/{dash_sku}.jpg",
+                            'default': len(image_set) == 0  # Default if no other image found
+                        })
+                
+                # Dynamically fetch all versioned images for both formats
                 for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                    versioned_match = re.match(rf'{sku}_v\d+\.jpg', filename, re.IGNORECASE)
+                    # Check for versioned images with full SKU (with dash if present)
+                    versioned_match = re.match(rf'{re.escape(full_sku)}_v\d+\.jpg', filename, re.IGNORECASE)
                     if versioned_match:
                         image_set.append({
                             'filename': filename,
                             'path': f"/list_image/{filename}",
                             'default': False
                         })
+                    
+                    # If SKU has a dash, also check for no-dash versioned images
+                    if '-' in full_sku:
+                        no_dash_sku = full_sku.replace('-', '')
+                        no_dash_versioned_match = re.match(rf'{re.escape(no_dash_sku)}_v\d+\.jpg', filename, re.IGNORECASE)
+                        if no_dash_versioned_match:
+                            image_set.append({
+                                'filename': filename,
+                                'path': f"/list_image/{filename}",
+                                'default': False
+                            })
+                    
+                    # If SKU doesn't have a dash, also check for dash versioned images
+                    if '-' not in full_sku and len(full_sku) > len(base_sku):
+                        suffix = full_sku[len(base_sku):]
+                        dash_sku = f"{base_sku}-{suffix}"
+                        dash_versioned_match = re.match(rf'{re.escape(dash_sku)}_v\d+\.jpg', filename, re.IGNORECASE)
+                        if dash_versioned_match:
+                            image_set.append({
+                                'filename': filename,
+                                'path': f"/list_image/{filename}",
+                                'default': False
+                            })
 
                 # Add SKU and its images to the dictionary
                 if image_set:  # Only include SKUs that have images
-                    image_urls[sku] = sorted(image_set, key=lambda x: x['filename'])  # Sort by filename for consistency
+                    image_urls[full_sku] = sorted(image_set, key=lambda x: x['filename'])  # Sort by filename for consistency
 
         except UnicodeEncodeError:
             continue
 
     return image_urls
+
 @v6_listcreator_bp.route('/list_image/dropbox/<path:filename>')
 def serve_dropbox_image(filename):
     dropbox_path = os.path.join(Config.LOCAL_DROPBOX_DIR, filename)
@@ -884,3 +1055,277 @@ def generate_catalog_pdf(image_data_list, output_buffer, image_size='full', sele
             c.showPage()
         
         c.save()
+
+
+def get_sku_price(sku):
+    """Query the MySQL database for the list price of a specific SKU."""
+    connection = get_mysql_connection()
+    if connection is None:
+        return None
+    
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = "SELECT SKU, listprice FROM onlinedb.loris WHERE SKU = %s"
+        cursor.execute(query, (sku,))
+        result = cursor.fetchone()
+        return result
+    except Error as e:
+        print(f"Error querying MySQL database: {e}")
+        return None
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+def get_sku_sold_price(sku):
+    """Query the SQL Server database for the sold price of a specific SKU using fuzzy matching."""
+    try:
+        connection = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}')
+        cursor = connection.cursor()
+        # Use LIKE operator for fuzzy matching
+        query = """
+            SELECT TOP 1 ol.prod_cd, ol.unit_prs
+            FROM ord_log ol
+            JOIN customer c ON ol.cus_id = c.cus_id
+            WHERE ol.prod_cd LIKE ? AND ol.cus_id = '00868'
+            ORDER BY ol.olg_dt DESC
+        """
+        # Add wildcard for fuzzy matching
+        search_pattern = f"%{sku}%"
+        cursor.execute(query, (search_pattern,))
+        row = cursor.fetchone()
+        if row:
+            return {"prod_cd": row[0], "unit_prs": row[1]}
+        return None
+    except pyodbc.Error as e:
+        print(f"Error querying SQL Server database: {e}")
+        return None
+    finally:
+        if 'connection' in locals() and connection:
+            cursor.close()
+            connection.close()
+                    
+@v6_listcreator_bp.route('/export_lori_format', methods=['POST'])
+def export_lori_format():
+    try:
+        request_data = request.get_json()
+        data = request_data.get('exportData', [])
+        image_size_input = request_data.get('image_size', "800")
+        processing_image_size = None if image_size_input == "full" else int(image_size_input)
+        
+        workbook = Workbook()
+        # Create OTB sheet
+        sheet = workbook.create_sheet("OTB", 0)
+        sheet.append([])
+        sheet.append([])
+        # Add SUM formulas to cells N2, O2, and P2
+        sheet['N2'] = "=SUM(N3:N523)"  # Sum of Available Units
+        sheet['O2'] = "=SUM(O3:O525)"  # Sum of Ext Cost
+        # Leave first two rows empty
+        sheet['O2'].number_format = r'$#,##0.0_);[Red]($#,##0)'
+
+
+        
+        # Add headers on row 3 - Added new columns X, Y, Z for SKU, List Price, Sold Price
+        headers = [
+            "UPC or Item Code", "Image", "Vendor", "Description", "Cost", "Retail", "GM$", "", 
+            "Sale Retail", "Event GM$", "Event GP%", "Proj Store Count", "Color", "Available Units",
+            "Ext Retail", "Earliest Ship Date", "Terms", "Notes", "Case Pack", "Case Cost",
+            "", "", "", "SKU", "List Price", "Sold Price"  # Added new columns
+        ]
+        sheet.append(headers)
+        
+        blue_fill = PatternFill(start_color="B8CCE4", end_color="B8CCE4", fill_type="solid")
+        green_fill = PatternFill(start_color="C4D79B", end_color="C4D79B", fill_type="solid")
+        tan_fill = PatternFill(start_color="F0DEAA", end_color="F0DEAA", fill_type="solid")
+        
+        # Apply colors to A3:D3 (blue)
+        for col in range(1, 5):  # A to D
+            sheet.cell(row=3, column=col).fill = blue_fill
+            
+        # Apply colors to E3:K3 (green)
+        for col in range(5, 12):  # E to K
+            sheet.cell(row=3, column=col).fill = green_fill
+            
+        # Apply colors to L3:O3 (tan)
+        for col in range(12, 16):  # L to O
+            sheet.cell(row=3, column=col).fill = tan_fill
+            
+        # Apply colors to P3:T3 (blue)
+        for col in range(16, 21):  # P to T
+            sheet.cell(row=3, column=col).fill = blue_fill
+
+        # Set column widths
+        sheet.column_dimensions['A'].width = 15  # UPC/Item Code
+        sheet.column_dimensions['B'].width = 25  # Image
+        sheet.column_dimensions['C'].width = 10  # Vendor
+        sheet.column_dimensions['D'].width = 25  # Description
+        sheet.column_dimensions['E'].width = 10  # Cost
+        sheet.column_dimensions['F'].width = 10  # Retail
+        sheet.column_dimensions['M'].width = 10  # Color
+        sheet.column_dimensions['N'].width = 15  # Available Units
+        sheet.column_dimensions['X'].width = 15  # SKU
+        sheet.column_dimensions['Y'].width = 15  # List Price
+        sheet.column_dimensions['Z'].width = 15  # Sold Price
+        sheet.column_dimensions['R'].width = 30  # notes
+        sheet.column_dimensions['o'].width = 15  # Case Pack
+        
+        # Set row height and apply text wrapping to header row
+        sheet.row_dimensions[3].height = 39
+        for col in range(1, len(headers) + 1):
+            cell = sheet.cell(row=3, column=col)
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        
+        # Current row counter (starting after headers)
+        current_row = 4
+        
+        # Process each item
+        for item in data:
+            style = item['style']
+            description = item['description']
+            price_str = item['price'].replace('$', '').strip()
+            price = float(price_str) if price_str and price_str != 'N/A' else 0
+            image_filename = item['image']
+            
+            # Process image path
+            if '/list_image/' in image_filename:
+                image_filename = re.sub(r'/list_image/', '', image_filename)
+                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
+            else:
+                image_path = image_filename
+                
+            if not os.path.exists(image_path):
+                current_app.logger.error(f"Image not found: {image_path}")
+                image_path = os.path.join('static', 'no_image_available.jpg')
+                
+            # Resize image if needed
+            if processing_image_size is not None:
+                image_buffer = resize_image(image_path, processing_image_size)
+                img = OpenPyXLImage(image_buffer)
+            else:
+                img = OpenPyXLImage(image_path)
+                
+            # Set image dimensions
+            img.width = 180
+            img.height = 135
+            
+            # Get rows data or create empty if none
+            rows = item['rows']
+            if not rows:
+                rows = [{"color": "N/A", "quantity": "0"}]
+                
+            # Ensure we have exactly 8 rows per style (pad with empty rows if needed)
+            while len(rows) < 8:
+                rows.append({"color": "", "quantity": "0"})
+                
+            # Process each row (up to 8)
+            # Process each row (up to 8)
+            for i, row in enumerate(rows[:8]):
+                color = row.get('color', '')
+                quantity = int(float(row.get('quantity', 0)))
+                
+                # Calculate extended retail
+                ext_retail = quantity * price
+                
+                # Get SKU with color
+                full_sku = f"{style}" if color else style
+                
+                # Get list price and sold price from MySQL and SQL Server
+                list_price_info = get_sku_price(style)
+                list_price = f"${list_price_info['listprice']}" if list_price_info and 'listprice' in list_price_info else "Not found"
+                
+                sold_price_info = get_sku_sold_price(style)
+                sold_price = f"${sold_price_info['unit_prs']:.2f}" if sold_price_info and 'unit_prs' in sold_price_info else "No recent sales"
+                
+                # Determine if we should add "ordered before" to notes
+                notes = ""
+                if i == 0 and sold_price_info and 'unit_prs' in sold_price_info:
+                    notes = "ordered before"
+                
+                # Create row data with raw values for numeric fields
+                row_data = [
+                    style if i == 0 else "",  # UPC/Item Code
+                    "",  # Image placeholder
+                    "FDC",  # Vendor
+                    description if i == 0 else "",  # Description - fill if color is not empty
+                    price if color else "",  # Cost - fill if color is not empty
+                    "",  # Retail - leave empty as requested
+                    f"=F{current_row}-E{current_row}" if color else "",  # GM$ formula: F(row#)-E(row#)
+                    f"=G{current_row}/F{current_row}",  # Empty column
+                    "",  # Sale Retail
+                    "",  # Event GM$
+                    f"=J{current_row}/I{current_row}",  # Event GP%
+                    "",  # Proj Store Count
+                    color,  # Color
+                    quantity if color else "",  # Available Units
+                    f"=N{current_row}*G{current_row}",  # Ext Cost - fill if color is not empty
+                    "Fill it out",  # Earliest Ship Date
+                    "Net 90",  # Terms
+                    notes,  # Notes - "ordered before" if first row and has sold price
+                    "",  # Case Pack
+                    0,  # Case Cost
+                    "",  # Empty column
+                    "",  # Empty column
+                    "",  # Empty column
+                    full_sku,  # SKU with color
+                    list_price,  # List Price
+                    sold_price  # Sold Price
+                ]
+                
+                # Add row to sheet
+                sheet.append(row_data)
+                
+                # Add image to first row of each style
+                if i == 0:
+                    sheet.add_image(img, f"B{current_row}")
+                
+                # Apply cell formatting
+                for col_idx, cell_value in enumerate(row_data, 1):
+                    cell = sheet.cell(row=current_row, column=col_idx)
+                    
+                    # Center align all cells
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
+                    
+                    # Apply specific formatting based on column
+                    if col_idx == 5 or col_idx == 6:  # Cost and Retail (E and F)
+                        if isinstance(cell_value, (int, float)) and cell_value > 0:
+                            cell.number_format = '"$ "#,##0.00'
+                    
+                    if col_idx == 7:  # GM$ (G)
+                        cell.number_format = r'$#,##0.00_);[Red]($#,##0.00)'
+                    elif col_idx == 15:  # Ext Retail (O)
+                        cell.number_format = r'$#,##0.0_);[Red]($#,##0)'
+                    
+                    elif col_idx == 20:  # Case Cost (T)
+                        if isinstance(cell_value, (int, float)):
+                            cell.number_format = '"$"#,##0.00'
+                
+                current_row += 1
+                
+        # Apply borders to all cells
+        thin_border = Border(
+            left=Side(style='thin'), 
+            right=Side(style='thin'), 
+            top=Side(style='thin'), 
+            bottom=Side(style='thin')
+        )
+        
+        for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row):
+            for cell in row:
+                cell.border = thin_border
+                
+        # Create output file
+        output = BytesIO()
+        workbook.save(output)
+        output.seek(0)
+        
+        return send_file(
+            output, 
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f"Lori_OTB_{datetime.datetime.now().strftime('%Y%m%d')}.xlsx"
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in export_lori_format: {e}")
+        return jsonify({"error": str(e)}), 500

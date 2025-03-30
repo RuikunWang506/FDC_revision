@@ -12,6 +12,7 @@ import datetime
 import subprocess
 import mysql.connector
 from mysql.connector import Error
+import pyodbc
 
 # External library imports
 import pandas as pd
@@ -48,7 +49,7 @@ from PIL import Image
 
 from V6listcreator import v6_listcreator_bp
 from lori_automation import lori_automation_bp
-
+from customer import customer_bp
 
 
  
@@ -71,6 +72,7 @@ def register_routes(app):
     app.register_blueprint(v6_listcreator_bp)
     app.register_blueprint(gpgtmx_bp)
     app.register_blueprint(lori_automation_bp)
+    app.register_blueprint(customer_bp)
 
 
     app.permanent_session_lifetime = timedelta(days=30)
@@ -1111,14 +1113,14 @@ def register_routes(app):
 
         return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, current_user=current_user, sql_query=sql_query)
 
-
+    
     def load_credentials():
         base_dir = os.path.dirname(os.path.abspath(__file__))
         credentials_path = os.path.join(base_dir, 'credentials.json')
         with open(credentials_path) as file:
             credentials = json.load(file)
         return credentials
-
+    
     @app.route('/upload_center', methods=['GET', 'POST'])
     def upload_center():
         if 'username' not in session:
