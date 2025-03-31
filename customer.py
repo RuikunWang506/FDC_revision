@@ -22,10 +22,15 @@ def customer_home():
 
 @customer_bp.route('/check_customer', methods=['POST'])
 def check_customer():
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for("login"))
+    current_user = session['username']
     data = request.get_json()
     customer_name = data.get('customer_name', '')
-
+    current_app.logger.info("***%s***__@@@search customer@@@__ %s",current_user, data)
     results = []
+    null_results = []  # List to hold rows with null values
     databases = ['omsdata_FDC', 'oms_EF']
 
     for database in databases:
@@ -34,31 +39,70 @@ def check_customer():
                 f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}'
             )
             cursor = conn.cursor()
-            query = "SELECT cus_nm, cus_id FROM customer WHERE cus_nm LIKE ?"
+            query = f"""
+                SELECT
+                    c.cus_nm,
+                    c.cus_id,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_ord_dt,
+                    o.ord_num
+                FROM
+                    customer c
+                LEFT JOIN (
+                    SELECT
+                        cus_id,
+                        MAX(ord_num) AS max_ord_num
+                    FROM
+                        orders
+                    GROUP BY
+                        cus_id
+                ) AS max_orders ON c.cus_id = max_orders.cus_id
+                LEFT JOIN orders o ON max_orders.cus_id = o.cus_id AND max_orders.max_ord_num = o.ord_num
+                WHERE
+                    c.cus_nm LIKE ?
+            """
             cursor.execute(query, ('%' + customer_name + '%',))
             rows = cursor.fetchall()
 
             for row in rows:
-                results.append({
-                    'cus_nm': row[0],
-                    'cus_id': row[1],
-                    'database_origin': database
-                })
+                if row[2] is not None and row[3] is not None:  # Check if formatted_ord_dt and max_ord_num are not null
+                    results.append({
+                        'cus_nm': row[0],
+                        'cus_id': row[1],
+                        'formatted_ord_dt': row[2],
+                        'max_ord_num': row[3],
+                        'database_origin': database
+                    })
+                else:
+                    null_results.append({
+                        'cus_nm': row[0],
+                        'cus_id': row[1],
+                        'formatted_ord_dt': row[2],
+                        'max_ord_num': row[3],
+                        'database_origin': database
+                    })
 
             cursor.close()
             conn.close()
         except Exception as e:
             return jsonify({"success": False, "message": str(e)})
 
-    return jsonify({"success": True, "data": results})
+    return jsonify({
+        "success": True,
+        "data": results,
+        "null_data": null_results  # Return the null results as a separate key
+    })
 
 @customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
 def customer_details(customer_id):
+    database_origin = request.args.get('db')  # Get the database origin from the query parameter
     results = []
     unique_order_numbers = {}
     unique_product_data = {}
-
-    databases = ['omsdata_FDC', 'oms_EF']
+    current_app.logger.info("******__@@@search customer id@@@__ %s in database, %s",customer_id,database_origin)
+    # Use the selected database
+    databases = [database_origin] if database_origin in ['omsdata_FDC', 'oms_EF'] else []
 
     for database in databases:
         try:
@@ -174,7 +218,6 @@ def customer_details(customer_id):
     }
     for ord_num, details in unique_order_numbers.items()
 ]
-    current_app.logger.info(unique_order_numbers_list)
     return jsonify({
         "success": True,
         "data": history_html_table,

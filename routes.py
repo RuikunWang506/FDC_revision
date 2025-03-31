@@ -1098,7 +1098,7 @@ def register_routes(app):
             sql_query = request.form.get("sql_query")
             database_name = request.form.get("database_name")
             try:
-                app.logger.info("%s executed a custom SQL query: %s", current_user, sql_query)
+                app.logger.info("%s executed a custom SQL query:", current_user)
                 excel_html, error_message = execute_custom_query(sql_query, database_name)
             except Exception as e:
                 error_message = str(e)
