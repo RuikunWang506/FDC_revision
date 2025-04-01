@@ -47,8 +47,6 @@
         .step-container {
             margin-bottom: 30px;
             padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
             background-color: #f9f9f9;
         }
         
@@ -57,10 +55,16 @@
             color: #007bff;
             font-weight: bold;
         }
+        
+        .tool-section {
+            margin-top: 50px;
+            padding-top: 30px;
+        }
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
+    <!-- Instructions PDF Link -->
     
     <!-- Loading overlay (initially hidden) -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
@@ -72,92 +76,31 @@
     
     <div class="container mt-4">
         <h1 class="text-center mb-4">Order Processor Tool</h1>
-        
-        <!-- Step 1: Input Area -->
-        <div id="step1" class="step-container">
-            <h3 class="step-title">Step 1: Paste Your Item List</h3>
-            <p>Paste your list in the format: Item# (line break) Quantity (line break) Price</p>
-            <div class="form-group">
-                <textarea id="inputArea" class="form-control" placeholder="Paste your list here..."></textarea>
-            </div>
-            <div class="text-center mt-3">
-                <button id="formatButton" class="btn btn-primary">Format Data</button>
-                <a href="/download_sample" class="btn btn-secondary ml-2">Download Sample CSV</a>
-            </div>
+        <div class="text-center mb-4">
+            <a href="/static/order_processor_instruction.pdf" target="_blank" class="btn btn-info">
+                <i class="fa fa-file-pdf-o mr-2"></i>Download Instructions PDF
+            </a>
         </div>
-        
-        <!-- Step 2: Formatted Data Table -->
-        <div id="step2" class="step-container" style="display: none;">
-            <h3 class="step-title">Step 2: Review Formatted Data</h3>
-            <div class="table-responsive">
-                <table id="formattedDataTable" class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Product Code</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                        </tr>
-                    </thead>
-                    <tbody id="formattedDataBody">
-                    </tbody>
-                </table>
+        <!-- Order Processor Tool -->
+        <div id="orderProcessorTool">
+            <!-- Step 1: Input Area -->
+            <div id="step1" class="step-container">
+                <h3 class="step-title">Step 1: Paste Your Item List</h3>
+                <p>Paste your list in the format: Item# --- Quantity ---- Price</p>
+                <p>M1121 bk 2 8.99</p>
+                <div class="form-group">
+                    <textarea id="inputArea" class="form-control" placeholder="Paste your list here..."></textarea>
+                </div>
+                <div class="text-center mt-3">
+                    <button id="formatButton" class="btn btn-primary">Format Data</button>
+                </div>
             </div>
-            <div class="text-center mt-3">
-                <button id="continueButton" class="btn btn-success">Continue</button>
-                <button id="backToStep1" class="btn btn-secondary ml-2">Back</button>
-            </div>
-        </div>
-        
-        <!-- Step 3: Order Number Input -->
-        <div id="step3" class="step-container" style="display: none;">
-            <h3 class="step-title">Step 3: Enter Order Number</h3>
-            <div class="form-group">
-                <label for="orderNumberInput">Order Number:</label>
-                <input type="text" id="orderNumberInput" class="form-control" placeholder="Enter order number">
-            </div>
-            <div class="text-center mt-3">
-                <button id="verifyOrderButton" class="btn btn-primary">Verify Order</button>
-                <button id="backToStep2" class="btn btn-secondary ml-2">Back</button>
-            </div>
-        </div>
-        
-        <!-- Step 4: Order Verification and Confirmation -->
-        <div id="step4" class="step-container" style="display: none;">
-            <h3 class="step-title">Step 4: Confirm Changes</h3>
-            <div class="alert alert-warning">
-                <strong>Warning:</strong> You are about to update the following items in order <span id="displayOrderNumber"></span>. Please review carefully.
-            </div>
-            <div class="table-responsive">
-                <table id="confirmationTable" class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Product Code</th>
-                            <th>Current Quantity</th>
-                            <th>New Quantity</th>
-                            <th>Current Price</th>
-                            <th>New Price</th>
-                        </tr>
-                    </thead>
-                    <tbody id="confirmationTableBody">
-                    </tbody>
-                </table>
-            </div>
-            <div class="text-center mt-3">
-                <button id="submitChangesButton" class="btn btn-danger">Submit Changes</button>
-                <button id="backToStep3" class="btn btn-secondary ml-2">Back</button>
-            </div>
-        </div>
-        
-        <!-- Step 5: Result -->
-        <div id="step5" class="step-container" style="display: none;">
-            <h3 class="step-title">Step 5: Result</h3>
-            <div id="resultMessage" class="alert alert-success">
-                Changes have been successfully applied to the order.
-            </div>
-            <div id="resultDetails">
-                <h4>Updated Items</h4>
+            
+            <!-- Step 2: Formatted Data Table -->
+            <div id="step2" class="step-container" style="display: none;">
+                <h3 class="step-title">Step 2: Review Formatted Data</h3>
                 <div class="table-responsive">
-                    <table id="updatedItemsTable" class="table table-striped table-bordered">
+                    <table id="formattedDataTable" class="table table-striped table-bordered">
                         <thead>
                             <tr>
                                 <th>Product Code</th>
@@ -165,13 +108,98 @@
                                 <th>Price</th>
                             </tr>
                         </thead>
-                        <tbody id="updatedItemsBody">
+                        <tbody id="formattedDataBody">
                         </tbody>
                     </table>
                 </div>
+                <div class="text-center mt-3">
+                    <button id="continueButton" class="btn btn-success">Continue</button>
+                    <button id="backToStep1" class="btn btn-secondary ml-2">Back</button>
+                </div>
             </div>
-            <div class="text-center mt-3">
-                <button id="startOverButton" class="btn btn-primary">Process Another Order</button>
+            
+            <!-- Step 3: Order Number Input -->
+            <div id="step3" class="step-container" style="display: none;">
+                <h3 class="step-title">Step 3: Enter Order Number</h3>
+                <h3 class="step-title"></h3>
+                <div class="form-group">
+                    <label for="orderNumberInput">Order Number:</label>
+                    <input type="text" id="orderNumberInput" class="form-control" placeholder="Enter order number">
+                </div>
+                <div class="text-center mt-3">
+                    <button id="verifyOrderButton" class="btn btn-primary">Verify Order</button>
+                    <button id="downloadOmsCsvButton" class="btn btn-info ml-2">Download OMS CSV</button>
+                    <button id="backToStep2" class="btn btn-secondary ml-2">Back</button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Order Verification and Confirmation -->
+            <div id="step4" class="step-container" style="display: none;">
+                <h3 class="step-title">Step 4: Confirm Changes</h3>
+                <div class="alert alert-warning">
+                    <strong>Warning:</strong> You are about to update the following items in order <span id="displayOrderNumber"></span>. Please review carefully.
+                </div>
+                <div class="table-responsive">
+                    <table id="confirmationTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Product Code</th>
+                                <th>Current Quantity</th>
+                                <th>New Quantity</th>
+                                <th>Current Price</th>
+                                <th>New Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="confirmationTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <button id="submitChangesButton" class="btn btn-danger">Submit Changes</button>
+                    <button id="backToStep3" class="btn btn-secondary ml-2">Back</button>
+                </div>
+            </div>
+            
+            <!-- Step 5: Result -->
+            <div id="step5" class="step-container" style="display: none;">
+                <h3 class="step-title">Step 5: Result</h3>
+                <div id="resultMessage" class="alert alert-success">
+                    Changes have been successfully applied to the order.
+                </div>
+                <div id="resultDetails">
+                    <h4>Updated Items</h4>
+                    <div class="table-responsive">
+                        <table id="updatedItemsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Product Code</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="updatedItemsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button id="startOverButton" class="btn btn-primary">Process Another Order</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Zhuankuan Tool Section -->
+        <div id="zhuankuanTool" class="tool-section">
+            <h2 class="text-center mb-4">Zhuankuan Style Switcher Tool</h2>
+            <div class="step-container">
+                <h3 class="step-title">Enter Item Codes</h3>
+                <p>Enter item codes separated by commas (e.g., ES1269,L1687-M,L1687-S,L1689-S,L1731,L1732)</p>
+                <div class="form-group">
+                    <textarea id="zhuankuanInput" class="form-control" rows="5" placeholder="Enter item codes separated by commas..."></textarea>
+                </div>
+                <div class="text-center mt-3">
+                    <button id="processZhuankuanButton" class="btn btn-primary">Process Item Codes</button>
+                </div>
             </div>
         </div>
     </div>
@@ -357,39 +385,69 @@
                     $('#verifyOrderButton').click();
                 }
             });
+            
+            // Zhuankuan Process Button
+            $('#processZhuankuanButton').click(function() {
+                const itemCodes = $('#zhuankuanInput').val().trim();
+                if (!itemCodes) {
+                    alert('Please enter item codes first.');
+                    return;
+                }
+                
+                showLoading("Processing item codes...");
+                
+                // Create a form for direct file download
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/zhuankuan';
+                form.style.display = 'none';
+                
+                // Add the item codes as hidden input
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'item_codes';
+                input.value = itemCodes;
+                form.appendChild(input);
+                
+                document.body.appendChild(form);
+                
+                // Submit the form
+                form.submit();
+                
+                // Clean up
+                setTimeout(function() {
+                    document.body.removeChild(form);
+                    hideLoading();
+                }, 2000);
+            });
         });
         
         // Function to parse input text into structured data
-        function parseInputText(inputText) {
+function parseInputText(inputText) {
     const lines = inputText.split('\n').filter(line => line.trim() !== '');
     const result = [];
     
     // Skip header line if it exists
     const startIndex = lines[0].toLowerCase().includes('item') && 
-                       lines[0].toLowerCase().includes('qty') && 
-                       lines[0].toLowerCase().includes('price') ? 1 : 0;
+                    lines[0].toLowerCase().includes('qty') && 
+                    lines[0].toLowerCase().includes('price') ? 1 : 0;
     
     for (let i = startIndex; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         
-        // Try tab-separated format first
-        let parts = line.split('\t').filter(part => part.trim() !== '');
+        // Split by whitespace
+        const parts = line.split(/\s+/).filter(part => part.trim() !== '');
         
-        // If not tab-separated, try space-separated (multiple spaces)
-        if (parts.length !== 3) {
-            parts = line.split(/\s+/).filter(part => part.trim() !== '');
-        }
-        
-        // If we have at least 3 parts, process them
         if (parts.length >= 3) {
-            const productCode = parts[0].trim();
-            
             // The last part is the price
             const price = parseFloat(parts[parts.length - 1].trim());
             
             // The second-to-last part is the quantity
             const quantity = parseInt(parts[parts.length - 2].trim());
+            
+            // Everything else is the product code
+            const productCode = parts.slice(0, parts.length - 2).join(' ');
             
             if (isNaN(quantity) || isNaN(price)) {
                 throw new Error(`Invalid data in line: "${line}". Ensure format is correct.`);
@@ -401,7 +459,7 @@
                 price: price
             });
         } else {
-            throw new Error(`Invalid format in line: "${line}". Expected tab or space separated values.`);
+            throw new Error(`Invalid format in line: "${line}". Expected at least 3 space-separated values.`);
         }
     }
     
@@ -414,94 +472,98 @@
         
         // Function to display formatted data in the table
         function displayFormattedData(data) {
-            const tableBody = $('#formattedDataBody');
-            tableBody.empty();
-            
-            data.forEach(item => {
-                tableBody.append(`
-                    <tr>
-                        <td>${item.product_code}</td>
-                        <td>${item.quantity}</td>
-                        <td>${item.price.toFixed(2)}</td>
-                    </tr>
-                `);
-            });
-            
-            // Initialize DataTable if not already initialized
-            if (!$.fn.DataTable.isDataTable('#formattedDataTable')) {
-                $('#formattedDataTable').DataTable({
-                    "paging": true,
-                    "searching": true,
-                    "ordering": true,
-                    "info": true,
-                    "autoWidth": false,
-                    "dom": 'Bfrtip',
-                    "buttons": ['csv', 'excel']
-                });
-            } else {
-                $('#formattedDataTable').DataTable().clear().rows.add(tableBody[0].rows).draw();
-            }
-        }
+    const tableBody = $('#formattedDataBody');
+    tableBody.empty();
+    
+    data.forEach(item => {
+        tableBody.append(`
+            <tr>
+                <td>${item.product_code}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price.toFixed(2)}</td>
+            </tr>
+        `);
+    });
+    
+    // Initialize DataTable if not already initialized
+    if (!$.fn.DataTable.isDataTable('#formattedDataTable')) {
+        $('#formattedDataTable').DataTable({
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "paging": false,  // Disable pagination
+            "dom": 'Bfrtip',
+            "buttons": ['csv']
+        });
+    } else {
+        $('#formattedDataTable').DataTable().clear().rows.add(tableBody[0].rows).draw();
+    }
+}
         
         // Function to display confirmation table
-        function displayConfirmationTable(orderDetails, newData) {
-            const tableBody = $('#confirmationTableBody');
-            tableBody.empty();
-            
-            // Create a map for quick lookup of new values
-            const newDataMap = {};
-            newData.forEach(item => {
-                newDataMap[item.product_code] = {
-                    quantity: item.quantity,
-                    price: item.price
-                };
-            });
-            
-            // Populate the table
-            orderDetails.items.forEach(item => {
-                const newValues = newDataMap[item.product_code] || { quantity: "-", price: "-" };
-                
-                tableBody.append(`
-                    <tr>
-                        <td>${item.product_code}</td>
-                        <td>${item.quantity}</td>
-                        <td>${newValues.quantity}</td>
-                        <td>${parseFloat(item.price).toFixed(2)}</td>
-                        <td>${typeof newValues.price === 'number' ? newValues.price.toFixed(2) : newValues.price}</td>
-                    </tr>
-                `);
-            });
-            
-            // Add new items that weren't in the original order
-            newData.forEach(item => {
-                const exists = orderDetails.items.some(orderItem => orderItem.product_code === item.product_code);
-                if (!exists) {
-                    tableBody.append(`
-                        <tr class="table-warning">
-                            <td>${item.product_code}</td>
-                            <td>Not in order</td>
-                            <td>${item.quantity}</td>
-                            <td>Not in order</td>
-                            <td>${item.price.toFixed(2)}</td>
-                        </tr>
-                    `);
-                }
-            });
-            
-            // Initialize DataTable if not already initialized
-            if (!$.fn.DataTable.isDataTable('#confirmationTable')) {
-                $('#confirmationTable').DataTable({
-                    "paging": true,
-                    "searching": true,
-                    "ordering": true,
-                    "info": true,
-                    "autoWidth": false
-                });
-            } else {
-                $('#confirmationTable').DataTable().clear().draw();
-                $('#confirmationTable').DataTable().rows.add(tableBody[0].rows).draw();
-            }
+// Function to display confirmation table
+function displayConfirmationTable(orderDetails, newData) {
+    const tableBody = $('#confirmationTableBody');
+    tableBody.empty();
+    
+    // Create a map for quick lookup of new values
+    const newDataMap = {};
+    newData.forEach(item => {
+        newDataMap[item.product_code] = {
+            quantity: item.quantity,
+            price: item.price
+        };
+    });
+    
+    // Populate the table
+    orderDetails.items.forEach(item => {
+        const newValues = newDataMap[item.product_code] || { quantity: "-", price: "-" };
+        
+        // Convert current quantity to integer by using parseInt
+        const currentQuantity = parseInt(item.quantity);
+        
+        tableBody.append(`
+            <tr>
+                <td>${item.product_code}</td>
+                <td>${currentQuantity}</td>
+                <td>${newValues.quantity}</td>
+                <td>${parseFloat(item.price).toFixed(2)}</td>
+                <td>${typeof newValues.price === 'number' ? newValues.price.toFixed(2) : newValues.price}</td>
+            </tr>
+        `);
+    });
+    
+    // Add new items that weren't in the original order
+    newData.forEach(item => {
+        const exists = orderDetails.items.some(orderItem => orderItem.product_code === item.product_code);
+        if (!exists) {
+            tableBody.append(`
+                <tr class="table-warning">
+                    <td>${item.product_code}</td>
+                    <td>Not in order</td>
+                    <td>${item.quantity}</td>
+                    <td>Not in order</td>
+                    <td>${item.price.toFixed(2)}</td>
+                </tr>
+            `);
         }
+    });
+    
+    // Initialize DataTable if not already initialized
+    if (!$.fn.DataTable.isDataTable('#confirmationTable')) {
+        $('#confirmationTable').DataTable({
+            "paging": false,  // Disable pagination to show all data
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+        });
+    } else {
+        $('#confirmationTable').DataTable().clear().draw();
+        $('#confirmationTable').DataTable().rows.add(tableBody[0].rows).draw();
+    }
+}
         
         // Function to display updated items
         function displayUpdatedItems(updatedData) {
@@ -533,6 +595,32 @@
                 $('#updatedItemsTable').DataTable().clear().rows.add(tableBody[0].rows).draw();
             }
         }
+    </script>
+    <script>
+        // Download OMS CSV button
+$('#downloadOmsCsvButton').click(function() {
+    if (formattedData.length === 0) {
+        alert('No data available to download.');
+        return;
+    }
+    
+    // Create CSV content
+    let csvContent = "Item#,Qty,\n";
+    formattedData.forEach(item => {
+        csvContent += `${item.product_code},${item.quantity},${item.price.toFixed(2)}\n`;
+    });
+    
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'oms_data.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
     </script>
 </body>
 </html>
