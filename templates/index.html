@@ -5,46 +5,159 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FDC HOME</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="/static/icons/handbag.svg">
     <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --accent-color: #f6c23e;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
         .main-title {
-            font-size: 3rem;
-            font-weight: bold;
+            font-size: 2.5rem;
+            font-weight: 700;
             text-align: center;
-            margin: 30px 0;
-            color: #333;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin: 40px 0;
+            color: var(--dark-color);
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .main-title:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-body {
+            padding: 1.75rem;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+        
+        .card-text {
+            color: var(--dark-color);
+            margin-bottom: 1.5rem;
+            min-height: 60px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5ccc;
+            transform: translateY(-2px);
+        }
+        
+        .card-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .status-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 10px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    background: linear-gradient(
+        90deg,
+        #ff0000, #ff7f00, #ffff00, 
+        #00ff00, #0000ff, #4b0082, 
+        #9400d3, #ff0000
+    );
+    background-size: 400% 100%;
+    animation: rainbow-gradient 8s linear infinite;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+@keyframes rainbow-gradient {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+        
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
 
-    <div class="main-title">fdcef 主菜单 更新中。请稍后 menu updating</div>
-    <div class="container mt-4">
+    <div class="container">
+        <div class="main-title">FDC 主菜单 <small class="text-muted d-block d-md-inline">Menu Updating</small></div>
+        
         <div class="row">
-            <!-- Additional hardcoded route cards -->
             {% for route in [
-                
-                {'path': '/item_lookup', 'title': 'Item Lookup','description':'找款'},
-                {'path': '/location_service', 'title': 'Location Service','description':'位置查找'},
-                {'path': '/mobile', 'title': 'Mobile View','description':'手机找款'},
-                {'path': '/order_lookup', 'title': 'Order Lookup','description':'找单+打单 Jennifer 专用'},
-                {'path': '/customer', 'title': 'Customer','description':'客户历史查找'},
-                {'path': '/v6_listcreator', 'title': 'v6 listcreator','description':'做list'}, 
-                {'path': '/order_processor', 'title': 'order_process','description':'更改invoice 价格数量'}, 
-
-                {'path': '/lori_automation','title': 'loris automation','description':'Loris 全自动'},
-
-                {'path': '/big_images', 'title': 'Download Big Images','description':'下大图'},
-                {'path': '/boat', 'title': 'Boat Service','description':'Check Boat Status, 船期'},  
+                {'path': '/item_lookup', 'title': 'Item Lookup', 'description': 'Find products and styles', 'icon': 'search'},
+                {'path': '/location_service', 'title': 'Location Service', 'description': 'Find item locations in warehouse', 'icon': 'map-marker-alt'},
+                {'path': '/mobile', 'title': 'Mobile View', 'description': 'Mobile-friendly product lookup', 'icon': 'mobile-alt'},
+                {'path': '/order_lookup', 'title': 'Order Lookup', 'description': 'Jennifer专用 - Find and print orders', 'icon': 'file-invoice', 'badge': 'jennifer专用'},
+                {'path': '/customer', 'title': 'Customer', 'description': 'View customer purchase history', 'icon': 'users'},
+                {'path': '/v6_listcreator', 'title': 'List Creator', 'description': 'Create product lists', 'icon': 'list-ol'}, 
+                {'path': '/order_processor', 'title': 'Order Processor', 'description': 'Edit invoice prices/quantities 转款', 'icon': 'edit'}, 
+                {'path': '/lori_automation', 'title': 'Lori Automation', 'description': 'Fully automated processing', 'icon': 'robot'},
+                {'path': '/big_images', 'title': 'Big Images', 'description': 'Download high-resolution product images', 'icon': 'image'},
+                {'path': '/boat', 'title': 'Boat Service', 'description': 'Check shipping boat status and schedules', 'icon': 'ship'},  
             ] %}
-            <div class="col-md-4 mb-4">
+            <div class="col-lg-4 col-md-6 mb-4">
                 <div class="card h-100">
-                    <div class="card-body">
+                    <div class="card-body text-center">
+                        <i class="card-icon fas fa-{{ route.icon }}"></i>
                         <h5 class="card-title">{{ route.title }}</h5>
-                        <p class="card-text"> {{ route.description }} </p>
-                        <a href="{{ route.path }}" class="btn btn-primary">Visit</a>
+                        <p class="card-text">{{ route.description }}</p>
+                        <a href="{{ route.path }}" class="btn btn-primary">
+                            Access <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                        {% if route.badge %}
+                            <span class="status-badge">{{ route.badge }}</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
