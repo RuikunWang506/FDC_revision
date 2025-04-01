@@ -7,180 +7,53 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/static/icons/handbag.svg">
     <style>
-        .custom-btn {
-        padding: 40px 40px !important;
-        font-size: 40px !important;
-        border-radius: 50px !important;
-        margin: 20px !important;
-        width: 250px !important;
-        height: 300px !important;
-        transition: background-color 0.3s, transform 0.3s !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-direction: column !important;
-        line-height: 1 !important;
-    }
-    .custom-btn:hover {
-        transform: translateY(-30px) !important;
-    }
-    .custom-btn img {
-        margin-right: 10px !important;
-        width: 80px !important;
-        height: 80px !important;
-    }
-    .custom-btn h4 {
-        margin-top: 5px !important;
-        margin-bottom: 0 !important;
-    }
-
-    /* To-do list styling */
-    .todo-list {
-        border: 1px solid lightgray;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        margin-left: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: auto;
-        width:600px;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    .todo-list h3 {
-        color: rgb(11, 110, 240);
-    }
-
-    /* Flex layout for aligning number and text on the same row */
-    .todo-item {
-        display: flex;
-        align-items: flex-start; /* Aligns items at the top */
-        margin-bottom: 10px;
-    }
-
-    /* Fixed-width for the numbers */
-    .todo-number {
-        min-width: 30px;
-        color: rgb(81, 144, 226);
-        font-weight: bold;
-        text-align: right;
-        margin-right: 10px; /* Adds space between the number and the text */
-    }
-
-    /* Text aligns left and wraps if necessary */
-    .todo-text {
-        color: rgb(81, 144, 226);
-        text-align: left;
-        word-wrap: break-word; /* Ensures long text wraps */
-        max-width: 250px; /* Set a maximum width for the text */
-    }
-
-    /* Bug report section at the bottom */
-    .bug-report {
-        color: rgb(123, 202, 179);
-        font-size: 1.2rem;
-        text-align: center;
-        margin-top: auto;
-    }
-
-    /* Footer styling */
-    .footer-btn {
-        margin: 10px;
-    }
-        /* Media query for cellphones */
-        @media (max-width: 768px) {
-            .custom-btn {
-                padding: 20px 20px !important;
-                font-size: 20px !important;
-                border-radius: 25px !important;
-                margin: 10px !important;
-                width: 125px !important;
-                height: 150px !important;
-            }
-            .custom-btn img {
-                width: 40px !important;
-                height: 40px !important;
-            }
-            .custom-btn h4 {
-                font-size: 18px !important;
-            }
-            .todo-list {
-                margin-left: 0;
-                margin-top: 20px;
-            }
+        .main-title {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 30px 0;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
-    <!-- Include Navbar -->
     {% include 'navbar.html' %}
-    <!-- End of Navbar -->
 
-    <div class="container mt-5 text-center">
-        <button type="button" class="btn btn-info mb-3 mx-2">
-            <a href="/mobile" class="text-center" style="color:#ffffff; text-decoration: none;">Mobile friendly site</a>
-        </button>
-        <div class="d-flex justify-content-center mt-4">
-            <!-- Main buttons -->
-            <div>
-                <a href="/item_lookup" class="btn btn-primary custom-btn">
-                    <p><img src="/static/icons/magnifying-glass.svg" alt="Item Lookup"></p>
-                    Item Lookup<h4>看款</h4>
-                </a>
-                <a href="https://cl1p.net/fdcef" class="btn btn-info custom-btn">
-                    clipboard 快速链接
-                    
-                </a>
-            </div>
-            <div>
-                {% if current_user != 'fdc' %}
-                <a href="/order_lookup" class="btn btn-secondary custom-btn">
-                    <p><img src="/static/icons/document.svg" alt="Order Lookup"></p>
-                    <h4>Order Lookup & Label Maker</h4><h4>看单+打label</h4>
-                </a>
-                <a href="/boat" class="btn btn-dark custom-btn">
-                    <p>Container Tracker</p>
-                </a>
-                {% endif %}
-            </div>
-            <div>
-                <a href="/v6_listcreator" class="btn btn-success custom-btn">
-                    <p><img src="/static/icons/handbag.svg" alt="V6 List Creator"></p>
-                    V6 List Creator<h4>做List</h4>
-                </a>
-                <a href="/big_img" class="btn btn-info custom-btn">
-                    <p><img src="/static/icons/image.svg" alt="image"></p>
-                    find big images
-                </a>
-            </div>
+    <div class="main-title">fdcef 主菜单 更新中。请稍后 menu updating</div>
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Additional hardcoded route cards -->
+            {% for route in [
+                
+                {'path': '/item_lookup', 'title': 'Item Lookup','description':'找款'},
+                {'path': '/location_service', 'title': 'Location Service','description':'位置查找'},
+                {'path': '/mobile', 'title': 'Mobile View','description':'手机找款'},
+                {'path': '/order_lookup', 'title': 'Order Lookup','description':'找单+打单 Jennifer 专用'},
+                {'path': '/customer', 'title': 'Customer','description':'客户历史查找'},
+                {'path': '/v6_listcreator', 'title': 'v6 listcreator','description':'做list'}, 
+                {'path': '/order_processor', 'title': 'order_process','description':'更改invoice 价格数量'}, 
 
-            <!-- To-do List on the right -->
-            <div class="todo-list">
-                <h3>Memo</h3>
-                <div class="todo-item">
-                    <span class="todo-number">1.</span>
-                    <span class="todo-text">chill and cheer</span>
-                </div>
-                <div class="todo-item">
-                    <span class="todo-number">2.</span>
-                    <span class="todo-text"></span>
-                </div>
-                <div class="todo-item">
-                </div>
-                <div class="todo-item">
-                </div>
-            
-                <div class="bug-report">Request a function by "report a bug" <br>↙️↙️↙️↙️ </div>
-            </div>
+                {'path': '/lori_automation','title': 'loris automation','description':'Loris 全自动'},
 
-            
+                {'path': '/big_images', 'title': 'Download Big Images','description':'下大图'},
+                {'path': '/boat', 'title': 'Boat Service','description':'Check Boat Status, 船期'},  
+            ] %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ route.title }}</h5>
+                        <p class="card-text"> {{ route.description }} </p>
+                        <a href="{{ route.path }}" class="btn btn-primary">Visit</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 
-    <!-- Footer Section -->
     {% include 'footer.html' %}
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

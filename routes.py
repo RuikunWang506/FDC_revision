@@ -50,6 +50,7 @@ from PIL import Image
 from V6listcreator import v6_listcreator_bp
 from lori_automation import lori_automation_bp
 from customer import customer_bp
+from order_processor import order_processor_bp
 
 
  
@@ -73,6 +74,7 @@ def register_routes(app):
     app.register_blueprint(gpgtmx_bp)
     app.register_blueprint(lori_automation_bp)
     app.register_blueprint(customer_bp)
+    app.register_blueprint(order_processor_bp)
 
 
     app.permanent_session_lifetime = timedelta(days=30)
@@ -107,7 +109,40 @@ def register_routes(app):
         except Exception as e:
             app.logger.error(f"Error fetching location data: {e}")
             return {}
-
+    @app.route("/list_routes", methods=["GET"])
+    def list_routes():
+        if 'username' not in session:
+            session['next'] = request.url
+            return redirect(url_for("login"))
+        
+        current_user = session['username']
+        
+        # Only allow admin users to access this route
+        if current_user not in ['yeti', 'yetimaster']:
+            flash("You don't have permission to access this page.")
+            return redirect(url_for("home"))
+        
+        routes_list = []
+        for rule in app.url_map.iter_rules():
+            # Skip static files and POST-only routes
+            if 'static' not in rule.endpoint and 'GET' in rule.methods:
+                route_info = {
+                    'endpoint': rule.endpoint,
+                    'methods': ', '.join(sorted(rule.methods)),
+                    'path': str(rule),
+                    'blueprint': rule.endpoint.split('.')[0] if '.' in rule.endpoint else 'main'
+                }
+                routes_list.append(route_info)
+        
+        # Sort routes by blueprint and then by path
+        routes_list.sort(key=lambda x: (x['blueprint'], x['path']))
+        
+        return render_template(
+            "routes_list.html", 
+            routes=routes_list, 
+            current_user=current_user,
+            title="Application Routes"
+        )
     @app.route("/login", methods=["GET", "POST"])
     def login():
         # If user is already logged in, redirect to home

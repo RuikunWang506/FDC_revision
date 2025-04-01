@@ -11,10 +11,55 @@ from config import Config
 import fitz
 import io
 import re
+import pytz  # Make sure to install pytz if not already installed
+import json
 
 
 gpgtmx_bp = Blueprint('gpgtmx', __name__, template_folder='templates')
 last_data_update = time.time()
+today_order_count = 0
+last_reset_date = None
+count_file_path = os.path.join('output', 'gpginvoice', 'order_count.json')
+
+def load_order_count():
+    """Load the order count from a JSON file."""
+    if os.path.exists(count_file_path):
+        with open(count_file_path, 'r') as f:
+            data = json.load(f)
+            return data.get("count", 1), data.get("last_reset_date", None)
+    return 1, None
+
+def save_order_count(count, last_reset_date):
+    """Save the order count to a JSON file."""
+    with open(count_file_path, 'w') as f:
+        json.dump({"count": count, "last_reset_date": last_reset_date}, f)
+
+# Initialize the counter and last reset date
+today_order_count, last_reset_date = load_order_count()
+
+def count_today_orders():
+    """Count the number of orders recorded today."""
+    global today_order_count, last_reset_date
+
+    # Get the current date in PST
+    pst = pytz.timezone('America/Los_Angeles')
+    current_time = datetime.now(pst)
+    today = current_time.date()
+
+    # Check if the last reset date has changed
+    if last_reset_date is None or last_reset_date != str(today):
+        # Reset the counter if it's a new day
+        today_order_count = 1
+        last_reset_date = str(today)
+        save_order_count(today_order_count, last_reset_date)  # Save the reset count
+
+    return today_order_count
+
+def add_order():
+    """Function to add an order and increment the count."""
+    global today_order_count
+    today_order_count += 1
+    save_order_count(today_order_count, last_reset_date)  # Save the updated count
 
 def register_routes(app):
     CORS(app, resources={
@@ -79,6 +124,7 @@ def gpginvoice():
             descriptions = get_tmx_descriptions()
 
             new_rows = []
+            duplicates = []  # List to track duplicates
             for item in data['lineItems']:
                 order_number = data['orderNumber'].strip()
                 part_number = item['partNumber'].strip().upper()
@@ -94,7 +140,7 @@ def gpginvoice():
 
                 description = descriptions.get(prefixed_part_number, '')
 
-                new_rows.append([
+                new_row = [
                     order_number,
                     data['orderDate'],
                     line_number,
@@ -102,7 +148,29 @@ def gpginvoice():
                     description,
                     item['qty'],
                     item['price'].replace('$', '').strip()
-                ])
+                ]
+
+                # Check for duplicates
+                if os.path.exists(excel_path):
+                    try:
+                        with pd.ExcelFile(excel_path) as xls:
+                            df = pd.read_excel(xls, engine='openpyxl')
+                            # Normalize the DataFrame for comparison
+                            df['orderNumber'] = df['orderNumber'].astype(str).str.strip().str.upper()
+                            df['Part Number'] = df['Part Number'].astype(str).str.strip().str.upper()
+                            df['Line Number'] = df['Line Number'].astype(str).str.strip()
+
+                            # Check if the new row already exists in the DataFrame
+                            if not df[(df['orderNumber'] == order_number) & 
+                                       (df['Part Number'] == part_number) & 
+                                       (df['Line Number'] == line_number)].empty:
+                                duplicates.append(new_row)  # Track duplicates
+                            else:
+                                new_rows.append(new_row)  # Add to new rows if not a duplicate
+                    except PermissionError:
+                        return jsonify({"error": "File is currently in use. Please try again."}), 503
+                else:
+                    new_rows.append(new_row)  # If file doesn't exist, add the new row
 
             # Load existing data with proper file handling
             if os.path.exists(excel_path):
@@ -133,7 +201,20 @@ def gpginvoice():
             except PermissionError:
                 return jsonify({"error": "Cannot save file - it is being used by another process."}), 503
 
-            return jsonify({"success": True})
+            # Count today's orders
+            if new_rows:
+                add_order()
+            total_orders_today = count_today_orders()
+
+            # Prepare response message
+            response_message = f"Row is indeed added to the Excel file. This is order number {total_orders_today} of the day, you have {total_orders_today} total today."
+            if duplicates:
+                response_message = f" Skipped {len(duplicates)} duplicate entries."
+
+            return jsonify({
+                "success": True,
+                "message": response_message
+            })
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -159,8 +240,7 @@ def gpginvoice():
         table_html = "<p>No data available</p>"
         
     current_time = time.time()
-    return render_template('gpginvoice.html', table_html=table_html, 
-                          current_user=current_user, 
+    return render_template('gpginvoice.html', table_html=table_html, current_user=current_user,
                           current_time=current_time)
 
 @gpgtmx_bp.route("/gpg_finish", methods=["POST"])
