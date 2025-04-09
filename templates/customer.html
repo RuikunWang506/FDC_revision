@@ -154,6 +154,9 @@
     <!-- New container for all customer details -->
     <div class="details-container" id="allCustomerDetails"></div>
     
+    <!-- Add a hidden input to store the current user -->
+    <input type="hidden" id="currentUser" value="{{ current_user }}">
+    
     <!-- Required Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
@@ -164,15 +167,16 @@
 
     <script>
         // Function to show loading overlay
-            function showLoading(message = "Fetching customer information...") {
-                document.querySelector('.loading-text').textContent = message;
-                document.getElementById('loadingOverlay').style.display = 'flex';
-            }
+        function showLoading(message = "Fetching customer information...") {
+            document.querySelector('.loading-text').textContent = message;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
 
-            // Function to hide loading overlay
-            function hideLoading() {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            }
+        // Function to hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
         $(document).ready(function() {
             $('#toggleNullEntries').on('click', function() {
                 const nullEntriesDiv = $('#nullEntries');
@@ -184,13 +188,18 @@
             });
         });
 
-
         function checkCustomerId() {
     const customerName = document.getElementById('customerNameInput').value;
+    const currentUser = document.getElementById('currentUser').value;
+    
     if (!customerName) {
         alert("Please enter a customer name.");
         return;
     }
+
+    // Clear previous customer details
+    const allDetailsDiv = document.getElementById('allCustomerDetails');
+    allDetailsDiv.innerHTML = "";
 
     // Show loading overlay
     showLoading("Searching for customer...");
@@ -198,7 +207,10 @@
     $.ajax({
         type: "POST",
         url: "/check_customer",
-        data: JSON.stringify({ customer_name: customerName }),
+        data: JSON.stringify({ 
+            customer_name: customerName,
+            username: currentUser  // Include the username in the request
+        }),
         contentType: "application/json",
         success: function(response) {
             // Hide loading overlay
@@ -254,120 +266,122 @@
     });
 }
 
-function getCustomerDetails(customerId, databaseOrigin) {
-    // Show loading overlay with specific message
-    showLoading("Fetching detailed customer information...");
-    
-    // Clear previous details
-    const allDetailsDiv = document.getElementById('allCustomerDetails');
-    allDetailsDiv.innerHTML = "";
-    
-    $.ajax({
-        type: "GET",
-        url: `/customer_details/${customerId}?db=${databaseOrigin}`, // Pass the database origin as a query parameter
-        success: function(response) {
-            // Hide loading overlay
-            hideLoading();
+        function getCustomerDetails(customerId, databaseOrigin) {
+            // Get the current user
+            const currentUser = document.getElementById('currentUser').value;
             
-            if (response.success) {
-                const detailsSection = document.createElement('div');
-                detailsSection.className = 'details-section';
-                detailsSection.innerHTML = `<h4>Customer Order History</h4><div id="customerOrderHistory">${response.data}</div>`;
-                
-                const orderNumbersSection = document.createElement('div');
-                orderNumbersSection.className = 'details-section';
-                orderNumbersSection.innerHTML = `
-                    <h4>Unique Order Numbers</h4>
-                    <table id="orderNumbersTable" class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Order</th>
-                                <th>Date</th>
-                                <th>Item total</th>
-                                <th>Handling</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${response.unique_order_numbers.map(order => `
-                                <tr>
-                                    <td><a href="${order.order_lookup_url}">${order.order_number}</a></td>
-                                    <td>${order.date}</td>
-                                    <td>${parseFloat(order.ord_amt || 0).toFixed(2)}</td>
-                                    <td>${parseFloat(order.handl_fee || 0).toFixed(2)}</td>
-                                    <td>${parseFloat(order.total || 0).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-                
-                const productSummarySection = document.createElement('div');
-                productSummarySection.className = 'details-section';
-                productSummarySection.innerHTML = `<div id="productSummary">${response.product_summary}</div>`;
-                
-                allDetailsDiv.appendChild(detailsSection);
-                allDetailsDiv.appendChild(productSummarySection);
-                allDetailsDiv.appendChild(orderNumbersSection);
+            // Show loading overlay with specific message
+            showLoading("Fetching detailed customer information...");
+            
+            // Clear previous details
+            const allDetailsDiv = document.getElementById('allCustomerDetails');
+            allDetailsDiv.innerHTML = "";
+            
+            $.ajax({
+                type: "GET",
+                url: `/customer_details/${customerId}?db=${databaseOrigin}&username=${currentUser}`, // Pass the username as a query parameter
+                success: function(response) {
+                    // Hide loading overlay
+                    hideLoading();
+                    
+                    if (response.success) {
+                        const detailsSection = document.createElement('div');
+                        detailsSection.className = 'details-section';
+                        detailsSection.innerHTML = `<h4>Customer Order History</h4><div id="customerOrderHistory">${response.data}</div>`;
+                        
+                        const orderNumbersSection = document.createElement('div');
+                        orderNumbersSection.className = 'details-section';
+                        orderNumbersSection.innerHTML = `
+                            <h4>Unique Order Numbers</h4>
+                            <table id="orderNumbersTable" class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Date</th>
+                                        <th>Item total</th>
+                                        <th>Handling</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${response.unique_order_numbers.map(order => `
+                                        <tr>
+                                            <td><a href="${order.order_lookup_url}">${order.order_number}</a></td>
+                                            <td>${order.date}</td>
+                                            <td>${parseFloat(order.ord_amt || 0).toFixed(2)}</td>
+                                            <td>${parseFloat(order.handl_fee || 0).toFixed(2)}</td>
+                                            <td>${parseFloat(order.total || 0).toFixed(2)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                        
+                        const productSummarySection = document.createElement('div');
+                        productSummarySection.className = 'details-section';
+                        productSummarySection.innerHTML = `<div id="productSummary">${response.product_summary}</div>`;
+                        
+                        allDetailsDiv.appendChild(detailsSection);
+                        allDetailsDiv.appendChild(productSummarySection);
+                        allDetailsDiv.appendChild(orderNumbersSection);
 
-                // Initialize DataTable for order numbers
-                $('#orderNumbersTable').DataTable({
-                    "order": [[0, "desc"]], // Sort by the first column (Order Number) in descending order
-                    "scrollX": true,
-                    "autoWidth": false,
-                    "paging": true,
-                    "searching": true,
-                    "info": true,
-                    "pageLength": 100,
-                    "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
-                    "dom": 'Blfrtip',
-                    "buttons": ['excelHtml5']
-                });
+                        // Initialize DataTable for order numbers
+                        $('#orderNumbersTable').DataTable({
+                            "order": [[0, "desc"]], // Sort by the first column (Order Number) in descending order
+                            "scrollX": true,
+                            "autoWidth": false,
+                            "paging": true,
+                            "searching": true,
+                            "info": true,
+                            "pageLength": 100,
+                            "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+                            "dom": 'Blfrtip',
+                            "buttons": ['excelHtml5']
+                        });
 
-                setTimeout(function() {
-                    if ($.fn.DataTable.isDataTable('#customer_details_table')) {
-                        $('#customer_details_table').DataTable().destroy();
+                        setTimeout(function() {
+                            if ($.fn.DataTable.isDataTable('#customer_details_table')) {
+                                $('#customer_details_table').DataTable().destroy();
+                            }
+                            if ($.fn.DataTable.isDataTable('#product_summary_table')) {
+                                $('#product_summary_table').DataTable().destroy();
+                            }
+
+                            $('#customer_details_table').DataTable({
+                                "order": [[0, "desc"]], // Sort by the first column (Order Number) in descending order
+                                "scrollX": true,
+                                "autoWidth": false,
+                                "paging": true,
+                                "searching": true,
+                                "info": true,
+                                "pageLength": 100,
+                                "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+                                "dom": 'Blfrtip',
+                                "buttons": ['excelHtml5']
+                            });
+                                $('#product_summary_table').DataTable({
+                                "scrollX": true,
+                                "autoWidth": false,
+                                "paging": true,
+                                "searching": true,
+                                "info": true,
+                                "pageLength": 100,
+                                "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+                                "dom": 'Blfrtip',
+                                "buttons": ['excelHtml5']
+                            });
+                        }, 100);
+                    } else {
+                        allDetailsDiv.innerHTML = `<div class='alert alert-danger'>${response.message}</div>`;
                     }
-                    if ($.fn.DataTable.isDataTable('#product_summary_table')) {
-                        $('#product_summary_table').DataTable().destroy();
-                    }
-
-                    $('#customer_details_table').DataTable({
-                        "order": [[0, "desc"]], // Sort by the first column (Order Number) in descending order
-                        "scrollX": true,
-                        "autoWidth": false,
-                        "paging": true,
-                        "searching": true,
-                        "info": true,
-                        "pageLength": 100,
-                        "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
-                        "dom": 'Blfrtip',
-                        "buttons": ['excelHtml5']
-                    });
-
-                    $('#product_summary_table').DataTable({
-                        "scrollX": true,
-                        "autoWidth": false,
-                        "paging": true,
-                        "searching": true,
-                        "info": true,
-                        "pageLength": 100,
-                        "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
-                        "dom": 'Blfrtip',
-                        "buttons": ['excelHtml5']
-                    });
-                }, 100);
-            } else {
-                allDetailsDiv.innerHTML = `<div class='alert alert-danger'>${response.message}</div>`;
-            }
-        },
-        error: function() {
-            // Hide loading overlay
-            hideLoading();
-            alert("An error occurred while retrieving customer details.");
+                },
+                error: function() {
+                    // Hide loading overlay
+                    hideLoading();
+                    alert("An error occurred while retrieving customer details.");
+                }
+            });
         }
-    });
-}
 
         document.getElementById('customerNameInput').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
@@ -375,6 +389,7 @@ function getCustomerDetails(customerId, databaseOrigin) {
                 checkCustomerId();
             }
         });
+        
         document.getElementById('nullEntriesHeader').addEventListener('click', function () {
             const table = document.getElementById('nullEntriesTable');
             const visible = table.style.display === 'block';

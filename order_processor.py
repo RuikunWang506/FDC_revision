@@ -42,7 +42,6 @@ def verify_order():
     if 'username' not in session:
         return jsonify({"success": False, "message": "Not logged in"}), 401
 
-    # Use force=True to parse JSON regardless of Content-Type header
     data = request.get_json(force=True)
     order_number = data.get('order_number')
     items = data.get('items', [])
@@ -51,7 +50,14 @@ def verify_order():
         return jsonify({"success": False, "message": "Order number is required"}), 400
 
     try:
-        conn = get_db_connection()
+        # Determine the database to use based on the length of the order_number
+        if len(order_number) == 4:
+            conn = get_db_connection()  # Connect to oms_EF
+        elif len(order_number) == 5:
+            conn = get_zhuankuan_db_connection()  # Connect to omsdata_FDC
+        else:
+            return jsonify({"success": False, "message": "Invalid order number length"}), 400
+
         cursor = conn.cursor()
         cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE ord_num = ?", order_number)
         count = cursor.fetchone()[0]
@@ -99,40 +105,49 @@ def update_order():
         return jsonify({"success": False, "message": "Order number and items are required"}), 400
 
     try:
-        conn = get_db_connection()
+        # Determine the database connection based on the order number length
+        if len(order_number) == 4:
+            conn = get_db_connection()  # Connect to oms_EF
+        elif len(order_number) == 5:
+            conn = get_zhuankuan_db_connection()  # Connect to omsdata_FDC
+        else:
+            return jsonify({"success": False, "message": "Order number must be 4 or 5 digits."}), 400
+
         cursor = conn.cursor()
         updated_items = []
         not_found_items = []
+        result_message = "Order updated successfully"
 
         for item in items:
             product_code = item['product_code']
             quantity = item['quantity']
             price = item['price']
 
-            cursor.execute(f"""
-                SELECT COUNT(*) FROM {table_name} 
+            # Assuming the same logic applies to both databases
+            cursor.execute("""
+                SELECT COUNT(*) FROM dbo.ord_log  
                 WHERE ord_num = ? AND PROD_CD = ?
-            """, order_number, product_code)
+            """, (order_number, product_code))
             count = cursor.fetchone()[0]
 
             if count > 0:
-                query = f"""
-                    UPDATE {table_name}
+                query = """
+                    UPDATE dbo.ord_log  
                     SET ORDER_QTY = ?, UNIT_PRS = ?
                     WHERE ord_num = ? AND PROD_CD = ?
                 """
-                cursor.execute(query, quantity, price, order_number, product_code)
-                current_app.logger.info(f"User {current_user} updated item {product_code} in order {order_number}: qty={quantity}, price={price}")
+                cursor.execute(query, (quantity, price, order_number, product_code))
                 updated_items.append(product_code)
             else:
                 current_app.logger.warning(f"Item {product_code} not found in order {order_number}")
                 not_found_items.append(product_code)
 
         conn.commit()
+
         placeholders = ','.join(['?'] * len(updated_items))
         cursor.execute(f"""
-            SELECT PROD_CD, ORDER_QTY, UNIT_PRS 
-            FROM {table_name} 
+            SELECT PROD_CD, ORDER_QTY, UNIT_PRS
+            FROM dbo.ord_log  
             WHERE ord_num = ? AND PROD_CD IN ({placeholders})
         """, [order_number] + updated_items)
 
@@ -145,11 +160,11 @@ def update_order():
             })
 
         conn.close()
-        result_message = f"Successfully updated {len(updated_items)} items in order {order_number}"
+
         if not_found_items:
             result_message += f". {len(not_found_items)} items were not found in the order: {', '.join(not_found_items)}"
 
-        current_app.logger.info(f"User {current_user} {result_message}")
+        current_app.logger.info(f"User {current_user} updated order {order_number}")
         return jsonify({
             "success": True,
             "message": result_message,

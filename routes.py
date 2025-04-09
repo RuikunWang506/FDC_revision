@@ -51,7 +51,7 @@ from V6listcreator import v6_listcreator_bp
 from lori_automation import lori_automation_bp
 from customer import customer_bp
 from order_processor import order_processor_bp
-
+from tk_label_zoom import tk_label_zoom_bp
 
  
 
@@ -75,7 +75,7 @@ def register_routes(app):
     app.register_blueprint(lori_automation_bp)
     app.register_blueprint(customer_bp)
     app.register_blueprint(order_processor_bp)
-
+    app.register_blueprint(tk_label_zoom_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 

@@ -12,6 +12,7 @@ import zipfile
 import mysql.connector
 from mysql.connector import Error
 import pyodbc
+import base64
 
 lori_automation_bp = Blueprint('lori_automation', __name__)
 color_dict = {"TL":"Teal","ABL":"ASHY BLUE","FLOWER":"FLOWER","BG":"BEIGE","BK":"BLACK","BL":"BLUE","BP":"BLUSH PINK","BR":"BROWN","CF":"COFFEE","CG":"COGNAC","CO":"CORAL","DM":"DENIM BLUE","DPL":"DARK PLUM","FU":"FUSCHIA","GN":"GREEN","GY":"GREY","KH":"KHAKI","LBL":"LIGHT BLUE","LV":"LAVENDER","MD":"MUSTARD","MV":"MAUVE","NV":"NAVY","OL":"OLIVE","OR":"ORANGE","OW":"OFF WHITE","PK":"PINK","PL":"PLUM","PP":"PURPLE","RD":"RED","TN":"TAN","TP":"TAUPE","TQ":"TEQUISE","WN":"WINE","WT":"WHITE","YL":"YELLOW","ST":"STONE"}
@@ -375,11 +376,10 @@ def lori_automation():
             })
 
         return jsonify({
-            'excel_zip': memory_zip.getvalue().decode('latin1'),
-            'combined_pdf': pdf_output.getvalue().decode('latin1'),
+            'excel_zip': base64.b64encode(memory_zip.getvalue()).decode('utf-8'),
+            'combined_pdf': base64.b64encode(pdf_output.getvalue()).decode('utf-8'),
             'shipstation_data': shipstation_data
         })
-    
     return render_template("lori_automation.html", current_user=session['username'])
 
 @lori_automation_bp.route("/send_to_shipstation", methods=["POST"])
@@ -387,9 +387,12 @@ def send_to_shipstation():
     data = request.get_json()
     url = "https://ssapi.shipstation.com/orders/createorders"
     headers = {'Content-Type': 'application/json'}
-
+    
+    # Get all orders
+    all_orders = data['shipstation_data']
+    
     # Ensure each order has the required fields
-    for order in data['shipstation_data']:
+    for order in all_orders:
         order['orderStatus'] = 'awaiting_shipment'  # Required field
         order['billTo'] = {
             "name": f"Lori's Gift Shop #{order['orderNumber'][:4]}",
@@ -401,14 +404,42 @@ def send_to_shipstation():
             "country": "US",
             "phone": "",
         }
-
-    response = requests.post(url, headers=headers, json=data['shipstation_data'], auth=(current_app.config['APIKEY'], current_app.config['APIPASS']))
     
-    # Log the response
-    current_app.logger.info(f"ShipStation Response: {response.status_code}")
-    current_app.logger.info(f"Response Content: {response.text}")
+    # Batch orders in groups of 80
+    batch_size = 80
+    batches = [all_orders[i:i + batch_size] for i in range(0, len(all_orders), batch_size)]
     
-    return jsonify(response.json())
+    # Process each batch
+    all_responses = []
+    for batch_index, batch in enumerate(batches):
+        current_app.logger.info(f"Processing batch {batch_index+1} of {len(batches)} with {len(batch)} orders")
+        
+        response = requests.post(
+            url, 
+            headers=headers, 
+            json=batch, 
+            auth=(current_app.config['APIKEY'], current_app.config['APIPASS'])
+        )
+        
+        # Log the response
+        current_app.logger.info(f"ShipStation Response for batch {batch_index+1}: {response.status_code}")
+        current_app.logger.info(f"Response Content for batch {batch_index+1}: {response.text}")
+        
+        try:
+            response_data = response.json()
+            all_responses.append(response_data)
+        except Exception as e:
+            current_app.logger.error(f"Error parsing response for batch {batch_index+1}: {str(e)}")
+            all_responses.append({"error": str(e)})
+    
+    # Combine all responses
+    combined_response = {
+        "batches_processed": len(batches),
+        "total_orders": len(all_orders),
+        "batch_responses": all_responses
+    }
+    
+    return jsonify(combined_response)
 
 
 @lori_automation_bp.route("/download_database", methods=["GET"])

@@ -25,10 +25,16 @@ def check_customer():
     if 'username' not in session:
         session['next'] = request.url
         return redirect(url_for("login"))
+    
     current_user = session['username']
     data = request.get_json()
     customer_name = data.get('customer_name', '')
-    current_app.logger.info("***%s***__@@@search customer@@@__ %s",current_user, data)
+    # Get username from request if available, otherwise use session
+    username_from_request = data.get('username')
+    if username_from_request:
+        current_user = username_from_request
+        
+    current_app.logger.info("***%s***__@@@search customer@@@__ %s", current_user, data)
     results = []
     null_results = []  # List to hold rows with null values
     databases = ['omsdata_FDC', 'oms_EF']
@@ -96,11 +102,21 @@ def check_customer():
 
 @customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
 def customer_details(customer_id):
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for("login"))
+    
+    current_user = session['username']
+    # Get username from query parameter if available
+    username_from_request = request.args.get('username')
+    if username_from_request:
+        current_user = username_from_request
+        
     database_origin = request.args.get('db')  # Get the database origin from the query parameter
     results = []
     unique_order_numbers = {}
     unique_product_data = {}
-    current_app.logger.info("******__@@@search customer id@@@__ %s in database, %s",customer_id,database_origin)
+    current_app.logger.info("***%s***__@@@search customer id@@@__ %s in database %s", current_user, customer_id, database_origin)
     # Use the selected database
     databases = [database_origin] if database_origin in ['omsdata_FDC', 'oms_EF'] else []
 

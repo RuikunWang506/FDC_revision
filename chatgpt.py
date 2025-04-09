@@ -4,14 +4,15 @@ from openai import OpenAI
 import json
 import time
 import logging
-from flask import Blueprint, render_template, request, jsonify,session,redirect,url_for
+from flask import Blueprint, render_template, request, jsonify,session,redirect,url_for,send_from_directory,current_app,abort
 from openai import RateLimitError, OpenAIError
+chatgpt_bp = Blueprint('chatgpt_bp', __name__)
+
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-chatgpt_bp = Blueprint('chatgpt_bp', __name__)
 
 def load_credentials():
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -91,3 +92,115 @@ def chat():
     except Exception as e:
         logger.exception("Error handling /chatgpt request.")
         return jsonify({'response': f"An internal error occurred: {str(e)}"}), 500
+
+    
+# #stable fusion part
+# from flask import Flask, render_template, request, send_file
+# from diffusers import StableDiffusionPipeline
+# import torch
+# import uuid
+# import threading
+# generation_status = {}
+
+# pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float32)
+# pipe.to("cuda")    
+# # Define the output directory and prompts file
+# OUTPUT_DIR = os.path.join("output", "stable")
+# if not os.path.exists(OUTPUT_DIR):
+#     os.makedirs(OUTPUT_DIR)
+# PROMPTS_FILE = os.path.join(OUTPUT_DIR, "prompts.json")
+
+# def load_images_data():
+#     if os.path.exists(PROMPTS_FILE):
+#         with open(PROMPTS_FILE, "r") as pf:
+#             return json.load(pf)
+#     return []
+
+# def save_images_data(data):
+#     with open(PROMPTS_FILE, "w") as pf:
+#         json.dump(data, pf)
+
+# def generate_image(prompt, steps, guidance, width, height):
+#     global generation_status
+#     generation_status['status'] = "Starting image generation..."
+    
+#     # Simulate image generation process
+#     for i in range(1, steps + 1):
+#         time.sleep(0.1)  # Simulate processing delay
+#         generation_status['status'] = f"Generating... Step {i} of {steps}"
+
+#     # Generate the image using the parameters
+#     image = pipe(prompt,
+#                  num_inference_steps=steps,
+#                  guidance_scale=guidance,
+#                  width=width,
+#                  height=height).images[0]
+    
+#     filename = f"output_{uuid.uuid4().hex}.png"
+#     image_path = os.path.join(OUTPUT_DIR, filename)
+#     image.save(image_path)
+    
+#     # Update status and save image metadata
+#     generation_status['status'] = "Image generation complete!"
+    
+#     image_data = {
+#         'prompt': prompt,
+#         'filename': filename,
+#         'steps': steps,
+#         'guidance': guidance,
+#         'width': width,
+#         'height': height
+#     }
+#     images_data = load_images_data()
+#     images_data.append(image_data)
+#     save_images_data(images_data)
+    
+
+
+# @chatgpt_bp.route('/stablediffusion', methods=['GET', 'POST'])
+# def stablediffusion():
+#     global generation_status
+#     images_data = load_images_data()
+#     if request.method == 'POST':
+#         prompt = request.form['prompt']
+#         steps = int(request.form.get('steps', 30))
+#         guidance = float(request.form.get('guidance', 7.5))
+#         width = int(request.form.get('width', 512))
+#         height = int(request.form.get('height', 512))
+
+#         # Start a new thread for image generation
+#         thread = threading.Thread(target=generate_image, args=(prompt, steps, guidance, width, height))
+#         thread.start()
+#         current_app.logger.info(f"Image generation thread started for prompt: {prompt}")
+
+#         return jsonify({'status': 'Image generation started.'}), 202
+
+#     return render_template('stablediffusion.html', images_data=images_data)
+
+# @chatgpt_bp.route('/output/stable/<filename>')
+# def stable_output(filename):
+#     # Ensure the requested file exists in the output directory
+#     file_path = os.path.join(OUTPUT_DIR, filename)
+    
+#     if not os.path.exists(file_path):
+#         abort(404)  # Return a 404 error if the file does not exist
+
+#     # Return the file for download
+#     return send_from_directory(OUTPUT_DIR, filename)
+# @chatgpt_bp.route('/output/stable')
+# def list_stable_outputs():
+#     # List all files in the OUTPUT_DIR
+#     files = os.listdir(OUTPUT_DIR)
+    
+#     # Filter files to include only .png files (or any other relevant extensions)
+#     files = [f for f in files if f.endswith('.png')]
+    
+#     # Sort files by modification time (newest first)
+#     files.sort(key=lambda x: os.path.getmtime(os.path.join(OUTPUT_DIR, x)), reverse=True)
+    
+#     # Return the sorted list of files (you can render this in a template or return as JSON)
+#     return jsonify(files)
+
+# @chatgpt_bp.route('/generation_status', methods=['GET'])
+# def get_generation_status():
+#     return jsonify(generation_status)

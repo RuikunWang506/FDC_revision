@@ -515,25 +515,41 @@ function displayConfirmationTable(orderDetails, newData) {
             price: item.price
         };
     });
-    
+
+    // Variables to calculate sums and averages
+    let totalCurrentQuantity = 0;
+    let totalNewQuantity = 0;
+    let totalCurrentPrice = 0;
+    let totalNewPrice = 0;
+    let itemCount = 0;
+
     // Populate the table
     orderDetails.items.forEach(item => {
         const newValues = newDataMap[item.product_code] || { quantity: "-", price: "-" };
         
         // Convert current quantity to integer by using parseInt
         const currentQuantity = parseInt(item.quantity);
+        const currentPrice = parseFloat(item.price);
         
+        // Update totals
+        if (!isNaN(currentQuantity)) totalCurrentQuantity += currentQuantity;
+        if (!isNaN(newValues.quantity)) totalNewQuantity += newValues.quantity;
+        if (!isNaN(currentPrice)) totalCurrentPrice += currentPrice;
+        if (typeof newValues.price === 'number') totalNewPrice += newValues.price;
+
+        itemCount++;
+
         tableBody.append(`
             <tr>
                 <td>${item.product_code}</td>
                 <td>${currentQuantity}</td>
                 <td>${newValues.quantity}</td>
-                <td>${parseFloat(item.price).toFixed(2)}</td>
+                <td>${currentPrice.toFixed(2)}</td>
                 <td>${typeof newValues.price === 'number' ? newValues.price.toFixed(2) : newValues.price}</td>
             </tr>
         `);
     });
-    
+
     // Add new items that weren't in the original order
     newData.forEach(item => {
         const exists = orderDetails.items.some(orderItem => orderItem.product_code === item.product_code);
@@ -549,7 +565,22 @@ function displayConfirmationTable(orderDetails, newData) {
             `);
         }
     });
-    
+
+    // Calculate averages
+    const averageCurrentPrice = totalCurrentPrice / itemCount || 0;
+    const averageNewPrice = totalNewPrice / itemCount || 0;
+
+    // Append a summary row
+    tableBody.append(`
+        <tr class="table-info">
+            <td><strong>Total/Average</strong></td>
+            <td><strong>${totalCurrentQuantity}</strong></td>
+            <td><strong>${totalNewQuantity}</strong></td>
+            <td><strong>${averageCurrentPrice.toFixed(2)}</strong></td>
+            <td><strong>${averageNewPrice.toFixed(2)}</strong></td>
+        </tr>
+    `);
+
     // Initialize DataTable if not already initialized
     if (!$.fn.DataTable.isDataTable('#confirmationTable')) {
         $('#confirmationTable').DataTable({
