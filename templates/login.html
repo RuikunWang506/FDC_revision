@@ -6,6 +6,10 @@
     <title>Login</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <!-- Add jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </head>
 <style>
@@ -32,8 +36,9 @@
                 <h1 class="text-center rainbow-text">🀅</h1>
 
                 <h2 class="text-center">FDC Toolkit Login</h2>
-                
-                <form method="POST" action="{{ url_for('login') }}">
+                <h5 class="text-center">If you do not have a login, contact: <a href="mailto:tristen@fdcus.com"> tristen</a></h5>
+
+                <form method="POST" action="{{ url_for('auth.login') }}" style="padding-bottom: 10px;" class="mt-4">
                     <div class="form-group">
                         <label for="username">Username</label>
                         <input type="text" class="form-control" id="username" name="username" required>
@@ -48,7 +53,45 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Login</button>
                 </form>
+
+
+
+                <a href="{{ url_for('auth.google_login') }}" class="btn btn-danger btn-block" style="background-color: #4285F4; border-color: #4285F4;">
+                    <img src="https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://google.com&size=48" alt="Google logo" style="width: 20px; height: 20px; margin-right: 10px;">
+                    Sign in with Google (after first time login)
+                </a>
                 
+                
+              
+                <div class="mt-3 text-right">
+                    <a href="#" class="btn btn-link"  data-toggle="modal" data-target="#resetPasswordModal">Forgot Password?</a>
+                    <br>
+                </div>
+                
+                <!-- Reset Password Modal -->
+                <div class="modal fade" id="resetPasswordModal" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="resetPasswordForm">
+                                    <div class="form-group">
+                                        <label for="resetIdentifier">Username or Email</label>
+                                        <input type="text" class="form-control" id="resetIdentifier" name="identifier" required>
+                                        <small class="form-text text-muted">Enter either your username or email address</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Request Password Reset</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 
                 {% with messages = get_flashed_messages() %}
                     {% if messages %}
@@ -65,12 +108,12 @@
                     
         {% if location.status == 'success' %}
             
-            <p>Your IP is: {{ client_ip }}</p>
-            <p>City: {{ location.city }}</p>
-            <p>Region: {{ location.regionName }}</p>
-            <p>Country: {{ location.country }}</p>
-            <p>Latitude: {{ location.lat }}</p>
-            <p>Longitude: {{ location.lon }}</p>
+            <p><b>Your IP is:</b> {{ client_ip }}</p>
+            <p><b>City:</b> {{ location.city }},
+            <b>Region:</b> {{ location.regionName }},
+            <b>Country:</b> {{ location.country }}</p>
+            <p><b>Latitude:</b> {{ location.lat }},
+            <b>Longitude:</b> {{ location.lon }}</p>
             <h3>👁️ Am Watching You</h3>
             <!-- Map container -->
             <div class="container-fluid">
@@ -80,7 +123,6 @@
                     </div>
                 </div>
             </div>
-            
         {% else %}
             <p>Location not found.</p>
         {% endif %}
@@ -123,5 +165,51 @@
         })
         .catch(error => console.error('Error fetching location:', error));
 </script>
+
+<script>
+    // Add error handling for modal
+    $('#resetPasswordModal').on('show.bs.modal', function (e) {
+        console.log('Modal is opening');
+    }).on('shown.bs.modal', function (e) {
+        console.log('Modal is now visible');
+    }).on('hide.bs.modal', function (e) {
+        console.log('Modal is hiding');
+    });
+
+    // Handle password reset form submission
+    document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const identifier = document.getElementById('resetIdentifier').value;
+        
+        fetch('/request_password_reset', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ identifier: identifier })
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 500) {
+                    throw new Error('Server error. Please try again later.');
+                }
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Unknown error occurred');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            $('#resetPasswordModal').modal('hide');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        });
+    });
+</script>
+
 
 </html>

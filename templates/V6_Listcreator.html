@@ -241,13 +241,12 @@
 </head>
 <body>
     {% include 'navbar.html' %}
-
+    {% if not missing_descriptions and pivot_data %}
     <div class="bookmark-sidebar">
         <h5>Styles</h5>
 
         
         <div class="action-sidebar">
-            {% if not missing_descriptions and pivot_data %}
             <div class="d-flex flex-column">
                 <button type="button" class="btn btn-success mb-4" data-toggle="modal" data-target="#imageSizeModal">Export List</button>
                 <button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#editDescriptionModal">Edit Desc</button>
@@ -256,20 +255,10 @@
                 <button type="button" class="btn btn-warning mb-2" id="togglePcsBox" onclick="togglePcsBox()">Hide PCS/BOX</button>
                 <button type="button" class="btn btn-warning mb-2" id="toggleDimensions" onclick="toggleDimensions()">Hide Dimensions</button>
                 <button type="button" class="btn btn-info mb-2" onclick="selectNonDropboxImages()">No Dropbox Img</button>
-                
             </div>
-            {% endif %}
-            <ul>
-                <h5>Todo</h5>
-                <li>save work progress</li>
-                <h5>more advanced</h5>
-                <li>all avaliable inventory</li>
-                <li>all ocean</li>
-                <li>all avaliable before xxx date</li>
-                
-            </ul>
         </div>
         
+
         <div class="bookmark-sidebar">
             <div class="section-header" onclick="toggleSection('styles-section')">
                 <h5>Styles ({{ pivot_data|length }} styles / {{ list_input|count_dropbox_files if list_input else 0 }} pics)</h5>
@@ -312,6 +301,7 @@
                     {% endfor %}
                 </ul>
         </div>
+        {% endif %}
     </div>
     </div>
     <div class="container mt-4">
@@ -320,9 +310,56 @@
                 {{ error_message }}
             </div>
         {% endif %}
-        <h2 style="color: red; text-align:center">List Creator 6.0 </h2>
-        <h2 style="color: red; text-align:center">超强无敌终极目录创造器6.0 版本</h2>
-        {% if list_input %}<h5>your input was:<br> {{list_input}}</h5>{%endif%}
+        <h2 style="color: red; text-align:center">List Creator V6.1 </h2>
+        <h3 style="color: #eb66a8; text-align:center">now supports -sml styles</h3>
+        
+<!-- Add this section to your v6_listcreator.html template -->
+{% if your_input_was %}
+<div class="alert alert-info">
+    <strong>Your input was:</strong> {{ your_input_was }}
+    
+    {% if clean_list_for_memo %}
+    <div class="mt-2">
+        <strong>Your item list is:</strong> 
+        <div style="word-wrap: break-word; white-space: normal; max-width: 100%;">
+            {{ clean_list_for_memo }}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if duplicate_items %}
+    <div class="mt-2">
+        <strong>Your duplicate items:</strong> 
+        {% for item in duplicate_items %}
+            <span class="badge badge-danger">{{ item.base_sku }} ({{ item.files|join(', ') }})</span>
+        {% endfor %}
+    </div>
+    <div class="mt-2">
+        <strong>New Total Pic count:</strong> 
+        <span class="badge badge-success">{{ list_input|count_dropbox_files if list_input else 0 }} Minus {{ duplicate_items  | length }} duplicate</span>
+    </div>
+    {% endif %}
+    
+    {% if missing_styles %}
+    <div class="mt-2">
+        <strong>Styles not found in database:</strong> 
+        {% for style in missing_styles %}
+            <span class="badge badge-warning">{{ style }}</span> 
+        {% endfor %}
+        <span>maybe not imported or missing the -set</span>
+    </div>
+    {% endif %}
+    
+    {% if duplicate_styles %}
+    <div class="mt-2">
+        <strong>Duplicate styles:</strong> 
+        {% for style in duplicate_styles %}
+            <span class="badge badge-danger">{{ style }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
         <form method="POST" action="{{ url_for('v6_listcreator.index') }}">
             <div class="form-group">
                 <input type="text" class="form-control" id="list_input" name="list_input" placeholder="Styles or Dropboxlink">
@@ -333,7 +370,6 @@
         <div class="form-group">
             <label for="random_strings_input"><h6>Paste your raw list, can be from excel, seperator is comma "," or new line "enter</p></h6></label>
             <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5"></textarea>
-            if user choose to upload a dropbox link and receives "not_in_oms" for -s -m -L Styles, try the same list input again without the "-“ or add the "-" before the S, M , L  
 
         </div>
         {% endif %}
@@ -496,8 +532,8 @@
                         <td>
                             <select name="description_{{ loop.index }}" class="form-control">
                                 <option value="">Select a description</option>
-                                {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "BELT BAG", "BUCKET BAG", "CROSSBODY", "CROSSBODY 2-IN-1", "CROSSBODY SET", "FLAP BAG", "FRAME BAG", "GIFT SET", "HOBO", "JELLY BAG", "LARGE CROSSBODY", "LARGE NYLON CROSSBODY", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME BAG", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "NYLON BACKPACK", "NYLON CROSSBODY", "NYLON HOBO", "PATENT BAG", "PATENT MINI SATCHEL", "SATCHEL", "SLING", "STRAW BAG", "STRAW CROSSBODY", "TOTE", "WALLET"] %}
-                                    <option value="{{ option }}">{{ option }}</option>
+                                {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
+                                <option value="{{ option }}">{{ option }}</option>
                                 {% endfor %}
                             </select>
                         </td>
@@ -1194,6 +1230,8 @@ function exportWithSelectedSize() {
                         if (indexB === -1) return -1;
                         
                         return indexA - indexB;
+                    } else if (sortType === 'sort_description') {
+                        return styleB.localeCompare(styleA);
                     }
                 });
                 
@@ -1279,5 +1317,71 @@ function exportWithSelectedSize() {
     });
 }
         </script>
+<!-- Add this script at the end of the file, just before the closing </body> tag -->
+<script>
+    // Define the default order for descriptions
+    const defaultDescriptionOrder = [
+        "2-IN-1 SET", "3-IN-1 SET", "Sets", "Gift Set", 
+        "BACKPACK", "Backpack(Nylon)", "MINI BACKPACK", 
+        "Satchel", "Satchel(oversize)", "MINI SATCHEL", 
+        "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", 
+        "FRAME BAG", "MINI FRAME", 
+        "Tote", 
+        "Hobo", "Hobo(Nylon)", "MINI HOBO", 
+        "BELT BAG", "MINI BELT BAG", 
+        "BUCKET BAG", "MINI BUCKET", 
+        "Flap Bag", "Jelly Bag", "MINI BAG", "CHEST BAG", 
+        "Mini Tote (Embossed)", "phone bag", "Round bag", "sling", 
+        "straw bag", "MINI STRAW BAG", 
+        "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", 
+        "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", 
+        "Crossbody(oversize)", "crossbody(straw)", 
+        "Wallet"
+    ];
+
+    // Function to reorder the descriptions list according to the default order
+    function reorderDescriptions() {
+        const descriptionsList = document.getElementById('sortableDescriptions');
+        if (!descriptionsList) return;
+
+        const items = Array.from(descriptionsList.querySelectorAll('li'));
+        if (items.length === 0) return;
+
+        // Sort items based on the default order
+        items.sort((a, b) => {
+            const textA = a.textContent.trim();
+            const textB = b.textContent.trim();
+            
+            // Find index in default order list, ignoring case
+            const indexA = defaultDescriptionOrder.findIndex(
+                item => item.toLowerCase() === textA.toLowerCase()
+            );
+            const indexB = defaultDescriptionOrder.findIndex(
+                item => item.toLowerCase() === textB.toLowerCase()
+            );
+            
+            // If both items are in the default order list, sort by that order
+            if (indexA !== -1 && indexB !== -1) {
+                return indexA - indexB;
+            }
+            
+            // If only one item is in the default order list, prioritize it
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            
+            // If neither is in the default list, sort alphabetically
+            return textA.localeCompare(textB);
+        });
+
+        // Clear the list and append items in the new order
+        descriptionsList.innerHTML = '';
+        items.forEach(item => descriptionsList.appendChild(item));
+    }
+
+    // Call the reordering function when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        reorderDescriptions();
+    });
+</script>
 </body>
 </html>

@@ -300,6 +300,7 @@
                                         <th>Date</th>
                                         <th>Item total</th>
                                         <th>Handling</th>
+                                        <th>Misc</th>
                                         <th>Total</th>
                                     </tr>
                                 </thead>
@@ -310,6 +311,7 @@
                                             <td>${order.date}</td>
                                             <td>${parseFloat(order.ord_amt || 0).toFixed(2)}</td>
                                             <td>${parseFloat(order.handl_fee || 0).toFixed(2)}</td>
+                                            <td>${parseFloat(order.misc_chg || 0).toFixed(2)}</td>
                                             <td>${parseFloat(order.total || 0).toFixed(2)}</td>
                                         </tr>
                                     `).join('')}

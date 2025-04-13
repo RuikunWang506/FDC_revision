@@ -281,6 +281,15 @@
                         log
                     </a>
                 </li>
+
+                {% endif %}
+                {% if current_user in ['yetimaster'] %}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/manage_users">
+                        <img src="/static/icons/shipping.svg" alt="User Management">Users
+                    </a>
+                </li>
                 {% endif %}
             </ul>
             <ul class="navbar-nav ml-auto">
@@ -308,11 +317,12 @@
                             {% endif %}
                         </span>                    </a>
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                        <a class="dropdown-item" href="/logout">Logout</a>
+                        <a class="dropdown-item" href="{{ url_for('auth.user_settings') }}">Settings</a>
+                        <a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a>
                     </div>
                 
                     <!-- Display only on mobile -->
-                    <a class="nav-link d-lg-none" href="/logout">Logout</a>
+                    <a class="nav-link d-lg-none" href="{{ url_for('auth.logout') }}">Logout</a>
                 </li>
             </ul>
         </div>

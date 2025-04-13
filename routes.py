@@ -1,5 +1,8 @@
 from flask import (request, render_template, jsonify, redirect, url_for, 
                    session, flash, send_from_directory,send_file, Response, make_response)
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from werkzeug.utils import secure_filename
 
 # Standard library imports
@@ -52,7 +55,7 @@ from lori_automation import lori_automation_bp
 from customer import customer_bp
 from order_processor import order_processor_bp
 from tk_label_zoom import tk_label_zoom_bp
-
+from auth import auth_bp
  
 
 
@@ -76,44 +79,23 @@ def register_routes(app):
     app.register_blueprint(customer_bp)
     app.register_blueprint(order_processor_bp)
     app.register_blueprint(tk_label_zoom_bp)
-
+    app.register_blueprint(auth_bp)
     app.permanent_session_lifetime = timedelta(days=30)
 
+    @app.route("/", methods=["GET", "POST"])
+    def home():
+        if 'username' not in session:
+            session['next'] = request.url
+            return redirect(url_for("auth.login"))
+        current_user = session['username']
+        return render_template("index.html", current_user=current_user)
 
-
-    def check_credentials(username, password):
-        return Config.USERS.get(username) == password
-
-    def log_user_activity(username):
-        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        user_agent = parse(request.headers.get('User-Agent'))
-        referrer = request.referrer
-        query_params = request.args
-
-        app.logger.info(
-            "***%s*** has logged in. IP: ***%s***, Browser: %s %s, OS: %s %s, Device: ***%s***, "
-            "Method: %s, URL: %s, Referrer: %s",
-            username, client_ip, user_agent.browser.family, user_agent.browser.version_string,
-            user_agent.os.family, user_agent.os.version_string, user_agent.device.family,
-            request.method, request.url, referrer
-        )
-
-    def get_location(ip):
-        try:
-            response = requests.get(f'http://ip-api.com/json/{ip}')
-            if response.status_code == 200:
-                return response.json()
-            else:
-                app.logger.warning(f"Failed to get location for IP: {ip}")
-                return {}
-        except Exception as e:
-            app.logger.error(f"Error fetching location data: {e}")
-            return {}
+   
     @app.route("/list_routes", methods=["GET"])
     def list_routes():
         if 'username' not in session:
             session['next'] = request.url
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         
         current_user = session['username']
         
@@ -143,66 +125,7 @@ def register_routes(app):
             current_user=current_user,
             title="Application Routes"
         )
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        # If user is already logged in, redirect to home
-        if 'username' in session:
-            return redirect(url_for("home"))
-        
-        # Get the next page from query parameters or referrer
-        next_page = request.args.get('next') or request.referrer
-        
-        # Store the next page in session
-        if next_page and not next_page.endswith('/login'):
-            session['next'] = next_page
-        
-        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        location_data = get_location(client_ip)
-        
-        if request.method == "POST":
-            username = request.form.get("username")
-            password = request.form.get("password")
-            remember = request.form.get("remember")
-            
-            if check_credentials(username, password):
-                session['username'] = username
-                if remember:
-                    session.permanent = True
-                else:
-                    session.permanent = False
-                
-                flash(f"Logged in as {username}")
-                log_user_activity(username)
-                
-                # Redirect TMX users to gpginvoice page
-                if username == 'tmx':
-                    return redirect(url_for("gpgtmx.gpginvoice"))
-
-                    
-                # For other users, redirect to stored next page or home
-                redirect_url = session.pop('next', url_for("home"))
-                return redirect(redirect_url)
-            else:
-                flash("Invalid credentials")
-        
-        return render_template("login.html", client_ip=client_ip, location=location_data)
-
-    @app.route("/logout")
-    def logout():
-        session.pop('username', None)
-        flash("Logged out")
-        return redirect(url_for("login"))
-
-
-    @app.route("/", methods=["GET", "POST"])
-    def home():
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("login"))
-        current_user = session['username']
-        return render_template("index.html", current_user=current_user)
-
-
+    
     
     @app.route("/delete_image", methods=["POST"])
     def delete_image():
@@ -297,7 +220,7 @@ def register_routes(app):
     def item_lookup(user_input=None):
         if 'username' not in session or not session['username']:
             session['next'] = request.url
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
 
         current_user = session['username']
         excel_html = None
@@ -533,7 +456,7 @@ def register_routes(app):
     @app.route("/order_lookup/<string:order_number>", methods=["GET"])
     def order_lookup(order_number=None):
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         
         current_user = session['username']
         excel_html = None
@@ -660,7 +583,7 @@ def register_routes(app):
     @app.route("/label_maker", methods=["GET", "POST"])
     def label_maker():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         filename = None
         error_message = None
@@ -683,7 +606,7 @@ def register_routes(app):
     @app.route("/macy", methods=["GET", "POST"])
     def macy_maker():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         filename = None
         error_message = None
@@ -707,7 +630,7 @@ def register_routes(app):
     @app.route("/loris", methods=["GET", "POST"])
     def loris():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
 
         current_user = session['username']
         filename_30stickers = None
@@ -774,7 +697,7 @@ def register_routes(app):
     @app.route('/log')
     def display():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
 
         try:
@@ -784,7 +707,7 @@ def register_routes(app):
             reversed_lines = list(reversed(formatted_lines))
 
             # Pagination logic
-            per_page = 500
+            per_page = 100
             page = request.args.get('page', 1, type=int)
             start = (page - 1) * per_page
             end = start + per_page
@@ -889,7 +812,7 @@ def register_routes(app):
     @app.route('/download4/<filename>')
     def download_file4(filename):
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         app.logger.info("***%s***__@@@[Download][labels]@@@__ %s", current_user,filename)
         return send_from_directory("output/macy_label/", filename, as_attachment=False)
@@ -897,7 +820,7 @@ def register_routes(app):
     @app.route("/report_bug", methods=["GET", "POST"])
     def report_bug():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         
         if request.method == "POST":
@@ -937,14 +860,14 @@ def register_routes(app):
     @app.route('/shipping_receipt', methods=['GET'])
     def shipping_receipt():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template('upload_file.html', current_user=current_user)
     
     @app.route('/help', methods=['GET'])
     def help():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template('help.html', current_user=current_user)
 
@@ -952,7 +875,7 @@ def register_routes(app):
     @app.route('/send_shipping_receipt', methods=['POST'])
     def send_shipping_receipt():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         file = request.files.get('file')
         memo = request.form.get('memo')
         store = request.form.get('store')
@@ -1036,10 +959,10 @@ def register_routes(app):
     @app.route("/calculator", methods=["GET"])
     def calculatorapp():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("calculator2.html",  current_user=current_user)
-    
+     
     def get_temu_listings_data():
         creds = service_account.Credentials.from_service_account_file(Config.SERVICE_ACCOUNT_FILE, scopes=Config.SCOPES)
         service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
@@ -1073,7 +996,7 @@ def register_routes(app):
     @app.route("/temu", methods=["GET"])
     def temuroute():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         sheet_data_html = get_temu_listings_data()
         current_user = session['username']
         return render_template("temu.html", sheet_data_html=sheet_data_html, current_user=current_user)
@@ -1082,14 +1005,14 @@ def register_routes(app):
     @app.route("/geek_tools", methods=["GET"])
     def geek_tools():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("geek_tools.html", current_user=current_user)
     
     @app.route("/shipping_center", methods=["GET"])
     def shipping_center():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("shipping_center.html", current_user=current_user)
 
@@ -1121,7 +1044,7 @@ def register_routes(app):
     @app.route("/geek_tools/custom_query", methods=["GET", "POST"])
     def custom_query():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
         excel_html = None
         error_message = None
@@ -1148,18 +1071,12 @@ def register_routes(app):
 
         return render_template("custom_query.html", excel_html=excel_html, error_message=error_message, memo_html=memo_html, current_user=current_user, sql_query=sql_query)
 
-    
-    def load_credentials():
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        credentials_path = os.path.join(base_dir, 'credentials.json')
-        with open(credentials_path) as file:
-            credentials = json.load(file)
-        return credentials
+
     
     @app.route('/upload_center', methods=['GET', 'POST'])
     def upload_center():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
 
         if request.method == 'POST':
@@ -1242,32 +1159,4 @@ def register_routes(app):
             download_name=zip_filename,
             as_attachment=True
         )
-    
-    @app.route("/bookmarks", methods=["GET", "POST"])
-    def bookmarks_page():  # Renamed function
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("login"))
-
-        current_user = session['username']
-        
-        if current_user != 'yeti':
-            return render_template("index.html", current_user=current_user)
-
-        bookmarks_list = [
-            {"title": "Passwords & Accounts", "year":"8888", "category": "Passwords", "url": "https://docs.google.com/spreadsheets/d/1nkle6flS263CJ65b0G8YQf46a3aTUC8vP2r3exfdFms/edit?gid=0#gid=0","linktype":"Google Sheet"},
-            {"title": "Channel_TEMU-USA", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1-PzqDYddrHTzBZ-f0IdzZFgmQaBK_Hx_Y_IYgHCIGWw/edit?gid=0#gid=0","linktype":"Google Sheet"},
-            {"title": "Channel_TEMU-HK", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1n_ewjw68TLFIDouP11z-AJlI1PilObQfP3lan7DepUg/edit?gid=0#gid=0","linktype":"Google Sheet"},
-            {"title": "HR_Ashley Sign-in Sheet", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1ABTgQ4KmVkBX0KRFV9XuIH94irc3jtBlUtjjpB1HRgE/edit?gid=0#gid=0","linktype":"Google Sheet"},
-            {"title": "Channel_TIKTOK_AMBRA",  "year":"2024","category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1gwJVGsJVCpYY-LtimYCwj5_hCUc8xs1zoqzhAqO9XQ8/edit?gid=697444757#gid=697444757","linktype":"Google Sheet"},
-            {"title": "Channel_Old Dec-Mar TIKTOK", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/13xcqIjFSOrDBh7xHZFsr_P4LBCKt2uGsrohIMXfeUxg/edit?gid=0#gid=0","linktype":"Google Sheet"},
-            {"title": "Channel_Tiktok Accounting 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1aW4wmxQHtSXZPjgui0PhaKGszkttTKay6JVlNJflJ_M/edit?gid=462431388#gid=462431388","linktype":"Google Sheet"},
-            {"title": "HR_1099 Sheet 2024", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1bgCEWmdWmFTyAkpbOQkxDvEgBFUhPNLVJLRIOsgxWd0/edit?gid=0#gid=0","linktype":"Google Sheet"},
-            {"title": "Channel_ERWAN 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1vIG8VhrZTJmuuEjXFP7ZmdnsyhAbXMWnasIOH_v76Ok/edit?gid=572048210#gid=572048210","linktype":"Google Sheet"},
-            {"title": "Tiktok_2025", "year":"2025", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1v9nzwoMk3p9LAcztZOW4et2v51Wfx21VeTlJbF-X64M/edit?gid=0#gid=0","linktype":"Google Sheet"},
-            {"title": "Channel_ERWAN 2025","year": "2025","category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1nU0CIyAtQYGK9AKNBhc-l_Mr-qRaoWLen4g4oZsdaBw/edit?gid=0#gid=0","linktype":"Google Sheet"}
-        ]
-
-        return render_template("bookmark.html", current_user=current_user, bookmarks_list=bookmarks_list)
-
     

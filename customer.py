@@ -157,7 +157,7 @@ def customer_details(customer_id):
                     if ord_num not in unique_order_numbers:
                         # Query to get ord_amt and handl_fee for the current order number
                         order_query = f"""
-                            SELECT ord_amt, handl_fee 
+                            SELECT ord_amt, handl_fee,misc_chg 
                             FROM orders 
                             WHERE ord_num = ?
                         """
@@ -166,11 +166,13 @@ def customer_details(customer_id):
                         if order_row:
                             ord_amt = order_row[0] or 0
                             handl_fee = order_row[1] or 0
-                            total = ord_amt + handl_fee
+                            misc_chg = order_row[2] or 0
+                            total = ord_amt + handl_fee+misc_chg
                             unique_order_numbers[ord_num] = {
                                 'date': formatted_date,
                                 'ord_amt': ord_amt,
                                 'handl_fee': handl_fee,
+                                'misc_chg': misc_chg,
                                 'total': total
                             }
 

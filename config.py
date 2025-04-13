@@ -13,29 +13,26 @@ class Config:
     SLACK_TOKEN = 'xoxb-4986748541874-7439245251395-YMVIoCeqbhWRp4rAFx66JGMK'
     SLACK_CHANNEL = 'C07CGNKSPF1'
     SERVICE_ACCOUNT_FILE = r'C:/FDC_FLASK_APP/credentials.json'
-    SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+    
+    # Update these scopes to be consistent
+    SCOPES = OAUTH_SCOPES = [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'openid'
+    ]
+    
     LOG_FILE = r'C:/FDC_FLASK_APP/log.txt'  # Log file path for better accessibility
     TMX_sheet = 'https://docs.google.com/spreadsheets/d/1nNLDB4LruCniq6MiKXlBPeDhNu9IkoX3pZdNLUSPka8/edit?gid=2057295499#gid=2057295499'
     APIKEY = "542deb79868b4d56b06aa6adb0a0db69"
     APIPASS = "1850bc9b80634abfa7c29840568a63bf"
     
-    # Users dictionary
-    USERS = {
-        'fdc': '827',
-        'yetimaster':'whitebox',
-        'yeti': '5788',
-        'ken': '2843',
-        'ahua':'5788',
-        'jennifer': '123456',
-        'nicye':'dick',
-        'ting':'827',
-        'helen':'827',
-        'kx':'200',
-        'dennis':'dennis',
-        'jiayi':'1234',
-        'xj':'88',
-        'wh':'1234',
-        'tmx':'qwe123',
-        'warehouse':'1234'
-    }
+    # Email configuration
+    SMTP_SERVER = "smtp.fatcow.com"
+    SMTP_PORT = 465
+    EMAIL_ADDRESS = "Tristen@fdcus.com"
+    EMAIL_PASSWORD = "Tr1st3n827"
+    
+    
+    GOOGLE_CREDENTIALS_FILE = r'C:/FDC_FLASK_APP/client_secret.json'
     

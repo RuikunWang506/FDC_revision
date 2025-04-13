@@ -34,32 +34,46 @@ formatted_date = datetime.datetime.now().strftime("%Y%m%d")  # Example date form
 
 
 def list_from_dropbox(list_input, current_user):
+    """Processes a dropbox path and returns list of styles and image mappings."""
     match = re.search(r'dropbox\\(.+)', list_input, re.IGNORECASE)
     if match:
         relative_path = match.group(1)
         dropbox_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
         current_app.logger.info(f"***{current_user}*** processing regular input: {relative_path}")
         
-        
         if not os.path.exists(dropbox_path):
             return {"error": "Directory not found. Please check your URL."}
         
-        file_list = set()  # Changed to set to avoid duplicates
+        file_list = set()
         sku_to_image = {}
         
         for filename in os.listdir(dropbox_path):
             if filename.endswith('.jpg'):
-                # Modified regex to extract just the base SKU pattern (1-2 letters followed by 4 digits)
-                sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
-                if sku_match:
-                    base_sku = sku_match.group(1).upper()  # Capture just the base SKU
-                    file_list.add(base_sku)  # Add to set to ensure uniqueness
-                    sku_to_image[base_sku] = os.path.join(dropbox_path, filename)
+                # Extract the base SKU first (1-2 letters followed by 4 digits)
+                base_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
+                if base_match:
+                    base_sku = base_match.group(1).upper()
+                    # Check if it's a size suffix pattern
+                    size_suffix = re.search(r'[-]?[smlSML](?:\.|$)', filename[len(base_sku):])
+                    if size_suffix:
+                        # Handle size suffix cases (both with and without dash)
+                        dash_style = f"{base_sku}-{size_suffix.group().strip('.-')}"
+                        no_dash_style = f"{base_sku}{size_suffix.group().strip('.-')}"
+                        file_list.add(dash_style)
+                        file_list.add(no_dash_style)
+                        sku_to_image[dash_style] = os.path.join(dropbox_path, filename)
+                        sku_to_image[no_dash_style] = os.path.join(dropbox_path, filename)
+                    else:
+                        # For any other variations, just use the base SKU
+                        file_list.add(base_sku)
+                        sku_to_image[base_sku] = os.path.join(dropbox_path, filename)
         
         if not file_list:
             return {"error": "No images found in the specified directory. Please check your URL."}
         
-        file_list = sorted(list(file_list))  # Convert set back to sorted list
+        file_list = sorted(list(file_list))
+        clean_list_for_memo = str(file_list).replace("'","")
+        current_app.logger.info(f"list_from_dropbox called with input: {clean_list_for_memo}")
         
         return file_list, sku_to_image
 
@@ -105,32 +119,71 @@ def list_from_origin(list_input, current_user):
     unique_style_list = [x for x in style_list if not (x in seen or seen.add(x))]
     return unique_style_list
 
-
+def normalize_style(style):
+    """Remove dash and convert to uppercase for comparison"""
+    return re.sub(r'-', '', style).upper()
 
 @v6_listcreator_bp.route('/v6_listcreator', methods=['GET', 'POST'])
 def index():
     if 'username' not in session:
         session['next'] = request.url
         return redirect(url_for("login"))
-    
-    current_user = session['username']
-    error_message = None  # Initialize error message
-    dropbox_images = {}  # Initialize dropbox_images as a dictionary
-    missing_descriptions = []  # Initialize missing descriptions list
-    image_urls = {}  # Initialize image_urls
 
-    # Handle GET request with list_input parameter
+    current_user = session['username']
+    error_message = None
+    dropbox_images = {}
+    missing_descriptions = []
+    image_urls = {}
+    missing_styles = []
+    duplicate_styles = []
+    duplicate_items = []
+    clean_list_for_memo = None
+
     if request.method == 'GET' and request.args.get('list_input'):
         list_input = request.args.get('list_input')
-        
+        original_input_styles = []
+
         if 'dropbox' in list_input.lower():
+            match = re.search(r'dropbox\\(.+)', list_input, re.IGNORECASE)
+            if match:
+                relative_path = match.group(1)
+                full_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
+                if os.path.exists(full_path):
+                    base_sku_to_files = {}
+                    for filename in os.listdir(full_path):
+                        if filename.endswith('.jpg'):
+                            base_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
+                            if base_match:
+                                base_sku = base_match.group(1).upper()
+                                if re.search(r'-[^smlSML]', filename):
+                                    base_sku_to_files.setdefault(base_sku, []).append(filename)
+                    for base_sku, files in base_sku_to_files.items():
+                        if len(files) > 1:
+                            duplicate_items.append({'base_sku': base_sku, 'files': files})
             result = list_from_dropbox(list_input, current_user)
             if isinstance(result, dict) and 'error' in result:
                 error_message = result['error']
                 return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
             style_list, dropbox_images = result
+            current_app.logger.info(f"***{current_user}*** processing dropbox input: {list_input}")
+            clean_list_for_memo = ','.join(style_list).replace("'", "")
+            match = re.search(r'dropbox\\(.+)', list_input, re.IGNORECASE)
+            if match:
+                relative_path = match.group(1)
+                full_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
+                num_images = len([f for f in os.listdir(full_path) if f.endswith('.jpg')])
+                if num_images != len(set(style_list)):
+                    error_message = f"Warning: Found {num_images} images but processed {len(set(style_list))} unique styles."
         else:
+            original_input_styles = [s.strip().upper() for s in list_input.split(',') if s.strip()]
             style_list = list_from_origin(list_input, current_user)
+            normalized_found_styles = {normalize_style(style) for style in style_list}
+            for orig_style in original_input_styles:
+                normalized_orig = normalize_style(orig_style)
+                if normalized_orig not in normalized_found_styles:
+                    alt_found = any(normalized_orig.startswith(re.match(r'[A-Za-z]{1,2}\d{4}', found).group(0)) for found in normalized_found_styles)
+                    if not alt_found:
+                        missing_styles.append(orig_style)
 
         if style_list:
             image_urls = get_images_for_selection(style_list)
@@ -139,131 +192,37 @@ def index():
             db_styles = set()
             if data:
                 for row in data:
-                    # Set verification for the exact style from the database
                     exact_style = row[2].upper() if row[2] else ''
                     if exact_style:
                         db_styles.add(exact_style)
-                        session[f'verified_{exact_style}'] = True  # Set for exact style
-                        
-                        # Also extract and verify the base style
+                        session[f'verified_{exact_style}'] = True
                         sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
                         if sku_match:
                             base_sku = sku_match.group(1).upper()
                             db_styles.add(base_sku)
-                            session[f'verified_{base_sku}'] = True  # Set for base style
-
-            # Handle styles not found in database
+                            session[f'verified_{base_sku}'] = True
+            normalized_db_styles = {normalize_style(s) for s in db_styles}
             for style in style_list:
-                if style not in db_styles:
-                    placeholder_data = [
-                        ('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 'BK', 
-                        0, 0, 0, 'N/A', 'N/A', 'Not in OMS')
-                    ]
-                    if data:
-                        data.extend(placeholder_data)
-                    else:
-                        data = placeholder_data            
-            for style in style_list:
-                description = get_description_from_mysql(style)
-                descriptions[style] = description
-                if description == "No description available":
-                    missing_descriptions.append(style)
-
-            if data:
-                pivot_data = create_pivot_table(data)
-                context = {
-                    'current_user': current_user,
-                    'data': data,
-                    'pivot_data': pivot_data,
-                    'image_urls': image_urls,
-                    'dropbox_images': dropbox_images,
-                    'descriptions': descriptions,
-                    'error_message': error_message
-                }
-                
-                # Add this line before rendering the template
-
-                return render_template('v6_listcreator.html', **context, list_input=list_input)
-
-    if request.method == 'POST':
-        list_input = request.form.get('list_input')
-        session['original_input'] = list_input  # Store the original input
-        
-        if 'dropbox' in list_input.lower():
-            result = list_from_dropbox(list_input, current_user)
-            if isinstance(result, dict) and 'error' in result:
-                error_message = result['error']  # Capture the error message
-                return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
-        
-            style_list, dropbox_images = result  # Unpack the result correctly
-        else:
-            style_list = list_from_origin(list_input, current_user)
-        
-        if style_list:
-            image_urls = get_images_for_selection(style_list)  # Get images for all styles
-            descriptions = {}
-            
-            # Get database data
-            data = get_sql_data(style_list)  # Fetch style data
-            
-            # Create a set of styles found in the database
-            db_styles = set()
-            if data:
-                for row in data:
-                    # Set verification for the exact style from the database
-                    exact_style = row[2].upper() if row[2] else ''
-                    if exact_style:
-                        db_styles.add(exact_style)
-                        session[f'verified_{exact_style}'] = True  # Set for exact style
-                        
-                        # Also extract and verify the base style
-                        sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
-                        if sku_match:
-                            base_sku = sku_match.group(1).upper()
-                            db_styles.add(base_sku)
-                            session[f'verified_{base_sku}'] = True  # Set for base style
-            
-            # Handle styles not found in database by adding placeholder data
-            missing_styles = []
-            for style in style_list:
-                if style not in db_styles:
-                    missing_styles.append(style)
-                    # Add placeholder data for database missing styles with in_oms tag
-                    placeholder_data = [
-                        ('N/A',        # DatabaseName
-                        f'{style}BK',  # SKU (adding BK color)
-                        style,         # SKU_no_color
-                        0, 0, 0, 0,    # in_stock, some_one_ordered, quantity, ocean
-                        999.0,         # selling_price (set to 999)
-                        0, 0,          # pcsBox, unit_weight
-                        'BK',          # color (default to BK)
-                        0, 0, 0,       # item dimensions
-                        'N/A', 'N/A',  # last_activity, Created_dt
-                        'Not in OMS')  # in_oms tag
-                    ]
+                if normalize_style(style) not in normalized_db_styles:
+                    if style not in missing_styles:
+                        missing_styles.append(style)
+                    placeholder_data = [('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')]
                     if data:
                         data.extend(placeholder_data)
                     else:
                         data = placeholder_data
-            
-            # Get descriptions for all styles
             for style in style_list:
                 description = get_description_from_mysql(style)
                 descriptions[style] = description
                 if description == "No description available":
                     missing_descriptions.append(style)
-            if missing_descriptions:
-                return render_template('v6_listcreator.html',
-                                    current_user=current_user,
-                                    missing_descriptions=missing_descriptions,
-                                    image_urls=image_urls,
-                                    dropbox_images=dropbox_images,
-                                    list_input=list_input)    
-            # Continue with pivot table creation if we have data
+            style_count = {}
+            for style in style_list:
+                style_upper = style.upper()
+                style_count[style_upper] = style_count.get(style_upper, 0) + 1
+            duplicate_styles = [style for style, count in style_count.items() if count > 1]
             if data:
                 pivot_data = create_pivot_table(data)
-                
-                # Prepare the context for rendering
                 context = {
                     'current_user': current_user,
                     'data': data,
@@ -271,15 +230,109 @@ def index():
                     'image_urls': image_urls,
                     'dropbox_images': dropbox_images,
                     'descriptions': descriptions,
-                    'error_message': error_message
+                    'error_message': error_message,
+                    'missing_styles': missing_styles,
+                    'duplicate_styles': duplicate_styles,
+                    'your_input_was': list_input,
+                    'clean_list_for_memo': clean_list_for_memo,
+                    'duplicate_items': duplicate_items
                 }
-                
-                # Add this line before rendering the template
-
                 return render_template('v6_listcreator.html', **context, list_input=list_input)
 
-    # Render default view if no POST request
+    if request.method == 'POST':
+        list_input = request.form.get('list_input')
+        session['original_input'] = list_input
+        original_input_styles = [s.strip().upper() for s in list_input.split(',') if s.strip()]
+
+        if 'dropbox' in list_input.lower():
+            match = re.search(r'dropbox\\(.+)', list_input, re.IGNORECASE)
+            if match:
+                relative_path = match.group(1)
+                full_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
+                if os.path.exists(full_path):
+                    base_sku_to_files = {}
+                    for filename in os.listdir(full_path):
+                        if filename.endswith('.jpg'):
+                            base_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
+                            if base_match:
+                                base_sku = base_match.group(1).upper()
+                                base_sku_to_files.setdefault(base_sku, []).append(filename)
+                    for base_sku, files in base_sku_to_files.items():
+                        filtered = [f for f in files if not re.search(r'-?(S|M|L|SET)(?=\.|_|$)', f, re.IGNORECASE)]
+                        if len(filtered) > 1:
+                            duplicate_items.append({'base_sku': base_sku, 'files': sorted(filtered)})
+
+            result = list_from_dropbox(list_input, current_user)
+            if isinstance(result, dict) and 'error' in result:
+                error_message = result['error']
+                return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
+            style_list, dropbox_images = result
+            current_app.logger.info(f"***{current_user}*** processing dropbox input: {list_input}")
+            clean_list_for_memo = ','.join(style_list).replace("'", "")
+        else:
+            style_list = list_from_origin(list_input, current_user)
+            normalized_style_list = [re.sub(r'-', '', s).upper() for s in style_list]
+            for orig_style in original_input_styles:
+                normalized_orig = re.sub(r'-', '', orig_style).upper()
+                if normalized_orig not in normalized_style_list:
+                    missing_styles.append(orig_style)
+
+        if style_list:
+            image_urls = get_images_for_selection(style_list)
+            descriptions = {}
+            data = get_sql_data(style_list)
+            db_styles = set()
+            
+            if data:
+                for row in data:
+                    exact_style = row[2].upper() if row[2] else ''
+                    if exact_style:
+                        db_styles.add(exact_style)
+                        session[f'verified_{exact_style}'] = True
+                        sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
+                        if sku_match:
+                            base_sku = sku_match.group(1).upper()
+                            db_styles.add(base_sku)
+                            session[f'verified_{base_sku}'] = True
+            normalized_db_styles = {normalize_style(s) for s in db_styles}
+            for style in style_list:
+                if normalize_style(style) not in normalized_db_styles:
+                    if style not in missing_styles:
+                        missing_styles.append(style)
+                    placeholder_data = [('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')]
+                    if data:
+                        data.extend(placeholder_data)
+                    else:
+                        data = placeholder_data
+            for style in style_list:
+                description = get_description_from_mysql(style)
+                descriptions[style] = description
+                if description == "No description available":
+                    missing_descriptions.append(style)
+            style_count = {}
+            for style in style_list:
+                style_upper = style.upper()
+                style_count[style_upper] = style_count.get(style_upper, 0) + 1
+            duplicate_styles = [style for style, count in style_count.items() if count > 1]
+            if data:
+                pivot_data = create_pivot_table(data)
+                context = {
+                    'current_user': current_user,
+                    'data': data,
+                    'pivot_data': pivot_data,
+                    'image_urls': image_urls,
+                    'dropbox_images': dropbox_images,
+                    'descriptions': descriptions,
+                    'error_message': error_message,
+                    'missing_styles': missing_styles,
+                    'duplicate_styles': duplicate_styles,
+                    'your_input_was': list_input,
+                    'clean_list_for_memo': clean_list_for_memo,
+                    'duplicate_items': duplicate_items
+                }
+                return render_template('v6_listcreator.html', **context, list_input=list_input)
     return render_template('v6_listcreator.html', current_user=current_user, error_message=error_message)
+
 
 
 @v6_listcreator_bp.route('/update_descriptions', methods=['POST'])
@@ -1329,3 +1382,4 @@ def export_lori_format():
     except Exception as e:
         current_app.logger.error(f"Error in export_lori_format: {e}")
         return jsonify({"error": str(e)}), 500
+

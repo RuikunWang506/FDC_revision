@@ -2,13 +2,17 @@ from flask import Flask
 from logging_setup import configure_logging
 from config import Config
 from routes import register_routes  # Import your routes after binding the dashboard
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import os
 
 # Flask app
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 app.secret_key = os.urandom(24)
 app.config.from_object(Config)
+app.config['SERVER_NAME'] = 'www.fdcef.com'
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 
 # Configure logging
 configure_logging(app)
