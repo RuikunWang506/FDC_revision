@@ -20,7 +20,7 @@ def get_daily_file():
 def daily_todo():
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     current_user = session['username']
 
     if current_user not in {'yeti', 'ting','nicye','ahua','tmx'}:
@@ -73,7 +73,7 @@ def daily_todo():
 def ecaudit():
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     current_user = session['username']
 
     if current_user not in {'yeti', 'ting', 'nicye', 'ahua', 'tmx'}:

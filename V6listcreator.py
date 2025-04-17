@@ -127,7 +127,7 @@ def normalize_style(style):
 def index():
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
 
     current_user = session['username']
     error_message = None

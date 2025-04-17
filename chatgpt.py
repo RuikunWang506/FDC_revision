@@ -67,7 +67,7 @@ def get_gpt_response(message, model_name, attachment=None):
 @chatgpt_bp.route('/chatgpt', methods=['GET'])
 def chat_page():
     if 'username' not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     return render_template('chatgpt.html', 
                          current_user=session.get('username'),
                          models=AVAILABLE_MODELS)

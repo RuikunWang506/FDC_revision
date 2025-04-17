@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Loris Maker</title>
-    <td><strong>{{ table_data|sum(attribute=2) }}</strong></td>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
@@ -33,6 +32,17 @@
             width: 100px;
             height: 100px;
         }
+        .table-container {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+        #dataTable {
+            width: 100%;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
     </style>
     <script>
         function generateBarcodes() {
@@ -53,18 +63,53 @@
                 const quantity = document.getElementById('quantity').value.split('\n');
                 let inputData = '';
 
-                for (let i = 0; i < sku.length; i++) {
-                    if (sku[i] && barcode[i] && quantity[i]) {
-                        inputData += `${sku[i]}\t${barcode[i]}\t${quantity[i]}\n`;
+                for (let i = 0; i < Math.max(sku.length, barcode.length, quantity.length); i++) {
+                    if (sku[i]?.trim() && barcode[i]?.trim() && quantity[i]?.trim()) {
+                        // Use tab separator to ensure proper parsing
+                        inputData += `${sku[i].trim()}\t${barcode[i].trim()}\t${quantity[i].trim()}\n`;
                     }
                 }
 
                 document.getElementById('input_data').value = inputData.trim();
             }
 
+            // Add event listeners to all textareas
             document.getElementById('sku').addEventListener('input', updateInputData);
             document.getElementById('barcode').addEventListener('input', updateInputData);
             document.getElementById('quantity').addEventListener('input', updateInputData);
+            
+            // Also update when pasting
+            document.getElementById('sku').addEventListener('paste', function() {
+                setTimeout(updateInputData, 10);
+            });
+            document.getElementById('barcode').addEventListener('paste', function() {
+                setTimeout(updateInputData, 10);
+            });
+            document.getElementById('quantity').addEventListener('paste', function() {
+                setTimeout(updateInputData, 10);
+            });
+            
+            // Parse input_data back to individual fields
+            document.getElementById('input_data').addEventListener('input', function() {
+                const lines = this.value.trim().split('\n');
+                let skus = [];
+                let barcodes = [];
+                let quantities = [];
+                
+                lines.forEach(line => {
+                    const parts = line.split('\t');
+                    if (parts.length === 3) {
+                        skus.push(parts[0].trim());
+                        barcodes.push(parts[1].trim());
+                        quantities.push(parts[2].trim());
+                    }
+                });
+                
+                document.getElementById('sku').value = skus.join('\n');
+                document.getElementById('barcode').value = barcodes.join('\n');
+                document.getElementById('quantity').value = quantities.join('\n');
+            });
+            
             generateBarcodes();
         });
     </script>
@@ -83,7 +128,7 @@
             <div class="textarea-container">
                 <div class="form-group">
                     <label for="sku">SKU:</label><br>
-                    <label for="sku">N1237-S  (no space)</label>
+                    <label for="sku">N1237-S or N1237 S</label>
                     <textarea id="sku" class="form-control" name="sku">{{ sku }}</textarea>
                 </div>
                 <div class="form-group">
@@ -91,19 +136,16 @@
                     <label for="barcode">
                         <a href="https://eancheck.com/" target="_blank">Check</a>
                     </label>
-
                     <textarea id="barcode" class="form-control" name="barcode">{{ barcode }}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="quantity">Quantity:</label><br>
                     <label for="quantity">100</label>
-
                     <textarea id="quantity" class="form-control" name="quantity">{{ quantity }}</textarea>
                 </div>
                 <div class="form-group" style="flex: 2;">
                     <label for="input_data">Paste your list here:</label><br>
-                    <label for="input_data">one paste</label>
-
+                    <label for="input_data">Tab-separated values (SKU ⇥ Barcode ⇥ Quantity)</label>
                     <textarea id="input_data" class="form-control" name="input_data" rows="14">{{ input_data }}</textarea>
                 </div>
             </div>
@@ -111,13 +153,14 @@
                 <button type="submit" name="show_table" class="btn btn-secondary btn-lg large-button">Show Table</button>
                 <button type="submit" name="submit_data" class="btn btn-primary btn-lg large-button">Submit</button>
                 <button type="reset" class="btn btn-danger btn-lg large-button">Reset</button>
-                
             </div>
         </form>
+        
         {% if table_data %}
-        <div class="table-responsive mt-5">
-            <table class="table table-bordered">
-                <thead>
+        <div class="table-container">
+            <h3>Data Preview</h3>
+            <table id="dataTable" class="table table-bordered table-striped">
+                <thead class="thead-dark">
                     <tr>
                         <th>SKU</th>
                         <th>Barcode</th>
@@ -134,7 +177,7 @@
                     {% endfor %}
                 </tbody>
                 <tfoot>
-                    <tr>
+                    <tr class="total-row">
                         <td><strong>Total</strong></td>
                         <td><strong>{{ table_data|length }} items</strong></td>
                         <td><strong>{{ table_data|sum(attribute=2) }}</strong></td>
@@ -142,17 +185,32 @@
                 </tfoot>
             </table>
         </div>
+        
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+        <script>
+            $(document).ready(function() {
+                $('#dataTable').DataTable({
+                    "paging": false,
+                    "ordering": true,
+                    "info": false,
+                    "searching": true
+                });
+            });
+        </script>
         {% endif %}
+        
         {% if filename_30stickers and filename_exact %}
         <div class="text-center" style="padding-top: 50px;">
             <h2>Download Labels</h2>
             <div class="d-flex flex-wrap justify-content-center" style="padding-top: 10px;">
-                <a href="{{ url_for('download_file3', filename=filename_30stickers) }}" class="btn btn-primary" target="_blank">Download 30 Stickers Version</a>
-                <a href="{{ url_for('download_file3', filename=filename_exact) }}" class="btn btn-secondary" target="_blank">Download Exact Quantity Version</a>
+                <a href="{{ url_for('download_file3', filename=filename_30stickers) }}" class="btn btn-primary btn-lg m-2" target="_blank">Download 30 Stickers Version</a>
+                <a href="{{ url_for('download_file3', filename=filename_exact) }}" class="btn btn-secondary btn-lg m-2" target="_blank">Download Exact Quantity Version</a>
             </div>
         </div>
         {% endif %}
     </div>
+    
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             generateBarcodes();

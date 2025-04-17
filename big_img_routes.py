@@ -27,7 +27,7 @@ def register_big_img_routes(app):
     @app.route('/big_img', methods=['GET', 'POST'])
     def big_img():
         if 'username' not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
         current_user = session['username']
 
         image_data = []

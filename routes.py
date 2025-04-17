@@ -726,7 +726,7 @@ def register_routes(app):
     @app.route('/log/stream', methods=['GET'])
     def stream_log():
        # if 'username' not in session:
-       #     return redirect(url_for("login"))
+       #     return redirect(url_for("auth.login"))
         def generate():
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
                 file.seek(0, 2)  # Move to the end of the file

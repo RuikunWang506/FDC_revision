@@ -154,9 +154,9 @@ def process_input_data(input_data):
         lines = lines[1:]
     
     for line in lines:
-        parts = line.strip().split()
+        parts = line.strip().split('\t')  # Split by tab instead of whitespace
         if len(parts) == 3:
-            additional_text = parts[0]
+            additional_text = parts[0] # Replace spaces with hyphens in SKU
             barcode_value = parts[1]
             try:
                 barcode_quantity = int(parts[2])
@@ -167,6 +167,7 @@ def process_input_data(input_data):
         else:
             logging.warning("Incorrect data format: %s", line)
     return data
+
 
 def merge_pdfs(output_pdf, pdfs_to_merge):
     """

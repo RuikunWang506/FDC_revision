@@ -32,7 +32,7 @@ def get_zhuankuan_db_connection():
 def order_processor():
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     current_user = session['username']
     return render_template('order_processor.html', current_user=current_user)
 

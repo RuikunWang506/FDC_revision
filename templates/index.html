@@ -1,174 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FDC HOME</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="icon" type="image/svg+xml" href="/static/icons/handbag.svg">
-    <style>
-        :root {
-            --primary-color: #4e73df;
-            --secondary-color: #1cc88a;
-            --accent-color: #f6c23e;
-            --dark-color: #5a5c69;
-            --light-color: #f8f9fc;
-        }
-        
-        body {
-            background-color: #f5f7fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .main-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            text-align: center;
-            margin: 40px 0;
-            color: var(--dark-color);
-            position: relative;
-            padding-bottom: 15px;
-        }
-        
-        .main-title:after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-            border-radius: 2px;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            overflow: hidden;
-            background: white;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-        }
-        
-        .card-body {
-            padding: 1.75rem;
-        }
-        
-        .card-title {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            font-size: 1.25rem;
-        }
-        
-        .card-text {
-            color: var(--dark-color);
-            margin-bottom: 1.5rem;
-            min-height: 60px;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary:hover {
-            background-color: #3a5ccc;
-            transform: translateY(-2px);
-        }
-        
-        .card-icon {
-            font-size: 2rem;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
-        
-        .status-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    font-size: 0.7rem;
-    padding: 3px 8px;
-    border-radius: 10px;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    background: linear-gradient(
-        90deg,
-        #ff0000, #ff7f00, #ffff00, 
-        #00ff00, #0000ff, #4b0082, 
-        #9400d3, #ff0000
-    );
-    background-size: 400% 100%;
-    animation: rainbow-gradient 8s linear infinite;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-@keyframes rainbow-gradient {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 100% 50%; }
-}
-        
-        @media (max-width: 768px) {
-            .main-title {
-                font-size: 2rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FDC Main Menu</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+  <style>
+    .menu-theme {
+      background-color: #0b0f1a;
+      font-family: 'Segoe UI', sans-serif;
+      color: #0ff;
+    }
+    .menu-theme .main-title {
+      text-align: center;
+      font-size: 2.5rem;
+      color: #0ff;
+    }
+    .menu-theme .sub-title {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #09eafa;
+      font-size: 1.5rem;
+      margin-top: -10px;
+    }
+    .menu-theme .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .menu-theme .card {
+      background: #121e2f;
+      border: 2px solid #00f0ff55;
+      border-radius: 15px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 0 15px #00f0ff44;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      color: #fff;
+      text-decoration: none;
+    }
+    .menu-theme .card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 0 25px #00f0ffcc;
+    }
+    .menu-theme .card i {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #0ff;
+      transition: color 0.3s;
+    }
+    .menu-theme .card:hover i {
+      color: #1cc88a;
+    }
+    .menu-theme .card h3 {
+      margin-bottom: 0.5rem;
+      color: #0ff;
+    }
+    .menu-theme .card p {
+      color: #b0dfff;
+      font-size: 0.95rem;
+    }
+    .menu-theme .badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: linear-gradient(90deg, #ff0055, #ff9900, #ff0055);
+      background-size: 200% auto;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      animation: badgeGlow 3s linear infinite;
+    }
+    @keyframes badgeGlow {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+  </style>
 </head>
-<body>
-    {% include 'navbar.html' %}
-
-    <div class="container">
-        <div class="main-title">FDC 主菜单 <small class="text-muted d-block d-md-inline">Menu Updating</small></div>
-        
-        <div class="row">
-            {% for route in [
-                {'path': '/item_lookup', 'title': 'Item Lookup', 'description': 'Find products and styles', 'icon': 'search'},
-                {'path': '/location_service', 'title': 'Location Service', 'description': 'Find item locations in warehouse', 'icon': 'map-marker-alt'},
-                {'path': '/mobile', 'title': 'Mobile View', 'description': 'Mobile-friendly product lookup', 'icon': 'mobile-alt'},
-                {'path': '/order_lookup', 'title': 'Order Lookup', 'description': 'Jennifer专用 - Find and print orders', 'icon': 'file-invoice', 'badge': 'jennifer专用'},
-                {'path': '/customer', 'title': 'Customer', 'description': 'View customer purchase history', 'icon': 'users'},
-                {'path': '/v6_listcreator', 'title': 'List Creator', 'description': 'Create product lists', 'icon': 'list-ol'}, 
-                {'path': '/order_processor', 'title': 'Order Processor', 'description': 'Edit invoice prices/quantities 转款', 'icon': 'edit'}, 
-                {'path': '/lori_automation', 'title': 'Lori Automation', 'description': 'Fully automated processing', 'icon': 'robot'},
-                {'path': '/big_images', 'title': 'Big Images', 'description': 'Download high-resolution product images', 'icon': 'image'},
-                {'path': '/boat', 'title': 'Boat Service', 'description': 'Check shipping boat status and schedules', 'icon': 'ship'},  
-            ] %}
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="card-icon fas fa-{{ route.icon }}"></i>
-                        <h5 class="card-title">{{ route.title }}</h5>
-                        <p class="card-text">{{ route.description }}</p>
-                        <a href="{{ route.path }}" class="btn btn-primary">
-                            Access <i class="fas fa-arrow-right ml-1"></i>
-                        </a>
-                        {% if route.badge %}
-                            <span class="status-badge">{{ route.badge }}</span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+<body class="menu-theme">
+  {% include 'navbar.html' %}
+  <div class="main-title">FDC 主菜单 </div>
+  <div class="container">
+    <div class="sub-title">
+        — Find SKU  —
+        <div class="sub-title"> 找款 </div>
     </div>
-
-    {% include 'footer.html' %}
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <a href="/item_lookup" class="card">
+      <i class="fas fa-search"></i>
+      <h3>Item Lookup</h3>
+      <p>Find products and styles</p>
+    </a>
+    <a href="/location_service" class="card">
+      <i class="fas fa-map-marker-alt"></i>
+      <h3>Location Service</h3>
+      <p>Find item locations in warehouse</p>
+    </a>
+    <a href="/mobile" class="card">
+      <i class="fas fa-mobile-alt"></i>
+      <h3>Mobile View</h3>
+      <p>Mobile-friendly product lookup</p>
+    </a>
+    <a href="/big_imag" class="card">
+        <i class="fas fa-image"></i>
+        <h3>Big Images</h3>
+        <p>Download high-resolution product images</p>
+      </a>
+    <div class="sub-title">
+        — Office Processing  —
+        <div class="sub-title"> 打单，做单 </div>
+    </div>
+    <a href="/order_lookup" class="card">
+      <i class="fas fa-file-invoice"></i>
+      <h3>Order Lookup</h3>
+      <p>Jennifer专用 - Find and print orders</p>
+      <div class="badge">Jennifer专用</div>
+    </a>
+    <a href="/v6_listcreator" class="card">
+        <i class="fas fa-list-ol"></i>
+        <h3>List Creator</h3>
+        <p>Create product lists</p>
+      </a>
+      <a href="/lori_automation" class="card">
+        <i class="fas fa-robot"></i>
+        <h3>Lori Automation</h3>
+        <p>Fully automated processing</p>
+      </a>
+      <a href="/order_processor" class="card">
+        <i class="fas fa-edit"></i>
+        <h3>Order Processor</h3>
+        <p>Edit invoice prices/quantities 转款</p>
+      </a>
+    <div class="sub-title">
+        — Customer，orders —
+        <div class="sub-title"> 客户信息，订单信息 </div>
+    </div>
+    <a href="/customer" class="card">
+      <i class="fas fa-users"></i>
+      <h3>Customer</h3>
+      <p>View customer purchase history</p>
+    </a>
+    <div class="sub-title">
+        — Boat  —
+        <div class="sub-title"> 船期 </div>
+    </div>
+    <a href="/boat" class="card">
+      <i class="fas fa-ship"></i>
+      <h3>Boat Service</h3>
+      <p>Check shipping boat status and schedules</p>
+    </a>
+    <a href="/container" class="card">
+        <i class="fas fa-book"></i>
+          <h3>Container file</h3>
+        <p>Container import files for oms</p>
+    </a>
+  </div>
 </body>
 </html>

@@ -303,7 +303,7 @@ def get_product_data(user_input):
 @mobile_lite_bp.route('/mobile', methods=['GET', 'POST'])
 def mobile_view():
     if 'username' not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     
     current_user = session['username']
     data = None

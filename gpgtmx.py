@@ -102,7 +102,7 @@ def get_tmx_descriptions():
 def gpg_redirect():
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     return redirect(url_for("gpgtmx.gpginvoice"))
 
 @gpgtmx_bp.route("/gpginvoice", methods=["GET", "POST", "OPTIONS"])
@@ -112,7 +112,7 @@ def gpginvoice():
 
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     
     current_user = session['username']
     excel_path = os.path.join('output', 'gpginvoice', 'gpg_orders.xlsx')

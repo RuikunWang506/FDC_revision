@@ -68,7 +68,7 @@ def location_service():
         else:
             # User is not logged in and IP is not allowed; redirect to login
             session['next'] = request.url
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
 
     search_results = []
     all_products = []

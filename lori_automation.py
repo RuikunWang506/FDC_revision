@@ -282,7 +282,7 @@ def process_skus():
 @lori_automation_bp.route("/lori_automation", methods=["GET", "POST"])
 def lori_automation():
     if 'username' not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     
     if request.method == "POST":
         if 'files[]' not in request.files:

@@ -29,7 +29,7 @@ conn = pyodbc.connect(conn_str)
 @boat_service_bp.route('/boat', methods=['GET'])
 def boat_service():
     if 'username' not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     current_user = session['username']
     current_app.logger.info(f"***{current_user}***__@@@checked boat page@@@")
     file_path = 'C:/Users/stream/Dropbox/Pictures-China (1)/container catalog/Container/container catalog/container import/container import.xlsb.xlsx'

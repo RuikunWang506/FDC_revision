@@ -15,7 +15,7 @@ driver = 'ODBC Driver 17 for SQL Server'
 def customer_home():
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     current_user = session['username']
     return render_template('customer.html',current_user=current_user)
 
@@ -24,7 +24,7 @@ def customer_home():
 def check_customer():
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     
     current_user = session['username']
     data = request.get_json()
@@ -104,7 +104,7 @@ def check_customer():
 def customer_details(customer_id):
     if 'username' not in session:
         session['next'] = request.url
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
     
     current_user = session['username']
     # Get username from query parameter if available

@@ -9,7 +9,7 @@ container_bp = Blueprint('container', __name__)
 def upload_container_file():
     if 'username' not in session:
             session['next'] = request.url
-            return redirect(url_for("login"))
+            return redirect(url_for("auth.login"))
     current_user = session['username']
     if request.method == 'POST':
         file = request.files.get('container_file')
