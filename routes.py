@@ -40,7 +40,6 @@ from mobile_lite import mobile_lite_bp
 import Label_Maker, order_search, SQL_connector
 from macy_special import process_orders
 from loris_sticker import main, process_input_data
-from products import products_bp
 from datetime import timedelta,datetime
 from dailytodo import dailytodo
 from gpgtmx import gpgtmx_bp
@@ -68,7 +67,6 @@ def register_routes(app):
     register_big_img_routes(app)
     app.register_blueprint(location_service_bp)
     app.register_blueprint(container_bp)
-    app.register_blueprint(products_bp)
     app.register_blueprint(boat_service_bp)
     app.register_blueprint(chatgpt_bp)
     app.register_blueprint(mobile_lite_bp)
@@ -993,13 +991,6 @@ def register_routes(app):
         
         return sheet_data_html
 
-    @app.route("/temu", methods=["GET"])
-    def temuroute():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
-        sheet_data_html = get_temu_listings_data()
-        current_user = session['username']
-        return render_template("temu.html", sheet_data_html=sheet_data_html, current_user=current_user)
 
 
     @app.route("/geek_tools", methods=["GET"])

@@ -412,7 +412,6 @@ def send_to_shipstation():
     # Process each batch
     all_responses = []
     for batch_index, batch in enumerate(batches):
-        current_app.logger.info(f"Processing batch {batch_index+1} of {len(batches)} with {len(batch)} orders")
         
         response = requests.post(
             url, 
@@ -422,14 +421,12 @@ def send_to_shipstation():
         )
         
         # Log the response
-        current_app.logger.info(f"ShipStation Response for batch {batch_index+1}: {response.status_code}")
-        current_app.logger.info(f"Response Content for batch {batch_index+1}: {response.text}")
         
         try:
             response_data = response.json()
             all_responses.append(response_data)
         except Exception as e:
-            current_app.logger.error(f"Error parsing response for batch {batch_index+1}: {str(e)}")
+            current_app.logger.error(f"Error parsing response ")
             all_responses.append({"error": str(e)})
     
     # Combine all responses
