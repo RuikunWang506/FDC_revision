@@ -135,6 +135,7 @@ def ecaudit():
                 aggfunc='sum', 
                 fill_value=0
             )
+            
             pivot_df = pivot_df.sort_index()
             pivot_df['Total'] = pivot_df.sum(axis=1)
             platform_totals = pivot_df.sum(axis=0)
@@ -151,6 +152,15 @@ def ecaudit():
                 classes="table table-bordered",
                 index=False
             )
+            chart_data = {
+                "labels": pivot_df["Date"].tolist(),
+                "datasets": [
+                    {
+                        "label": col,
+                        "data": pivot_df[col].tolist(),
+                    } for col in pivot_df.columns if col not in ['Date', 'Day of Week', 'Total']
+                ]
+            }
 
     return render_template(
         'online_audit.html',
@@ -165,7 +175,8 @@ def ecaudit():
         current_month=view_month,
         current_week=view_week,
         current_platform=platform_filter,
-        current_user=current_user
+        current_user=current_user,
+        chart_data=json.dumps(chart_data)
     )
 
 @dailytodo.app_template_filter('week_to_month')
@@ -231,3 +242,5 @@ def aggregate_labels(data, platform=None):
                 result[plat]['dates'][date] = label_count
     
     return result
+
+

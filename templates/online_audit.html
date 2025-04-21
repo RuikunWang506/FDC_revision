@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Online Label Audit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Add TableExport CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tableexport@5.2.0/dist/css/tableexport.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         .table-responsive {
             overflow-x: auto;
@@ -21,122 +25,212 @@
         .table > tbody > tr.table-striped-row {
         background-color: rgba(0, 0, 0, 0.05);
         }
+        .export-buttons {
+            margin-bottom: 10px;
+        }
+        .export-buttons .btn {
+            margin-right: 5px;
+        }
     </style>
+    <style>
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .table th, .table td {
+            text-align: center;
+        }
+        .sticky-filter-container {
+            position: sticky;
+            top: 0;
+            z-index: 1500;
+            background-color: white;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-section {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .table > tbody > tr.table-striped-row {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        .export-buttons {
+            margin-bottom: 10px;
+        }
+        .export-buttons .btn {
+            margin-right: 5px;
+        }
+        /* Reduce spacing in form elements */
+        .form-label.small {
+            margin-bottom: 0.1rem;
+            font-size: 0.8rem;
+        }
+        .form-select-sm {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+        /* Add some space below the sticky header */
+        .container.mt-5 {
+            padding-top: 10px;
+        }
+        /* Adjust spacing for the title */
+        h1.text-center.mb-4 {
+            margin-bottom: 0.5rem !important;
+            font-size: 1.75rem;
+        }
+        h3.mb-2 {
+            font-size: 1.2rem;
+            margin-bottom: 0.3rem !important;
+        }
+        /* Use smaller row spacing */
+        .row.g-2 {
+            margin-left: -5px;
+            margin-right: -5px;
+        }
+        .row.g-2 > [class*="col-"] {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+    </style>
+    
 </head>
 <body>
     {% include 'navbar.html' %}
     
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">Label Audit System</h1>
-        
-        <!-- Filter Controls -->
-        <div class="filter-section">
-            <h3 class="mb-3">Data Filters</h3>
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <label for="viewType" class="form-label">View Type</label>
-                    <select id="viewType" class="form-select">
-                        <option value="all" {% if current_view_type == 'all' %}selected{% endif %}>All Data</option>
-                        <option value="week" {% if current_view_type == 'week' %}selected{% endif %}>Weekly</option>
-                        <option value="month" {% if current_view_type == 'month' %}selected{% endif %}>Monthly</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-2">
-                    <label for="yearSelect" class="form-label">Year</label>
-                    <select id="yearSelect" class="form-select">
-                        {% for year in available_years %}
-                        <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-2" id="monthSelectContainer" {% if current_view_type != 'month' %}style="display:none"{% endif %}>
-                    <label for="monthSelect" class="form-label">Month</label>
-                    <select id="monthSelect" class="form-select">
-                        {% for year, month in available_months %}
-                        <option value="{{ month }}" data-year="{{ year }}" 
-                            {% if year == current_year and month == current_month %}selected{% endif %}>
-                            {{ month }}/{{ year }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-2" id="weekSelectContainer" {% if current_view_type != 'week' %}style="display:none"{% endif %}>
-                    <label for="weekSelect" class="form-label">Week</label>
-                    <select id="weekSelect" class="form-select">
-                        {% for year, week in available_weeks %}
-                        <option value="{{ week }}" data-year="{{ year }}" 
-                            {% if year == current_year and week == current_week %}selected{% endif %}>
-                            Week {{ week }} - {{ week|week_to_month(year) }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
-                    <label for="platformSelect" class="form-label">Platform</label>
-                    <select id="platformSelect" class="form-select">
-                        <option value="">All Platforms</option>
-                        <option value="EF_FBM">EF_FBM</option>
-                        <option value="ELLO_DROPSHIP">ELLO_DROPSHIP</option>
-                        <option value="ERWAN_DROPSHIP">ERWAN_DROPSHIP</option>
-                        <option value="FDC_FBM">FDC_FBM</option>
-                        <option value="SHEIN">SHEIN</option>
-                        <option value="TEMU_HK">TEMU_HK</option>
-                        <option value="TEMU_USA">TEMU_USA</option>
-                        <option value="TIKTOK">TIKTOK</option>
-                        <option value="TMX_GPG">TMX_GPG</option>
-                        <option value="TMX_HONDA">TMX_HONDA</option>
-                        <option value="TMX_HYNDAI">TMX_HYNDAI</option>
-                    </select>
-                </div>
+    <!-- Replace the filter section with this updated version -->
+<!-- Replace the filter section with this updated version -->
+<div class="sticky-filter-container">
+    <div class="filter-section">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label for="viewType" class="form-label small mb-1">View Type</label>
+                <select id="viewType" class="form-select form-select-sm">
+                    <option value="all" {% if current_view_type == 'all' %}selected{% endif %}>All Data</option>
+                    <option value="week" {% if current_view_type == 'week' %}selected{% endif %}>Weekly</option>
+                    <option value="month" {% if current_view_type == 'month' %}selected{% endif %}>Monthly</option>
+                </select>
             </div>
             
-            <div class="row">
-                <div class="col-md-12">
-                    <button id="applyFiltersBtn" class="btn btn-primary me-2">Apply Filters</button>
-                    <a id="exportDataBtn" href="/dailytodo/export" class="btn btn-success" target="_blank">Export to Excel</a>
-                </div>
+            <div class="col-md-2">
+                <label for="yearSelect" class="form-label small mb-1">Year</label>
+                <select id="yearSelect" class="form-select form-select-sm">
+                    {% for year in available_years %}
+                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2" id="monthSelectContainer" {% if current_view_type != 'month' %}style="display:none"{% endif %}>
+                <label for="monthSelect" class="form-label small mb-1">Month</label>
+                <select id="monthSelect" class="form-select form-select-sm">
+                    {% for year, month in available_months %}
+                    <option value="{{ month }}" data-year="{{ year }}" 
+                        {% if year == current_year and month == current_month %}selected{% endif %}>
+                        {{ month }}/{{ year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2" id="weekSelectContainer" {% if current_view_type != 'week' %}style="display:none"{% endif %}>
+                <label for="weekSelect" class="form-label small mb-1">Week</label>
+                <select id="weekSelect" class="form-select form-select-sm">
+                    {% for year, week in available_weeks %}
+                    <option value="{{ week }}" data-year="{{ year }}" 
+                        {% if year == current_year and week == current_week %}selected{% endif %}>
+                        Week {{ week }} - {{ week|week_to_month(year) }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="platformSelect" class="form-label small mb-1">Platform</label>
+                <select id="platformSelect" class="form-select form-select-sm">
+                    <option value="">All Platforms</option>
+                    <option value="EF_FBM">EF_FBM</option>
+                    <option value="ELLO_DROPSHIP">ELLO_DROPSHIP</option>
+                    <option value="ERWAN_DROPSHIP">ERWAN_DROPSHIP</option>
+                    <option value="FDC_FBM">FDC_FBM</option>
+                    <option value="SHEIN">SHEIN</option>
+                    <option value="TEMU_HK">TEMU_HK</option>
+                    <option value="TEMU_USA">TEMU_USA</option>
+                    <option value="TIKTOK">TIKTOK</option>
+                    <option value="TMX_GPG">TMX_GPG</option>
+                    <option value="TMX_HONDA">TMX_HONDA</option>
+                    <option value="TMX_HYNDAI">TMX_HYNDAI</option>
+                </select>
+            </div>
+            
+            <div class="col-md-1">
+                <button id="applyFiltersBtn" class="btn btn-primary btn-sm w-100">Apply</button>
             </div>
         </div>
-    
+    </div>
+</div>
+
+<div class="container mt-5">
+    <canvas id="labelsChart" height="auto"></canvas>
+</div>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Label Audit System</h1>
         <!-- Platform Totals Table -->
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h3 class="mb-0">Platform Totals</h3>
+                        <div class="export-buttons">
+                            <button class="btn btn-sm btn-light export-platform-totals" data-type="xlsx">Export to Excel</button>
+                            <button class="btn btn-sm btn-light export-platform-totals" data-type="csv">Export to CSV</button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            {{ platform_totals|safe }}
+                            <div id="platform-totals-container">
+                                {{ platform_totals|safe }}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    
     <div>
         <!-- Historical Data Table -->
         <div class="row mb-5">
             <div class="col-md-12">
                 <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h3 class="mb-0">Daily Breakdown</h3>
+                        <div class="export-buttons">
+                            <button class="btn btn-sm btn-light export-daily-breakdown" data-type="xlsx">Export to Excel</button>
+                            <button class="btn btn-sm btn-light export-daily-breakdown" data-type="csv">Export to CSV</button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            {{ historical_table|safe }}
+                            <div id="daily-breakdown-container">
+                                {{ historical_table|safe }}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Add required libraries for table export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Handle view type changes
@@ -180,66 +274,33 @@
                 window.location.href = url;
             });
             
-            // Update export link when filters change
-            function updateExportLink() {
-                const viewType = document.getElementById('viewType').value;
-                const year = document.getElementById('yearSelect').value;
-                const platform = document.getElementById('platformSelect').value;
+            // Function to hide zero total rows in daily breakdown table
+            function hideZeroRows() {
+                const dailyTable = document.querySelector('.row.mb-5 .table');
+                if (!dailyTable) return;
+                const rows = dailyTable.querySelectorAll('tbody tr');
+                let visibleRowIndex = 0;
                 
-                let url = `/dailytodo/export?view_type=${viewType}&year=${year}`;
+                // Remove any previous striped classes
+                rows.forEach(row => row.classList.remove('table-striped-row'));
                 
-                if (viewType === 'month') {
-                    const month = document.getElementById('monthSelect').value;
-                    url += `&month=${month}`;
-                } else if (viewType === 'week') {
-                    const week = document.getElementById('weekSelect').value;
-                    url += `&week=${week}`;
-                }
-                
-                if (platform) {
-                    url += `&platform=${platform}`;
-                }
-                
-                document.getElementById('exportDataBtn').href = url;
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    // Use the third cell (index 2) as the Total column
+                    const totalCell = cells[2];
+                    if (totalCell && parseInt(totalCell.textContent) === 0) {
+                        row.style.display = 'none';
+                    } else {
+                        row.style.display = '';
+                        if (visibleRowIndex % 2 === 0) {
+                            row.classList.add('table-striped-row');
+                        }
+                        visibleRowIndex++;
+                    }
+                });
             }
             
-            // Add change listeners to update export link
-            document.getElementById('viewType').addEventListener('change', updateExportLink);
-            document.getElementById('yearSelect').addEventListener('change', updateExportLink);
-            document.getElementById('monthSelect').addEventListener('change', updateExportLink);
-            document.getElementById('weekSelect').addEventListener('change', updateExportLink);
-            document.getElementById('platformSelect').addEventListener('change', updateExportLink);
-            
-            // Initialize the export link
-            updateExportLink();
-        });
-
-        // Function to hide zero total rows in daily breakdown table
-        function hideZeroRows() {
-            const dailyTable = document.querySelector('.row.mb-5 .table');
-            if (!dailyTable) return;
-            const rows = dailyTable.querySelectorAll('tbody tr');
-            let visibleRowIndex = 0;
-            
-            // Remove any previous striped classes
-            rows.forEach(row => row.classList.remove('table-striped-row'));
-            
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                // Use the third cell (index 2) as the Total column
-                const totalCell = cells[2];
-                if (totalCell && parseInt(totalCell.textContent) === 0) {
-                    row.style.display = 'none';
-                } else {
-                    row.style.display = '';
-                    if (visibleRowIndex % 2 === 0) {
-                        row.classList.add('table-striped-row');
-                    }
-                    visibleRowIndex++;
-                }
-            });
-        }
-        const platformTable = document.querySelector('.card .table-responsive .table');
+            const platformTable = document.querySelector('.card .table-responsive .table');
             if (platformTable) {
                 const rows = platformTable.querySelectorAll('tbody tr');
                 let visibleRowIndex = 0;
@@ -261,18 +322,134 @@
                 });
             }
 
-        // Run when page loads
-        hideZeroRows();
+            // Run when page loads
+            hideZeroRows();
 
-        // Run after filter changes
-        document.getElementById('applyFiltersBtn').addEventListener('click', () => {
-            setTimeout(hideZeroRows, 500);
-        });
+            // Run after filter changes
+            document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+                setTimeout(hideZeroRows, 500);
+            });
 
-        // Run after view type changes
-        document.getElementById('viewType').addEventListener('change', () => {
-            setTimeout(hideZeroRows, 500);
+            // Run after view type changes
+            document.getElementById('viewType').addEventListener('change', () => {
+                setTimeout(hideZeroRows, 500);
+            });
+            
+            // Table export functionality
+            function exportTable(tableId, fileType, fileName) {
+                const table = document.querySelector(`#${tableId} table`);
+                if (!table) return;
+                
+                // Get table data
+                const rows = Array.from(table.querySelectorAll('tr'));
+                const data = rows.map(row => {
+                    return Array.from(row.querySelectorAll('th, td')).map(cell => cell.textContent.trim());
+                });
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                
+                // Generate filename with date
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                const fullFileName = `${fileName}_${dateStr}.${fileType}`;
+                
+                // Export file
+                if (fileType === 'xlsx') {
+                    XLSX.writeFile(wb, fullFileName);
+                } else if (fileType === 'csv') {
+                    const csv = XLSX.utils.sheet_to_csv(ws);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    saveAs(blob, fullFileName);
+                }
+            }
+            
+            // Add event listeners to export buttons
+            document.querySelectorAll('.export-platform-totals').forEach(button => {
+                button.addEventListener('click', function() {
+                    const fileType = this.getAttribute('data-type');
+                    exportTable('platform-totals-container', fileType, 'Platform_Totals');
+                });
+            });
+            
+            document.querySelectorAll('.export-daily-breakdown').forEach(button => {
+                button.addEventListener('click', function() {
+                    const fileType = this.getAttribute('data-type');
+                    exportTable('daily-breakdown-container', fileType, 'Daily_Breakdown');
+                });
+            });
         });
     </script>
+<script>
+    const ctx = document.getElementById('labelsChart').getContext('2d');
+    let chartData = JSON.parse('{{ chart_data|safe }}');
+    
+    // Process the data to replace 0 values with null
+    chartData.datasets.forEach(dataset => {
+        dataset.data = dataset.data.map(value => value === 0 ? null : value);
+        dataset.spanGaps = true;
+    });
+    
+    // Find the maximum value across all datasets
+    const allValues = chartData.datasets.flatMap(dataset => 
+        dataset.data.filter(value => value !== null && value !== undefined));
+    const maxValue = Math.max(...allValues, 30); // At least 20
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    // Use a logarithmic scale with a custom base to compress higher values
+                    type: 'logarithmic',
+                    min: 1, // Start at 1 for log scale
+                    max: maxValue,
+                    ticks: {
+                        callback: function(value) {
+                            // Only show integer values
+                            if (Math.floor(value) === value) {
+                                return value;
+                            }
+                            return null;
+                        },
+                        autoSkip: false
+                    }
+                }
+            },
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            size: 16
+                        },
+                        padding: 20
+                    },
+                    maxHeight: 100
+                },
+                tooltip: { 
+                    mode: 'index', 
+                    intersect: false 
+                },
+                title: { 
+                    display: true, 
+                    text: 'Labels per Platform Over Time',
+                    font: {
+                        size: 26
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+
+
+
+      
 </body>
 </html>
