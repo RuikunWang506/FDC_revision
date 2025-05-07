@@ -6,8 +6,8 @@
     <title>Item Lookup</title>
     
     <!-- Include Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Include DataTables CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+            <!-- Include DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
     <!-- Include DataTables Buttons CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
@@ -607,9 +607,12 @@ h3.mt-5.text-center {
                     {% endif %}
     
                     <div class="form-group">
-                        <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}" placeholder="Enter SKUs or Styles">
+                        <div class="input-group">
+                            <div class="input-group-prepend" id="clearInputButton" style="display: {{ 'block' if user_input else 'none' }};">
+                            </div>
+                            <input type="text" class="form-control" name="user_input" id="user_input" required value="{{ user_input }}" placeholder="Enter SKUs or Styles">
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">View Result</button>
                     
                     {% if user_input %}
                     <div class="search-input mt-4">
@@ -808,7 +811,7 @@ $(document).ready(function() {
                     "className": 'dt-body-center'
                 }
             ],
-            "order": [[0, 'asc']],
+            "order": [[1, 'dsc'], [2, 'asc']], // Sort by DB (column 1) first, then by SKU (column 2)
             "displayStart": 0,
             
             // Add this drawCallback to create and update the summary row
@@ -1373,6 +1376,46 @@ function closePopup(event) {
                     $editableSpan.removeClass('editing').text(originalText);
                 });
             });
+        </script>
+        <script>
+// Check if we have results displayed and clear the input field
+document.addEventListener('DOMContentLoaded', function() {
+        // If excel_html or image_urls exist (meaning results are displayed)
+        if (document.getElementById('excel_table') || 
+            document.querySelectorAll('.img-container').length > 0) {
+            
+            // Store the current search value in a data attribute for reference
+            const userInput = document.getElementById('user_input');
+            if (userInput) {
+                userInput.dataset.lastSearch = userInput.value;
+                
+                // Clear the input field
+                userInput.value = '';
+                
+                // Hide the clear button
+                const clearButton = document.getElementById('clearInputButton');
+                if (clearButton) {
+                    clearButton.style.display = 'none';
+                }
+            }
+        }
+    });
+    
+    // Modify the redirectToResult function to store the search value
+    function redirectToResult(event) {
+        event.preventDefault();
+        var userInput = document.getElementById('user_input');
+        var inputValue = userInput.value.trim();
+        
+        if (inputValue) {
+            // Store the current search for reference
+            userInput.dataset.lastSearch = inputValue;
+            
+            // Redirect to path parameter format
+            window.location.href = '/item_lookup/' + encodeURIComponent(inputValue);
+        }
+        return false;
+    }
         </script>
         
 </body></html>

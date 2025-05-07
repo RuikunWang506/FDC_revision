@@ -48,6 +48,7 @@ import io
 import zipfile
 from util import resize_image  # Import the master resizing function
 from PIL import Image
+from pathlib import Path
 
 from V6listcreator import v6_listcreator_bp
 from lori_automation import lori_automation_bp
@@ -55,8 +56,8 @@ from customer import customer_bp
 from order_processor import order_processor_bp
 from tk_label_zoom import tk_label_zoom_bp
 from auth import auth_bp
- 
-
+from Toolkits import pdf_toolkit_bp
+from auth import log_event
 
 client = WebClient(token=Config.SLACK_TOKEN)
 
@@ -78,17 +79,29 @@ def register_routes(app):
     app.register_blueprint(order_processor_bp)
     app.register_blueprint(tk_label_zoom_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(pdf_toolkit_bp)
+
     app.permanent_session_lifetime = timedelta(days=30)
 
     @app.route("/", methods=["GET", "POST"])
     def home():
+        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        log_event("INFO", f'{client_ip} "{request.method} {request.path}"')
+        
         if 'username' not in session:
             session['next'] = request.url
             return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("index.html", current_user=current_user)
 
-   
+    @app.route("/robots.txt")
+    def robots_txt():
+        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        proto = request.environ.get("SERVER_PROTOCOL", "HTTP/1.1")
+        log_event("INFO", f'{client_ip} "GET /robots.txt {proto}"')
+        # app.static_folder points at your 'static' directory
+        return send_from_directory(app.static_folder, "robots.txt")
+    
     @app.route("/list_routes", methods=["GET"])
     def list_routes():
         if 'username' not in session:
@@ -1238,3 +1251,164 @@ def register_routes(app):
     @app.route("/download55/<path:filename>")
     def download_file55(filename):
         return send_from_directory(BASE_DIR, filename)
+
+
+
+    @app.route("/savvy_images", methods=["GET"])
+    def savvy_images():
+        
+        # Path to the Dropbox folder
+        dropbox_path = r"C:\Users\stream\Dropbox\分享del"
+        
+        # Check if the directory exists
+        if not os.path.exists(dropbox_path):
+            return render_template("error.html", 
+                                error_message="Dropbox directory not found")
+        
+        # Dictionary to store images grouped by folder
+        folder_images = {}
+        
+        # Walk through the directory and all subdirectories
+        for root, dirs, files in os.walk(dropbox_path):
+            # Get the relative folder path from the base directory
+            rel_folder = os.path.relpath(root, dropbox_path)
+            
+            # Skip the root directory itself
+            if rel_folder == '.':
+                folder_name = 'Root'
+            else:
+                # Use the last part of the path as the folder name
+                folder_name = os.path.basename(rel_folder)
+            
+            # Initialize the folder in our dictionary if it doesn't exist
+            if folder_name not in folder_images:
+                folder_images[folder_name] = []
+            
+            # Add all images in this folder
+            for file in files:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, dropbox_path)
+                    
+                    folder_images[folder_name].append({
+                        'filename': file,
+                        'path': rel_path,
+                        'full_path': full_path
+                    })
+        
+        # Remove empty folders
+        folder_images = {k: v for k, v in folder_images.items() if v}
+        
+        # Sort images within each folder by filename
+        for folder in folder_images:
+            folder_images[folder].sort(key=lambda x: x['filename'])
+        
+        # Calculate total images
+        total_images = sum(len(images) for images in folder_images.values())
+        
+        app.logger.info(f" viewed Savvy images, found {total_images} images in {len(folder_images)} folders")
+        
+        return render_template("dropbox_images.html", 
+                            folder_images=folder_images, 
+                            total_images=total_images,
+                            folder_path=dropbox_path)
+
+    @app.route("/savvy/<path:image_path>")
+    def serve_savvy_image(image_path):
+
+        # Base path for the Dropbox folder
+        dropbox_path = r"C:\Users\stream\Dropbox\分享del"
+        
+        # Construct the full path
+        full_path = os.path.join(dropbox_path, image_path)
+        
+        # Get the directory and filename
+        directory = os.path.dirname(full_path)
+        filename = os.path.basename(full_path)
+        
+        # Check if the file exists
+        if not os.path.exists(full_path):
+            return send_from_directory('static', 'no_image_available.jpg')
+        
+        # Get size parameter for optional resizing
+        size = request.args.get('size', 'full')
+        
+        if size == 'full':
+            return send_from_directory(directory, filename)
+        
+        try:
+            # Resize image on demand
+            buffer = resize_image(full_path, int(size) if size.isdigit() else 300)
+            return send_file(buffer, mimetype='image/jpeg')
+        except Exception as e:
+            app.logger.error(f"Error serving Savvy image {image_path}: {e}")
+            return send_from_directory('static', 'no_image_available.jpg')
+
+    @app.route("/download_savvy_images", methods=["POST"])
+    def download_savvy_images():
+
+        selected_images = request.form.get('selected_images', '')
+        folder = request.form.get('folder', '')
+        
+        # Base path for the Dropbox folder
+        dropbox_path = r"C:\Users\stream\Dropbox\分享del"
+        
+        # Create a zip file in memory
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w') as zf:
+            if selected_images:
+                image_paths = selected_images.split(',')
+                for image_path in image_paths:
+                    if image_path:
+                        full_path = os.path.join(dropbox_path, image_path)
+                        if os.path.exists(full_path):
+                            # Add file to zip with its relative path
+                            zf.write(full_path, arcname=os.path.basename(image_path))
+        
+        memory_file.seek(0)
+        
+        # Set the zip filename based on whether it's a folder download or selected images
+        if folder:
+            zip_filename = f"{folder}_images.zip"
+            app.logger.info(f"User  downloaded folder {folder} images")
+        else:
+            zip_filename = "selected_savvy_images.zip"
+            app.logger.info(f"User  downloaded {len(selected_images.split(','))} selected images")
+        
+        return send_file(
+            memory_file,
+            download_name=zip_filename,
+            as_attachment=True,
+            mimetype='application/zip'
+        )
+
+    @app.route("/bookmarks", methods=["GET", "POST"])
+    def bookmarks_page():  # Renamed function
+        if 'username' not in session:
+            session['next'] = request.url
+            return redirect(url_for("auth.login"))
+
+        current_user = session['username']
+        
+        if current_user != 'yeti':
+            return render_template("index.html", current_user=current_user)
+
+        bookmarks_list = [
+            {"title": "Passwords & Accounts", "year":"8888", "category": "Passwords", "url": "https://docs.google.com/spreadsheets/d/1nkle6flS263CJ65b0G8YQf46a3aTUC8vP2r3exfdFms/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_TEMU-USA", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1-PzqDYddrHTzBZ-f0IdzZFgmQaBK_Hx_Y_IYgHCIGWw/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_TEMU-HK", "year":"2024", "category": "Accounting",  "url": "https://docs.google.com/spreadsheets/d/1n_ewjw68TLFIDouP11z-AJlI1PilObQfP3lan7DepUg/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "HR_Ashley Sign-in Sheet", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1ABTgQ4KmVkBX0KRFV9XuIH94irc3jtBlUtjjpB1HRgE/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_TIKTOK_AMBRA",  "year":"2024","category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1gwJVGsJVCpYY-LtimYCwj5_hCUc8xs1zoqzhAqO9XQ8/edit?gid=697444757#gid=697444757","linktype":"Google Sheet"},
+            {"title": "Channel_Old Dec-Mar TIKTOK", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/13xcqIjFSOrDBh7xHZFsr_P4LBCKt2uGsrohIMXfeUxg/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_Tiktok Accounting 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1aW4wmxQHtSXZPjgui0PhaKGszkttTKay6JVlNJflJ_M/edit?gid=462431388#gid=462431388","linktype":"Google Sheet"},
+            {"title": "HR_1099 Sheet 2024", "year":"2024", "category": "Payroll", "url": "https://docs.google.com/spreadsheets/d/1bgCEWmdWmFTyAkpbOQkxDvEgBFUhPNLVJLRIOsgxWd0/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_ERWAN 2024", "year":"2024", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1vIG8VhrZTJmuuEjXFP7ZmdnsyhAbXMWnasIOH_v76Ok/edit?gid=572048210#gid=572048210","linktype":"Google Sheet"},
+            {"title": "Tiktok_2025", "year":"2025", "category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1v9nzwoMk3p9LAcztZOW4et2v51Wfx21VeTlJbF-X64M/edit?gid=0#gid=0","linktype":"Google Sheet"},
+            {"title": "Channel_ERWAN 2025","year": "2025","category": "Accounting", "url": "https://docs.google.com/spreadsheets/d/1nU0CIyAtQYGK9AKNBhc-l_Mr-qRaoWLen4g4oZsdaBw/edit?gid=0#gid=0","linktype":"Google Sheet"}
+        ]
+
+        return render_template("bookmark.html", current_user=current_user, bookmarks_list=bookmarks_list)
+
+    @app.route("/apple", methods=["GET"])
+    def apple():
+        return render_template("calculator.html")

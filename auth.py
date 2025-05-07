@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session, flash,current_app
+from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session, flash, current_app
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -22,6 +22,37 @@ import os
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
 
+def log_event(level, message):
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+    with open('alllog.txt', 'a') as log:
+        log.write(f'{timestamp} {level.upper()} {message}\n')
+
+@auth_bp.before_request
+def log_request():
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    method = request.method
+    path = request.path
+    http_version = request.environ.get('SERVER_PROTOCOL', 'HTTP/1.1')
+    
+    # Log the request
+    log_event('INFO', f'{client_ip} "{method} {path} {http_version}"')
+    
+    # Store the request details for after_request logging
+    request._logging_details = {
+        'client_ip': client_ip,
+        'method': method,
+        'path': path,
+        'http_version': http_version
+    }
+
+@auth_bp.after_request
+def log_response(response):
+    if hasattr(request, '_logging_details'):
+        details = request._logging_details
+        status_code = response.status_code
+        log_event('INFO', f'{details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}')
+    return response
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     # If user is already logged in, redirect to home
@@ -44,6 +75,8 @@ def login():
         remember = request.form.get("remember")
         
         if check_credentials(username, password):
+            # Check if user has an email address
+            connection = get_db_connection()
             # Check if user has an email address
             connection = get_db_connection()
             if connection:
@@ -83,6 +116,7 @@ def login():
             return redirect(redirect_url)
         else:
             flash("Invalid credentials")
+            log_event('WARNING', f'Failed login attempt - Username: {username}, IP: {client_ip}')
     
     return render_template("login.html", client_ip=client_ip, location=location_data)
 
@@ -488,17 +522,31 @@ def check_credentials(username, password):
     return False
 
 def log_user_activity(username):
-    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    user_agent = parse(request.headers.get('User-Agent'))
-    referrer = request.referrer
-    query_params = request.args
+    client_ip   = request.headers.get('X-Forwarded-For', request.remote_addr)
+    user_agent  = parse(request.headers.get('User-Agent'))
+    referrer    = request.referrer
+
+    # fetch location info
+    location = get_location(client_ip) or {}
+    city      = location.get('city', 'Unknown')
+    region    = location.get('regionName', 'Unknown')
+    country   = location.get('country', 'Unknown')
+    lat       = location.get('lat', 'N/A')
+    lon       = location.get('lon', 'N/A')
+    timezone  = location.get('timezone', 'Unknown')
+    isp       = location.get('isp', 'Unknown')
+    org       = location.get('org', 'Unknown')
 
     current_app.logger.info(
-        f"***{username}*** has logged in. IP: ***{client_ip}***, "
-        f"Browser: {user_agent.browser.family} {user_agent.browser.version_string}, "
-        f"OS: {user_agent.os.family} {user_agent.os.version_string}, "
-        f"Device: ***{user_agent.device.family}***, "
-        f"Method: {request.method}, URL: {request.url}, Referrer: {referrer}"
+        f"***{username}*** has logged in. "
+        f"IP: ***{client_ip}***; "
+        f"Location: @@@{city}, {region}, {country}@@@ "
+        f"(lat: {lat}, lon: {lon}); "
+        f"Timezone: @@@{timezone}@@@; ISP: {isp}; Org: {org}; "
+        f"Browser: @@@{user_agent.browser.family} {user_agent.browser.version_string}@@@; "
+        f"OS: {user_agent.os.family} {user_agent.os.version_string}; "
+        f"Device: @@@{user_agent.device.family}@@@; "
+        f"Method: {request.method}; URL: {request.url}; Referrer: {referrer}"
     )
 
 def get_location(ip):

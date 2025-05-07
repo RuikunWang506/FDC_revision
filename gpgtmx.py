@@ -132,9 +132,11 @@ def gpginvoice():
 
                 # Determine Manufacturer Prefix
                 if order_number.startswith("CH"):
-                    prefixed_part_number = f"Honda:{part_number}"
+                    prefixed_part_number = f"Honda:H_{part_number}"
                 elif order_number.startswith("CU"):
-                    prefixed_part_number = f"Hyundai:{part_number}"
+                    prefixed_part_number = f"Hyundai:HD_{part_number}"
+                elif order_number.startswith("VA"):
+                    prefixed_part_number = f"Honda:H_{part_number}"
                 else:
                     prefixed_part_number = part_number  # No prefix
 
@@ -227,8 +229,9 @@ def gpginvoice():
             
             descriptions = get_tmx_descriptions()
             df['Description'] = df.apply(lambda row: descriptions.get(
-                f"Honda:{row['Part Number']}" if row['orderNumber'].startswith("CH") else
-                f"Hyundai:{row['Part Number']}" if row['orderNumber'].startswith("CU") else
+                f"Honda:H_{row['Part Number']}" if row['orderNumber'].startswith("CH") else
+                f"Hyundai:HD_{row['Part Number']}" if row['orderNumber'].startswith("CU") else
+                f"Honda:H_{row['Part Number']}" if row['orderNumber'].startswith("VA") else
                 row['Part Number'], ''
             ), axis=1)
 
@@ -309,7 +312,7 @@ def gpg_finish():
         return jsonify({"error": str(e)}), 500
 @gpgtmx_bp.route("/upload_pdf", methods=["POST"])
 def upload_pdf():
-    """Handle PDF upload, extract data, and generate a pivot table in Excel."""
+    """Handle PDF upload, extract data, generate a pivot table in Excel, and return HTML table."""
     try:
         file = request.files.get("file")
         if not file:
@@ -347,12 +350,15 @@ def upload_pdf():
                     line_no = i  # Define line_no here at the part number detection level
                     
                     # Search for quantity in the next few lines
+                    quantity = None
+                    subtotal = None
+                    
                     # Looking for a line that contains just a number (quantity)
                     for j in range(i+1, min(i+8, len(lines))):
                         qty_line = lines[j].strip()
                         # Check if the line is just a number (the quantity)
                         if qty_line.isdigit():
-                            quantity = int(qty_line/4)
+                            quantity = int(qty_line)
                             
                             # Then look for price in the next line
                             if j+1 < len(lines) and j+2 < len(lines):
@@ -360,12 +366,9 @@ def upload_pdf():
                                 if '.' in lines[j+1].strip():
                                     price = lines[j+1].strip()
                                     subtotal = lines[j+2].strip()  # The second price is the subtotal
-                                    
-                                    extracted_data.append([current_order, part_no, line_no, quantity, subtotal])
-                                    print(f"Extracted: {current_order}, {part_no}, {quantity}, {subtotal}")
                                     break
 
-                    if quantity is not None:
+                    if quantity is not None and subtotal is not None:
                         extracted_data.append([current_order, part_no, line_no, quantity, subtotal])
                         print(f"Extracted: {current_order}, {part_no}, {quantity}, {subtotal}")
                     else:
@@ -389,7 +392,7 @@ def upload_pdf():
         else:
             return jsonify({"error": "Failed to create pivot table, no valid data found."}), 400
 
-        # Convert the pivot table DataFrame to an Excel file in-memory
+        # Generate Excel file for download
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             pivot_df.to_excel(writer, sheet_name="Pivot Table")
@@ -413,19 +416,23 @@ def upload_pdf():
             worksheet.page_setup.paperWidth = "4in"
 
         output.seek(0)
-        print("Excel File Created Successfully with custom formatting!")
-        print("Excel File Created Successfully!")
-
-        # Send the Excel file for download
-        try:
-            response = send_file(output, as_attachment=True, download_name="pivot_table.xlsx",
-                                 mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            print("File Sent Successfully!")
-            return response
-        except Exception as e:
-            print("Error Sending File:", str(e))
-            return jsonify({"error": "Error generating download file."}), 500
+        
+        # Convert pivot table to HTML for display
+        pivot_html = pivot_df.to_html(classes='table table-striped table-bordered', table_id='pivotTable')
+        
+        # Encode the Excel file as base64 for direct download
+        import base64
+        excel_b64 = base64.b64encode(output.getvalue()).decode('utf-8')
+        
+        # Return both the Excel file and HTML table
+        return jsonify({
+            "success": True,
+            "pivotHtml": pivot_html,
+            "excelData": excel_b64,
+            "fileReady": True
+        })
 
     except Exception as e:
         print(f"General Error: {e}")
         return jsonify({"error": str(e)}), 500
+

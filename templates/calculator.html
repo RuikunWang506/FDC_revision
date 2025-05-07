@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>房子贷款计算器</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        .plan-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .plan-buttons button {
+            flex: 1 1 calc(50% - 10px);
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #3a7bd5;
+            color: white;
+            cursor: pointer;
+        }
+        .plan-buttons button.active {
+            background: #00d2ff;
+        }
+        .result {
+            font-size: 14px;
+        }
+        .result p {
+            margin: 6px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .installment-amount {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>房子贷款计算器</h1>
+    <div class="input-group">
+        <label for="price">房屋总价 (元):</label>
+        <input type="number" id="price" value="0" placeholder="请输入房屋总价">
+    </div>
+    <div class="plan-buttons" id="planButtons"></div>
+    <div class="result" id="info"></div>
+</div>
+
+<script>
+class LoanCalculator {
+    constructor() {
+        this.plans = [
+            { id: '0.2-0.045-30', name: '20%首付 30年 4.5%' },
+            { id: '0.3-0.04-20', name: '30%首付 20年 4.0%' },
+            { id: '0.4-0.035-15', name: '40%首付 15年 3.5%' },
+        ];
+        this.selectedPlan = this.plans[0].id;
+        this.selectedPlanName = this.plans[0].name;
+        this.init();
+    }
+
+    init() {
+        this.renderPlanButtons();
+        document.getElementById('price').addEventListener('input', () => this.calculate());
+        this.calculate();
+    }
+
+    renderPlanButtons() {
+        const container = document.getElementById('planButtons');
+        container.innerHTML = '';
+        this.plans.forEach(plan => {
+            const btn = document.createElement('button');
+            btn.textContent = plan.name;
+            if (plan.id === this.selectedPlan) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                this.selectedPlan = plan.id;
+                this.selectedPlanName = plan.name;
+                document.querySelectorAll('.plan-buttons button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.calculate();
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    calculate() {
+        const price = parseFloat(document.getElementById('price').value) || 0;
+        const [dpRatio, rate, years] = this.selectedPlan.split('-').map(Number);
+        const down = price * dpRatio;
+        const loan = price - down;
+        const months = years * 12;
+        const monthlyRate = rate / 12;
+        const monthlyPayment = loan * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
+
+        document.getElementById('info').innerHTML = `
+            <p><span>房屋总价</span><span>¥${price.toLocaleString()}</span></p>
+            <p><span>首付比例</span><span>${(dpRatio * 100).toFixed(0)}%</span></p>
+            <p><span>首付金额</span><span>¥${down.toLocaleString(undefined, {maximumFractionDigits: 2})}</span></p>
+            <p><span>贷款金额</span><span>¥${loan.toLocaleString(undefined, {maximumFractionDigits: 2})}</span></p>
+            <p><span>贷款年限</span><span>${years} 年</span></p>
+            <p><span>年利率</span><span>${(rate * 100).toFixed(2)}%</span></p>
+            <p class="installment-amount"><span>每月还款</span><span>¥${monthlyPayment.toFixed(2)}</span></p>
+        `;
+    }
+}
+
+new LoanCalculator();
+</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>savvy Images</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+        body {
+            padding-top: 20px;
+            background-color: #f8f9fa;
+        }
+        .card {
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+        .card-img-top {
+            height: 200px;
+            object-fit: contain;
+            background-color: #f5f5f5;
+            padding: 10px;
+        }
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .folder-section {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        .folder-heading {
+            background-color: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .download-btn {
+            margin-left: 10px;
+        }
+        .image-checkbox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+        .sticky-controls-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            width: 100%;
+        }
+
+        .sticky-controls {
+            background-color: rgba(248, 249, 250, 0.95);
+            padding: 15px;
+            margin: 0 auto 20px auto;
+            border-bottom: 1px solid #dee2e6;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            transition: box-shadow 0.3s ease;
+            max-width: 400px; /* Adjust this width as needed */
+        }
+
+        .sticky-controls:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Add some padding to the top of the content to prevent it from jumping when the controls become fixed */
+        .container {
+            padding-top: 10px;
+        }
+
+        .form-check-input { 
+            width: 2.5em !important; 
+            height: 2.5em !important; 
+        }
+
+    </style>
+</head>
+<body>
+    <div class="sticky-controls-container">
+        <div class="sticky-controls">
+            <div class="text-center">
+                
+                
+                <!-- Download selected images button -->
+                <div class="mb-12">
+                    <button id="selectAllBtn" class="btn btn-outline-secondary">Select All</button>
+                    <button id="deselectAllBtn" class="btn btn-outline-secondary">Deselect All</button>
+                    <button id="downloadSelectedBtn" class="btn btn-primary">Download Selected</button>
+                    <span>Total Images: {{ total_images }} </span>
+                    <span id="selectedCount" class="ms-2">(0 selected)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+
+    <!-- Main Content -->
+    <div class="container">
+        <h2>Images from Savvy </h2>
+
+        {% if folder_images %}
+            {% for folder_name, images in folder_images.items() %}
+                <div class="folder-section">
+                    <h4 class="folder-heading">
+                        {{ folder_name }}
+                        <button class="btn btn-sm btn-outline-primary download-btn" 
+                                onclick="downloadFolderImages('{{ folder_name }}')">
+                            Download Folder
+                        </button>
+                        <span class="badge bg-secondary ms-2">{{ images|length }} images</span>
+                    </h4>
+                </div>
+                
+                <div class="row folder-images" data-folder="{{ folder_name }}">
+                    {% for image in images %}
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100">
+                                <div class="form-check image-checkbox">
+                                    <input class="form-check-input" type="checkbox" value="{{ image.path }}" 
+                                           id="check-{{ folder_name }}-{{ loop.index }}" data-folder="{{ folder_name }}">
+                                </div>
+                                <a href="/savvy/{{ image.path }}" target="_blank">
+                                    <img src="/savvy/{{ image.path }}?size=300" 
+                                         class="card-img-top" 
+                                         alt="{{ image.filename }}">
+                                </a>
+                                <div class="card-body">
+                                    <h6 class="card-title text-truncate" title="{{ image.filename }}">
+                                        {{ image.filename }}
+                                    </h6>
+                                    <p class="card-text small text-muted text-truncate-2" title="{{ image.path }}">
+                                        {{ image.path }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                No images found in the specified directory.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Download form (hidden) -->
+    <form id="downloadForm" action="/download_savvy_images" method="POST" style="display: none;">
+        <input type="hidden" name="selected_images" id="selectedImagesInput">
+        <input type="hidden" name="folder" id="folderInput">
+    </form>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript for image selection and download -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.image-checkbox input');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const deselectAllBtn = document.getElementById('deselectAllBtn');
+            const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+            const selectedCount = document.getElementById('selectedCount');
+            const downloadForm = document.getElementById('downloadForm');
+            const selectedImagesInput = document.getElementById('selectedImagesInput');
+            const folderInput = document.getElementById('folderInput');
+            
+            // Update selected count
+            function updateSelectedCount() {
+                const count = document.querySelectorAll('.image-checkbox input:checked').length;
+                selectedCount.textContent = `(${count} selected)`;
+            }
+            
+            // Add event listeners to checkboxes
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedCount);
+            });
+            
+            // Select all images
+            selectAllBtn.addEventListener('click', function() {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                updateSelectedCount();
+            });
+            
+            // Deselect all images
+            deselectAllBtn.addEventListener('click', function() {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                updateSelectedCount();
+            });
+            
+            // Download selected images
+            downloadSelectedBtn.addEventListener('click', function() {
+                const selectedImages = Array.from(document.querySelectorAll('.image-checkbox input:checked'))
+                    .map(checkbox => checkbox.value);
+                
+                if (selectedImages.length === 0) {
+                    alert('Please select at least one image to download.');
+                    return;
+                }
+                
+                selectedImagesInput.value = selectedImages.join(',');
+                folderInput.value = '';
+                downloadForm.submit();
+            });
+        });
+        
+        // Download all images in a folder
+        function downloadFolderImages(folder) {
+            const folderCheckboxes = document.querySelectorAll(`.image-checkbox input[data-folder="${folder}"]`);
+            const selectedImages = Array.from(folderCheckboxes).map(checkbox => checkbox.value);
+            
+            if (selectedImages.length === 0) {
+                alert('No images found in this folder.');
+                return;
+            }
+            
+            const downloadForm = document.getElementById('downloadForm');
+            const selectedImagesInput = document.getElementById('selectedImagesInput');
+            const folderInput = document.getElementById('folderInput');
+            
+            selectedImagesInput.value = selectedImages.join(',');
+            folderInput.value = folder;
+            downloadForm.submit();
+        }
+    </script>
+</body>
+</html>
