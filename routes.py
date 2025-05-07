@@ -1408,7 +1408,3 @@ def register_routes(app):
         ]
 
         return render_template("bookmark.html", current_user=current_user, bookmarks_list=bookmarks_list)
-
-    @app.route("/apple", methods=["GET"])
-    def apple():
-        return render_template("calculator.html")
