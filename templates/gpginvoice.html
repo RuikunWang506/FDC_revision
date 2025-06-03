@@ -234,7 +234,7 @@
         }
 
         // Determine manufacturer prefix based on invoice number
-        const manufacturerPrefix = invoiceNo.startsWith('CU') ? 'Hyundai:' : 'Honda:';
+        const manufacturerPrefix = invoiceNo.startsWith('CU') ? 'Hyundai:HD_' : 'Honda:H_';
         const itemProductService = manufacturerPrefix + partNumber;
 
         csvData.push([

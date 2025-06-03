@@ -211,14 +211,20 @@ def generate_excel(user_input):
             )
         else:
             history_html_table = "<p>No item history found for the given input.</p>"
+            
+        # Purchase history
         purchase_html = generate_purchase_history(input_parts)
+        
+        # NEW: Add inventory adjustments
+        adjustment_html = generate_inventory_adjustments(input_parts)
 
+        # Return all HTML tables, including the new adjustment_html
+        return html_table, history_html_table, purchase_html, adjustment_html, [], user_input
 
-        return html_table, history_html_table,purchase_html, [], user_input  # image_urls is handled in Flask route
 
     except pyodbc.Error as e:
         app.logger.error(f"Error connecting to SQL Server: {e}")
-        return None, None, [], user_input
+        return None, None, None, None, [], user_input
     finally:
         if 'conn_fdc' in locals() and conn_fdc:
             conn_fdc.close()
@@ -288,3 +294,714 @@ def generate_purchase_history(input_parts):
         purchase_html = "<p>No purchase history found.</p>"
         
     return purchase_html
+
+def generate_inventory_adjustments(input_parts):
+    adjustment_conditions = []
+    adjustment_params = []
+    
+    for part in input_parts:
+        if "%" in part:
+            adjustment_conditions.append("prod_cd LIKE ?")
+            adjustment_params.append(part)
+        else:
+            adjustment_conditions.append("prod_cd LIKE ?")
+            adjustment_params.append(f"{part}%")
+
+    combined_condition_adjustment = " OR ".join(adjustment_conditions) if adjustment_conditions else "1=1"
+
+    adjustment_query = f"""
+        SELECT 
+            prod_cd,
+            log_num,
+            RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', log_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+            RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', log_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+            CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', log_dt) - 81088, '20230101')) AS VARCHAR) AS formatted_log_dt,
+            log_by,
+            log_qty
+        FROM [dbo].[wm_log]
+        WHERE ({combined_condition_adjustment})
+        AND type_cd = 'adj'
+        ORDER BY log_dt DESC
+    """
+
+    all_adjustment_rows = []
+    
+    # Connect to both databases and fetch data
+    for db_name, db in [(database_fdc, 'omsdata_FDC'), (database_oms_ef, 'oms_EF')]:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            cursor.execute(adjustment_query, adjustment_params)
+            rows = cursor.fetchall()
+            
+            # Add database source column
+            display_db_name = 'FDC' if db == 'omsdata_FDC' else 'E_FAS'
+            rows_with_db = [(display_db_name,) + tuple(row) for row in rows]
+            all_adjustment_rows.extend(rows_with_db)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error connecting to {db}: {e}")
+    
+    if all_adjustment_rows:
+        adjustment_df = pd.DataFrame.from_records(all_adjustment_rows, 
+                                                 columns=['Database', 'SKU', 'Log Number', 'Date', 'Adjusted By', 'Quantity'])
+        
+        # Convert Quantity column to integer
+        adjustment_df['Quantity'] = pd.to_numeric(adjustment_df['Quantity'], errors='coerce').fillna(0).astype(int)
+        
+        adjustment_html = adjustment_df.to_html(
+            index=False,
+            classes="table table-bordered table-striped",
+            table_id="adjustment_table"
+        )
+    else:
+        adjustment_html = "<p>No inventory adjustments found.</p>"
+        
+    return adjustment_html
+
+def get_last_20_orders():
+    """Get the last 20 order numbers from both FDC and E-Fashion databases"""
+    return get_orders_by_criteria(num_orders=20, database_filter='both')
+
+def debug_date_format(days_back=1):
+    """Debug function to understand the date format in your database"""
+    try:
+        conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}')
+        cursor = conn.cursor()
+        
+        # Get some recent orders with their raw ord_dt values and converted dates
+        debug_query = """
+            SELECT TOP 5
+                o.ord_num,
+                o.ord_dt as raw_ord_dt,
+                RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_date,
+                GETDATE() as current_datetime,
+                DATEDIFF(day, '19000101', GETDATE()) + 81088 as today_in_db_format,
+                DATEDIFF(day, '19000101', DATEADD(day, -1, GETDATE())) + 81088 as yesterday_in_db_format
+            FROM orders o
+            ORDER BY o.ord_dt DESC
+        """
+        
+        cursor.execute(debug_query)
+        rows = cursor.fetchall()
+        
+        app.logger.debug("Date format debug results:")
+        for row in rows:
+            app.logger.debug(f"Order: {row[0]}, Raw ord_dt: {row[1]}, Formatted: {row[2]}")
+        
+        if rows:
+            app.logger.debug(f"Today in DB format: {rows[0][4]}")
+            app.logger.debug(f"Yesterday in DB format: {rows[0][5]}")
+        
+        conn.close()
+        return rows
+    except Exception as e:
+        app.logger.error(f"Debug query failed: {e}")
+        return []
+
+def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None, since_date=None):
+    """Get orders based on various criteria with proper date filtering"""
+    all_orders = []
+    
+    # Determine which databases to query
+    databases_to_query = []
+    if database_filter in ['both', 'fdc']:
+        databases_to_query.append((database_fdc, 'FDC'))
+    if database_filter in ['both', 'efashion']:
+        databases_to_query.append((database_oms_ef, 'E_FAS'))
+    
+    # Build the WHERE clause based on criteria
+    where_clause = ""
+    top_clause = ""
+    
+    if days_back is not None:
+        if days_back == 0:
+            # Today only - get orders from start of today to end of today
+            where_clause = f"""
+            WHERE o.ord_dt >= (
+                DATEDIFF(day, '20230101', CAST(GETDATE() AS DATE)) + 81088
+            )
+            AND o.ord_dt < (
+                DATEDIFF(day, '20230101', DATEADD(day, 1, CAST(GETDATE() AS DATE))) + 81088
+            )
+            """
+            app.logger.info(f"Date filter: Looking for orders from TODAY only")
+        else:
+            # Last X days: days_back=1 means today + yesterday, days_back=2 means today + yesterday + day before, etc.
+            where_clause = f"""
+            WHERE o.ord_dt >= (
+                DATEDIFF(day, '20230101', DATEADD(day, -{days_back}, CAST(GETDATE() AS DATE))) + 81088
+            )
+            """
+            app.logger.info(f"Date filter: Looking for orders from last {days_back} days (including today)")
+
+    elif since_date:
+        try:
+            from datetime import datetime
+            parsed_date = datetime.strptime(since_date, '%m-%d-%Y')
+            sql_date = parsed_date.strftime('%Y-%m-%d')
+            
+            where_clause = f"""
+            WHERE o.ord_dt >= (
+                DATEDIFF(day, '20230101', '{sql_date}') + 81088
+            )
+            """
+            app.logger.info(f"Date filter: Looking for orders since {since_date}")
+        except ValueError as e:
+            top_clause = f"TOP {num_orders}"
+            app.logger.info(f"Invalid date format: {since_date}, error: {e}, falling back to TOP {num_orders}")
+    else:
+        top_clause = f"TOP {num_orders}"
+        app.logger.info(f"No date filter: Getting TOP {num_orders} orders")
+    
+    # Connect to databases and fetch data
+    for db_name, db_display in databases_to_query:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            # Debug the new date calculation
+            if days_back or since_date:
+                debug_query = f"""
+                    SELECT 
+                        GETDATE() as current_datetime,
+                        DATEDIFF(day, '20230101', GETDATE()) + 81088 as today_in_new_format,
+                        DATEDIFF(day, '20230101', DATEADD(day, -{days_back if days_back else 0}, GETDATE())) + 81088 as cutoff_in_new_format,
+                        MAX(o.ord_dt) as latest_order_date,
+                        COUNT(*) as total_orders_in_db
+                    FROM orders o
+                """
+                cursor.execute(debug_query)
+                debug_result = cursor.fetchone()
+                app.logger.info(f"NEW Debug info for {db_display}: Current datetime: {debug_result[0]}, Today in NEW format: {debug_result[1]}, Cutoff in NEW format: {debug_result[2]}, Latest order date: {debug_result[3]}, Total orders: {debug_result[4]}")
+                
+                # Check how many orders match our criteria
+                count_query = f"""
+                    SELECT COUNT(*) as matching_orders
+                    FROM orders o
+                    {where_clause}
+                """
+                cursor.execute(count_query)
+                count_result = cursor.fetchone()
+                app.logger.info(f"Orders matching NEW criteria in {db_display}: {count_result[0]}")
+            
+            # Main query to get orders
+            query = f"""
+                SELECT {top_clause}
+                    o.ord_num,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_ord_dt,
+                    c.cus_nm AS customer_name,
+                    o.ord_amt AS order_amount,
+                    o.handl_fee AS handling_fee,
+                    o.misc_chg AS misc_charge,
+                    (o.ord_amt + o.handl_fee + o.misc_chg) AS order_total,
+                    COUNT(ol.prod_cd) AS total_items
+                FROM orders o
+                JOIN customer c ON o.cus_id = c.cus_id
+                LEFT JOIN ord_log ol ON o.ord_num = ol.ord_num
+                {where_clause}
+                GROUP BY o.ord_num, o.ord_dt, c.cus_nm, o.ord_amt, o.handl_fee, o.misc_chg
+                ORDER BY o.ord_dt DESC
+            """
+            
+            app.logger.info(f"Executing NEW query on {db_display}")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            app.logger.info(f"Found {len(rows)} orders in {db_display}")
+            
+            # Log a sample of the results
+            if rows:
+                app.logger.info(f"Sample order from {db_display}: Order {rows[0][0]}, Date: {rows[0][1]}")
+            
+            # Add database source column
+            rows_with_db = [(db_display,) + tuple(row) for row in rows]
+            all_orders.extend(rows_with_db)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.info(f"SQL Error in {db_name}: {e}")
+        except Exception as e:
+            app.logger.info(f"General error in {db_name}: {e}")
+    
+    app.logger.info(f"Total orders found across all databases: {len(all_orders)}")
+    return all_orders
+    """Get orders based on various criteria with proper date filtering"""
+    all_orders = []
+    
+    # Determine which databases to query
+    databases_to_query = []
+    if database_filter in ['both', 'fdc']:
+        databases_to_query.append((database_fdc, 'FDC'))
+    if database_filter in ['both', 'efashion']:
+        databases_to_query.append((database_oms_ef, 'E_FAS'))
+    
+    # Build the WHERE clause based on criteria
+    where_clause = ""
+    top_clause = ""
+    
+    if days_back:
+        # Use the same date conversion logic as in your existing code (lines 164-166)
+        # The existing code uses: CAST(ol.olg_dt AS INT) - 81088, '20230101'
+        # So we need to reverse this: current_date + 81088 - days_back
+        where_clause = f"WHERE o.ord_dt >= (CAST(DATEADD(day, -{days_back}, GETDATE()) AS INT) + 81088)"
+        app.logger.info(f"Date filter: Looking for orders from last {days_back} days")
+    elif since_date:
+        try:
+            from datetime import datetime
+            parsed_date = datetime.strptime(since_date, '%m-%d-%Y')
+            # Convert to the same format as your existing date logic
+            sql_date = parsed_date.strftime('%Y%m%d')
+            where_clause = f"WHERE o.ord_dt >= (CAST('{sql_date}' AS INT) + 81088)"
+            app.logger.info(f"Date filter: Looking for orders since {since_date} (converted to {sql_date})")
+        except ValueError as e:
+            top_clause = f"TOP {num_orders}"
+            app.logger.info(f"Invalid date format: {since_date}, error: {e}, falling back to TOP {num_orders}")
+    else:
+        top_clause = f"TOP {num_orders}"
+        app.logger.info(f"No date filter: Getting TOP {num_orders} orders")
+    
+    # Connect to databases and fetch data
+    for db_name, db_display in databases_to_query:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            # First, let's debug what we're looking for
+            if days_back or since_date:
+                debug_query = f"""
+                    SELECT 
+                        GETDATE() as current_datetime,
+                        CAST(GETDATE() AS INT) + 81088 as today_in_db_format,
+                        CAST(DATEADD(day, -{days_back if days_back else 0}, GETDATE()) AS INT) + 81088 as cutoff_in_db_format,
+                        MAX(o.ord_dt) as latest_order_date,
+                        COUNT(*) as total_orders_in_db
+                    FROM orders o
+                """
+                cursor.execute(debug_query)
+                debug_result = cursor.fetchone()
+                app.logger.info(f"Debug info for {db_display}: Current datetime: {debug_result[0]}, Today in DB format: {debug_result[1]}, Cutoff in DB format: {debug_result[2]}, Latest order date: {debug_result[3]}, Total orders: {debug_result[4]}")
+                
+                # Check how many orders match our criteria
+                count_query = f"""
+                    SELECT COUNT(*) as matching_orders
+                    FROM orders o
+                    {where_clause}
+                """
+                cursor.execute(count_query)
+                count_result = cursor.fetchone()
+                app.logger.info(f"Orders matching criteria in {db_display}: {count_result[0]}")
+            
+            # Main query to get orders
+            query = f"""
+                SELECT {top_clause}
+                    o.ord_num,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_ord_dt,
+                    c.cus_nm AS customer_name,
+                    o.ord_amt AS order_amount,
+                    o.handl_fee AS handling_fee,
+                    o.misc_chg AS misc_charge,
+                    (o.ord_amt + o.handl_fee + o.misc_chg) AS order_total,
+                    COUNT(ol.prod_cd) AS total_items
+                FROM orders o
+                JOIN customer c ON o.cus_id = c.cus_id
+                LEFT JOIN ord_log ol ON o.ord_num = ol.ord_num
+                {where_clause}
+                GROUP BY o.ord_num, o.ord_dt, c.cus_nm, o.ord_amt, o.handl_fee, o.misc_chg
+                ORDER BY o.ord_dt DESC
+            """
+            
+            app.logger.info(f"Executing query on {db_display}: {query}")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            app.logger.info(f"Found {len(rows)} orders in {db_display}")
+            
+            # Log a sample of the results
+            if rows:
+                app.logger.info(f"Sample order from {db_display}: {rows[0]}")
+            
+            # Add database source column
+            rows_with_db = [(db_display,) + tuple(row) for row in rows]
+            all_orders.extend(rows_with_db)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.info(f"SQL Error in {db_name}: {e}")
+        except Exception as e:
+            app.logger.info(f"General error in {db_name}: {e}")
+    
+    app.logger.info(f"Total orders found across all databases: {len(all_orders)}")
+    return all_orders
+    """Get orders based on various criteria with proper date filtering"""
+    all_orders = []
+    
+    # Determine which databases to query
+    databases_to_query = []
+    if database_filter in ['both', 'fdc']:
+        databases_to_query.append((database_fdc, 'FDC'))
+    if database_filter in ['both', 'efashion']:
+        databases_to_query.append((database_oms_ef, 'E_FAS'))
+    
+    # Build the WHERE clause based on criteria
+    where_clause = ""
+    top_clause = ""
+    
+    if days_back:
+        # Use SQL Server's DATEADD function to go back X days from today
+        # Convert current date to the same format as ord_dt
+        where_clause = f"""
+        WHERE o.ord_dt >= (
+            DATEDIFF(day, '19000101', DATEADD(day, -{days_back}, GETDATE())) + 81088
+        )
+        """
+        app.logger.debug(f"Using days_back filter: {days_back} days")
+    elif since_date:
+        # Convert MM-DD-YYYY to database format using SQL Server functions
+        try:
+            # Parse the date to ensure it's valid
+            from datetime import datetime
+            parsed_date = datetime.strptime(since_date, '%m-%d-%Y')
+            date_str = parsed_date.strftime('%Y%m%d')  # Convert to YYYYMMDD format
+            
+            where_clause = f"""
+            WHERE o.ord_dt >= (
+                DATEDIFF(day, '19000101', CAST('{date_str}' AS DATE)) + 81088
+            )
+            """
+            app.logger.debug(f"Using since_date filter: {since_date} -> {date_str}")
+        except ValueError:
+            # Invalid date format, fall back to recent orders
+            top_clause = f"TOP {num_orders}"
+            app.logger.warning(f"Invalid date format: {since_date}, falling back to TOP {num_orders}")
+    else:
+        # Default: get last X orders
+        top_clause = f"TOP {num_orders}"
+        app.logger.debug(f"Using TOP {num_orders} orders")
+    
+    # Connect to databases and fetch data
+    for db_name, db_display in databases_to_query:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            # Query to get orders based on criteria
+            query = f"""
+                SELECT {top_clause}
+                    o.ord_num,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_ord_dt,
+                    c.cus_nm AS customer_name,
+                    o.ord_amt AS order_amount,
+                    o.handl_fee AS handling_fee,
+                    o.misc_chg AS misc_charge,
+                    (o.ord_amt + o.handl_fee + o.misc_chg) AS order_total,
+                    COUNT(ol.prod_cd) AS total_items
+                FROM orders o
+                JOIN customer c ON o.cus_id = c.cus_id
+                LEFT JOIN ord_log ol ON o.ord_num = ol.ord_num
+                {where_clause}
+                GROUP BY o.ord_num, o.ord_dt, c.cus_nm, o.ord_amt, o.handl_fee, o.misc_chg
+                ORDER BY o.ord_dt DESC
+            """
+            
+            app.logger.debug(f"Executing order query on {db_display}: {query}")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            app.logger.debug(f"Found {len(rows)} orders in {db_display}")
+            
+            # Add database source column
+            rows_with_db = [(db_display,) + tuple(row) for row in rows]
+            all_orders.extend(rows_with_db)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error connecting to {db_name}: {e}")
+    
+    app.logger.debug(f"Total orders found across all databases: {len(all_orders)}")
+    return all_orders
+def get_sold_out_skus_from_orders(orders_data):
+    """Get SKUs from the provided orders that are sold out (combined available quantity is 0 or negative)"""
+    if not orders_data:
+        return []
+    
+    # Extract order numbers from the orders data
+    order_numbers = []
+    order_db_map = {}  # Map order numbers to their database
+    
+    for order_row in orders_data:
+        db_name = order_row[0]  # Database name (FDC/E_FAS)
+        order_num = order_row[1]  # Order number
+        order_numbers.append(order_num)
+        order_db_map[order_num] = db_name
+    
+    all_sku_data = []
+    
+    # Connect to both databases and fetch data
+    for db_name, db_display in [(database_fdc, 'FDC'), (database_oms_ef, 'E_FAS')]:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            # Get order numbers that belong to this database
+            db_order_numbers = [ord_num for ord_num, db in order_db_map.items() if db == db_display]
+            
+            if not db_order_numbers:
+                conn.close()
+                continue
+            
+            # Create placeholders for the IN clause
+            placeholders = ','.join(['?' for _ in db_order_numbers])
+            
+            # Query to get SKU data from the specific orders (don't filter by availability yet)
+            query = f"""
+                SELECT DISTINCT
+                    ol.ord_num,
+                    ol.prod_cd AS SKU,
+                    i.ALT_CD AS Style,
+                    i.DESCRIP AS Description,
+                    ISNULL(id.in_stock, 0) AS Stock,
+                    ISNULL(id.ORDER_QTY, 0) AS Ordered,
+                    ISNULL((id.in_stock - id.order_qty), 0) AS Available,
+                    ISNULL(id.on_order_qty, 0) AS Incoming,
+                    i.RETAIL_PRS AS Price,
+                    ol.order_qty AS Qty_In_Order
+                FROM ord_log ol
+                JOIN dbo.inv i ON ol.prod_cd = i.PROD_CD
+                LEFT JOIN dbo.inv_data id ON i.PROD_CD = id.Prod_cd
+                WHERE ol.ord_num IN ({placeholders})
+                ORDER BY ol.ord_num, ol.prod_cd
+            """
+            
+            cursor.execute(query, db_order_numbers)
+            rows = cursor.fetchall()
+            
+            # Add database source column
+            rows_with_db = [(db_display,) + tuple(row) for row in rows]
+            all_sku_data.extend(rows_with_db)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error connecting to {db_name}: {e}")
+    
+    # Now combine data by SKU and filter for sold out items
+    if not all_sku_data:
+        return []
+    
+    # Convert to DataFrame for easier processing
+    df = pd.DataFrame.from_records(all_sku_data,
+                                 columns=['Database', 'Order Number', 'SKU', 'Style', 'Description', 'Stock', 'Ordered', 'Available', 'Incoming', 'Price', 'Qty in Order'])
+    
+    # Convert numeric columns
+    numeric_cols = ['Stock', 'Ordered', 'Available', 'Incoming', 'Price', 'Qty in Order']
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    
+    # Group by SKU and sum the availability across databases
+    sku_summary = df.groupby('SKU').agg({
+        'Available': 'sum',
+        'Stock': 'sum',
+        'Ordered': 'sum',
+        'Incoming': 'sum'
+    }).reset_index()
+    
+    # Get SKUs that are actually sold out (combined available <= 0)
+    sold_out_skus = sku_summary[sku_summary['Available'] <= 0]['SKU'].tolist()
+    
+    # Filter original data to only include sold out SKUs
+    sold_out_data = df[df['SKU'].isin(sold_out_skus)]
+    
+    # Convert back to list of tuples for consistency
+    return sold_out_data.values.tolist()
+
+def get_all_skus_from_orders(orders_data):
+    """Get all unique SKUs from the given orders across both databases"""
+    all_skus = set()
+    
+    if not orders_data:
+        return list(all_skus)
+    
+    # Extract order numbers by database
+    fdc_orders = [order[1] for order in orders_data if order[0] == 'FDC']
+    efas_orders = [order[1] for order in orders_data if order[0] == 'E_FAS']
+    
+    # Get SKUs from FDC orders
+    if fdc_orders:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            placeholders = ','.join(['?' for _ in fdc_orders])
+            query = f"SELECT DISTINCT prod_cd FROM ord_log WHERE ord_num IN ({placeholders})"
+            cursor.execute(query, fdc_orders)
+            
+            fdc_skus = [row[0] for row in cursor.fetchall()]
+            all_skus.update(fdc_skus)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting SKUs from FDC orders: {e}")
+    
+    # Get SKUs from E-Fashion orders
+    if efas_orders:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_oms_ef};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            placeholders = ','.join(['?' for _ in efas_orders])
+            query = f"SELECT DISTINCT prod_cd FROM ord_log WHERE ord_num IN ({placeholders})"
+            cursor.execute(query, efas_orders)
+            
+            efas_skus = [row[0] for row in cursor.fetchall()]
+            all_skus.update(efas_skus)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting SKUs from E-Fashion orders: {e}")
+    
+    return list(all_skus)
+
+def get_sku_inventory_from_both_databases(sku_list):
+    """Get inventory information for a list of SKUs from both FDC and E-Fashion databases"""
+    all_inventory = []
+    
+    if not sku_list:
+        return all_inventory
+    
+    # Create placeholders for the IN clause
+    placeholders = ','.join(['?' for _ in sku_list])
+    
+    # Connect to both databases and fetch inventory data
+    for db_name, db_display in [(database_fdc, 'FDC'), (database_oms_ef, 'E_FAS')]:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            # Query to get inventory information for all SKUs (removed the sold out filter)
+            query = f"""
+                SELECT 
+                    i.PROD_CD AS SKU,
+                    i.ALT_CD AS Style,
+                    i.DESCRIP AS Description,
+                    ISNULL(id.in_stock, 0) AS Stock,
+                    ISNULL(id.ORDER_QTY, 0) AS Ordered,
+                    ISNULL((id.in_stock - id.order_qty), 0) AS Available,
+                    ISNULL(id.on_order_qty, 0) AS Incoming,
+                    ISNULL(i.RETAIL_PRS, 0) AS Price
+                FROM dbo.inv AS i
+                LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+                WHERE i.PROD_CD IN ({placeholders})
+            """
+            
+            cursor.execute(query, sku_list)
+            rows = cursor.fetchall()
+            
+            # Add database source column
+            rows_with_db = [(db_display,) + tuple(row) for row in rows]
+            all_inventory.extend(rows_with_db)
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error connecting to {db_name}: {e}")
+    
+    return all_inventory
+
+def get_sku_order_quantities(orders_data, sku_list):
+    """Get the quantities ordered for each SKU in the given orders"""
+    sku_order_data = []
+    
+    if not orders_data or not sku_list:
+        return sku_order_data
+    
+    # Extract order numbers by database
+    fdc_orders = [order[1] for order in orders_data if order[0] == 'FDC']
+    efas_orders = [order[1] for order in orders_data if order[0] == 'E_FAS']
+    
+    # Get order quantities from FDC
+    if fdc_orders:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            if fdc_orders and sku_list:
+                try:
+                    conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_fdc};UID={username};PWD={password}')
+                    cursor = conn.cursor()
+                    
+                    order_placeholders = ','.join(['?' for _ in fdc_orders])
+                    sku_placeholders = ','.join(['?' for _ in sku_list])
+                    
+                    query = f"""
+                        SELECT ord_num, prod_cd, order_qty 
+                        FROM ord_log 
+                        WHERE ord_num IN ({order_placeholders}) 
+                        AND prod_cd IN ({sku_placeholders})
+                    """
+                    
+                    cursor.execute(query, fdc_orders + sku_list)
+                    rows = cursor.fetchall()
+                    
+                    for row in rows:
+                        sku_order_data.append(('FDC', row[0], row[1], row[2]))
+                    
+                    conn.close()
+                except pyodbc.Error as e:
+                    app.logger.error(f"Error getting order quantities from FDC: {e}")
+            
+            rows = cursor.fetchall()
+            
+            for row in rows:
+                sku_order_data.append(('FDC', row[0], row[1], row[2]))
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting order quantities from FDC: {e}")
+    
+    # Get order quantities from E-Fashion
+    if efas_orders:
+        try:
+            conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_oms_ef};UID={username};PWD={password}')
+            cursor = conn.cursor()
+            
+            if efas_orders and sku_list:
+                try:
+                    conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database_oms_ef};UID={username};PWD={password}')
+                    cursor = conn.cursor()
+                    
+                    order_placeholders = ','.join(['?' for _ in efas_orders])
+                    sku_placeholders = ','.join(['?' for _ in sku_list])
+                    
+                    query = f"""
+                        SELECT ord_num, prod_cd, order_qty 
+                        FROM ord_log 
+                        WHERE ord_num IN ({order_placeholders}) 
+                        AND prod_cd IN ({sku_placeholders})
+                    """
+                    
+                    cursor.execute(query, efas_orders + sku_list)
+                    rows = cursor.fetchall()
+                    
+                    for row in rows:
+                        sku_order_data.append(('E_FAS', row[0], row[1], row[2]))
+                    
+                    conn.close()
+                except pyodbc.Error as e:
+                    app.logger.error(f"Error getting order quantities from E-Fashion: {e}")
+
+            
+            cursor.execute(query, efas_orders + sku_list)
+            rows = cursor.fetchall()
+            
+            for row in rows:
+                sku_order_data.append(('E_FAS', row[0], row[1], row[2]))
+            
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting order quantities from E-Fashion: {e}")
+    
+    return sku_order_data

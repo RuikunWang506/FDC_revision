@@ -76,7 +76,10 @@
             display: inline-block;
             padding: 2px;
         }
-    
+        .image-option input[type="radio"]:checked + label img,
+        .image-option input[type="radio"]:checked + label .image-wrapper img.img-thumbnail {
+            border: 3px solid #4CAF50 !important;
+        }
         .image-option input[type="radio"]:checked + label {
             border-color: #007bff;
         }
@@ -227,8 +230,6 @@
             cursor: pointer;
             font-weight: bold;
         }
-    </style>
-    <style>
         .sortable:hover {
             background-color: #f5f5f5;
         }
@@ -238,9 +239,245 @@
             opacity: 0.5;
         }
     </style>
+    <!-- Add this in the head section, after the existing styles -->
+<style>
+    /* Mobile Responsive Styles */
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    /* General layout adjustments */
+    .container {
+        padding: 0 5px;
+        width: 100%;
+    }
+    
+    /* Card adjustments */
+    .card-body {
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .card-title {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Hide price display on mobile */
+    .card-text.mb-0.font-weight-bold.text-primary {
+        display: none !important;
+    }
+    
+    /* Hide delete button on mobile */
+    .btn.btn-danger[onclick="deleteCard(this)"] {
+        display: none !important;
+    }
+    
+    /* Hide description input on mobile to save space */
+    .description-input {
+        display: none !important;
+    }
+    
+    /* Table adjustments */
+    .table td, .table th {
+        padding: 0.25rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Simplify tables on mobile by hiding less important columns */
+    .table th:nth-child(3),
+    .table td:nth-child(3),
+    .table th:nth-child(5),
+    .table td:nth-child(5) {
+        display: none !important;
+    }
+    
+    /* Make remaining table columns take up more space */
+    .table th,
+    .table td {
+        width: auto !important;
+    }
+    
+    /* Image display - show only first image */
+    .d-flex.flex-wrap .image-option:not(:first-child) {
+        display: none !important;
+    }
+    
+    /* Make the first image take up full width */
+    .d-flex.flex-wrap .image-option:first-child {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Ensure the image itself takes full width with auto height */
+    .d-flex.flex-wrap .image-option:first-child img.img-thumbnail,
+    .d-flex.flex-wrap .image-option:first-child .image-wrapper img.img-thumbnail {
+        width: 100%;
+        max-width: 100%;
+        height: auto !important;
+        object-fit: contain;
+        margin-bottom: 10px;
+    }
+    
+    /* Remove any fixed height constraints from parent containers */
+    .image-option,
+    .image-container,
+    .image-wrapper {
+        height: auto !important;
+        max-height: none !important;
+    }
+    
+    /* Ensure the image container doesn't restrict the image size */
+    .d-flex.flex-wrap {
+        width: 100%;
+        max-width: 100%;
+        display: block !important;
+    }
+    
+    /* Ensure the first radio button is checked on mobile */
+    .d-flex.flex-wrap .image-option:first-child input[type="radio"] {
+        display: none;
+    }
+    
+    /* Column layout adjustments */
+    .col-6 {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+    
+    /* Ensure the image container is at the top */
+    .card-body .col-6:first-child {
+        order: -1;
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+        margin-bottom: 10px;
+    }
+    
+    /* Row layout adjustments */
+    .row {
+        flex-direction: column;
+    }
+    
+    /* Style list for mobile */
+    #style-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Adjust the alignment of card header elements */
+    .d-flex.align-items-center {
+        flex-wrap: wrap;
+    }
+    
+    .card-title.mb-0.mr-4 {
+        margin-bottom: 0.5rem !important;
+        margin-right: 0 !important;
+        width: 100%;
+    }
+    
+    /* Ensure title bar takes full width */
+    .d-flex.align-items-center.mb-2.bg-light.p-2.rounded {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    /* Sidebar adjustments */
+    .bookmark-sidebar, .action-sidebar {
+        position: fixed;
+        top: 0;
+        height: 100vh;
+        width: 80%;
+        max-width: 300px;
+        z-index: 2000;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .bookmark-sidebar.open, .action-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .bookmark-sidebar {
+        right: auto;
+        left: 0;
+        border-right: 1px solid #dee2e6;
+        border-left: none;
+    }
+    
+    /* Mobile sidebar toggle buttons */
+    .mobile-sidebar-toggle {
+        position: fixed;
+        bottom: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #4CAF50;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1999;
+        border: none;
+    }
+    
+    #toggleBookmarkSidebar {
+        right: 20px;
+    }
+    
+    #toggleActionSidebar {
+        left: 20px;
+    }
+    
+    /* Mobile sidebar overlay */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1990;
+    }
+    
+    /* Adjust modal for mobile */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    /* Image popup adjustments */
+    .image-popup img {
+        max-width: 95%;
+        max-height: 80vh;
+    }
+    
+    .nav-btn {
+        font-size: 30px;
+        padding: 10px;
+    }
+    
+    .prev-btn { left: 5px; }
+    .next-btn { right: 5px; }
+    
+    .close-btn {
+        top: 10px;
+        right: 15px;
+        font-size: 30px;
+    }
+}
+
+</style>
+
+
 </head>
 <body>
     {% include 'navbar.html' %}
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <button id="toggleBookmarkSidebar" class="mobile-sidebar-toggle d-md-none">📋</button>
+    <button id="toggleActionSidebar" class="mobile-sidebar-toggle d-md-none">⚙️</button>
+
     {% if not missing_descriptions and pivot_data %}
     <div class="bookmark-sidebar">
         <h5>Styles</h5>
@@ -310,8 +547,8 @@
                 {{ error_message }}
             </div>
         {% endif %}
-        <h2 style="color: red; text-align:center">List Creator V6.1 </h2>
-        <h3 style="color: #eb66a8; text-align:center">now supports -sml styles</h3>
+        <h2 style="color: red; text-align:center">List Creator V6.2<sub> - 5/14/25 </sub></h2>
+        <h3 style="color: #eb66a8; text-align:center">now supports -sml styles , not <b style="color: #007bff;">sets</b> but will be noted</h3>
         
 <!-- Add this section to your v6_listcreator.html template -->
 {% if your_input_was %}
@@ -327,29 +564,20 @@
     </div>
     {% endif %}
     
-    {% if duplicate_items %}
-    <div class="mt-2">
-        <strong>Your duplicate items:</strong> 
-        {% for item in duplicate_items %}
-            <span class="badge badge-danger">{{ item.base_sku }} ({{ item.files|join(', ') }})</span>
-        {% endfor %}
-    </div>
-    <div class="mt-2">
-        <strong>New Total Pic count:</strong> 
-        <span class="badge badge-success">{{ list_input|count_dropbox_files if list_input else 0 }} Minus {{ duplicate_items  | length }} duplicate</span>
-    </div>
-    {% endif %}
+{% if duplicate_items %}
+<div class="mt-2">
+    <strong>Your duplicate items:</strong> 
+    {% for item in duplicate_items %}
+        <span class="badge badge-danger">{{ item.base_sku }} ({{ item.files|join(', ') }})</span>
+    {% endfor %}
+</div>
+<div class="mt-2">
+    <strong>New Total Pic count:</strong> 
+    <span class="badge badge-success">{{ list_input|count_dropbox_files if list_input else 0 }} Minus {{ total_duplicates }} duplicate(s) = {{ (list_input|count_dropbox_files if list_input else 0) - total_duplicates }} style(s)</span>
+</div>
+{% endif %}
     
-    {% if missing_styles %}
-    <div class="mt-2">
-        <strong>Styles not found in database:</strong> 
-        {% for style in missing_styles %}
-            <span class="badge badge-warning">{{ style }}</span> 
-        {% endfor %}
-        <span>maybe not imported or missing the -set</span>
-    </div>
-    {% endif %}
-    
+
     {% if duplicate_styles %}
     <div class="mt-2">
         <strong>Duplicate styles:</strong> 
@@ -376,7 +604,9 @@
         {% if list_input %}
         
         {%endif%}
-        {% if pivot_data %}
+{% if pivot_data and not missing_descriptions %}
+
+
 <div class="mt-4">
     {# First create groups by description #}
     {% set description_groups = {} %}
@@ -464,16 +694,15 @@
                                 <div class="image-option">
                                     <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
                                     <label for="catalog_image_{{ style }}_{{ loop.index }}">
-                                        <img src="{{ image['path'] }}?size=150" 
-                                            data-fullsize="{{ image['path'] }}"
-                                            alt="{{ style }}" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
+                                    <img src="{{ image['path'] }}?size=150" 
+                                        data-fullsize="{{ image['path'] }}"
+                                        alt="{{ style }}" 
+                                        class="img-thumbnail"
+                                        onclick="enlargeImage(this, this.dataset.fullsize)">
                                     </label>
                                 </div>
                                 {% endfor %}
                             </div>
-                            <div class="mt-3">double click to enlarge</div>
                         </div>
                     </div>
                 </div>
@@ -486,6 +715,10 @@
 
     </div>
     {% if missing_descriptions %}
+    <script>
+    console.log('Missing descriptions detected:', {{ missing_descriptions|tojson }});
+    console.log('Number of missing descriptions:', {{ missing_descriptions|length }});
+</script>
     <div class="mt-4 container">
         <h5 class="text-center mb-4">Please select descriptions for the following styles:</h5>
         <form method="POST" action="{{ url_for('v6_listcreator.update_descriptions') }}">
@@ -524,7 +757,7 @@
                             </a>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='SATCHEL'">SATCHEL</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='Satchel'">SATCHEL</button>
                             <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">MINI SATCHEL</button>
                             <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">BACKPACK</button>
                             <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
@@ -1382,6 +1615,291 @@ function exportWithSelectedSize() {
     document.addEventListener('DOMContentLoaded', function() {
         reorderDescriptions();
     });
+</script>
+<script>
+    // Mobile sidebar functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const bookmarkSidebar = document.querySelector('.bookmark-sidebar');
+        const actionSidebar = document.querySelector('.action-sidebar');
+        const toggleBookmarkBtn = document.getElementById('toggleBookmarkSidebar');
+        const toggleActionBtn = document.getElementById('toggleActionSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        // Toggle bookmark sidebar
+        if (toggleBookmarkBtn && bookmarkSidebar) {
+            toggleBookmarkBtn.addEventListener('click', function() {
+                bookmarkSidebar.classList.toggle('open');
+                if (actionSidebar) actionSidebar.classList.remove('open');
+                overlay.style.display = bookmarkSidebar.classList.contains('open') ? 'block' : 'none';
+            });
+        }
+        
+        // Toggle action sidebar
+        if (toggleActionBtn && actionSidebar) {
+            toggleActionBtn.addEventListener('click', function() {
+                actionSidebar.classList.toggle('open');
+                if (bookmarkSidebar) bookmarkSidebar.classList.remove('open');
+                overlay.style.display = actionSidebar.classList.contains('open') ? 'block' : 'none';
+            });
+        }
+        
+        // Close sidebars when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                if (bookmarkSidebar) bookmarkSidebar.classList.remove('open');
+                if (actionSidebar) actionSidebar.classList.remove('open');
+                overlay.style.display = 'none';
+            });
+        }
+        
+        // Close sidebars when clicking links inside them
+        const sidebarLinks = document.querySelectorAll('.bookmark-sidebar a, .action-sidebar button');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    if (bookmarkSidebar) bookmarkSidebar.classList.remove('open');
+                    if (actionSidebar) actionSidebar.classList.remove('open');
+                    if (overlay) overlay.style.display = 'none';
+                }
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                if (overlay) overlay.style.display = 'none';
+            }
+        });
+        
+        // Adjust image containers for better mobile viewing
+        const adjustImageContainers = function() {
+            if (window.innerWidth <= 768) {
+                document.querySelectorAll('.col-6').forEach(col => {
+                    const table = col.querySelector('table');
+                    const imageContainer = col.querySelector('.d-flex.flex-wrap');
+                    
+                    if (table && imageContainer) {
+                        // Move image container above the table for better mobile viewing
+                        col.insertBefore(imageContainer, table);
+                    }
+                });
+            }
+        };
+        
+        // Call once on load
+        adjustImageContainers();
+        
+        // Also call on window resize
+        window.addEventListener('resize', adjustImageContainers);
+    });
+    // Add this function to your JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to update image URLs with appropriate size parameter
+    function updateImageSizes() {
+        // Determine appropriate size based on screen width
+        let requestSize = 150; // Default for desktop
+        
+        if (window.innerWidth <= 768) {
+            // For mobile devices
+            requestSize = 800; // Higher resolution for mobile
+        }
+        
+        // Update all thumbnail images
+        document.querySelectorAll('.img-thumbnail').forEach(img => {
+            // Store original full size URL if not already stored
+            if (!img.dataset.originalSrc) {
+                img.dataset.originalSrc = img.getAttribute('data-fullsize');
+            }
+            
+            // Update the src attribute with appropriate size
+            let currentSrc = img.src;
+            
+            // Handle both URL patterns
+            if (currentSrc.includes('?size=')) {
+                // Replace existing size parameter
+                img.src = currentSrc.replace(/\?size=\d+/, `?size=${requestSize}`);
+            } else if (currentSrc.includes('&size=')) {
+                // Replace existing size parameter in more complex URL
+                img.src = currentSrc.replace(/&size=\d+/, `&size=${requestSize}`);
+            } else {
+                // Add size parameter if it doesn't exist
+                img.src = currentSrc + `?size=${requestSize}`;
+            }
+        });
+    }
+    
+    // Call on page load
+    updateImageSizes();
+    
+    // Also call when window is resized
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        // Debounce to avoid excessive updates during resize
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(updateImageSizes, 200);
+    });
+    
+    // Override the enlargeImage function to use full resolution
+    const originalEnlargeImage = window.enlargeImage;
+    if (originalEnlargeImage) {
+        window.enlargeImage = function(imgElement, url) {
+            // For popup, always use full resolution
+            var popup = document.getElementById("imagePopup");
+            var popupImg = document.getElementById("popupImage");
+            
+            // Use the original full size URL for the popup
+            if (imgElement.dataset.originalSrc) {
+                popupImg.src = imgElement.dataset.originalSrc;
+            } else {
+                popupImg.src = url;
+            }
+            
+            popup.style.display = "flex";
+            
+            // Get parent container (either card or modal)
+            const container = imgElement.closest('.card') || imgElement.closest('.modal');
+            
+            if (container) {
+                allImages = Array.from(container.querySelectorAll('.img-thumbnail, img[onclick*="enlargeImage"]'));
+                allRadios = Array.from(container.querySelectorAll('input[type="radio"]'));
+                currentImageIndex = allImages.indexOf(imgElement);
+            } else {
+                allImages = [imgElement];
+                allRadios = [];
+                currentImageIndex = 0;
+            }
+            
+            document.addEventListener('keydown', handleKeyPress);
+        };
+    }
+});
+
+</script>
+<script>
+    // Add this to your existing JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to rearrange card elements for mobile
+    function rearrangeForMobile() {
+        if (window.innerWidth <= 768) {
+            // For each card
+            document.querySelectorAll('.card').forEach(card => {
+                const cardBody = card.querySelector('.card-body');
+                if (!cardBody) return;
+                
+                // Find the image column and the title/description section
+                const imageColumn = cardBody.querySelector('.col-6 .d-flex.flex-wrap').closest('.col-6');
+                const titleSection = cardBody.querySelector('.d-flex.align-items-center.mb-2.bg-light.p-2.rounded');
+                
+                if (imageColumn && titleSection && !imageColumn.dataset.rearranged) {
+                    // Move the image column before the title section
+                    cardBody.insertBefore(imageColumn, titleSection);
+                    
+                    // Mark as rearranged to avoid doing it multiple times
+                    imageColumn.dataset.rearranged = 'true';
+                    
+                    // Make image column full width
+                    imageColumn.classList.remove('col-6');
+                    imageColumn.classList.add('col-12');
+                }
+            });
+        } else {
+            // Reset for desktop view
+            document.querySelectorAll('.card').forEach(card => {
+                const cardBody = card.querySelector('.card-body');
+                if (!cardBody) return;
+                
+                const imageColumn = cardBody.querySelector('[data-rearranged="true"]');
+                if (imageColumn) {
+                    // Reset column width
+                    imageColumn.classList.remove('col-12');
+                    imageColumn.classList.add('col-6');
+                    
+                    // Find the row
+                    const row = cardBody.querySelector('.row');
+                    if (row) {
+                        // Move back to original position
+                        row.appendChild(imageColumn);
+                        imageColumn.removeAttribute('data-rearranged');
+                    }
+                }
+            });
+        }
+    }
+    
+    // Run on page load
+    rearrangeForMobile();
+    
+    // Run on window resize
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(rearrangeForMobile, 200);
+    });
+    
+    // Update image sizes for mobile
+    function updateImageSizes() {
+        const requestSize = window.innerWidth <= 768 ? 800 : 150;
+        
+        document.querySelectorAll('.img-thumbnail').forEach(img => {
+            let currentSrc = img.src;
+            if (currentSrc.includes('?size=')) {
+                img.src = currentSrc.replace(/\?size=\d+/, `?size=${requestSize}`);
+            }
+        });
+    }
+    
+    // Run image size update on page load and resize
+    updateImageSizes();
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            updateImageSizes();
+            rearrangeForMobile();
+        }, 200);
+    });
+});
+
+</script>
+<script>
+    // Add this to your existing JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to handle image display on mobile
+    function handleMobileImageDisplay() {
+        if (window.innerWidth <= 768) {
+            // For each card
+            document.querySelectorAll('.card').forEach(card => {
+                const imageOptions = card.querySelectorAll('.image-option');
+                
+                // If there are multiple images
+                if (imageOptions.length > 1) {
+                    // Find the first image with a dropbox overlay (preferred)
+                    const dropboxImage = Array.from(imageOptions).find(option => 
+                        option.querySelector('.dropbox-overlay'));
+                    
+                    // If a dropbox image exists, select it, otherwise select the first image
+                    const imageToSelect = dropboxImage || imageOptions[0];
+                    
+                    // Select the radio button for this image
+                    const radioButton = imageToSelect.querySelector('input[type="radio"]');
+                    if (radioButton) {
+                        radioButton.checked = true;
+                    }
+                }
+            });
+        }
+    }
+    
+    // Run on page load
+    handleMobileImageDisplay();
+    
+    // Run on window resize
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(handleMobileImageDisplay, 200);
+    });
+});
+
 </script>
 </body>
 </html>

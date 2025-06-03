@@ -58,6 +58,8 @@ from tk_label_zoom import tk_label_zoom_bp
 from auth import auth_bp
 from Toolkits import pdf_toolkit_bp
 from auth import log_event
+from warehousemap import warehousemap_bp
+from master_audit import master_audit_bp
 
 client = WebClient(token=Config.SLACK_TOKEN)
 
@@ -80,6 +82,8 @@ def register_routes(app):
     app.register_blueprint(tk_label_zoom_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(pdf_toolkit_bp)
+    app.register_blueprint(warehousemap_bp)
+    app.register_blueprint(master_audit_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 
@@ -236,7 +240,9 @@ def register_routes(app):
         current_user = session['username']
         excel_html = None
         history_html = None  # Initialize history_html
-
+        purchase_html = None
+        adjustment_html = None  # Initialize adjustment_html
+        
         if request.method == "POST":
             # Handle the case where user input is submitted via the form
             user_input = request.form.get("user_input", "").lower().strip()
@@ -257,11 +263,10 @@ def register_routes(app):
             user_input = user_input[:-1]
 
         # Generate Excel and history HTML
-        excel_html, history_html, purchase_html, _, user_input = SQL_connector.generate_excel(user_input)
+        excel_html, history_html, purchase_html, adjustment_html, _, user_input = SQL_connector.generate_excel(user_input)
 
-        if not excel_html and not history_html:  # If no valid data is found
-            return render_template("Item_lookup.html", excel_html=None, history_html=None, current_user=current_user, user_input=user_input)
-
+        if not excel_html and not history_html and not purchase_html and not adjustment_html:  # If no valid data is found
+            return render_template("Item_lookup.html", excel_html=None, history_html=None, purchase_html=None, adjustment_html=None, current_user=current_user, user_input=user_input)
         # Process excel_html to add Location and Update_Date columns
         if excel_html:
             from io import StringIO
@@ -364,13 +369,14 @@ def register_routes(app):
         return render_template(
             "Item_lookup.html",
             excel_html=excel_html,
-            history_html=history_html,  # Pass the history_html to the template
-            purchase_html=purchase_html,  # Add this
+            history_html=history_html,
+            purchase_html=purchase_html,
+            adjustment_html=adjustment_html,  # Add this
             image_urls=sorted_image_urls,
             file_names=sorted_file_names,
             file_info=file_info,
             current_user=current_user,
-            user_input=user_input.capitalize()  # Pass user_input back to the template to avoid "None"
+            user_input=user_input.capitalize()
         )
 
     @app.route('/image/<path:filename>')
@@ -710,29 +716,73 @@ def register_routes(app):
         if 'username' not in session:
             return redirect(url_for("auth.login"))
         current_user = session['username']
+        search_term = request.args.get('search', '').strip()
 
         try:
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
                 lines = file.readlines()
-            formatted_lines = format_logs(lines)
-            reversed_lines = list(reversed(formatted_lines))
-
-            # Pagination logic
-            per_page = 100
-            page = request.args.get('page', 1, type=int)
-            start = (page - 1) * per_page
-            end = start + per_page
-            paginated_log_lines = reversed_lines[start:end]
-
-            # Calculate total pages
-            total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
-
-            #return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages,current_user=current_user), 200
-            return render_template('log_viewer.html', log_lines=paginated_log_lines, page=page, total_pages=total_pages,current_user=current_user), 200
+            
+            # If there's a search term, filter logs across all pages
+            if search_term:
+                filtered_lines = []
+                for line in lines:
+                    if search_term.lower() in line.lower():
+                        filtered_lines.append(line)
+                
+                formatted_lines = format_logs(filtered_lines)
+                reversed_lines = list(reversed(formatted_lines))
+                
+                # Return search results with pagination
+                per_page = 100
+                page = request.args.get('page', 1, type=int)
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated_log_lines = reversed_lines[start:end]
+                
+                # Calculate total pages for search results
+                total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
+                
+                return render_template('log_viewer.html', 
+                                    log_lines=paginated_log_lines, 
+                                    page=page, 
+                                    total_pages=total_pages,
+                                    current_user=current_user,
+                                    search_term=search_term), 200
+            else:
+                # Original pagination logic for all logs
+                formatted_lines = format_logs(lines)
+                reversed_lines = list(reversed(formatted_lines))
+                
+                per_page = 100
+                page = request.args.get('page', 1, type=int)
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated_log_lines = reversed_lines[start:end]
+                
+                total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
+                
+                return render_template('log_viewer.html', 
+                                    log_lines=paginated_log_lines, 
+                                    page=page, 
+                                    total_pages=total_pages,
+                                    current_user=current_user,
+                                    search_term=''), 200
 
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)
             return jsonify(error=str(e)), 500
+
+    @app.route('/log/search', methods=['POST'])
+    def search_logs():
+        if 'username' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+        
+        search_term = request.form.get('search_term', '').strip()
+        if not search_term:
+            return redirect(url_for('display'))
+        
+        return redirect(url_for('display', search=search_term, page=1))
+
         
     @app.route('/log/stream', methods=['GET'])
     def stream_log():

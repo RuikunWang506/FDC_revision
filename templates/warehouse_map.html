@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Warehouse Map</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Add this line -->
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        h1, h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .page-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+        
+        .map-section {
+    width: 70%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+        
+        .sidebar {
+    width: 30%;
+    height: 100%;
+    background-color: #f5f5f5;
+    border-left: 1px solid #ddd;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+        
+        .upload-form {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .flash-messages {
+            margin-bottom: 15px;
+        }
+        
+        .flash-message {
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+.item-list {
+    width: 100%;
+    overflow-x: visible; /* Change from auto to visible */
+}
+    table {
+        width: 100%;
+        border-collapse: separate; /* Changed from collapse to ensure sticky works properly */
+        border-spacing: 0;
+    }
+thead {
+        box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+    }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        
+th, td {
+    padding: 8px;
+    text-align: left;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+        
+        th {
+        background-color: #f2f2f2;
+        position: sticky !important; /* Force sticky positioning */
+        top: 0 !important; /* Force top position */
+        z-index: 10 !important; /* Ensure headers appear above table content */
+    }
+    th.sortable {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+    }
+        
+        .item-marker {
+            fill: none;
+            stroke: red;
+            stroke-width: 2px;
+            cursor: pointer;
+            transition: r 0.2s ease;
+        }
+        
+        .tooltip {
+    position: fixed;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 1000;
+    max-width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.tooltip-item {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tooltip-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.tooltip-count {
+    font-weight: bold;
+    color: #ff9800;
+    margin-bottom: 5px;
+}        
+        #map-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+        }
+        
+        svg {
+            max-width: 100%;
+            max-height: 100%;
+            height: auto;
+            width: auto;
+            display: block;
+        }
+        
+        .search-container {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-input {
+            padding: 8px;
+            flex-grow: 1;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            padding: 6px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .toggle-btn {
+    white-space: nowrap;
+    padding: 4px 6px;
+    font-size: 0.8em;
+}
+        
+        .toggle-btn.active {
+            background-color: #f44336;
+        }
+        
+        .toggle-btn.not-found {
+            background-color: #4CAF50; /* Green for N/A buttons */
+            cursor: default; /* No pointer cursor since it's not clickable */
+        }
+        
+        .toggle-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .toggle-btn.active:hover {
+            background-color: #d32f2f;
+        }
+        
+        .toggle-btn.not-found:hover {
+            background-color: #4CAF50; /* Keep the same color on hover */
+        }
+        
+        .note {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            padding: 10px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-section h1 {
+            margin: 0;
+        }
+        
+        .controls-section {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .toggle-all-btn {
+            margin-bottom: 10px;
+        }
+        
+        
+        .order-number {
+            font-size: 0.8em;
+            color: #666;
+            margin-left: 5px;
+        }
+        
+
+        
+        .clear-btn {
+        background-color: #f44336;
+        margin-left: 10px;
+    }
+    
+    .clear-btn:hover {
+        background-color: #d32f2f;
+    }
+.item-marker {
+    fill: rgba(255, 0, 0, 0.5);  /* Semi-transparent red fill */
+    stroke: #ff0000;
+    stroke-width: 1.5px;
+    cursor: pointer;
+    transition: r 0.2s ease;
+}
+
+.item-marker-secondary {
+    fill: rgba(0, 128, 0, 0.5);  /* Semi-transparent green fill */
+    stroke: #008000;
+    stroke-width: 1.5px;
+    cursor: pointer;
+    transition: r 0.2s ease;
+}
+
+.item-marker-mid {
+    fill: rgba(0, 0, 255, 0.5);  /* Semi-transparent blue fill */
+    stroke: #0000ff;
+    stroke-width: 1.5px;
+    cursor: pointer;
+    transition: r 0.2s ease;
+}
+
+.item-marker-top {
+    fill: rgba(128, 0, 128, 0.5);  /* Semi-transparent purple fill */
+    stroke: #800080;
+    stroke-width: 1.5px;
+    cursor: pointer;
+    transition: r 0.2s ease;
+}
+/* Match Delete button to Show button size and style, but red */
+
+
+.toggle-btn.delete-btn {
+    margin-left: 4px; /* Reduce margin between buttons */
+}
+.toggle-btn.delete-btn:hover {
+    background-color: #d32f2f;
+}
+.tooltip.visible {
+    opacity: 1;
+}
+
+    </style>
+    <style>
+    th.sortable {
+        cursor: pointer;
+        position: relative;
+    }
+    
+    th.sortable:after {
+        content: '⇅';
+        position: absolute;
+        right: 8px;
+        color: #999;
+    }
+    
+    th.sortable.sorted-asc:after {
+        content: '↑';
+        color: #333;
+    }
+    
+    th.sortable.sorted-desc:after {
+        content: '↓';
+        color: #333;
+    }
+    .editable-cell {
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .editable-cell:hover {
+        background-color: #f0f0f0;
+    }
+    
+    .editable-cell:hover::after {
+        content: '✎';
+        position: absolute;
+        right: 5px;
+        color: #999;
+    }
+
+    .sku-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.sku-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.sku-cell {
+    padding: 8px 12px;
+}
+</style>
+
+    
+    <style>
+        @media (max-width: 900px) {
+            .page-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .map-section, .sidebar {
+                width: 100%;
+                min-width: 0;
+                padding: 10px;
+                box-sizing: border-box;
+            }
+            .sidebar {
+                border-left: none;
+                border-top: 1px solid #ddd;
+                padding-top: 0;
+            }
+            .header-section, .controls-section {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .upload-form, .item-list {
+                margin-top: 10px;
+            }
+            table, th, td {
+                font-size: 1em;
+            }
+            th, td {
+                padding: 6px;
+            }
+            #map-container {
+                min-height: 250px;
+                height: 40vw;
+                max-height: 50vw;
+            }
+        }
+        @media (max-width: 600px) {
+            h1, h2 {
+                font-size: 1.2em;
+            }
+            button, .toggle-btn, .clear-btn {
+                font-size: 1em;
+                padding: 8px 12px;
+            }
+            .note {
+                font-size: 0.95em;
+                padding: 8px;
+            }
+            table, th, td {
+                font-size: 0.95em;
+            }
+            #map-container {
+                min-height: 180px;
+                height: 40vw;
+                max-height: 60vw;
+            }
+            .tooltip {
+                font-size: 12px;
+                padding: 6px;
+                max-width: 220px;
+                max-height: 120px;
+                line-height: 1.3;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+            .item-marker, .item-marker-secondary, .item-marker-mid, .item-marker-top {
+                    pointer-events: all !important;
+
+                stroke-width: 2.5px;
+            }
+            svg {
+                pointer-events: auto;
+            }
+            .tooltip.visible {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .toggle-all-btn,
+            .clear-btn {
+                display: none !important;
+            }
+        }
+        /* Make tables scrollable on small screens */
+
+    </style>
+    <style>
+    .floating-flash-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 350px;
+        width: auto;
+    }
+    
+    .floating-flash-message {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        animation: fadeInOut 5s forwards;
+        opacity: 0;
+    }
+    
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-20px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-20px); }
+    }
+</style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="page-container">
+        <!-- Left section (70%) - Map and upload form -->
+        <div class="map-section">
+            <!-- Combined controls section -->
+            <div class="upload-form">
+                <div class="controls-section" style="display: flex; width: 100%; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <!-- Left side: SKU entry and file upload -->
+                    <div style="flex: 2; display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <form id="singleSkuForm" method="POST" style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="singleSkuInput" name="single_sku" placeholder="Enter SKU" style="flex: 1;">
+                                <button type="submit" id="addSkuBtn">Add</button>
+                            </form>
+                        </div>
+                        <div style="flex: 1;">
+                            <form method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+                                <input type="file" name="file" accept=".xlsx,.csv" style="flex: 1;">
+                                <button type="submit">Upload</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side: Control buttons -->
+                    <div style="flex: 1; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button id="toggleAllBtn" class="toggle-all-btn" onclick="toggleAllMarkers(true)">Show All</button>
+                        <button id="hideAllBtn" class="toggle-all-btn" onclick="toggleAllMarkers(false)">Hide All</button>
+                        <form method="POST" style="display: inline;">
+                            <input type="hidden" name="clear" value="1">
+                            <button type="submit" class="clear-btn">Clear Data</button>
+                        </form>
+                    </div>
+                </div>
+                <div id="skuStatus" style="margin-top: 8px; font-size: 0.95em;"></div>
+            </div>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div id="floatingFlashContainer" class="floating-flash-container">
+                        {% for message in messages %}
+                            <div class="floating-flash-message">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                    <script>
+                        // Remove flash messages after they've faded out (5 seconds + animation time)
+                        setTimeout(function() {
+                            const container = document.getElementById('floatingFlashContainer');
+                            if (container) {
+                                container.remove();
+                            }
+                        }, 5500);
+                    </script>
+                {% endif %}
+            {% endwith %}
+
+            {% if not items %}
+    <!-- No items message -->
+    <div class="note" style="margin-top: 20px;">
+        <p><strong>No items to display.</strong> Add items by entering SKUs or uploading a file.</p>
+    </div>
+{% else %}
+    <div id="map-container">
+        <!-- SVG will be loaded here -->
+    </div>
+    <div id="tooltip" class="tooltip"></div>
+{% endif %}
+        </div>
+        
+        <!-- Right section (30%) - Inventory list -->
+        <div class="sidebar">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <h2 style="margin: 0;">Inventory Items</h2>
+                <button id="exportExcelBtn" style="margin-left: 5px; font-size: 0.9em;">Export to Excel</button>
+            </div>
+            {% if items %}
+                <div class="item-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-column="sku">SKU</th>
+                                <th class="sortable" data-column="qty">Qty</th>
+                                <th class="sortable" data-column="loc">Loc</th>
+                                <th>Show</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No items to display.</p>
+            {% endif %}
+        </div>
+    </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        function compareLocations(locA, locB) {
+    // Split locations into parts (e.g., "L12-C" -> ["L", "12", "C"])
+    const parseLocation = (loc) => {
+        const match = loc.match(/([A-Za-z]+)(\d+)(?:-([A-Za-z0-9]+))?/);
+        if (match) {
+            return {
+                prefix: match[1],                    // "L"
+                number: parseInt(match[2], 10),      // 12 (as number)
+                suffix: match[3] || ''               // "C"
+            };
+        }
+        return { prefix: loc, number: 0, suffix: '' }; // Default for non-matching formats
+    };
+    
+    const partsA = parseLocation(locA);
+    const partsB = parseLocation(locB);
+    
+    // Compare prefix first (e.g., "L" vs "S")
+    if (partsA.prefix !== partsB.prefix) {
+        return partsA.prefix.localeCompare(partsB.prefix);
+    }
+    
+    // Then compare the numeric part (e.g., 2 vs 12)
+    if (partsA.number !== partsB.number) {
+        return partsA.number - partsB.number;
+    }
+    
+    // Finally compare the suffix (e.g., "C" vs "E")
+    return partsA.suffix.localeCompare(partsB.suffix);
+}
+
+        
+let items = {{ items_json|safe }};
+        const markers = [];
+
+        // Load the SVG
+        // Load the SVG
+fetch('/static/drawing.svg')
+.then(response => response.text())
+.then(svgContent => {
+    document.getElementById('map-container').innerHTML = svgContent;
+    
+    // Add the legend after the SVG is loaded
+    const mapContainer = document.getElementById('map-container');
+    const legend = document.createElement('div');
+    legend.id = 'map-legend';
+    legend.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px;
+        font-size: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 1000;
+    `;
+    
+    legend.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">Location Legend</div>
+        <div style="display: flex; align-items: center; margin-bottom: 4px;">
+            <span style="
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background-color: rgba(255, 0, 0, 0.5);
+                border: 1.5px solid #ff0000;
+                margin-right: 5px;
+            "></span>
+            <span>Bottom Level</span>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 4px;">
+            <span style="
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background-color: rgba(0, 0, 255, 0.5);
+                border: 1.5px solid #0000ff;
+                margin-right: 5px;
+            "></span>
+            <span>Middle Level</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <span style="
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background-color: rgba(128, 0, 128, 0.5);
+                border: 1.5px solid #800080;
+                margin-right: 5px;
+            "></span>
+            <span>Top Level</span>
+        </div>
+    `;
+    
+    mapContainer.appendChild(legend);
+    
+    const tooltip = document.getElementById('tooltip');
+    placeItemsOnMap(tooltip);
+    fitSvgToContainer();
+    populateItemsTable();
+})
+.catch(error => {
+    console.error('Error loading SVG:', error);
+    document.getElementById('map-container').innerHTML = '<p>Error loading warehouse map. Please check if the SVG file exists.</p>';
+    populateItemsTable();
+});
+
+
+
+        // Highlight the sidebar row for a SKU
+        function highlightSidebarRow(sku) {
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            rows.forEach(row => {
+                if (row.firstChild && row.firstChild.textContent.trim().toLowerCase() === sku.toLowerCase()) {
+                    row.style.backgroundColor = "#ffff99";
+                    setTimeout(() => { row.style.backgroundColor = ""; }, 1500);
+                }
+            });
+        }
+        function fitSvgToContainer() {
+            const svg = document.querySelector('svg');
+            const container = document.getElementById('map-container');
+            
+            if (svg) {
+                // Get SVG dimensions
+                const svgWidth = parseFloat(svg.getAttribute('width') || svg.getBoundingClientRect().width);
+                const svgHeight = parseFloat(svg.getAttribute('height') || svg.getBoundingClientRect().height);
+                
+                // Make SVG responsive
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+                svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+            }
+        }
+        
+        // Change the placeItemsOnMap function to group items by location
+
+function placeItemsOnMap(tooltip) {
+    const svg = document.querySelector('svg');
+    
+    // Group items by location
+    const locationGroups = {};
+    
+    // Track positions of markers to avoid overlap
+    const markerPositions = {};
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+
+    // First, create a pivot structure similar to the table
+    items.forEach(item => {
+        // Handle locations with commas (multiple locations)
+        if (item.loc.includes(',')) {
+            const locations = item.loc.split(',').map(loc => loc.trim());
+            
+            // Add item to each location
+            locations.forEach(loc => {
+                addItemToLocationGroup(locationGroups, loc, item);
+            });
+        } else {
+            // Single location
+            addItemToLocationGroup(locationGroups, item.loc, item);
+        }
+    });
+    
+    // Create markers for each location
+    for (const [location, skuData] of Object.entries(locationGroups)) {
+        // Determine marker type based on location
+        let markerType = 'primary';
+        let baseLocation = location;
+
+        if (location.endsWith(' MID')) {
+            markerType = 'mid';
+            baseLocation = location.replace(/ MID$/, '');
+        } else if (location.endsWith(' TOP')) {
+            markerType = 'top';
+            baseLocation = location.replace(/ TOP$/, '');
+        }
+        
+        // Find the location in the SVG by looking for text elements with the base location code
+        // Extract the location code (e.g., "L9-A" from "L9-A")
+        const locationMatch = baseLocation.match(/([A-Z]\d+(?:-[A-Z0-9]+)?)/i);
+        let locationCode = baseLocation;
+        
+        if (locationMatch) {
+            locationCode = locationMatch[1];
+        }
+        
+        const locationTexts = Array.from(document.querySelectorAll('text'))
+            .filter(text => text.textContent.trim() === locationCode);
+        
+        if (locationTexts.length > 0) {
+            // Get the position of the text element
+            const locationText = locationTexts[0];
+            let x = parseFloat(locationText.getAttribute('x'));
+            let y = parseFloat(locationText.getAttribute('y')) - 10; // Position slightly above the text
+            
+            // Adjust position to avoid overlap
+            const posKey = `${locationCode}`;
+            if (!markerPositions[posKey]) {
+                markerPositions[posKey] = [];
+            }
+            
+            // Offset new markers to avoid overlap
+            if (markerPositions[posKey].length > 0) {
+                x += 10 * markerPositions[posKey].length;
+                y -= 5 * markerPositions[posKey].length;
+            }
+            
+            markerPositions[posKey].push({x, y});
+            
+            // Create a marker for the location
+            const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            marker.setAttribute("cx", x);
+            marker.setAttribute("cy", y);
+            marker.setAttribute("r", isMobile ? "18" : "8"); // Larger on mobile
+            
+            // Set class based on marker type
+            if (markerType === 'mid') {
+                marker.setAttribute("class", "item-marker-mid");
+            } else if (markerType === 'top') {
+                marker.setAttribute("class", "item-marker-top");
+            } else if (markerPositions[posKey].length > 1) {
+                marker.setAttribute("class", "item-marker-secondary");
+            } else {
+                marker.setAttribute("class", "item-marker");
+            }
+            
+            marker.dataset.loc = location;
+            marker.style.display = "block"; // Initially visible
+            
+            // Count total items at this location
+            const totalItems = Object.keys(skuData).length;
+            function buildTooltipContent() {
+            let tooltipContent = `<div class="tooltip-count">${totalItems} item(s) at location ${location}</div>`;
+            for (const [sku, data] of Object.entries(skuData)) {
+                tooltipContent += `<div class="tooltip-item"><strong>SKU:</strong> ${sku}<br><strong>Quantity:</strong> ${data.qty}</div>`;
+            }
+            return tooltipContent;
+        }
+        // --- Desktop: hover, Mobile: tap ---
+        if (isMobile) {
+            marker.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                tooltip.innerHTML = buildTooltipContent();
+                tooltip.style.left = (e.touches[0].clientX + 10) + 'px';
+                tooltip.style.top = (e.touches[0].clientY - 10) + 'px';
+                tooltip.classList.add('visible');
+                // Hide tooltip on next tap anywhere
+                document.body.addEventListener('touchstart', function hideTooltip(ev) {
+                    if (!tooltip.contains(ev.target)) {
+                        tooltip.classList.remove('visible');
+                        document.body.removeEventListener('touchstart', hideTooltip);
+                    }
+                });
+            });
+            marker.addEventListener('click', function(e) {
+        tooltip.innerHTML = buildTooltipContent();
+        tooltip.style.left = (e.clientX + 10) + 'px';
+        tooltip.style.top = (e.clientY - 10) + 'px';
+        tooltip.classList.add('visible');
+        document.body.addEventListener('click', function hideTooltip(ev) {
+            if (!tooltip.contains(ev.target)) {
+                tooltip.classList.remove('visible');
+                document.body.removeEventListener('click', hideTooltip);
+            }
+        });
+    });
+        } else {
+            marker.addEventListener('mouseover', function(e) {
+                this.setAttribute("r", "10");
+                tooltip.innerHTML = buildTooltipContent();
+                tooltip.style.left = (e.clientX + 10) + 'px';
+                tooltip.style.top = (e.clientY - 10) + 'px';
+                tooltip.classList.add('visible');
+            });
+            marker.addEventListener('mouseout', function() {
+                this.setAttribute("r", "8");
+                tooltip.classList.remove('visible');
+            });
+            marker.addEventListener('mousemove', function(e) {
+                tooltip.style.left = (e.clientX + 10) + 'px';
+                tooltip.style.top = (e.clientY - 10) + 'px';
+            });
+        }
+
+        // Always add marker to SVG and markers array
+        svg.appendChild(marker);
+        markers.push({
+            element: marker,
+            loc: location,
+            skuData: skuData,
+            visible: true
+        });
+        }
+    }
+}
+
+// Helper function to add an item to the location group
+function addItemToLocationGroup(locationGroups, loc, item) {
+    const sku = item.sku;
+    
+    // Normalize the location to handle case differences
+    const normalizedLoc = normalizeLocation(loc);
+    
+    if (!locationGroups[normalizedLoc]) {
+        locationGroups[normalizedLoc] = {};
+    }
+    
+    if (!locationGroups[normalizedLoc][sku]) {
+        locationGroups[normalizedLoc][sku] = {
+            qty: 0,
+            orders: []
+        };
+    }
+    
+    // Sum quantities
+    locationGroups[normalizedLoc][sku].qty += parseInt(item.qty) || 0;
+    
+    // Collect order information
+    if (item.order_number && item.order_number !== 'N/A') {
+        locationGroups[normalizedLoc][sku].orders.push({
+            order: item.order_number
+        });
+    }
+}
+
+function normalizeLocation(loc) {
+    // Extract the base location code
+    const baseMatch = loc.match(/([A-Z]\d+(?:-[A-Z0-9]+)?)/i);
+    let baseLocation = baseMatch ? baseMatch[1].toUpperCase() : loc;
+    
+    // Check for position indicators with case-insensitive matching
+    const locLower = loc.toLowerCase();
+    if (locLower.includes(' mid')) {
+        baseLocation += ' MID';
+    } else if (locLower.includes(' top') || locLower.includes(' up')) {
+        baseLocation += ' TOP';
+    }
+    
+    return baseLocation;
+}        
+console.log(items);
+   function populateItemsTable() {
+    const tableBody = document.getElementById('itemsTableBody');
+    tableBody.innerHTML = ''; // Clear existing content
+
+    // Create a pivot table structure: group by location and SKU, sum quantities
+    const pivotData = {};
+
+    items.forEach(item => {
+        // Ensure item has all required properties
+        const loc = item.loc || 'storage';
+        const sku = item.sku || '';
+        const qty = parseInt(item.qty) || 0;
+
+        // Normalize location for display consistency
+        const normalizedLoc = normalizeLocation(loc);
+
+        if (!pivotData[normalizedLoc]) {
+            pivotData[normalizedLoc] = {};
+        }
+
+        if (!pivotData[normalizedLoc][sku]) {
+            pivotData[normalizedLoc][sku] = {
+                qty: 0,
+                orders: new Set()
+            };
+        }
+
+        // Sum quantities
+        pivotData[normalizedLoc][sku].qty += parseInt(item.qty) || 0;
+
+        // Collect order numbers (if available and not N/A)
+        if (item.order_number && item.order_number !== 'N/A') {
+            pivotData[normalizedLoc][sku].orders.add(item.order_number);
+        }
+    });
+
+    // Convert pivot data to sorted array for display
+    // Use custom location sorting
+    const sortedLocations = Object.keys(pivotData).sort(compareLocations);
+
+    // --- Calculate total quantity ---
+    let totalQty = 0;
+
+    // Populate table with pivot data
+    sortedLocations.forEach(loc => {
+        const skus = Object.keys(pivotData[loc]).sort();
+
+        skus.forEach(sku => {
+            const pivotItem = pivotData[loc][sku];
+
+            const row = document.createElement('tr');
+            row.setAttribute('data-loc', loc);
+
+            // Create cells
+            const skuCell = document.createElement('td');
+            skuCell.className = 'sku-cell';
+
+            // Create hyperlink for SKU
+            const skuLink = document.createElement('a');
+            skuLink.href = `https://www.fdcef.com/item_lookup/${encodeURIComponent(sku)}`;
+            skuLink.target = '_blank';
+            skuLink.className = 'sku-link';
+            skuLink.textContent = sku;
+
+            skuCell.appendChild(skuLink);
+
+            const qtyCell = document.createElement('td');
+            qtyCell.textContent = pivotItem.qty;
+
+            const locCell = document.createElement('td');
+            locCell.textContent = loc;
+
+            const buttonCell = document.createElement('td');
+            const button = document.createElement('button');
+
+            // Extract base location for marker lookup
+            let baseLocation = loc;
+            if (loc.endsWith(' MID')) {
+                baseLocation = loc.replace(/ MID$/, '');
+            } else if (loc.endsWith(' TOP')) {
+                baseLocation = loc.replace(/ TOP$/, '');
+            }
+
+            // Check if this location was found on the map
+            let isFound = markers.some(m => m.loc === loc);
+            if (!isFound && (loc.includes(' MID') || loc.includes(' TOP'))) {
+                isFound = markers.some(m => m.loc === baseLocation);
+            }
+
+            if (isFound) {
+                // Location was found on the map - create toggle button
+                button.textContent = "Show";
+                button.className = "toggle-btn active";
+                button.dataset.loc = loc;
+                button.onclick = function() { toggleMarker(this); };
+            } else {
+                // Location was not found on the SVG - create N/A button
+                button.textContent = "N/A";
+                button.className = "toggle-btn not-found";
+                button.disabled = true;
+            }
+            buttonCell.appendChild(button);
+
+const deleteBtn = document.createElement('button');
+deleteBtn.textContent = "Delete";
+deleteBtn.className = "toggle-btn delete-btn";
+deleteBtn.style.marginLeft = "8px";
+deleteBtn.onclick = function() {
+    fetch("/warehousemap/delete", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: `sku=${encodeURIComponent(sku)}&loc=${encodeURIComponent(loc)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+
+            // 1) remove that SKU/loc from our client-side items array
+            items = items.filter(item =>
+                !(item.sku === sku && normalizeLocation(item.loc) === loc)
+            );
+        
+
+            // 2) only remove the SVG marker if *no* items remain at that loc
+            const stillHasLoc = items.some(item =>
+                normalizeLocation(item.loc) === loc
+            );
+            if (!stillHasLoc) {
+                for (let i = markers.length - 1; i >= 0; i--) {
+                    if (markers[i].loc === loc) {
+                        markers[i].element.remove();
+                        markers.splice(i, 1);
+                    }
+                }
+            }
+            
+            // 3) re-draw the sidebar table (this will re-disable N/A buttons properly)
+            populateItemsTable();
+        } else {
+            alert("Delete failed: " + (data.error || "Unknown error"));
+        }
+    })
+    .catch(() => alert("Delete failed due to network error."));
+};
+buttonCell.appendChild(deleteBtn);
+
+            // Add cells to row
+            row.appendChild(skuCell);
+            row.appendChild(qtyCell);
+            row.appendChild(locCell);
+            row.appendChild(buttonCell);
+
+            // Add row to table
+            tableBody.appendChild(row);
+
+            // --- Add to total quantity ---
+            totalQty += pivotItem.qty;
+        });
+    });
+
+    // --- Add total row at the end ---
+    const totalRow = document.createElement('tr');
+    totalRow.style.fontWeight = "bold";
+    totalRow.style.backgroundColor = "#f2f2f2";
+
+    const totalLabelCell = document.createElement('td');
+    totalLabelCell.textContent = "Total";
+    const totalQtyCell = document.createElement('td');
+    totalQtyCell.textContent = totalQty;
+    const emptyCell1 = document.createElement('td');
+    const emptyCell2 = document.createElement('td');
+
+    totalRow.appendChild(totalLabelCell);
+    totalRow.appendChild(totalQtyCell);
+    totalRow.appendChild(emptyCell1);
+    totalRow.appendChild(emptyCell2);
+
+    tableBody.appendChild(totalRow);
+    setupEditableLocations();
+
+}
+
+
+        
+        // Function to toggle marker visibility
+function toggleMarker(button) {
+    const loc = button.dataset.loc;
+    
+    // Extract base location for marker lookup
+    let baseLocation = loc;
+    if (loc.endsWith(' MID')) {
+        baseLocation = loc.replace(/ MID$/, '');
+    } else if (loc.endsWith(' TOP')) {
+        baseLocation = loc.replace(/ TOP$/, '');
+    }
+    
+    // Find the marker for this location
+    let marker = markers.find(m => m.loc === loc);
+    
+    // If not found with exact match, try with base location
+    if (!marker && (loc.includes(' MID') || loc.includes(' TOP'))) {
+        marker = markers.find(m => m.loc === baseLocation);
+    }
+    
+    if (marker) {
+        if (marker.visible) {
+            // Hide marker
+            marker.element.style.display = "none";
+            marker.visible = false;
+            button.textContent = "Hide";
+            button.classList.remove("active");
+        } else {
+            // Show marker
+            marker.element.style.display = "block";
+            marker.visible = true;
+            button.textContent = "Show";
+            button.classList.add("active");
+        }
+    }
+}
+
+        
+        // Function to toggle all markers
+    function toggleAllMarkers(show) {
+        markers.forEach(marker => {
+            marker.element.style.display = show ? "block" : "none";
+            marker.visible = show;
+        });
+        
+        // Update all toggle buttons (skip N/A buttons)
+        const buttons = document.querySelectorAll('.toggle-btn:not(.not-found)');
+        buttons.forEach(button => {
+            if (show) {
+                button.textContent = "Show";
+                button.classList.add("active");
+            } else {
+                button.textContent = "Hide";
+                button.classList.remove("active");
+            }
+        });
+    }
+
+    </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportBtn = document.getElementById('exportExcelBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function() {
+                // Get data directly from the table for what's currently displayed
+                const tableRows = document.querySelectorAll('#itemsTableBody tr:not(:last-child)'); // Exclude total row
+                const exportData = [];
+                
+                tableRows.forEach(row => {
+                    if (row.cells.length >= 3) { // Make sure row has enough cells
+                        exportData.push({
+                            SKU: row.cells[0].textContent.trim(),
+                            Qty: parseInt(row.cells[1].textContent.trim()) || 0,
+                            Loc: row.cells[2].textContent.trim()
+                        });
+                    }
+                });
+
+                // Convert to worksheet
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                // Create workbook and add the worksheet
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+
+                // Export to file
+                XLSX.writeFile(wb, "warehouse_inventory.xlsx");
+            });
+        }
+    });
+
+</script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize sorting state
+        window.sortState = {
+            column: null,
+            direction: 'asc'
+        };
+        
+        // Add click handlers to sortable column headers
+        const sortableHeaders = document.querySelectorAll('th.sortable');
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-column');
+                sortTable(column);
+            });
+        });
+    });
+    
+    function sortTable(column) {
+        const tableBody = document.getElementById('itemsTableBody');
+        const rows = Array.from(tableBody.querySelectorAll('tr:not(:last-child)')); // Exclude total row
+        
+        // Update sort direction
+        if (window.sortState.column === column) {
+            window.sortState.direction = window.sortState.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            window.sortState.column = column;
+            window.sortState.direction = 'asc';
+        }
+        
+        // Update header indicators
+        document.querySelectorAll('th.sortable').forEach(header => {
+            header.classList.remove('sorted-asc', 'sorted-desc');
+            if (header.getAttribute('data-column') === column) {
+                header.classList.add(window.sortState.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            }
+        });
+        
+        // Sort the rows
+        rows.sort((a, b) => {
+            let valueA, valueB, comparison;
+            
+            if (column === 'sku') {
+                valueA = a.cells[0].textContent.trim().toLowerCase();
+                valueB = b.cells[0].textContent.trim().toLowerCase();
+                comparison = valueA.localeCompare(valueB);
+            } else if (column === 'qty') {
+                valueA = parseInt(a.cells[1].textContent.trim()) || 0;
+                valueB = parseInt(b.cells[1].textContent.trim()) || 0;
+                comparison = valueA - valueB;
+            } else if (column === 'loc') {
+                // Use the compareLocations function for location sorting
+                valueA = a.cells[2].textContent.trim();
+                valueB = b.cells[2].textContent.trim();
+                comparison = compareLocations(valueA, valueB);
+            }
+            
+            return window.sortState.direction === 'asc' ? comparison : -comparison;
+        });
+        
+        // Reorder the rows in the table
+        const totalRow = tableBody.querySelector('tr:last-child'); // Save total row
+        tableBody.innerHTML = '';
+        rows.forEach(row => tableBody.appendChild(row));
+        if (totalRow) tableBody.appendChild(totalRow); // Add total row back at the end
+    }
+    
+    // Make sure compareLocations is available for sorting
+    function compareLocations(locA, locB) {
+        // Split locations into parts (e.g., "L12-C" -> ["L", "12", "C"])
+        const parseLocation = (loc) => {
+            const match = loc.match(/([A-Za-z]+)(\d+)(?:-([A-Za-z0-9]+))?/);
+            if (match) {
+                return {
+                    prefix: match[1],                    // "L"
+                    number: parseInt(match[2], 10),      // 12 (as number)
+                    suffix: match[3] || ''               // "C"
+                };
+            }
+            return { prefix: loc, number: 0, suffix: '' }; // Default for non-matching formats
+        };
+        
+        const partsA = parseLocation(locA);
+        const partsB = parseLocation(locB);
+        
+        // Compare prefix first (e.g., "L" vs "S")
+        if (partsA.prefix !== partsB.prefix) {
+            return partsA.prefix.localeCompare(partsB.prefix);
+        }
+        
+        // Then compare the numeric part (e.g., 2 vs 12)
+        if (partsA.number !== partsB.number) {
+            return partsA.number - partsB.number;
+        }
+        
+        // Finally compare the suffix (e.g., "C" vs "E")
+        return partsA.suffix.localeCompare(partsB.suffix);
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to check if map is visible and show/hide legend accordingly
+        function updateLegendVisibility() {
+            const mapContainer = document.getElementById('map-container');
+            const mapLegend = document.getElementById('map-legend');
+            
+            if (mapContainer && mapLegend) {
+                // Only show legend if map container has content
+                if (mapContainer.innerHTML.trim() && !mapContainer.innerHTML.includes('Error loading warehouse map')) {
+                    mapLegend.style.display = 'block';
+                } else {
+                    mapLegend.style.display = 'none';
+                }
+            }
+        }
+        
+        // Initial check
+        updateLegendVisibility();
+        
+        // Check again after SVG is loaded
+        fetch('/static/drawing.svg')
+            .then(() => setTimeout(updateLegendVisibility, 500))
+            .catch(() => {
+                // Hide legend if SVG fails to load
+                const mapLegend = document.getElementById('map-legend');
+                if (mapLegend) mapLegend.style.display = 'none';
+            });
+    });
+</script>
+<script>
+    // Function to make location cells editable
+    function setupEditableLocations() {
+        const tableBody = document.getElementById('itemsTableBody');
+        if (!tableBody) return;
+        
+        // Add click event listeners to location cells
+        const rows = tableBody.querySelectorAll('tr:not(:last-child)'); // Exclude total row
+        rows.forEach(row => {
+            // Setup editable quantity (second column, index 1)
+            const qtyCell = row.cells[1];
+            if (qtyCell) {
+                qtyCell.classList.add('editable-cell');
+                qtyCell.setAttribute('title', 'Click to edit quantity');
+                
+                qtyCell.addEventListener('click', function() {
+                    // Only create input if not already editing
+                    if (!this.querySelector('input')) {
+                        const currentValue = this.textContent.trim();
+                        const sku = row.cells[0].textContent.trim();
+                        const loc = row.cells[2].textContent.trim();
+                        
+                        // Create input element
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.min = '0';
+                        input.value = currentValue;
+                        input.style.width = '100%';
+                        input.style.boxSizing = 'border-box';
+                        input.style.padding = '2px';
+                        
+                        // Clear cell and add input
+                        this.textContent = '';
+                        this.appendChild(input);
+                        input.focus();
+                        input.select(); // Select all text for easy editing
+                        
+                        // Handle input blur (when user clicks away)
+                        input.addEventListener('blur', function() {
+                            const newQty = parseInt(this.value) || 0;
+                            
+                            // Send update to server
+                            fetch('/warehousemap/update_qty', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    sku: sku,
+                                    loc: loc,
+                                    qty: newQty
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Update successful - refresh the page
+                                    window.location.reload();
+                                } else {
+                                    // Update failed
+                                    qtyCell.textContent = currentValue;
+                                    alert('Failed to update quantity: ' + (data.message || 'Unknown error'));
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error updating quantity:', error);
+                                qtyCell.textContent = currentValue;
+                                alert('Error updating quantity. Please try again.');
+                            });
+                        });
+                        
+                        // Handle Enter key
+                        input.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                this.blur(); // Trigger the blur event
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Setup editable location (third column, index 2)
+            const locCell = row.cells[2];
+            if (locCell) {
+                locCell.classList.add('editable-cell');
+                locCell.setAttribute('title', 'Click to edit location');
+                
+                // Existing location editing code...
+            }
+        });
+    }
+    
+    // Call setupEditableLocations after table is populated
+    document.addEventListener('DOMContentLoaded', function() {
+        populateItemsTable();
+        
+        // Fix SVG loading
+        fetch('/static/drawing.svg')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('SVG file not found');
+                }
+                return response.text();
+            })
+            .then(svgContent => {
+                document.getElementById('map-container').innerHTML = svgContent;
+                const tooltip = document.getElementById('tooltip');
+                placeItemsOnMap(tooltip);
+            })
+            .catch(error => {
+                console.error('Error loading SVG:', error);
+                document.getElementById('map-container').innerHTML = 
+                    '<p>Error loading warehouse map. Please check if the SVG file exists.</p>';
+            });
+        
+        // Wait for table to be populated
+        setTimeout(setupEditableLocations, 500);
+    });
+</script>
+
+</body>
+</html>
+
+        

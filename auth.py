@@ -88,7 +88,7 @@ def login():
                     if not result or not result[0]:
                         # Store the next page in session before redirecting
                         session['next'] = next_page
-                        session['username'] = username
+                        session['username'] = username.upper()
                         return redirect(url_for('auth.update_email'))
                 except Error as e:
                     print(f"Error checking email: {e}")

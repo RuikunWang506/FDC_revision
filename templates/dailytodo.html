@@ -366,6 +366,10 @@
         <button class="btn btn-success btn-block mb-4" onclick="window.location.href='/online_audit'" aria-label="Open audit tool">
             Audit tool
         </button>
+        <button class="btn btn-success btn-block mb-4" onclick="window.location.href='/warehousemap'" aria-label="Open warehouse map">
+            Open warehouse map
+        </button>
+
     </div>
     <div class="container_tkprocessor">
         <h2>Tiktok Processor, make into big packing slip</h2>
@@ -639,6 +643,7 @@
             updateTotalLabels();
             updateWeekdayDisplay();
         });
+        
     
         document.getElementById('datePicker').addEventListener('input', function(e) {
             const date = new Date(this.value);

@@ -275,6 +275,21 @@ def gpg_finish():
 
         import io
         qbo_df = pd.read_csv(io.StringIO(csv_content))
+        
+        # Modify part numbers based on order number prefix
+        if 'orderNumber' in qbo_df.columns and 'partNumber' in qbo_df.columns:
+            def add_prefix(row):
+                order_num = str(row['orderNumber']).strip()
+                part_num = str(row['partNumber']).strip()
+                
+                if order_num.startswith(('VA', 'CH')):
+                    return f"Honda:H_{part_num}"
+                elif order_num.startswith('CU'):
+                    return f"Hyundai:HD_{part_num}"
+                else:
+                    return part_num
+                    
+            qbo_df['partNumber'] = qbo_df.apply(add_prefix, axis=1)
 
         # Ensure unique sheet name
         sheet_name = 'for_qbo'
@@ -310,6 +325,7 @@ def gpg_finish():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 @gpgtmx_bp.route("/upload_pdf", methods=["POST"])
 def upload_pdf():
     """Handle PDF upload, extract data, generate a pivot table in Excel, and return HTML table."""

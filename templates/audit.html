@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Audit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .audit-section {
+            margin-bottom: 2rem;
+        }
+        
+        /* Freeze table headers */
+        .table-container table {
+            margin-bottom: 0;
+        }
+        
+        .table-container thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+            border-bottom: 2px solid #dee2e6;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Ensure proper styling for frozen headers */
+        .table-container .table-striped thead th {
+            background-color: #e9ecef;
+        }
+        
+        /* Add some padding to prevent content from hiding behind header */
+        .table-container tbody tr:first-child td {
+            padding-top: 8px;
+        }
+        
+        .search-options {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .search-type-section {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .search-type-section.active {
+            display: block;
+        }
+        
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .form-row label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+        /* Style the totals row */
+        /* Style the totals row and make it sticky */
+.table tbody tr:last-child {
+    background-color: #f8f9fa !important;
+    border-top: 2px solid #dee2e6;
+    font-weight: bold;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    box-shadow: 0 -2px 2px -1px rgba(0, 0, 0, 0.4);
+}
+
+.table tbody tr:last-child td {
+    background-color: #f8f9fa !important;
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Master Audit</h1>
+        <p>Welcome to the audit page, {{ current_user }}!</p>
+        
+        <!-- Search Options Form -->
+        <div class="search-options">
+            <h4>Order Selection Criteria</h4>
+            <form method="POST" id="auditForm">
+                <!-- Search Type Selection -->
+                <div class="form-row">
+                    <label class="form-label">Search by:</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="search_type" id="search_orders" value="orders" 
+                               {% if search_type == 'orders' or not search_type %}checked{% endif %}>
+                        <label class="form-check-label" for="search_orders">Number of Orders</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="search_type" id="search_days" value="days"
+                               {% if search_type == 'days' %}checked{% endif %}>
+                        <label class="form-check-label" for="search_days">Last X Days</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="search_type" id="search_since" value="since"
+                               {% if search_type == 'since' %}checked{% endif %}>
+                        <label class="form-check-label" for="search_since">Since Date</label>
+                    </div>
+                </div>
+                
+                <!-- Database Selection (common to all search types) -->
+                <div class="form-row">
+                    <label class="form-label">Database:</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="database_filter" id="db_both" value="both"
+                               {% if database_filter == 'both' or not database_filter %}checked{% endif %}>
+                        <label class="form-check-label" for="db_both">Both</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="database_filter" id="db_fdc" value="fdc"
+                               {% if database_filter == 'fdc' %}checked{% endif %}>
+                        <label class="form-check-label" for="db_fdc">FDC</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="database_filter" id="db_efashion" value="efashion"
+                               {% if database_filter == 'efashion' %}checked{% endif %}>
+                        <label class="form-check-label" for="db_efashion">E-Fashion</label>
+                    </div>
+                </div>
+                
+                <!-- Number of Orders Section -->
+                <div id="orders_section" class="search-type-section {% if search_type == 'orders' or not search_type %}active{% endif %}">
+                    <div class="form-row">
+                        <label for="num_orders" class="form-label">Last</label>
+                        <input type="number" class="form-control" id="num_orders" name="num_orders" 
+                               value="{{ num_orders or 20 }}" min="1" max="1000" style="width: 100px;">
+                        <label class="form-label">orders</label>
+                    </div>
+                </div>
+                
+                <!-- Last X Days Section -->
+                <div id="days_section" class="search-type-section {% if search_type == 'days' %}active{% endif %}">
+                    <div class="form-row">
+                        <label for="days_back" class="form-label">Last</label>
+                        <input type="number" class="form-control" id="days_back" name="days_back" 
+       value="{{ days_back or 7 }}" min="0" max="365" style="width: 100px;">
+                        <label class="form-label">days</label>
+                    </div>
+                </div>
+                
+                <!-- Since Date Section -->
+                <div id="since_section" class="search-type-section {% if search_type == 'since' %}active{% endif %}">
+                    <div class="form-row">
+                        <label for="since_date" class="form-label">Orders since:</label>
+                        <input type="text" class="form-control" id="since_date" name="since_date" 
+                               value="{{ since_date or '' }}" placeholder="MM-DD-YYYY" style="width: 150px;">
+                        <small class="text-muted">Format: MM-DD-YYYY (e.g., 12-01-2023)</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <button type="submit" class="btn btn-primary">Update Results</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset to Defaults</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Orders Section -->
+        <div class="audit-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        {% if search_type == 'days' %}
+                            Orders from Last {{ days_back or 7 }} Days
+                        {% elif search_type == 'since' %}
+                            Orders Since {{ since_date or 'N/A' }}
+                        {% else %}
+                            Last {{ num_orders or 20 }} Orders
+                        {% endif %}
+                        {% if database_filter == 'fdc' %}
+                            (FDC Only)
+                        {% elif database_filter == 'efashion' %}
+                            (E-Fashion Only)
+                        {% else %}
+                            (Both Databases)
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        {{ orders_html|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sold Out SKUs from Selected Orders Section -->
+        <div class="audit-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Sold Out SKUs from Selected Orders</h3>
+                    <small class="text-muted">Items that have 0 or negative combined availability across both databases</small>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        {{ sold_out_html|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show/hide sections based on search type selection
+        document.querySelectorAll('input[name="search_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Hide all sections
+                document.querySelectorAll('.search-type-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show the selected section
+                const selectedSection = document.getElementById(this.value + '_section');
+                if (selectedSection) {
+                    selectedSection.classList.add('active');
+                }
+            });
+        });
+        
+        // Reset form to defaults
+        function resetForm() {
+            document.getElementById('search_orders').checked = true;
+            document.getElementById('db_both').checked = true;
+            document.getElementById('num_orders').value = 20;
+            document.getElementById('days_back').value = 7;
+            document.getElementById('since_date').value = '';
+            
+            // Show orders section
+            document.querySelectorAll('.search-type-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('orders_section').classList.add('active');
+        }
+        
+        // Date input validation
+        document.getElementById('since_date').addEventListener('input', function() {
+            const datePattern = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-\d{4}$/;
+            if (this.value && !datePattern.test(this.value)) {
+                this.setCustomValidity('Please enter date in MM-DD-YYYY format');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+        
+        // Auto-submit form when Enter is pressed in input fields
+        document.querySelectorAll('input[type="number"], input[type="text"]').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('auditForm').submit();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

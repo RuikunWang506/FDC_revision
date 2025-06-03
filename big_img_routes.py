@@ -1,4 +1,4 @@
-from flask import request, render_template, session, jsonify, send_file, redirect, url_for, flash,send_from_directory
+from flask import request, render_template, session, jsonify, current_app,send_file, redirect, url_for, flash,send_from_directory
 import os
 import json
 import zipfile
@@ -38,7 +38,7 @@ def register_big_img_routes(app):
             include_folders = request.form.get('include_folders', False)
             
             index_file = os.path.join(Config.BIG_PICTURE_DIR, 'white_background_images.json') if white_background else os.path.join(Config.BIG_PICTURE_DIR, 'index.json')
-
+            current_app.logger.info(f" ***{current_user}***___@@@big images @@@__ {search_str}")
             if not os.path.exists(index_file):
                 return "Index file not found. Please generate the index first.", 500
 

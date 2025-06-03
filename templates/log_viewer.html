@@ -118,6 +118,13 @@
             background-color: yellow;
             color: black;
         }
+        
+        .search-info {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
@@ -130,16 +137,27 @@
     </div>
     
     <!-- Search Box -->
-    <div class="search-container">
-        <input type="text" id="search-input" placeholder="Search logs...">
-        <button id="search-button">Search</button>
-        <button id="clear-search">Clear</button>
+    <form action="{{ url_for('search_logs') }}" method="post" class="search-container">
+        <input type="text" id="search-input" name="search_term" placeholder="Search logs..." value="{{ search_term }}">
+        <button type="submit" id="search-button">Search</button>
+        <a href="{{ url_for('display') }}" id="clear-search">Clear</a>
+    </form>
+    
+    <!-- Search Results Info -->
+    {% if search_term %}
+    <div class="search-info">
+        Showing results for: "{{ search_term }}"
     </div>
+    {% endif %}
     
     <div id="log-container">
         {% for log_class, line in log_lines %}
             <div class="log-entry {{ log_class }}">
-                {{ line | safe }}
+                {% if search_term %}
+                    {{ line | replace(search_term, '<mark class="highlight-search">' + search_term + '</mark>') | safe }}
+                {% else %}
+                    {{ line | safe }}
+                {% endif %}
             </div>
         {% endfor %}
     </div>
@@ -147,8 +165,8 @@
     <!-- Pagination Controls -->
     <div class="pagination">
         {% if page > 1 %}
-            <a href="{{ url_for('display', page=1) }}">First</a>
-            <a href="{{ url_for('display', page=page-1) }}">Previous</a>
+            <a href="{{ url_for('display', page=1, search=search_term) }}">First</a>
+            <a href="{{ url_for('display', page=page-1, search=search_term) }}">Previous</a>
         {% else %}
             <a class="disabled">First</a>
             <a class="disabled">Previous</a>
@@ -157,8 +175,8 @@
         <span>Page {{ page }} of {{ total_pages }}</span>
 
         {% if page < total_pages %}
-            <a href="{{ url_for('display', page=page+1) }}">Next</a>
-            <a href="{{ url_for('display', page=total_pages) }}">Last</a>
+            <a href="{{ url_for('display', page=page+1, search=search_term) }}">Next</a>
+            <a href="{{ url_for('display', page=total_pages, search=search_term) }}">Last</a>
         {% else %}
             <a class="disabled">Next</a>
             <a class="disabled">Last</a>
@@ -168,62 +186,8 @@
     <script>
         const logContainer = document.getElementById("log-container");
         const searchInput = document.getElementById("search-input");
-        const searchButton = document.getElementById("search-button");
-        const clearSearchButton = document.getElementById("clear-search");
         
-        // Store all log entries for filtering
-        const allLogEntries = Array.from(document.querySelectorAll('.log-entry'));
-        
-        // Search function
-        function performSearch() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                // If search term is empty, show all entries
-                allLogEntries.forEach(entry => {
-                    entry.style.display = '';
-                    entry.innerHTML = entry.innerHTML.replace(/<mark class="highlight-search">(.*?)<\/mark>/g, "$1");
-                });
-                return;
-            }
-            
-            // Filter and highlight entries
-            allLogEntries.forEach(entry => {
-                const textContent = entry.textContent.toLowerCase();
-                const htmlContent = entry.innerHTML;
-                
-                if (textContent.includes(searchTerm)) {
-                    entry.style.display = ''; // Show matching entries
-                    
-                    // Highlight the matching text
-                    const regex = new RegExp(searchTerm, 'gi');
-                    entry.innerHTML = htmlContent.replace(regex, match => 
-                        `<mark class="highlight-search">${match}</mark>`
-                    );
-                } else {
-                    entry.style.display = 'none'; // Hide non-matching entries
-                }
-            });
-        }
-        
-        // Clear search function
-        function clearSearch() {
-            searchInput.value = '';
-            allLogEntries.forEach(entry => {
-                entry.style.display = '';
-                entry.innerHTML = entry.innerHTML.replace(/<mark class="highlight-search">(.*?)<\/mark>/g, "$1");
-            });
-        }
-        
-        // Event listeners
-        searchButton.addEventListener('click', performSearch);
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
-        });
-        clearSearchButton.addEventListener('click', clearSearch);
-
+        // For live log updates
         function connectEventSource() {
             const evtSource = new EventSource("/log/stream");
 
@@ -242,18 +206,20 @@
                             logEntry.classList.add('info');
                         }
 
-                        logEntry.innerHTML = formatted_line;
-                        
-                        // Add to our stored array of entries
-                        allLogEntries.unshift(logEntry);
+                        // If we're searching, highlight the search term in new entries
+                        const searchTerm = "{{ search_term }}";
+                        if (searchTerm && formatted_line.toLowerCase().includes(searchTerm.toLowerCase())) {
+                            const regex = new RegExp(searchTerm, 'gi');
+                            logEntry.innerHTML = formatted_line.replace(
+                                regex, 
+                                match => `<mark class="highlight-search">${match}</mark>`
+                            );
+                        } else {
+                            logEntry.innerHTML = formatted_line;
+                        }
                         
                         // Prepend the new line at the top
                         logContainer.insertBefore(logEntry, logContainer.firstChild);
-                        
-                        // If we're currently searching, apply the filter to the new entry
-                        if (searchInput.value.trim() !== '') {
-                            performSearch();
-                        }
                     }
                 } catch (e) {
                     console.error("Failed to parse log line:", e);
@@ -268,6 +234,13 @@
         }
 
         connectEventSource();
+        
+        // Focus the search input when the page loads
+        window.onload = function() {
+            searchInput.focus();
+            // Position cursor at the end of the input text
+            searchInput.selectionStart = searchInput.selectionEnd = searchInput.value.length;
+        };
     </script>
 </body>
 </html>
