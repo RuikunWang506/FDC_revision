@@ -334,50 +334,7 @@ def warehouse():
                 flash('Please upload a valid Excel (.xlsx) or CSV file')
                 return redirect(url_for('whmap.warehouse'))
             
-    # --- Erwan Add handling ---
-        erwan_input = request.form.get('erwan_add')
-        if erwan_input:
-            new_items = []
-            lines = erwan_input.split('\n')  # Split by new lines first
-            for line in lines:
-                parts = line.split() # then by spaces
-                for part in parts:
-                    match = re.match(r"(.*?)/(.*?)\*(\d+)(.*?)/(.*?)", part)
-                    if match:
-                        sku1 = f"{match.group(1)} {match.group(2)}"
-                        qty1 = int(match.group(3))
-                        sku2 = f"{match.group(4)} {match.group(5)}"
-                        qty2 = 1  # Default quantity for the second SKU
-                        new_items.append({'sku': sku1, 'qty': qty1})
-                        new_items.append({'sku': sku2, 'qty': qty2})
-
-            if new_items:
-                # Fetch locations for the new SKUs
-                location_dict = fetch_locations([item['sku'] for item in new_items])
-                for item in new_items:
-                    item['loc'] = location_dict.get(item['sku'].lower(), 'storage')
-                    item['shop'] = 'Erwan Input'
-                    item['order_number'] = 'N/A'
-                    item['sku_url'] = f"https://www.fdcef.com/item_lookup/{item['sku'].replace(' ', '%20')}"
-
-                # Merge with existing items, summing quantities for duplicates
-                existing_skus = {item['sku'].lower(): item for item in items}
-                for new_item in new_items:
-                    sku_lower = new_item['sku'].lower()
-                    if sku_lower in existing_skus:
-                        existing_skus[sku_lower]['qty'] += new_item['qty']
-                    else:
-                        items.append(new_item)
-                save_items_to_json(items)
-
-                # Prepare data for the confirmation popup
-                popup_data = []
-                for item in new_items:
-                    popup_data.append([item['sku'], item['qty']])
-                session['erwan_popup_data'] = popup_data  # Store in session for confirmation
-                return redirect(url_for('whmap.confirm_erwan')) # Redirect to confirmation page
-            else:
-                flash('Invalid Erwan input format.')
+   
                 
     # Ensure all existing items have sku_url if they don't already
     for item in items:
@@ -471,26 +428,3 @@ def update_qty():
         print(f"Error updating quantity: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@warehousemap_bp.route("/warehousemap/confirm_erwan", methods=["GET", "POST"])
-def confirm_erwan():
-    if 'erwan_popup_data' not in session:
-        return redirect(url_for('whmap.warehouse'))
-    
-    popup_data = session['erwan_popup_data']
-    if request.method == "POST":
-        if "confirm" in request.form:
-            # Data already saved in previous step, just clear session and redirect
-            session.pop('erwan_popup_data')
-            flash('Items added successfully!')
-            return redirect(url_for('whmap.warehouse'))
-        elif "cancel" in request.form:
-            # Remove the added items (restore previous state)
-            items = load_items_from_json()
-            new_skus = {item[0].lower() for item in popup_data}
-            items = [item for item in items if item['sku'].lower() not in new_skus]
-            save_items_to_json(items)
-            session.pop('erwan_popup_data')
-            flash('Items addition cancelled.')
-            return redirect(url_for('whmap.warehouse'))
-
-    return render_template("confirm_erwan.html", popup_data=popup_data)
