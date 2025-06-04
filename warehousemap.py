@@ -1,14 +1,11 @@
-from flask import Flask, request, send_file, render_template, current_app, Blueprint, flash, redirect, url_for,jsonify,session
-import io
-import os
-import re
-import tempfile
+from flask import request, render_template, Blueprint, flash, redirect, url_for,jsonify,session
+import os,re
 import pandas as pd
 import json
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
-import shutil
+
 
 warehousemap_bp = Blueprint('whmap', __name__, template_folder='templates')
 
@@ -336,7 +333,52 @@ def warehouse():
             else:
                 flash('Please upload a valid Excel (.xlsx) or CSV file')
                 return redirect(url_for('whmap.warehouse'))
-    
+            
+    # --- Erwan Add handling ---
+        erwan_input = request.form.get('erwan_add')
+        if erwan_input:
+            new_items = []
+            lines = erwan_input.split('\n')  # Split by new lines first
+            for line in lines:
+                parts = line.split() # then by spaces
+                for part in parts:
+                    match = re.match(r"(.*?)/(.*?)\*(\d+)(.*?)/(.*?)", part)
+                    if match:
+                        sku1 = f"{match.group(1)} {match.group(2)}"
+                        qty1 = int(match.group(3))
+                        sku2 = f"{match.group(4)} {match.group(5)}"
+                        qty2 = 1  # Default quantity for the second SKU
+                        new_items.append({'sku': sku1, 'qty': qty1})
+                        new_items.append({'sku': sku2, 'qty': qty2})
+
+            if new_items:
+                # Fetch locations for the new SKUs
+                location_dict = fetch_locations([item['sku'] for item in new_items])
+                for item in new_items:
+                    item['loc'] = location_dict.get(item['sku'].lower(), 'storage')
+                    item['shop'] = 'Erwan Input'
+                    item['order_number'] = 'N/A'
+                    item['sku_url'] = f"https://www.fdcef.com/item_lookup/{item['sku'].replace(' ', '%20')}"
+
+                # Merge with existing items, summing quantities for duplicates
+                existing_skus = {item['sku'].lower(): item for item in items}
+                for new_item in new_items:
+                    sku_lower = new_item['sku'].lower()
+                    if sku_lower in existing_skus:
+                        existing_skus[sku_lower]['qty'] += new_item['qty']
+                    else:
+                        items.append(new_item)
+                save_items_to_json(items)
+
+                # Prepare data for the confirmation popup
+                popup_data = []
+                for item in new_items:
+                    popup_data.append([item['sku'], item['qty']])
+                session['erwan_popup_data'] = popup_data  # Store in session for confirmation
+                return redirect(url_for('whmap.confirm_erwan')) # Redirect to confirmation page
+            else:
+                flash('Invalid Erwan input format.')
+                
     # Ensure all existing items have sku_url if they don't already
     for item in items:
         if 'sku_url' not in item:
@@ -347,202 +389,7 @@ def warehouse():
     
     return render_template("warehouse_map.html", items=items, items_json=items_json)
 
-    items = load_items_from_json()  # Load existing items by default
-    # Re-fetch all locations from database on every page load
-    if items:
-        # Extract all SKUs from items
-        skus = [item['sku'] for item in items]
-        
-        # Fetch fresh location data from database
-        location_dict = fetch_locations(skus)
-        
-        # Update items with the latest location data
-        for item in items:
-            sku_lower = item['sku'].lower()
-            if sku_lower in location_dict:
-                item['loc'] = location_dict[sku_lower]
-        
-        # Save updated items back to JSON
-        save_items_to_json(items)
-        
-    if request.method == "POST":
-        if 'clear' in request.form:
-            # Clear the current data
-            if os.path.exists(LATEST_DATA_FILE):
-                os.remove(LATEST_DATA_FILE)
-            items = []
-            flash('Data cleared successfully')
-            return redirect(url_for('whmap.warehouse'))
 
-        # --- Manual SKU input handling ---
-        single_sku = request.form.get('single_sku')
-        if single_sku:
-            sku = single_sku.strip()
-            if not sku:
-                flash('Please enter a SKU.')
-                return redirect(url_for('whmap.warehouse'))
-            # Check if SKU already exists (case-insensitive)
-            if any(item['sku'].lower() == sku.lower() for item in items):
-                flash(f'SKU "{sku}" already exists in inventory.')
-                return redirect(url_for('whmap.warehouse'))
-            # Fetch location for this SKU
-            location_dict = fetch_locations([sku])
-            items.append({
-                'sku': sku,
-                'qty': 1,
-                'loc': location_dict.get(sku.lower(), 'storage'),
-                'shop': 'Manual Input',
-                'order_number': 'N/A'
-            })
-            save_items_to_json(items)
-            flash(f'SKU "{sku}" added to inventory (qty 1, loc: {location_dict.get(sku.lower(), "storage")}).')
-            return redirect(url_for('whmap.warehouse'))
-        
-        if 'file' in request.files:
-            file = request.files['file']
-            
-            if file.filename == '':
-                flash('No file selected')
-                return redirect(url_for('whmap.warehouse'))
-            
-            if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.csv')):
-                try:
-                    # Create a timestamped filename
-                    timestamp = datetime.now().strftime('%m-%d-%Y')
-                    file_ext = os.path.splitext(file.filename)[1]
-                    saved_filename = f"warehouse_{timestamp}{file_ext}"
-                    saved_path = os.path.join(WAREHOUSE_DIR, saved_filename)
-                    
-                    # Save the uploaded file
-                    file.save(saved_path)
-                    
-                    # Read the file based on its extension
-                    if file.filename.endswith('.xlsx'):
-                        df = pd.read_excel(saved_path)
-                    else:  # CSV file
-                        df = pd.read_csv(saved_path)
-                    
-                    # Check if this is a platform export file
-                    platform_columns = ['Stock SKU', 'Quantity', 'Platform Order Number', 'Shop']
-                    simple_columns = ['sku', 'qty']
-                    
-                    # Check if it's a platform export file
-                    if any(col in df.columns for col in platform_columns):
-                        # Map column names for platform export
-                        column_mapping = {}
-                        
-                        # Find the SKU column - specifically look for "Stock SKU" with case-insensitive matching
-                        sku_columns = [col for col in df.columns if 'Stock SKU' in col or col.lower() == 'sku']
-                        if sku_columns:
-                            column_mapping[sku_columns[0]] = 'sku'
-                        
-                        # Find the Quantity column
-                        qty_columns = [col for col in df.columns if 'Quantity' in col or col.lower() == 'qty']
-                        if qty_columns:
-                            column_mapping[qty_columns[0]] = 'qty'
-                        
-                        # Find the Shop/Platform column
-                        shop_columns = [col for col in df.columns if 'Shop' in col or 'Platform' in col]
-                        if shop_columns:
-                            column_mapping[shop_columns[0]] = 'shop'
-                        
-                        # Find the Order Number column
-                        order_columns = [col for col in df.columns if 'Order' in col and 'Number' in col]
-                        if order_columns:
-                            column_mapping[order_columns[0]] = 'order_number'
-                        
-                        # Rename columns
-                        df = df.rename(columns=column_mapping)
-                        
-                        # Ensure required columns exist
-                        if 'sku' not in df.columns or 'qty' not in df.columns:
-                            missing = []
-                            if 'sku' not in df.columns:
-                                missing.append('Stock SKU')
-                            if 'qty' not in df.columns:
-                                missing.append('Quantity')
-                            flash(f'File must contain the following columns: {", ".join(missing)}')
-                            return redirect(url_for('whmap.warehouse'))
-                        
-                        # Add shop and order_number if they don't exist
-                        if 'shop' not in df.columns:
-                            df['shop'] = 'Unknown'
-                        if 'order_number' not in df.columns:
-                            df['order_number'] = 'N/A'
-                        
-                    # Check if it's a simple SKU/QTY file
-                    elif all(col.lower() in map(str.lower, df.columns) for col in simple_columns):
-                        # Map column names case-insensitively
-                        column_mapping = {
-                            col: 'sku' for col in df.columns if col.lower() == 'sku'
-                        }
-                        column_mapping.update({
-                            col: 'qty' for col in df.columns if col.lower() == 'qty'
-                        })
-                        
-                        # Rename columns
-                        df = df.rename(columns=column_mapping)
-                        
-                        # Add shop and order_number columns
-                        df['shop'] = 'Manual Upload'
-                        df['order_number'] = 'N/A'
-                    else:
-                        flash('File format not recognized. Please upload a file with SKU and Quantity columns or a platform export file.')
-                        return redirect(url_for('whmap.warehouse'))
-                    
-                    # Ensure SKUs are properly formatted (replace hyphens with spaces if needed)
-                    if 'sku' in df.columns:
-                        # Convert all SKUs to string type first
-                        df['sku'] = df['sku'].astype(str)
-                        
-                        # If the SKU contains hyphens, replace them with spaces
-                        # This ensures consistency with how SKUs are stored in the database
-                        df['sku'] = df['sku'].str.replace('-', ' ')
-                    
-                    # If LOC column doesn't exist, add it
-                    if 'loc' not in df.columns:
-                        # Get list of SKUs
-                        skus = df['sku'].astype(str).tolist()
-                        
-                        # Fetch locations from database
-                        location_dict = fetch_locations(skus)
-                        
-                        # Add locations to dataframe
-                        df['loc'] = df['sku'].str.lower().map(location_dict).fillna('storage')
-                    
-                    # Convert DataFrame to list of dictionaries
-                    new_items = df[['sku', 'qty', 'loc', 'shop', 'order_number']].to_dict('records')
-                    
-                    # MODIFICATION: Merge new items with existing items instead of replacing
-                    # Create a dictionary to track existing SKUs
-                    existing_skus = {item['sku'].lower(): item for item in items}
-                    
-                    # Process new items
-                    for new_item in new_items:
-                        sku_lower = new_item['sku'].lower()
-                        if sku_lower in existing_skus:
-                            # If SKU exists, update quantity
-                            existing_skus[sku_lower]['qty'] += int(new_item['qty'])
-                        else:
-                            # If SKU is new, add to items list
-                            items.append(new_item)
-                    
-                    # Save updated items to JSON for persistence
-                    save_items_to_json(items)
-                    
-                    flash(f'File uploaded and processed successfully: {saved_filename}. Added to existing inventory.')
-                    return redirect(url_for('whmap.warehouse'))
-                except Exception as e:
-                    flash(f'Error processing file: {str(e)}')
-                    return redirect(url_for('whmap.warehouse'))
-            else:
-                flash('Please upload a valid Excel (.xlsx) or CSV file')
-                return redirect(url_for('whmap.warehouse'))
-    
-    # Convert items to JSON for the template
-    items_json = json.dumps(items)
-    
-    return render_template("warehouse_map.html", items=items, items_json=items_json)
 
 @warehousemap_bp.route("/warehousemap/delete", methods=["POST"])
 def delete_item():
@@ -623,3 +470,27 @@ def update_qty():
     except Exception as e:
         print(f"Error updating quantity: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@warehousemap_bp.route("/warehousemap/confirm_erwan", methods=["GET", "POST"])
+def confirm_erwan():
+    if 'erwan_popup_data' not in session:
+        return redirect(url_for('whmap.warehouse'))
+    
+    popup_data = session['erwan_popup_data']
+    if request.method == "POST":
+        if "confirm" in request.form:
+            # Data already saved in previous step, just clear session and redirect
+            session.pop('erwan_popup_data')
+            flash('Items added successfully!')
+            return redirect(url_for('whmap.warehouse'))
+        elif "cancel" in request.form:
+            # Remove the added items (restore previous state)
+            items = load_items_from_json()
+            new_skus = {item[0].lower() for item in popup_data}
+            items = [item for item in items if item['sku'].lower() not in new_skus]
+            save_items_to_json(items)
+            session.pop('erwan_popup_data')
+            flash('Items addition cancelled.')
+            return redirect(url_for('whmap.warehouse'))
+
+    return render_template("confirm_erwan.html", popup_data=popup_data)

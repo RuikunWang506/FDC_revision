@@ -8,9 +8,9 @@ import requests
 from user_agents import parse
 import re
 import secrets
-import string
 from datetime import datetime, timedelta
 from config import Config
+import json
 
 # Google OAuth imports
 from google_auth_oauthlib.flow import Flow
@@ -88,7 +88,7 @@ def login():
                     if not result or not result[0]:
                         # Store the next page in session before redirecting
                         session['next'] = next_page
-                        session['username'] = username.upper()
+                        session['username'] = username
                         return redirect(url_for('auth.update_email'))
                 except Error as e:
                     print(f"Error checking email: {e}")
@@ -513,13 +513,46 @@ def check_credentials(username, password):
             result = cursor.fetchone()
             if result:
                 return result[0] == password
-            return False
+            
+            session['username'] = username.upper()
+            session['user_permissions'] = get_user_permissions(username.upper()) # <--- This line fetches and stores permissions
+            return True
         finally:
             if 'cursor' in locals():
                 cursor.close()
             if connection and connection.is_connected():
                 connection.close()
     return False
+def get_user_permissions(username):
+    connection = get_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)  # Use dictionary cursor
+            cursor.execute(
+                "SELECT permissions FROM users WHERE username = %s", (username,)
+            )
+            user_data = cursor.fetchone()
+            if user_data:
+                permissions_json = user_data.get('permissions')
+                if permissions_json:
+                    try:
+                        return json.loads(permissions_json)
+                    except json.JSONDecodeError:
+                        print(f"Invalid JSON for user permissions: {username}")
+                        return {}
+                else:  # Handle NULL permissions
+                    return {}
+            else: # User not found
+                return {}
+        except Error as e:
+            print(f"Error fetching user permissions: {e}")
+            return {}
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if connection and connection.is_connected():
+                connection.close()
+    return {} # Return empty dict if any issues
 
 def log_user_activity(username):
     client_ip   = request.headers.get('X-Forwarded-For', request.remote_addr)

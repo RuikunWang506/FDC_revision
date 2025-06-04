@@ -390,11 +390,7 @@ th, td {
             th, td {
                 padding: 6px;
             }
-            #map-container {
-                min-height: 250px;
-                height: 40vw;
-                max-height: 50vw;
-            }
+
         }
         @media (max-width: 600px) {
             h1, h2 {
@@ -412,10 +408,11 @@ th, td {
                 font-size: 0.95em;
             }
             #map-container {
-                min-height: 180px;
-                height: 40vw;
-                max-height: 60vw;
-            }
+    overflow: auto;
+    height: auto;        /* remove fixed height */
+    min-height: 0;       /* if you had a min-height, override it */
+  }
+        
             .tooltip {
                 font-size: 12px;
                 padding: 6px;
@@ -432,8 +429,11 @@ th, td {
                 stroke-width: 2.5px;
             }
             svg {
-                pointer-events: auto;
-            }
+    width: 100%;
+    height: 100%;
+    display: block;
+    preserveAspectRatio: xMidYMid meet; /* ensure entire map stays visible */
+  }
             .tooltip.visible {
                 opacity: 1;
                 pointer-events: auto;
@@ -490,6 +490,10 @@ th, td {
                                 <input type="text" id="singleSkuInput" name="single_sku" placeholder="Enter SKU" style="flex: 1;">
                                 <button type="submit" id="addSkuBtn">Add</button>
                             </form>
+                            <form id="erwanAddForm" method="POST" style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                <textarea id="erwanAddInput" name="erwan_add" placeholder="Enter Erwan format" style="flex: 1; height: 80px;"></textarea>
+                                <button type="submit" id="erwanAddBtn">Erwan Add</button>
+                            </form>
                         </div>
                         <div style="flex: 1;">
                             <form method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
@@ -537,10 +541,10 @@ th, td {
         <p><strong>No items to display.</strong> Add items by entering SKUs or uploading a file.</p>
     </div>
 {% else %}
-    <div id="map-container">
-        <!-- SVG will be loaded here -->
-    </div>
-    <div id="tooltip" class="tooltip"></div>
+<div id="map-container"></div>
+    <!-- svg goes here -->
+
+<div id="tooltip" class="tooltip"></div>
 {% endif %}
         </div>
         
@@ -619,61 +623,36 @@ fetch('/static/drawing.svg')
     // Add the legend after the SVG is loaded
     const mapContainer = document.getElementById('map-container');
     const legend = document.createElement('div');
-    legend.id = 'map-legend';
-    legend.style.cssText = `
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background-color: rgba(255, 255, 255, 0.9);
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 8px;
-        font-size: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        z-index: 1000;
-    `;
-    
-    legend.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 5px;">Location Legend</div>
-        <div style="display: flex; align-items: center; margin-bottom: 4px;">
-            <span style="
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                background-color: rgba(255, 0, 0, 0.5);
-                border: 1.5px solid #ff0000;
-                margin-right: 5px;
-            "></span>
-            <span>Bottom Level</span>
-        </div>
-        <div style="display: flex; align-items: center; margin-bottom: 4px;">
-            <span style="
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                background-color: rgba(0, 0, 255, 0.5);
-                border: 1.5px solid #0000ff;
-                margin-right: 5px;
-            "></span>
-            <span>Middle Level</span>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <span style="
-                display: inline-block;
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                background-color: rgba(128, 0, 128, 0.5);
-                border: 1.5px solid #800080;
-                margin-right: 5px;
-            "></span>
-            <span>Top Level</span>
-        </div>
-    `;
-    
-    mapContainer.appendChild(legend);
+legend.id = 'map-legend';
+legend.style.cssText = `
+    margin-top: 10px;
+    font-size: 12px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+`;
+
+legend.innerHTML = `
+    <strong style="margin-right: 10px;">Legend:</strong>
+    <div style="display: flex; align-items: center; gap: 5px;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 1.5px solid #ff0000;"></span>
+        Bottom
+    </div>
+    <div style="display: flex; align-items: center; gap: 5px;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background-color: rgba(0, 0, 255, 0.5); border: 1.5px solid #0000ff;"></span>
+        Middle
+    </div>
+    <div style="display: flex; align-items: center; gap: 5px;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background-color: rgba(128, 0, 128, 0.5); border: 1.5px solid #800080;"></span>
+        Top
+    </div>
+`;
+
+mapContainer.parentElement.appendChild(legend);
     
     const tooltip = document.getElementById('tooltip');
     placeItemsOnMap(tooltip);
@@ -700,19 +679,16 @@ fetch('/static/drawing.svg')
         }
         function fitSvgToContainer() {
             const svg = document.querySelector('svg');
-            const container = document.getElementById('map-container');
-            
-            if (svg) {
-                // Get SVG dimensions
-                const svgWidth = parseFloat(svg.getAttribute('width') || svg.getBoundingClientRect().width);
-                const svgHeight = parseFloat(svg.getAttribute('height') || svg.getBoundingClientRect().height);
-                
-                // Make SVG responsive
-                svg.style.width = '100%';
-                svg.style.height = '100%';
-                svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-                svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+            if (!svg) return;
+
+            if (!svg.getAttribute('viewBox')) {
+                const bbox = svg.getBBox();
+                svg.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
             }
+
+            svg.style.width = '100%';
+            svg.style.height = 'auto';
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
         }
         
         // Change the placeItemsOnMap function to group items by location
@@ -1309,7 +1285,7 @@ function toggleMarker(button) {
             if (mapContainer && mapLegend) {
                 // Only show legend if map container has content
                 if (mapContainer.innerHTML.trim() && !mapContainer.innerHTML.includes('Error loading warehouse map')) {
-                    mapLegend.style.display = 'block';
+                    mapLegend.style.display = 'flex';
                 } else {
                     mapLegend.style.display = 'none';
                 }
