@@ -685,7 +685,7 @@ def register_routes(app):
         # Ensure table_data is a list
         if table_data is None:
             table_data = []
-        return render_template("loris.html", filename_30stickers=filename_30stickers, filename_exact=filename_exact, error_message=error_message, table_data=table_data, input_data=input_data, sku=sku, barcode=barcode, quantity=quantity, current_user=current_user)
+        return render_template("lori_automation.html", filename_30stickers=filename_30stickers, filename_exact=filename_exact, error_message=error_message, table_data=table_data, input_data=input_data, sku=sku, barcode=barcode, quantity=quantity, current_user=current_user)
         
     def parse_input_data(input_data):
         lines = input_data.strip().split('\n')

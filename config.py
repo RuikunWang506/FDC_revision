@@ -24,8 +24,7 @@ class Config:
     
     LOG_FILE = r'C:/FDC_FLASK_APP/log.txt'  # Log file path for better accessibility
     TMX_sheet = 'https://docs.google.com/spreadsheets/d/1nNLDB4LruCniq6MiKXlBPeDhNu9IkoX3pZdNLUSPka8/edit?gid=2057295499#gid=2057295499'
-    APIKEY = "542deb79868b4d56b06aa6adb0a0db69"
-    APIPASS = "1850bc9b80634abfa7c29840568a63bf"
+
     
     # Email configuration
     SMTP_SERVER = "smtp.fatcow.com"

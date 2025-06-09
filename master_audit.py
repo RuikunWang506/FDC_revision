@@ -2,15 +2,17 @@ from flask import Flask, render_template, current_app,request, redirect, url_for
 import SQL_connector
 import pandas as pd
 from urllib.parse import quote
+import os
+from werkzeug.utils import secure_filename
 
 master_audit_bp = Blueprint('master_audit', __name__, template_folder='templates')
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Blueprint
-import SQL_connector
-import pandas as pd
-from urllib.parse import quote
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
 
-master_audit_bp = Blueprint('master_audit', __name__, template_folder='templates')
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @master_audit_bp.route("/audit", methods=["GET", "POST"])
 def audit():
@@ -20,14 +22,23 @@ def audit():
     
     current_user = session['username']
     
+    # Initialize variables - ADD sold_out_df HERE
+    orders_html = "<p>No orders found.</p>"
+    sold_out_html = "<p>No sold out items found.</p>"
+    matched_inventory_html = ""
+    orders_data = []
+    sold_out_df = pd.DataFrame()  # Initialize as empty DataFrame
+    
     # Get form parameters
     search_type = request.form.get('search_type', 'orders')
     database_filter = request.form.get('database_filter', 'both')
-    num_orders = int(request.form.get('num_orders', 20))
+    num_orders = int(request.form.get('num_orders', 0))
     days_back_value = request.form.get('days_back', '').strip()
     days_back = int(days_back_value) if days_back_value != '' else None    
     since_date = request.form.get('since_date', '').strip()
     
+    uploaded_file = request.files.get('inventory_file')
+
     # Get orders based on criteria
     try:
         if search_type == 'days' and days_back is not None:
@@ -209,7 +220,111 @@ def audit():
             sold_out_html = "<p>No orders to analyze.</p>"
     except Exception as e:
         sold_out_html = f"<p>Error loading sold out items: {str(e)}</p>"
-    
+    # Process uploaded Excel file if provided
+    matched_inventory_html = ""
+    if uploaded_file and allowed_file(uploaded_file.filename) and not sold_out_df.empty:
+        try:
+            # Create uploads directory if it doesn't exist
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            
+            # Save uploaded file
+            filename = secure_filename(uploaded_file.filename)
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            uploaded_file.save(filepath)
+            
+            # Read Excel file
+            excel_df = pd.read_excel(filepath)
+            
+            # Clean up the file after reading
+            os.remove(filepath)
+            
+            # Check if required columns exist
+            required_columns = ['Stock SKU', 'On Hand', 'Available', 'Reserved']
+            missing_columns = [col for col in required_columns if col not in excel_df.columns]
+            
+            if missing_columns:
+                matched_inventory_html = f"<p>Error: Missing required columns in Excel file: {', '.join(missing_columns)}</p>"
+            else:
+                # Clean and prepare data
+                excel_df['Stock SKU'] = excel_df['Stock SKU'].astype(str).str.strip().str.upper()
+                
+                # Convert numeric columns
+                for col in ['On Hand', 'Available', 'Reserved']:
+                    excel_df[col] = pd.to_numeric(excel_df[col], errors='coerce').fillna(0)
+                
+                # Get SKUs from sold out table (remove HTML links for matching)
+                sold_out_skus = sold_out_df['SKU'].apply(
+                    lambda x: x.split('>')[-2].split('<')[0] if '<a href=' in str(x) else str(x)
+                ).str.strip().str.upper()
+                
+                # Find matches between sold out SKUs and Excel SKUs
+                matched_skus = []
+                for i, sku in enumerate(sold_out_skus):
+                    if sku in excel_df['Stock SKU'].values:
+                        excel_row = excel_df[excel_df['Stock SKU'] == sku].iloc[0]
+                        
+                        # Get original sold out row data
+                        sold_out_row = sold_out_df.iloc[i].copy()
+                        
+                        matched_skus.append({
+                            'Style': sold_out_row['Style'],
+                            'SKU': sold_out_row['SKU'],
+                            'DB Total Stock': sold_out_row['Total Stock'],
+                            'DB Total Ordered': sold_out_row['Total Ordered'],
+                            'DB Total Available': sold_out_row['Total Available'],
+                            'DB Total Incoming': sold_out_row['Total Incoming'],
+                            'Excel On Hand': int(excel_row['On Hand']),
+                            'Excel Available': int(excel_row['Available']),
+                            'Excel Reserved': int(excel_row['Reserved']),
+                            'Combined Available': sold_out_row['Total Available'] + int(excel_row['Available']),
+                            'Total Qty in Orders': sold_out_row['Total Qty in Orders'],
+                            'Order Numbers': sold_out_row['Order Numbers']
+                        })
+                
+                if matched_skus:
+                    matched_df = pd.DataFrame(matched_skus)
+                    
+                    # Calculate totals for matched inventory summary
+                    matched_count = len(matched_df)
+                    db_stock_sum = matched_df['DB Total Stock'].sum()
+                    db_ordered_sum = matched_df['DB Total Ordered'].sum()
+                    db_available_sum = matched_df['DB Total Available'].sum()
+                    db_incoming_sum = matched_df['DB Total Incoming'].sum()
+                    excel_on_hand_sum = matched_df['Excel On Hand'].sum()
+                    excel_available_sum = matched_df['Excel Available'].sum()
+                    excel_reserved_sum = matched_df['Excel Reserved'].sum()
+                    combined_available_sum = matched_df['Combined Available'].sum()
+                    total_qty_orders_sum = matched_df['Total Qty in Orders'].sum()
+                    
+                    # Create summary row for matched inventory
+                    matched_summary_row = pd.DataFrame([{
+                        'Style': '<strong>TOTALS</strong>',
+                        'SKU': f'<strong>{matched_count} matched items</strong>',
+                        'DB Total Stock': f'<strong>{db_stock_sum:,}</strong>',
+                        'DB Total Ordered': f'<strong>{db_ordered_sum:,}</strong>',
+                        'DB Total Available': f'<strong>{db_available_sum:,}</strong>',
+                        'DB Total Incoming': f'<strong>{db_incoming_sum:,}</strong>',
+                        'Excel On Hand': f'<strong>{excel_on_hand_sum:,}</strong>',
+                        'Excel Available': f'<strong>{excel_available_sum:,}</strong>',
+                        'Excel Reserved': f'<strong>{excel_reserved_sum:,}</strong>',
+                        'Combined Available': f'<strong>{combined_available_sum:,}</strong>',
+                        'Total Qty in Orders': f'<strong>{total_qty_orders_sum:,}</strong>',
+                        'Order Numbers': ''
+                    }])
+                    
+                    matched_df_with_totals = pd.concat([matched_df, matched_summary_row], ignore_index=True)
+                    
+                    matched_inventory_html = matched_df_with_totals.to_html(
+                        index=False,
+                        classes="table table-bordered table-striped table-sm",
+                        table_id="matched_inventory_table",
+                        escape=False
+                    )
+                else:
+                    matched_inventory_html = "<p>No matching SKUs found between sold out items and uploaded Excel file.</p>"
+                    
+        except Exception as e:
+            matched_inventory_html = f"<p>Error processing Excel file: {str(e)}</p>"
     return render_template("audit.html", 
                          current_user=current_user,
                          orders_html=orders_html,
@@ -218,5 +333,7 @@ def audit():
                          database_filter=database_filter,
                          num_orders=num_orders,
                          days_back=days_back,
-                         since_date=since_date)
+                         since_date=since_date,
+                         matched_inventory_html=matched_inventory_html,
+                         show_upload_section=not sold_out_df.empty)
     

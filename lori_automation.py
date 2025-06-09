@@ -412,6 +412,7 @@ def send_to_shipstation():
     # Process each batch
     all_responses = []
     for batch_index, batch in enumerate(batches):
+        current_app.logger.info(f"Processing batch {batch_index + 1}/{len(batches)} with {len(batch)} orders")
         
         response = requests.post(
             url, 
@@ -420,14 +421,22 @@ def send_to_shipstation():
             auth=(current_app.config['APIKEY'], current_app.config['APIPASS'])
         )
         
-        # Log the response
+        # Log the response status
+        current_app.logger.info(f"Batch {batch_index + 1} response status: {response.status_code}")
+        
+        if response.status_code != 200:
+            current_app.logger.error(f"ShipStation API error for batch {batch_index + 1}: Status {response.status_code}, Response: {response.text}")
         
         try:
             response_data = response.json()
             all_responses.append(response_data)
         except Exception as e:
-            current_app.logger.error(f"Error parsing response ")
-            all_responses.append({"error": str(e)})
+            current_app.logger.error(f"Error parsing response for batch {batch_index + 1}: Status {response.status_code}, Error: {str(e)}, Response text: {response.text[:500]}")
+            all_responses.append({
+                "error": str(e),
+                "status_code": response.status_code,
+                "response_text": response.text[:500]
+            })
     
     # Combine all responses
     combined_response = {
@@ -588,3 +597,7 @@ def upload_otb():
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
+            
+@lori_automation_bp.route("/loris_ups", methods=["GET"])
+def loris_ups():
+    return render_template("loris_ups.html")

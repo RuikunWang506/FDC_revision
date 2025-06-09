@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>洛瑞丝庄园</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .border-dashed {
+            border-style: dashed !important;
+        }
+        .highlight-drop {
+            border-color: #007bff !important;
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #343a40;
+        }
+        .navbar-brand {
+            color: white !important;
+        }
+        .nav-link {
+            color: rgba(255,255,255,.8) !important;
+        }
+        .nav-link:hover {
+            color: white !important;
+        }
+        .drop-zone {
+            min-height: 150px;
+            transition: all 0.3s ease;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+        .drop-zone:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        .drop-zone.highlight {
+            border-color: #007bff;
+            background-color: #f0f7ff;
+        }
+        .processing-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-content {
+            text-align: center;
+        }
+        [contenteditable="true"] {
+            background-color: #fff;
+            border: 1px solid transparent;
+            padding: 4px;
+        }
+        [contenteditable="true"]:hover {
+            border-color: #007bff;
+            cursor: pointer;
+        }
+        [contenteditable="true"]:focus {
+            outline: none;
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h3 class="text-light mt-3">磨刀霍霍向猪🐏</h3>
+            <p class="text-light" id="processing-status">Please wait while we process your files...</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    {% include 'navbar.html' %}
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>掖庭选美机</h2>
+                <!-- New SKU Input Field -->
+                <div class="card mt-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">SKU 查询</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="sku-input">输入SKU列表 (用逗号或换行分隔):</label>
+                            <textarea id="sku-input" class="form-control" rows="3" placeholder="456"></textarea>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button id="process-sku-btn" class="btn btn-primary">
+                                <i class="fas fa-search"></i> 查询SKU
+                            </button>
+                        </div>
+                        
+                        <!-- Database Management Section -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h5 class="mb-0">数据库管理</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <button id="download-db-btn" class="btn btn-outline-secondary">
+                                                <i class="fas fa-download"></i> 下载数据库
+                                            </button>
+                                            <button id="upload-db-btn" class="btn btn-outline-secondary">
+                                                <i class="fas fa-upload"></i> 上传数据库
+                                            </button>
+                                            <input type="file" id="upload-db-input" class="d-none" accept=".xlsx">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0">OTB 管理</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="otb-drop-zone" class="drop-zone">
+                                            <i class="fas fa-file-excel fa-2x mb-2 text-info"></i>
+                                            <p class="mb-0">拖放 OTB 文件到这里</p>
+                                            <p class="small text-muted">或点击选择文件</p>
+                                        </div>
+                                        <input type="file" id="upload-otb-input" class="d-none" accept=".xlsx" multiple>
+                                        <div id="otb-file-list" class="file-list mt-2">
+                                            <ul class="list-group" id="selected-otb-files"></ul>
+                                        </div>
+                                        <div class="d-grid mt-2">
+                                            <button id="process-otb-btn" class="btn btn-info" style="display: none;">
+                                                <i class="fas fa-cogs"></i> 处理 OTB 文件
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="sku-results" class="mt-4" style="display: none;">
+                            <h5>查询结果:</h5>
+                            <div id="sku-output" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>后宫翻牌机</h2>
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div id="drop-zone" class="drop-zone">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                            <h4>娘娘们一次性拉进来~~~~</h4>
+                            <p>or</p>
+                            <input type="file" id="file-input" multiple accept=".pdf" class="d-none">
+                            <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                                小窗通融一下
+                            </button>
+                        </div>
+
+                        <div id="file-list" class="mt-3">
+                            <h5>被翻牌的娘娘有:</h5>
+                            <ul class="list-group" id="selected-files">
+                            </ul>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button id="process-btn" class="btn btn-success btn-lg" style="display: none;">
+                                <i class="fas fa-cogs"></i> 烧水，开始洗澡
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results-section" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">下面是准备好名单，请过目👀</h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Download Buttons -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <a id="excel-download" class="btn btn-success btn-block w-100">
+                                        <i class="fas fa-file-excel"></i> 小主价目表 (Excel)
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a id="pdf-download" class="btn btn-danger btn-block w-100">
+                                        <i class="fas fa-file-pdf"></i> 小主合体名单 (PDF)
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- ShipStation Data Table -->
+                            <div class="table-responsive">
+                                <h5>地址可以改的哈</h5>
+                                <table class="table table-bordered table-striped" id="shipstation-table">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>PO Number</th>
+                                            <th>Company Name</th>
+                                            <th>Address</th>
+                                            <th>City</th>
+                                            <th>State</th>
+                                            <th>ZIP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- ShipStation Submit Button -->
+                            <div class="text-center mt-4">
+                                <button id="send-to-shipstation" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-shipping-fast"></i> 前往养心殿，等待小主们临幸 ( ShipStation )
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('selected-files');
+        const processBtn = document.getElementById('process-btn');
+        let uploadedFiles = [];
+
+        // OTB Dropzone
+        const otbDropZone = document.getElementById('otb-drop-zone');
+        const otbFileInput = document.getElementById('upload-otb-input');
+        const otbFileList = document.getElementById('selected-otb-files');
+        const processOtbBtn = document.getElementById('process-otb-btn');
+        let uploadedOtbFiles = [];
+
+        // SKU Processing
+        const skuInput = document.getElementById('sku-input');
+        const processSKUBtn = document.getElementById('process-sku-btn');
+        const skuResults = document.getElementById('sku-results');
+        const skuOutput = document.getElementById('sku-output');
+
+        // Database buttons
+        const downloadDbBtn = document.getElementById('download-db-btn');
+        const uploadDbBtn = document.getElementById('upload-db-btn');
+        const uploadDbInput = document.getElementById('upload-db-input');
+
+        // Set up drag and drop for OTB files
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            otbDropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            otbDropZone.addEventListener(eventName, () => {
+                otbDropZone.classList.add('highlight');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            otbDropZone.addEventListener(eventName, () => {
+                otbDropZone.classList.remove('highlight');
+            }, false);
+        });
+
+        otbDropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleOtbFiles(files);
+        });
+
+        otbDropZone.addEventListener('click', () => {
+            otbFileInput.click();
+        });
+
+        otbFileInput.addEventListener('change', (e) => {
+            handleOtbFiles(e.target.files);
+        });
+
+        function handleOtbFiles(files) {
+            uploadedOtbFiles = [...files];
+            updateOtbFileList();
+            processOtbBtn.style.display = uploadedOtbFiles.length > 0 ? 'block' : 'none';
+        }
+
+        function updateOtbFileList() {
+            otbFileList.innerHTML = '';
+            uploadedOtbFiles.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span><i class="fas fa-file-excel text-info"></i> ${file.name}</span>
+                    <button class="btn btn-sm btn-danger" onclick="removeOtbFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                otbFileList.appendChild(li);
+            });
+        }
+
+        window.removeOtbFile = function(index) {
+            uploadedOtbFiles.splice(index, 1);
+            updateOtbFileList();
+            processOtbBtn.style.display = uploadedOtbFiles.length > 0 ?
+            'block' : 'none';
+        }
+
+        // Process OTB files
+        processOtbBtn.addEventListener('click', async () => {
+            if (uploadedOtbFiles.length === 0) {
+                alert('请先选择OTB文件');
+                return;
+            }
+
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 'Processing OTB files...';
+
+            try {
+                for (let i = 0; i < uploadedOtbFiles.length; i++) {
+                    const file = uploadedOtbFiles[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    document.getElementById('processing-status').textContent = 
+                        `Processing OTB file ${i+1} of ${uploadedOtbFiles.length}: ${file.name}`;
+                    
+                    const response = await fetch('/upload_otb', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                }
+                
+                alert('所有OTB文件处理完成!');
+                uploadedOtbFiles = [];
+                updateOtbFileList();
+                processOtbBtn.style.display = 'none';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理OTB文件时出错: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+
+        // SKU Processing
+        processSKUBtn.addEventListener('click', async () => {
+            const skuList = skuInput.value.trim();
+            if (!skuList) {
+                alert('请输入SKU列表');
+                return;
+            }
+
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 'Processing SKUs...';
+
+            try {
+                const response = await fetch('/process_skus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ skus: skuList })
+                });
+
+                const data = await response.json();
+                
+                // Create table HTML
+                let tableHtml = `
+                    <table class="table table-striped table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>SKU</th>
+                                <th>你给过的价</th>
+                                <th>你卖过的价</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                // Add rows for each SKU
+                data.table_data.forEach(item => {
+                    tableHtml += `
+                        <tr>
+                            <td>${item.sku}</td>
+                            <td>${item.list_price}</td>
+                            <td>${item.sold_price}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHtml += `
+                        </tbody>
+                    </table>
+                `;
+                
+                // Display results
+                skuOutput.innerHTML = tableHtml;
+                skuResults.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing SKUs.');
+            } finally {
+                // Hide loading overlay
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+
+        // Database management
+        downloadDbBtn.addEventListener('click', async () => {
+            window.location.href = '/download_database';
+        });
+
+        uploadDbBtn.addEventListener('click', () => {
+            uploadDbInput.click();
+        });
+
+        uploadDbInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 'Uploading database...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                const response = await fetch('/upload_database', { 
+                    method: 'POST', 
+                    body: formData 
+                });
+                const data = await response.json();
+                alert(data.message || data.error);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while uploading the database.');
+            } finally {
+                // Hide loading overlay
+                document.getElementById('loading-overlay').style.display = 'none';
+                // Reset file input
+                uploadDbInput.value = '';
+            }
+        });
+
+        // PDF Processing
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('highlight');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('highlight');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            uploadedFiles = [...files];
+            updateFileList();
+            processBtn.style.display = uploadedFiles.length > 0 ? 'block' : 'none';
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            const totalFiles = uploadedFiles.length;
+            
+            // Show first 3 files
+            uploadedFiles.slice(0, 3).forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span><i class="fas fa-file-pdf text-danger"></i> ${file.name}</span>
+                    <button class="btn btn-sm btn-danger" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                fileList.appendChild(li);
+            });
+
+            // Add total count if more than 3 files
+            if (totalFiles > 3) {
+                const countLi = document.createElement('li');
+                countLi.className = 'list-group-item text-center font-weight-bold';
+                countLi.innerHTML = `<span class="badge bg-primary">共计名单有: ${totalFiles}</span>`;
+                fileList.appendChild(countLi);
+            }
+        }
+
+        window.removeFile = function(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            processBtn.style.display = uploadedFiles.length === 0 ? 'none' : 'block';
+        }
+
+        processBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            uploadedFiles.forEach(file => {
+                formData.append('files[]', file);
+            });
+
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 
+                `Processing ${uploadedFiles.length} files...`;
+
+            try {
+                const response = await fetch('/lori_automation', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing the files.');
+            } finally {
+                // Hide loading overlay
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results-section').style.display = 'block';
+            
+            // Set download links
+            document.getElementById('excel-download').href = 'data:application/zip;base64,' + data.excel_zip;
+            document.getElementById('excel-download').download = 'excel_files.zip';
+            
+            document.getElementById('pdf-download').href = 'data:application/pdf;base64,' + data.combined_pdf;
+            document.getElementById('pdf-download').download = 'combined_orders.pdf';
+
+            // Store original data
+            window.shipstationData = JSON.parse(JSON.stringify(data.shipstation_data));
+
+            // Populate editable table
+            const tbody = document.getElementById('shipstation-table').querySelector('tbody');
+            tbody.innerHTML = data.shipstation_data.map((order, index) => `
+                <tr data-row="${index}">
+                    <td>${index + 1}</td>
+                    <td contenteditable="true" data-field="orderNumber">${order.orderNumber}</td>
+                    <td contenteditable="true" data-field="company">${order.shipTo.company}</td>
+                    <td contenteditable="true" data-field="street1">${order.shipTo.street1}</td>
+                    <td contenteditable="true" data-field="city">${order.shipTo.city}</td>
+                    <td contenteditable="true" data-field="state">${order.shipTo.state}</td>
+                    <td contenteditable="true" data-field="postalCode">${order.shipTo.postalCode}</td>
+                </tr>
+            `).join('');
+
+            // Add event listeners for editable cells
+            tbody.addEventListener('input', (e) => {
+                const cell = e.target;
+                const row = cell.parentElement;
+                const rowIndex = row.dataset.row;
+                const field = cell.dataset.field;
+                const value = cell.textContent;
+
+                // Update the stored data
+                if (field === 'orderNumber') {
+                    window.shipstationData[rowIndex].orderNumber = value;
+                } else {
+                    window.shipstationData[rowIndex].shipTo[field] = value;
+                }
+            });
+
+            // Update send to ShipStation handler
+            document.getElementById('send-to-shipstation').onclick = async () => {
+                // Get button reference first
+                const submitButton = document.getElementById('send-to-shipstation');
+                
+                try {
+                    // Show loading state
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+                    const response = await fetch('/send_to_shipstation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            shipstation_data: window.shipstationData
+                        })
+                    });
+
+                    const result = await response.json();
+                    alert(`Successfully sent ${window.shipstationData.length} orders to ShipStation!`);
+
+                } catch (error) {
+                    alert('Please verify your ShipStation connection and try again.');
+                } finally {
+                    // Reset button state
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-shipping-fast"></i> 前往养心殿，等待小主们临幸 ( ShipStation )';
+                }
+            };
+        }
+    });
+</script>
+</body>
+</html>
