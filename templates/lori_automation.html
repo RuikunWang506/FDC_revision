@@ -49,6 +49,14 @@
             border-color: #007bff;
             background-color: #f0f7ff;
         }
+        .processing-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
         #loading-overlay {
             position: fixed;
             top: 0;
@@ -64,39 +72,24 @@
         .loading-content {
             text-align: center;
         }
+        [contenteditable="true"] {
+            background-color: #fff;
+            border: 1px solid transparent;
+            padding: 4px;
+        }
+        [contenteditable="true"]:hover {
+            border-color: #007bff;
+            cursor: pointer;
+        }
+        [contenteditable="true"]:focus {
+            outline: none;
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
         .file-list {
             max-height: 200px;
             overflow-y: auto;
         }
-                .textarea-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-        .textarea-container .form-group {
-            flex: 1;
-            margin: 0 10px;
-        }
-        .textarea-container .form-group textarea {
-            height: 200px;
-        }
-        .buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        .large-button {
-            font-size: 1.5rem;
-        }
-        .table-container {
-            margin-top: 30px;
-            overflow-x: auto;
-        }
-        .total-row {
-            font-weight: bold;
-            background-color: #f8f9fa;
-        }
-
     </style>
 </head>
 <body>
@@ -115,22 +108,14 @@
     {% include 'navbar.html' %}
 
     <div class="container mt-4">
-        <h2 class="text-center"> 洛瑞丝庄园 V2 </h2>
         <div class="row">
             <div class="col-12">
-                <!-- SKU Section -->
+                <h2>掖庭选美机</h2>
+                <!-- New SKU Input Field -->
                 <div class="card mt-4">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">
-                            <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#skuSection" aria-expanded="true" aria-controls="skuSection">
-                                <i class="fas fa-search"></i> Loris 历史价格查询 - SKU 查询，支持OTB 文件上传
-                                <i class="fas fa-chevron-up float-end mt-1"></i>
-                            </button>
-                        </h4>
+                        <h4 class="mb-0">SKU 查询</h4>
                     </div>
-                    <div class="collapse {% if sku_input %}show{% endif %}" id="skuSection">
-
-
                     <div class="card-body">
                         <div class="form-group">
                             <label for="sku-input">输入SKU列表 (用逗号或换行分隔):</label>
@@ -197,114 +182,90 @@
             </div>
         </div>
     </div>
-                <!-- Loris Maker Section -->
-                <div class="card mt-4">
-                    <div class="card-header bg-success text-white">
-                        <h4 class="mb-0">
-                            <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#lorisSection" aria-expanded="false" aria-controls="lorisSection">
-                                <i class="fas fa-tags"></i> Loris Maker - Sticker Maker
-                                <i class="fas fa-chevron-down float-end mt-1"></i>
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>后宫翻牌机</h2>
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div id="drop-zone" class="drop-zone">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                            <h4>娘娘们一次性拉进来~~~~</h4>
+                            <p>or</p>
+                            <input type="file" id="file-input" multiple accept=".pdf" class="d-none">
+                            <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                                小窗通融一下
                             </button>
-                        </h4>
+                        </div>
+
+                        <div id="file-list" class="mt-3">
+                            <h5>被翻牌的娘娘有:</h5>
+                            <ul class="list-group" id="selected-files">
+                            </ul>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button id="process-btn" class="btn btn-success btn-lg" style="display: none;">
+                                <i class="fas fa-cogs"></i> 烧水，开始洗澡
+                            </button>
+                        </div>
                     </div>
-                    <div class="collapse {% if sku or barcode or quantity or table_data or filename_30stickers or filename_exact %}show{% endif %}" id="lorisSection">
+                </div>
+
+                <!-- Results Section -->
+                <div id="results-section" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">下面是准备好名单，请过目👀</h4>
+                        </div>
                         <div class="card-body">
-                            <form method="post" action="/loris" enctype="multipart/form-data">
-                                <div class="textarea-container">
-                                    <div class="form-group">
-                                        <label for="sku">SKU:</label><br>
-                                        <label for="sku">N1237-S or N1237 S</label>
-                                        <textarea id="sku" class="form-control" name="sku">{{ sku }}</textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="barcode">Barcode:</label><br>
-                                        <label for="barcode">
-                                            <a href="https://eancheck.com/" target="_blank">Check</a>
-                                        </label>
-                                        <textarea id="barcode" class="form-control" name="barcode">{{ barcode }}</textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="quantity">Quantity:</label><br>
-                                        <label for="quantity">100</label>
-                                        <textarea id="quantity" class="form-control" name="quantity">{{ quantity }}</textarea>
-                                    </div>
-                                    <div class="form-group" style="flex: 2;">
-                                        <label for="input_data">Paste your list here:</label><br>
-                                        <label for="input_data">Tab-separated values (SKU ⇥ Barcode ⇥ Quantity)</label>
-                                        <textarea id="input_data" class="form-control" name="input_data" rows="14">{{ input_data }}</textarea>
-                                    </div>
+                            <!-- Download Buttons -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <a id="excel-download" class="btn btn-success btn-block w-100">
+                                        <i class="fas fa-file-excel"></i> 小主价目表 (Excel)
+                                    </a>
                                 </div>
-                                <div class="buttons mt-3">
-                                    <button type="submit" name="show_table" class="btn btn-secondary btn-lg large-button">Show Table</button>
-                                    <button type="submit" name="submit_data" class="btn btn-primary btn-lg large-button">Submit</button>
-                                    <button type="reset" class="btn btn-danger btn-lg large-button">Reset</button>
+                                <div class="col-md-6">
+                                    <a id="pdf-download" class="btn btn-danger btn-block w-100">
+                                        <i class="fas fa-file-pdf"></i> 小主合体名单 (PDF)
+                                    </a>
                                 </div>
-                            </form>
-                            
-                            {% if table_data %}
-                            <div class="table-container">
-                                <h3>Data Preview</h3>
-                                <table id="dataTable" class="table table-bordered table-striped">
+                            </div>
+
+                            <!-- ShipStation Data Table -->
+                            <div class="table-responsive">
+                                <h5>地址可以改的哈</h5>
+                                <table class="table table-bordered table-striped" id="shipstation-table">
                                     <thead class="thead-dark">
                                         <tr>
-                                            <th>SKU</th>
-                                            <th>Barcode</th>
-                                            <th>Quantity</th>
+                                            <th>#</th>
+                                            <th>PO Number</th>
+                                            <th>Company Name</th>
+                                            <th>Address</th>
+                                            <th>City</th>
+                                            <th>State</th>
+                                            <th>ZIP</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for row in table_data %}
-                                        <tr>
-                                            <td>{{ row[0] }}</td>
-                                            <td>{{ row[1] }}</td>
-                                            <td>{{ row[2] }}</td>
-                                        </tr>
-                                        {% endfor %}
                                     </tbody>
-                                    <tfoot>
-                                        <tr class="total-row">
-                                            <td><strong>Total</strong></td>
-                                            <td><strong>{{ table_data|length }} items</strong></td>
-                                            <td><strong>{{ table_data|sum(attribute=2) }}</strong></td>
-                                        </tr>
-                                    </tfoot>
                                 </table>
                             </div>
-                            {% endif %}
-                            
-                            {% if filename_30stickers and filename_exact %}
-                            <div class="text-center" style="padding-top: 50px;">
-                                <h2>Download Labels</h2>
-                                <div class="d-flex flex-wrap justify-content-center" style="padding-top: 10px;">
-                                    <a href="{{ url_for('download_file3', filename=filename_30stickers) }}" class="btn btn-primary btn-lg m-2" target="_blank">Download 30 Stickers Version</a>
-                                    <a href="{{ url_for('download_file3', filename=filename_exact) }}" class="btn btn-secondary btn-lg m-2" target="_blank">Download Exact Quantity Version</a>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                                <!-- Loris UPS Section -->
-                <div class="card mt-4">
-                    <div class="card-header bg-warning text-dark">
-                        <h4 class="mb-0">
-                            <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#lorisUpsSection" aria-expanded="false" aria-controls="lorisUpsSection">
-                                <i class="fas fa-shipping-fast"></i> Loris UPS -- Dennis 特供 - V.Alpha 
-                                <i class="fas fa-chevron-down float-end mt-1"></i>
-                            </button>
-                        </h4>
-                    </div>
-                    <div class="collapse" id="lorisUpsSection">
-                        <div class="card-body">
-                            <div class="text-center">
-                                <p class="mb-3">Access Loris UPS functionality</p>
-                                <a href="/loris_ups" class="btn btn-warning btn-lg">
-                                    <i class="fas fa-external-link-alt"></i> Go to Loris UPS
-                                </a>
+
+                            <!-- ShipStation Submit Button -->
+                            <div class="text-center mt-4">
+                                <button id="send-to-shipstation" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-shipping-fast"></i> 前往养心殿，等待小主们临幸 ( ShipStation )
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -312,6 +273,12 @@
     <!-- Main JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('selected-files');
+        const processBtn = document.getElementById('process-btn');
+        let uploadedFiles = [];
+
         // OTB Dropzone
         const otbDropZone = document.getElementById('otb-drop-zone');
         const otbFileInput = document.getElementById('upload-otb-input');
@@ -329,11 +296,6 @@
         const downloadDbBtn = document.getElementById('download-db-btn');
         const uploadDbBtn = document.getElementById('upload-db-btn');
         const uploadDbInput = document.getElementById('upload-db-input');
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
 
         // Set up drag and drop for OTB files
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -532,66 +494,195 @@
                 alert('An error occurred while uploading the database.');
             } finally {
                 // Hide loading overlay
-            document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('loading-overlay').style.display = 'none';
                 // Reset file input
                 uploadDbInput.value = '';
             }
         });
-    });
-</script>
 
+        // PDF Processing
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
 
-<!--script for stickersn -->
-<script>
-            // Loris Maker functionality
-        function updateInputData() {
-            const sku = document.getElementById('sku').value.split('\n');
-            const barcode = document.getElementById('barcode').value.split('\n');
-            const quantity = document.getElementById('quantity').value.split('\n');
-            let inputData = '';
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
-            for (let i = 0; i < Math.max(sku.length, barcode.length, quantity.length); i++) {
-                if (sku[i]?.trim() && barcode[i]?.trim() && quantity[i]?.trim()) {
-                    inputData += `${sku[i].trim()}\t${barcode[i].trim()}\t${quantity[i].trim()}\n`;
-                }
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('highlight');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('highlight');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            uploadedFiles = [...files];
+            updateFileList();
+            processBtn.style.display = uploadedFiles.length > 0 ? 'block' : 'none';
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            const totalFiles = uploadedFiles.length;
+            
+            // Show first 3 files
+            uploadedFiles.slice(0, 3).forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span><i class="fas fa-file-pdf text-danger"></i> ${file.name}</span>
+                    <button class="btn btn-sm btn-danger" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                fileList.appendChild(li);
+            });
+
+            // Add total count if more than 3 files
+            if (totalFiles > 3) {
+                const countLi = document.createElement('li');
+                countLi.className = 'list-group-item text-center font-weight-bold';
+                countLi.innerHTML = `<span class="badge bg-primary">共计名单有: ${totalFiles}</span>`;
+                fileList.appendChild(countLi);
             }
-
-            document.getElementById('input_data').value = inputData.trim();
         }
 
-        // Add event listeners for Loris Maker if elements exist
-        const skuElement = document.getElementById('sku');
-        const barcodeElement = document.getElementById('barcode');
-        const quantityElement = document.getElementById('quantity');
-        const inputDataElement = document.getElementById('input_data');
-
-        if (skuElement && barcodeElement && quantityElement && inputDataElement) {
-            [skuElement, barcodeElement, quantityElement].forEach(element => {
-                element.addEventListener('input', updateInputData);
-                element.addEventListener('paste', function() {
-                    setTimeout(updateInputData, 10);
-                });
-            });
-
-            inputDataElement.addEventListener('input', function() {
-                const lines = this.value.trim().split('\n');
-                let skus = [], barcodes = [], quantities = [];
-                
-                lines.forEach(line => {
-                    const parts = line.split('\t');
-                    if (parts.length === 3) {
-                        skus.push(parts[0].trim());
-                        barcodes.push(parts[1].trim());
-                        quantities.push(parts[2].trim());
-                    }
-                });
-                
-                skuElement.value = skus.join('\n');
-                barcodeElement.value = barcodes.join('\n');
-                quantityElement.value = quantities.join('\n');
-            });
+        window.removeFile = function(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            processBtn.style.display = uploadedFiles.length === 0 ? 'none' : 'block';
         }
 
+        processBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            uploadedFiles.forEach(file => {
+                formData.append('files[]', file);
+            });
+
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 
+                `Processing ${uploadedFiles.length} files...`;
+
+            try {
+                const response = await fetch('/lori_automation', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing the files.');
+            } finally {
+                // Hide loading overlay
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results-section').style.display = 'block';
+            
+            // Set download links
+            document.getElementById('excel-download').href = 'data:application/zip;base64,' + data.excel_zip;
+            document.getElementById('excel-download').download = 'excel_files.zip';
+            
+            document.getElementById('pdf-download').href = 'data:application/pdf;base64,' + data.combined_pdf;
+            document.getElementById('pdf-download').download = 'combined_orders.pdf';
+
+            // Store original data
+            window.shipstationData = JSON.parse(JSON.stringify(data.shipstation_data));
+
+            // Populate editable table
+            const tbody = document.getElementById('shipstation-table').querySelector('tbody');
+            tbody.innerHTML = data.shipstation_data.map((order, index) => `
+                <tr data-row="${index}">
+                    <td>${index + 1}</td>
+                    <td contenteditable="true" data-field="orderNumber">${order.orderNumber}</td>
+                    <td contenteditable="true" data-field="company">${order.shipTo.company}</td>
+                    <td contenteditable="true" data-field="street1">${order.shipTo.street1}</td>
+                    <td contenteditable="true" data-field="city">${order.shipTo.city}</td>
+                    <td contenteditable="true" data-field="state">${order.shipTo.state}</td>
+                    <td contenteditable="true" data-field="postalCode">${order.shipTo.postalCode}</td>
+                </tr>
+            `).join('');
+
+            // Add event listeners for editable cells
+            tbody.addEventListener('input', (e) => {
+                const cell = e.target;
+                const row = cell.parentElement;
+                const rowIndex = row.dataset.row;
+                const field = cell.dataset.field;
+                const value = cell.textContent;
+
+                // Update the stored data
+                if (field === 'orderNumber') {
+                    window.shipstationData[rowIndex].orderNumber = value;
+                } else {
+                    window.shipstationData[rowIndex].shipTo[field] = value;
+                }
+            });
+
+            // Update send to ShipStation handler
+            document.getElementById('send-to-shipstation').onclick = async () => {
+                // Get button reference first
+                const submitButton = document.getElementById('send-to-shipstation');
+                
+                try {
+                    // Show loading state
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+                    const response = await fetch('/send_to_shipstation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            shipstation_data: window.shipstationData
+                        })
+                    });
+
+                    const result = await response.json();
+                    alert(`Successfully sent ${window.shipstationData.length} orders to ShipStation!`);
+
+                } catch (error) {
+                    alert('Please verify your ShipStation connection and try again.');
+                } finally {
+                    // Reset button state
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-shipping-fast"></i> 前往养心殿，等待小主们临幸 ( ShipStation )';
+                }
+            };
+        }
+    });
 </script>
 </body>
 </html>

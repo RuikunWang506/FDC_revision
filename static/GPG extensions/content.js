@@ -1,13 +1,13 @@
 let popupCreated = false;
 
-setTimeout(() => {
+function parseAndCreatePopup() {
   if (popupCreated) return;
 
   if (window.location.href.includes("admin.genuinepartsgiant.com/popup/HPD/orderDetails/orders") || 
-      window.location.href.includes("admin.genuinepartsgiant.com/popup/HPN/orderDetails/orders")||
-	    window.location.href.includes("admin.genuinepartsgiant.com/popup/TPD/orderDetails/orders")||
+      window.location.href.includes("admin.genuinepartsgiant.com/popup/HPN/orderDetails/orders") ||
+      window.location.href.includes("admin.genuinepartsgiant.com/popup/TPD/orderDetails/orders") ||
       window.location.href.includes("admin.genuinepartsgiant.com/popup/APW/orderDetails/orders")) {
-    
+
     const salesOrderNoElement = document.evaluate(
       '//strong[contains(text(), "Sales Order No.")]',
       document,
@@ -15,14 +15,12 @@ setTimeout(() => {
       XPathResult.FIRST_ORDERED_NODE_TYPE,
       null
     ).singleNodeValue;
+
+    if (!salesOrderNoElement) return;
+
     const orderNumber = salesOrderNoElement.textContent.replace("Sales Order No.:", "").trim();
-    navigator.clipboard.writeText(orderNumber)
-        .then(() => {
-            console.log('Order number copied:', orderNumber);
-        })
-        .catch(err => {
-            console.log('Failed to copy:', err);
-        });
+    navigator.clipboard.writeText(orderNumber).catch(console.error);
+
     const orderDateElement = document.evaluate(
       '//strong[contains(text(), "Order Date")]',
       document,
@@ -32,14 +30,10 @@ setTimeout(() => {
     ).singleNodeValue;
 
     const invoiceData = {
-      orderNumber: salesOrderNoElement
-          ? salesOrderNoElement.textContent.replace("Sales Order No.:", "").trim()
-          : "N/A",
-      orderDate: orderDateElement
-          ? orderDateElement.textContent.replace("Order Date:", "").trim()
-          : "N/A",
+      orderNumber,
+      orderDate: orderDateElement?.textContent.replace("Order Date:", "").trim() || "N/A",
       lineItems: [],
-  };
+    };
 
     const partRows = document.evaluate(
       '//table[contains(@class, "order-item-list-table")]//tr',
@@ -65,22 +59,19 @@ setTimeout(() => {
         XPathResult.FIRST_ORDERED_NODE_TYPE,
         null
       ).singleNodeValue?.href || "";
+
       if (/^\d+$/.test(lineNumber) && Number(lineNumber) >= 1 && Number(lineNumber) <= 12) {
-        invoiceData.lineItems.push({
-          lineNumber,
-          partNumber,
-          altpartNumber,
-          qty,
-          price: gpgiPrice,
-          partLink,
-        });
+        invoiceData.lineItems.push({ lineNumber, partNumber, altpartNumber, qty, price: gpgiPrice, partLink });
       }
     }
 
     createPopup(invoiceData);
     popupCreated = true;
   }
-}, 3000);
+}
+
+setTimeout(parseAndCreatePopup, 3000);
+
 
 
 function createPopup(data) {
@@ -138,7 +129,25 @@ function createPopup(data) {
 
 
 
-
+  const refreshButton = document.createElement("button");
+  refreshButton.textContent = "Refresh";
+  Object.assign(refreshButton.style, {
+    float: "right",
+    marginRight: "10px",
+    marginBottom: "20px",
+    backgroundColor: "#2196F3",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "24px"
+  });
+  refreshButton.addEventListener("click", () => {
+    popupCreated = false;
+    document.querySelectorAll("div[style*='position: fixed']").forEach(el => el.remove());
+    setTimeout(parseAndCreatePopup, 500);
+  });
 
   // Rest of your existing popup content
   const closeButton = document.createElement("button");
@@ -182,6 +191,7 @@ function createPopup(data) {
       zIndex: '10000'
   });
   // Now we can safely add buttons to container
+  buttonContainer.appendChild(refreshButton);
   buttonContainer.appendChild(createInvoiceButton);
   buttonContainer.appendChild(closeButton);
   createInvoiceButton.addEventListener("click", () => {

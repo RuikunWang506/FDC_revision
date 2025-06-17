@@ -107,6 +107,64 @@
             border-radius: 4px;
         }
     </style>
+    <style>
+    /* Existing styles... */
+    
+    /* Compact Pivot Table Styles */
+    #pivotTableContainer {
+        max-width: 600px;
+        margin: 20px 0;
+    }
+    
+    #pivotTableContainer h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        color: #333;
+    }
+    
+    #pivotTable {
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    #pivotTable th,
+    #pivotTable td {
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    
+    #pivotTable th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+    
+    #pivotTable tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    #pivotTable tbody tr:hover {
+        background-color: #e9ecef;
+    }
+    
+    /* Make the pivot table responsive */
+    @media (max-width: 768px) {
+        #pivotTableContainer {
+            max-width: 100%;
+        }
+        
+        #pivotTable {
+            font-size: 0.8rem;
+        }
+        
+        #pivotTable th,
+        #pivotTable td {
+            padding: 4px 8px;
+        }
+    }
+</style>
 </head>
 <body>
     {% include 'navbar.html' %}
@@ -234,7 +292,15 @@
         }
 
         // Determine manufacturer prefix based on invoice number
-        const manufacturerPrefix = invoiceNo.startsWith('CU') ? 'Hyundai:HD_' : 'Honda:H_';
+        let manufacturerPrefix = '';
+
+        if (invoiceNo.startsWith('CU')) {
+        manufacturerPrefix = 'Hyundai:HD_';
+        } else if (invoiceNo.startsWith('CT')) {
+        manufacturerPrefix = 'Toyota:T_';
+        } else if (invoiceNo.startsWith('VA') || invoiceNo.startsWith('CH')) {
+        manufacturerPrefix = 'Honda:H_';
+        }        
         const itemProductService = manufacturerPrefix + partNumber;
 
         csvData.push([
@@ -370,7 +436,7 @@ function showStatusMessage(message, type) {
             .catch(error => alert(error.message));
         });
     </script>
-    <script>
+<script>
 document.getElementById("convertBtn").addEventListener("click", () => {
     if (!uploadedFile) return alert("Please upload a file first!");
 
@@ -409,7 +475,12 @@ document.getElementById("convertBtn").addEventListener("click", () => {
                 paging: false,
                 searching: false,
                 info: false,
-                order: [[1, 'desc']]  // Sort by quantity column descending
+                order: [[1, 'desc']],  // Sort by quantity column descending
+                columnDefs: [
+                    { targets: 0, width: '70%', className: 'dt-body-left' },   // Part Number
+                    { targets: 1, width: '30%', className: 'dt-body-right' }   // Quantity
+                ],
+                dom: 't'  // Only show the table, no other controls
             });
         }
         
@@ -449,7 +520,7 @@ function base64ToBlob(base64, mimeType) {
     
     return new Blob(byteArrays, {type: mimeType});
 }
+</script>
 
-    </script>
 </body>
 </html>
