@@ -52,7 +52,6 @@ def log_response(response):
         status_code = response.status_code
         log_event('INFO', f'{details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}')
     return response
-
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     # If user is already logged in, redirect to home
@@ -77,8 +76,6 @@ def login():
         if check_credentials(username, password):
             # Check if user has an email address
             connection = get_db_connection()
-            # Check if user has an email address
-            connection = get_db_connection()
             if connection:
                 try:
                     cursor = connection.cursor()
@@ -98,7 +95,10 @@ def login():
                     if connection and connection.is_connected():
                         connection.close()
             
+            # Set session data after successful authentication
             session['username'] = username
+            session['user_permissions'] = get_user_permissions(username)
+            
             if remember:
                 session.permanent = True
             else:
@@ -115,7 +115,7 @@ def login():
             redirect_url = session.pop('next', url_for("home"))
             return redirect(redirect_url)
         else:
-            flash("Invalid credentials")
+            flash("Invalid username or password")
             log_event('WARNING', f'Failed login attempt - Username: {username}, IP: {client_ip}')
     
     return render_template("login.html", client_ip=client_ip, location=location_data)
@@ -512,11 +512,17 @@ def check_credentials(username, password):
             cursor.execute(query, (username,))
             result = cursor.fetchone()
             if result:
-                return result[0] == password
-            
-            session['username'] = username.upper()
-            session['user_permissions'] = get_user_permissions(username.upper()) # <--- This line fetches and stores permissions
-            return True
+                # User exists, check password
+                if result[0] == password:
+                    return True
+                else:
+                    return False
+            else:
+                # User doesn't exist
+                return False
+        except Error as e:
+            print(f"Database error during credential check: {e}")
+            return False
         finally:
             if 'cursor' in locals():
                 cursor.close()

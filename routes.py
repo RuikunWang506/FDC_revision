@@ -43,6 +43,7 @@ from loris_sticker import main, process_input_data
 from datetime import timedelta,datetime
 from dailytodo import dailytodo
 from gpgtmx import gpgtmx_bp
+from memo_routes import memo_bp
 
 import io
 import zipfile
@@ -62,7 +63,7 @@ from warehousemap import warehousemap_bp
 from master_audit import master_audit_bp
 
 client = WebClient(token=Config.SLACK_TOKEN)
-
+ 
 # Configure logging
 
 def register_routes(app):
@@ -84,6 +85,7 @@ def register_routes(app):
     app.register_blueprint(pdf_toolkit_bp)
     app.register_blueprint(warehousemap_bp)
     app.register_blueprint(master_audit_bp)
+    app.register_blueprint(memo_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 
