@@ -6,6 +6,23 @@
     <title>Master Audit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        .upload-section {
+    background-color: #e8f4fd;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 2px solid #0d6efd;
+}
+
+.file-upload-info {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: 10px;
+}
+
+.upload-button {
+    margin-top: 15px;
+}
         .table-container {
             max-height: 500px;
             overflow-y: auto;
@@ -171,7 +188,54 @@
                 </div>
             </form>
         </div>
+        <!-- Excel Upload Section - Only show if there are sold out items -->
+{% if show_upload_section %}
+<div class="upload-section">
+    <h4><i class="fas fa-upload"></i> Upload Inventory Excel File</h4>
+    <p class="mb-3">Upload an Excel file to match additional inventory data with the sold out SKUs above.</p>
+    
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        <!-- Preserve existing form data -->
+        <input type="hidden" name="search_type" value="{{ search_type }}">
+        <input type="hidden" name="database_filter" value="{{ database_filter }}">
+        <input type="hidden" name="num_orders" value="{{ num_orders }}">
+        <input type="hidden" name="days_back" value="{{ days_back }}">
+        <input type="hidden" name="since_date" value="{{ since_date }}">
         
+        <div class="form-row">
+            <label for="inventory_file" class="form-label">Select Excel File:</label>
+            <input type="file" class="form-control" id="inventory_file" name="inventory_file" 
+                   accept=".xlsx,.xls" required style="width: 300px;">
+            <button type="submit" class="btn btn-success upload-button">
+                <i class="fas fa-upload"></i> Upload & Match Inventory
+            </button>
+        </div>
+        
+        <div class="file-upload-info">
+            <strong>Required Excel columns:</strong> Product Name, Stock SKU, Warehouse, Location, On Hand, Available, Reserved, Safety Stock, Average Cost, Total Value<br>
+            <strong>Supported formats:</strong> .xlsx, .xls<br>
+            <strong>Note:</strong> The system will match SKUs from the sold out table with the "Stock SKU" column in your Excel file.
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<!-- Matched Inventory Section - Only show if there are matches -->
+{% if matched_inventory_html %}
+<div class="audit-section">
+    <div class="card">
+        <div class="card-header">
+            <h3>Matched Inventory from Excel Upload</h3>
+            <small class="text-muted">SKUs that appear in both the sold out table and uploaded Excel file</small>
+        </div>
+        <div class="card-body">
+            <div class="table-container">
+                {{ matched_inventory_html|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
         <!-- Orders Section -->
         <div class="audit-section">
             <div class="card">

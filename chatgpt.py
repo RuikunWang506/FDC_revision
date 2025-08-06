@@ -6,6 +6,7 @@ import json
 import logging
 from openai import OpenAI
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for,current_app
+from auth import login_required
 
 chatgpt_bp = Blueprint('chatgpt_bp', __name__)
 logging.basicConfig(level=logging.INFO)
@@ -65,14 +66,14 @@ def get_gpt_response(message, model_name, attachment=None):
         return response.choices[0].message.content
 
 @chatgpt_bp.route('/chatgpt', methods=['GET'])
+@login_required
 def chat_page():
-    if 'username' not in session:
-        return redirect(url_for("auth.login"))
     return render_template('chatgpt.html', 
                          current_user=session.get('username'),
                          models=AVAILABLE_MODELS)
 
 @chatgpt_bp.route('/chatgpt', methods=['POST'])
+@login_required
 def chat():
     data = request.get_json()
     message = data.get('message', '').strip()

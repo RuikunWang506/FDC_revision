@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}FDC MEMO{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+    {% include 'navbar.html' %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-4">📝 Memo Drag enabled 备忘录，可拖拽</h1>
+            <h2 class="text-center mb-4">Daily updates here</h2>
+
+            <div class="text-center mb-3">
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Column 1: To Do -->
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📋Rush-Import 紧急-重要</h5>
+                    <button class="btn btn-sm btn-light" onclick="addCard('todo')">+</button>
+                </div>
+                <div class="card-body drop-zone" id="todo-column" data-column="todo" style="min-height: 500px;">
+                    <!-- Cards will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Column 2: In Progress -->
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🔄 Rush - not import 紧急-不重要</h5>
+                    <button class="btn btn-sm btn-light" onclick="addCard('progress')">+</button>
+                </div>
+                <div class="card-body drop-zone" id="progress-column" data-column="progress" style="min-height: 500px;">
+                    <!-- Cards will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Column 3: Review -->
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">👀 no rush - import 不紧急-重要</h5>
+                    <button class="btn btn-sm btn-light" onclick="addCard('review')">+</button>
+                </div>
+                <div class="card-body drop-zone" id="review-column" data-column="review" style="min-height: 500px;">
+                    <!-- Cards will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Column 4: Done -->
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">✅ Done 完成</h5>
+                    <button class="btn btn-sm btn-light" onclick="addCard('done')">+</button>
+                </div>
+                <div class="card-body drop-zone" id="done-column" data-column="done" style="min-height: 500px;">
+                    <!-- Cards will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body text-center py-2">
+                <small class="text-muted">
+                    👤 Current User: <strong>{{ current_user }}</strong>
+
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Card Modal -->
+<div class="modal fade" id="addCardModal" tabindex="-1" aria-labelledby="addCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+    <h5 class="modal-title" id="addCardModalLabel">你有什么问题</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="addCardForm">
+                    <div class="mb-3">
+                        <label for="cardTitle" class="form-label">问题</label>
+                        <input type="text" class="form-control" id="cardTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cardDescription" class="form-label">内容</label>
+                        <textarea class="form-control" id="cardDescription" rows="3"></textarea>
+                    </div>
+                    <input type="hidden" id="cardColumn">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveCard()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentColumn = '';
+let currentModal = null;
+let draggedCard = null;
+
+// Load memos when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadMemos();
+    setupDragAndDrop();
+    
+    // Initialize modal reference
+    const modalElement = document.getElementById('addCardModal');
+    if (modalElement) {
+        // Try different Bootstrap versions
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            currentModal = new bootstrap.Modal(modalElement);
+        } else if (typeof $ !== 'undefined' && $.fn.modal) {
+            // Fallback to jQuery Bootstrap
+            currentModal = modalElement;
+        }
+    }
+});
+
+function setupDragAndDrop() {
+    // Add drag and drop event listeners to all drop zones
+    const dropZones = document.querySelectorAll('.drop-zone');
+    
+    dropZones.forEach(zone => {
+        zone.addEventListener('dragover', handleDragOver);
+        zone.addEventListener('drop', handleDrop);
+        zone.addEventListener('dragenter', handleDragEnter);
+        zone.addEventListener('dragleave', handleDragLeave);
+    });
+}
+
+function handleDragStart(e) {
+    draggedCard = e.target.closest('.memo-card');
+    if (draggedCard) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', draggedCard.outerHTML);
+        draggedCard.style.opacity = '0.5';
+    }
+}
+
+function handleDragEnd(e) {
+    if (draggedCard) {
+        draggedCard.style.opacity = '1';
+        draggedCard = null;
+    }
+    
+    // Remove all drag-over classes
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.classList.remove('drag-over');
+    });
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    e.target.closest('.drop-zone').classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    if (!e.target.closest('.drop-zone').contains(e.relatedTarget)) {
+        e.target.closest('.drop-zone').classList.remove('drag-over');
+    }
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    
+    const dropZone = e.target.closest('.drop-zone');
+    const newColumn = dropZone.dataset.column;
+    
+    if (draggedCard && newColumn) {
+        const cardId = draggedCard.dataset.cardId;
+        
+        // Move card to new column in the server
+        moveCard(cardId, newColumn);
+    }
+    
+    dropZone.classList.remove('drag-over');
+}
+
+function moveCard(cardId, newColumn) {
+    fetch('/memo/move', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            card_id: cardId,
+            new_column: newColumn
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadMemos(); // Reload all memos to reflect the change
+        } else {
+            alert('Error moving card: ' + (data.error || 'Unknown error'));
+            loadMemos(); // Reload to reset the UI
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error moving card: ' + error.message);
+        loadMemos(); // Reload to reset the UI
+    });
+}
+
+function addCard(column) {
+    currentColumn = column;
+    document.getElementById('cardColumn').value = column;
+    document.getElementById('cardTitle').value = '';
+    document.getElementById('cardDescription').value = '';
+    
+    // Show modal with different methods
+    if (currentModal && typeof bootstrap !== 'undefined') {
+        currentModal.show();
+    } else if (typeof $ !== 'undefined') {
+        $('#addCardModal').modal('show');
+    } else {
+        // Fallback - show modal manually
+        document.getElementById('addCardModal').style.display = 'block';
+        document.getElementById('addCardModal').classList.add('show');
+    }
+}
+
+function hideModal() {
+    if (currentModal && typeof bootstrap !== 'undefined') {
+        currentModal.hide();
+    } else if (typeof $ !== 'undefined') {
+        $('#addCardModal').modal('hide');
+    } else {
+        // Fallback - hide modal manually
+        document.getElementById('addCardModal').style.display = 'none';
+        document.getElementById('addCardModal').classList.remove('show');
+    }
+}
+
+function saveCard() {
+    const title = document.getElementById('cardTitle').value;
+    const description = document.getElementById('cardDescription').value;
+    const column = document.getElementById('cardColumn').value;
+    
+    if (!title.trim()) {
+        alert('Please enter a title');
+        return;
+    }
+    
+    const cardData = {
+        title: title,
+        description: description,
+        column: column,
+        timestamp: new Date().toISOString()
+    };
+    
+    fetch('/memo/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cardData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadMemos();
+            hideModal();
+        } else {
+            alert('Error saving card: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving card: ' + error.message);
+    });
+}
+
+function deleteCard(cardId) {
+    if (confirm('你确认要删了我，不放在完成里面吗？')) {
+        fetch('/memo/delete/' + cardId, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadMemos();
+            } else {
+                alert('Error deleting card: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting card: ' + error.message);
+        });
+    }
+}
+
+function loadMemos() {
+    fetch('/memo/list')
+    .then(response => response.json())
+    .then(data => {
+        // Clear all columns
+        document.getElementById('todo-column').innerHTML = '';
+        document.getElementById('progress-column').innerHTML = '';
+        document.getElementById('review-column').innerHTML = '';
+        document.getElementById('done-column').innerHTML = '';
+        
+        // Add cards to respective columns
+        if (data.memos && Array.isArray(data.memos)) {
+            data.memos.forEach(memo => {
+                const cardHtml = createCardHtml(memo);
+                const columnElement = document.getElementById(memo.column + '-column');
+                if (columnElement) {
+                    columnElement.innerHTML += cardHtml;
+                }
+            });
+        }
+        
+        // Re-setup drag and drop for new cards
+        setupCardDragEvents();
+    })
+    .catch(error => {
+        console.error('Error loading memos:', error);
+        // Show some default message or handle gracefully
+    });
+}
+
+function setupCardDragEvents() {
+    const cards = document.querySelectorAll('.memo-card');
+    cards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+    });
+}
+
+function createCardHtml(memo) {
+    const date = new Date(memo.timestamp).toLocaleDateString();
+    const title = memo.title ? memo.title.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    const description = memo.description ? memo.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    const createdBy = memo.created_by || 'Unknown';
+    
+    return `
+        <div class="card mb-2 memo-card" draggable="true" data-card-id="${memo.id}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h6 class="card-title">${title}</h6>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCard(${memo.id})" title="Delete card">×</button>
+                </div>
+                ${description ? `<p class="card-text small">${description}</p>` : ''}
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">${date}</small>
+                    <small class="text-muted">👤 ${createdBy}</small>
+                </div>
+                <div class="drag-handle">⋮⋮</div>
+            </div>
+        </div>
+    `;
+}
+
+// Add event listeners for modal close buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', hideModal);
+    });
+});
+</script>
+
+<style>
+.memo-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: grab;
+    position: relative;
+}
+
+.memo-card:active {
+    cursor: grabbing;
+}
+
+.memo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.memo-card[draggable="true"]:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.memo-card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.drop-zone {
+    transition: background-color 0.2s, border 0.2s;
+    border: 2px dashed transparent;
+    border-radius: 8px;
+}
+
+.drop-zone.drag-over {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+    border-style: dashed;
+}
+
+.drag-handle {
+    position: absolute;
+    top: 5px;
+    right: 30px;
+    color: #ccc;
+    font-size: 12px;
+    cursor: grab;
+    user-select: none;
+}
+
+.drag-handle:hover {
+    color: #999;
+}
+
+.card-header h5 {
+    font-size: 1rem;
+}
+
+.card-header {
+    padding: 0.75rem 1rem;
+}
+
+.card-body {
+    padding: 0.75rem;
+}
+
+.memo-card .card-body {
+    padding: 0.5rem;
+}
+
+.memo-card .card-title {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    padding-right: 20px; /* Make room for drag handle */
+}
+
+.memo-card .card-text {
+    margin-bottom: 0.25rem;
+    color: #666;
+}
+
+/* Visual feedback for different columns */
+.drop-zone[data-column="todo"].drag-over {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+}
+
+.drop-zone[data-column="progress"].drag-over {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+}
+
+.drop-zone[data-column="review"].drag-over {
+    background-color: rgba(23, 162, 184, 0.1);
+    border-color: #17a2b8;
+}
+
+.drop-zone[data-column="done"].drag-over {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+}
+
+/* Fallback modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    outline: 0;
+}
+
+.modal.show {
+    display: block !important;
+}
+
+/* Mobile responsiveness for drag and drop */
+@media (max-width: 768px) {
+    .memo-card {
+        margin-bottom: 10px;
+    }
+    
+    .drag-handle {
+        display: none; /* Hide drag handle on mobile */
+    }
+    
+    .memo-card .card-title {
+        padding-right: 0;
+    }
+}
+
+/* Animation for card movement */
+@keyframes cardMove {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.memo-card.moving {
+    animation: cardMove 0.3s ease-in-out;
+}
+</style>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+</body>
+</html>

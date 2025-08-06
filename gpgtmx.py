@@ -70,6 +70,7 @@ def register_routes(app):
             "supports_credentials": True
         }
     })
+
 @gpgtmx_bp.route("/gpg_check_updates")
 def check_updates():
     """Check if there have been updates since the client's last check"""
@@ -97,6 +98,20 @@ def get_tmx_descriptions():
             description = row[1].strip()
             descriptions[sku] = description
     return descriptions
+
+def get_prefixed_part_number(order_number, part_number):
+    """Get the prefixed part number based on order number prefix."""
+    order_number = str(order_number).strip().upper()
+    part_number = str(part_number).strip().upper()
+    
+    if order_number.startswith("CH") or order_number.startswith("VA"):
+        return f"Honda:H_{part_number}"
+    elif order_number.startswith("CU"):
+        return f"Hyundai:HD_{part_number}"
+    elif order_number.startswith("CT"):
+        return f"Toyota:T_{part_number}"
+    else:
+        return part_number  # No prefix for unknown order types
 
 @gpgtmx_bp.route("/gpg")
 def gpg_redirect():
@@ -130,16 +145,8 @@ def gpginvoice():
                 part_number = item['partNumber'].strip().upper()
                 line_number = str(item['lineNumber']).strip()
 
-                # Determine Manufacturer Prefix
-                if order_number.startswith("CH"):
-                    prefixed_part_number = f"Honda:H_{part_number}"
-                elif order_number.startswith("CU"):
-                    prefixed_part_number = f"Hyundai:HD_{part_number}"
-                elif order_number.startswith("VA"):
-                    prefixed_part_number = f"Honda:H_{part_number}"
-                else:
-                    prefixed_part_number = part_number  # No prefix
-
+                # Get prefixed part number for description lookup
+                prefixed_part_number = get_prefixed_part_number(order_number, part_number)
                 description = descriptions.get(prefixed_part_number, '')
 
                 new_row = [
@@ -211,7 +218,7 @@ def gpginvoice():
             # Prepare response message
             response_message = f"Row is indeed added to the Excel file. This is order number {total_orders_today} of the day, you have {total_orders_today} total today."
             if duplicates:
-                response_message = f" Skipped {len(duplicates)} duplicate entries."
+                response_message += f" Skipped {len(duplicates)} duplicate entries."
 
             return jsonify({
                 "success": True,
@@ -228,17 +235,22 @@ def gpginvoice():
                 df = pd.read_excel(xls, engine='openpyxl')
             
             descriptions = get_tmx_descriptions()
-            df['Description'] = df.apply(lambda row: descriptions.get(
-                f"Honda:H_{row['Part Number']}" if row['orderNumber'].startswith("CH") else
-                f"Hyundai:HD_{row['Part Number']}" if row['orderNumber'].startswith("CU") else
-                f"Honda:H_{row['Part Number']}" if row['orderNumber'].startswith("VA") else
-                row['Part Number'], ''
-            ), axis=1)
+            
+            # Fix the Description column assignment - use a proper function instead of lambda
+            def get_description(row):
+                order_number = str(row['orderNumber']).strip().upper()
+                part_number = str(row['Part Number']).strip().upper()
+                prefixed_part_number = get_prefixed_part_number(order_number, part_number)
+                return descriptions.get(prefixed_part_number, '')
+            
+            df['Description'] = df.apply(get_description, axis=1)
 
             df = df[['orderNumber', 'orderDate', 'Line Number', 'Part Number', 'Description', 'Quantity', 'Price']]
             table_html = df.to_html(classes='table table-striped', table_id='gpgTable', index=False)
         except PermissionError:
             table_html = "<p>Data file is currently in use. Please refresh the page.</p>"
+        except Exception as e:
+            table_html = f"<p>Error loading data: {str(e)}</p>"
     else:
         table_html = "<p>No data available</p>"
         
@@ -276,21 +288,6 @@ def gpg_finish():
         import io
         qbo_df = pd.read_csv(io.StringIO(csv_content))
         
-        # Modify part numbers based on order number prefix
-        if 'orderNumber' in qbo_df.columns and 'partNumber' in qbo_df.columns:
-            def add_prefix(row):
-                order_num = str(row['orderNumber']).strip()
-                part_num = str(row['partNumber']).strip()
-                
-                if order_num.startswith(('VA', 'CH')):
-                    return f"Honda:H_{part_num}"
-                elif order_num.startswith('CU'):
-                    return f"Hyundai:HD_{part_num}"
-                else:
-                    return part_num
-                    
-            qbo_df['partNumber'] = qbo_df.apply(add_prefix, axis=1)
-
         # Ensure unique sheet name
         sheet_name = 'for_qbo'
 
@@ -402,7 +399,11 @@ def upload_pdf():
 
         # Create Pivot Table: Sum of Qty per Part No
         if not df.empty:
-            pivot_df = df.pivot_table(index="Part No", values="Qty", aggfunc="sum")
+            pivot_df = df.pivot_table(index="Part No", values="Qty", aggfunc="sum").reset_index()
+            # Rename columns to be more clear
+            pivot_df.columns = ["Part No", "Total Qty"]
+            # Sort by quantity descending
+            pivot_df = pivot_df.sort_values("Total Qty", ascending=False)
             print("Pivot Table Head:")
             print(pivot_df.head())
         else:
@@ -411,14 +412,35 @@ def upload_pdf():
         # Generate Excel file for download
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            pivot_df.to_excel(writer, sheet_name="Pivot Table")
+            pivot_df.to_excel(writer, sheet_name="Pivot Table", index=False)
             
             # Get the workbook and sheet
             workbook = writer.book
             worksheet = writer.sheets['Pivot Table']
             
-            # Set column A width to 15 inches (approximately 120 units in Excel's width system)
+            # Import border styles
+            from openpyxl.styles import Border, Side
+            
+            # Define border style
+            thin_border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+            
+            # Apply borders to all cells with data
+            max_row = len(pivot_df) + 1  # +1 for header
+            max_col = len(pivot_df.columns)
+            
+            for row in range(1, max_row + 1):
+                for col in range(1, max_col + 1):
+                    cell = worksheet.cell(row=row, column=col)
+                    cell.border = thin_border
+            
+            # Set column widths
             worksheet.column_dimensions['A'].width = 20
+            worksheet.column_dimensions['B'].width = 12
             
             # Set page setup for 4x6 inches with 0.25 inch margins
             worksheet.page_setup.paperSize = worksheet.PAPERSIZE_LETTER
@@ -433,8 +455,13 @@ def upload_pdf():
 
         output.seek(0)
         
-        # Convert pivot table to HTML for display
-        pivot_html = pivot_df.to_html(classes='table table-striped table-bordered', table_id='pivotTable')
+        # Convert pivot table to HTML for display with proper table structure
+        pivot_html = pivot_df.to_html(
+            classes='table table-striped table-bordered', 
+            table_id='pivotTable',
+            index=False,
+            escape=False
+        )
         
         # Encode the Excel file as base64 for direct download
         import base64
@@ -451,4 +478,3 @@ def upload_pdf():
     except Exception as e:
         print(f"General Error: {e}")
         return jsonify({"error": str(e)}), 500
-

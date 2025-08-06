@@ -10,8 +10,8 @@ from auth import log_event
 class CustomRequestHandler(WSGIRequestHandler):
     def log_request(self, code='-', size='-'):
         # Skip everything from the local host
-        if self.client_address[0] in ("127.0.0.1", "::1"):
-            return
+        if self.client_address[0] in ("127.0.0.1", "::1", "173.198.50.202"):
+            return True
 
         # Skip static files (adjust prefix if needed)
         if self.path.startswith("/static"):

@@ -2,29 +2,55 @@ import os
 from flask import Blueprint, render_template, request, send_file, current_app,session,redirect,url_for
 import pandas as pd
 import re
+from auth import login_required
 
 container_bp = Blueprint('container', __name__)
 
 @container_bp.route('/container', methods=['GET', 'POST'])
+@login_required
 def upload_container_file():
-    if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("auth.login"))
     current_user = session['username']
     if request.method == 'POST':
-        file = request.files.get('container_file')
-        if file:
-            df_header = pd.read_excel(file, sheet_name='System File', nrows=2, header=None)
-            container_number_raw = df_header.iloc[0, 0]
-            container_number = container_number_raw.split('-')[-1].strip()
-            step3_file_path, step4_file_path, df_step3, df_step4 = process_container_file(file, container_number)
-            # Render the template with download links and rendered tables
+        files = request.files.getlist('container_files')  # Changed to support multiple files
+        if files and files[0].filename:  # Check if files are selected
+            all_files = []
+            all_tables = []
+            processing_errors = []
+            
+            for file in files:
+                try:
+                    df_header = pd.read_excel(file, sheet_name='System File', nrows=2, header=None)
+                    container_number_raw = df_header.iloc[0, 0]
+                    container_number = container_number_raw.split('-')[-1].strip()
+                    step3_file_path, step4_file_path, df_step3, df_step4 = process_container_file(file, container_number)
+                    
+                    # Add files to the list
+                    all_files.extend([step3_file_path, step4_file_path])
+                    
+                    # Add table data with container info
+                    all_tables.append({
+                        'container_number': container_number,
+                        'table1': df_step3.to_html(classes="table table-bordered", index=False),
+                        'table2': df_step4.to_html(classes="table table-bordered", index=False),
+                        'success': True
+                    })
+                    
+                    current_app.logger.info(f"Successfully processed container file: {file.filename}")
+                    
+                except Exception as e:
+                    error_msg = f"Error processing file {file.filename}: {str(e)}"
+                    current_app.logger.error(error_msg)
+                    processing_errors.append(error_msg)
+                    continue
+            
+            # Render the template with all processed files and tables
             return render_template('container.html', 
-                                   files=[step3_file_path, step4_file_path],  # Two generated file paths
-                                   table1=df_step3.to_html(classes="table table-bordered", index=False), 
-                                   table2=df_step4.to_html(classes="table table-bordered", index=False),current_user=current_user)
+                                   files=all_files,
+                                   tables=all_tables,
+                                   errors=processing_errors,
+                                   current_user=current_user)
     # On GET request, just render the upload form
-    return render_template('container.html',current_user=current_user)
+    return render_template('container.html', current_user=current_user)
 
 def process_container_file(file, container_number):
     df_f24213 = pd.read_excel(file, sheet_name='System File', header=2)
@@ -121,6 +147,7 @@ def process_container_file(file, container_number):
     return output_step3_path, output_step4_path, df_step3, df_step4
 
 @container_bp.route('/download55/<filename>')
+@login_required
 def download_file55(filename):
     # Define the directory for saved files in 'output/container/'
     output_dir = os.path.join(current_app.root_path, 'output', 'container')

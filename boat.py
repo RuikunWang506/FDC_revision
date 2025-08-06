@@ -4,6 +4,7 @@ import pyodbc
 import os
 from datetime import datetime
 import logging
+from auth import login_required
 
 
 boat_service_bp = Blueprint('boat_service', __name__, template_folder='../templates')
@@ -27,9 +28,8 @@ conn_str = (
 conn = pyodbc.connect(conn_str)
 
 @boat_service_bp.route('/boat', methods=['GET'])
+@login_required
 def boat_service():
-    if 'username' not in session:
-        return redirect(url_for("auth.login"))
     current_user = session['username']
     current_app.logger.info(f"***{current_user}***__@@@checked boat page@@@")
     file_path = 'C:/Users/stream/Dropbox/Pictures-China (1)/container catalog/Container/container catalog/container import/container import.xlsb.xlsx'

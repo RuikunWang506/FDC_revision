@@ -13,9 +13,12 @@ import mysql.connector
 from mysql.connector import Error
 import pyodbc
 import base64
+from loris_sticker import main, process_input_data
+
+
 
 lori_automation_bp = Blueprint('lori_automation', __name__)
-color_dict = {"TL":"Teal","ABL":"ASHY BLUE","FLOWER":"FLOWER","BG":"BEIGE","BK":"BLACK","BL":"BLUE","BP":"BLUSH PINK","BR":"BROWN","CF":"COFFEE","CG":"COGNAC","CO":"CORAL","DM":"DENIM BLUE","DPL":"DARK PLUM","FU":"FUSCHIA","GN":"GREEN","GY":"GREY","KH":"KHAKI","LBL":"LIGHT BLUE","LV":"LAVENDER","MD":"MUSTARD","MV":"MAUVE","NV":"NAVY","OL":"OLIVE","OR":"ORANGE","OW":"OFF WHITE","PK":"PINK","PL":"PLUM","PP":"PURPLE","RD":"RED","TN":"TAN","TP":"TAUPE","TQ":"TEQUISE","WN":"WINE","WT":"WHITE","YL":"YELLOW","ST":"STONE"}
+color_dict = {"TL":"Teal","ABL":"ASHY BLUE","FLOWER":"FLOWER","BG":"BEIGE","BK":"BLACK","BL":"BLUE","BP":"BLUSH PINK","BR":"BROWN","CF":"COFFEE","CG":"COGNAC","CO":"CORAL","DM":"DENIM BLUE","DPL":"DARK PLUM","FU":"FUSCHIA","GN":"GREEN","GY":"GREY","KH":"KHAKI","LBL":"LIGHT BLUE","LV":"LAVENDER","MD":"MUSTARD","MV":"MAUVE","NV":"NAVY","OL":"OLIVE","OR":"ORANGE","OW":"OFF WHITE","PK":"PINK","PL":"PLUM","PP":"PURPLE","RD":"RED","TN":"TAN","TP":"TAUPE","TQ":"TEQUISE","WN":"WINE","WT":"WHITE","YL":"YELLOW","ST":"STONE","L.ST":"L.Stone","L":"LARGE"}
 
 # MySQL Database configuration
 db_config = {
@@ -174,7 +177,8 @@ def process_pdf(pdf_content):
     
     address = extract_clean_address(text_content)
     
-    item_pattern = re.compile(r"([\w\-]+)\s+1\s+(\d+)\s+(\d{12})\s+(.+?)\s+\$(\d+\.\d+)\s+\$(\d+\.\d+)")
+    # Updated regex pattern to handle line numbers and various vendor item formats including dots
+    item_pattern = re.compile(r"\d+\s+([A-Za-z][A-Za-z0-9\-\s\.]*?)\s+1\s+(\d+)\s+(\d{12})\s+(.+?)\s+\$(\d+\.\d+)\s+\$(\d+\.\d+)", re.DOTALL)
     rows = item_pattern.findall(text_content)
     
     today = datetime.now().strftime("%m/%d/%Y")
@@ -197,21 +201,38 @@ def process_pdf(pdf_content):
     
     for entry in rows:
         vendor_item, qty, upc, description, unit_price, ext_cost = entry
+        vendor_item = vendor_item.strip()  # Clean up any extra whitespace
         qty = Decimal(qty)
         unit_price = Decimal(unit_price)
         ext_cost = Decimal(ext_cost)
         
-        if "-" in vendor_item:
+        # Clean up description - remove extra whitespace and newlines
+        description = ' '.join(description.split())
+        
+        # Check for Special items first (both "Special" and "Special - L" types)
+        if vendor_item.lower() == "special" or vendor_item.lower() == "special - l":
+            color = ""  # Leave color field empty for Special items
+        elif "-" in vendor_item:
             parts = vendor_item.split("-")
-            color_key = parts[-1]  # Get everything after the last hyphen
-            color = color_dict.get(color_key, color_key)  # Use the color key itself as fallback
+            color_key = parts[-1].strip()  # Get everything after the last hyphen
+            
+            # Special handling for items like "N2366-L.ST" where color is "L.ST"
+            if "." in color_key:
+                # For cases like "L.ST", use the full color_key and modify vendor_item
+                color = color_dict.get(color_key, color_key)
+                # Replace the last hyphen with a space for compound color codes
+                last_hyphen_index = vendor_item.rfind("-")
+                vendor_item = vendor_item[:last_hyphen_index] + " " + vendor_item[last_hyphen_index+1:]
+            else:
+                # Normal case - look up in color dictionary
+                color = color_dict.get(color_key, color_key)
         else:
-            # Handle case with no hyphen
+            # Handle case with no hyphen - try last 2 characters
             color_key = vendor_item[-2:]
             color = color_dict.get(color_key, "")
             
         ws[f"A{starting_row}"] = starting_row - 19
-        ws[f"B{starting_row}"] = vendor_item
+        ws[f"B{starting_row}"] = vendor_item  # Keep original vendor_item unchanged
         ws[f"C{starting_row}"] = color
         ws[f"D{starting_row}"] = qty
         ws[f"E{starting_row}"] = description
@@ -375,10 +396,19 @@ def lori_automation():
                 }
             })
 
+        # Prepare individual Excel files data for frontend
+        individual_excel_files = []
+        for excel in excel_files:
+            individual_excel_files.append({
+                'filename': excel['filename'],
+                'content': base64.b64encode(excel['content']).decode('utf-8')
+            })
+
         return jsonify({
             'excel_zip': base64.b64encode(memory_zip.getvalue()).decode('utf-8'),
             'combined_pdf': base64.b64encode(pdf_output.getvalue()).decode('utf-8'),
-            'shipstation_data': shipstation_data
+            'shipstation_data': shipstation_data,
+            'individual_excel_files': individual_excel_files
         })
     return render_template("lori_automation.html", current_user=session['username'])
 
@@ -412,6 +442,7 @@ def send_to_shipstation():
     # Process each batch
     all_responses = []
     for batch_index, batch in enumerate(batches):
+        current_app.logger.info(f"Processing batch {batch_index + 1}/{len(batches)} with {len(batch)} orders")
         
         response = requests.post(
             url, 
@@ -420,14 +451,22 @@ def send_to_shipstation():
             auth=(current_app.config['APIKEY'], current_app.config['APIPASS'])
         )
         
-        # Log the response
+        # Log the response status
+        current_app.logger.info(f"Batch {batch_index + 1} response status: {response.status_code}")
+        
+        if response.status_code != 200:
+            current_app.logger.error(f"ShipStation API error for batch {batch_index + 1}: Status {response.status_code}, Response: {response.text}")
         
         try:
             response_data = response.json()
             all_responses.append(response_data)
         except Exception as e:
-            current_app.logger.error(f"Error parsing response ")
-            all_responses.append({"error": str(e)})
+            current_app.logger.error(f"Error parsing response for batch {batch_index + 1}: Status {response.status_code}, Error: {str(e)}, Response text: {response.text[:500]}")
+            all_responses.append({
+                "error": str(e),
+                "status_code": response.status_code,
+                "response_text": response.text[:500]
+            })
     
     # Combine all responses
     combined_response = {
@@ -588,3 +627,82 @@ def upload_otb():
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
+            
+@lori_automation_bp.route("/loris_ups", methods=["GET", "POST"])
+def loris_ups():
+    if 'username' not in session:
+        return redirect(url_for("auth.login"))
+    
+    current_user = session['username']
+    filename_30stickers = None
+    filename_exact = None
+    error_message = None
+    table_data = None
+    
+    input_data = request.form.get("input_data")
+    sku = request.form.get("sku", "")
+    barcode = request.form.get("barcode", "")
+    quantity = request.form.get("quantity", "")
+    
+    if request.method == "POST":
+        if "submit_data" in request.form:
+            try:
+                current_app.logger.info("Processing data in Loris UPS for %s", current_user)
+                
+                # Import the main function from loris_sticker
+                from loris_sticker import main
+                
+                # Generate PDFs for both versions
+                filename_30stickers, filename_exact = main(input_data)
+                
+                if not filename_30stickers or not filename_exact:
+                    error_message = "An error occurred while generating the PDFs."
+            except Exception as e:
+                error_message = f"An error occurred: {e}"
+                current_app.logger.error("Exception in Loris UPS: %s", e)
+                
+        elif "show_table" in request.form:
+            try:
+                # Import the parse function from loris_sticker
+                from loris_sticker import process_input_data
+                table_data = process_input_data(input_data)
+                # Convert to the format expected by the template
+                table_data = [[item[0], item[1], item[2]] for item in table_data]
+            except Exception as e:
+                error_message = f"An error occurred while parsing the data: {e}"
+                current_app.logger.error("Error parsing data in Loris UPS: %s", e)
+    
+    # Ensure table_data is a list
+    if table_data is None:
+        table_data = []
+    
+    return render_template("loris_ups.html", 
+                         filename_30stickers=filename_30stickers, 
+                         filename_exact=filename_exact, 
+                         error_message=error_message, 
+                         table_data=table_data, 
+                         input_data=input_data, 
+                         sku=sku, 
+                         barcode=barcode, 
+                         quantity=quantity, 
+                         current_user=current_user)
+
+@lori_automation_bp.route("/download_file3/<filename>")
+def download_file3(filename):
+    """Download generated sticker files"""
+    if 'username' not in session:
+        return redirect(url_for("auth.login"))
+    
+    try:
+        # Files are stored in the pdf_output_folder from loris_sticker.py
+        file_path = os.path.join("output/barcode_output", filename)
+        
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True, download_name=filename)
+        else:
+            current_app.logger.error(f"File not found: {file_path}")
+            return jsonify({'error': 'File not found'}), 404
+            
+    except Exception as e:
+        current_app.logger.error(f"Error downloading file {filename}: {str(e)}")
+        return jsonify({'error': 'Error downloading file'}), 500
