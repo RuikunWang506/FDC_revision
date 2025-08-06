@@ -35,3 +35,6 @@ class Config:
     
     GOOGLE_CREDENTIALS_FILE = r'C:/FDC_FLASK_APP/client_secret.json'
     
+    # ShipStation API Configuration
+    APIKEY = "b8a6c57f6dcc4ca5b01011e20b414fd1"
+    APIPASS = "07fe8c250831477fab9c2d3db6f0b9cd"

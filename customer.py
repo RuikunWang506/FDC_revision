@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify,redirect,session,render_template,url_for,current_app
 import pyodbc
 import pandas as pd
+from auth import login_required
 
 # Define the blueprint
 customer_bp = Blueprint('customer', __name__)
@@ -12,20 +13,15 @@ password = 'Fdc2022!!'
 driver = 'ODBC Driver 17 for SQL Server'
 
 @customer_bp.route('/customer', methods=['GET'])
+@login_required
 def customer_home():
-    if 'username' not in session:
-        session['next'] = request.url
-        return redirect(url_for("auth.login"))
     current_user = session['username']
     return render_template('customer.html',current_user=current_user)
 
 
 @customer_bp.route('/check_customer', methods=['POST'])
+@login_required
 def check_customer():
-    if 'username' not in session:
-        session['next'] = request.url
-        return redirect(url_for("auth.login"))
-    
     current_user = session['username']
     data = request.get_json()
     customer_name = data.get('customer_name', '')
@@ -101,11 +97,9 @@ def check_customer():
     })
 
 @customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
+@customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
+@login_required
 def customer_details(customer_id):
-    if 'username' not in session:
-        session['next'] = request.url
-        return redirect(url_for("auth.login"))
-    
     current_user = session['username']
     # Get username from query parameter if available
     username_from_request = request.args.get('username')

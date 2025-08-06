@@ -221,7 +221,8 @@
                 </li>
                 
 
-                {% if current_user not in 'fdc' %}
+{% if current_user is defined and 'fdc' not in (current_user|lower) %}
+
                 <li class="nav-item">
                     <a class="nav-link" href="/memo">
                         📝memo

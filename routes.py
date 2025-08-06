@@ -44,6 +44,7 @@ from datetime import timedelta,datetime
 from dailytodo import dailytodo
 from gpgtmx import gpgtmx_bp
 from memo_routes import memo_bp
+from auth import login_required  # Import the login_required decorator
 
 import io
 import zipfile
@@ -90,13 +91,11 @@ def register_routes(app):
     app.permanent_session_lifetime = timedelta(days=30)
 
     @app.route("/", methods=["GET", "POST"])
+    @login_required
     def home():
         client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         log_event("INFO", f'{client_ip} "{request.method} {request.path}"')
         
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("index.html", current_user=current_user)
 
@@ -109,11 +108,8 @@ def register_routes(app):
         return send_from_directory(app.static_folder, "robots.txt")
     
     @app.route("/list_routes", methods=["GET"])
+    @login_required
     def list_routes():
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("auth.login"))
-        
         current_user = session['username']
         
         # Only allow admin users to access this route
@@ -145,9 +141,8 @@ def register_routes(app):
     
     
     @app.route("/delete_image", methods=["POST"])
+    @login_required
     def delete_image():
-        if 'username' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
         current_user = session['username']
         if current_user != 'yetimaster':
             return jsonify({"error": "Permission denied"}), 403
@@ -234,11 +229,8 @@ def register_routes(app):
 
     @app.route("/item_lookup", methods=["GET", "POST"])
     @app.route("/item_lookup/<string:user_input>", methods=["GET"])
+    @login_required
     def item_lookup(user_input=None):
-        if 'username' not in session or not session['username']:
-            session['next'] = request.url
-            return redirect(url_for("auth.login"))
-
         current_user = session['username']
         excel_html = None
         history_html = None  # Initialize history_html
@@ -382,10 +374,8 @@ def register_routes(app):
         )
 
     @app.route('/image/<path:filename>')
+    @login_required
     def serve_image(filename):
-        if 'username' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-            
         image_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
         
         # Check if image exists
@@ -407,6 +397,7 @@ def register_routes(app):
             return send_from_directory('static', 'no_image_available.jpg')
 
     @app.route('/update_location', methods=['POST'])
+    @login_required
     def update_location():
         data = request.get_json()
         sku = data.get('sku')
@@ -473,10 +464,8 @@ def register_routes(app):
 
     @app.route("/order_lookup", methods=["GET", "POST"])
     @app.route("/order_lookup/<string:order_number>", methods=["GET"])
+    @login_required
     def order_lookup(order_number=None):
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
-        
         current_user = session['username']
         excel_html = None
 
@@ -522,6 +511,7 @@ def register_routes(app):
             current_user=current_user
         )
     @app.route('/label_maker_from_order_lookup', methods=['POST'])
+    @login_required
     def label_maker_from_order_lookup():
         current_user = session['username']
         try:
@@ -576,6 +566,7 @@ def register_routes(app):
 
     
     @app.route("/run_fast_script", methods=["POST"])
+    @login_required
     def run_fast_script():
         try:
             app.logger.info("Running fast script")
@@ -600,9 +591,8 @@ def register_routes(app):
 
 
     @app.route("/label_maker", methods=["GET", "POST"])
+    @login_required
     def label_maker():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         filename = None
         error_message = None
@@ -623,9 +613,8 @@ def register_routes(app):
         return render_template("label_maker.html", filename=filename, error_message=error_message, current_user=current_user, number_of_labels=number_of_labels, duplicate_numbers=duplicate_numbers)
 
     @app.route("/macy", methods=["GET", "POST"])
+    @login_required
     def macy_maker():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         filename = None
         error_message = None
@@ -647,10 +636,8 @@ def register_routes(app):
         return render_template("macy.html", filename=filename, error_message=error_message, current_user=current_user, po_num=po_num, order_number=order_number, apt=apt, carrier=carrier, project=project)
 
     @app.route("/loris", methods=["GET", "POST"])
+    @login_required
     def loris():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
-
         current_user = session['username']
         filename_30stickers = None
         filename_exact = None
@@ -714,9 +701,8 @@ def register_routes(app):
         
 
     @app.route('/log')
+    @login_required
     def display():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         search_term = request.args.get('search', '').strip()
 
@@ -775,10 +761,8 @@ def register_routes(app):
             return jsonify(error=str(e)), 500
 
     @app.route('/log/search', methods=['POST'])
+    @login_required
     def search_logs():
-        if 'username' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-        
         search_term = request.form.get('search_term', '').strip()
         if not search_term:
             return redirect(url_for('display'))
@@ -861,29 +845,29 @@ def register_routes(app):
         return formatted
          
     @app.route('/download2/<filename>')
+    @login_required
     def download_file2(filename):
         current_user = session['username']
         app.logger.info("***%s***__@@@[Download][labels]@@@__ %s", current_user,filename)
         return send_from_directory("output/label_output/", filename, as_attachment=False)
 
     @app.route('/download3/<filename>')
+    @login_required
     def download_file3(filename):
         app.logger.info("[Download][loris_barcode]File %s downloaded from barcode output", filename)
         return send_from_directory("output/barcode_output/", filename, as_attachment=False)
 
 
     @app.route('/download4/<filename>')
+    @login_required
     def download_file4(filename):
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         app.logger.info("***%s***__@@@[Download][labels]@@@__ %s", current_user,filename)
         return send_from_directory("output/macy_label/", filename, as_attachment=False)
 
     @app.route("/report_bug", methods=["GET", "POST"])
+    @login_required
     def report_bug():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         
         if request.method == "POST":
@@ -921,24 +905,21 @@ def register_routes(app):
         return render_template("report_bug.html",current_user=current_user)
 
     @app.route('/shipping_receipt', methods=['GET'])
+    @login_required
     def shipping_receipt():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template('upload_file.html', current_user=current_user)
     
     @app.route('/help', methods=['GET'])
+    @login_required
     def help():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template('help.html', current_user=current_user)
 
 
     @app.route('/send_shipping_receipt', methods=['POST'])
+    @login_required
     def send_shipping_receipt():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         file = request.files.get('file')
         memo = request.form.get('memo')
         store = request.form.get('store')
@@ -1020,9 +1001,8 @@ def register_routes(app):
         return redirect(url_for('shipping_receipt'))
 
     @app.route("/calculator", methods=["GET"])
+    @login_required
     def calculatorapp():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("calculator2.html",  current_user=current_user)
      
@@ -1059,16 +1039,14 @@ def register_routes(app):
 
 
     @app.route("/geek_tools", methods=["GET"])
+    @login_required
     def geek_tools():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("geek_tools.html", current_user=current_user)
     
     @app.route("/shipping_center", methods=["GET"])
+    @login_required
     def shipping_center():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         return render_template("shipping_center.html", current_user=current_user)
 
@@ -1098,9 +1076,8 @@ def register_routes(app):
         return sorted_filenames
     
     @app.route("/geek_tools/custom_query", methods=["GET", "POST"])
+    @login_required
     def custom_query():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         excel_html = None
         error_message = None
@@ -1130,9 +1107,8 @@ def register_routes(app):
 
     
     @app.route('/upload_center', methods=['GET', 'POST'])
+    @login_required
     def upload_center():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
 
         if request.method == 'POST':
@@ -1435,11 +1411,8 @@ def register_routes(app):
         )
 
     @app.route("/bookmarks", methods=["GET", "POST"])
+    @login_required
     def bookmarks_page():  # Renamed function
-        if 'username' not in session:
-            session['next'] = request.url
-            return redirect(url_for("auth.login"))
-
         current_user = session['username']
         
         if current_user != 'yeti':

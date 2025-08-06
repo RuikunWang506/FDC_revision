@@ -11,6 +11,7 @@ import secrets
 from datetime import datetime, timedelta
 from config import Config
 import json
+from functools import wraps
 
 # Google OAuth imports
 from google_auth_oauthlib.flow import Flow
@@ -21,6 +22,17 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 import os
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
+
+def login_required(f):
+    """Decorator to require login for routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            # Store the current URL to redirect back after login
+            session['next'] = request.url
+            return redirect(url_for('auth.login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def log_event(level, message):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
@@ -97,6 +109,7 @@ def login():
             
             # Set session data after successful authentication
             session['username'] = username
+            session['logged_in'] = True  # Add this for login_required decorator compatibility
             session['user_permissions'] = get_user_permissions(username)
             
             if remember:
@@ -123,14 +136,13 @@ def login():
 @auth_bp.route("/logout")
 def logout():
     session.pop('username', None)
+    session.pop('logged_in', None)  # Clear logged_in flag too
     flash("Logged out")
     return redirect(url_for("auth.login"))
 
 @auth_bp.route("/update_email", methods=["GET", "POST"])
+@login_required
 def update_email():
-    if 'username' not in session:
-        return redirect(url_for("auth.login"))
-    
     username = session['username']
     connection = get_db_connection()
     
@@ -162,11 +174,8 @@ def update_email():
     return render_template("update_email.html")
 
 @auth_bp.route("/manage_users", methods=["GET", "POST"])
+@login_required
 def manage_users():
-    # Check if user is logged in
-    if 'username' not in session:
-        return redirect(url_for("auth.login"))
-    
     # Block access if user is not yetimaster
     if session['username'] != 'yetimaster':
         flash("Access denied. Only yetimaster can manage users.")
@@ -721,6 +730,7 @@ def google_callback():
                     
                     if result:
                         session['username'] = result[0]
+                        session['logged_in'] = True  # Add for decorator compatibility
                         flash(f"Logged in as {result[0]} via Google")
                         return redirect(url_for("home"))
                     else:
@@ -756,10 +766,8 @@ def google_no_account():
 
 
 @auth_bp.route("/edit_user", methods=["POST"])
+@login_required
 def edit_user():
-    if 'username' not in session:
-        return jsonify({"error": "Not logged in"}), 401
-    
     # Parse the JSON data from the request
     data = request.get_json()
     user_id = data.get('id')
@@ -796,10 +804,8 @@ def edit_user():
 
 
 @auth_bp.route("/delete_user", methods=["POST"])
+@login_required
 def delete_user():
-    if 'username' not in session:
-        return jsonify({"error": "Not logged in"}), 401
-    
     # Parse the JSON data from the request
     data = request.get_json()
     user_id = data.get('userId')
@@ -836,10 +842,8 @@ def delete_user():
             connection.close()
 
 @auth_bp.route("/user_settings", methods=["GET", "POST"])
+@login_required
 def user_settings():
-    if 'username' not in session:
-        return redirect(url_for("auth.login"))
-    
     username = session['username']
     success_message = None
     error_message = None

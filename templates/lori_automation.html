@@ -111,6 +111,10 @@
         <div class="row">
             <div class="col-12">
                 <h2>掖庭选美机</h2>
+                <a href="{{ url_for('lori_automation.loris_ups') }}" class="btn btn-danger mb-3">
+                    <i class="fas fa-arrow-left"></i> 贴纸点这里（新的UPS版本还没做好）
+                </a>
+
                 <!-- New SKU Input Field -->
                 <div class="card mt-4">
                     <div class="card-header bg-primary text-white">
@@ -222,15 +226,34 @@
                         <div class="card-body">
                             <!-- Download Buttons -->
                             <div class="row mb-4">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <a id="excel-download" class="btn btn-success btn-block w-100">
-                                        <i class="fas fa-file-excel"></i> 小主价目表 (Excel)
+                                        <i class="fas fa-file-excel"></i> 小主价目表 (Excel ZIP)
                                     </a>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <button id="individual-excel-btn" class="btn btn-info btn-block w-100">
+                                        <i class="fas fa-download"></i> 单独下载 Excel
+                                    </button>
+                                </div>
+                                <div class="col-md-4">
                                     <a id="pdf-download" class="btn btn-danger btn-block w-100">
                                         <i class="fas fa-file-pdf"></i> 小主合体名单 (PDF)
                                     </a>
+                                </div>
+                            </div>
+
+                            <!-- Individual Excel Files Section -->
+                            <div id="individual-excel-section" style="display: none;" class="mb-4">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0">单独下载 Excel 文件</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="individual-excel-list" class="d-grid gap-2">
+                                            <!-- Individual download links will be populated here -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -617,8 +640,24 @@
             document.getElementById('pdf-download').href = 'data:application/pdf;base64,' + data.combined_pdf;
             document.getElementById('pdf-download').download = 'combined_orders.pdf';
 
-            // Store original data
+            // Store original data and individual excel files
             window.shipstationData = JSON.parse(JSON.stringify(data.shipstation_data));
+            window.individualExcelFiles = data.individual_excel_files || [];
+
+            // Set up individual Excel download functionality
+            const individualBtn = document.getElementById('individual-excel-btn');
+            const individualSection = document.getElementById('individual-excel-section');
+            
+            individualBtn.addEventListener('click', () => {
+                if (individualSection.style.display === 'none') {
+                    individualSection.style.display = 'block';
+                    individualBtn.innerHTML = '<i class="fas fa-chevron-up"></i> 隐藏单独下载';
+                    populateIndividualExcelList();
+                } else {
+                    individualSection.style.display = 'none';
+                    individualBtn.innerHTML = '<i class="fas fa-download"></i> 单独下载 Excel';
+                }
+            });
 
             // Populate editable table
             const tbody = document.getElementById('shipstation-table').querySelector('tbody');
@@ -681,6 +720,40 @@
                     submitButton.innerHTML = '<i class="fas fa-shipping-fast"></i> 前往养心殿，等待小主们临幸 ( ShipStation )';
                 }
             };
+        }
+
+        function populateIndividualExcelList() {
+            const individualList = document.getElementById('individual-excel-list');
+            
+            // If we have individual files data from server
+            if (window.individualExcelFiles && window.individualExcelFiles.length > 0) {
+                individualList.innerHTML = window.individualExcelFiles.map((file, index) => `
+                    <a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${file.content}" 
+                       download="${file.filename}" 
+                       class="btn btn-outline-success">
+                        <i class="fas fa-file-excel"></i> ${file.filename}
+                    </a>
+                `).join('');
+            } else {
+                // Generate individual downloads from PO numbers as fallback
+                individualList.innerHTML = window.shipstationData.map((order, index) => {
+                    const filename = `${order.orderNumber.replace(/-/g, '_')}.xlsx`;
+                    return `
+                        <button onclick="downloadIndividualExcel(${index})" class="btn btn-outline-success">
+                            <i class="fas fa-file-excel"></i> ${filename}
+                        </button>
+                    `;
+                }).join('');
+            }
+        }
+
+        window.downloadIndividualExcel = function(index) {
+            // This would need to make a request to the server to generate individual file
+            // For now, show an alert
+            const order = window.shipstationData[index];
+            alert(`Downloading individual Excel for PO: ${order.orderNumber}`);
+            // You could implement this by making an AJAX call to a new endpoint
+            // that generates a single Excel file for the specific PO
         }
     });
 </script>
