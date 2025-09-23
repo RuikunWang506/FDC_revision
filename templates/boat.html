@@ -56,6 +56,14 @@
             background-color: rgba(216, 127, 136, 0.3) !important; /* Light red with more transparency */
             color: white; /* White text for better contrast */
         }
+
+        .status-imported {
+            background-color: rgba(144, 238, 144, 0.3) !important; /* Light green for imported */
+        }
+
+        .status-not-imported {
+            background-color: rgba(255, 182, 193, 0.3) !important; /* Light pink for not imported */
+        }
     </style>
 </head>
 <body>
@@ -121,12 +129,11 @@
                 var eta = $(this).find('td:nth-child(4)').text().trim();
                 var rcd = $(this).find('td:nth-child(5)').text().trim();
                 var reserved = $(this).find('td:nth-child(1)').text().trim();
+                var importStatus = $(this).find('td:nth-child(8)').text().trim();
 
                 // Format dates
                 if (eta) $(this).find('td:nth-child(4)').text(formatDate(eta));
                 if (rcd) $(this).find('td:nth-child(5)').text(formatDate(rcd));
-
-                
 
                 // Apply status classes
                 if (status === '🚢ocean🚢') {
@@ -141,7 +148,12 @@
                     $(this).addClass('status-landed');
                 }
 
-                
+                // Apply import status classes
+                if (importStatus === '✅imported') {
+                    $(this).addClass('status-imported');
+                } else if (importStatus === '❌not imported to oms') {
+                    $(this).addClass('status-not-imported');
+                }
             });
         });
       </script>

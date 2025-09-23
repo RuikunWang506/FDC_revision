@@ -208,7 +208,7 @@
                     </div>
                     <div class="collapse {% if sku or barcode or quantity or table_data or filename_30stickers or filename_exact %}show{% endif %}" id="lorisSection">
                         <div class="card-body">
-                            <form method="post" action="/loris_ups" enctype="multipart/form-data">
+                            <form method="post" action="/loris_fedex" enctype="multipart/form-data">
                                 <div class="textarea-container">
                                     <div class="form-group">
                                         <label for="sku">SKU:</label><br>
@@ -283,22 +283,22 @@
                         </div>
                     </div>
                 </div>
-                                <!-- Loris UPS Section -->
+                                <!-- Loris fedex Section -->
                 <div class="card mt-4">
                     <div class="card-header bg-warning text-dark">
                         <h4 class="mb-0">
-                            <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#lorisUpsSection" aria-expanded="false" aria-controls="lorisUpsSection">
-                                <i class="fas fa-shipping-fast"></i> Loris UPS -- Dennis 特供 - V.Alpha 
+                            <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#lorisfedexSection" aria-expanded="false" aria-controls="lorisfedexSection">
+                                <i class="fas fa-shipping-fast"></i> Loris fedex -- Dennis 特供 - V.Alpha 
                                 <i class="fas fa-chevron-down float-end mt-1"></i>
                             </button>
                         </h4>
                     </div>
-                    <div class="collapse" id="lorisUpsSection">
+                    <div class="collapse" id="lorisfedexSection">
                         <div class="card-body">
                             <div class="text-center">
-                                <p class="mb-3">Access Loris UPS functionality</p>
-                                <a href="/loris_ups" class="btn btn-warning btn-lg">
-                                    <i class="fas fa-external-link-alt"></i> Go to Loris UPS
+                                <p class="mb-3">Access Loris fedex functionality</p>
+                                <a href="/loris_fedex" class="btn btn-warning btn-lg">
+                                    <i class="fas fa-external-link-alt"></i> Go to Loris fedex
                                 </a>
                             </div>
                         </div>

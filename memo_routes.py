@@ -16,11 +16,6 @@ def init_memo_db():
     db_path = get_db_path()
     logger = current_app.logger if current_app else None
     
-    if logger:
-        logger.info(f"Initializing database at: {db_path}")
-    else:
-        print(f"Initializing database at: {db_path}")
-    
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -52,10 +47,7 @@ def init_memo_db():
             else:
                 print("Column added successfully")
         else:
-            if logger:
-                logger.info("created_by column already exists")
-            else:
-                print("created_by column already exists")
+            print("created_by column already exists")
             
         conn.commit()
         conn.close()
@@ -79,12 +71,8 @@ def memo_page():
         return redirect(url_for("auth.login"))
     
     current_user = session['username']
-    logger = current_app.logger
-    logger.info(f"Memo page accessed by user: {current_user}")
     
     # Initialize database when accessing memo page
-    init_result = init_memo_db()
-    logger.info(f"Database initialization result: {init_result}")
     
     return render_template('memo.html', current_user=current_user)
 
@@ -179,9 +167,7 @@ def list_memos():
     logger = current_app.logger
     current_user = session.get('username', 'Unknown')
     
-    try:
-        logger.info(f"Listing memos for user: {current_user}")
-        
+    try:        
         db_path = get_db_path()
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -216,7 +202,6 @@ def list_memos():
             memos.append(memo)
         
         conn.close()
-        logger.info(f"Retrieved {len(memos)} memos")
         return jsonify({'memos': memos})
     
     except Exception as e:

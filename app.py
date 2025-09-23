@@ -40,7 +40,7 @@ class CustomRequestHandler(WSGIRequestHandler):
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
-app.secret_key = __import__("os").urandom(24)
+app.secret_key = 'your-fixed-secret-key-for-persistent-sessions-fdc-flask-app-2025'
 app.config.from_object(Config)
 app.config['SERVER_NAME'] = 'www.fdcef.com'
 app.config['PREFERRED_URL_SCHEME'] = 'https'
