@@ -56,137 +56,233 @@ email_config = {
     'download_path': r'C:\Users\stream\Dropbox\Elaine\loris 2025\==========LORIS_auto_PENDING====='
 }
 
-def fetch_email_attachments():
-    """Fetch PDF attachments from emails from the last 2 months sent by MI9_Merchant@lorisgifts.com"""
+def parse_pdf_to_database(pdf_content, batch_date, email_date=None):
+    """Parse PDF content and store order information in database"""
     try:
-        # Create download directory if it doesn't exist
-        os.makedirs(email_config['download_path'], exist_ok=True)
-        # Calculate date 2 months ago
+        reader = PdfReader(pdf_content)
+        text_content = "\n".join([page.extract_text() for page in reader.pages])
+        lines = text_content.split("\n")
+        
+        # Extract order information
+        order_date = lines[1].strip() if len(lines) > 1 else "N/A"
+        delivery_date = lines[2].strip() if len(lines) > 2 else "N/A"
+        cancel_date = lines[3].strip() if len(lines) > 3 else "N/A"
+        
+        po_match = re.search(r"P\.O\. #:\s*([\d-]+)", text_content)
+        po_number = po_match.group(1) if po_match else "N/A"
+        
+        address = extract_clean_address(text_content)
+        
+        # Parse items using existing regex pattern
+        item_pattern = re.compile(r"\d+\s+([A-Za-z][A-Za-z0-9\-\s\.]*?)\s+1\s+(\d+)\s+(\d{12})\s+(.+?)\s+\$(\d+\.\d+)\s+\$(\d+\.\d+)", re.DOTALL)
+        rows = item_pattern.findall(text_content)
+        
+        # Calculate totals
+        total_qty = Decimal(0)
+        total_cost = Decimal(0)
+        items = []
+        
+        for entry in rows:
+            vendor_item, qty, upc, description, unit_price, ext_cost = entry
+            vendor_item = vendor_item.strip()
+            qty = Decimal(qty)
+            unit_price = Decimal(unit_price)
+            ext_cost = Decimal(ext_cost)
+            description = ' '.join(description.split())
+            
+            # Determine color
+            if vendor_item.lower() == "special" or vendor_item.lower() == "special - l":
+                color = ""
+            elif "-" in vendor_item:
+                parts = vendor_item.split("-")
+                color_key = parts[-1].strip()
+                if "." in color_key:
+                    color = color_dict.get(color_key, color_key)
+                    last_hyphen_index = vendor_item.rfind("-")
+                    vendor_item = vendor_item[:last_hyphen_index] + " " + vendor_item[last_hyphen_index+1:]
+                else:
+                    color = color_dict.get(color_key, color_key)
+            else:
+                color_key = vendor_item[-2:]
+                color = color_dict.get(color_key, "")
+            
+            items.append({
+                'vendor_item': vendor_item,
+                'color': color,
+                'quantity': qty,
+                'description': description,
+                'unit_price': unit_price,
+                'extended_cost': ext_cost,
+                'upc': upc
+            })
+            
+            total_qty += qty
+            total_cost += ext_cost
+        
+        # Store in database
+        connection = get_db_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}
+        
+        cursor = connection.cursor()
+        
+        # Check if order already exists
+        cursor.execute("SELECT po_number FROM lori_orders WHERE po_number = %s", (po_number,))
+        existing_order = cursor.fetchone()
+        
+        if existing_order:
+            return {'message': f'Order {po_number} already exists in database', 'skipped': True}
+        
+        # Insert order
+        insert_order_sql = """
+            INSERT INTO lori_orders (po_number, batch_date, email_date, order_date, delivery_date, 
+                                   cancel_date, ship_to_address, total_qty, total_cost, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_order_sql, (
+            po_number, batch_date, email_date, order_date, delivery_date,
+            cancel_date, address, total_qty, total_cost, 'pending'
+        ))
+        
+        # Insert items
+        insert_item_sql = """
+            INSERT INTO lori_order_items (po_number, vendor_item, color, quantity, description, 
+                                        unit_price, extended_cost, upc)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        for item in items:
+            cursor.execute(insert_item_sql, (
+                po_number, item['vendor_item'], item['color'], item['quantity'],
+                item['description'], item['unit_price'], item['extended_cost'], item['upc']
+            ))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return {
+            'success': True,
+            'po_number': po_number,
+            'total_items': len(items),
+            'total_qty': float(total_qty),
+            'total_cost': float(total_cost)
+        }
+        
+    except Exception as e:
+        return {'error': f'PDF processing error: {str(e)}'}
+
+def fetch_email_attachments():
+    """Fetch PDF attachments from emails and download them to directory"""
+    try:
+        # Calculate date 1 month ago
         from dateutil.relativedelta import relativedelta
         one_months_ago = datetime.now() - relativedelta(months=1)
         search_date = one_months_ago.strftime('%d-%b-%Y')  # Format: 01-Jan-2023
+        
         # Connect to IMAP server
         mail = imaplib.IMAP4_SSL(email_config['imap_server'], email_config['imap_port'])
         mail.login(email_config['email'], email_config['password'])
         # Select inbox
         mail.select('inbox')
-        # Search for emails from specific sender in the last 1 months
+        # Search for emails from specific sender in the last 1 month
         search_criteria = f'(FROM "{email_config["sender_filter"]}" SINCE {search_date})'
         result, data = mail.search(None, search_criteria)
         if result != 'OK':
             return {'error': 'Failed to search emails'}
+        
         downloaded_files = []
-        skipped_existing = 0
-        newly_downloaded = 0
-        # Get email IDs from search
         email_ids = data[0].split() if result == 'OK' else []
-        # First, collect all email info and attachment names
-        attachment_map = {}  # {date_key: set(filenames)}
+        
+        # Ensure download directory exists
+        download_path = email_config['download_path']
+        os.makedirs(download_path, exist_ok=True)
+        
+        # Process each email and download PDF attachments
         for email_id in email_ids:
             result, data = mail.fetch(email_id, '(RFC822)')
             if result != 'OK':
                 continue
             email_message = email.message_from_bytes(data[0][1])
+            
             # Get email date
             email_date_str = email_message.get('Date', '')
             try:
                 from email.utils import parsedate_to_datetime
                 email_date = parsedate_to_datetime(email_date_str)
-                date_key = email_date.strftime('%Y-%m-%d')  # Format: YYYY-MM-DD
+                batch_date = email_date.strftime('%Y-%m-%d')  # Format: 2025-09-24
             except:
-                date_key = 'unknown_date'
-            if date_key not in attachment_map:
-                attachment_map[date_key] = set()
+                batch_date = datetime.now().strftime('%Y-%m-%d')
+            
+            # Create batch directory
+            batch_dir = os.path.join(download_path, batch_date)
+            os.makedirs(batch_dir, exist_ok=True)
+            
+            # Process PDF attachments
             for part in email_message.walk():
                 if part.get_content_disposition() == 'attachment':
                     filename = part.get_filename()
                     if filename and filename.lower().endswith('.pdf'):
-                        attachment_map[date_key].add(filename)
-        # Now, for each date_key and filename, download if not already present
-        for date_key, filenames in attachment_map.items():
-            date_dir = os.path.join(email_config['download_path'], date_key)
-            os.makedirs(date_dir, exist_ok=True)
-            for filename in filenames:
-                filepath = os.path.join(date_dir, filename)
-                if os.path.exists(filepath):
-                    skipped_existing += 1
-                    continue  # Skip download if file exists
-                # Find the email again to get the attachment content
-                for email_id in email_ids:
-                    result, data = mail.fetch(email_id, '(RFC822)')
-                    if result != 'OK':
-                        continue
-                    email_message = email.message_from_bytes(data[0][1])
-                    email_date_str = email_message.get('Date', '')
-                    try:
-                        from email.utils import parsedate_to_datetime
-                        email_date = parsedate_to_datetime(email_date_str)
-                        this_date_key = email_date.strftime('%Y-%m-%d')
-                    except:
-                        this_date_key = 'unknown_date'
-                    if this_date_key != date_key:
-                        continue
-                    for part in email_message.walk():
-                        if part.get_content_disposition() == 'attachment':
-                            fname = part.get_filename()
-                            if fname == filename:
-                                with open(filepath, 'wb') as f:
-                                    f.write(part.get_payload(decode=True))
-                                file_info = {
-                                    'filename': fname,
-                                    'original_filename': fname,
-                                    'filepath': filepath,
-                                    'size': os.path.getsize(filepath),
-                                    'email_date': email_date_str,
-                                    'date_key': date_key
-                                }
-                                downloaded_files.append(file_info)
-                                newly_downloaded += 1
-                                break
+                        # Generate unique filename if it already exists
+                        file_path = os.path.join(batch_dir, filename)
+                        counter = 1
+                        base_name, ext = os.path.splitext(filename)
+                        while os.path.exists(file_path):
+                            filename = f"{base_name}_{counter}{ext}"
+                            file_path = os.path.join(batch_dir, filename)
+                            counter += 1
+                        
+                        # Download PDF file
+                        try:
+                            with open(file_path, 'wb') as f:
+                                f.write(part.get_payload(decode=True))
+                            
+                            downloaded_files.append({
+                                'filename': filename,
+                                'filepath': file_path,
+                                'batch_date': batch_date
+                            })
+                        except Exception as e:
+                            print(f"Error downloading {filename}: {str(e)}")
+                            continue
+        
         mail.close()
         mail.logout()
-        # After all downloads, count all PDFs in each batch directory
-        batch_counts = {}
-        for date_key in attachment_map.keys():
-            date_dir = os.path.join(email_config['download_path'], date_key)
-            if os.path.exists(date_dir):
-                pdf_count = len([f for f in os.listdir(date_dir) if f.lower().endswith('.pdf')])
-            else:
-                pdf_count = 0
-            batch_counts[date_key] = pdf_count
-        # Sort batches by date (most recent first) and convert sets to lists for JSON serialization
-        sorted_batches = {k: list(v) for k, v in sorted(attachment_map.items(), key=lambda x: x[0], reverse=True)}
-        # Logging summary
-        print(f"[fetch_email_attachments] Total PDFs found in all batches: {sum(batch_counts.values())}")
-        print(f"[fetch_email_attachments] Skipped existing PDFs: {skipped_existing}")
-        print(f"[fetch_email_attachments] Newly downloaded PDFs: {newly_downloaded}")
+        
+        # Create batch summary
+        batch_dates = list(set([f['batch_date'] for f in downloaded_files]))
+        batch_summary = []
+        for batch_date in batch_dates:
+            batch_files = [f for f in downloaded_files if f['batch_date'] == batch_date]
+            batch_summary.append({
+                'date': batch_date,
+                'count': len(batch_files),
+                'files': [f['filename'] for f in batch_files]
+            })
+        
         print(f"[fetch_email_attachments] Total emails processed: {len(email_ids)}")
+        print(f"[fetch_email_attachments] Total files downloaded: {len(downloaded_files)}")
+        print(f"[fetch_email_attachments] Batch dates: {batch_dates}")
+        
         return {
             'success': True,
-            'files': downloaded_files,
-            'total_files': sum(batch_counts.values()),
             'total_emails_processed': len(email_ids),
-            'skipped_existing': skipped_existing,
-            'newly_downloaded': newly_downloaded,
-            'search_period': f'Last 1 months (since {search_date})',
-            'batches': sorted_batches,
-            'batch_summary': [
-                {
-                    'date': date_key,
-                    'file_count': batch_counts[date_key]
-                }
-                for date_key in sorted_batches.keys()
-            ]
+            'total_files': len(downloaded_files),
+            'files': downloaded_files,
+            'batches': batch_dates,
+            'batch_summary': batch_summary,
+            'search_period': f'Last 1 month (since {search_date})'
         }
     except Exception as e:
         return {'error': f'Email fetch error: {str(e)}'}
 
 def process_email_pdfs(selected_batch_date=None):
-    """Process PDFs that were downloaded from emails, optionally filtering by batch date"""
+    """Parse downloaded PDFs and store order data in database"""
     try:
         # Get all PDF files from download directory
         pdf_files = []
         seen_files = set()
+        
         if selected_batch_date:
             # Process only files from specific date batch
             batch_dir = os.path.join(email_config['download_path'], selected_batch_date)
@@ -195,126 +291,83 @@ def process_email_pdfs(selected_batch_date=None):
                     if filename.lower().endswith('.pdf'):
                         filepath = os.path.join(batch_dir, filename)
                         if filename not in seen_files:
-                            pdf_files.append(filepath)
+                            pdf_files.append({
+                                'filepath': filepath,
+                                'filename': filename,
+                                'batch_date': selected_batch_date
+                            })
                             seen_files.add(filename)
         else:
             # Process all PDF files from all batches
             if os.path.exists(email_config['download_path']):
                 for root, dirs, files in os.walk(email_config['download_path']):
+                    # Extract batch date from directory name
+                    batch_date = os.path.basename(root)
+                    if batch_date == os.path.basename(email_config['download_path']):
+                        batch_date = datetime.now().strftime('%Y-%m-%d')
+                    
                     for filename in files:
                         if filename.lower().endswith('.pdf'):
                             if filename not in seen_files:
                                 filepath = os.path.join(root, filename)
-                                pdf_files.append(filepath)
+                                pdf_files.append({
+                                    'filepath': filepath,
+                                    'filename': filename,
+                                    'batch_date': batch_date
+                                })
                                 seen_files.add(filename)
         
         if not pdf_files:
             return {'error': 'No PDF files found in download directory'}
         
-        excel_files = []
-        po_numbers = []
-        addresses = []
+        processed_orders = []
+        skipped_orders = 0
+        new_orders = 0
         
-        # Import PdfMerger here to avoid import issues
-        from PyPDF2 import PdfMerger
-        pdf_merger = PdfMerger()
-        
-        for filepath in pdf_files:
-            with open(filepath, 'rb') as f:
-                pdf_content = io.BytesIO(f.read())
-                result = process_pdf(pdf_content)
+        # Process each PDF file and store in database
+        for pdf_file in pdf_files:
+            try:
+                with open(pdf_file['filepath'], 'rb') as f:
+                    pdf_content = io.BytesIO(f.read())
+                    
+                # Parse batch date
+                try:
+                    batch_date = datetime.strptime(pdf_file['batch_date'], '%Y-%m-%d').date()
+                except:
+                    batch_date = datetime.now().date()
                 
-                excel_files.append({
-                    'content': result['excel'].getvalue(),
-                    'filename': result['filename']
-                })
-                po_numbers.append(result['po_number'])
-                addresses.append(result['address'])
+                # Parse PDF and store in database
+                result = parse_pdf_to_database(pdf_content, batch_date, datetime.now())
                 
-                pdf_content.seek(0)
-                pdf_merger.append(pdf_content)
+                if 'error' in result:
+                    print(f"Error processing {pdf_file['filename']}: {result['error']}")
+                    continue
+                elif result.get('skipped'):
+                    skipped_orders += 1
+                else:
+                    processed_orders.append({
+                        'filename': pdf_file['filename'],
+                        'po_number': result['po_number'],
+                        'total_items': result['total_items'],
+                        'batch_date': pdf_file['batch_date']
+                    })
+                    new_orders += 1
+                    
+            except Exception as e:
+                print(f"Error processing file {pdf_file['filename']}: {str(e)}")
+                continue
         
-        # Create ZIP of Excel files
-        memory_zip = io.BytesIO()
-        with zipfile.ZipFile(memory_zip, 'w') as zf:
-            for excel in excel_files:
-                zf.writestr(excel['filename'], excel['content'])
+        print(f"[process_email_pdfs] Total PDF files processed: {len(pdf_files)}")
+        print(f"[process_email_pdfs] New orders added to database: {new_orders}")
+        print(f"[process_email_pdfs] Orders skipped (already exist): {skipped_orders}")
         
-        # Create combined PDF
-        pdf_output = io.BytesIO()
-        pdf_merger.write(pdf_output)
-        pdf_output.seek(0)
-        
-        # Prepare ShipStation data
-        shipstation_data = []
-        for po, addr in zip(po_numbers, addresses):
-            addr_parts = addr.split('\n')
-            current_time = datetime.now().isoformat()
-            
-            shipstation_data.append({
-                "orderNumber": po,
-                "orderDate": current_time,
-                "paymentDate": current_time,
-                "shipByDate": current_time,
-                "orderStatus": "awaiting_shipment",
-                "customerUsername": "",
-                "customerEmail": "",
-                "billTo": {
-                    "name": f"Lori's Gift Shop #{po[:4]}"
-                },
-                "shipTo": {
-                    "name": f"Lori's Gift Shop #{po[:4]}",
-                    "company": addr_parts[0] if len(addr_parts) > 0 else "",
-                    "street1": addr_parts[1] if len(addr_parts) > 1 else "",
-                    "street2": "",
-                    "street3": "",
-                    "city": addr_parts[2].split(',')[0] if len(addr_parts) > 2 else "",
-                    "state": addr_parts[2].split(',')[1].split()[0] if len(addr_parts) > 2 else "",
-                    "postalCode": addr_parts[2].split(',')[1].split()[1] if len(addr_parts) > 2 else "",
-                    "country": "US",
-                    "phone": "",
-                    "residential": "false"
-                },
-                "carrierCode": "ups",
-                "serviceCode": "ups_ground",
-                "packageCode": "package",
-                "confirmation": "none",
-                "shipDate": datetime.now().strftime("%Y-%m-%d"),
-                "insuranceOptions": {
-                    "provider": "carrier",
-                    "insureShipment": "true",
-                    "insuredValue": "0"
-                },
-                "advancedOptions": {
-                    "nonMachinable": "false",
-                    "saturdayDelivery": "false",
-                    "containsAlcohol": "false",
-                    "mergedOrSplit": "false",
-                    "customField1": "",
-                    "customField2": "",
-                    "source": "Webstore",
-                    "billToParty": "third_party",
-                    "billToAccount": "7504E1",
-                    "billToPostalCode": "75006",
-                    "billToCountryCode": "US"
-                }
-            })
-
-        # Prepare individual Excel files data for frontend
-        individual_excel_files = []
-        for excel in excel_files:
-            individual_excel_files.append({
-                'filename': excel['filename'],
-                'content': base64.b64encode(excel['content']).decode('utf-8')
-            })
-
         return {
             'success': True,
-            'excel_zip': base64.b64encode(memory_zip.getvalue()).decode('utf-8'),
-            'combined_pdf': base64.b64encode(pdf_output.getvalue()).decode('utf-8'),
-            'shipstation_data': shipstation_data,
-            'individual_excel_files': individual_excel_files,
-            'processed_files': len(pdf_files)
+            'processed_orders': processed_orders,
+            'total_files': len(pdf_files),
+            'new_orders': new_orders,
+            'skipped_orders': skipped_orders,
+            'processed_files': len(processed_orders)
         }
         
     except Exception as e:
@@ -1069,6 +1122,102 @@ def process_local_pdfs():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
+@lori_automation_bp.route("/upload_and_process_pdfs", methods=["POST"])
+def upload_and_process_pdfs():
+    """Process uploaded PDF files directly into database and save to manual folder"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        files = request.files.getlist('files[]')
+        if not files:
+            return jsonify({'error': 'No files uploaded'}), 400
+        
+        processed_orders = []
+        skipped_orders = 0
+        new_orders = 0
+        batch_date = datetime.now().date()  # Use current date as batch date
+        
+        # Create manual directory for saving uploaded PDFs
+        manual_dir = os.path.join(email_config['download_path'], 'manual')
+        os.makedirs(manual_dir, exist_ok=True)
+        
+        # Helper function to check if filename exists in any folder
+        def file_exists_anywhere(filename, base_path):
+            """Check if a filename exists in any subfolder of base_path"""
+            if not os.path.exists(base_path):
+                return False
+            
+            for root, dirs, files in os.walk(base_path):
+                if filename in files:
+                    return True
+            return False
+        
+        for file in files:
+            if file and file.filename.lower().endswith('.pdf'):
+                try:
+                    filename = file.filename
+                    
+                    # Check if this filename already exists anywhere in the download directory
+                    if file_exists_anywhere(filename, email_config['download_path']):
+                        print(f"Skipping duplicate file: {filename} (already exists in download directory)")
+                        skipped_orders += 1
+                        continue
+                    
+                    # Read file content
+                    file_content = file.read()
+                    pdf_content = io.BytesIO(file_content)
+                    
+                    # Save PDF file to manual directory
+                    file_path = os.path.join(manual_dir, filename)
+                    
+                    # Save the PDF file
+                    with open(file_path, 'wb') as f:
+                        f.write(file_content)
+                    
+                    # Process the PDF into database
+                    result = parse_pdf_to_database(pdf_content, batch_date, datetime.now())
+                    
+                    if 'error' in result:
+                        print(f"Error processing {file.filename}: {result['error']}")
+                        continue
+                    elif result.get('skipped'):
+                        skipped_orders += 1
+                    else:
+                        processed_orders.append({
+                            'filename': filename,
+                            'saved_path': file_path,
+                            'po_number': result['po_number'],
+                            'total_items': result['total_items']
+                        })
+                        new_orders += 1
+                        
+                except Exception as e:
+                    print(f"Error processing file {file.filename}: {str(e)}")
+                    continue
+        
+        # Create appropriate message based on results
+        message_parts = []
+        if new_orders > 0:
+            message_parts.append(f'成功处理了 {new_orders} 个新订单到数据库，PDF文件已保存到 manual 文件夹')
+        if skipped_orders > 0:
+            message_parts.append(f'跳过了 {skipped_orders} 个重复文件')
+        
+        message = '；'.join(message_parts) if message_parts else '没有处理任何文件'
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'new_orders': new_orders,
+            'skipped_orders': skipped_orders,
+            'processed_files': len(processed_orders),
+            'saved_directory': manual_dir,
+            'count': new_orders  # For compatibility with existing frontend
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'处理上传文件时出错: {str(e)}'}), 500
+
 @lori_automation_bp.route("/lori_automation", methods=["GET", "POST"])
 def lori_automation():
     if 'username' not in session:
@@ -1079,115 +1228,283 @@ def lori_automation():
             return jsonify({'error': 'No files uploaded'}), 400
         
         files = request.files.getlist('files[]')
-        excel_files = []
-        po_numbers = []
-        addresses = []
+        processed_orders = []
+        upload_errors = []
         
-        # Import PdfMerger here to avoid import issues
-        from PyPDF2 import PdfMerger
-        pdf_merger = PdfMerger()
+        # Use current date as batch date for user uploads
+        batch_date = datetime.now().date()
         
         for file in files:
             if file.filename.endswith('.pdf'):
-                pdf_content = io.BytesIO(file.read())
-                result = process_pdf(pdf_content)
-                
-                excel_files.append({
-                    'content': result['excel'].getvalue(),
-                    'filename': result['filename']
-                })
-                po_numbers.append(result['po_number'])
-                addresses.append(result['address'])
-                
-                pdf_content.seek(0)
-                pdf_merger.append(pdf_content)
+                try:
+                    pdf_content = io.BytesIO(file.read())
+                    result = parse_pdf_to_database(pdf_content, batch_date)
+                    
+                    if 'error' in result:
+                        upload_errors.append({
+                            'filename': file.filename,
+                            'error': result['error']
+                        })
+                    elif result.get('skipped'):
+                        processed_orders.append({
+                            'filename': file.filename,
+                            'po_number': result.get('po_number', 'N/A'),
+                            'status': 'skipped',
+                            'message': 'Order already exists in database'
+                        })
+                    else:
+                        processed_orders.append({
+                            'filename': file.filename,
+                            'po_number': result['po_number'],
+                            'order_id': result['order_id'],
+                            'total_items': result['total_items'],
+                            'total_qty': result['total_qty'],
+                            'total_cost': result['total_cost'],
+                            'status': 'success',
+                            'batch_date': batch_date.strftime('%Y-%m-%d')
+                        })
+                except Exception as e:
+                    upload_errors.append({
+                        'filename': file.filename,
+                        'error': str(e)
+                    })
         
-        # Create ZIP of Excel files
-        memory_zip = io.BytesIO()
-        with zipfile.ZipFile(memory_zip, 'w') as zf:
-            for excel in excel_files:
-                zf.writestr(excel['filename'], excel['content'])
-        
-        # Create combined PDF
-        pdf_output = io.BytesIO()
-        pdf_merger.write(pdf_output)
-        pdf_output.seek(0)
-        
-        # Prepare ShipStation data
-        shipstation_data = []
-        for po, addr in zip(po_numbers, addresses):
-            addr_parts = addr.split('\n')
-            current_time = datetime.now().isoformat()
-            
-            shipstation_data.append({
-                "orderNumber": po,
-                "orderDate": current_time,
-                "paymentDate": current_time,
-                "shipByDate": current_time,
-                "orderStatus": "awaiting_shipment",
-                "customerUsername": "",
-                "customerEmail": "",
-                "billTo": {
-                    "name": f"Lori's Gift Shop #{po[:4]}"
-                },
-                "shipTo": {
-                    "name": f"Lori's Gift Shop #{po[:4]}",
-                    "company": addr_parts[0] if len(addr_parts) > 0 else "",
-                    "street1": addr_parts[1] if len(addr_parts) > 1 else "",
-                    "street2": "",
-                    "street3": "",
-                    "city": addr_parts[2].split(',')[0] if len(addr_parts) > 2 else "",
-                    "state": addr_parts[2].split(',')[1].split()[0] if len(addr_parts) > 2 else "",
-                    "postalCode": addr_parts[2].split(',')[1].split()[1] if len(addr_parts) > 2 else "",
-                    "country": "US",
-                    "phone": "",
-                    "residential": "false"
-                },
-                "carrierCode": "ups",
-                "serviceCode": "ups_ground",
-                "packageCode": "package",
-                "confirmation": "none",
-                "shipDate": datetime.now().strftime("%Y-%m-%d"),
-                "insuranceOptions": {
-                    "provider": "carrier",
-                    "insureShipment": "true",
-                    "insuredValue": "0"
-                },
-                "advancedOptions": {
-                    "nonMachinable": "false",
-                    "saturdayDelivery": "false",
-                    "containsAlcohol": "false",
-                    "mergedOrSplit": "false",
-                    "customField1": "",
-                    "customField2": "",
-                    "source": "Webstore",
-                    "billToParty": "third_party",
-                    "billToAccount": "7504E1",
-                    "billToPostalCode": "75006",
-                    "billToCountryCode": "US"
-                }
-            })
-
-        # Prepare individual Excel files data for frontend
-        individual_excel_files = []
-        for excel in excel_files:
-            individual_excel_files.append({
-                'filename': excel['filename'],
-                'content': base64.b64encode(excel['content']).decode('utf-8')
-            })
-
         return jsonify({
-            'excel_zip': base64.b64encode(memory_zip.getvalue()).decode('utf-8'),
-            'combined_pdf': base64.b64encode(pdf_output.getvalue()).decode('utf-8'),
-            'shipstation_data': shipstation_data,
-            'individual_excel_files': individual_excel_files
+            'success': True,
+            'message': f'Processed {len(processed_orders)} files',
+            'processed_orders': processed_orders,
+            'errors': upload_errors,
+            'total_files': len(files),
+            'batch_date': batch_date.strftime('%Y-%m-%d')
         })
     return render_template("loris_fedex.html", current_user=session['username'])
+
+@lori_automation_bp.route("/get_orders", methods=["GET"])
+def get_orders():
+    """Get all orders from database with internal store addresses"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get all orders with their details
+        query = """
+            SELECT o.po_number, o.batch_date, o.email_date, o.order_date, 
+                   o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty, 
+                   o.total_cost, o.status, o.created_at, o.updated_at,
+                   COUNT(oi.id) as item_count
+            FROM lori_orders o
+            LEFT JOIN lori_order_items oi ON o.po_number = oi.po_number
+            GROUP BY o.po_number
+            ORDER BY o.batch_date DESC, o.created_at DESC
+        """
+        cursor.execute(query)
+        orders = cursor.fetchall()
+        
+        # For each order, get the internal address using first 4 digits
+        for order in orders:
+            store_number = order['po_number'][:4] if order['po_number'] else ''
+            if store_number:
+                cursor.execute("""
+                    SELECT store_number, store_name, company, phone, address1, address2, 
+                           address3, city, state, zip_code, status, memo
+                    FROM loris_store_info 
+                    WHERE store_number = %s
+                """, (store_number,))
+                store_info = cursor.fetchone()
+                order['store_info'] = store_info
+            else:
+                order['store_info'] = None
+            
+            # Format dates for display
+            if order['batch_date']:
+                order['batch_date_formatted'] = order['batch_date'].strftime('%Y-%m-%d')
+            if order['email_date']:
+                order['email_date_formatted'] = order['email_date'].strftime('%Y-%m-%d %H:%M')
+            if order['created_at']:
+                order['created_at_formatted'] = order['created_at'].strftime('%Y-%m-%d %H:%M')
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'orders': orders,
+            'total_orders': len(orders)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection.is_connected():
+            connection.close()
+
+@lori_automation_bp.route("/get_order_items/<string:po_number>", methods=["GET"])
+def get_order_items(po_number):
+    """Get items for a specific order"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cursor = connection.cursor(dictionary=True)
+        
+        query = """
+            SELECT id, vendor_item, color, quantity, description, 
+                   unit_price, extended_cost, upc
+            FROM lori_order_items 
+            WHERE po_number = %s
+            ORDER BY id
+        """
+        cursor.execute(query, (po_number,))
+        items = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'items': items
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection.is_connected():
+            connection.close()
+
+@lori_automation_bp.route("/update_order_status", methods=["POST"])
+def update_order_status():
+    """Update order status"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    po_number = data.get('order_id')  # Keep 'order_id' for compatibility with frontend
+    status = data.get('status')
+    
+    if not po_number or not status:
+        return jsonify({'error': 'Missing order_id or status'}), 400
+    
+    valid_statuses = ['pending', 'processed', 'shipped', 'completed']
+    if status not in valid_statuses:
+        return jsonify({'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
+    
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute("""
+            UPDATE lori_orders 
+            SET status = %s, updated_at = CURRENT_TIMESTAMP 
+            WHERE po_number = %s
+        """, (status, po_number))
+        
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Order not found'}), 404
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Order status updated successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection.is_connected():
+            connection.close()
+
+@lori_automation_bp.route("/delete_order", methods=["POST"])
+def delete_order():
+    """Delete an order and all its items"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    po_number = data.get('order_id')  # Keep 'order_id' for compatibility with frontend
+    
+    if not po_number:
+        return jsonify({'error': 'Missing order_id'}), 400
+    
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cursor = connection.cursor()
+        
+        # Check if order exists
+        cursor.execute("SELECT po_number FROM lori_orders WHERE po_number = %s", (po_number,))
+        order = cursor.fetchone()
+        
+        if not order:
+            return jsonify({'error': 'Order not found'}), 404
+        
+        # Delete order (items will be deleted automatically due to CASCADE)
+        cursor.execute("DELETE FROM lori_orders WHERE po_number = %s", (po_number,))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Order {po_number} deleted successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection.is_connected():
+            connection.close()
+
+@lori_automation_bp.route("/fetch_and_process_emails", methods=["POST"])
+def fetch_and_process_emails():
+    """Simplified endpoint: Fetch emails, download PDFs, and process into database automatically"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        # Step 1: Fetch attachments from email
+        fetch_result = fetch_email_attachments()
+        if 'error' in fetch_result:
+            return jsonify(fetch_result), 500
+        
+        # Step 2: Process all downloaded PDFs into database
+        process_result = process_email_pdfs()  # Process all batches
+        if 'error' in process_result:
+            return jsonify(process_result), 500
+        
+        # Return success with summary
+        return jsonify({
+            'success': True,
+            'message': f'完成！处理了 {fetch_result["total_emails_processed"]} 封邮件，添加了 {process_result["new_orders"]} 个新订单到数据库',
+            'total_emails_processed': fetch_result['total_emails_processed'],
+            'total_files_downloaded': fetch_result['total_files'],
+            'new_orders': process_result['new_orders'],
+            'skipped_orders': process_result['skipped_orders'],
+            'count': process_result['new_orders']  # For compatibility with existing frontend
+        })
+    except Exception as e:
+        return jsonify({'error': f'处理过程中出错: {str(e)}'}), 500
 
 # Restore the original /fetch_email_pdfs endpoint for compatibility
 @lori_automation_bp.route("/fetch_email_pdfs", methods=["POST"])
 def fetch_email_pdfs():
-    """Fetch PDF attachments from email and process them"""
+    """Fetch PDF attachments from email and process them into database"""
     if 'username' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     try:
@@ -1195,10 +1512,12 @@ def fetch_email_pdfs():
         request_data = request.get_json() or {}
         selected_batch_date = request_data.get('batch_date', None)
         fetch_only = request_data.get('fetch_only', False)  # If true, only fetch without processing
+        
         # First, fetch attachments from email
         fetch_result = fetch_email_attachments()
         if 'error' in fetch_result:
             return jsonify(fetch_result), 500
+        
         # If fetch_only is True, return just the fetch results with batch information
         if fetch_only:
             return jsonify({
@@ -1210,26 +1529,21 @@ def fetch_email_pdfs():
                 'batches': fetch_result['batches'],
                 'batch_summary': fetch_result['batch_summary']
             })
-        # Then process the downloaded PDFs (optionally filtered by batch date)
+        
+        # Process the downloaded PDFs and store in database
         process_result = process_email_pdfs(selected_batch_date)
         if 'error' in process_result:
             return jsonify(process_result), 500
-        batch_info = ""
-        if selected_batch_date:
-            batch_info = f" from batch {selected_batch_date}"
+        
+        # Return simplified response for database storage
         return jsonify({
             'success': True,
-            'message': f'Successfully processed {process_result["processed_files"]} PDF files from email{batch_info}',
-            'fetched_files': fetch_result['files'],
-            'total_files': fetch_result['total_files'],
+            'message': f'Successfully processed {process_result["new_orders"]} new orders from {fetch_result["total_emails_processed"]} emails',
             'total_emails_processed': fetch_result['total_emails_processed'],
-            'batches': fetch_result['batches'],
-            'batch_summary': fetch_result['batch_summary'],
-            'selected_batch': selected_batch_date,
-            'excel_zip': process_result['excel_zip'],
-            'combined_pdf': process_result['combined_pdf'],
-            'shipstation_data': process_result['shipstation_data'],
-            'individual_excel_files': process_result['individual_excel_files']
+            'total_files_downloaded': fetch_result['total_files'],
+            'new_orders': process_result['new_orders'],
+            'skipped_orders': process_result['skipped_orders'],
+            'batches': fetch_result['batches']
         })
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
