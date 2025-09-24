@@ -283,23 +283,420 @@
                         </div>
                     </div>
                 </div>
-                                <!-- Loris fedex Section -->
-                <div class="card mt-4">
-                    <div class="card-header bg-warning text-dark">
+                <!-- loris 店铺地址单 Section -->
+                <!-- Loris Store Address Section (Truly Full Width) -->
+
+                <!-- 后宫翻牌机 Section -->
+                <div class="card mt-4" >
+                    <div class="card-header bg-danger text-white">
                         <h4 class="mb-0">
-                            <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#lorisfedexSection" aria-expanded="false" aria-controls="lorisfedexSection">
-                                <i class="fas fa-shipping-fast"></i> Loris fedex -- Dennis 特供 - V.Alpha 
+                            <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#houGongSection" aria-expanded="false" aria-controls="houGongSection">
+                                <i class="fas fa-crown"></i> 后宫翻牌机 - PDF 处理
                                 <i class="fas fa-chevron-down float-end mt-1"></i>
                             </button>
                         </h4>
                     </div>
-                    <div class="collapse" id="lorisfedexSection">
+                    <div class="collapse" id="houGongSection">
                         <div class="card-body">
-                            <div class="text-center">
-                                <p class="mb-3">Access Loris fedex functionality</p>
-                                <a href="/loris_fedex" class="btn btn-warning btn-lg">
-                                    <i class="fas fa-external-link-alt"></i> Go to Loris fedex
-                                </a>
+                            <h2 class="text-center mb-4">后宫翻牌机</h2>
+                            
+                            <div id="pdf-drop-zone" class="drop-zone">
+                                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                <h4>娘娘们一次性拉进来~~~~</h4>
+                                <p>or</p>
+                                <input type="file" id="pdf-file-input" multiple accept=".pdf" class="d-none">
+                                <button class="btn btn-primary" onclick="document.getElementById('pdf-file-input').click()">
+                                    小窗通融一下
+                                </button>
+                            </div>
+
+                            <div class="text-center mt-3 mb-3">
+                                <div class="border-top pt-3">
+                                    <h5>或者</h5>
+                                    <button id="fetch-email-btn" class="btn btn-info btn-lg">
+                                        <i class="fas fa-envelope"></i> 从邮箱获取PDF文件 (最近1个月)
+                                    </button>
+                                    <p class="small text-muted mt-2">自动从 MI9_Merchant@lorisgifts.com 获取最近1个月的PDF附件</p>
+                                    
+                                    <!-- Batch Selection Section -->
+                                    <div id="batch-selection-section" class="mt-3" style="display: none;">
+                                        <div class="card">
+                                            <div class="card-header bg-secondary text-white">
+                                                <h6 class="mb-0">选择日期批次处理</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="batch-list" class="d-grid gap-2">
+                                                    <!-- Batch buttons will be populated here -->
+                                                </div>
+                                                <div class="mt-3">
+                                                    <button id="process-all-batches-btn" class="btn btn-primary">
+                                                        <i class="fas fa-play"></i> 处理所有批次
+                                                    </button>
+                                                    <button id="hide-batches-btn" class="btn btn-secondary">
+                                                        <i class="fas fa-times"></i> 隐藏
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="pdf-file-list" class="mt-3">
+                                <h5>被翻牌的娘娘有:</h5>
+                                <ul class="list-group" id="selected-pdf-files">
+                                </ul>
+                            </div>
+
+                            <div class="text-center mt-3">
+                                <button id="process-pdf-btn" class="btn btn-success btn-lg" style="display: none;">
+                                    <i class="fas fa-cogs"></i> 烧水，开始洗澡
+                                </button>
+                            </div>
+
+                            <!-- Results Section -->
+                            <div id="pdf-results-section" class="mt-4" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h4 class="mb-0">下面是准备好名单，请过目👀</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Download Buttons -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-4">
+                                                <a id="excel-download" class="btn btn-success btn-block w-100">
+                                                    <i class="fas fa-file-excel"></i> 小主价目表 (Excel ZIP)
+                                                </a>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <button id="individual-excel-btn" class="btn btn-info btn-block w-100">
+                                                    <i class="fas fa-download"></i> 单独下载 Excel
+                                                </button>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <a id="pdf-download" class="btn btn-danger btn-block w-100">
+                                                    <i class="fas fa-file-pdf"></i> 小主合体名单 (PDF)
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <!-- Individual Excel Files Section -->
+                                        <div id="individual-excel-section" style="display: none;" class="mb-4">
+                                            <div class="card">
+                                                <div class="card-header bg-info text-white">
+                                                    <h5 class="mb-0">单独下载 Excel 文件</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="individual-excel-list" class="d-grid gap-2">
+                                                        <!-- Individual download links will be populated here -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- ShipStation Data Table -->
+                                        <div class="table-responsive">
+                                            <h5>地址可以改的哈</h5>
+                                            <table class="table table-bordered table-striped" id="shipstation-table">
+                                                <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>PO Number</th>
+                                                        <th>Company Name</th>
+                                                        <th>Address</th>
+                                                        <th>City</th>
+                                                        <th>State</th>
+                                                        <th>ZIP</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- ShipStation Submit Button (Dummy) -->
+                                        <div class="text-center mt-4">
+                                            <button id="send-to-shipstation" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-shipping-fast"></i> 前往养心殿，等待小主们临幸 ( ShipStation ) - Coming Soon
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4" style="padding-top: 30px;">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#storeInfoSection" aria-expanded="false" aria-controls="storeInfoSection">
+                                <i class="fas fa-store"></i> loris 店铺地址单
+                                <i class="fas fa-chevron-down float-end mt-1"></i>
+                            </button>
+                        </h4>
+                    </div>
+                    <div class="collapse" id="storeInfoSection">
+                        <div class="card-body">
+                            <h2 class="text-center mb-4">店铺信息管理</h2>
+                            <!-- Control Buttons -->
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <button id="download-store-info-btn" class="btn btn-primary btn-lg w-100">
+                                        <i class="fas fa-download"></i> 下载所有店铺信息
+                                    </button>
+                                </div>
+                                <div class="col-md-4">
+                                    <button id="manual-add-store-btn" class="btn btn-info btn-lg w-100" data-bs-toggle="modal" data-bs-target="#addStoreModal">
+                                        <i class="fas fa-plus"></i> Manual 手动添加
+                                    </button>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="input-group">
+                                        <input type="file" id="upload-store-info-input" accept=".xlsx,.xls" class="form-control">
+                                        <button id="upload-store-info-btn" class="btn btn-success">
+                                            <i class="fas fa-upload"></i> 上传店铺信息
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Store Info Table -->
+                            <div class="mb-3">
+                                <input type="text" id="store-search-input" class="form-control" placeholder="Search stores...">
+                            </div>
+                            <div id="store-info-table-section" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:#fff;padding:24px 0 24px 0;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;">
+                                <div class="table-responsive" style="overflow-x:visible;">
+                                    <table id="store-info-table" class="table table-bordered table-striped w-100" style="min-width:1800px;width:100vw;">
+                                            <thead class="thead-dark">
+                                                <tr>
+                                                    <th>Store Number</th>
+                                                    <th>Store Name</th>
+                                                    <th>Company</th>
+                                                    <th>Phone</th>
+                                                    <th>Address 1</th>
+                                                    <th>Address 2</th>
+                                                    <th>Address 3</th>
+                                                    <th>City</th>
+                                                    <th>State</th>
+                                                    <th>Zip Code</th>
+                                                    <th>Status</th>
+                                                    <th>Memo</th>
+                                                    <th>Created At</th>
+                                                    <th>Updated At</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Store info rows will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Loading indicator -->
+                                <div id="store-info-loading" class="text-center" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">加载中...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Add Store Info Modal -->
+                <div class="modal fade" id="addStoreModal" tabindex="-1" aria-labelledby="addStoreModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addStoreModalLabel">Add New Store</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="addStoreForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="add-store-number" class="form-label">Store Number</label>
+                                                <input type="text" class="form-control" id="add-store-number" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="add-store-name" class="form-label">Store Name</label>
+                                                <input type="text" class="form-control" id="add-store-name" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="add-company" class="form-label">Company</label>
+                                                    <input type="text" class="form-control" id="add-company">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="add-phone" class="form-label">Phone</label>
+                                                    <input type="text" class="form-control" id="add-phone">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <div class="mb-3">
+                                        <label for="add-address1" class="form-label">Address Line 1</label>
+                                        <input type="text" class="form-control" id="add-address1" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="add-address2" class="form-label">Address Line 2</label>
+                                        <input type="text" class="form-control" id="add-address2">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="add-address3" class="form-label">Address Line 3</label>
+                                        <input type="text" class="form-control" id="add-address3">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="add-city" class="form-label">City</label>
+                                                <input type="text" class="form-control" id="add-city" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="add-state" class="form-label">State</label>
+                                                <input type="text" class="form-control" id="add-state" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="add-zip-code" class="form-label">Zip Code</label>
+                                                <input type="text" class="form-control" id="add-zip-code" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="add-status" class="form-label">Status</label>
+                                                <select class="form-control" id="add-status" required>
+                                                    <option value="">Select Status</option>
+                                                    <option value="Active">Active</option>
+                                                    <option value="Dead">Dead</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="add-memo" class="form-label">Memo</label>
+                                                <input type="text" class="form-control" id="add-memo">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="add-store-btn">Add Store</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Store Info Modal -->
+                <div class="modal fade" id="editStoreModal" tabindex="-1" aria-labelledby="editStoreModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editStoreModalLabel">编辑店铺信息</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editStoreForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="edit-store-number" class="form-label">店铺编号</label>
+                                                <input type="text" class="form-control" id="edit-store-number" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="edit-store-name" class="form-label">店铺名称</label>
+                                                <input type="text" class="form-control" id="edit-store-name">
+                                            </div>
+                                        </div>
+                                    </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="edit-company" class="form-label">Company</label>
+                                                    <input type="text" class="form-control" id="edit-company">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="edit-phone" class="form-label">Phone</label>
+                                                    <input type="text" class="form-control" id="edit-phone">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <div class="mb-3">
+                                        <label for="edit-address1" class="form-label">Address Line 1</label>
+                                        <input type="text" class="form-control" id="edit-address1">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit-address2" class="form-label">Address Line 2</label>
+                                        <input type="text" class="form-control" id="edit-address2">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit-address3" class="form-label">Address Line 3</label>
+                                        <input type="text" class="form-control" id="edit-address3">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="edit-city" class="form-label">城市</label>
+                                                <input type="text" class="form-control" id="edit-city">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="edit-state" class="form-label">州/省</label>
+                                                <input type="text" class="form-control" id="edit-state">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="edit-zip-code" class="form-label">邮编</label>
+                                                <input type="text" class="form-control" id="edit-zip-code">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="edit-status" class="form-label">Status</label>
+                                                <select class="form-control" id="edit-status">
+                                                    <option value="">Select Status</option>
+                                                    <option value="Active">Active</option>
+                                                    <option value="Dead">Dead</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="edit-memo" class="form-label">备注</label>
+                                                <input type="text" class="form-control" id="edit-memo">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" id="save-store-btn">保存</button>
                             </div>
                         </div>
                     </div>
@@ -539,6 +936,367 @@
     });
 </script>
 
+<!-- PDF Processing JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // PDF Processing
+        const pdfDropZone = document.getElementById('pdf-drop-zone');
+        const pdfFileInput = document.getElementById('pdf-file-input');
+        const pdfFileList = document.getElementById('selected-pdf-files');
+        const processPdfBtn = document.getElementById('process-pdf-btn');
+        const fetchEmailBtn = document.getElementById('fetch-email-btn');
+        const batchSelectionSection = document.getElementById('batch-selection-section');
+        const batchList = document.getElementById('batch-list');
+        const processAllBatchesBtn = document.getElementById('process-all-batches-btn');
+        const hideBatchesBtn = document.getElementById('hide-batches-btn');
+        const pdfResultsSection = document.getElementById('pdf-results-section');
+        let uploadedPdfFiles = [];
+        let currentBatchData = null;
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Set up drag and drop for PDF files
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            pdfDropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            pdfDropZone.addEventListener(eventName, () => {
+                pdfDropZone.classList.add('highlight');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            pdfDropZone.addEventListener(eventName, () => {
+                pdfDropZone.classList.remove('highlight');
+            }, false);
+        });
+
+        pdfDropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handlePdfFiles(files);
+        });
+
+        pdfFileInput.addEventListener('change', (e) => {
+            handlePdfFiles(e.target.files);
+        });
+
+        function handlePdfFiles(files) {
+            uploadedPdfFiles = [...files];
+            updatePdfFileList();
+            processPdfBtn.style.display = uploadedPdfFiles.length > 0 ? 'block' : 'none';
+        }
+
+        function updatePdfFileList() {
+            pdfFileList.innerHTML = '';
+            uploadedPdfFiles.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span><i class="fas fa-file-pdf text-danger"></i> ${file.name}</span>
+                    <button class="btn btn-sm btn-danger" onclick="removePdfFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                pdfFileList.appendChild(li);
+            });
+        }
+
+        window.removePdfFile = function(index) {
+            uploadedPdfFiles.splice(index, 1);
+            updatePdfFileList();
+            processPdfBtn.style.display = uploadedPdfFiles.length > 0 ? 'block' : 'none';
+        }
+
+        // Process PDF files
+        processPdfBtn.addEventListener('click', async () => {
+            if (uploadedPdfFiles.length === 0) {
+                alert('请先选择PDF文件');
+                return;
+            }
+
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 'Processing PDF files...';
+
+            try {
+                const formData = new FormData();
+                uploadedPdfFiles.forEach((file, index) => {
+                    formData.append('files[]', file);
+                });
+
+                const response = await fetch('/lori_automation', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Show results section
+                pdfResultsSection.style.display = 'block';
+
+                // Set up download links
+                const excelDownload = document.getElementById('excel-download');
+                const pdfDownload = document.getElementById('pdf-download');
+                
+                excelDownload.href = 'data:application/zip;base64,' + data.excel_zip;
+                excelDownload.download = 'excel_files.zip';
+                
+                pdfDownload.href = 'data:application/pdf;base64,' + data.combined_pdf;
+                pdfDownload.download = 'combined.pdf';
+
+                // Populate individual Excel files
+                const individualExcelBtn = document.getElementById('individual-excel-btn');
+                const individualExcelSection = document.getElementById('individual-excel-section');
+                const individualExcelList = document.getElementById('individual-excel-list');
+
+                individualExcelBtn.addEventListener('click', () => {
+                    individualExcelSection.style.display = individualExcelSection.style.display === 'none' ? 'block' : 'none';
+                });
+
+                individualExcelList.innerHTML = '';
+                data.individual_excel_files.forEach(file => {
+                    const link = document.createElement('a');
+                    link.className = 'btn btn-outline-success';
+                    link.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + file.content;
+                    link.download = file.filename;
+                    link.innerHTML = `<i class="fas fa-file-excel"></i> ${file.filename}`;
+                    individualExcelList.appendChild(link);
+                });
+
+                // Populate ShipStation table
+                const tableBody = document.querySelector('#shipstation-table tbody');
+                tableBody.innerHTML = '';
+                
+                data.shipstation_data.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td contenteditable="true">${item.orderNumber}</td>
+                        <td contenteditable="true">${item.shipTo.company}</td>
+                        <td contenteditable="true">${item.shipTo.street1}</td>
+                        <td contenteditable="true">${item.shipTo.city}</td>
+                        <td contenteditable="true">${item.shipTo.state}</td>
+                        <td contenteditable="true">${item.shipTo.postalCode}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Dummy ShipStation button
+                const shipStationBtn = document.getElementById('send-to-shipstation');
+                shipStationBtn.addEventListener('click', () => {
+                    alert('ShipStation integration coming soon! 🚢');
+                });
+
+                alert('PDF文件处理完成！');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理PDF文件时出错: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+
+        // Fetch Email PDFs functionality with batch support
+        fetchEmailBtn.addEventListener('click', async () => {
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 'Fetching PDFs from last 1 months of emails...';
+
+            try {
+                // First, fetch emails without processing (fetch_only = true)
+                const response = await fetch('/fetch_email_pdfs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        fetch_only: true 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Store batch data
+                currentBatchData = data;
+
+                // Show batch selection
+                displayBatchSelection(data);
+                
+                alert(`成功获取了 ${data.total_files} 个PDF文件，来自 ${data.total_emails_processed} 封邮件！\n按日期分为 ${data.batch_summary.length} 个批次。`);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('从邮箱获取PDF文件时出错: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+
+        function displayBatchSelection(data) {
+            // Clear existing batch list
+            batchList.innerHTML = '';
+
+            // Add batch buttons
+            data.batch_summary.forEach(batch => {
+                const button = document.createElement('button');
+                button.className = 'btn btn-outline-primary';
+                button.innerHTML = `<i class="fas fa-calendar-day"></i> ${batch.date} (${batch.file_count} 个文件)`;
+                button.addEventListener('click', () => processBatch(batch.date));
+                batchList.appendChild(button);
+            });
+
+            // Show batch selection section
+            batchSelectionSection.style.display = 'block';
+        }
+
+        async function processBatch(batchDate) {
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = `Processing batch for ${batchDate}...`;
+
+            try {
+                const response = await fetch('/fetch_email_pdfs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        batch_date: batchDate,
+                        fetch_only: false 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                displayResults(data);
+                alert(`成功处理了日期 ${batchDate} 的PDF文件！`);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理批次时出错: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+
+        async function processAllBatches() {
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').textContent = 'Processing all batches...';
+
+            try {
+                const response = await fetch('/fetch_email_pdfs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        fetch_only: false  // Process all batches
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                displayResults(data);
+                alert(`成功处理了所有批次的PDF文件！`);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理所有批次时出错: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            // Show results section
+            pdfResultsSection.style.display = 'block';
+
+            // Set up download links
+            const excelDownload = document.getElementById('excel-download');
+            const pdfDownload = document.getElementById('pdf-download');
+            
+            excelDownload.href = 'data:application/zip;base64,' + data.excel_zip;
+            excelDownload.download = 'excel_files.zip';
+            
+            pdfDownload.href = 'data:application/pdf;base64,' + data.combined_pdf;
+            pdfDownload.download = 'combined.pdf';
+
+            // Populate individual Excel files
+            const individualExcelBtn = document.getElementById('individual-excel-btn');
+            const individualExcelSection = document.getElementById('individual-excel-section');
+            const individualExcelList = document.getElementById('individual-excel-list');
+
+            individualExcelBtn.addEventListener('click', () => {
+                individualExcelSection.style.display = individualExcelSection.style.display === 'none' ? 'block' : 'none';
+            });
+
+            individualExcelList.innerHTML = '';
+            data.individual_excel_files.forEach(file => {
+                const link = document.createElement('a');
+                link.className = 'btn btn-outline-success';
+                link.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + file.content;
+                link.download = file.filename;
+                link.innerHTML = `<i class="fas fa-file-excel"></i> ${file.filename}`;
+                individualExcelList.appendChild(link);
+            });
+
+            // Populate ShipStation table
+            const tableBody = document.querySelector('#shipstation-table tbody');
+            tableBody.innerHTML = '';
+            
+            data.shipstation_data.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td contenteditable="true">${item.orderNumber}</td>
+                    <td contenteditable="true">${item.shipTo.company}</td>
+                    <td contenteditable="true">${item.shipTo.street1}</td>
+                    <td contenteditable="true">${item.shipTo.city}</td>
+                    <td contenteditable="true">${item.shipTo.state}</td>
+                    <td contenteditable="true">${item.shipTo.postalCode}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Dummy ShipStation button
+            const shipStationBtn = document.getElementById('send-to-shipstation');
+            shipStationBtn.addEventListener('click', () => {
+                alert('ShipStation integration coming soon! 🚢');
+            });
+        }
+
+        // Event listeners for batch processing
+        processAllBatchesBtn.addEventListener('click', processAllBatches);
+        
+        hideBatchesBtn.addEventListener('click', () => {
+            batchSelectionSection.style.display = 'none';
+        });
+    });
+</script>
+
 
 <!--script for stickersn -->
 <script>
@@ -591,6 +1349,328 @@
             });
         }
 
+        // Store Info Management
+        let currentEditingStoreNumber = null;
+
+        // Load store info when section is opened
+        document.addEventListener('DOMContentLoaded', function() {
+            const storeInfoSection = document.getElementById('storeInfoSection');
+            storeInfoSection.addEventListener('shown.bs.collapse', function() {
+                loadStoreInfo();
+            });
+        });
+
+        // Download store info
+        document.getElementById('download-store-info-btn').addEventListener('click', function() {
+            window.location.href = '/download_store_info';
+        });
+
+        // Upload store info
+        document.getElementById('upload-store-info-btn').addEventListener('click', async function() {
+            const fileInput = document.getElementById('upload-store-info-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('请选择要上传的文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload_store_info', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                alert(data.message);
+                fileInput.value = '';
+                loadStoreInfo(); // Reload the table
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('上传失败: ' + error.message);
+            }
+        });
+
+        // Load store info from server
+        async function loadStoreInfo() {
+            const loadingDiv = document.getElementById('store-info-loading');
+            const tableSection = document.getElementById('store-info-table-section');
+            
+            loadingDiv.style.display = 'block';
+            tableSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/get_store_info');
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                populateStoreTable(data.data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('加载店铺信息失败: ' + error.message);
+            } finally {
+                loadingDiv.style.display = 'none';
+                tableSection.style.display = 'block';
+            }
+        }
+
+        // Populate store table
+        function populateStoreTable(stores) {
+            const tbody = document.querySelector('#store-info-table tbody');
+            tbody.innerHTML = '';
+            
+            stores.forEach(store => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${store.store_number || ''}</td>
+                    <td>${store.store_name || ''}</td>
+                    <td>${store.company || ''}</td>
+                    <td>${store.phone || ''}</td>
+                    <td>${store.address1 || store.address || ''}</td>
+                    <td>${store.address2 || ''}</td>
+                    <td>${store.address3 || ''}</td>
+                    <td>${store.city || ''}</td>
+                    <td>${store.state || ''}</td>
+                    <td>${store.zip_code || ''}</td>
+                    <td>${store.status || ''}</td>
+                    <td>${store.memo || ''}</td>
+                    <td>${store.created_at ? new Date(store.created_at).toLocaleString() : ''}</td>
+                    <td>${store.updated_at ? new Date(store.updated_at).toLocaleString() : ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editStore('${store.store_number}')">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStore('${store.store_number}')">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Edit store
+        async function editStore(storeNumber) {
+            try {
+                const response = await fetch('/get_store_info');
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const store = data.data.find(s => s.store_number === storeNumber);
+                if (!store) {
+                    throw new Error('店铺信息未找到');
+                }
+                
+                // Populate form
+                document.getElementById('edit-store-number').value = store.store_number || '';
+                document.getElementById('edit-store-name').value = store.store_name || '';
+                document.getElementById('edit-company').value = store.company || '';
+                document.getElementById('edit-phone').value = store.phone || '';
+                document.getElementById('edit-address1').value = store.address1 || store.address || '';
+                document.getElementById('edit-address2').value = store.address2 || '';
+                document.getElementById('edit-address3').value = store.address3 || '';
+                document.getElementById('edit-city').value = store.city || '';
+                document.getElementById('edit-state').value = store.state || '';
+                document.getElementById('edit-zip-code').value = store.zip_code || '';
+                document.getElementById('edit-memo').value = store.memo || '';
+                // Always set status explicitly (case-insensitive)
+                const statusSelect = document.getElementById('edit-status');
+                let statusValue = (store.status || '').toLowerCase();
+                if (statusValue === 'active' || statusValue === 'dead') {
+                    // Capitalize first letter for dropdown value
+                    statusSelect.value = statusValue.charAt(0).toUpperCase() + statusValue.slice(1);
+                } else {
+                    statusSelect.value = '';
+                }
+                
+                currentEditingStoreNumber = storeNumber;
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('editStoreModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('加载店铺信息失败: ' + error.message);
+            }
+        }
+
+        // Save store
+        document.getElementById('save-store-btn').addEventListener('click', async function() {
+            if (!currentEditingStoreNumber) {
+                alert('没有选择要编辑的店铺');
+                return;
+            }
+
+            let storeNumberRaw = currentEditingStoreNumber;
+            let storeNumber = storeNumberRaw.padStart(4, '0');
+            const storeData = {
+                store_number: storeNumber,
+                store_name: document.getElementById('edit-store-name').value,
+                company: document.getElementById('edit-company').value,
+                phone: document.getElementById('edit-phone').value,
+                address1: document.getElementById('edit-address1').value,
+                address2: document.getElementById('edit-address2').value,
+                address3: document.getElementById('edit-address3').value,
+                city: document.getElementById('edit-city').value,
+                state: document.getElementById('edit-state').value,
+                zip_code: document.getElementById('edit-zip-code').value,
+                status: document.getElementById('edit-status').value,
+                memo: document.getElementById('edit-memo').value
+            };
+
+            try {
+                const response = await fetch('/edit_store_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(storeData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                alert(data.message);
+                
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editStoreModal'));
+                modal.hide();
+                
+                // Reload table
+                loadStoreInfo();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('保存失败: ' + error.message);
+            }
+        });
+
+        // Add new store
+        document.getElementById('add-store-btn').addEventListener('click', async function() {
+            // Validate form
+            const requiredFields = ['add-store-number', 'add-store-name', 'add-address1', 'add-city', 'add-state', 'add-zip-code', 'add-status'];
+            for (const fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    alert(`Please fill in the ${field.previousElementSibling.textContent} field`);
+                    field.focus();
+                    return;
+                }
+            }
+
+            let storeNumberRaw = document.getElementById('add-store-number').value.trim();
+            let storeNumber = storeNumberRaw.padStart(4, '0');
+            const storeData = {
+                store_number: storeNumber,
+                store_name: document.getElementById('add-store-name').value.trim(),
+                company: document.getElementById('add-company').value.trim(),
+                phone: document.getElementById('add-phone').value.trim(),
+                address1: document.getElementById('add-address1').value.trim(),
+                address2: document.getElementById('add-address2').value.trim(),
+                address3: document.getElementById('add-address3').value.trim(),
+                city: document.getElementById('add-city').value.trim(),
+                state: document.getElementById('add-state').value.trim(),
+                zip_code: document.getElementById('add-zip-code').value.trim(),
+                status: document.getElementById('add-status').value,
+                memo: document.getElementById('add-memo').value.trim()
+            };
+
+            try {
+                const response = await fetch('/add_store_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(storeData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                alert(data.message);
+                
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addStoreModal'));
+                modal.hide();
+                
+                // Reset form
+                document.getElementById('addStoreForm').reset();
+                
+                // Reload table
+                loadStoreInfo();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add store: ' + error.message);
+            }
+        });
+
+        // Delete store
+        async function deleteStore(storeNumber) {
+            if (!confirm(`Are you sure you want to delete store ${storeNumber}? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/delete_store_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ store_number: storeNumber })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                alert(data.message);
+                loadStoreInfo(); // Reload the table
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete store: ' + error.message);
+            }
+        }
+
+        // Store Table Search
+        const storeSearchInput = document.getElementById('store-search-input');
+        if (storeSearchInput) {
+            storeSearchInput.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                const table = document.getElementById('store-info-table');
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        }
 </script>
 </body>
 </html>
