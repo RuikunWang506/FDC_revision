@@ -503,26 +503,10 @@
                 {
                     po_number: '0002-2025-001',
                     batch_date: '2025-09-18',
-                    ship_to_address: 'MEDICAL CITY (PLANO)\n3901 W 15TH ST\nFloor 1 STE 101\nPLANO TX 75075-7738',
+                    ship_to_address: 'xxxxxxxxx',
                     total_qty: 50,
                     total_cost: 1250.00,
                     status: 'pending'
-                },
-                {
-                    po_number: '0003-2025-002',
-                    batch_date: '2025-09-18',
-                    ship_to_address: 'Store Location\n456 Oak Ave\nSuite 200\nSometown CA 90210',
-                    total_qty: 75,
-                    total_cost: 1875.00,
-                    status: 'pending'
-                },
-                {
-                    po_number: '0004-2025-003',
-                    batch_date: '2025-09-17',
-                    ship_to_address: 'Another Store\n789 Pine St\nAnother City TX 75001',
-                    total_qty: 25,
-                    total_cost: 650.00,
-                    status: 'shipped'
                 }
             ];
             renderPendingOrders();
@@ -701,9 +685,7 @@
                     <td style="padding: 12px; text-align: center;">
                         <select class="form-select status-select" data-po="${order.po_number}" style="font-size: 1rem; padding: 8px;">
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
-                            <option value="processed" ${order.status === 'processed' ? 'selected' : ''}>Processed</option>
                             <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
-                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
                         </select>
                     </td>
                     <td style="padding: 12px; text-align: center;">
@@ -762,9 +744,7 @@
                 <td style="padding: 12px; text-align: center;">
                     <select class="form-select status-select" data-po="${order.po_number}" style="font-size: 1rem; padding: 8px;">
                         <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
-                        <option value="processed" ${order.status === 'processed' ? 'selected' : ''}>Processed</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
-                        <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
                     </select>
                 </td>
                 <td style="padding: 12px; text-align: center;">
