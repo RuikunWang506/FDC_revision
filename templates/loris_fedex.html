@@ -127,6 +127,7 @@
                             <button type="submit" name="show_table" class="btn btn-secondary btn-lg large-button">Show Table</button>
                             <button type="submit" name="submit_data" class="btn btn-primary btn-lg large-button">Submit</button>
                             <button type="reset" class="btn btn-danger btn-lg large-button">Reset</button>
+
                         </div>
                     </form>
                     
@@ -158,6 +159,16 @@
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Debug info (temporary) -->
+                    {% if filename_30stickers or filename_exact %}
+                    <div class="alert alert-info mt-3">
+                        <strong>Debug Info:</strong><br>
+                        30 Stickers File: {{ filename_30stickers or 'None' }}<br>
+                        Exact File: {{ filename_exact or 'None' }}<br>
+                        Error: {{ error_message or 'None' }}
                     </div>
                     {% endif %}
                     
@@ -253,6 +264,7 @@
                                         <button id="upload-db-btn" class="btn btn-outline-secondary">
                                             <i class="fas fa-upload"></i> 上传数据库
                                         </button>
+
                                         <input type="file" id="upload-db-input" accept=".xlsx,.xls" style="display: none;">
                                     </div>
                                 </div>
@@ -306,204 +318,40 @@
                                     </button>
                                     <p class="small text-muted mt-2">Automatically fetch PDF attachments from MI9_Merchant@lorisgifts.com in the last 1 month</p>
                                 </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Orders Management Section - Pending -->
-                <div class="card mt-4">
-                    <div class="card-header bg-warning text-dark">
-                        <h4 class="mb-0">
-                            <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#pendingOrdersSection" aria-expanded="false" aria-controls="pendingOrdersSection">
-                                <i class="fas fa-shopping-cart"></i> 订单管理系统 - Orders Management - pending
-                                <i class="fas fa-chevron-down float-end mt-1"></i>
-                            </button>
-                        </h4>
-                    </div>
-                    <div class="collapse" id="pendingOrdersSection">
-                        <div class="card-body">
-                        <!-- Control Buttons -->
-                        <div class="row mb-4">
-                            <div class="col-md-12 text-center">
-                                <button id="refresh-pending-orders-btn" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-sync"></i> refresh
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Filter Controls -->
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <input type="date" id="pending-batch-date-filter" class="form-control" placeholder="Batch Date">
-                            </div>
-                            <div class="col-md-3">
-                                <input type="text" id="pending-po-search" class="form-control" placeholder="Search PO Number...">
-                            </div>
-                            <div class="col-md-3">
-                                <button id="clear-pending-filters-btn" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-times"></i> Clear Filters
-                                </button>
-                            </div>
-                        </div>
-                        <div id="pending-orders-table-section" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:#fff;padding:24px 0 24px 0;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;">
-                            <div class="table-responsive" style="overflow-x:visible;">
-                                <table id="pending-orders-table" class="table table-bordered table-striped w-100" style="min-width:2200px;width:100vw;">
-                                    <thead class="thead-dark">
-                                        <tr>
-                                            <th width="5%">#</th>
-                                            <th width="8%">PO Number</th>
-                                            <th width="8%">Batch</th>
-                                            <th width="10%">Ship To Address</th>
-                                            <th width="8%">Total Qty</th>
-                                            <th width="8%">Total Cost</th>
-                                            <th width="8%">Status</th>                                            
-                                            <th width="6%">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="pending-orders-table-body">
-                                        <!-- Pending orders will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Orders Management Section - Shipped -->
-                <div class="card mt-4">
-                    <div class="card-header bg-info text-white">
-                        <h4 class="mb-0">
-                            <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#shippedOrdersSection" aria-expanded="false" aria-controls="shippedOrdersSection">
-                                <i class="fas fa-shopping-cart"></i> 订单管理系统 - Orders Management - shipped
-                                <i class="fas fa-chevron-down float-end mt-1"></i>
-                            </button>
-                        </h4>
-                    </div>
-                    <div class="collapse" id="shippedOrdersSection">
-                        <div class="card-body">
-                        <!-- Control Buttons -->
-                        <div class="row mb-4">
-                            <div class="col-md-12 text-center">
-                                <button id="refresh-shipped-orders-btn" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-sync"></i> refresh
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Filter Controls -->
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <input type="date" id="shipped-batch-date-filter" class="form-control" placeholder="Batch Date">
-                            </div>
-                            <div class="col-md-3">
-                                <input type="text" id="shipped-po-search" class="form-control" placeholder="Search PO Number...">
-                            </div>
-                            <div class="col-md-3">
-                                <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-times"></i> Clear Filters
-                                </button>
-                            </div>
-                        </div>
-                        <div id="shipped-orders-table-section" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:#fff;padding:24px 0 24px 0;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;">
-                            <div class="table-responsive" style="overflow-x:visible;">
-                                <table id="shipped-orders-table" class="table table-bordered table-striped w-100" style="min-width:2200px;width:100vw;">
-                                    <thead class="thead-dark">
-                                        <tr>
-                                            <th width="5%">#</th>
-                                            <th width="8%">PO Number</th>
-                                            <th width="8%">Batch</th>
-                                            <th width="10%">Ship To Address</th>
-                                            <th width="8%">Total Qty</th>
-                                            <th width="8%">Total Cost</th>
-                                            <th width="8%">Status</th>                                            
-                                            <th width="6%">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="shipped-orders-table-body">
-                                        <!-- Shipped orders will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4" style="padding-top: 30px;">
-                    <div class="card-header bg-success text-white">
-                        <h4 class="mb-0">
-                            <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#storeInfoSection" aria-expanded="false" aria-controls="storeInfoSection">
-                                <i class="fas fa-store"></i> loris 店铺地址单
-                                <i class="fas fa-chevron-down float-end mt-1"></i>
-                            </button>
-                        </h4>
-                    </div>
-                    <div class="collapse" id="storeInfoSection">
-                        <div class="card-body">
-                            <h2 class="text-center mb-4">Store Information Management</h2>
-                            <!-- Control Buttons -->
-                            <div class="row mb-4">
-                                <div class="col-md-4">
-                                    <button id="download-store-info-btn" class="btn btn-primary btn-lg w-100">
-                                        <i class="fas fa-download"></i> Download All Store Information
+                                <div class="border-top pt-3">
+                                    <button id="delete-pdf-data-btn" class="btn btn-danger btn-lg">
+                                        <i class="fas fa-trash-alt"></i> Delete All PDF Files & Orders
                                     </button>
-                                </div>
-                                <div class="col-md-4">
-                                    <button id="manual-add-store-btn" class="btn btn-info btn-lg w-100" data-bs-toggle="modal" data-bs-target="#addStoreModal">
-                                        <i class="fas fa-plus"></i> Manual Add
-                                    </button>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="input-group">
-                                        <input type="file" id="upload-store-info-input" accept=".xlsx,.xls" class="form-control">
-                                        <button id="upload-store-info-btn" class="btn btn-success">
-                                            <i class="fas fa-upload"></i> Upload Store Information
-                                        </button>
-                                    </div>
+                                    <p class="small text-muted mt-2">Remove all downloaded PDF files and delete all orders from database</p>
                                 </div>
                             </div>
-                            <!-- Store Info Table -->
-                            <div class="mb-3">
-                                <input type="text" id="store-search-input" class="form-control" placeholder="Search stores...">
-                            </div>
-                            <div id="store-info-table-section" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:#fff;padding:24px 0 24px 0;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;">
-                                <div class="table-responsive" style="overflow-x:visible;">
-                                    <table id="store-info-table" class="table table-bordered table-striped w-100" style="min-width:1800px;width:100vw;">
-                                            <thead class="thead-dark">
-                                                <tr>
-                                                    <th>Store Number</th>
-                                                    <th>Store Name</th>
-                                                    <th>Company</th>
-                                                    <th>Phone</th>
-                                                    <th>Address 1</th>
-                                                    <th>Address 2</th>
-                                                    <th>Address 3</th>
-                                                    <th>City</th>
-                                                    <th>State</th>
-                                                    <th>Zip Code</th>
-                                                    <th>Status</th>
-                                                    <th>Memo</th>
-                                                    <th>Created At</th>
-                                                    <th>Updated At</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <!-- Store info rows will be populated here -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
 
-                                <!-- Loading indicator -->
-                                <div id="store-info-loading" class="text-center" style="display: none;">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="sr-only">Loading...</span>
-                                    </div>
-                                    <p class="mt-2">Loading...</p>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Link to Shipping Management Page -->
+                <div class="card mt-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0 text-center">
+                            <i class="fas fa-shipping-fast"></i> Shipping Management
+                        </h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="mb-3">Manage orders and store information</p>
+                        <a href="{{ url_for('lori_automation.loris_shipping') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-shipping-fast"></i> Go to Shipping Management
+                        </a>
+                        <p class="mt-2 text-muted">
+                            <small>
+                                <i class="fas fa-info-circle"></i> 
+                                Access order management (pending/shipped) and store address management
+                            </small>
+                        </p>
+                    </div>
+                </div>
+
+
 
 
                 <!-- Add Store Info Modal -->
@@ -964,6 +812,56 @@
                 uploadDbInput.value = '';
             }
         });
+
+        // Delete button event handlers
+
+        const deletePdfDataBtn = document.getElementById('delete-pdf-data-btn');
+
+
+
+
+        if (deletePdfDataBtn) {
+            deletePdfDataBtn.addEventListener('click', async () => {
+                if (confirm('🚨 确定要删除所有PDF文件和订单数据吗？此操作无法撤销！\n\n这将删除：\n- 所有下载的PDF文件\n- 所有订单数据\n- 所有相关的Excel输出文件')) {
+                    // Show loading overlay
+                    document.getElementById('loading-overlay').style.display = 'flex';
+                    document.getElementById('processing-status').textContent = 'Deleting PDF files and orders...';
+                    
+                    try {
+                        const response = await fetch('/delete_pdf_data', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        const data = await response.json();
+                        
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+                        
+                        alert(data.message);
+                        
+                        // Clear PDF related sections
+                        if (document.getElementById('pdf-results-section')) {
+                            document.getElementById('pdf-results-section').style.display = 'none';
+                        }
+                        if (document.getElementById('batch-selection-section')) {
+                            document.getElementById('batch-selection-section').style.display = 'none';
+                        }
+                        
+                        // Clear uploaded files
+                        uploadedPdfFiles = [];
+                        updatePdfFileList();
+                        processPdfBtn.style.display = 'none';
+                        
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('删除PDF数据时出错: ' + error.message);
+                    } finally {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                    }
+                }
+            });
+        }
     });
 </script>
 
@@ -1353,810 +1251,6 @@
                 quantityElement.value = quantities.join('\n');
             });
         }
-
-        // Store Info Management
-        let currentEditingStoreNumber = null;
-
-        // Load store info when section is opened
-        document.addEventListener('DOMContentLoaded', function() {
-            const storeInfoSection = document.getElementById('storeInfoSection');
-            storeInfoSection.addEventListener('shown.bs.collapse', function() {
-                loadStoreInfo();
-            });
-        });
-
-        // Download store info
-        document.getElementById('download-store-info-btn').addEventListener('click', function() {
-            window.location.href = '/download_store_info';
-        });
-
-        // Upload store info
-        document.getElementById('upload-store-info-btn').addEventListener('click', async function() {
-            const fileInput = document.getElementById('upload-store-info-input');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('请选择要上传的文件');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/upload_store_info', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                alert(data.message);
-                fileInput.value = '';
-                loadStoreInfo(); // Reload the table
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('上传失败: ' + error.message);
-            }
-        });
-
-        // Load store info from server
-        async function loadStoreInfo() {
-            const loadingDiv = document.getElementById('store-info-loading');
-            const tableSection = document.getElementById('store-info-table-section');
-            
-            loadingDiv.style.display = 'block';
-            tableSection.style.display = 'none';
-
-            try {
-                const response = await fetch('/get_store_info');
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                populateStoreTable(data.data);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('加载店铺信息失败: ' + error.message);
-            } finally {
-                loadingDiv.style.display = 'none';
-                tableSection.style.display = 'block';
-            }
-        }
-
-        // Populate store table
-        function populateStoreTable(stores) {
-            const tbody = document.querySelector('#store-info-table tbody');
-            tbody.innerHTML = '';
-            
-            stores.forEach(store => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${store.store_number || ''}</td>
-                    <td>${store.store_name || ''}</td>
-                    <td>${store.company || ''}</td>
-                    <td>${store.phone || ''}</td>
-                    <td>${store.address1 || store.address || ''}</td>
-                    <td>${store.address2 || ''}</td>
-                    <td>${store.address3 || ''}</td>
-                    <td>${store.city || ''}</td>
-                    <td>${store.state || ''}</td>
-                    <td>${store.zip_code || ''}</td>
-                    <td>${store.status || ''}</td>
-                    <td>${store.memo || ''}</td>
-                    <td>${store.created_at ? new Date(store.created_at).toLocaleString() : ''}</td>
-                    <td>${store.updated_at ? new Date(store.updated_at).toLocaleString() : ''}</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary me-1" onclick="editStore('${store.store_number}')">
-                            <i class="fas fa-edit"></i> 编辑
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteStore('${store.store_number}')">
-                            <i class="fas fa-trash"></i> 删除
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Edit store
-        async function editStore(storeNumber) {
-            try {
-                const response = await fetch('/get_store_info');
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                const store = data.data.find(s => s.store_number === storeNumber);
-                if (!store) {
-                    throw new Error('店铺信息未找到');
-                }
-                
-                // Populate form
-                document.getElementById('edit-store-number').value = store.store_number || '';
-                document.getElementById('edit-store-name').value = store.store_name || '';
-                document.getElementById('edit-company').value = store.company || '';
-                document.getElementById('edit-phone').value = store.phone || '';
-                document.getElementById('edit-address1').value = store.address1 || store.address || '';
-                document.getElementById('edit-address2').value = store.address2 || '';
-                document.getElementById('edit-address3').value = store.address3 || '';
-                document.getElementById('edit-city').value = store.city || '';
-                document.getElementById('edit-state').value = store.state || '';
-                document.getElementById('edit-zip-code').value = store.zip_code || '';
-                document.getElementById('edit-memo').value = store.memo || '';
-                // Always set status explicitly (case-insensitive)
-                const statusSelect = document.getElementById('edit-status');
-                let statusValue = (store.status || '').toLowerCase();
-                if (statusValue === 'active' || statusValue === 'dead') {
-                    // Capitalize first letter for dropdown value
-                    statusSelect.value = statusValue.charAt(0).toUpperCase() + statusValue.slice(1);
-                } else {
-                    statusSelect.value = '';
-                }
-                
-                currentEditingStoreNumber = storeNumber;
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('editStoreModal'));
-                modal.show();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('加载店铺信息失败: ' + error.message);
-            }
-        }
-
-        // Save store
-        document.getElementById('save-store-btn').addEventListener('click', async function() {
-            if (!currentEditingStoreNumber) {
-                alert('没有选择要编辑的店铺');
-                return;
-            }
-
-            let storeNumberRaw = currentEditingStoreNumber;
-            let storeNumber = storeNumberRaw.padStart(4, '0');
-            const storeData = {
-                store_number: storeNumber,
-                store_name: document.getElementById('edit-store-name').value,
-                company: document.getElementById('edit-company').value,
-                phone: document.getElementById('edit-phone').value,
-                address1: document.getElementById('edit-address1').value,
-                address2: document.getElementById('edit-address2').value,
-                address3: document.getElementById('edit-address3').value,
-                city: document.getElementById('edit-city').value,
-                state: document.getElementById('edit-state').value,
-                zip_code: document.getElementById('edit-zip-code').value,
-                status: document.getElementById('edit-status').value,
-                memo: document.getElementById('edit-memo').value
-            };
-
-            try {
-                const response = await fetch('/edit_store_info', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(storeData)
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                alert(data.message);
-                
-                // Hide modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editStoreModal'));
-                modal.hide();
-                
-                // Reload table
-                loadStoreInfo();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('保存失败: ' + error.message);
-            }
-        });
-
-        // Add new store
-        document.getElementById('add-store-btn').addEventListener('click', async function() {
-            // Validate form
-            const requiredFields = ['add-store-number', 'add-store-name', 'add-address1', 'add-city', 'add-state', 'add-zip-code', 'add-status'];
-            for (const fieldId of requiredFields) {
-                const field = document.getElementById(fieldId);
-                if (!field.value.trim()) {
-                    alert(`Please fill in the ${field.previousElementSibling.textContent} field`);
-                    field.focus();
-                    return;
-                }
-            }
-
-            let storeNumberRaw = document.getElementById('add-store-number').value.trim();
-            let storeNumber = storeNumberRaw.padStart(4, '0');
-            const storeData = {
-                store_number: storeNumber,
-                store_name: document.getElementById('add-store-name').value.trim(),
-                company: document.getElementById('add-company').value.trim(),
-                phone: document.getElementById('add-phone').value.trim(),
-                address1: document.getElementById('add-address1').value.trim(),
-                address2: document.getElementById('add-address2').value.trim(),
-                address3: document.getElementById('add-address3').value.trim(),
-                city: document.getElementById('add-city').value.trim(),
-                state: document.getElementById('add-state').value.trim(),
-                zip_code: document.getElementById('add-zip-code').value.trim(),
-                status: document.getElementById('add-status').value,
-                memo: document.getElementById('add-memo').value.trim()
-            };
-
-            try {
-                const response = await fetch('/add_store_info', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(storeData)
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                alert(data.message);
-                
-                // Hide modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addStoreModal'));
-                modal.hide();
-                
-                // Reset form
-                document.getElementById('addStoreForm').reset();
-                
-                // Reload table
-                loadStoreInfo();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to add store: ' + error.message);
-            }
-        });
-
-        // Delete store
-        async function deleteStore(storeNumber) {
-            if (!confirm(`Are you sure you want to delete store ${storeNumber}? This action cannot be undone.`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch('/delete_store_info', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ store_number: storeNumber })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                alert(data.message);
-                loadStoreInfo(); // Reload the table
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to delete store: ' + error.message);
-            }
-        }
-
-        // Store Table Search
-        const storeSearchInput = document.getElementById('store-search-input');
-        if (storeSearchInput) {
-            storeSearchInput.addEventListener('input', function() {
-                const query = this.value.trim().toLowerCase();
-                const table = document.getElementById('store-info-table');
-                const rows = table.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(query) ? '' : 'none';
-                });
-            });
-        }
-
-        // ...existing code...
 </script>
 </body>
-<script>
-// Orders Management JavaScript  
-let allOrders = [];
-
-// Define global functions first
-window.loadAndRenderOrders = async function() {
-    try {
-        const response = await fetch('/get_orders');
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        allOrders = data.orders || [];
-        renderPendingOrders();
-        renderShippedOrders();
-    } catch (error) {
-        console.error('Error loading orders:', error);
-        // Show sample data if API fails
-        allOrders = [
-            {
-                po_number: "1001-240924-001",
-                batch_date_formatted: "2024-09-24",
-                ship_to_address: "123 Main St, City, State 12345",
-                total_quantity: 50,
-                total_cost: "250.00",
-                status: "pending",
-                order_date_formatted: "2024-09-24",
-                delivery_date_formatted: "2024-09-30",
-                created_at_formatted: "2024-09-24 10:30:00",
-                store_number: "1001"
-            },
-            {
-                po_number: "1002-240924-002",
-                batch_date_formatted: "2024-09-24",
-                ship_to_address: "456 Oak Ave, City, State 67890",
-                total_quantity: 25,
-                total_cost: "125.00",
-                status: "shipped",
-                order_date_formatted: "2024-09-23",
-                delivery_date_formatted: "2024-09-29",
-                created_at_formatted: "2024-09-23 14:20:00",
-                store_number: "1002"
-            }
-        ];
-        renderPendingOrders();
-        renderShippedOrders();
-        console.log('Showing sample orders due to API error:', error.message);
-    }
-}
-
-function renderPendingOrders() {
-    const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
-    const pendingPoSearch = document.getElementById('pending-po-search');
-    const batchDate = pendingBatchDateFilter?.value || '';
-    const poValue = (pendingPoSearch?.value || '').toLowerCase();
-    const filtered = allOrders.filter(order => {
-        return order.status === 'pending' &&
-            (!batchDate || order.batch_date_formatted === batchDate) &&
-            (!poValue || order.po_number.toLowerCase().includes(poValue));
-    });
-    renderOrdersTable(filtered, document.getElementById('pending-orders-table-body'));
-}
-
-function renderShippedOrders() {
-    const shippedBatchDateFilter = document.getElementById('shipped-batch-date-filter');
-    const shippedPoSearch = document.getElementById('shipped-po-search');
-    const batchDate = shippedBatchDateFilter?.value || '';
-    const poValue = (shippedPoSearch?.value || '').toLowerCase();
-    const filtered = allOrders.filter(order => {
-        return order.status === 'shipped' &&
-            (!batchDate || order.batch_date_formatted === batchDate) &&
-            (!poValue || order.po_number.toLowerCase().includes(poValue));
-    });
-    renderOrdersTable(filtered, document.getElementById('shipped-orders-table-body'));
-}
-
-function renderOrdersTable(orderList, tbody) {
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    orderList.forEach((order, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${order.po_number || 'N/A'}</td>
-            <td>${order.batch_date_formatted || 'N/A'}</td>
-            <td>${order.ship_to_address || 'N/A'}</td>
-            <td>${order.total_quantity || 0}</td>
-            <td>$${order.total_cost || '0.00'}</td>
-            <td>
-                <span class="badge ${order.status === 'pending' ? 'bg-warning' : 'bg-success'}">
-                    ${order.status || 'Unknown'}
-                </span>
-            </td>
-            <td>
-                <button class="btn btn-sm btn-info me-1" onclick="viewOrderDetails('${order.po_number}')">
-                    <i class="fas fa-eye"></i> View
-                </button>
-                <button class="btn btn-sm btn-success me-1" onclick="updateOrderStatus('${order.po_number}', 'shipped')">
-                    <i class="fas fa-ship"></i> Ship
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.po_number}')">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    const pendingSection = document.getElementById('pendingOrdersSection');
-    if (pendingSection) {
-        pendingSection.addEventListener('shown.bs.collapse', function() {
-            loadAndRenderOrders();
-        });
-    }
-    const shippedSection = document.getElementById('shippedOrdersSection');
-    if (shippedSection) {
-        shippedSection.addEventListener('shown.bs.collapse', function() {
-            loadAndRenderOrders();
-        });
-    }
-    // Refresh buttons
-    const refreshPendingBtn = document.getElementById('refresh-pending-orders-btn');
-    if (refreshPendingBtn) {
-        refreshPendingBtn.addEventListener('click', loadAndRenderOrders);
-    }
-    const refreshShippedBtn = document.getElementById('refresh-shipped-orders-btn');
-    if (refreshShippedBtn) {
-        refreshShippedBtn.addEventListener('click', loadAndRenderOrders);
-    }
-    // Filter controls
-    const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
-    const pendingPoSearch = document.getElementById('pending-po-search');
-    const clearPendingFiltersBtn = document.getElementById('clear-pending-filters-btn');
-    const shippedBatchDateFilter = document.getElementById('shipped-batch-date-filter');
-    const shippedPoSearch = document.getElementById('shipped-po-search');
-    const clearShippedFiltersBtn = document.getElementById('clear-shipped-filters-btn');
-    if (pendingBatchDateFilter) pendingBatchDateFilter.addEventListener('change', renderPendingOrders);
-    if (pendingPoSearch) pendingPoSearch.addEventListener('input', renderPendingOrders);
-    if (clearPendingFiltersBtn) clearPendingFiltersBtn.addEventListener('click', function() {
-        pendingBatchDateFilter.value = '';
-        pendingPoSearch.value = '';
-        renderPendingOrders();
-    });
-    if (shippedBatchDateFilter) shippedBatchDateFilter.addEventListener('change', renderShippedOrders);
-    if (shippedPoSearch) shippedPoSearch.addEventListener('input', renderShippedOrders);
-    if (clearShippedFiltersBtn) clearShippedFiltersBtn.addEventListener('click', function() {
-        shippedBatchDateFilter.value = '';
-        shippedPoSearch.value = '';
-        renderShippedOrders();
-    });
-
-    // Add helper functions for order management
-    window.viewOrderDetails = async function(poNumber) {
-        try {
-            const response = await fetch(`/get_order_items/${poNumber}`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            
-            // Show order details in modal
-            const modalContent = document.getElementById('order-details-content');
-            modalContent.innerHTML = `<p>Order details for ${poNumber}</p>`;
-            const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-            modal.show();
-        } catch (error) {
-            console.error('Error:', error);
-            alert('加载订单详情失败: ' + error.message);
-        }
-    }
-
-    window.updateOrderStatus = async function(poNumber, status) {
-        try {
-            const response = await fetch('/update_order_status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order_id: poNumber, status: status })
-            });
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            
-            alert('订单状态已更新');
-            loadAndRenderOrders();
-        } catch (error) {
-            console.error('Error:', error);
-            alert('更新订单状态失败: ' + error.message);
-        }
-    }
-
-    window.deleteOrder = async function(poNumber) {
-        if (!confirm(`确定要删除订单 ${poNumber} 吗？此操作无法撤销。`)) {
-            return;
-        }
-        
-        try {
-            const response = await fetch('/delete_order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order_id: poNumber })
-            });
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            
-            alert('订单已删除');
-            loadAndRenderOrders();
-        } catch (error) {
-            console.error('Error:', error);
-            alert('删除订单失败: ' + error.message);
-        }
-    }
-});
-
-</script>
-
-<!--script for stickersn -->
-<script>
-    // Loris Maker functionality
-    function updateInputData() {
-        const sku = document.getElementById('sku').value.split('\n');
-                <td><strong>${order.po_number}</strong></td>
-                <td><span class="badge bg-info">${order.batch_date_formatted}</span></td>
-                <td style="max-width: 200px; word-wrap: break-word;">${order.ship_to_address || 'N/A'}</td>
-                <td>${order.total_qty || 0}</td>
-                <td>$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
-                <td>
-                    <select class="form-select form-select-sm status-select" data-order-id="${order.po_number}">
-                        <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>pending</option>
-                        <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>shipped</option>
-                    </select>
-                </td>
-                <td>${order.order_date || 'N/A'}</td>
-                <td>${order.delivery_date || 'N/A'}</td>
-                <td>${order.created_at_formatted}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary view-items-btn" data-order-id="${order.po_number}">
-                        <i class="fas fa-list"></i> ${order.item_count}
-                    </button>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-danger delete-order-btn" data-order-id="${order.po_number}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-info toggle-store-info-btn" data-po="${order.po_number}">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(row);
-            // Store info row (initially hidden)
-            const storeRow = document.createElement('tr');
-            storeRow.className = 'store-info-row d-none';
-            storeRow.setAttribute('data-po', order.po_number);
-            if (order.store_info) {
-                storeRow.innerHTML = `
-                    <td colspan="13" class="bg-light">
-                        <div class="p-3">
-                            <h6><i class="fas fa-store"></i> 内部店铺信息 (Store #${order.po_number.substring(0, 4)})</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <strong>店铺名称:</strong> ${order.store_info.store_name || 'N/A'}<br>
-                                    <strong>公司:</strong> ${order.store_info.company || 'N/A'}<br>
-                                    <strong>电话:</strong> ${order.store_info.phone || 'N/A'}<br>
-                                    <strong>状态:</strong> ${order.store_info.status || 'N/A'}
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>地址:</strong><br>
-                                    ${order.store_info.address1 || ''}<br>
-                                    ${order.store_info.address2 ? order.store_info.address2 + '<br>' : ''}
-                                    ${order.store_info.address3 ? order.store_info.address3 + '<br>' : ''}
-                                    ${order.store_info.city || ''}, ${order.store_info.state || ''} ${order.store_info.zip_code || ''}
-                                </div>
-                            </div>
-                            ${order.store_info.memo ? `<div class=\"mt-2\"><strong>备注:</strong> ${order.store_info.memo}</div>` : ''}
-                        </div>
-                    </td>
-                `;
-            } else {
-                storeRow.innerHTML = `
-                    <td colspan="13" class="bg-light">
-                        <div class="p-3">
-                            <h6><i class="fas fa-exclamation-triangle text-warning"></i> 未找到店铺信息 (Store #${order.po_number.substring(0, 4)})</h6>
-                            <p class="mb-0">数据库中没有找到对应的店铺信息。</p>
-                        </div>
-                    </td>
-                `;
-            }
-            tbody.appendChild(storeRow);
-        });
-        addOrdersEventListeners();
-    }
-    function addOrdersEventListeners() {
-        // Status change listeners
-        document.querySelectorAll('.status-select').forEach(select => {
-            select.addEventListener('change', async function() {
-                const orderId = this.getAttribute('data-order-id');
-                const newStatus = this.value;
-                try {
-                    const response = await fetch('/update_order_status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            order_id: orderId,
-                            status: newStatus
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.error) throw new Error(data.error);
-                    this.style.backgroundColor = '#d4edda';
-                    setTimeout(() => { this.style.backgroundColor = ''; }, 1000);
-                    // Reload orders to update both tables if status changed
-                    loadAndRenderOrders();
-                } catch (error) {
-                    alert('更新订单状态失败: ' + error.message);
-                    this.value = allOrders.find(o => o.po_number == orderId)?.status || 'pending';
-                }
-            });
-        });
-        // View items listeners
-        document.querySelectorAll('.view-items-btn').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const orderId = this.getAttribute('data-order-id');
-                await showOrderDetails(orderId);
-            });
-        });
-        // Toggle store info listeners
-        document.querySelectorAll('.toggle-store-info-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const poNumber = this.getAttribute('data-po');
-                const storeRow = document.querySelector(`tr.store-info-row[data-po="${poNumber}"]`);
-                const icon = this.querySelector('i');
-                if (storeRow.classList.contains('d-none')) {
-                    storeRow.classList.remove('d-none');
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                } else {
-                    storeRow.classList.add('d-none');
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }
-            });
-        });
-        // Delete order listeners
-        document.querySelectorAll('.delete-order-btn').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const orderId = this.getAttribute('data-order-id');
-                if (!confirm('确定要删除订单吗？此操作无法撤销。')) return;
-                try {
-                    const response = await fetch('/delete_order', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ order_id: orderId })
-                    });
-                    const data = await response.json();
-                    if (data.error) throw new Error(data.error);
-                    alert(data.message);
-                    loadAndRenderOrders();
-                } catch (error) {
-                    alert('删除订单失败: ' + error.message);
-                }
-            });
-        });
-    }
-    async function showOrderDetails(orderId) {
-        try {
-            const response = await fetch(`/get_order_items/${orderId}`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            const order = allOrders.find(o => o.po_number == orderId);
-            const modalContent = document.getElementById('order-details-content');
-            modalContent.innerHTML = `
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <h6>订单信息</h6>
-                        <p><strong>PO号码:</strong> ${order.po_number}</p>
-                        <p><strong>批次日期:</strong> ${order.batch_date_formatted}</p>
-                        <p><strong>总数量:</strong> ${order.total_qty}</p>
-                        <p><strong>总金额:</strong> $${parseFloat(order.total_cost).toFixed(2)}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>发货地址</h6>
-                        <p>${order.ship_to_address ? order.ship_to_address.replace(/\n/g, '<br>') : 'N/A'}</p>
-                    </div>
-                </div>
-                <h6>订单项目</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>商品编号</th>
-                                <th>颜色</th>
-                                <th>数量</th>
-                                <th>描述</th>
-                                <th>单价</th>
-                                <th>总价</th>
-                                <th>UPC</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.items.map(item => `
-                                <tr>
-                                    <td>${item.vendor_item}</td>
-                                    <td>${item.color || ''}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>${item.description}</td>
-                                    <td>$${parseFloat(item.unit_price).toFixed(2)}</td>
-                                    <td>$${parseFloat(item.extended_cost).toFixed(2)}</td>
-                                    <td>${item.upc || ''}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-            modal.show();
-        } catch (error) {
-            alert('加载订单详情失败: ' + error.message);
-        }
-    }
-
-
-
-
-
-
-
-    // Loris Maker functionality
-    function updateInputData() {
-        const sku = document.getElementById('sku').value.split('\n');
-        const barcode = document.getElementById('barcode').value.split('\n');
-        const quantity = document.getElementById('quantity').value.split('\n');
-        let inputData = '';
-
-        for (let i = 0; i < Math.max(sku.length, barcode.length, quantity.length); i++) {
-            if (sku[i]?.trim() && barcode[i]?.trim() && quantity[i]?.trim()) {
-                inputData += `${sku[i].trim()}\t${barcode[i].trim()}\t${quantity[i].trim()}\n`;
-            }
-        }
-
-        document.getElementById('input_data').value = inputData.trim();
-    }
-
-    // Add event listeners for Loris Maker if elements exist
-    const skuElement = document.getElementById('sku');
-    const barcodeElement = document.getElementById('barcode');
-    const quantityElement = document.getElementById('quantity');
-    const inputDataElement = document.getElementById('input_data');
-
-    if (skuElement && barcodeElement && quantityElement && inputDataElement) {
-        [skuElement, barcodeElement, quantityElement].forEach(element => {
-            element.addEventListener('input', updateInputData);
-            element.addEventListener('paste', function() {
-                setTimeout(updateInputData, 10);
-            });
-        });
-
-        inputDataElement.addEventListener('input', function() {
-            const lines = this.value.trim().split('\n');
-            let skus = [], barcodes = [], quantities = [];
-            
-            lines.forEach(line => {
-                const parts = line.split('\t');
-                if (parts.length === 3) {
-                    skus.push(parts[0].trim());
-                    barcodes.push(parts[1].trim());
-                    quantities.push(parts[2].trim());
-                }
-            });
-            
-            skuElement.value = skus.join('\n');
-            barcodeElement.value = barcodes.join('\n');
-            quantityElement.value = quantities.join('\n');
-        });
-    }
-});
-</script>
 </html>

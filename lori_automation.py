@@ -223,24 +223,31 @@ def fetch_email_attachments():
                 if part.get_content_disposition() == 'attachment':
                     filename = part.get_filename()
                     if filename and filename.lower().endswith('.pdf'):
-                        # Generate unique filename if it already exists
+                        # Check if file already exists in batch directory
                         file_path = os.path.join(batch_dir, filename)
-                        counter = 1
-                        base_name, ext = os.path.splitext(filename)
-                        while os.path.exists(file_path):
-                            filename = f"{base_name}_{counter}{ext}"
-                            file_path = os.path.join(batch_dir, filename)
-                            counter += 1
+                        
+                        if os.path.exists(file_path):
+                            print(f"[fetch_email_attachments] File already exists, skipping: {filename}")
+                            # Still add to downloaded_files list for tracking
+                            downloaded_files.append({
+                                'filename': filename,
+                                'filepath': file_path,
+                                'batch_date': batch_date,
+                                'status': 'skipped_existing'
+                            })
+                            continue
                         
                         # Download PDF file
                         try:
                             with open(file_path, 'wb') as f:
                                 f.write(part.get_payload(decode=True))
                             
+                            print(f"[fetch_email_attachments] Downloaded: {filename}")
                             downloaded_files.append({
                                 'filename': filename,
                                 'filepath': file_path,
-                                'batch_date': batch_date
+                                'batch_date': batch_date,
+                                'status': 'downloaded'
                             })
                         except Exception as e:
                             print(f"Error downloading {filename}: {str(e)}")
@@ -252,22 +259,33 @@ def fetch_email_attachments():
         # Create batch summary
         batch_dates = list(set([f['batch_date'] for f in downloaded_files]))
         batch_summary = []
+        downloaded_count = len([f for f in downloaded_files if f.get('status') == 'downloaded'])
+        skipped_count = len([f for f in downloaded_files if f.get('status') == 'skipped_existing'])
+        
         for batch_date in batch_dates:
             batch_files = [f for f in downloaded_files if f['batch_date'] == batch_date]
+            batch_downloaded = [f for f in batch_files if f.get('status') == 'downloaded']
+            batch_skipped = [f for f in batch_files if f.get('status') == 'skipped_existing']
             batch_summary.append({
                 'date': batch_date,
                 'count': len(batch_files),
+                'downloaded': len(batch_downloaded),
+                'skipped': len(batch_skipped),
                 'files': [f['filename'] for f in batch_files]
             })
         
         print(f"[fetch_email_attachments] Total emails processed: {len(email_ids)}")
-        print(f"[fetch_email_attachments] Total files downloaded: {len(downloaded_files)}")
+        print(f"[fetch_email_attachments] Total files found: {len(downloaded_files)}")
+        print(f"[fetch_email_attachments] Files downloaded: {downloaded_count}")
+        print(f"[fetch_email_attachments] Files skipped (already exist): {skipped_count}")
         print(f"[fetch_email_attachments] Batch dates: {batch_dates}")
         
         return {
             'success': True,
             'total_emails_processed': len(email_ids),
             'total_files': len(downloaded_files),
+            'files_downloaded': downloaded_count,
+            'files_skipped': skipped_count,
             'files': downloaded_files,
             'batches': batch_dates,
             'batch_summary': batch_summary,
@@ -517,6 +535,22 @@ def get_store_info():
         return jsonify({'data': rows})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@lori_automation_bp.route("/loris_all_store_information", methods=["GET"])
+def loris_all_store_information():
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM loris_store_info ORDER BY store_number;")
+        rows = cursor.fetchall()
+        return jsonify({'success': True, 'data': rows})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         cursor.close()
         connection.close()
@@ -1061,8 +1095,11 @@ def loris_fedex():
                 # Generate PDFs for both versions
                 filename_30stickers, filename_exact = main(input_data)
                 
+                current_app.logger.info("PDF generation result: 30stickers='%s', exact='%s'", filename_30stickers, filename_exact)
+                
                 if not filename_30stickers or not filename_exact:
                     error_message = "An error occurred while generating the PDFs."
+                    current_app.logger.error("PDF generation failed: 30stickers='%s', exact='%s'", filename_30stickers, filename_exact)
             except Exception as e:
                 error_message = f"An error occurred: {e}"
                 current_app.logger.error("Exception in Loris fedex: %s", e)
@@ -1082,6 +1119,9 @@ def loris_fedex():
     if table_data is None:
         table_data = []
     
+    current_app.logger.info("Rendering template with: 30stickers='%s', exact='%s', error='%s'", 
+                           filename_30stickers, filename_exact, error_message)
+    
     return render_template("loris_fedex.html", 
                          filename_30stickers=filename_30stickers, 
                          filename_exact=filename_exact, 
@@ -1093,6 +1133,13 @@ def loris_fedex():
                          quantity=quantity, 
                          current_user=current_user)
 
+@lori_automation_bp.route("/loris_shipping", methods=["GET"])
+def loris_shipping():
+    if 'username' not in session:
+        return redirect(url_for("auth.login"))
+    
+    current_user = session['username']
+    return render_template("loris_shipping.html", current_user=current_user)
 
 # New endpoint: process local PDFs only (no email fetch)
 @lori_automation_bp.route("/process_local_pdfs", methods=["POST"])
@@ -1303,8 +1350,10 @@ def get_orders():
             GROUP BY o.po_number
             ORDER BY o.batch_date DESC, o.created_at DESC
         """
+        current_app.logger.info("Executing orders query: %s", query)
         cursor.execute(query)
         orders = cursor.fetchall()
+        current_app.logger.info("Found %d orders", len(orders))
         
         # For each order, get the internal address using first 4 digits
         for order in orders:
@@ -1321,16 +1370,25 @@ def get_orders():
             else:
                 order['store_info'] = None
             
-            # Format dates for display
-            if order['batch_date']:
-                order['batch_date_formatted'] = order['batch_date'].strftime('%Y-%m-%d')
-            if order['email_date']:
-                order['email_date_formatted'] = order['email_date'].strftime('%Y-%m-%d %H:%M')
-            if order['created_at']:
-                order['created_at_formatted'] = order['created_at'].strftime('%Y-%m-%d %H:%M')
+            # Convert datetime objects to strings for JSON serialization (handle both datetime objects and strings)
+            def format_date(date_value, format_str='%Y-%m-%d'):
+                if date_value is None:
+                    return None
+                if hasattr(date_value, 'strftime'):
+                    return date_value.strftime(format_str)
+                else:
+                    # Already a string, return as-is
+                    return str(date_value)
+            
+            order['batch_date'] = format_date(order['batch_date'])
+            order['email_date'] = format_date(order['email_date'], '%Y-%m-%d %H:%M:%S')
+            order['order_date'] = format_date(order['order_date'])
+            order['delivery_date'] = format_date(order['delivery_date'])
+            order['cancel_date'] = format_date(order['cancel_date'])
+            order['created_at'] = format_date(order['created_at'], '%Y-%m-%d %H:%M:%S')
+            order['updated_at'] = format_date(order['updated_at'], '%Y-%m-%d %H:%M:%S')
         
         cursor.close()
-        connection.close()
         
         return jsonify({
             'success': True,
@@ -1339,9 +1397,12 @@ def get_orders():
         })
         
     except Exception as e:
+        current_app.logger.error("Error in get_orders: %s", str(e))
+        import traceback
+        current_app.logger.error("Traceback: %s", traceback.format_exc())
         return jsonify({'error': str(e)}), 500
     finally:
-        if connection.is_connected():
+        if connection and connection.is_connected():
             connection.close()
 
 @lori_automation_bp.route("/get_order_items/<string:po_number>", methods=["GET"])
@@ -1489,11 +1550,23 @@ def fetch_and_process_emails():
             return jsonify(process_result), 500
         
         # Return success with summary
+        files_downloaded = fetch_result.get('files_downloaded', 0)
+        files_skipped = fetch_result.get('files_skipped', 0)
+        
+        message = f'完成！处理了 {fetch_result["total_emails_processed"]} 封邮件'
+        if files_downloaded > 0:
+            message += f'，下载了 {files_downloaded} 个PDF文件'
+        if files_skipped > 0:
+            message += f'，跳过了 {files_skipped} 个已存在的文件'
+        message += f'，添加了 {process_result["new_orders"]} 个新订单到数据库'
+        
         return jsonify({
             'success': True,
-            'message': f'完成！处理了 {fetch_result["total_emails_processed"]} 封邮件，添加了 {process_result["new_orders"]} 个新订单到数据库',
+            'message': message,
             'total_emails_processed': fetch_result['total_emails_processed'],
-            'total_files_downloaded': fetch_result['total_files'],
+            'total_files_found': fetch_result['total_files'],
+            'files_downloaded': files_downloaded,
+            'files_skipped': files_skipped,
             'new_orders': process_result['new_orders'],
             'skipped_orders': process_result['skipped_orders'],
             'count': process_result['new_orders']  # For compatibility with existing frontend
@@ -1545,5 +1618,68 @@ def fetch_email_pdfs():
             'skipped_orders': process_result['skipped_orders'],
             'batches': fetch_result['batches']
         })
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+
+# --- Delete Operations Endpoints ---
+
+
+
+
+@lori_automation_bp.route("/delete_pdf_data", methods=["POST"])
+def delete_pdf_data():
+    """Delete all PDF files and order data"""
+    try:
+        deleted_files = 0
+        deleted_orders = 0
+        deleted_items = 0
+        
+        # Connect to the database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        
+        # Delete from orders and related tables
+        cursor.execute("DELETE FROM lori_order_items")
+        deleted_items = cursor.rowcount
+        
+        cursor.execute("DELETE FROM lori_orders")
+        deleted_orders = cursor.rowcount
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        # Delete PDF files from the output directory
+        pdf_directory = os.path.join(os.getcwd(), 'output', 'barcode_output')
+        if os.path.exists(pdf_directory):
+            for filename in os.listdir(pdf_directory):
+                if filename.endswith('.pdf'):
+                    file_path = os.path.join(pdf_directory, filename)
+                    try:
+                        os.remove(file_path)
+                        deleted_files += 1
+                    except Exception as e:
+                        print(f"Error deleting file {filename}: {str(e)}")
+        
+        # Also clean up any temporary Excel files
+        excel_directory = os.path.join(os.getcwd(), 'output')
+        if os.path.exists(excel_directory):
+            for filename in os.listdir(excel_directory):
+                if filename.endswith(('.xlsx', '.xls')) and 'extracted_' in filename:
+                    file_path = os.path.join(excel_directory, filename)
+                    try:
+                        os.remove(file_path)
+                        deleted_files += 1
+                    except Exception as e:
+                        print(f"Error deleting Excel file {filename}: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {deleted_orders} orders, {deleted_items} order items, and {deleted_files} files'
+        })
+        
+    except Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500

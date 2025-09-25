@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>洛瑞丝庄园 - Shipping Management</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .navbar {
+            background-color: #343a40;
+        }
+        .navbar-brand {
+            color: white !important;
+        }
+        .nav-link {
+            color: rgba(255,255,255,.8) !important;
+        }
+        .nav-link:hover {
+            color: white !important;
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .table-container {
+            margin-top: 20px;
+        }
+        .total-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    {% include 'navbar.html' %}
+
+    <div class="container-fluid mt-4" style="max-width: 95%;">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="text-center mb-4" style="font-size: 2.5rem;">
+                    <i class="fas fa-shipping-fast"></i> 洛瑞丝庄园 - Shipping Management
+                </h1>
+                <div class="text-center">
+                    <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Back to Main Page
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Management Section - Pending -->
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#pendingOrdersSection" aria-expanded="false" aria-controls="pendingOrdersSection">
+                        <i class="fas fa-shopping-cart"></i> 订单管理系统 - Orders Management - pending
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </h4>
+            </div>
+            <div class="collapse" id="pendingOrdersSection">
+                <div class="card-body">
+                <!-- Control Buttons -->
+                <div class="row mb-4">
+                    <div class="col-md-12 text-center">
+                        <button id="refresh-pending-orders-btn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sync"></i> refresh
+                        </button>
+                    </div>
+                </div>
+                <!-- Filter Controls -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="date" id="pending-batch-date-filter" class="form-control" placeholder="Batch Date">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" id="pending-po-search" class="form-control" placeholder="Search PO Number...">
+                    </div>
+                    <div class="col-md-3">
+                        <button id="clear-pending-filters-btn" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    </div>
+                </div>
+                <div id="pending-orders-table-section" style="background:#fff;padding:30px;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;margin:0 -15px;">
+                    <div class="table-responsive">
+                        <table id="pending-orders-table" class="table table-bordered table-striped" style="width:100%;font-size:1.1rem;text-align:center;">
+                            <thead class="thead-dark" style="font-size:1.2rem;">
+                                <tr>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">#</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">PO Number</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Batch</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Ship To Address</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Internal Add</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Qty</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Cost</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Status</th>                                            
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-orders-table-body">
+                                <!-- Pending orders will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Orders Management Section - Shipped -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#shippedOrdersSection" aria-expanded="false" aria-controls="shippedOrdersSection">
+                        <i class="fas fa-shopping-cart"></i> 订单管理系统 - Orders Management - shipped
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </h4>
+            </div>
+            <div class="collapse" id="shippedOrdersSection">
+                <div class="card-body">
+                <!-- Control Buttons -->
+                <div class="row mb-4">
+                    <div class="col-md-12 text-center">
+                        <button id="refresh-shipped-orders-btn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sync"></i> refresh
+                        </button>
+                    </div>
+                </div>
+                <!-- Filter Controls -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <input type="date" id="shipped-batch-date-filter" class="form-control" placeholder="Batch Date">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" id="shipped-po-search" class="form-control" placeholder="Search PO Number...">
+                    </div>
+                    <div class="col-md-3">
+                        <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    </div>
+                </div>
+                <div id="shipped-orders-table-section" style="background:#fff;padding:30px;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;margin:0 -15px;">
+                    <div class="table-responsive">
+                        <table id="shipped-orders-table" class="table table-bordered table-striped" style="width:100%;font-size:1.1rem;text-align:center;">
+                            <thead class="thead-dark" style="font-size:1.2rem;">
+                                <tr>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">#</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">PO Number</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Batch</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Ship To Address</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Internal Add</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Qty</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Cost</th>
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Status</th>                                            
+                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shipped-orders-table-body">
+                                <!-- Shipped orders will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Store Info Section -->
+        <div class="card mb-4" style="padding-top: 30px;">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#storeInfoSection" aria-expanded="false" aria-controls="storeInfoSection">
+                        <i class="fas fa-store"></i> loris 店铺地址单
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </h4>
+            </div>
+            <div class="collapse" id="storeInfoSection">
+                <div class="card-body">
+                    <h2 class="text-center mb-4">Store Information Management</h2>
+                    <!-- Control Buttons -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <button id="download-store-info-btn" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-download"></i> Download All Store Information
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="manual-add-store-btn" class="btn btn-info btn-lg w-100" data-bs-toggle="modal" data-bs-target="#addStoreModal">
+                                <i class="fas fa-plus"></i> Manual Add
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="file" id="upload-store-info-input" accept=".xlsx,.xls" class="form-control">
+                                <button id="upload-store-info-btn" class="btn btn-success">
+                                    <i class="fas fa-upload"></i> Upload Store Information
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Store Info Table -->
+                    <div class="mb-3">
+                        <input type="text" id="store-search-input" class="form-control" placeholder="Search stores...">
+                    </div>
+                    <div id="store-info-table-section" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:#fff;padding:24px 0 24px 0;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;">
+                        <div class="table-responsive" style="overflow-x:visible;">
+                            <table id="store-info-table" class="table table-bordered table-striped w-100" style="min-width:1800px;width:100vw;">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>Store Number</th>
+                                            <th>Store Name</th>
+                                            <th>Company</th>
+                                            <th>Phone</th>
+                                            <th>Address 1</th>
+                                            <th>Address 2</th>
+                                            <th>Address 3</th>
+                                            <th>City</th>
+                                            <th>State</th>
+                                            <th>Zip Code</th>
+                                            <th>Status</th>
+                                            <th>Memo</th>
+                                            <th>Created At</th>
+                                            <th>Updated At</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Store info rows will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Loading indicator -->
+                        <div id="store-info-loading" class="text-center" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Store Info Modal -->
+        <div class="modal fade" id="addStoreModal" tabindex="-1" aria-labelledby="addStoreModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addStoreModalLabel">Add New Store</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="add-store-number" class="form-label">Store Number *</label>
+                                <input type="text" class="form-control" id="add-store-number" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="add-store-name" class="form-label">Store Name *</label>
+                                <input type="text" class="form-control" id="add-store-name" required>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="add-company" class="form-label">Company</label>
+                                <input type="text" class="form-control" id="add-company">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="add-phone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="add-phone">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <label for="add-address1" class="form-label">Address 1 *</label>
+                                <input type="text" class="form-control" id="add-address1" required>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="add-address2" class="form-label">Address 2</label>
+                                <input type="text" class="form-control" id="add-address2">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="add-address3" class="form-label">Address 3</label>
+                                <input type="text" class="form-control" id="add-address3">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <label for="add-city" class="form-label">City *</label>
+                                <input type="text" class="form-control" id="add-city" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="add-state" class="form-label">State *</label>
+                                <input type="text" class="form-control" id="add-state" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="add-zip-code" class="form-label">Zip Code *</label>
+                                <input type="text" class="form-control" id="add-zip-code" required>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="add-status" class="form-label">Status *</label>
+                                <select class="form-control" id="add-status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="add-memo" class="form-label">Memo</label>
+                                <textarea class="form-control" id="add-memo" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="add-store-btn">Add Store</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Store Info Modal -->
+        <div class="modal fade" id="editStoreModal" tabindex="-1" aria-labelledby="editStoreModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editStoreModalLabel">Edit Store Information</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="edit-store-number" class="form-label">Store Number</label>
+                                <input type="text" class="form-control" id="edit-store-number" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-store-name" class="form-label">Store Name</label>
+                                <input type="text" class="form-control" id="edit-store-name">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="edit-company" class="form-label">Company</label>
+                                <input type="text" class="form-control" id="edit-company">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-phone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="edit-phone">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <label for="edit-address1" class="form-label">Address 1</label>
+                                <input type="text" class="form-control" id="edit-address1">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="edit-address2" class="form-label">Address 2</label>
+                                <input type="text" class="form-control" id="edit-address2">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-address3" class="form-label">Address 3</label>
+                                <input type="text" class="form-control" id="edit-address3">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <label for="edit-city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="edit-city">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit-state" class="form-label">State</label>
+                                <input type="text" class="form-control" id="edit-state">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit-zip-code" class="form-label">Zip Code</label>
+                                <input type="text" class="form-control" id="edit-zip-code">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="edit-status" class="form-label">Status</label>
+                                <select class="form-control" id="edit-status">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit-memo" class="form-label">Memo</label>
+                                <textarea class="form-control" id="edit-memo" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="save-store-btn">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Details Modal -->
+        <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="orderDetailsModalLabel">
+                            <i class="fas fa-eye"></i> 订单详情 - Order Details
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="order-details-content">
+                            <!-- Order details will be populated here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-primary" onclick="printOrderDetails()">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> 关闭 Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay">
+            <div class="text-center text-white">
+                <div class="spinner-border text-light" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p id="processing-status" class="mt-3">Processing...</p>
+            </div>
+        </div>
+    </div> <!-- Close container -->
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Orders Management JavaScript -->
+    <script>
+    // Orders Management JavaScript  
+    let allOrders = [];
+
+    // Define global functions first
+    window.loadAndRenderOrders = async function() {
+        console.log('Starting to load orders...');
+        try {
+            // Load store information first
+            console.log('Loading store information...');
+            await loadStoreInfo();
+            console.log('Store information loaded successfully');
+            
+            console.log('Fetching orders from /get_orders...');
+            const response = await fetch('/get_orders');
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Orders data received:', data);
+            
+            if (data.error) throw new Error(data.error);
+            allOrders = data.orders || [];
+            console.log('Total orders loaded:', allOrders.length);
+            
+            renderPendingOrders();
+            renderShippedOrders();
+            console.log('Orders rendered successfully');
+            
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            // Show sample data if API fails
+            allOrders = [
+                {
+                    po_number: '0002-2025-001',
+                    batch_date: '2025-09-18',
+                    ship_to_address: 'MEDICAL CITY (PLANO)\n3901 W 15TH ST\nFloor 1 STE 101\nPLANO TX 75075-7738',
+                    total_qty: 50,
+                    total_cost: 1250.00,
+                    status: 'pending'
+                },
+                {
+                    po_number: '0003-2025-002',
+                    batch_date: '2025-09-18',
+                    ship_to_address: 'Store Location\n456 Oak Ave\nSuite 200\nSometown CA 90210',
+                    total_qty: 75,
+                    total_cost: 1875.00,
+                    status: 'pending'
+                },
+                {
+                    po_number: '0004-2025-003',
+                    batch_date: '2025-09-17',
+                    ship_to_address: 'Another Store\n789 Pine St\nAnother City TX 75001',
+                    total_qty: 25,
+                    total_cost: 650.00,
+                    status: 'shipped'
+                }
+            ];
+            renderPendingOrders();
+            renderShippedOrders();
+            console.log('Showing sample orders due to API error:', error.message);
+        }
+    }
+
+    function renderPendingOrders() {
+        const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
+        const pendingPoSearch = document.getElementById('pending-po-search');
+        const batchDate = pendingBatchDateFilter?.value || '';
+        const poValue = (pendingPoSearch?.value || '').toLowerCase();
+        const filtered = allOrders.filter(order => {
+            return order.status === 'pending' &&
+                (!batchDate || order.batch_date === batchDate) &&
+                (!poValue || order.po_number.toLowerCase().includes(poValue));
+        });
+        renderOrdersByBatch(filtered, 'pending-orders-table-body');
+    }
+
+    function renderShippedOrders() {
+        const shippedBatchDateFilter = document.getElementById('shipped-batch-date-filter');
+        const shippedPoSearch = document.getElementById('shipped-po-search');
+        const batchDate = shippedBatchDateFilter?.value || '';
+        const poValue = (shippedPoSearch?.value || '').toLowerCase();
+        const filtered = allOrders.filter(order => {
+            return order.status === 'shipped' &&
+                (!batchDate || order.batch_date === batchDate) &&
+                (!poValue || order.po_number.toLowerCase().includes(poValue));
+        });
+        renderOrdersByBatch(filtered, 'shipped-orders-table-body');
+    }
+
+    // Store information cache
+    let storeInfoCache = {};
+
+    // Function to get store information by store number
+    function getStoreInfo(storeNumber) {
+        if (!storeNumber) return 'N/A';
+        if (storeInfoCache[storeNumber]) {
+            return storeInfoCache[storeNumber];
+        } else {
+            // Return a button for adding new store
+            return `<button class="btn btn-sm btn-success add-store-btn" data-store-number="${storeNumber}" title="Add New Store ${storeNumber}">
+                <i class="fas fa-plus"></i> Add Store ${storeNumber}
+            </button>`;
+        }
+    }
+
+    // Function to load store information
+    async function loadStoreInfo() {
+        console.log('Loading store information from /get_store_info...');
+        try {
+            const response = await fetch('/get_store_info');
+            console.log('Store info response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Store info data received:', data);
+            
+            if (data.data) {
+                storeInfoCache = {};
+                data.data.forEach(store => {
+                    const storeNum = store.store_number;
+                    if (storeNum) {
+                        // Format internal address: Company, Address1, Address2, Address3, City, State ZIP
+                        let internalAddress = [];
+                        if (store.company) internalAddress.push(store.company);
+                        if (store.address1) internalAddress.push(store.address1);
+                        if (store.address2) internalAddress.push(store.address2);
+                        if (store.address3) internalAddress.push(store.address3);
+                        
+                        // City, State ZIP on same line
+                        let cityStateZip = [];
+                        if (store.city) cityStateZip.push(store.city);
+                        if (store.state) cityStateZip.push(store.state);
+                        if (store.zip_code) cityStateZip.push(store.zip_code);
+                        
+                        if (cityStateZip.length > 0) {
+                            internalAddress.push(cityStateZip.join(' '));
+                        }
+                        
+                        storeInfoCache[storeNum] = internalAddress.join('\n');
+                    }
+                });
+                console.log('Store cache loaded with', Object.keys(storeInfoCache).length, 'stores');
+                
+                // Re-render tables to update with store info
+                if (allOrders.length > 0) {
+                    renderPendingOrders();
+                    renderShippedOrders();
+                }
+            } else {
+                console.warn('Store info response missing success or data:', data);
+            }
+        } catch (error) {
+            console.error('Error loading store information:', error);
+            // Continue without store info - don't block the main loading
+        }
+    }
+
+    // Simple function to display batch date as-is from database
+    function formatBatchDate(dateString) {
+        return dateString || 'N/A';
+    }
+
+    function renderOrdersByBatch(orderList, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        // Clear the container
+        container.innerHTML = '';
+        
+        if (orderList.length === 0) {
+            container.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No orders found</td></tr>';
+            return;
+        }
+        
+        // Group orders by batch date
+        const ordersByBatch = {};
+        orderList.forEach(order => {
+            const batchDate = order.batch_date || '2025-09-18'; // Default to 2025-09-18 if no batch date
+            if (!ordersByBatch[batchDate]) {
+                ordersByBatch[batchDate] = [];
+            }
+            ordersByBatch[batchDate].push(order);
+        });
+        
+        // Sort batch dates (newest first)
+        const sortedBatchDates = Object.keys(ordersByBatch).sort((a, b) => new Date(b) - new Date(a));
+        
+        let overallIndex = 0;
+        sortedBatchDates.forEach(batchDate => {
+            const orders = ordersByBatch[batchDate];
+            
+            // Create batch header row
+            const batchHeaderRow = document.createElement('tr');
+            batchHeaderRow.className = 'table-primary';
+            batchHeaderRow.innerHTML = `
+                <td colspan="9" class="text-center fw-bold py-4" style="font-size: 1.3rem; padding: 20px;">
+                    <i class="fas fa-calendar-alt"></i> Batch Date: ${formatBatchDate(batchDate)} 
+                    <span class="badge bg-primary ms-3" style="font-size: 1rem;">${orders.length} orders</span>
+                </td>
+            `;
+            container.appendChild(batchHeaderRow);
+            
+            // Add orders for this batch
+            orders.forEach(order => {
+                overallIndex++;
+                // Extract first 4 digits from PO number for store lookup
+                const storeNumber = order.po_number ? order.po_number.substring(0, 4) : '';
+                const internalAddress = getStoreInfo(storeNumber);
+                
+                // Format ship-to address for better display
+                let formattedShipToAddress = order.ship_to_address || 'N/A';
+                if (order.ship_to_address && order.ship_to_address !== 'N/A') {
+                    const addressLines = order.ship_to_address.split('\n').filter(line => line.trim());
+                    if (addressLines.length > 0) {
+                        formattedShipToAddress = addressLines.join('\n');
+                    }
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${overallIndex}</td>
+                    <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">${order.po_number || 'N/A'}</td>
+                    <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
+                    <td style="white-space: pre-line; max-width: 300px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;">${formattedShipToAddress}</td>
+                    <td style="white-space: pre-line; max-width: 350px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;"></td>
+                    <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${order.total_qty || 0}</td>
+                    <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
+                    <td style="padding: 12px; text-align: center;">
+                        <select class="form-select status-select" data-po="${order.po_number}" style="font-size: 1rem; padding: 8px;">
+                            <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="processed" ${order.status === 'processed' ? 'selected' : ''}>Processed</option>
+                            <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items" style="font-size: 1rem; padding: 8px 12px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order" style="font-size: 1rem; padding: 8px 12px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                // Set the internal address content separately to handle HTML
+                const internalAddCell = row.children[4]; // 5th column (0-indexed)
+                internalAddCell.innerHTML = internalAddress;
+                
+                container.appendChild(row);
+            });
+            
+            // Add a spacing row between batches (except for the last one)
+            if (batchDate !== sortedBatchDates[sortedBatchDates.length - 1]) {
+                const spacingRow = document.createElement('tr');
+                spacingRow.innerHTML = '<td colspan="9" style="height: 10px; border: none;"></td>';
+                container.appendChild(spacingRow);
+            }
+        });
+    }
+
+    function renderOrdersTable(orderList, tbody) {
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        orderList.forEach((order, index) => {
+            // Extract first 4 digits from PO number for store lookup
+            const storeNumber = order.po_number ? order.po_number.substring(0, 4) : '';
+            const internalAddress = getStoreInfo(storeNumber);
+            
+            // Format ship-to address for better display
+            let formattedShipToAddress = order.ship_to_address || 'N/A';
+            if (order.ship_to_address && order.ship_to_address !== 'N/A') {
+                // Try to format the ship-to address if it's not already well formatted
+                const addressLines = order.ship_to_address.split('\n').filter(line => line.trim());
+                if (addressLines.length > 0) {
+                    formattedShipToAddress = addressLines.join('\n');
+                }
+            }
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${index + 1}</td>
+                <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">${order.po_number || 'N/A'}</td>
+                <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
+                <td style="white-space: pre-line; max-width: 300px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;">${formattedShipToAddress}</td>
+                <td style="white-space: pre-line; max-width: 350px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;"></td>
+                <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${order.total_qty || 0}</td>
+                <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
+                <td style="padding: 12px; text-align: center;">
+                    <select class="form-select status-select" data-po="${order.po_number}" style="font-size: 1rem; padding: 8px;">
+                        <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="processed" ${order.status === 'processed' ? 'selected' : ''}>Processed</option>
+                        <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                        <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                    </select>
+                </td>
+                <td style="padding: 12px; text-align: center;">
+                    <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items" style="font-size: 1rem; padding: 8px 12px;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order" style="font-size: 1rem; padding: 8px 12px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            // Set the internal address content separately to handle HTML
+            const internalAddCell = row.children[4]; // 5th column (0-indexed)
+            internalAddCell.innerHTML = internalAddress;
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const pendingSection = document.getElementById('pendingOrdersSection');
+        if (pendingSection) {
+            pendingSection.addEventListener('shown.bs.collapse', function() {
+                loadAndRenderOrders();
+            });
+        }
+        const shippedSection = document.getElementById('shippedOrdersSection');
+        if (shippedSection) {
+            shippedSection.addEventListener('shown.bs.collapse', function() {
+                loadAndRenderOrders();
+            });
+        }
+        // Refresh buttons
+        const refreshPendingBtn = document.getElementById('refresh-pending-orders-btn');
+        if (refreshPendingBtn) {
+            refreshPendingBtn.addEventListener('click', loadAndRenderOrders);
+        }
+        const refreshShippedBtn = document.getElementById('refresh-shipped-orders-btn');
+        if (refreshShippedBtn) {
+            refreshShippedBtn.addEventListener('click', loadAndRenderOrders);
+        }
+        // Filter controls
+        const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
+        const pendingPoSearch = document.getElementById('pending-po-search');
+        const clearPendingFiltersBtn = document.getElementById('clear-pending-filters-btn');
+        const shippedBatchDateFilter = document.getElementById('shipped-batch-date-filter');
+        const shippedPoSearch = document.getElementById('shipped-po-search');
+        const clearShippedFiltersBtn = document.getElementById('clear-shipped-filters-btn');
+        if (pendingBatchDateFilter) pendingBatchDateFilter.addEventListener('change', renderPendingOrders);
+        if (pendingPoSearch) pendingPoSearch.addEventListener('input', renderPendingOrders);
+        if (clearPendingFiltersBtn) clearPendingFiltersBtn.addEventListener('click', function() {
+            pendingBatchDateFilter.value = '';
+            pendingPoSearch.value = '';
+            renderPendingOrders();
+        });
+        if (shippedBatchDateFilter) shippedBatchDateFilter.addEventListener('change', renderShippedOrders);
+        if (shippedPoSearch) shippedPoSearch.addEventListener('input', renderShippedOrders);
+        if (clearShippedFiltersBtn) clearShippedFiltersBtn.addEventListener('click', function() {
+            shippedBatchDateFilter.value = '';
+            shippedPoSearch.value = '';
+            renderShippedOrders();
+        });
+
+        // Add helper functions for order management
+        window.viewOrderDetails = async function(poNumber) {
+            try {
+                const response = await fetch(`/get_order_items/${poNumber}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Find the order info from allOrders
+                const order = allOrders.find(o => o.po_number === poNumber);
+                
+                // Create a nicely formatted display
+                let orderDetailsHTML = `
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-receipt"></i> Order Information</h5>
+                            <table class="table table-sm table-borderless">
+                                <tr><td><strong>PO Number:</strong></td><td>${poNumber}</td></tr>
+                                <tr><td><strong>Batch Date:</strong></td><td>${formatBatchDate(order?.batch_date || 'N/A')}</td></tr>
+                                <tr><td><strong>Status:</strong></td><td><span class="badge ${order?.status === 'pending' ? 'bg-warning' : order?.status === 'shipped' ? 'bg-success' : 'bg-info'}">${order?.status || 'N/A'}</span></td></tr>
+                                <tr><td><strong>Total Quantity:</strong></td><td>${order?.total_qty || 0}</td></tr>
+                                <tr><td><strong>Total Cost:</strong></td><td>$${parseFloat(order?.total_cost || 0).toFixed(2)}</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-shipping-fast"></i> Shipping Address</h5>
+                            <div class="border p-3 bg-light rounded">
+                                ${order?.ship_to_address ? order.ship_to_address.replace(/\n/g, '<br>') : 'No address available'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add items table if items exist
+                if (data.items && data.items.length > 0) {
+                    orderDetailsHTML += `
+                        <div class="row">
+                            <div class="col-12">
+                                <h5><i class="fas fa-boxes"></i> Order Items (${data.items.length} items)</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-sm">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Vendor Item</th>
+                                                <th>Color</th>
+                                                <th>Quantity</th>
+                                                <th>Description</th>
+                                                <th>Unit Price</th>
+                                                <th>Extended Cost</th>
+                                                <th>UPC</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+                    
+                    let totalQty = 0;
+                    let totalCost = 0;
+                    
+                    data.items.forEach((item, index) => {
+                        const qty = parseFloat(item.quantity || 0);
+                        const extCost = parseFloat(item.extended_cost || 0);
+                        totalQty += qty;
+                        totalCost += extCost;
+                        
+                        orderDetailsHTML += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td><strong>${item.vendor_item || 'N/A'}</strong></td>
+                                <td>${item.color || '-'}</td>
+                                <td class="text-center">${qty}</td>
+                                <td>${item.description || 'N/A'}</td>
+                                <td class="text-end">$${parseFloat(item.unit_price || 0).toFixed(2)}</td>
+                                <td class="text-end">$${extCost.toFixed(2)}</td>
+                                <td><small>${item.upc || '-'}</small></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    // Add totals row
+                    orderDetailsHTML += `
+                            <tr class="table-info fw-bold">
+                                <td colspan="3"><strong>TOTALS</strong></td>
+                                <td class="text-center"><strong>${totalQty}</strong></td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-end"><strong>$${totalCost.toFixed(2)}</strong></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+                    `;
+                } else {
+                    orderDetailsHTML += `
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    No items found for this order.
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('order-details-content').innerHTML = orderDetailsHTML;
+                const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error loading order details:', error);
+                alert('Error loading order details: ' + error.message);
+            }
+        }
+
+        window.updateOrderStatus = async function(poNumber, status) {
+            try {
+                const response = await fetch('/update_order_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: poNumber, status: status })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                loadAndRenderOrders();
+            } catch (error) {
+                console.error('Error updating order status:', error);
+                alert('Error updating order status: ' + error.message);
+            }
+        }
+
+        window.deleteOrder = async function(poNumber) {
+            if (!confirm(`确定要删除订单 ${poNumber} 吗？此操作无法撤销。`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/delete_order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: poNumber })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                alert('订单删除成功！');
+                loadAndRenderOrders();
+            } catch (error) {
+                console.error('Error deleting order:', error);
+                alert('删除订单时发生错误: ' + error.message);
+            }
+        }
+
+        // Event delegation for dynamically created elements
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('status-select')) {
+                const poNumber = e.target.getAttribute('data-po');
+                const newStatus = e.target.value;
+                updateOrderStatus(poNumber, newStatus);
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.view-items-btn')) {
+                const poNumber = e.target.closest('.view-items-btn').getAttribute('data-po');
+                viewOrderDetails(poNumber);
+            }
+            if (e.target.closest('.delete-order-btn')) {
+                const poNumber = e.target.closest('.delete-order-btn').getAttribute('data-po');
+                deleteOrder(poNumber);
+            }
+            if (e.target.closest('.add-store-btn')) {
+                const storeNumber = e.target.closest('.add-store-btn').getAttribute('data-store-number');
+                openAddStoreModal(storeNumber);
+            }
+        });
+
+        // Function to open Add Store modal with pre-populated store number
+        window.openAddStoreModal = function(storeNumber = '') {
+            // Pre-populate the store number if provided
+            if (storeNumber) {
+                document.getElementById('add-store-number').value = storeNumber;
+            }
+            
+            // Clear other fields
+            document.getElementById('add-store-name').value = '';
+            document.getElementById('add-company').value = '';
+            document.getElementById('add-phone').value = '';
+            document.getElementById('add-address1').value = '';
+            document.getElementById('add-address2').value = '';
+            document.getElementById('add-address3').value = '';
+            document.getElementById('add-city').value = '';
+            document.getElementById('add-state').value = '';
+            document.getElementById('add-zip-code').value = '';
+            document.getElementById('add-status').value = '';
+            document.getElementById('add-memo').value = '';
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addStoreModal'));
+            modal.show();
+        }
+    });
+    </script>
+
+    <!-- Store Info Management JavaScript -->
+    <script>
+        // Store Info Management
+        let currentEditingStoreNumber = null;
+
+        // Load store info when section is opened
+        document.addEventListener('DOMContentLoaded', function() {
+            const storeInfoSection = document.getElementById('storeInfoSection');
+            if (storeInfoSection) {
+                storeInfoSection.addEventListener('shown.bs.collapse', function() {
+                    loadStoreInfoForManagement();
+                });
+            }
+        });
+
+        // Download store info
+        document.getElementById('download-store-info-btn').addEventListener('click', function() {
+            window.location.href = '/download_store_info';
+        });
+
+        // Upload store info
+        document.getElementById('upload-store-info-btn').addEventListener('click', async function() {
+            const fileInput = document.getElementById('upload-store-info-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('请选择文件！');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload_store_info', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                alert(data.message);
+                loadStoreInfoForManagement();
+                fileInput.value = '';
+                
+            } catch (error) {
+                console.error('Error uploading store info:', error);
+                alert('上传失败: ' + error.message);
+            }
+        });
+
+        // Load store info from server for store management section
+        async function loadStoreInfoForManagement() {
+            const loadingDiv = document.getElementById('store-info-loading');
+            const tableSection = document.getElementById('store-info-table-section');
+            
+            console.log('Loading store info for management section...');
+            
+            if (loadingDiv) loadingDiv.style.display = 'block';
+            if (tableSection) tableSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/get_store_info');
+                console.log('Store management response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Store management data:', data);
+                
+                if (data.error) throw new Error(data.error);
+                
+                populateStoreTable(data.data || []);
+                if (tableSection) tableSection.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading store info for management:', error);
+                alert('加载店铺信息失败: ' + error.message);
+            } finally {
+                if (loadingDiv) loadingDiv.style.display = 'none';
+            }
+        }
+
+        // Populate store table
+        function populateStoreTable(stores) {
+            const tbody = document.querySelector('#store-info-table tbody');
+            tbody.innerHTML = '';
+            
+            stores.forEach(store => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${store.store_number || ''}</td>
+                    <td>${store.store_name || ''}</td>
+                    <td>${store.company || ''}</td>
+                    <td>${store.phone || ''}</td>
+                    <td>${store.address1 || ''}</td>
+                    <td>${store.address2 || ''}</td>
+                    <td>${store.address3 || ''}</td>
+                    <td>${store.city || ''}</td>
+                    <td>${store.state || ''}</td>
+                    <td>${store.zip_code || ''}</td>
+                    <td>${store.status || ''}</td>
+                    <td>${store.memo || ''}</td>
+                    <td>${store.created_at || ''}</td>
+                    <td>${store.updated_at || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editStore('${store.store_number}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStore('${store.store_number}')">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Edit store
+        async function editStore(storeNumber) {
+            try {
+                const response = await fetch('/get_store_info');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                const store = data.data.find(s => s.store_number === storeNumber);
+                if (!store) throw new Error('Store not found');
+                
+                currentEditingStoreNumber = storeNumber;
+                
+                // Populate edit modal
+                document.getElementById('edit-store-number').value = store.store_number || '';
+                document.getElementById('edit-store-name').value = store.store_name || '';
+                document.getElementById('edit-company').value = store.company || '';
+                document.getElementById('edit-phone').value = store.phone || '';
+                document.getElementById('edit-address1').value = store.address1 || '';
+                document.getElementById('edit-address2').value = store.address2 || '';
+                document.getElementById('edit-address3').value = store.address3 || '';
+                document.getElementById('edit-city').value = store.city || '';
+                document.getElementById('edit-state').value = store.state || '';
+                document.getElementById('edit-zip-code').value = store.zip_code || '';
+                document.getElementById('edit-status').value = store.status || '';
+                document.getElementById('edit-memo').value = store.memo || '';
+                
+                const modal = new bootstrap.Modal(document.getElementById('editStoreModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error loading store for edit:', error);
+                alert('加载店铺信息失败: ' + error.message);
+            }
+        }
+
+        // Save store
+        document.getElementById('save-store-btn').addEventListener('click', async function() {
+            if (!currentEditingStoreNumber) {
+                alert('没有选择要编辑的店铺');
+                return;
+            }
+
+            let storeNumberRaw = currentEditingStoreNumber;
+            let storeNumber = storeNumberRaw.padStart(4, '0');
+            const storeData = {
+                store_number: storeNumber,
+                store_name: document.getElementById('edit-store-name').value,
+                company: document.getElementById('edit-company').value,
+                phone: document.getElementById('edit-phone').value,
+                address1: document.getElementById('edit-address1').value,
+                address2: document.getElementById('edit-address2').value,
+                address3: document.getElementById('edit-address3').value,
+                city: document.getElementById('edit-city').value,
+                state: document.getElementById('edit-state').value,
+                zip_code: document.getElementById('edit-zip-code').value,
+                status: document.getElementById('edit-status').value,
+                memo: document.getElementById('edit-memo').value
+            };
+
+            try {
+                const response = await fetch('/edit_store_info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(storeData)
+                });
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                alert('店铺信息更新成功！');
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editStoreModal'));
+                modal.hide();
+                
+                loadStoreInfoForManagement();
+                currentEditingStoreNumber = null;
+                
+            } catch (error) {
+                console.error('Error updating store:', error);
+                alert('更新店铺信息失败: ' + error.message);
+            }
+        });
+
+        // Add new store
+        document.getElementById('add-store-btn').addEventListener('click', async function() {
+            // Validate form
+            const requiredFields = ['add-store-number', 'add-store-name', 'add-address1', 'add-city', 'add-state', 'add-zip-code', 'add-status'];
+            for (const fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    alert(`请填写 ${field.previousElementSibling.textContent}`);
+                    field.focus();
+                    return;
+                }
+            }
+
+            let storeNumberRaw = document.getElementById('add-store-number').value.trim();
+            let storeNumber = storeNumberRaw.padStart(4, '0');
+            const storeData = {
+                store_number: storeNumber,
+                store_name: document.getElementById('add-store-name').value.trim(),
+                company: document.getElementById('add-company').value.trim(),
+                phone: document.getElementById('add-phone').value.trim(),
+                address1: document.getElementById('add-address1').value.trim(),
+                address2: document.getElementById('add-address2').value.trim(),
+                address3: document.getElementById('add-address3').value.trim(),
+                city: document.getElementById('add-city').value.trim(),
+                state: document.getElementById('add-state').value.trim(),
+                zip_code: document.getElementById('add-zip-code').value.trim(),
+                status: document.getElementById('add-status').value,
+                memo: document.getElementById('add-memo').value.trim()
+            };
+
+            try {
+                const response = await fetch('/add_store_info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(storeData)
+                });
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                alert('店铺添加成功！');
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addStoreModal'));
+                modal.hide();
+                
+                // Clear form
+                document.getElementById('addStoreModal').querySelectorAll('input, select, textarea').forEach(input => {
+                    input.value = '';
+                });
+                
+                // Reload store info for management section
+                loadStoreInfoForManagement();
+                
+                // Reload store cache for orders display
+                await loadStoreInfo();
+                
+                // Re-render orders to show updated store info
+                if (allOrders.length > 0) {
+                    renderPendingOrders();
+                    renderShippedOrders();
+                }
+                
+            } catch (error) {
+                console.error('Error adding store:', error);
+                alert('添加店铺失败: ' + error.message);
+            }
+        });
+
+        // Delete store
+        async function deleteStore(storeNumber) {
+            if (!confirm(`Are you sure you want to delete store ${storeNumber}? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/delete_store_info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ store_number: storeNumber })
+                });
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                alert('店铺删除成功！');
+                loadStoreInfoForManagement();
+                
+            } catch (error) {
+                console.error('Error deleting store:', error);
+                alert('删除店铺失败: ' + error.message);
+            }
+        }
+
+        // Store Table Search
+        const storeSearchInput = document.getElementById('store-search-input');
+        if (storeSearchInput) {
+            storeSearchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#store-info-table tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+
+        // Print order details function
+        window.printOrderDetails = function() {
+            const modalContent = document.getElementById('order-details-content');
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Order Details</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .table { margin-bottom: 20px; }
+                        @media print {
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container-fluid">
+                        <h2 class="text-center mb-4">洛瑞丝庄园 - Order Details</h2>
+                        ${modalContent.innerHTML}
+                        <div class="text-center mt-4 no-print">
+                            <button onclick="window.print()" class="btn btn-primary">Print</button>
+                            <button onclick="window.close()" class="btn btn-secondary">Close</button>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+    </script>
+</body>
+</html>
