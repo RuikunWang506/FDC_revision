@@ -11,6 +11,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     
     <style>
+        .card-body {
+            background-color: #efdca391;    
+        }
         .navbar {
             background-color: #343a40;
         }
@@ -42,48 +45,495 @@
             background-color: #f8f9fa;
             font-weight: bold;
         }
+        
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background-color: #fff;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1050;
+            transition: right 0.3s ease;
+        }
+        
+        .sidebar.show {
+            right: 0;
+        }
+        
+        .sidebar-content {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1040;
+        }
+        
+        .package-info-container {
+            min-height: 120px;
+        }
+        
+        .pkg-status-indicator.success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .pkg-status-indicator.error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        /* Batch collapse styles */
+        .batch-toggle-icon {
+            transition: transform 0.2s ease;
+            margin-right: 8px;
+        }
+        
+        .table-primary td {
+            position: relative;
+        }
+        
+        .select-batch-btn {
+            border: 3px solid rgb(255, 111, 0) !important;
+            border-style: dotted !important;
+            color: rgb(0, 0, 0) !important;
+            font-size: 1rem !important;
+        }
+        
+        .select-batch-btn:hover {
+            background-color: rgb(255, 0, 0) !important;
+            border-color: rgba(0, 242, 255, 0.5) !important;
+            color: white !important;
+        }
+        
+        .batch-order-row {
+            transition: all 0.2s ease;
+        }
+        
+        .pkg-status-indicator.warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .pkg-status-indicator.deleted {
+            color: #6c757d;
+            font-weight: bold;
+        }
+        
+        .pkg-status-indicator {
+            font-size: 0.7rem;
+        }
+        
+        /* CM Conversion Styles */
+        .cm-checkbox {
+            transform: scale(0.8);
+        }
+        
+        .conversion-display {
+            color: #6c757d;
+            font-style: italic;
+            line-height: 1;
+            margin-top: 2px;
+        }
+        
+        .form-check-label {
+            margin-bottom: 0;
+        }
+        
+        /* Toast notification styles */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            max-width: 350px;
+            word-wrap: break-word;
+        }
+        
+        .toast-notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .toast-notification.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-left: 5px solid #155724;
+        }
+        
+        .toast-notification.error {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            border-left: 5px solid #721c24;
+        }
+        
+        .toast-notification .toast-icon {
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        /* Compact Grid Styles for Box Dimensions */
+        .compact-box-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 3px;
+            padding: 6px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            max-width: 140px;
+        }
+        
+        .compact-dimension-input {
+            border: none;
+            background: white;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 4px;
+            width: 100%;
+            border-radius: 2px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .compact-dimension-input:focus {
+            outline: none;
+            background-color: #e3f2fd;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .compact-dimension-input::placeholder {
+            font-size: 10px;
+            color: #9ca3af;
+            font-weight: normal;
+        }
+        
+        .compact-weight-input {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 6px;
+            width: 100%;
+            max-width: 90px;
+            min-width: 60px;
+            transition: all 0.2s ease;
+        }
+        
+        .compact-weight-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .dimension-labels {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2px;
+            font-size: 11px;
+            color: #6c757d;
+            text-align: center;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+        
+        .compact-conversion-display {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 2px;
+            font-style: italic;
+            line-height: 1;
+        }
+        
+        /* Hide number input spinners */
+        .compact-dimension-input::-webkit-outer-spin-button,
+        .compact-dimension-input::-webkit-inner-spin-button,
+        .compact-weight-input::-webkit-outer-spin-button,
+        .compact-weight-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .compact-dimension-input[type=number],
+        .compact-weight-input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        
+        /* Batch header row height */
+        .batch-header-row {
+            height: 30px; /* Adjust this value as needed */
+            vertical-align: middle;
+        }
+        
+        /* Layout and Container Styles */
+        .main-container {
+            max-width: 95%;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+        }
+        
+        .table-section {
+            background: #fff;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border-top: 2px solid #e9ecef;
+            margin: 0 -15px;
+        }
+        
+        .store-info-section {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            background: #fff;
+            padding: 24px 0 24px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border-top: 2px solid #e9ecef;
+        }
+        
+        .store-info-responsive {
+            overflow-x: visible;
+        }
+        
+        .store-info-table {
+            min-width: 1800px;
+            width: 100vw;
+        }
+        
+        .card-padding {
+            padding-top: 15px;
+        }
+        
+        /* Table Styles */
+        .orders-table {
+            width: 100%;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        
+        .orders-table-header {
+            font-size: 1rem;
+        }
+        
+        .table-header-cell {
+            padding: 6px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        
+        .order-cell {
+            padding: 8px;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        
+        .order-cell-bold {
+            padding: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .address-cell {
+            white-space: pre-line;
+            max-width: 180px;
+            width: 180px;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            padding: 6px 4px;
+            text-align: center;
+        }
+        
+        .internal-address-cell {
+            white-space: pre-line;
+            max-width: 200px;
+            width: 200px;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            padding: 6px 4px;
+            text-align: center;
+        }
+        
+        /* Package Info Form Styles */
+        .box-id-label {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .box-input {
+            font-size: 1rem;
+        }
+        .badge {
+            font-size: 100% !important
+        }
+        .remove-box-btn {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+        }
+        
+        .batch-badge {
+            font-size: 2rem;
+        }
+        
+
+        
+        /* Form Elements */
+        .status-select {
+            font-size: 1rem;
+            padding: 8px;
+        }
+        
+        .view-items-btn, .delete-order-btn, .download-pdf-btn {
+            font-size: 1rem;
+            padding: 8px 12px;
+        }
+        
+        .save-pkg-btn, .add-row-btn, .delete-pkg-btn {
+            font-size: 0.75rem;
+            padding: 6px 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Compact form controls */
+        .form-control, .form-select {
+            font-size: 1rem;
+            padding: 0.375rem 0.5rem;
+        }
+        
+        .btn {
+            font-size: 1rem;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        /* Package Info Container */
+        .package-info-container {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .package-actions-border {
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .package-cell {
+            padding: 12px;
+            text-align: center;
+            min-width: 400px;
+            width: auto;
+        }
+        
+        /* Spacer row for batch spacing */
+        .batch-spacer {
+            height: 10px;
+            border: none;
+        }
+
     </style>
 </head>
 <body>
     <!-- Navigation -->
     {% include 'navbar.html' %}
 
-    <div class="container-fluid mt-4" style="max-width: 95%;">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="text-center mb-4" style="font-size: 2.5rem;">
-                    <i class="fas fa-shipping-fast"></i> 洛瑞丝庄园 - Shipping Management
-                </h1>
-                <div class="text-center">
-                    <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-arrow-left"></i> Back to Main Page
-                    </a>
+    <!-- FedEx Batch Processing Sidebar -->
+    <div id="fedex-sidebar" class="sidebar" style="display: none;">
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h5><i class="fas fa-shipping-fast"></i> File Exporter</h5>
+                <button id="close-sidebar" class="btn btn-sm btn-light">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="sidebar-body">
+                <div id="selected-orders-list">
+                    <h6>Selected Orders:</h6>
+                    <ul id="selected-orders-ul" class="list-unstyled"></ul>
                 </div>
+                <div class="mt-3">
+                    <button id="process-selected-btn" class="btn btn-success btn-block w-100 mb-2">
+                        <i class="fas fa-shipping-fast"></i> Generate Fedex File & Ship Order
+                    </button>
+                    <button id="combine-pdf-btn" class="btn btn-info btn-block w-100 mb-2">
+                        <i class="fas fa-file-pdf"></i> Combine PDF Files
+                    </button>
+                    <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
+                        <i class="fas fa-file-invoice"></i> Download Invoices
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" style="display: none;"></div>
+
+    <div class="container-fluid mt-3 main-container">
+        <div class="row mb-2">
+            <div class="col-12">
+                <h1 class="text-center mb-2 page-title">
+                    <i class="fas fa-shipping-fast"></i> 洛瑞丝庄园 - Loris Shipping Management
+                    <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-arrow-left" style="padding-left: 5px;"></i> Back to Main Page
+                    </a>
+                </h1>
+
+                
             </div>
         </div>
 
         <!-- Orders Management Section - Pending -->
-        <div class="card mt-4">
-            <div class="card-header bg-warning text-dark">
-                <h4 class="mb-0">
-                    <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#pendingOrdersSection" aria-expanded="false" aria-controls="pendingOrdersSection">
-                        <i class="fas fa-shopping-cart"></i> 订单管理系统 - Orders Management - pending
-                        <i class="fas fa-chevron-down float-end mt-1"></i>
+        <div class="card mt-2">
+            <div class="card-header bg-warning text-dark py-2">
+                <h6 class="mb-0">
+                    <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#pendingOrdersSection" aria-expanded="true" aria-controls="pendingOrdersSection">
+                        <i class="fas fa-shopping-cart"></i> Pending Orders
+                        <i class="fas fa-chevron-down float-end"></i>
                     </button>
-                </h4>
+                </h6>
             </div>
-            <div class="collapse" id="pendingOrdersSection">
+            <div class="collapse show" id="pendingOrdersSection">
                 <div class="card-body">
-                <!-- Control Buttons -->
-                <div class="row mb-4">
-                    <div class="col-md-12 text-center">
-                        <button id="refresh-pending-orders-btn" class="btn btn-primary btn-lg">
-                            <i class="fas fa-sync"></i> refresh
-                        </button>
-                    </div>
-                </div>
                 <!-- Filter Controls -->
-                <div class="row mb-3">
+                <div class="row mb-2">
                     <div class="col-md-3">
                         <input type="date" id="pending-batch-date-filter" class="form-control" placeholder="Batch Date">
                     </div>
@@ -95,21 +545,29 @@
                             <i class="fas fa-times"></i> Clear Filters
                         </button>
                     </div>
+                    <div class="col-md-3">
+                        <button id="select-ready-orders-btn" class="btn btn-success w-100">
+                            <i class="fas fa-check-circle"></i> Select Ready Orders
+                        </button>
+                    </div>
                 </div>
-                <div id="pending-orders-table-section" style="background:#fff;padding:30px;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;margin:0 -15px;">
+                <div id="pending-orders-table-section" class="table-section">
                     <div class="table-responsive">
-                        <table id="pending-orders-table" class="table table-bordered table-striped" style="width:100%;font-size:1.1rem;text-align:center;">
-                            <thead class="thead-dark" style="font-size:1.2rem;">
+                        <table id="pending-orders-table" class="table table-bordered table-striped orders-table">
+                            <thead class="thead-dark orders-table-header">
                                 <tr>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">#</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">PO Number</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Batch</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Ship To Address</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Internal Add</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Qty</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Cost</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Status</th>                                            
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Actions</th>
+                                    <th class="table-header-cell">
+                                        <input type="checkbox" id="select-all-pending" title="Select All">
+                                    </th>
+                                    <th class="table-header-cell">PO Number</th>
+                                    <th class="table-header-cell">Batch</th>
+                                    <th class="table-header-cell">Ship To Address</th>
+                                    <th class="table-header-cell">Internal Add</th>
+                                    <th class="table-header-cell">Package Info</th>
+                                    <th class="table-header-cell">Total Qty</th>
+                                    <th class="table-header-cell">Total Cost</th>
+                                    <th class="table-header-cell">Status</th>                                            
+                                    <th class="table-header-cell">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="pending-orders-table-body">
@@ -122,27 +580,21 @@
         </div>
         
         <!-- Orders Management Section - Shipped -->
-        <div class="card mt-4">
-            <div class="card-header bg-info text-white">
-                <h4 class="mb-0">
+        <div class="card mt-2">
+            <div class="card-header bg-info text-white py-2">
+                <h6 class="mb-0">
                     <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#shippedOrdersSection" aria-expanded="false" aria-controls="shippedOrdersSection">
-                        <i class="fas fa-shopping-cart"></i> 订单管理系统 - Orders Management - shipped
-                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                        <i class="fas fa-truck"></i> Shipped Orders
+                        <i class="fas fa-chevron-down float-end"></i>
                     </button>
-                </h4>
+                </h6>
             </div>
             <div class="collapse" id="shippedOrdersSection">
                 <div class="card-body">
                 <!-- Control Buttons -->
-                <div class="row mb-4">
-                    <div class="col-md-12 text-center">
-                        <button id="refresh-shipped-orders-btn" class="btn btn-primary btn-lg">
-                            <i class="fas fa-sync"></i> refresh
-                        </button>
-                    </div>
-                </div>
+
                 <!-- Filter Controls -->
-                <div class="row mb-3">
+                <div class="row mb-2">
                     <div class="col-md-3">
                         <input type="date" id="shipped-batch-date-filter" class="form-control" placeholder="Batch Date">
                     </div>
@@ -155,20 +607,23 @@
                         </button>
                     </div>
                 </div>
-                <div id="shipped-orders-table-section" style="background:#fff;padding:30px;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;margin:0 -15px;">
+                <div id="shipped-orders-table-section" class="table-section">
                     <div class="table-responsive">
-                        <table id="shipped-orders-table" class="table table-bordered table-striped" style="width:100%;font-size:1.1rem;text-align:center;">
-                            <thead class="thead-dark" style="font-size:1.2rem;">
+                        <table id="shipped-orders-table" class="table table-bordered table-striped orders-table">
+                            <thead class="thead-dark orders-table-header">
                                 <tr>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">#</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">PO Number</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Batch</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Ship To Address</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Internal Add</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Qty</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Total Cost</th>
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Status</th>                                            
-                                    <th style="padding: 15px; font-size: 1.2rem; text-align: center;">Actions</th>
+                                    <th class="table-header-cell">
+                                        <input type="checkbox" id="select-all-shipped" title="Select All">
+                                    </th>
+                                    <th class="table-header-cell">PO Number</th>
+                                    <th class="table-header-cell">Batch</th>
+                                    <th class="table-header-cell">Ship To Address</th>
+                                    <th class="table-header-cell">Internal Add</th>
+                                    <th class="table-header-cell">Package Info</th>
+                                    <th class="table-header-cell">Total Qty</th>
+                                    <th class="table-header-cell">Total Cost</th>
+                                    <th class="table-header-cell">Status</th>                                            
+                                    <th class="table-header-cell">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="shipped-orders-table-body">
@@ -181,18 +636,17 @@
         </div>
 
         <!-- Store Info Section -->
-        <div class="card mb-4" style="padding-top: 30px;">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0">
+        <div class="card mb-4 card-padding">
+            <div class="card-header bg-success text-white py-2">
+                <h6 class="mb-0">
                     <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#storeInfoSection" aria-expanded="false" aria-controls="storeInfoSection">
-                        <i class="fas fa-store"></i> loris 店铺地址单
-                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                        <i class="fas fa-store"></i> Store Information
+                        <i class="fas fa-chevron-down float-end"></i>
                     </button>
-                </h4>
+                </h6>
             </div>
             <div class="collapse" id="storeInfoSection">
                 <div class="card-body">
-                    <h2 class="text-center mb-4">Store Information Management</h2>
                     <!-- Control Buttons -->
                     <div class="row mb-4">
                         <div class="col-md-4">
@@ -218,9 +672,9 @@
                     <div class="mb-3">
                         <input type="text" id="store-search-input" class="form-control" placeholder="Search stores...">
                     </div>
-                    <div id="store-info-table-section" style="width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:#fff;padding:24px 0 24px 0;box-shadow:0 2px 8px rgba(0,0,0,0.03);border-top:2px solid #e9ecef;">
-                        <div class="table-responsive" style="overflow-x:visible;">
-                            <table id="store-info-table" class="table table-bordered table-striped w-100" style="min-width:1800px;width:100vw;">
+                    <div id="store-info-table-section" class="store-info-section">
+                        <div class="table-responsive store-info-responsive">
+                            <table id="store-info-table" class="table table-bordered table-striped w-100 store-info-table">
                                     <thead class="thead-dark">
                                         <tr>
                                             <th>Store Number</th>
@@ -333,9 +787,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="add-store-btn">Add Store</button>
+                    <div class="modal-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-info" id="verify-address-btn">
+                            <i class="fas fa-search-location"></i> Verify Address
+                        </button>
+                        <div>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="add-store-btn">Add Store</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -449,6 +908,9 @@
             </div>
         </div>
 
+        <!-- Include FedEx Popup Modal -->
+
+
         <!-- Loading Overlay -->
         <div id="loading-overlay">
             <div class="text-center text-white">
@@ -467,6 +929,70 @@
     <script>
     // Orders Management JavaScript  
     let allOrders = [];
+    let shippedOrdersLoaded = false;
+
+    // Toast notification function
+    function showToast(message, type = 'success', duration = 4000) {
+        // Remove existing toasts
+        const existingToasts = document.querySelectorAll('.toast-notification');
+        existingToasts.forEach(toast => toast.remove());
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        
+        const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+        toast.innerHTML = `
+            <i class="${icon} toast-icon"></i>
+            <span>${message}</span>
+        `;
+        
+        // Add to page
+        document.body.appendChild(toast);
+        
+        // Show toast
+        setTimeout(() => toast.classList.add('show'), 100);
+        
+        // Auto hide toast
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
+    // Function to refresh a specific order row
+    function refreshOrderRow(poNumber) {
+        console.log('Refreshing row for PO:', poNumber);
+        
+        // Find the order in allOrders array
+        const order = allOrders.find(o => o.po_number === poNumber);
+        if (!order) {
+            console.log('Order not found in allOrders for refresh');
+            return;
+        }
+        
+        // Find the container and reload package info
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) {
+            console.log('Container not found for refresh');
+            return;
+        }
+        
+        // Reload package info for this order
+        loadPackageInfo(poNumber);
+        
+        // Add a subtle highlight effect to show the row was refreshed
+        const tableRow = container.closest('tr');
+        if (tableRow) {
+            tableRow.style.transition = 'background-color 0.3s ease';
+            tableRow.style.backgroundColor = '#e3f2fd';
+            setTimeout(() => {
+                tableRow.style.backgroundColor = '';
+            }, 1000);
+        }
+        
+        console.log('Row refreshed for PO:', poNumber);
+    }
 
     // Define global functions first
     window.loadAndRenderOrders = async function() {
@@ -477,12 +1003,21 @@
             await loadStoreInfo();
             console.log('Store information loaded successfully');
             
-            console.log('Fetching orders from /get_orders...');
-            const response = await fetch('/get_orders');
+            console.log('Fetching orders from /lori_automation...');
+            const response = await fetch('/lori_automation', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
             console.log('Response status:', response.status);
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const errorText = await response.text();
+                console.error('Error response text:', errorText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
             }
             
             const data = await response.json();
@@ -492,12 +1027,24 @@
             allOrders = data.orders || [];
             console.log('Total orders loaded:', allOrders.length);
             
+            // Reset shipped orders loaded flag when new data is loaded
+            shippedOrdersLoaded = false;
+            
             renderPendingOrders();
-            renderShippedOrders();
+            // Don't render shipped orders until user expands the section
             console.log('Orders rendered successfully');
             
         } catch (error) {
             console.error('Error loading orders:', error);
+            console.error('Error details:', error.message);
+            
+            // If it's an authentication error, show a more helpful message
+            if (error.message.includes('401') || error.message.includes('Not authenticated')) {
+                console.error('Authentication failed. Please check if you are logged in.');
+                alert('Authentication error. Please refresh the page and log in again.');
+                return;
+            }
+            
             // Show sample data if API fails
             allOrders = [
                 {
@@ -510,9 +1057,480 @@
                 }
             ];
             renderPendingOrders();
-            renderShippedOrders();
+            // Don't render shipped orders until user expands the section
             console.log('Showing sample orders due to API error:', error.message);
         }
+    };
+
+    // Package management functions
+    function loadPackageInfo(poNumber) {
+        fetch(`/lori_automation/get_package_info/${poNumber}`, {
+            credentials: 'same-origin'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists !== false) {
+                    try {
+                        populatePackageInfo(poNumber, data);
+                    } catch (error) {
+                        console.error('Error in populatePackageInfo for PO:', poNumber, error);
+                    }
+                }
+            })
+            .catch(error => console.error('Error loading package info:', error));
+    }
+
+    function populatePackageInfo(poNumber, data) {
+        console.log('populatePackageInfo called for PO:', poNumber, 'with data:', data);
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) {
+            console.log('Container not found for PO:', poNumber);
+            return;
+        }
+        if (!data.box_dimensions) {
+            console.log('No box dimensions data for PO:', poNumber);
+            return;
+        }
+        
+        if (container && data.box_dimensions) {
+            const boxes = data.box_dimensions;
+            if (boxes.length > 0) {
+                // Populate first box (main row)
+                const mainBox = boxes[0];
+                const lengthInput = container.querySelector('.box-length');
+                const widthInput = container.querySelector('.box-width');
+                const heightInput = container.querySelector('.box-height');
+                const weightInput = container.querySelector('.box-weight');
+                
+                console.log('Found inputs:', {
+                    length: !!lengthInput,
+                    width: !!widthInput, 
+                    height: !!heightInput,
+                    weight: !!weightInput
+                });
+                
+                if (lengthInput) lengthInput.value = mainBox.length ? parseFloat(mainBox.length).toFixed(1) : '';
+                if (widthInput) widthInput.value = mainBox.width ? parseFloat(mainBox.width).toFixed(1) : '';
+                if (heightInput) heightInput.value = mainBox.height ? parseFloat(mainBox.height).toFixed(1) : '';
+                if (weightInput) weightInput.value = mainBox.weight ? parseFloat(mainBox.weight).toFixed(1) : '';
+                
+                // Update box ID to main row (it already exists in the template)
+                const boxIdElement = container.querySelector('.box-id-label');
+                if (boxIdElement) {
+                    boxIdElement.textContent = '1';
+                }
+                
+                // Remove existing additional rows
+                const existingRows = container.querySelectorAll('.package-row');
+                existingRows.forEach(row => row.remove());
+                
+                // Add additional boxes (if any)
+                for (let i = 1; i < boxes.length; i++) {
+                    const box = boxes[i];
+                    addPackageRowWithData(poNumber, box, i + 1);
+                }
+                
+                const statusIndicator = container.querySelector('.pkg-status-indicator');
+                if (statusIndicator) {
+                    statusIndicator.textContent = '✓ Saved';
+                    statusIndicator.className = 'pkg-status-indicator success';
+                }
+            }
+        }
+    }
+
+    function savePackageInfo(poNumber) {
+        console.log('savePackageInfo called with PO:', poNumber);
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) {
+            console.log('Container not found for PO:', poNumber);
+            return;
+        }
+        console.log('Container found:', container);
+
+        // Check if status indicator exists
+        const statusIndicator = container.querySelector('.pkg-status-indicator');
+        console.log('Status indicator found:', !!statusIndicator);
+
+        // Collect data from all package rows (main + additional rows)
+        const allRows = [];
+        
+        // Main row (original package inputs)
+        const mainRow = container.querySelector('.main-box-row');
+        const mainCmCheckbox = mainRow ? mainRow.querySelector('.cm-checkbox') : null;
+        const isCmMode = mainCmCheckbox && mainCmCheckbox.checked;
+        
+        const lengthInput = container.querySelector('.box-length');
+        const widthInput = container.querySelector('.box-width');
+        const heightInput = container.querySelector('.box-height');
+        const weightInput = container.querySelector('.box-weight');
+        
+        const mainLength = lengthInput ? lengthInput.value : '';
+        const mainWidth = widthInput ? widthInput.value : '';
+        const mainHeight = heightInput ? heightInput.value : '';
+        const mainWeight = weightInput ? weightInput.value : '';
+        
+        if (mainLength && mainWidth && mainHeight && mainWeight) {
+            // Convert dimensions to inches if in CM mode, weight is always in lbs
+            const length = isCmMode ? parseFloat(mainLength) / 2.54 : parseFloat(mainLength);
+            const width = isCmMode ? parseFloat(mainWidth) / 2.54 : parseFloat(mainWidth);
+            const height = isCmMode ? parseFloat(mainHeight) / 2.54 : parseFloat(mainHeight);
+            const weight = parseFloat(mainWeight); // Weight is always in lbs
+            
+            allRows.push({
+                length: Math.round(length * 100) / 100, // Round to 2 decimal places
+                width: Math.round(width * 100) / 100,
+                height: Math.round(height * 100) / 100,
+                weight: Math.round(weight * 100) / 100
+            });
+        }
+        
+        // Additional rows
+        const additionalRows = container.querySelectorAll('.package-row');
+        additionalRows.forEach(row => {
+            const rowCmCheckbox = row.querySelector('.cm-checkbox');
+            const isRowCmMode = rowCmCheckbox && rowCmCheckbox.checked;
+            
+            const lengthInput = row.querySelector('.box-length');
+            const widthInput = row.querySelector('.box-width');
+            const heightInput = row.querySelector('.box-height');
+            const weightInput = row.querySelector('.box-weight');
+            
+            const length = lengthInput ? lengthInput.value : '';
+            const width = widthInput ? widthInput.value : '';
+            const height = heightInput ? heightInput.value : '';
+            const weight = weightInput ? weightInput.value : '';
+            
+            if (length && width && height && weight) {
+                // Convert dimensions to inches if in CM mode, weight is always in lbs
+                const convertedLength = isRowCmMode ? parseFloat(length) / 2.54 : parseFloat(length);
+                const convertedWidth = isRowCmMode ? parseFloat(width) / 2.54 : parseFloat(width);
+                const convertedHeight = isRowCmMode ? parseFloat(height) / 2.54 : parseFloat(height);
+                const convertedWeight = parseFloat(weight); // Weight is always in lbs
+                
+                allRows.push({
+                    length: Math.round(convertedLength * 100) / 100,
+                    width: Math.round(convertedWidth * 100) / 100,
+                    height: Math.round(convertedHeight * 100) / 100,
+                    weight: Math.round(convertedWeight * 100) / 100
+                });
+            }
+        });
+
+        if (allRows.length === 0) {
+            alert('Please fill in at least one complete package information set');
+            return;
+        }
+
+        // Create box dimensions array
+        const boxDimensions = allRows.map(row => ({
+            length: row.length,
+            width: row.width,
+            height: row.height,
+            weight: row.weight
+        }));
+
+        const data = {
+            poNumber: poNumber,
+            boxDimensions: boxDimensions,
+            fedexServiceType: 'FEDEX_GROUND',
+            fedexPackagingType: 'YOUR_PACKAGING',
+            specialInstructions: ''
+        };
+
+        fetch('/lori_automation/save_package_info', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            const statusIndicator = container.querySelector('.pkg-status-indicator');
+            if (result.success) {
+                // Show success toast
+                showToast(`Package info saved successfully for PO ${poNumber}`, 'success', 3000);
+                
+                // Update status indicator
+                if (statusIndicator) {
+                    statusIndicator.textContent = '✓ Saved';
+                    statusIndicator.className = 'pkg-status-indicator success';
+                }
+                
+                // Refresh the row to show updated data
+                setTimeout(() => refreshOrderRow(poNumber), 500);
+                
+            } else {
+                // Show error toast
+                showToast(`Failed to save package info for PO ${poNumber}: ${result.error || 'Unknown error'}`, 'error', 5000);
+                
+                // Update status indicator
+                if (statusIndicator) {
+                    statusIndicator.textContent = '✗ Error';
+                    statusIndicator.className = 'pkg-status-indicator error';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error saving package info:', error);
+            
+            // Show network error toast
+            showToast(`Network error saving package info for PO ${poNumber}: ${error.message}`, 'error', 5000);
+            
+            // Update status indicator
+            const statusIndicator = container.querySelector('.pkg-status-indicator');
+            if (statusIndicator) {
+                statusIndicator.textContent = '✗ Error';
+                statusIndicator.className = 'pkg-status-indicator error';
+            }
+        });
+    }
+
+    function addPackageRow(poNumber) {
+        console.log('addPackageRow called with PO:', poNumber);
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) {
+            console.log('Container not found for addPackageRow, PO:', poNumber);
+            return;
+        }
+        console.log('Container found for addPackageRow:', container);
+
+        // Count existing boxes to get the next box number
+        const existingRows = container.querySelectorAll('.package-row').length;
+        const boxNumber = existingRows + 2; // +2 because we have Box 1 (main) + new boxes
+        
+        addPackageRowWithData(poNumber, null, boxNumber);
+    }
+
+    function addPackageRowWithData(poNumber, boxData, boxNumber) {
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) return;
+
+        // Create a new package row with same styling as main row
+        const newRow = document.createElement('div');
+        newRow.className = 'package-row mb-2';
+        newRow.innerHTML = `
+            <div class="row g-1 mb-2 align-items-center">
+                <div class="col-1 text-center">
+                    <div class="box-id text-muted small box-id-label">${boxNumber}</div>
+                </div>
+                <div class="col-3">
+                    <div class="dimension-labels">
+                        <div>L</div>
+                        <div>W</div>
+                        <div>H</div>
+                    </div>
+                    <div class="compact-box-grid">
+                        <input type="number" class="compact-dimension-input box-length box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.length).toFixed(1) : ''}">
+                        <input type="number" class="compact-dimension-input box-width box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.width).toFixed(1) : ''}">
+                        <input type="number" class="compact-dimension-input box-height box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.height).toFixed(1) : ''}">
+                    </div>
+                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
+                </div>
+                <div class="col-2">
+                    <div style="font-size: 10px; color: #6c757d; text-align: center; margin-bottom: 2px;">Weight</div>
+                    <input type="number" class="compact-weight-input box-weight box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.weight).toFixed(1) : ''}" style="width: 100%; max-width: 80px;"
+                           data-placeholder-metric="kg" data-placeholder-imperial="lbs">
+                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
+                </div>
+                <div class="col-1 text-center">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input cm-checkbox" type="checkbox" id="cm-check-${boxNumber}" data-box="${boxNumber}" style="transform: scale(1.3);">
+                        <label class="form-check-label" for="cm-check-${boxNumber}" style="font-size: 0.9rem; font-weight: 600;">CM</label>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <select class="form-select preset-dimensions" data-box="${boxNumber}" style="font-size: 13px; padding: 6px 8px;">
+                        <option value="">Presets</option>
+                        <option value="26x19x16">26×19×16</option>
+                        <option value="22x16x16">22×16×16</option>
+                        <option value="20x20x20">20×20×20</option>
+                        <option value="26x20x16">26×20×16</option>
+                        <option value="26x21x16">26×21×16</option>
+                        <option value="24x18x16">24×18×16</option>
+                        <option value="22x16x10">22×16×10</option>
+                        <option value="22x19x16">22×19×16</option>
+                    </select>
+                </div>
+                <div class="col-2 text-center">
+                    <button class="btn btn-info duplicate-row-btn me-2" title="Duplicate this row" style="font-size: 12px; padding: 6px 10px;">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-danger remove-row-btn remove-box-btn" title="Delete this row" style="font-size: 12px; padding: 6px 10px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+            </div>
+        `;
+
+        // Find the buttons container and insert the new row before it
+        const buttonsContainer = container.querySelector('.d-flex.justify-content-between.gap-2.mt-3');
+        
+        // Insert the new row before the buttons
+        if (buttonsContainer) {
+            container.insertBefore(newRow, buttonsContainer);
+        } else {
+            // If buttons container not found, just append to the main container
+            container.appendChild(newRow);
+        }
+
+        // Add event listener for the remove button
+        const removeBtn = newRow.querySelector('.remove-row-btn');
+        removeBtn.addEventListener('click', function() {
+            newRow.remove();
+            // Update box numbers after removal
+            updateBoxNumbers(poNumber);
+        });
+        
+        // Duplicate button is handled by global event handler
+    }
+
+    function updateBoxNumbers(poNumber) {
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) return;
+        
+        // Update additional box numbers
+        const packageRows = container.querySelectorAll('.package-row');
+        packageRows.forEach((row, index) => {
+            const boxIdElement = row.querySelector('.box-id');
+            if (boxIdElement) {
+                boxIdElement.textContent = ` ${index + 2}`; // +2 because Box 1 is the main row
+            }
+        });
+    }
+    
+    function getNextBoxNumber(poNumber) {
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) return 2;
+        
+        // Count existing boxes (main row + additional rows)
+        const mainRow = container.querySelector('.main-box-row');
+        const packageRows = container.querySelectorAll('.package-row');
+        
+        return packageRows.length + 2; // +2 because we start from Box 1 (main row)
+    }
+
+    function deletePackageInfo(poNumber) {
+        console.log('deletePackageInfo called with PO:', poNumber);
+        
+        // Confirm deletion
+        const confirmed = confirm(`Are you sure you want to delete all package information for PO ${poNumber}?\n\nThis will:\n- Remove all saved box dimensions\n- Clear package info from database\n- Reset the form\n\nThis action cannot be undone.`);
+        
+        if (!confirmed) {
+            console.log('User cancelled deletion');
+            return;
+        }
+
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) {
+            console.log('Container not found for PO:', poNumber);
+            return;
+        }
+
+        console.log('Container HTML:', container.innerHTML);
+        console.log('All buttons in container:', container.querySelectorAll('button'));
+
+        // Show loading state
+        const statusIndicator = container.querySelector('.pkg-status-indicator');
+        let deleteBtn = container.querySelector('.delete-pkg-btn');
+        
+        // If not found in container, try finding by data-po attribute as fallback
+        if (!deleteBtn) {
+            console.log('Delete button not found in container, trying broader search...');
+            deleteBtn = document.querySelector(`.delete-pkg-btn[data-po="${poNumber}"]`);
+            console.log('Broader search result:', deleteBtn);
+        }
+        
+        console.log('Delete button found:', deleteBtn);
+        
+        if (!deleteBtn) {
+            console.error('Delete button not found in container for PO:', poNumber);
+            console.log('Available buttons with classes:', 
+                Array.from(container.querySelectorAll('button')).map(btn => btn.className));
+            console.log('All delete buttons on page:', 
+                Array.from(document.querySelectorAll('.delete-pkg-btn')).map(btn => btn.getAttribute('data-po')));
+            alert('Error: Delete button not found');
+            return;
+        }
+        
+        const originalBtnText = deleteBtn.innerHTML;
+        
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+        deleteBtn.disabled = true;
+        
+        if (statusIndicator) {
+            statusIndicator.textContent = 'Deleting...';
+            statusIndicator.className = 'pkg-status-indicator warning';
+        }
+
+        fetch(`/lori_automation/delete_package_info/${poNumber}`, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Clear all form inputs in main row
+                const lengthInput = container.querySelector('.box-length');
+                const widthInput = container.querySelector('.box-width');
+                const heightInput = container.querySelector('.box-height');
+                const weightInput = container.querySelector('.box-weight');
+                
+                if (lengthInput) lengthInput.value = '';
+                if (widthInput) widthInput.value = '';
+                if (heightInput) heightInput.value = '';
+                if (weightInput) weightInput.value = '';
+                
+                // Remove all additional package rows
+                const additionalRows = container.querySelectorAll('.package-row');
+                additionalRows.forEach(row => row.remove());
+                
+                // Clear box ID element if it exists
+                const boxIdElement = container.querySelector('.box-id');
+                if (boxIdElement) {
+                    boxIdElement.remove();
+                }
+                
+                // Update status indicator  
+                if (statusIndicator) {
+                    statusIndicator.textContent = '✓ Deleted';
+                    statusIndicator.className = 'pkg-status-indicator deleted';
+                }
+                
+                // Clear status after 3 seconds
+                if (statusIndicator) {
+                    setTimeout(() => {
+                        statusIndicator.textContent = '';
+                        statusIndicator.className = 'pkg-status-indicator';
+                    }, 3000);
+                }
+                
+                console.log('Package info deleted successfully');
+            } else {
+                if (statusIndicator) {
+                    statusIndicator.textContent = '✗ Delete Error';
+                    statusIndicator.className = 'pkg-status-indicator error';
+                }
+                alert('Error deleting package info: ' + (result.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting package info:', error);
+            if (statusIndicator) {
+                statusIndicator.textContent = '✗ Delete Error';
+                statusIndicator.className = 'pkg-status-indicator error';
+            }
+            alert('Error deleting package info: ' + error.message);
+        })
+        .finally(() => {
+            // Restore button state
+            if (deleteBtn) {
+                deleteBtn.innerHTML = originalBtnText;
+                deleteBtn.disabled = false;
+            }
+        });
     }
 
     function renderPendingOrders() {
@@ -543,6 +1561,9 @@
 
     // Store information cache
     let storeInfoCache = {};
+    
+    // Make storeInfoCache globally accessible
+    window.storeInfoCache = storeInfoCache;
 
     // Function to get store information by store number
     function getStoreInfo(storeNumber) {
@@ -561,7 +1582,9 @@
     async function loadStoreInfo() {
         console.log('Loading store information from /get_store_info...');
         try {
-            const response = await fetch('/get_store_info');
+            const response = await fetch('/lori_automation/get_store_info', {
+                credentials: 'same-origin'
+            });
             console.log('Store info response status:', response.status);
             
             if (!response.ok) {
@@ -573,6 +1596,7 @@
             
             if (data.data) {
                 storeInfoCache = {};
+                window.storeInfoCache = storeInfoCache;
                 data.data.forEach(store => {
                     const storeNum = store.store_number;
                     if (storeNum) {
@@ -592,6 +1616,16 @@
                         if (cityStateZip.length > 0) {
                             internalAddress.push(cityStateZip.join(' '));
                         }
+
+                        // Append phone number if available (displayed after the address)
+                        if (store.phone) {
+                            // Normalize phone formatting lightly
+                            let phone = String(store.phone).trim();
+                            if (phone.length === 10 && /^\d+$/.test(phone)) {
+                                phone = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+                            }
+                            internalAddress.push('Phone: ' + phone);
+                        }
                         
                         storeInfoCache[storeNum] = internalAddress.join('\n');
                     }
@@ -601,7 +1635,10 @@
                 // Re-render tables to update with store info
                 if (allOrders.length > 0) {
                     renderPendingOrders();
-                    renderShippedOrders();
+                    // Only render shipped orders if they were already loaded
+                    if (shippedOrdersLoaded) {
+                        renderShippedOrders();
+                    }
                 }
             } else {
                 console.warn('Store info response missing success or data:', data);
@@ -625,14 +1662,14 @@
         container.innerHTML = '';
         
         if (orderList.length === 0) {
-            container.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No orders found</td></tr>';
+            container.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No orders found</td></tr>';
             return;
         }
         
         // Group orders by batch date
         const ordersByBatch = {};
         orderList.forEach(order => {
-            const batchDate = order.batch_date || '2025-09-18'; // Default to 2025-09-18 if no batch date
+            const batchDate = order.batch_date || '1999-01-01'; // Default to 2025-09-18 if no batch date
             if (!ordersByBatch[batchDate]) {
                 ordersByBatch[batchDate] = [];
             }
@@ -645,19 +1682,33 @@
         let overallIndex = 0;
         sortedBatchDates.forEach(batchDate => {
             const orders = ordersByBatch[batchDate];
+            const batchId = `batch-${batchDate.replace(/[^a-zA-Z0-9]/g, '-')}-${containerId}`;
             
-            // Create batch header row
+            // Determine if this batch should be collapsed by default
+            // Pending orders should be uncollapsed by default, shipped orders collapsed
+            const isShippedTable = containerId === 'shipped-orders-table-body';
+            const defaultCollapsed = isShippedTable;
+            const chevronClass = defaultCollapsed ? 'fas fa-chevron-right batch-toggle-icon' : 'fas fa-chevron-down batch-toggle-icon';
+            
+            // Create batch header row with collapse functionality
             const batchHeaderRow = document.createElement('tr');
             batchHeaderRow.className = 'table-primary';
+            batchHeaderRow.style.cursor = 'pointer';
             batchHeaderRow.innerHTML = `
-                <td colspan="9" class="text-center fw-bold py-4" style="font-size: 1.3rem; padding: 20px;">
-                    <i class="fas fa-calendar-alt"></i> Batch Date: ${formatBatchDate(batchDate)} 
-                    <span class="badge bg-primary ms-3" style="font-size: 1rem;">${orders.length} orders</span>
+                <td colspan="10" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
+                    <i class="${chevronClass}" id="icon-${batchId}"></i>
+                    <i class="fas fa-calendar-alt ms-2"></i> Batch Date: ${formatBatchDate(batchDate)} 
+                    <button class="btn btn-sm btn-outline-primary ms-3 select-batch-btn" 
+                            onclick="event.stopPropagation(); selectAllFromBatch('${batchId}')">
+                        <i class="fas fa-check-square"></i> Select all orders from this batch
+                    </button>
+                    <span class="badge bg-warning ms-3 batch-badge">${orders.length} orders</span>
+
                 </td>
             `;
             container.appendChild(batchHeaderRow);
             
-            // Add orders for this batch
+            // Add orders for this batch (wrapped in collapsible section)
             orders.forEach(order => {
                 overallIndex++;
                 // Extract first 4 digits from PO number for store lookup
@@ -674,25 +1725,105 @@
                 }
                 
                 const row = document.createElement('tr');
+                row.className = 'batch-order-row';
+                row.setAttribute('data-batch-id', batchId);
+                
                 row.innerHTML = `
-                    <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${overallIndex}</td>
-                    <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">${order.po_number || 'N/A'}</td>
-                    <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
-                    <td style="white-space: pre-line; max-width: 300px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;">${formattedShipToAddress}</td>
-                    <td style="white-space: pre-line; max-width: 350px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;"></td>
-                    <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${order.total_qty || 0}</td>
-                    <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
-                    <td style="padding: 12px; text-align: center;">
-                        <select class="form-select status-select" data-po="${order.po_number}" style="font-size: 1rem; padding: 8px;">
+                    <td class="order-cell">
+                        <input type="checkbox" class="order-checkbox" value="${order.po_number}" data-po="${order.po_number}">
+                    </td>
+                    <td class="order-cell-bold">${order.po_number || 'N/A'}</td>
+                    <td class="order-cell">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
+                    <td class="address-cell">${formattedShipToAddress}</td>
+                    <td class="internal-address-cell"></td>
+                    <td class="package-cell">
+                        <div class="package-info-container" data-po="${order.po_number}">
+                            <!-- Main Box Row -->
+                            <div class="row g-1 mb-2 align-items-center main-box-row">
+                                <div class="col-1 text-center">
+                                    <div class="box-id text-muted small box-id-label">1</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="dimension-labels">
+                                        <div>L</div>
+                                        <div>W</div>
+                                        <div>H</div>
+                                    </div>
+                                    <div class="compact-box-grid">
+                                        <input type="number" class="compact-dimension-input box-length box-input" placeholder="0" min="0.1" step="0.1" value="">
+                                        <input type="number" class="compact-dimension-input box-width box-input" placeholder="0" min="0.1" step="0.1" value="">
+                                        <input type="number" class="compact-dimension-input box-height box-input" placeholder="0" min="0.1" step="0.1" value="">
+                                    </div>
+                                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
+                                </div>
+                                <div class="col-2">
+                                    <div style="font-size: 10px; color: #6c757d; text-align: center; margin-bottom: 2px;">Weight</div>
+                                    <input type="number" class="compact-weight-input box-weight box-input" placeholder="0" min="0.1" step="0.1" style="width: 100%; max-width: 80px;"
+                                           data-placeholder-metric="lb" data-placeholder-imperial="lbs">
+                                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
+                                </div>
+                                <div class="col-1 text-center">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input cm-checkbox" type="checkbox" id="cm-check-1" data-box="1" style="transform: scale(1.3);">
+                                        <label class="form-check-label" for="cm-check-1" style="font-size: 0.9rem; font-weight: 600;">CM</label>
+                                    </div>
+                                </div>
+                                <div class="col-2">
+                                    <select class="form-select preset-dimensions" data-box="1" style="font-size: 13px; padding: 6px 8px;">
+                                        <option value="">Presets</option>
+                                        <option value="26x19x16">26×19×16</option>
+                                        <option value="22x16x16">22×16×16</option>
+                                        <option value="20x20x20">20×20×20</option>
+                                        <option value="26x20x16">26×20×16</option>
+                                        <option value="26x21x16">26×21×16</option>
+                                        <option value="24x18x16">24×18×16</option>
+                                        <option value="22x16x10">22×16×10</option>
+                                        <option value="22x19x16">22×19×16</option>
+                                    </select>
+                                </div>
+                                <div class="col-2 text-center">
+                                    <button class="btn btn-info duplicate-row-btn" title="Duplicate this row" style="font-size: 12px; padding: 6px 10px;">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="col-1">
+                                    <!-- No remove button for main row -->
+                                </div>
+                            </div>
+                            
+                            <!-- Additional boxes will be inserted here -->
+                            
+                            <!-- Action Buttons at Bottom -->
+                            <div class="d-flex justify-content-between gap-2 mt-3 pt-2 package-actions-border">
+                                <button class="btn btn-success btn-sm flex-fill save-pkg-btn" data-po="${order.po_number}">
+                                    <i class="fas fa-save"></i> Save
+                                </button>
+                                <button class="btn btn-primary btn-sm flex-fill add-row-btn" data-po="${order.po_number}">
+                                    <i class="fas fa-plus"></i> Add Row
+                                </button>
+                                <button class="btn btn-danger btn-sm flex-fill delete-pkg-btn" data-po="${order.po_number}">
+                                    <i class="fas fa-trash"></i> remove pkg info
+                                </button>
+                            </div>
+                            <div class="pkg-status-indicator mt-1"></div>
+                        </div>
+                    </td>
+                    <td class="order-cell">${parseInt(order.total_qty || 0)}</td>
+                    <td class="order-cell-bold">$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
+                    <td class="order-cell">
+                        <select class="form-select status-select" data-po="${order.po_number}">
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                         </select>
                     </td>
-                    <td style="padding: 12px; text-align: center;">
-                        <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items" style="font-size: 1rem; padding: 8px 12px;">
+                    <td class="order-cell">
+                        <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                        <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order" style="font-size: 1rem; padding: 8px 12px;">
+                        <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
@@ -702,13 +1833,51 @@
                 const internalAddCell = row.children[4]; // 5th column (0-indexed)
                 internalAddCell.innerHTML = internalAddress;
                 
+                // Set initial visibility based on default collapsed state
+                if (defaultCollapsed) {
+                    row.style.display = 'none';
+                }
+                
                 container.appendChild(row);
+                
+                // Add direct event handler for delete button
+                const deleteBtn = row.querySelector('.delete-pkg-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function(e) {
+                        try {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Direct delete button click handler triggered');
+                            const poNumber = this.getAttribute('data-po');
+                            console.log('Direct handler PO Number:', poNumber);
+                            if (!this.disabled) {
+                                deletePackageInfo(poNumber);
+                            } else {
+                                console.log('Delete button is disabled');
+                            }
+                        } catch (error) {
+                            console.error('Error in direct delete handler:', error);
+                        }
+                    });
+                    console.log('Direct delete handler attached for PO:', order.po_number);
+                }
+                
+                // Load existing package info for this order
+                loadPackageInfo(order.po_number);
             });
             
             // Add a spacing row between batches (except for the last one)
             if (batchDate !== sortedBatchDates[sortedBatchDates.length - 1]) {
                 const spacingRow = document.createElement('tr');
-                spacingRow.innerHTML = '<td colspan="9" style="height: 10px; border: none;"></td>';
+                spacingRow.className = 'batch-spacing-row';
+                spacingRow.setAttribute('data-batch-id', batchId);
+                spacingRow.innerHTML = '<td colspan="10" class="batch-spacer"></td>';
+                
+                // Set initial visibility based on default collapsed state
+                if (defaultCollapsed) {
+                    spacingRow.style.display = 'none';
+                }
+                
                 container.appendChild(spacingRow);
             }
         });
@@ -734,24 +1903,34 @@
             
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${index + 1}</td>
-                <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">${order.po_number || 'N/A'}</td>
-                <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
-                <td style="white-space: pre-line; max-width: 300px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;">${formattedShipToAddress}</td>
-                <td style="white-space: pre-line; max-width: 350px; font-size: 1rem; line-height: 1.4; padding: 12px; text-align: center;"></td>
-                <td style="padding: 12px; font-size: 1.1rem; text-align: center;">${order.total_qty || 0}</td>
-                <td style="padding: 12px; font-size: 1.1rem; font-weight: 600; text-align: center;">$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
-                <td style="padding: 12px; text-align: center;">
-                    <select class="form-select status-select" data-po="${order.po_number}" style="font-size: 1rem; padding: 8px;">
+                <td class="order-cell">
+                    <input type="checkbox" class="order-checkbox" value="${order.po_number}" data-po="${order.po_number}">
+                </td>
+                <td class="order-cell-bold">${order.po_number || 'N/A'}</td>
+                <td class="order-cell">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
+                <td class="address-cell">${formattedShipToAddress}</td>
+                <td class="internal-address-cell"></td>
+                <td class="package-cell">
+                    <div class="package-info-display" data-po="${order.po_number}">
+                        <small class="text-muted">Package info saved</small>
+                    </div>
+                </td>
+                <td class="order-cell">${parseInt(order.total_qty || 0)}</td>
+                <td class="order-cell-bold">$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
+                <td class="order-cell">
+                    <select class="form-select status-select" data-po="${order.po_number}">
                         <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                     </select>
                 </td>
-                <td style="padding: 12px; text-align: center;">
-                    <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items" style="font-size: 1rem; padding: 8px 12px;">
+                <td class="order-cell">
+                    <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order" style="font-size: 1rem; padding: 8px 12px;">
+                    <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -762,11 +1941,29 @@
             internalAddCell.innerHTML = internalAddress;
             
             tbody.appendChild(row);
+            
+            // Load existing package info for this order (for shipped orders, just show status)
+            const packageDisplay = row.querySelector('.package-info-display');
+            if (packageDisplay) {
+                fetch(`/lori_automation/get_package_info/${order.po_number}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists !== false) {
+                            packageDisplay.innerHTML = `<small class="text-success">✓ Package info saved</small>`;
+                        } else {
+                            packageDisplay.innerHTML = `<small class="text-muted">No package info</small>`;
+                        }
+                    })
+                    .catch(error => console.error('Error loading package info:', error));
+            }
         });
     }
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
+        // Load data immediately since pending section is expanded by default
+        loadAndRenderOrders();
+        
         const pendingSection = document.getElementById('pendingOrdersSection');
         if (pendingSection) {
             pendingSection.addEventListener('shown.bs.collapse', function() {
@@ -776,18 +1973,17 @@
         const shippedSection = document.getElementById('shippedOrdersSection');
         if (shippedSection) {
             shippedSection.addEventListener('shown.bs.collapse', function() {
-                loadAndRenderOrders();
+                if (!shippedOrdersLoaded) {
+                    console.log('Loading shipped orders for the first time...');
+                    shippedOrdersLoaded = true;
+                    renderShippedOrders();
+                } else {
+                    // Just re-render shipped orders if already loaded
+                    renderShippedOrders();
+                }
             });
         }
-        // Refresh buttons
-        const refreshPendingBtn = document.getElementById('refresh-pending-orders-btn');
-        if (refreshPendingBtn) {
-            refreshPendingBtn.addEventListener('click', loadAndRenderOrders);
-        }
-        const refreshShippedBtn = document.getElementById('refresh-shipped-orders-btn');
-        if (refreshShippedBtn) {
-            refreshShippedBtn.addEventListener('click', loadAndRenderOrders);
-        }
+
         // Filter controls
         const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
         const pendingPoSearch = document.getElementById('pending-po-search');
@@ -802,6 +1998,12 @@
             pendingPoSearch.value = '';
             renderPendingOrders();
         });
+        
+        // Select Ready Orders button
+        const selectReadyOrdersBtn = document.getElementById('select-ready-orders-btn');
+        if (selectReadyOrdersBtn) selectReadyOrdersBtn.addEventListener('click', function() {
+            selectReadyOrders();
+        });
         if (shippedBatchDateFilter) shippedBatchDateFilter.addEventListener('change', renderShippedOrders);
         if (shippedPoSearch) shippedPoSearch.addEventListener('input', renderShippedOrders);
         if (clearShippedFiltersBtn) clearShippedFiltersBtn.addEventListener('click', function() {
@@ -813,7 +2015,9 @@
         // Add helper functions for order management
         window.viewOrderDetails = async function(poNumber) {
             try {
-                const response = await fetch(`/get_order_items/${poNumber}`);
+                const response = await fetch(`/lori_automation/get_order_items/${poNumber}`, {
+                    credentials: 'same-origin'
+                });
                 const data = await response.json();
                 
                 if (data.error) {
@@ -930,10 +2134,62 @@
             }
         }
 
+        window.downloadOriginalPDF = async function(poNumber) {
+            try {
+                // Show loading state
+                const button = document.querySelector(`.download-pdf-btn[data-po="${poNumber}"]`);
+                if (button) {
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    button.disabled = true;
+                    
+                    // Restore button after a short delay
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                }
+                
+                // Make request to download original PDF
+                const response = await fetch(`/lori_automation/download_original_pdf/${poNumber}`, {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Check if the response is actually a PDF or an error message
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/pdf')) {
+                    // Create blob and download
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${poNumber}_original.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    // Handle error response
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'PDF file not found');
+                }
+                
+            } catch (error) {
+                console.error('Error downloading original PDF:', error);
+                alert(`Error downloading original PDF for PO ${poNumber}: ${error.message}`);
+            }
+        }
+
         window.updateOrderStatus = async function(poNumber, status) {
             try {
-                const response = await fetch('/update_order_status', {
+                const response = await fetch('/lori_automation/update_order_status', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ order_id: poNumber, status: status })
                 });
@@ -952,8 +2208,9 @@
             }
             
             try {
-                const response = await fetch('/delete_order', {
+                const response = await fetch('/lori_automation/delete_order', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ order_id: poNumber })
                 });
@@ -977,6 +2234,17 @@
         });
 
         document.addEventListener('click', function(e) {
+            // Debug all clicks on delete-pkg-btn
+            if (e.target.classList.contains('delete-pkg-btn') || e.target.closest('.delete-pkg-btn')) {
+                console.log('Click detected on delete-pkg-btn or its child');
+                console.log('Target:', e.target);
+                console.log('Closest delete-pkg-btn:', e.target.closest('.delete-pkg-btn'));
+            }
+            
+            if (e.target.closest('.download-pdf-btn')) {
+                const poNumber = e.target.closest('.download-pdf-btn').getAttribute('data-po');
+                downloadOriginalPDF(poNumber);
+            }
             if (e.target.closest('.view-items-btn')) {
                 const poNumber = e.target.closest('.view-items-btn').getAttribute('data-po');
                 viewOrderDetails(poNumber);
@@ -989,33 +2257,685 @@
                 const storeNumber = e.target.closest('.add-store-btn').getAttribute('data-store-number');
                 openAddStoreModal(storeNumber);
             }
+            if (e.target.closest('.save-pkg-btn')) {
+                console.log('Save button clicked!');
+                const poNumber = e.target.closest('.save-pkg-btn').getAttribute('data-po');
+                console.log('PO Number:', poNumber);
+                savePackageInfo(poNumber);
+            }
+            
+            // Handle Add Row button clicks
+            if (e.target.closest('.add-row-btn')) {
+                console.log('Add Row button clicked!');
+                const poNumber = e.target.closest('.add-row-btn').getAttribute('data-po');
+                console.log('PO Number for add row:', poNumber);
+                addPackageRow(poNumber);
+            }
+            
+            // Handle Duplicate Row button clicks
+            if (e.target.closest('.duplicate-row-btn')) {
+                console.log('Duplicate Row button clicked!');
+                const duplicateBtn = e.target.closest('.duplicate-row-btn');
+                const currentRow = duplicateBtn.closest('.row, .main-box-row, .package-row');
+                const poNumber = currentRow.closest('.package-info-container').getAttribute('data-po');
+                
+                // Get the current row's values
+                const lengthInput = currentRow.querySelector('.box-length');
+                const widthInput = currentRow.querySelector('.box-width');
+                const heightInput = currentRow.querySelector('.box-height');
+                const weightInput = currentRow.querySelector('.box-weight');
+                
+                const duplicateData = {
+                    length: lengthInput ? lengthInput.value : '',
+                    width: widthInput ? widthInput.value : '',
+                    height: heightInput ? heightInput.value : '',
+                    weight: weightInput ? weightInput.value : ''
+                };
+                
+                // Create a new row with the duplicated data
+                const nextBoxNumber = getNextBoxNumber(poNumber);
+                addPackageRowWithData(poNumber, duplicateData, nextBoxNumber);
+                
+                console.log('Duplicated row with data:', duplicateData);
+            }
+            
+            // Handle Delete Package Info button clicks
+            if (e.target.closest('.delete-pkg-btn')) {
+                console.log('Delete button clicked!');
+                const deleteBtn = e.target.closest('.delete-pkg-btn');
+                console.log('Delete button element:', deleteBtn);
+                console.log('Delete button disabled?', deleteBtn.disabled);
+                const poNumber = deleteBtn.getAttribute('data-po');
+                console.log('PO Number for delete:', poNumber);
+                if (!deleteBtn.disabled) {
+                    deletePackageInfo(poNumber);
+                } else {
+                    console.log('Delete button is disabled, ignoring click');
+                }
+            }
         });
+
+        // Checkbox selection functionality
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('order-checkbox')) {
+                updateSelectedOrdersList();
+            }
+            if (e.target.id === 'select-all-pending') {
+                const checkboxes = document.querySelectorAll('#pending-orders-table-body .order-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateSelectedOrdersList();
+            }
+            if (e.target.id === 'select-all-shipped') {
+                const checkboxes = document.querySelectorAll('#shipped-orders-table-body .order-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateSelectedOrdersList();
+            }
+        });
+
+        // Sidebar functionality
+        document.getElementById('close-sidebar')?.addEventListener('click', hideSidebar);
+        document.getElementById('sidebar-overlay')?.addEventListener('click', hideSidebar);
+        
+        // Listen for checkbox changes to show/hide sidebar
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('order-checkbox') || e.target.id === 'select-all-pending' || e.target.id === 'select-all-shipped') {
+                updateSelectedOrdersList();
+            }
+        });
+        
+        // Handle select all functionality
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'select-all-pending') {
+                const checkboxes = document.querySelectorAll('#pending-orders-table-body .order-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateSelectedOrdersList();
+            } else if (e.target.id === 'select-all-shipped') {
+                const checkboxes = document.querySelectorAll('#shipped-orders-table-body .order-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateSelectedOrdersList();
+            }
+        });
+
+        // CM/Inches conversion functionality
+        document.addEventListener('change', function(e) {
+            // Handle CM checkbox changes
+            if (e.target.classList.contains('cm-checkbox')) {
+                const boxRow = e.target.closest('.row, .main-box-row');
+                const isChecked = e.target.checked;
+                const conversionDisplays = boxRow.querySelectorAll('.conversion-display');
+                const dimensionInputs = boxRow.querySelectorAll('.box-length, .box-width, .box-height');
+                const weightInput = boxRow.querySelector('.box-weight');
+                
+                if (isChecked) {
+                    // Show conversion displays
+                    conversionDisplays.forEach(display => display.style.display = 'block');
+                    
+                    // Update placeholders for compact format
+                    dimensionInputs.forEach(input => {
+                        input.placeholder = 'cm';
+                    });
+                    // Weight is always in lbs, not affected by CM checkbox
+                    
+                    // Initialize dimension conversion display with default format
+                    updateDimensionDisplay(boxRow);
+                } else {
+                    // Hide conversion displays and reset placeholders
+                    conversionDisplays.forEach(display => {
+                        display.style.display = 'none';
+                        display.textContent = '';
+                    });
+                    dimensionInputs.forEach(input => {
+                        input.placeholder = '0';
+                    });
+                    // Weight placeholder remains '0' (always lbs)
+                }
+            }
+            
+            // Handle dimension input changes for conversion
+            if (e.target.classList.contains('box-length') || e.target.classList.contains('box-width') || 
+                e.target.classList.contains('box-height')) {
+                const boxRow = e.target.closest('.row, .main-box-row');
+                const cmCheckbox = boxRow.querySelector('.cm-checkbox');
+                
+                if (cmCheckbox && cmCheckbox.checked) {
+                    updateDimensionDisplay(boxRow);
+                }
+            }
+            // Weight is always in lbs - no conversion needed
+        });
+
+        // Handle preset dimensions dropdown
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('preset-dimensions')) {
+                const selectedValue = e.target.value;
+                if (selectedValue && selectedValue !== '') {
+                    const boxRow = e.target.closest('.row, .main-box-row');
+                    const lengthInput = boxRow.querySelector('.box-length');
+                    const widthInput = boxRow.querySelector('.box-width');
+                    const heightInput = boxRow.querySelector('.box-height');
+                    const cmCheckbox = boxRow.querySelector('.cm-checkbox');
+                    
+                    // Parse dimensions (format: "20x20x20")
+                    const dimensions = selectedValue.split('x');
+                    if (dimensions.length === 3) {
+                        // Set the dimension values
+                        if (lengthInput) lengthInput.value = dimensions[0];
+                        if (widthInput) widthInput.value = dimensions[1];
+                        if (heightInput) heightInput.value = dimensions[2];
+                        
+                        // Trigger conversion if CM mode is active
+                        if (cmCheckbox && cmCheckbox.checked) {
+                            updateDimensionDisplay(boxRow);
+                        }
+                        
+                        // Reset dropdown to default option
+                        e.target.value = '';
+                    }
+                }
+            }
+        });
+
+        // Handle input events for real-time conversion
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('box-length') || e.target.classList.contains('box-width') || 
+                e.target.classList.contains('box-height')) {
+                const boxRow = e.target.closest('.row, .main-box-row');
+                const cmCheckbox = boxRow.querySelector('.cm-checkbox');
+                
+                if (cmCheckbox && cmCheckbox.checked) {
+                    updateDimensionDisplay(boxRow);
+                }
+            }
+            // Weight input doesn't need conversion - always in lbs
+        });
+
+        // Function to update dimension display
+        function updateDimensionDisplay(boxRow) {
+            const dimensionsColumn = boxRow.querySelector('.col-3');
+            const conversionDisplay = dimensionsColumn ? dimensionsColumn.querySelector('.conversion-display') : null;
+            
+            if (!conversionDisplay) return;
+            
+            const lengthInput = boxRow.querySelector('.box-length');
+            const widthInput = boxRow.querySelector('.box-width');
+            const heightInput = boxRow.querySelector('.box-height');
+            
+            const length = lengthInput ? parseFloat(lengthInput.value) : null;
+            const width = widthInput ? parseFloat(widthInput.value) : null;
+            const height = heightInput ? parseFloat(heightInput.value) : null;
+            
+            // Show conversion with ? for missing values
+            const lengthDisplay = (length && length > 0) ? (length / 2.54).toFixed(1) : '?';
+            const widthDisplay = (width && width > 0) ? (width / 2.54).toFixed(1) : '?';
+            const heightDisplay = (height && height > 0) ? (height / 2.54).toFixed(1) : '?';
+            
+            conversionDisplay.textContent = `≈ ${lengthDisplay} × ${widthDisplay} × ${heightDisplay} in`;
+        }
+
+        // Conversion function
+        function updateConversion(input) {
+            const value = parseFloat(input.value);
+            const boxRow = input.closest('.row, .main-box-row');
+            
+            if (!boxRow) return;
+            
+            // Find the appropriate conversion display
+            let conversionDisplay;
+            if (input.classList.contains('box-weight')) {
+                // For weight, find the conversion display in the weight column
+                const weightColumn = input.closest('.col-1');
+                conversionDisplay = weightColumn ? weightColumn.querySelector('.conversion-display') : null;
+            } else {
+                // For dimensions, find the conversion display in the dimensions column
+                const dimensionsColumn = boxRow.querySelector('.col-3');
+                conversionDisplay = dimensionsColumn ? dimensionsColumn.querySelector('.conversion-display') : null;
+            }
+            
+            if (!conversionDisplay) return;
+            
+            if (isNaN(value) || value <= 0) {
+                conversionDisplay.textContent = '';
+                return;
+            }
+            
+            let convertedValue, unit, displayText;
+            
+            if (input.classList.contains('box-weight')) {
+                // Convert kg to lbs (1 kg = 2.20462 lbs)
+                convertedValue = (value * 2.20462).toFixed(1);
+                unit = 'lbs';
+                displayText = `≈ ${convertedValue} ${unit}`;
+            } else {
+                // For dimensions, show all three conversions in a compact format
+                const lengthInput = boxRow.querySelector('.box-length');
+                const widthInput = boxRow.querySelector('.box-width');
+                const heightInput = boxRow.querySelector('.box-height');
+                
+                const length = lengthInput ? parseFloat(lengthInput.value) : null;
+                const width = widthInput ? parseFloat(widthInput.value) : null;
+                const height = heightInput ? parseFloat(heightInput.value) : null;
+                
+                // Show conversion with ? for missing values
+                const lengthDisplay = (length && length > 0) ? (length / 2.54).toFixed(1) : '?';
+                const widthDisplay = (width && width > 0) ? (width / 2.54).toFixed(1) : '?';
+                const heightDisplay = (height && height > 0) ? (height / 2.54).toFixed(1) : '?';
+                
+                displayText = `≈ ${lengthDisplay} × ${widthDisplay} × ${heightDisplay} in`;
+            }
+            
+            conversionDisplay.textContent = displayText;
+        }
+
+        // Package functions moved to first script block
+
+        function updateSelectedOrders() {
+            const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+            const count = selectedCheckboxes.length;
+            
+            const showSelectedBtn = document.getElementById('show-selected-btn');
+            const countSpan = document.getElementById('selected-count');
+            
+            if (count > 0) {
+                showSelectedBtn.style.display = 'inline-block';
+                countSpan.textContent = count;
+            } else {
+                showSelectedBtn.style.display = 'none';
+                hideSidebar();
+            }
+        }
+
+
+
+        // processSelectedOrders function moved to later in the file (async version)
+
+        function showSidebar() {
+            const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+            const ordersList = document.getElementById('selected-orders-ul');
+            
+            ordersList.innerHTML = '';
+            selectedCheckboxes.forEach(checkbox => {
+                const poNumber = checkbox.value;
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="badge bg-primary">${poNumber}</span>`;
+                ordersList.appendChild(li);
+            });
+            
+            document.getElementById('fedex-sidebar').classList.add('show');
+            document.getElementById('sidebar-overlay').style.display = 'block';
+        }
+
+        function hideSidebar() {
+            document.getElementById('fedex-sidebar').classList.remove('show');
+            document.getElementById('sidebar-overlay').style.display = 'none';
+        }
+
+        function processToCsv() {
+            const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+            const poNumbers = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (poNumbers.length === 0) {
+                alert('No orders selected');
+                return;
+            }
+
+            // Show loading state
+            const originalText = processBtn.innerHTML;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            processBtn.disabled = true;
+
+            fetch('/lori_automation/generate_batch_fedex_csv', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ poNumbers: poNumbers })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert(`Successfully processed ${result.processed_orders.length} orders!\nDownloading CSV file...`);
+                    
+                    // Auto-download the file
+                    const downloadUrl = result.download_url;
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = result.filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clear selections and hide sidebar
+                    document.querySelectorAll('.order-checkbox:checked').forEach(cb => cb.checked = false);
+                    updateSelectedOrders();
+                    hideSidebar();
+                    
+                    // Refresh the orders to show updated statuses
+                    loadAndRenderOrders();
+                } else {
+                    alert('Error generating CSV: ' + (result.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error processing CSV:', error);
+                alert('Error processing CSV: ' + error.message);
+            })
+            .finally(() => {
+                processBtn.innerHTML = originalText;
+                processBtn.disabled = false;
+            });
+        }
+    });
 
         // Function to open Add Store modal with pre-populated store number
         window.openAddStoreModal = function(storeNumber = '') {
             // Pre-populate the store number if provided
             if (storeNumber) {
                 document.getElementById('add-store-number').value = storeNumber;
+                document.getElementById('add-store-name').value = 'Lori\'s Gift Shop #' + storeNumber;
+                document.getElementById('add-address3').value = 'Lori\'s Gift Shop #' + storeNumber;
+
             }
             
             // Clear other fields
-            document.getElementById('add-store-name').value = '';
             document.getElementById('add-company').value = '';
-            document.getElementById('add-phone').value = '';
+            document.getElementById('add-phone').value = '(972)759-5000';
             document.getElementById('add-address1').value = '';
             document.getElementById('add-address2').value = '';
-            document.getElementById('add-address3').value = '';
+            
             document.getElementById('add-city').value = '';
             document.getElementById('add-state').value = '';
             document.getElementById('add-zip-code').value = '';
-            document.getElementById('add-status').value = '';
+            document.getElementById('add-status').value = 'Active';
             document.getElementById('add-memo').value = '';
             
             // Show the modal
             const modal = new bootstrap.Modal(document.getElementById('addStoreModal'));
             modal.show();
         }
-    });
+
+        // Sidebar Functions
+        function updateSelectedOrdersList() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedCount = checkboxes.length;
+            
+            if (selectedCount > 0) {
+                // Show sidebar
+                showSidebar();
+                
+                // Update selected orders list
+                const selectedOrdersList = document.getElementById('selected-orders-ul');
+                selectedOrdersList.innerHTML = '';
+                
+                checkboxes.forEach(checkbox => {
+                    const poNumber = checkbox.getAttribute('data-po');
+                    const listItem = document.createElement('li');
+                    listItem.className = 'mb-1';
+                    listItem.innerHTML = `
+                        <span class="badge bg-primary">${poNumber}</span>
+                    `;
+                    selectedOrdersList.appendChild(listItem);
+                });
+            } else {
+                // Hide sidebar if no orders selected
+                hideSidebar();
+            }
+        }
+
+        function showSidebar() {
+            const sidebar = document.getElementById('fedex-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.style.display = 'block';
+            overlay.style.display = 'block';
+            
+            // Add animation class after a brief delay
+            setTimeout(() => {
+                sidebar.classList.add('show');
+            }, 10);
+            
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideSidebar() {
+            const sidebar = document.getElementById('fedex-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.remove('show');
+            
+            // Hide after animation completes
+            setTimeout(() => {
+                sidebar.style.display = 'none';
+                overlay.style.display = 'none';
+            }, 300);
+            
+            document.body.style.overflow = 'auto';
+        }
+
+        // Process Selected Orders Function
+        async function processSelectedOrders() {
+            console.log('processSelectedOrders function called!');
+            
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            console.log('Found checkboxes:', checkboxes.length);
+            
+            if (checkboxes.length === 0) {
+                alert('Please select at least one order to process');
+                return;
+            }
+
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.getAttribute('data-po'));
+            console.log('Selected POs:', selectedPOs);
+
+            const confirmed = confirm(`Process ${selectedPOs.length} selected orders?\n\nThis will:\n- Generate Excel file\n- Update status to SHIPPED`);
+            
+            if (!confirmed) {
+                console.log('User cancelled processing');
+                return;
+            }
+
+            console.log('User confirmed, sending request...');
+            
+            // Show loading state
+            const processBtn = document.getElementById('process-selected-btn');
+            const originalText = processBtn.innerHTML;
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                const response = await fetch('/lori_automation/process_selected_orders', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        po_numbers: selectedPOs
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                // Handle blob response for Excel file download
+                const blob = await response.blob();
+                console.log('Blob received, creating download...');
+                
+                // Create download link for Excel file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `FedEx_Labels_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                alert(`Successfully processed ${selectedPOs.length} orders!\n\nExcel file downloaded successfully.\nOrders status updated to SHIPPED`);
+
+                // Clear selections and hide sidebar
+                checkboxes.forEach(cb => cb.checked = false);
+                hideSidebar();
+
+                // Refresh orders to show updated status
+                await loadAndRenderOrders();
+
+            } catch (error) {
+                console.error('Error processing orders:', error);
+                alert('Error processing orders: ' + error.message);
+            } finally {
+                // Restore button state
+                processBtn.disabled = false;
+                processBtn.innerHTML = originalText;
+            }
+        }
+
+        // Combine PDF files function
+        async function combinePDFFiles() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedPOs.length === 0) {
+                alert('Please select at least one order to combine PDFs.');
+                return;
+            }
+            
+            const combineBtn = document.getElementById('combine-pdf-btn');
+            const originalText = combineBtn.innerHTML;
+            
+            try {
+                // Update button state
+                combineBtn.disabled = true;
+                combineBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Combining PDFs...';
+                
+                const response = await fetch('/lori_automation/combine_pdfs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        po_numbers: selectedPOs
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                // Get the combined PDF as blob
+                const blob = await response.blob();
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `combined_orders_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                alert(`Successfully combined PDFs for ${selectedPOs.length} orders!\n\nCombined PDF downloaded successfully.`);
+                
+            } catch (error) {
+                console.error('Error combining PDFs:', error);
+                alert('Error combining PDFs: ' + error.message);
+            } finally {
+                // Restore button state
+                combineBtn.disabled = false;
+                combineBtn.innerHTML = originalText;
+            }
+        }
+
+        // Download invoices function
+        async function downloadInvoices() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedPOs.length === 0) {
+                alert('Please select at least one order to download invoices.');
+                return;
+            }
+            
+            const downloadBtn = document.getElementById('download-invoices-btn');
+            const originalText = downloadBtn.innerHTML;
+            
+            try {
+                // Update button state
+                downloadBtn.disabled = true;
+                downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Invoices...';
+                
+                const response = await fetch('/lori_automation/download_invoices', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        po_numbers: selectedPOs
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                // Get the file as blob
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('Content-Disposition');
+                
+                // Extract filename from Content-Disposition header
+                let filename = `invoices_${new Date().toISOString().split('T')[0]}`;
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = filenameMatch[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                const fileType = selectedPOs.length === 1 ? 'Excel file' : 'ZIP file';
+                alert(`Successfully generated invoices for ${selectedPOs.length} orders!\n\n${fileType} downloaded successfully.`);
+                
+            } catch (error) {
+                console.error('Error downloading invoices:', error);
+                alert('Error downloading invoices: ' + error.message);
+            } finally {
+                // Restore button state
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = originalText;
+            }
+        }
+
+        // Make the function globally available
+        window.processSelectedOrders = processSelectedOrders;
+        window.combinePDFFiles = combinePDFFiles;
+        window.downloadInvoices = downloadInvoices;
+
+        // Add event listener for process selected orders button
+        document.getElementById('process-selected-btn')?.addEventListener('click', processSelectedOrders);
+        
+        // Add event listener for combine PDF button
+        document.getElementById('combine-pdf-btn')?.addEventListener('click', combinePDFFiles);
+        
+        // Add event listener for download invoices button
+        document.getElementById('download-invoices-btn')?.addEventListener('click', downloadInvoices);
+
     </script>
 
     <!-- Store Info Management JavaScript -->
@@ -1035,7 +2955,7 @@
 
         // Download store info
         document.getElementById('download-store-info-btn').addEventListener('click', function() {
-            window.location.href = '/download_store_info';
+            window.location.href = '/lori_automation/download_store_info';
         });
 
         // Upload store info
@@ -1052,7 +2972,7 @@
             formData.append('file', file);
 
             try {
-                const response = await fetch('/upload_store_info', {
+                const response = await fetch('/lori_automation/upload_store_info', {
                     method: 'POST',
                     body: formData
                 });
@@ -1083,7 +3003,7 @@
             if (tableSection) tableSection.style.display = 'none';
 
             try {
-                const response = await fetch('/get_store_info');
+                const response = await fetch('/lori_automation/get_store_info');
                 console.log('Store management response status:', response.status);
                 
                 if (!response.ok) {
@@ -1140,7 +3060,7 @@
         // Edit store
         async function editStore(storeNumber) {
             try {
-                const response = await fetch('/get_store_info');
+                const response = await fetch('/lori_automation/get_store_info');
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
                 
@@ -1197,7 +3117,7 @@
             };
 
             try {
-                const response = await fetch('/edit_store_info', {
+                const response = await fetch('/lori_automation/edit_store_info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(storeData)
@@ -1212,11 +3132,71 @@
                 modal.hide();
                 
                 loadStoreInfoForManagement();
+                
+                // Reload store cache for orders display
+                await loadStoreInfo();
+                
+                // Re-render orders to show updated store info
+                if (allOrders.length > 0) {
+                    renderPendingOrders();
+                    // Only render shipped orders if they were already loaded
+                    if (shippedOrdersLoaded) {
+                        renderShippedOrders();
+                    }
+                }
+                
                 currentEditingStoreNumber = null;
                 
             } catch (error) {
                 console.error('Error updating store:', error);
                 alert('更新店铺信息失败: ' + error.message);
+            }
+        });
+
+        // Address verification
+        document.getElementById('verify-address-btn').addEventListener('click', async function() {
+            // Get address components from form
+            const address1 = document.getElementById('add-address1').value.trim();
+            const address2 = document.getElementById('add-address2').value.trim();
+            const city = document.getElementById('add-city').value.trim();
+            const state = document.getElementById('add-state').value.trim();
+            const zipCode = document.getElementById('add-zip-code').value.trim();
+            
+            if (!address1 || !city || !state || !zipCode) {
+                alert('Please fill in Address 1, City, State, and Zip Code for verification.');
+                return;
+            }
+            
+            // Create full address string
+            let fullAddress = address1;
+            if (address2) fullAddress += ', ' + address2;
+            fullAddress += ', ' + city + ', ' + state + ' ' + zipCode;
+            
+            // Show loading state
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+            
+            try {
+                // Use a simple Google Maps search as verification
+                // You could replace this with a proper address validation API
+                const encodedAddress = encodeURIComponent(fullAddress);
+                const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                
+                // Open in new tab for manual verification
+                window.open(googleMapsUrl, '_blank');
+                
+                // Show success message
+                alert(`Address verification opened in new tab:\n\n${fullAddress}\n\nPlease verify the address is correct and close this dialog to continue.`);
+                
+            } catch (error) {
+                console.error('Error during address verification:', error);
+                alert('Error during address verification: ' + error.message);
+            } finally {
+                // Restore button state
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         });
 
@@ -1251,7 +3231,7 @@
             };
 
             try {
-                const response = await fetch('/add_store_info', {
+                const response = await fetch('/lori_automation/add_store_info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(storeData)
@@ -1279,7 +3259,10 @@
                 // Re-render orders to show updated store info
                 if (allOrders.length > 0) {
                     renderPendingOrders();
-                    renderShippedOrders();
+                    // Only render shipped orders if they were already loaded
+                    if (shippedOrdersLoaded) {
+                        renderShippedOrders();
+                    }
                 }
                 
             } catch (error) {
@@ -1295,7 +3278,7 @@
             }
 
             try {
-                const response = await fetch('/delete_store_info', {
+                const response = await fetch('/lori_automation/delete_store_info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ store_number: storeNumber })
@@ -1324,6 +3307,150 @@
                     row.style.display = text.includes(searchTerm) ? '' : 'none';
                 });
             });
+        }
+
+        // Batch collapse/expand functionality
+        window.toggleBatch = function(batchId) {
+            const batchRows = document.querySelectorAll(`tr[data-batch-id="${batchId}"]`);
+            const toggleIcon = document.getElementById(`icon-${batchId}`);
+            
+            if (!batchRows.length || !toggleIcon) return;
+            
+            const isCollapsed = batchRows[0].style.display === 'none';
+            
+            batchRows.forEach(row => {
+                row.style.display = isCollapsed ? '' : 'none';
+            });
+            
+            // Update the chevron icon
+            if (isCollapsed) {
+                toggleIcon.className = 'fas fa-chevron-down batch-toggle-icon';
+            } else {
+                toggleIcon.className = 'fas fa-chevron-right batch-toggle-icon';
+            }
+        };
+
+        // Select all orders from a specific batch
+        window.selectAllFromBatch = function(batchId) {
+            const batchRows = document.querySelectorAll(`tr[data-batch-id="${batchId}"]`);
+            let hasSelectedOrders = false;
+            
+            batchRows.forEach(row => {
+                const checkbox = row.querySelector('.order-checkbox');
+                if (checkbox) {
+                    checkbox.checked = true;
+                    hasSelectedOrders = true;
+                }
+            });
+            
+            // Update the main "Select All" checkbox state if it exists
+            updateSelectAllCheckbox();
+            
+            // Automatically show the sidebar if orders were selected
+            if (hasSelectedOrders) {
+                showSidebar();
+            }
+        };
+
+        // Helper function to update main select all checkbox
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('select-all-orders');
+            if (selectAllCheckbox) {
+                const checkboxes = document.querySelectorAll('.order-checkbox');
+                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+                
+                if (checkboxes.length > 0) {
+                    selectAllCheckbox.checked = checkboxes.length === checkedBoxes.length;
+                    selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < checkboxes.length;
+                }
+            }
+        }
+
+        // Select Ready Orders function
+        function selectReadyOrders() {
+            // First, uncheck all checkboxes
+            const allCheckboxes = document.querySelectorAll('#pending-orders-table-body .order-checkbox');
+            allCheckboxes.forEach(cb => cb.checked = false);
+            
+            let selectedCount = 0;
+            
+            // Find all rows in the pending orders table
+            const pendingRows = document.querySelectorAll('#pending-orders-table-body tr:not(.table-primary)');
+            
+            pendingRows.forEach(row => {
+                // Skip batch header rows
+                if (row.classList.contains('table-primary')) return;
+                
+                const checkbox = row.querySelector('.order-checkbox');
+                if (!checkbox) return;
+                
+                const poNumber = checkbox.getAttribute('data-po');
+                if (!poNumber) return;
+                
+                // Check if internal address is filled (check storeInfoCache directly)
+                const storeNumber = poNumber.substring(0, 4);
+                const hasInternalAddress = storeInfoCache[storeNumber] && 
+                    storeInfoCache[storeNumber].trim() !== '' && 
+                    storeInfoCache[storeNumber] !== 'N/A';
+                
+                // Check if box dimensions are filled (any of the box inputs have values)
+                const packageContainer = row.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+                let hasBoxDimensions = false;
+                
+                if (packageContainer) {
+                    const boxInputs = packageContainer.querySelectorAll('.box-length, .box-width, .box-height, .box-weight');
+                    // Check if at least one complete set of dimensions exists (length, width, height, weight all filled)
+                    const boxRows = packageContainer.querySelectorAll('.main-box-row, .package-row');
+                    
+                    for (let boxRow of boxRows) {
+                        const length = boxRow.querySelector('.box-length')?.value;
+                        const width = boxRow.querySelector('.box-width')?.value;
+                        const height = boxRow.querySelector('.box-height')?.value;
+                        const weight = boxRow.querySelector('.box-weight')?.value;
+                        
+                        if (length && width && height && weight && 
+                            length.trim() !== '' && width.trim() !== '' && 
+                            height.trim() !== '' && weight.trim() !== '') {
+                            hasBoxDimensions = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Select the order if both conditions are met
+                if (hasInternalAddress && hasBoxDimensions) {
+                    checkbox.checked = true;
+                    selectedCount++;
+                }
+            });
+            
+            // Update the selected orders list and show sidebar if any orders were selected
+            updateSelectedOrdersList();
+            
+            // Show feedback to user
+            if (selectedCount > 0) {
+                console.log(`Selected ${selectedCount} ready orders`);
+                showSidebar();
+                
+                // Update the button text temporarily to show success
+                const btn = document.getElementById('select-ready-orders-btn');
+                if (btn) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = `<i class="fas fa-check"></i> Selected ${selectedCount} Orders`;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-info');
+                    
+                    // Reset after 2 seconds
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('btn-info');
+                        btn.classList.add('btn-success');
+                    }, 2000);
+                }
+            } else {
+                // Show message explaining what makes an order "ready"
+                alert('No ready orders found.\n\nOrders are considered "ready" when they have:\n• Internal store address loaded\n• Complete box dimensions (length, width, height, weight)');
+            }
         }
 
         // Print order details function

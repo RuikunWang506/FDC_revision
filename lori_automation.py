@@ -9,6 +9,7 @@ from datetime import datetime
 from PyPDF2 import PdfReader, PdfMerger
 from openpyxl import load_workbook
 from decimal import Decimal
+import copy
 import zipfile
 import mysql.connector
 from mysql.connector import Error
@@ -1169,6 +1170,7 @@ def process_local_pdfs():
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
+
 @lori_automation_bp.route("/upload_and_process_pdfs", methods=["POST"])
 def upload_and_process_pdfs():
     """Process uploaded PDF files directly into database and save to manual folder"""
@@ -1265,12 +1267,92 @@ def upload_and_process_pdfs():
     except Exception as e:
         return jsonify({'error': f'处理上传文件时出错: {str(e)}'}), 500
 
-@lori_automation_bp.route("/lori_automation", methods=["GET", "POST"])
+@lori_automation_bp.route("/", methods=["GET", "POST"])
 def lori_automation():
     if 'username' not in session:
+        # For API requests, return JSON error
+        if request.headers.get('Content-Type') == 'application/json' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({'error': 'Not authenticated'}), 401
         return redirect(url_for("auth.login"))
     
-    if request.method == "POST":
+    if request.method == "GET":
+        # Check if this is an API request for orders data
+        if request.headers.get('Content-Type') == 'application/json' or 'application/json' in request.headers.get('Accept', ''):
+            # Return the same data as get_orders endpoint
+            connection = get_db_connection()
+            if not connection:
+                return jsonify({'error': 'Database connection failed'}), 500
+            
+            try:
+                cursor = connection.cursor(dictionary=True)
+                
+                # Get all orders with their details and package info status (same query as get_orders)
+                query = """
+                    SELECT o.po_number, o.batch_date, o.email_date, o.order_date, 
+                           o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty, 
+                           o.total_cost, o.status, o.created_at, o.updated_at,
+                           COUNT(oi.id) as item_count,
+                           CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info
+                    FROM lori_orders o
+                    LEFT JOIN lori_order_items oi ON o.po_number = oi.po_number
+                    LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
+                    GROUP BY o.po_number
+                    ORDER BY o.batch_date DESC, o.created_at DESC
+                """
+                cursor.execute(query)
+                orders = cursor.fetchall()
+                
+                # Process orders (same as get_orders)
+                for order in orders:
+                    store_number = order['po_number'][:4] if order['po_number'] else ''
+                    if store_number:
+                        cursor.execute("""
+                            SELECT store_number, store_name, company, phone, address1, address2, 
+                                   address3, city, state, zip_code, status, memo
+                            FROM loris_store_info 
+                            WHERE store_number = %s
+                        """, (store_number,))
+                        store_info = cursor.fetchone()
+                        order['store_info'] = store_info
+                    else:
+                        order['store_info'] = None
+                    
+                    # Format dates for JSON serialization
+                    def format_date(date_value, format_str='%Y-%m-%d'):
+                        if date_value is None:
+                            return None
+                        if hasattr(date_value, 'strftime'):
+                            return date_value.strftime(format_str)
+                        else:
+                            return str(date_value)
+                    
+                    order['batch_date'] = format_date(order['batch_date'])
+                    order['email_date'] = format_date(order['email_date'], '%Y-%m-%d %H:%M:%S')
+                    order['order_date'] = format_date(order['order_date'])
+                    order['delivery_date'] = format_date(order['delivery_date'])
+                    order['cancel_date'] = format_date(order['cancel_date'])
+                    order['created_at'] = format_date(order['created_at'], '%Y-%m-%d %H:%M:%S')
+                    order['updated_at'] = format_date(order['updated_at'], '%Y-%m-%d %H:%M:%S')
+                
+                cursor.close()
+                connection.close()
+                
+                return jsonify({
+                    'success': True,
+                    'orders': orders,
+                    'total_orders': len(orders)
+                })
+                
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+            finally:
+                if connection and connection.is_connected():
+                    connection.close()
+        else:
+            # Regular web request - render template
+            return render_template("loris_fedex.html", current_user=session['username'])
+    
+    elif request.method == "POST":
         if 'files[]' not in request.files:
             return jsonify({'error': 'No files uploaded'}), 400
         
@@ -1324,7 +1406,6 @@ def lori_automation():
             'total_files': len(files),
             'batch_date': batch_date.strftime('%Y-%m-%d')
         })
-    return render_template("loris_fedex.html", current_user=session['username'])
 
 @lori_automation_bp.route("/get_orders", methods=["GET"])
 def get_orders():
@@ -1339,14 +1420,16 @@ def get_orders():
     try:
         cursor = connection.cursor(dictionary=True)
         
-        # Get all orders with their details
+        # Get all orders with their details and package info status
         query = """
             SELECT o.po_number, o.batch_date, o.email_date, o.order_date, 
                    o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty, 
                    o.total_cost, o.status, o.created_at, o.updated_at,
-                   COUNT(oi.id) as item_count
+                   COUNT(oi.id) as item_count,
+                   CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info
             FROM lori_orders o
             LEFT JOIN lori_order_items oi ON o.po_number = oi.po_number
+            LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
             GROUP BY o.po_number
             ORDER BY o.batch_date DESC, o.created_at DESC
         """
@@ -1627,9 +1710,12 @@ def fetch_email_pdfs():
 
 
 
-@lori_automation_bp.route("/delete_pdf_data", methods=["POST"])
+@lori_automation_bp.route("/delete_pdf_data", methods=["POST", "GET"])
 def delete_pdf_data():
-    """Delete all PDF files and order data"""
+    """Delete all PDF files and order data. Always returns JSON. Requires session auth."""
+    # Require authentication to avoid accidental/unauthorized deletions
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     try:
         deleted_files = 0
         deleted_orders = 0
@@ -1677,9 +1763,1536 @@ def delete_pdf_data():
         return jsonify({
             'success': True,
             'message': f'Successfully deleted {deleted_orders} orders, {deleted_items} order items, and {deleted_files} files'
-        })
+        }), 200
         
     except Error as e:
         return jsonify({'error': f'Database error: {str(e)}'}), 500
     except Exception as e:
+        # Ensure we never emit HTML content to callers
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+
+# --- FedEx Integration Endpoints (Alternative Implementation) ---
+
+
+def load_fedex_credentials():
+    """Load FedEx API credentials from credentials.json"""
+    try:
+        with open('credentials.json', 'r') as f:
+            credentials = json.load(f)
+            # Accept multiple possible keys for billing/account to be tolerant of different credential formats
+            billing_default = (
+                credentials.get('fedex_billing_account')
+                or credentials.get('fedex_billing_number')
+                or credentials.get('fedex_billing')
+            )
+
+            account_number = (
+                credentials.get('fedex_account_number')
+                or credentials.get('fedex_account')
+                or credentials.get('account_number')
+            )
+
+            return {
+                'api_key': credentials.get('fedex_api_key'),
+                'secret_key': credentials.get('fedex_secret_key'),
+                'account_number': account_number,
+                # credentials-level billing default (optional)
+                'billing_account_default': billing_default,
+                # Production-only integration: default environment is 'production'
+                'environment': credentials.get('fedex_environment', 'production')
+            }
+    except Exception as e:
+        current_app.logger.error(f"Error loading FedEx credentials: {str(e)}")
+        return None
+
+def get_fedex_auth_token(credentials):
+    """Get OAuth token from FedEx API"""
+    try:
+        # Choose OAuth endpoint based on credentials environment
+        # supported values: 'sandbox' or 'production' (default)
+        env = (credentials.get('environment') or 'production').lower()
+        if env == 'sandbox' or 'sandbox' in env:
+            auth_url = "https://apis-sandbox.fedex.com/oauth/token"
+        else:
+            auth_url = "https://apis.fedex.com/oauth/token"
+
+        current_app.logger.debug(f"FedEx auth env='{env}', using auth_url={auth_url}")
+
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+
+        data = {
+            'grant_type': 'client_credentials',
+            'client_id': credentials['api_key'],
+            'client_secret': credentials['secret_key']
+        }
+
+        response = requests.post(auth_url, headers=headers, data=data)
+        # Avoid logging full token/secret; log masked token info
+        if response.status_code == 200:
+            token_data = response.json()
+            access_token = token_data.get('access_token')
+            masked = f"***{access_token[-8:]}" if access_token else None
+            current_app.logger.debug(f"FedEx auth successful (masked token): {masked}")
+            return access_token
+        else:
+            current_app.logger.error(f"FedEx auth failed: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        current_app.logger.error(f"Error getting FedEx auth token: {str(e)}")
+        return None
+
+
+
+
+
+@lori_automation_bp.route("/save_package_info", methods=["POST"])
+def save_package_info():
+    """Save package information for a PO number"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_number = data.get('poNumber')
+        box_dimensions = data.get('boxDimensions', [])
+        fedex_service_type = data.get('fedexServiceType')
+        fedex_packaging_type = data.get('fedexPackagingType')
+        special_instructions = data.get('specialInstructions', '')
+        
+        if not po_number:
+            return jsonify({'error': 'PO number is required'}), 400
+        
+        if not box_dimensions:
+            return jsonify({'error': 'At least one box is required'}), 400
+        
+        # Calculate total weight
+        total_weight = sum(float(box.get('weight', 0)) for box in box_dimensions)
+        
+        # Create table if it doesn't exist
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        # Insert or update package info
+        upsert_query = """
+            INSERT INTO loris_pkg_info 
+            (po_number, box_count, box_dimensions, total_weight, 
+             fedex_service_type, fedex_packaging_type, special_instructions, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+            box_count = VALUES(box_count),
+            box_dimensions = VALUES(box_dimensions),
+            total_weight = VALUES(total_weight),
+            fedex_service_type = VALUES(fedex_service_type),
+            fedex_packaging_type = VALUES(fedex_packaging_type),
+            special_instructions = VALUES(special_instructions),
+            updated_at = CURRENT_TIMESTAMP
+        """
+        
+        cursor.execute(upsert_query, (
+            po_number, len(box_dimensions), json.dumps(box_dimensions), 
+            total_weight, fedex_service_type, fedex_packaging_type, 
+            special_instructions, session.get('username', 'unknown')
+        ))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Package information saved successfully',
+            'po_number': po_number,
+            'box_count': len(box_dimensions),
+            'total_weight': total_weight
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error saving package info: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/get_package_info/<po_number>", methods=["GET"])
+def get_package_info(po_number):
+    """Get package information for a PO number"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        query = "SELECT * FROM loris_pkg_info WHERE po_number = %s"
+        cursor.execute(query, (po_number,))
+        result = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
+        
+        if result:
+            # Parse JSON box_dimensions
+            if result['box_dimensions']:
+                result['box_dimensions'] = json.loads(result['box_dimensions'])
+            return jsonify(result)
+        else:
+            return jsonify({'exists': False})
+        
+    except Exception as e:
+        current_app.logger.error(f"Error getting package info: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/delete_package_info/<po_number>", methods=["DELETE"])
+def delete_package_info(po_number):
+    """Delete package information for a PO number"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        if not po_number:
+            return jsonify({'error': 'PO number is required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        # Check if package info exists
+        check_query = "SELECT COUNT(*) FROM loris_pkg_info WHERE po_number = %s"
+        cursor.execute(check_query, (po_number,))
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            cursor.close()
+            connection.close()
+            return jsonify({'error': 'Package info not found for this PO number'}), 404
+        
+        # Delete package info
+        delete_query = "DELETE FROM loris_pkg_info WHERE po_number = %s"
+        cursor.execute(delete_query, (po_number,))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Package information deleted successfully for PO {po_number}',
+            'po_number': po_number
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error deleting package info: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/generate_batch_fedex_csv", methods=["POST"])
+def generate_batch_fedex_csv():
+    """Generate FedEx CSV for multiple selected PO numbers"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_numbers = data.get('poNumbers', [])
+        if not po_numbers:
+            return jsonify({'error': 'No PO numbers provided'}), 400
+        
+        # Get all order and package information
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        csv_rows = []
+        processed_orders = []
+        
+        for po_number in po_numbers:
+            # Get order info
+            order_query = """
+                SELECT o.po_number, o.batch_date, o.ship_to_address, o.total_qty, o.total_cost, o.status,
+                       s.store_name, s.company, s.address1, s.address2, s.city, s.state, s.zip_code, s.phone
+                FROM lori_orders o
+                LEFT JOIN loris_store_info s ON o.po_number LIKE CONCAT(s.store_number, '-%')
+                WHERE o.po_number = %s
+            """
+            cursor.execute(order_query, (po_number,))
+            order = cursor.fetchone()
+            
+            if not order:
+                continue
+            
+            # Get package info
+            pkg_query = "SELECT * FROM loris_pkg_info WHERE po_number = %s"
+            cursor.execute(pkg_query, (po_number,))
+            pkg_info = cursor.fetchone()
+            
+            if not pkg_info:
+                continue
+            
+            # Parse recipient address
+            ship_to_lines = order['ship_to_address'].split('\n') if order['ship_to_address'] else []
+            recipient_info = parse_fedex_address(ship_to_lines)
+            
+            # Parse box dimensions
+            box_dimensions = json.loads(pkg_info['box_dimensions']) if pkg_info['box_dimensions'] else []
+            
+            # Create CSV row
+            csv_row = {
+                'Recipient Company': recipient_info['company'],
+                'Recipient Name': recipient_info['name'],
+                'Recipient Address 1': recipient_info['address1'],
+                'Recipient Address 2': recipient_info['address2'],
+                'Recipient City': recipient_info['city'],
+                'Recipient State': recipient_info['state'],
+                'Recipient Postal Code': recipient_info['zip'],
+                'Recipient Country': 'US',
+                'Recipient Phone': recipient_info['phone'],
+                'Service Type': map_fedex_service_type(pkg_info['fedex_service_type']),
+                'Package Type': map_fedex_packaging_type(pkg_info['fedex_packaging_type']),
+                'Weight': pkg_info['total_weight'],
+                'Declared Value': order['total_cost'],
+                'Reference 1': po_number,
+                'Reference 2': f"Batch: {order['batch_date']}",
+                'Special Instructions': pkg_info['special_instructions'] or '',
+                'Length': box_dimensions[0]['length'] if box_dimensions else '12',
+                'Width': box_dimensions[0]['width'] if box_dimensions else '12',
+                'Height': box_dimensions[0]['height'] if box_dimensions else '6'
+            }
+            
+            csv_rows.append(csv_row)
+            processed_orders.append(po_number)
+        
+        if not csv_rows:
+            return jsonify({'error': 'No valid orders found with package information'}), 400
+        
+        # Generate CSV file
+        output_dir = os.path.join(os.getcwd(), 'output', 'fedex_shipments')
+        os.makedirs(output_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        csv_filename = f"fedex_batch_import_{timestamp}.csv"
+        csv_filepath = os.path.join(output_dir, csv_filename)
+        
+        import csv
+        with open(csv_filepath, 'w', newline='', encoding='utf-8') as csvfile:
+            if csv_rows:
+                writer = csv.DictWriter(csvfile, fieldnames=csv_rows[0].keys())
+                writer.writeheader()
+                writer.writerows(csv_rows)
+        
+        # Update order statuses to 'SHIPPED'
+        #if processed_orders:
+        #    placeholders = ','.join(['%s'] * len(processed_orders))
+        #    update_query = f"UPDATE lori_orders SET status = 'SHIPPED' WHERE po_number IN ({placeholders})"
+        #    cursor.execute(update_query, processed_orders)
+        #    connection.commit()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Generated FedEx CSV for {len(processed_orders)} orders',
+            'filename': csv_filename,
+            'download_url': f'/download_fedex_file/{csv_filename}',
+            'processed_orders': processed_orders
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error generating batch FedEx CSV: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+def parse_fedex_address(ship_to_lines):
+    """Improved address parsing for FedEx format"""
+    recipient_info = {
+        'name': 'Recipient',
+        'company': '',
+        'address1': '',
+        'address2': '',
+        'city': '',
+        'state': '',
+        'zip': '',
+        'phone': ''
+    }
+    
+    if not ship_to_lines or len(ship_to_lines) == 0:
+        return recipient_info
+    
+    # Clean up lines - remove empty lines and strip whitespace
+    clean_lines = [line.strip() for line in ship_to_lines if line.strip()]
+    
+    if not clean_lines:
+        return recipient_info
+    
+    # First line is usually company/name
+    company = clean_lines[0]
+    recipient_info['company'] = company
+    recipient_info['name'] = company
+
+    # If we only have one line, return it as the name
+    if len(clean_lines) == 1:
+        return recipient_info
+
+    # Find the line with city, state, zip (usually the last line)
+    city_state_zip_line = ''
+    index_csz = -1
+
+    # Look for the line that contains state and ZIP pattern (more flexible regex)
+    for i, line in enumerate(clean_lines[1:], 1):  # Skip first line (name/company)
+        # Look for patterns like "Houston TX 77074" or "Houston, TX 77074-1234"
+        if re.search(r'\b[A-Z]{2}\b\s+\d{5}', line):
+            city_state_zip_line = line
+            index_csz = i
+            break
+
+    # Determine candidates between company and city/state/zip (or all remaining lines)
+    address_candidates = clean_lines[1:index_csz] if index_csz != -1 else clean_lines[1:]
+
+    street_lines = []
+    company_continuations = []
+
+    # Heuristic to detect street lines: start with number or contain common street tokens
+    street_token_re = re.compile(r'(^\d+\s)|\b(AVE|AVENUE|ST|STREET|RD|ROAD|HWY|HIGHWAY|BLVD|DR|DRIVE|LN|LANE|PKWY|PARKWAY|CT|COURT|WAY|PL|PLACE)\b', re.IGNORECASE)
+
+    for line in address_candidates:
+        if street_token_re.search(line):
+            street_lines.append(line)
+        else:
+            company_continuations.append(line)
+
+    # Merge any company continuation lines into the company field
+    if company_continuations:
+        merged = ' '.join(company_continuations).strip()
+        # Avoid duplicating if already present
+        if merged and merged not in recipient_info['company']:
+            recipient_info['company'] = (recipient_info['company'] + ' ' + merged).strip()
+            recipient_info['name'] = recipient_info['company']
+
+    # If no street lines detected, fallback: use the first candidate as address1
+    if not street_lines and address_candidates:
+        street_lines = [address_candidates[0]]
+
+    # Assign address lines (max 2)
+    if street_lines:
+        recipient_info['address1'] = street_lines[0]
+        if len(street_lines) > 1:
+            recipient_info['address2'] = street_lines[1]
+        # If more street lines exist, append to address2
+        if len(street_lines) > 2:
+            extra = ' '.join(street_lines[2:])
+            recipient_info['address2'] = (recipient_info['address2'] + ' ' + extra).strip() if recipient_info['address2'] else extra
+
+    # Parse city, state, zip from the identified line
+    if city_state_zip_line:
+        # More comprehensive regex to handle various formats:
+        # "Houston TX 77074", "Houston, TX 77074", "Houston TX 77074-1234"
+        patterns = [
+            r'^(.+?)\s*,?\s*\b([A-Z]{2})\b\s+(\d{5}(?:-\d{4})?)\b.*$',  # With optional extended ZIP
+            r'^(.+?)\s+([A-Z]{2})\s+(\d{5})\b.*$',  # Simple format
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, city_state_zip_line)
+            if match:
+                recipient_info['city'] = match.group(1).strip().rstrip(',')
+                recipient_info['state'] = match.group(2)
+                recipient_info['zip'] = match.group(3)
+                break
+    
+    # Look for phone numbers in any line
+    for line in clean_lines:
+        # Look for phone number patterns
+        phone_match = re.search(r'(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})', line)
+        if phone_match:
+            recipient_info['phone'] = phone_match.group(1)
+            break
+    
+    return recipient_info
+
+
+@lori_automation_bp.route("/fedexuploadtodraft", methods=["POST"])  # Original route
+@lori_automation_bp.route("/fedexupload", methods=["POST"])          # Alias for frontend
+@lori_automation_bp.route("/api/fedexupload", methods=["POST"])      # Alias for proxy/path prefix
+def fedex_upload_to_draft():
+    """Create FedEx shipping draft using simplified file-based approach"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        # Get request data
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_number = data.get('poNumber')
+        service_type = data.get('serviceType')
+        packaging_type = data.get('packagingType')
+        special_instructions = data.get('specialInstructions', '')
+        boxes = data.get('boxes', [])
+        
+        # Validate required fields
+        if not po_number or not service_type or not packaging_type or not boxes:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        current_app.logger.info(f"Creating FedEx shipment draft for PO {po_number} using alternative file method")
+        
+        # Get order details from database
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Get order info
+            order_query = """
+                SELECT po_number, batch_date, ship_to_address, total_qty, total_cost, status
+                FROM lori_orders 
+                WHERE po_number = %s
+            """
+            cursor.execute(order_query, (po_number,))
+            order = cursor.fetchone()
+            
+            if not order:
+                return jsonify({'error': 'Order not found'}), 404
+            
+            # Get order items
+            items_query = """
+                SELECT vendor_item, color, quantity, description, unit_price, extended_cost, upc
+                FROM lori_order_items 
+                WHERE po_number = %s
+            """
+            cursor.execute(items_query, (po_number,))
+            items = cursor.fetchall()
+            
+            # Get store information for shipper address
+            store_number = po_number[:4] if po_number else ''
+            store_query = """
+                SELECT store_number, store_name, company, address1, address2, address3, 
+                       city, state, zip_code, phone
+                FROM loris_store_info 
+                WHERE store_number = %s
+            """
+            cursor.execute(store_query, (store_number,))
+            store_info = cursor.fetchone()
+            
+            # Parse recipient address from ship-to lines
+            ship_to_lines = order['ship_to_address'].split('\n') if order['ship_to_address'] else []
+            
+            recipient_info = {
+                'name': 'Recipient',
+                'company': '',
+                'address1': '',
+                'address2': '',
+                'city': '',
+                'state': '',
+                'zip': '',
+                'phone': ''
+            }
+            
+            # Simple address parsing
+            if ship_to_lines:
+                recipient_info['company'] = ship_to_lines[0].strip() if len(ship_to_lines) > 0 else ''
+                recipient_info['name'] = recipient_info['company']  # Use company as name
+                
+                # Find address lines and city/state/zip
+                address_lines = []
+                city_state_zip = ''
+                
+                for i, line in enumerate(ship_to_lines[1:], 1):
+                    line = line.strip()
+                    # Check if this looks like city, state, zip
+                    if re.match(r'^.+\s+[A-Z]{2}\s+\d{5}', line):
+                        city_state_zip = line
+                        break
+                    else:
+                        address_lines.append(line)
+                
+                # Assign address lines
+                if address_lines:
+                    recipient_info['address1'] = address_lines[0] if len(address_lines) > 0 else ''
+                    recipient_info['address2'] = address_lines[1] if len(address_lines) > 1 else ''
+                
+                # Parse city, state, zip
+                if city_state_zip:
+                    match = re.match(r'^(.+?)\s+([A-Z]{2})\s+(\d{5}(?:-\d{4})?).*$', city_state_zip)
+                    if match:
+                        recipient_info['city'] = match.group(1).strip()
+                        recipient_info['state'] = match.group(2)
+                        recipient_info['zip'] = match.group(3)
+            
+            # Format shipper info from store data
+            shipper_info = {
+                'name': store_info.get('store_name', 'Loris Store') if store_info else 'Loris Store',
+                'company': store_info.get('company', 'Loris') if store_info else 'Loris',
+                'address1': store_info.get('address1', '') if store_info else '',
+                'address2': store_info.get('address2', '') if store_info else '',
+                'city': store_info.get('city', '') if store_info else '',
+                'state': store_info.get('state', '') if store_info else '',
+                'zip': store_info.get('zip_code', '') if store_info else '',
+                'phone': store_info.get('phone', '') if store_info else ''
+            }
+            
+            # Create shipment data structure
+            shipment_data = {
+                'order_info': {
+                    'po_number': po_number,
+                    'batch_date': str(order.get('batch_date', '')),
+                    'total_qty': order.get('total_qty', 0),
+                    'total_cost': float(order.get('total_cost', 0))
+                },
+                'shipper': shipper_info,
+                'recipient': recipient_info,
+                'service': {
+                    'type': service_type,
+                    'packaging': packaging_type,
+                    'instructions': special_instructions
+                },
+                'packages': boxes,
+                'items': [dict(item) for item in items] if items else []
+            }
+            
+            # Generate tracking number placeholder
+            import time
+            tracking_number = f"FX{int(time.time())}{po_number[-4:]}"
+            
+            # Create output directory
+            output_dir = os.path.join(os.getcwd(), 'output', 'fedex_shipments')
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Save detailed JSON
+            json_filename = f"shipment_{po_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            json_filepath = os.path.join(output_dir, json_filename)
+            
+            with open(json_filepath, 'w') as f:
+                json.dump(shipment_data, f, indent=2, default=str)
+            
+            # Generate FedEx Ship Manager CSV format
+            csv_data = {
+                'Recipient Company': shipment_data['recipient']['company'],
+                'Recipient Name': shipment_data['recipient']['name'],
+                'Recipient Address 1': shipment_data['recipient']['address1'],
+                'Recipient Address 2': shipment_data['recipient']['address2'],
+                'Recipient City': shipment_data['recipient']['city'],
+                'Recipient State': shipment_data['recipient']['state'],
+                'Recipient Postal Code': shipment_data['recipient']['zip'],
+                'Recipient Country': 'US',
+                'Recipient Phone': shipment_data['recipient']['phone'],
+                'Service Type': map_fedex_service_type(service_type),
+                'Package Type': map_fedex_packaging_type(packaging_type),
+                'Weight': sum([float(box['weight']) for box in boxes]),
+                'Declared Value': shipment_data['order_info']['total_cost'],
+                'Reference 1': po_number,
+                'Reference 2': f"Batch: {shipment_data['order_info']['batch_date']}",
+                'Special Instructions': special_instructions,
+                'Length': boxes[0]['length'] if boxes else '12',
+                'Width': boxes[0]['width'] if boxes else '12',
+                'Height': boxes[0]['height'] if boxes else '6'
+            }
+            
+            csv_filename = f"fedex_import_{po_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            csv_filepath = os.path.join(output_dir, csv_filename)
+            
+            import csv
+            with open(csv_filepath, 'w', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=csv_data.keys())
+                writer.writeheader()
+                writer.writerow(csv_data)
+            
+            # Save to database
+            try:
+                create_table_query = """
+                    CREATE TABLE IF NOT EXISTS fedex_shipments (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        po_number VARCHAR(50),
+                        tracking_number VARCHAR(50),
+                        service_type VARCHAR(100),
+                        packaging_type VARCHAR(100),
+                        special_instructions TEXT,
+                        boxes_data JSON,
+                        shipment_data JSON,
+                        json_file_path TEXT,
+                        csv_file_path TEXT,
+                        status VARCHAR(50) DEFAULT 'DRAFT',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        created_by VARCHAR(100)
+                    )
+                """
+                cursor.execute(create_table_query)
+                
+                # Insert shipment record
+                insert_query = """
+                    INSERT INTO fedex_shipments 
+                    (po_number, tracking_number, service_type, packaging_type, 
+                     special_instructions, boxes_data, shipment_data, json_file_path, 
+                     csv_file_path, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                
+                cursor.execute(insert_query, (
+                    po_number, tracking_number, service_type, packaging_type, 
+                    special_instructions, json.dumps(boxes), json.dumps(shipment_data, default=str),
+                    json_filepath, csv_filepath,
+                    session.get('username', 'unknown')
+                ))
+                
+                connection.commit()
+                
+            except Exception as db_error:
+                current_app.logger.error(f"Error saving to database: {str(db_error)}")
+            
+            cursor.close()
+            connection.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'FedEx shipment draft created successfully',
+                'trackingNumber': tracking_number,
+                'jsonFile': json_filename,
+                'csvFile': csv_filename,
+                'downloadUrl': f'/download_fedex_files/{po_number}',
+                'instructions': [
+                    'Shipment files have been generated successfully!',
+                    f'📄 Detailed data: {json_filename}',
+                    f'📊 FedEx CSV import: {csv_filename}',
+                    '',
+                    '📋 Next steps:',
+                    '1. Download the CSV file below',
+                    '2. Open FedEx Ship Manager website',
+                    '3. Use "Import" function to upload the CSV',
+                    '4. Print shipping labels',
+                    '5. Update tracking number when available'
+                ]
+            })
+            
+        except Exception as db_error:
+            current_app.logger.error(f"Database error: {str(db_error)}")
+            return jsonify({'error': f'Database error: {str(db_error)}'}), 500
+        
+        finally:
+            if connection and connection.is_connected():
+                connection.close()
+    
+    except Exception as e:
+        current_app.logger.error(f"Error in fedex_upload_to_draft: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+def map_fedex_service_type(service_type):
+    """Map internal service types to FedEx Ship Manager values"""
+    mapping = {
+        'FEDEX_GROUND': 'FedEx Ground',
+        'FEDEX_EXPRESS_SAVER': 'FedEx Express Saver',
+        'FEDEX_2_DAY': 'FedEx 2Day',
+        'STANDARD_OVERNIGHT': 'FedEx Standard Overnight',
+        'PRIORITY_OVERNIGHT': 'FedEx Priority Overnight',
+        'FIRST_OVERNIGHT': 'FedEx First Overnight'
+    }
+    return mapping.get(service_type, service_type)
+
+
+def map_fedex_packaging_type(packaging_type):
+    """Map internal packaging types to FedEx Ship Manager values"""
+    mapping = {
+        'YOUR_PACKAGING': 'Your Packaging',
+        'FEDEX_BOX': 'FedEx Box',
+        'FEDEX_ENVELOPE': 'FedEx Envelope',
+        'FEDEX_PAK': 'FedEx Pak',
+        'FEDEX_TUBE': 'FedEx Tube'
+    }
+    return mapping.get(packaging_type, packaging_type)
+
+@lori_automation_bp.route('/download_fedex_files/<po_number>', methods=['GET'])
+def download_fedex_files(po_number):
+    """Download FedEx shipment files for a given PO number"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        # Find the latest files for this PO number
+        output_dir = os.path.join(os.getcwd(), 'output', 'fedex_shipments')
+        
+        if not os.path.exists(output_dir):
+            return jsonify({'error': 'No FedEx files found'}), 404
+        
+        # Find files matching the PO number pattern
+        json_files = []
+        csv_files = []
+        
+        for filename in os.listdir(output_dir):
+            if po_number in filename:
+                if filename.endswith('.json'):
+                    json_files.append(filename)
+                elif filename.endswith('.csv'):
+                    csv_files.append(filename)
+        
+        if not json_files and not csv_files:
+            return jsonify({'error': f'No files found for PO {po_number}'}), 404
+        
+        # Get the most recent files
+        latest_json = max(json_files) if json_files else None
+        latest_csv = max(csv_files) if csv_files else None
+        
+        return jsonify({
+            'success': True,
+            'po_number': po_number,
+            'json_file': latest_json,
+            'csv_file': latest_csv,
+            'json_download': f'/download_fedex_file/{latest_json}' if latest_json else None,
+            'csv_download': f'/download_fedex_file/{latest_csv}' if latest_csv else None
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in download_fedex_files: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route('/download_fedex_file/<filename>', methods=['GET'])
+def download_fedex_file(filename):
+    """Download a specific FedEx file"""
+    if 'username' not in session:
+        return redirect('/login')
+    
+    try:
+        output_dir = os.path.join(os.getcwd(), 'output', 'fedex_shipments')
+        file_path = os.path.join(output_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
+        
+        from flask import send_file
+        return send_file(file_path, as_attachment=True, download_name=filename)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error downloading file {filename}: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route('/download_original_pdf/<po_number>', methods=['GET'])
+def download_original_pdf(po_number):
+    """Download original PDF file for a given PO number"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        # Get the base download path
+        base_path = email_config['download_path']
+        
+        if not os.path.exists(base_path):
+            return jsonify({'error': 'PDF directory not found'}), 404
+        
+        # Search for PDF file containing this PO number
+        # First, try to find the PO number in the database to get batch date
+        found_file = None
+        batch_date = None
+        
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            
+            # Get batch date for this PO number
+            cursor.execute("""
+                SELECT DISTINCT batch_date 
+                FROM loris_orders 
+                WHERE po_number = %s
+                LIMIT 1
+            """, (po_number,))
+            
+            result = cursor.fetchone()
+            if result:
+                batch_date = result['batch_date']
+                
+        except Error as e:
+            current_app.logger.error(f"Database error when looking up batch date: {str(e)}")
+        finally:
+            if 'connection' in locals() and connection.is_connected():
+                cursor.close()
+                connection.close()
+        
+        # Search strategy 1: If we have batch date, look in that specific directory first
+        if batch_date:
+            batch_dir = os.path.join(base_path, batch_date)
+            if os.path.exists(batch_dir):
+                for filename in os.listdir(batch_dir):
+                    if filename.lower().endswith('.pdf'):
+                        filepath = os.path.join(batch_dir, filename)
+                        # Check if PO number appears in the PDF content or filename
+                        if po_number in filename or check_pdf_contains_po(filepath, po_number):
+                            found_file = filepath
+                            break
+        
+        # Search strategy 2: If not found in batch dir, search all directories
+        if not found_file:
+            for item in os.listdir(base_path):
+                item_path = os.path.join(base_path, item)
+                if os.path.isdir(item_path):
+                    for filename in os.listdir(item_path):
+                        if filename.lower().endswith('.pdf'):
+                            filepath = os.path.join(item_path, filename)
+                            # Check if PO number appears in the PDF content or filename
+                            if po_number in filename or check_pdf_contains_po(filepath, po_number):
+                                found_file = filepath
+                                break
+                    if found_file:
+                        break
+        
+        if not found_file:
+            return jsonify({'error': f'Original PDF not found for PO {po_number}'}), 404
+        
+        # Generate download filename
+        original_filename = os.path.basename(found_file)
+        download_name = f"{po_number}_original_{original_filename}"
+        
+        return send_file(found_file, as_attachment=True, download_name=download_name)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error downloading original PDF for {po_number}: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+def check_pdf_contains_po(filepath, po_number):
+    """Check if PDF file contains the given PO number"""
+    try:
+        with open(filepath, 'rb') as file:
+            reader = PdfReader(file)
+            text_content = ""
+            for page in reader.pages:
+                text_content += page.extract_text()
+            
+            # Look for PO number in the text content
+            return po_number in text_content
+            
+    except Exception as e:
+        current_app.logger.error(f"Error reading PDF {filepath}: {str(e)}")
+        return False
+
+
+@lori_automation_bp.route("/process_selected_orders", methods=["POST"])
+def process_selected_orders():
+    """Process selected orders: generate Excel file and update status to shipped"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_numbers = data.get('po_numbers', [])
+        if not po_numbers:
+            return jsonify({'error': 'No PO numbers provided'}), 400
+        
+        # Get all order and package information
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Prepare Excel data
+            excel_data = []
+            processed_orders = []
+            
+            for po_number in po_numbers:
+                # Get order info
+                order_query = """
+                    SELECT po_number, batch_date, ship_to_address, total_qty, total_cost, status
+                    FROM lori_orders 
+                    WHERE po_number = %s
+                """
+                cursor.execute(order_query, (po_number,))
+                order = cursor.fetchone()
+                
+                if not order:
+                    current_app.logger.warning(f"Order not found: {po_number}")
+                    continue
+                
+                # Get package info
+                package_query = """
+                    SELECT box_dimensions, fedex_service_type, fedex_packaging_type
+                    FROM loris_pkg_info 
+                    WHERE po_number = %s
+                """
+                cursor.execute(package_query, (po_number,))
+                package_info = cursor.fetchone()
+                
+                if not package_info:
+                    current_app.logger.warning(f"No package info found for: {po_number}")
+                    continue
+                
+                # Get store information for additional contact details
+                store_number = po_number[:4] if po_number else ''
+                store_query = """
+                    SELECT store_name, company, phone, address1, address2, address3, 
+                           city, state, zip_code
+                    FROM loris_store_info 
+                    WHERE store_number = %s
+                """
+                cursor.execute(store_query, (store_number,))
+                store_info = cursor.fetchone()
+                
+                # Build recipient info primarily from DB (store_info). Fallback to parsed ship_to only if DB missing.
+                recipient_from_db = {}
+                if store_info:
+                    recipient_from_db = {
+                        'name': store_info.get('store_name') or store_info.get('company') or '',
+                        'company': store_info.get('company') or store_info.get('store_name') or '',
+                        'address1': store_info.get('address1') or '',
+                        'address2': store_info.get('address2') or '',
+                        'address3': store_info.get('address3') or '',
+                        'city': store_info.get('city') or '',
+                        'state': store_info.get('state') or '',
+                        'zip': store_info.get('zip_code') or '',
+                        'phone': store_info.get('phone') or ''
+                    }
+                
+                # If DB is missing, fallback to parsed HTML address
+                if not store_info:
+                    ship_to_lines = order['ship_to_address'].split('\n') if order['ship_to_address'] else []
+                    recipient_from_db = parse_fedex_address(ship_to_lines)
+                
+                # Normalize minimal fields (avoid None)
+                for k in ['name','company','address1','address2','address3','city','state','zip','phone']:
+                    if recipient_from_db.get(k) is None:
+                        recipient_from_db[k] = ''
+                
+                # Parse box dimensions
+                try:
+                    box_dimensions = json.loads(package_info['box_dimensions']) if isinstance(package_info['box_dimensions'], str) else package_info['box_dimensions']
+                except:
+                    box_dimensions = [{'length': 0, 'width': 0, 'height': 0, 'weight': 0}]
+                
+                # Build one shipment-level row, then package rows per box (multi-package format)
+                sender_name = "Elaine Xu"
+                sender_company = "Fashion Distribution Center"
+                sender_phone = "6265665243"
+                sender_address1 = "827 S Lawson St"
+                sender_address2 = ''
+                sender_city = "City of Industry"
+                sender_state = "CA"
+                sender_zip = "91748"
+
+                # Determine service and package type codes
+                service_code = (package_info.get('fedex_service_type')
+                                if package_info and package_info.get('fedex_service_type') else 'FEDEX_GROUND')
+                package_type_code = (package_info.get('fedex_packaging_type')
+                                     if package_info and package_info.get('fedex_packaging_type') else 'YOUR_PACKAGING')
+
+                # Shipment-level row (sender/recipient + service)
+                shipment_row = {
+                    'shipmentReference': po_number,
+                    'recordType': '',
+                    'numberOfPackages': '',
+                    'length': '',
+                    'width': '',
+                    'height': '',
+                    'packageWeight': '',
+                    'packageType': package_type_code,
+                    'weightUnits': 'LBS',
+                    'currencyType': 'USD',
+                    'senderContactName': sender_name,
+                    'senderCompany': sender_company,
+                    'senderContactNumber': sender_phone,
+                    'senderEmail': '',
+                    'senderLine1': sender_address1,
+                    'senderLine2': sender_address2,
+                    'senderCity': sender_city,
+                    'senderState': sender_state,
+                    'senderPostcode': sender_zip,
+                    'senderCountry': 'US',
+                    'recipientContactName': recipient_from_db.get('name') or recipient_from_db.get('company'),
+                    'recipientCompany': recipient_from_db.get('company', ''),
+                    'recipientContactNumber': recipient_from_db.get('phone', ''),
+                    'recipientEmail': '',
+                    'recipientLine1': recipient_from_db.get('address1', ''),
+                    'recipientLine2': recipient_from_db.get('address2', ''),
+                    'recipientLine3': recipient_from_db.get('address3', ''),
+                    'recipientCity': recipient_from_db.get('city', ''),
+                    'recipientState': recipient_from_db.get('state', ''),
+                    'recipientPostcode': recipient_from_db.get('zip', ''),
+                    'recipientCountry': 'US',
+                    'serviceType': service_code,
+                    'paymentType': 'THIRD_PARTY',
+                    'payerAccountNumber': '205200696'
+                }
+                excel_data.append(shipment_row)
+
+                # Package-level rows (dimensions/weight only)
+                for box in box_dimensions:
+                    package_row = {
+                        'shipmentReference': po_number,
+                        'recordType': 'PACKAGE',
+                        'numberOfPackages': 1,
+                        'length': box.get('length', 0),
+                        'width': box.get('width', 0),
+                        'height': box.get('height', 0),
+                        'packageWeight': box.get('weight', 0),
+                        'packageType': '',
+                        'weightUnits': '',
+                        'currencyType': '',
+                        'senderContactName': '',
+                        'senderCompany': '',
+                        'senderContactNumber': '',
+                        'senderEmail': '',
+                        'senderLine1': '',
+                        'senderLine2': '',
+                        'senderCity': '',
+                        'senderState': '',
+                        'senderPostcode': '',
+                        'senderCountry': '',
+                        'recipientContactName': '',
+                        'recipientCompany': '',
+                        'recipientContactNumber': '',
+                        'recipientEmail': '',
+                        'recipientLine1': '',
+                        'recipientLine2': '',
+                        'recipientLine3': '',
+                        'recipientCity': '',
+                        'recipientState': '',
+                        'recipientPostcode': '',
+                        'recipientCountry': '',
+                        'serviceType': '',
+                        'paymentType': '',
+                        'payerAccountNumber': ''
+                    }
+                    excel_data.append(package_row)
+                
+                processed_orders.append(po_number)
+            
+            if not excel_data:
+                return jsonify({'error': 'No valid orders with package info found'}), 400
+            
+            # Create Excel file with enforced column order matching FedEx sample
+            columns = [
+                'shipmentReference','recordType','numberOfPackages','length','width','height','packageWeight',
+                'packageType','weightUnits','currencyType',
+                'senderContactName','senderCompany','senderContactNumber','senderEmail','senderLine1','senderLine2','senderCity','senderState','senderPostcode','senderCountry',
+                'recipientContactName','recipientCompany','recipientContactNumber','recipientEmail','recipientLine1','recipientLine2','recipientLine3','recipientCity','recipientState','recipientPostcode','recipientCountry',
+                'serviceType','paymentType','payerAccountNumber'
+            ]
+            df = pd.DataFrame(excel_data, columns=columns)
+            
+            # Create Excel file in memory
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='FedEx Labels', index=False)
+                
+                # Auto-adjust column widths
+                worksheet = writer.sheets['FedEx Labels']
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+            
+            # Update order statuses to 'shipped'
+            update_query = "UPDATE lori_orders SET status = 'shipped', updated_at = NOW() WHERE po_number = %s"
+            for po_number in processed_orders:
+                cursor.execute(update_query, (po_number,))
+            
+            connection.commit()
+            cursor.close()
+            connection.close()
+            
+            # Prepare file for download
+            output.seek(0)
+            
+            current_app.logger.info(f"Successfully processed {len(processed_orders)} orders: {processed_orders}")
+            
+            return send_file(
+                output,
+                as_attachment=True,
+                download_name=f'FedEx_Labels_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            
+        except Exception as e:
+            if cursor:
+                cursor.close()
+            if connection and connection.is_connected():
+                connection.close()
+            raise e
+            
+    except Exception as e:
+        current_app.logger.error(f"Error processing selected orders: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/combine_pdfs", methods=["POST"])
+def combine_pdfs():
+    """Combine original PDF files from selected orders into one downloadable PDF"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_numbers = data.get('po_numbers', [])
+        if not po_numbers:
+            return jsonify({'error': 'No PO numbers provided'}), 400
+        
+        # Initialize PDF merger
+        merger = PdfMerger()
+        found_pdfs = []
+        missing_pdfs = []
+        
+        # Search for PDF files corresponding to each PO number
+        base_path = email_config['download_path']
+        
+        for po_number in po_numbers:
+            pdf_found = False
+            
+            # Search through all subdirectories in the download path
+            if os.path.exists(base_path):
+                for root, dirs, files in os.walk(base_path):
+                    for filename in files:
+                        if filename.lower().endswith('.pdf') and po_number in filename:
+                            pdf_path = os.path.join(root, filename)
+                            try:
+                                # Try to add the PDF to merger
+                                merger.append(pdf_path)
+                                found_pdfs.append({
+                                    'po_number': po_number,
+                                    'filename': filename,
+                                    'path': pdf_path
+                                })
+                                pdf_found = True
+                                current_app.logger.info(f"Added PDF for PO {po_number}: {filename}")
+                                break  # Found the PDF for this PO, move to next PO
+                            except Exception as e:
+                                current_app.logger.warning(f"Failed to add PDF {pdf_path}: {str(e)}")
+                                continue
+                    
+                    if pdf_found:
+                        break  # Found PDF for this PO, move to next PO
+            
+            if not pdf_found:
+                missing_pdfs.append(po_number)
+                current_app.logger.warning(f"PDF not found for PO: {po_number}")
+        
+        # Check if we found any PDFs
+        if not found_pdfs:
+            return jsonify({
+                'error': f'No PDF files found for any of the selected orders: {", ".join(po_numbers)}'
+            }), 404
+        
+        # Create combined PDF in memory
+        output = io.BytesIO()
+        merger.write(output)
+        merger.close()
+        
+        # Prepare file for download
+        output.seek(0)
+        
+        # Log results
+        success_pos = [pdf['po_number'] for pdf in found_pdfs]
+        current_app.logger.info(f"Successfully combined PDFs for {len(found_pdfs)} orders: {success_pos}")
+        
+        if missing_pdfs:
+            current_app.logger.warning(f"Missing PDFs for orders: {missing_pdfs}")
+        
+        # Return the combined PDF
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=f'Combined_Orders_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error combining PDFs: {str(e)}")
+        return jsonify({'error': f'Failed to combine PDFs: {str(e)}'}), 500
+
+
+@lori_automation_bp.route("/download_invoices", methods=["POST"])
+def download_invoices():
+    """Generate invoices for selected orders from database data"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_numbers = data.get('po_numbers', [])
+        if not po_numbers:
+            return jsonify({'error': 'No PO numbers provided'}), 400
+        
+        # Get database connection
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+            
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            invoice_files = []
+            processed_orders = []
+            
+            # Process each order
+            for po_number in po_numbers:
+                try:
+                    # Get order information
+                    order_query = """
+                        SELECT po_number, batch_date, ship_to_address, total_qty, total_cost, status,
+                               order_date, delivery_date, cancel_date
+                        FROM lori_orders 
+                        WHERE po_number = %s
+                    """
+                    cursor.execute(order_query, (po_number,))
+                    order = cursor.fetchone()
+                    
+                    if not order:
+                        current_app.logger.warning(f"Order not found: {po_number}")
+                        continue
+                    
+                    # Get order items
+                    items_query = """
+                        SELECT vendor_item, quantity, upc, description, unit_price, extended_cost
+                        FROM lori_order_items 
+                        WHERE po_number = %s
+                    """
+                    cursor.execute(items_query, (po_number,))
+                    items = cursor.fetchall()
+                    
+                    if not items:
+                        current_app.logger.warning(f"No items found for order: {po_number}")
+                        continue
+                    
+                    # Generate invoice using the existing logic
+                    invoice_data = generate_invoice_from_data(order, items)
+                    if invoice_data:
+                        invoice_files.append(invoice_data)
+                        processed_orders.append(po_number)
+                        
+                except Exception as e:
+                    current_app.logger.error(f"Error processing order {po_number}: {str(e)}")
+                    continue
+            
+            cursor.close()
+            connection.close()
+            
+            if not invoice_files:
+                return jsonify({'error': 'No valid invoices could be generated'}), 400
+            
+            # Return single Excel file or ZIP based on count
+            if len(invoice_files) == 1:
+                invoice = invoice_files[0]
+                return send_file(
+                    invoice['excel'],
+                    as_attachment=True,
+                    download_name=invoice['filename'],
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+            else:
+                # Create ZIP file for multiple invoices
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    for invoice in invoice_files:
+                        invoice['excel'].seek(0)
+                        zip_file.writestr(invoice['filename'], invoice['excel'].read())
+                
+                zip_buffer.seek(0)
+                
+                return send_file(
+                    zip_buffer,
+                    as_attachment=True,
+                    download_name=f'invoices_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip',
+                    mimetype='application/zip'
+                )
+                
+        except Exception as e:
+            if cursor:
+                cursor.close()
+            if connection and connection.is_connected():
+                connection.close()
+            raise e
+            
+    except Exception as e:
+        current_app.logger.error(f"Error generating invoices: {str(e)}")
+        return jsonify({'error': f'Failed to generate invoices: {str(e)}'}), 500
+
+
+def generate_invoice_from_data(order, items):
+    """Generate invoice Excel file from database data"""
+    try:
+        # Load Excel template
+        template_path = os.path.join(current_app.static_folder, 'new_sample.xlsx')
+        if not os.path.exists(template_path):
+            current_app.logger.error(f"Template file not found: {template_path}")
+            return None
+            
+        memory_file = io.BytesIO()
+        wb = load_workbook(template_path)
+        ws = wb.active
+        
+        # Extract data from order
+        po_number = order['po_number']
+        order_date = order.get('order_date', 'N/A')
+        delivery_date = order.get('delivery_date', 'N/A')
+        cancel_date = order.get('cancel_date', 'N/A')
+        ship_to_address = order.get('ship_to_address', 'N/A')
+        
+        # Generate filename
+        today = datetime.now().strftime("%m/%d/%Y")
+        file_date = today.replace("/", "").lstrip("0")
+        target_filename = f"{file_date}_{po_number[:4]}"
+        
+        # Fill Excel template
+        ws['F7'] = order_date if order_date != 'N/A' else today
+        ws['F8'] = today
+        ws['H6'] = target_filename.replace("_", "-")
+        ws['G11'] = f"GIFT STORE {po_number[:4]}"
+        ws['F9'] = cancel_date if cancel_date != 'N/A' else ''
+        ws['H8'] = delivery_date if delivery_date != 'N/A' else ''
+        ws['H7'] = po_number
+        ws['F12'] = ship_to_address
+        
+        # Process items
+        starting_row = 20
+        total_qty = Decimal(0)
+        total_cost = Decimal(0)
+        
+        for item in items:
+            vendor_item = item.get('vendor_item', '')
+            qty = Decimal(str(item.get('quantity', 0)))
+            upc = item.get('upc', '')
+            description = item.get('description', '')
+            unit_price = Decimal(str(item.get('unit_price', 0)))
+            ext_cost = Decimal(str(item.get('extended_cost', 0)))
+            
+            # Extract color from vendor item
+            if "-" in vendor_item:
+                parts = vendor_item.split("-")
+                color_key = parts[-1]
+                color = color_dict.get(color_key, color_key)
+            else:
+                color_key = vendor_item[-2:] if len(vendor_item) >= 2 else vendor_item
+                color = color_dict.get(color_key, "")
+            
+            # Fill row data
+            ws[f"A{starting_row}"] = starting_row - 19
+            ws[f"B{starting_row}"] = vendor_item
+            ws[f"C{starting_row}"] = color
+            ws[f"D{starting_row}"] = qty
+            ws[f"E{starting_row}"] = description
+            ws[f"G{starting_row}"] = f"${unit_price:.2f}"
+            ws[f"H{starting_row}"] = f"${ext_cost:.2f}"
+            
+            total_qty += qty
+            total_cost += ext_cost
+            starting_row += 1
+        
+        # Add totals
+        ws[f"C{starting_row + 1}"] = "Total Quantity"
+        ws[f"D{starting_row + 1}"] = total_qty
+        ws[f"G{starting_row + 1}"] = "Total Amount"
+        ws[f"H{starting_row + 1}"] = f"${total_cost:.2f}"
+        
+        # Save to memory
+        wb.save(memory_file)
+        memory_file.seek(0)
+        
+        return {
+            'excel': memory_file,
+            'filename': f"{target_filename}.xlsx",
+            'po_number': po_number,
+            'address': ship_to_address
+        }
+        
+    except Exception as e:
+        current_app.logger.error(f"Error generating invoice for {order.get('po_number', 'unknown')}: {str(e)}")
+        return None
+
+
+# test_fedx_auth endpoint removed - production-only integration
+@lori_automation_bp.route('/test_fedx_auth', methods=['GET'])
+def test_fedex_auth():
+    """Test FedEx OAuth auth_url and token acquisition (returns masked token info).
+
+    This endpoint is authenticated (requires session). It is safe to call from a browser
+    while logged in. It will NOT return the raw access_token, only a masked suffix.
+    """
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    credentials = load_fedex_credentials()
+    if not credentials:
+        return jsonify({'error': 'FedEx credentials not configured'}), 500
+
+    env = (credentials.get('environment') or 'production').lower()
+    if env == 'sandbox' or 'sandbox' in env:
+        auth_url = "https://apis-sandbox.fedex.com/oauth/token"
+    else:
+        auth_url = "https://apis.fedex.com/oauth/token"
+
+    current_app.logger.debug(f"[test_fedex_auth] env={env}, auth_url={auth_url}")
+
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    data = {
+        'grant_type': 'client_credentials',
+        'client_id': credentials.get('api_key'),
+        'client_secret': credentials.get('secret_key')
+    }
+
+    try:
+        resp = requests.post(auth_url, headers=headers, data=data, timeout=15)
+    except Exception as e:
+        current_app.logger.error(f"Error contacting FedEx auth URL: {str(e)}")
+        return jsonify({'error': 'Error contacting FedEx auth URL', 'detail': str(e)}), 500
+
+    result = {
+        'environment': env,
+        'auth_url': auth_url,
+        'status_code': resp.status_code
+    }
+
+    try:
+        body = resp.json()
+    except Exception:
+        body = {'raw': resp.text}
+
+    # If success, return masked token info only
+    if resp.status_code == 200 and isinstance(body, dict):
+        access_token = body.get('access_token')
+        if access_token:
+            masked = f"***{access_token[-8:]}" if len(access_token) > 8 else '***'
+            result['masked_token'] = masked
+            result['expires_in'] = body.get('expires_in')
+        else:
+            result['masked_token'] = None
+        # keep minimal response data for safety
+        return jsonify(result)
+
+    # For non-200, include the FedEx JSON body to show error codes/messages (already logged)
+    result['fedex_response'] = body
+    return jsonify(result), resp.status_code

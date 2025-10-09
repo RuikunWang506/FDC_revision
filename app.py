@@ -42,8 +42,17 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 app.secret_key = 'your-fixed-secret-key-for-persistent-sessions-fdc-flask-app-2025'
 app.config.from_object(Config)
-app.config['SERVER_NAME'] = 'www.fdcef.com'
-app.config['PREFERRED_URL_SCHEME'] = 'https'
+
+# Session configuration for both local and production
+app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP for localhost
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# Only set SERVER_NAME for production
+if app.config.get('ENV') == 'production':
+    app.config['SERVER_NAME'] = 'www.fdcef.com' 
+    app.config['PREFERRED_URL_SCHEME'] = 'https'
+    app.config['SESSION_COOKIE_SECURE'] = True
 
 configure_logging(app)
 register_routes(app)

@@ -86,6 +86,16 @@
     {% include 'navbar.html' %}
 
     <div class="container mt-4">
+        <div class="row mb-2">
+            <div class="col-12">
+                <h1 class="text-center mb-2 page-title">
+                    <i class="fas fa-shipping-fast"></i> 洛瑞丝庄园 - 小菜姬版
+                    </a>
+                </h1>
+
+                
+            </div>
+        </div>
         <!-- Loris Maker Section -->
         <div class="card">
             <div class="card-header bg-success text-white">
@@ -98,7 +108,7 @@
             </div>
             <div class="collapse {% if sku or barcode or quantity or table_data or filename_30stickers or filename_exact %}show{% endif %}" id="lorisSection">
                 <div class="card-body">
-                    <form method="post" action="/loris_fedex" enctype="multipart/form-data">
+                    <form method="post" action="{{ url_for('lori_automation.loris_fedex') }}" enctype="multipart/form-data">
                         <div class="textarea-container" style="display: flex; gap: 10px;">
                             <div class="form-group">
                                 <label for="sku">SKU:</label><br>
@@ -318,12 +328,14 @@
                                     </button>
                                     <p class="small text-muted mt-2">Automatically fetch PDF attachments from MI9_Merchant@lorisgifts.com in the last 1 month</p>
                                 </div>
+                                {% if session.username == 'yeti' %}
                                 <div class="border-top pt-3">
                                     <button id="delete-pdf-data-btn" class="btn btn-danger btn-lg">
                                         <i class="fas fa-trash-alt"></i> Delete All PDF Files & Orders
                                     </button>
                                     <p class="small text-muted mt-2">Remove all downloaded PDF files and delete all orders from database</p>
                                 </div>
+                                {% endif %}
                             </div>
 
                         </div>
@@ -334,20 +346,14 @@
                 <div class="card mt-4">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0 text-center">
-                            <i class="fas fa-shipping-fast"></i> Shipping Management
+                            <i class="fas fa-shipping-fast"></i> 
                         </h4>
                     </div>
                     <div class="card-body text-center">
-                        <p class="mb-3">Manage orders and store information</p>
                         <a href="{{ url_for('lori_automation.loris_shipping') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-shipping-fast"></i> Go to Shipping Management
                         </a>
-                        <p class="mt-2 text-muted">
-                            <small>
-                                <i class="fas fa-info-circle"></i> 
-                                Access order management (pending/shipped) and store address management
-                            </small>
-                        </p>
+
                     </div>
                 </div>
 
@@ -587,59 +593,77 @@
     <!-- Main JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // OTB Dropzone
-        const otbDropZone = document.getElementById('otb-drop-zone');
-        const otbFileInput = document.getElementById('upload-otb-input');
-        const otbFileList = document.getElementById('selected-otb-files');
-        const processOtbBtn = document.getElementById('process-otb-btn');
-        let uploadedOtbFiles = [];
+    // OTB Dropzone
+    const otbDropZone = document.getElementById('otb-drop-zone');
+    const otbFileInput = document.getElementById('upload-otb-input');
+    const otbFileList = document.getElementById('selected-otb-files');
+    const processOtbBtn = document.getElementById('process-otb-btn');
+    let uploadedOtbFiles = [];
 
         // SKU Processing
-        const skuInput = document.getElementById('sku-input');
-        const processSKUBtn = document.getElementById('process-sku-btn');
-        const skuResults = document.getElementById('sku-results');
-        const skuOutput = document.getElementById('sku-output');
+    const skuInput = document.getElementById('sku-input');
+    const processSKUBtn = document.getElementById('process-sku-btn');
+    const skuResults = document.getElementById('sku-results');
+    const skuOutput = document.getElementById('sku-output');
 
         // Database buttons
         const downloadDbBtn = document.getElementById('download-db-btn');
         const uploadDbBtn = document.getElementById('upload-db-btn');
         const uploadDbInput = document.getElementById('upload-db-input');
 
+        // Helper: robust JSON fetch that handles HTML error pages
+        async function fetchJson(url, options = {}) {
+            const resp = await fetch(url, options);
+            const ct = resp.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+                const data = await resp.json();
+                if (!resp.ok) {
+                    throw new Error(data.error || `HTTP ${resp.status}`);
+                }
+                return data;
+            } else {
+                const text = await resp.text();
+                throw new Error(`Server returned non-JSON (${resp.status}). ${text.slice(0,200)}`);
+            }
+        }
+
         function preventDefaults(e) {
             e.preventDefault();
             e.stopPropagation();
         }
 
-        // Set up drag and drop for OTB files
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            otbDropZone.addEventListener(eventName, preventDefaults, false);
-        });
+        // Set up drag and drop for OTB files (only if elements exist)
+        if (otbDropZone && otbFileInput) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                otbDropZone.addEventListener(eventName, preventDefaults, false);
+            });
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            otbDropZone.addEventListener(eventName, () => {
-                otbDropZone.classList.add('highlight');
-            }, false);
-        });
+            ['dragenter', 'dragover'].forEach(eventName => {
+                otbDropZone.addEventListener(eventName, () => {
+                    otbDropZone.classList.add('highlight');
+                }, false);
+            });
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            otbDropZone.addEventListener(eventName, () => {
-                otbDropZone.classList.remove('highlight');
-            }, false);
-        });
+            ['dragleave', 'drop'].forEach(eventName => {
+                otbDropZone.addEventListener(eventName, () => {
+                    otbDropZone.classList.remove('highlight');
+                }, false);
+            });
 
-        otbDropZone.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleOtbFiles(files);
-        });
+            otbDropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleOtbFiles(files);
+            });
 
-        otbDropZone.addEventListener('click', () => {
-            otbFileInput.click();
-        });
+            otbDropZone.addEventListener('click', () => {
+                otbFileInput.click();
+            });
 
-        otbFileInput.addEventListener('change', (e) => {
-            handleOtbFiles(e.target.files);
-        });
+            otbFileInput.addEventListener('change', (e) => {
+                handleOtbFiles(e.target.files);
+            });
+        }
 
         function handleOtbFiles(files) {
             uploadedOtbFiles = [...files];
@@ -670,7 +694,7 @@
         }
 
         // Process OTB files
-        processOtbBtn.addEventListener('click', async () => {
+        if (processOtbBtn) processOtbBtn.addEventListener('click', async () => {
             if (uploadedOtbFiles.length === 0) {
                 alert('请先选择OTB文件');
                 return;
@@ -689,7 +713,7 @@
                     document.getElementById('processing-status').textContent = 
                         `Processing OTB file ${i+1} of ${uploadedOtbFiles.length}: ${file.name}`;
                     
-                    const response = await fetch('/upload_otb', {
+                    const response = await fetch("{{ url_for('lori_automation.upload_otb') }}", {
                         method: 'POST',
                         body: formData
                     });
@@ -710,10 +734,10 @@
             } finally {
                 document.getElementById('loading-overlay').style.display = 'none';
             }
-        });
+    });
 
         // SKU Processing
-        processSKUBtn.addEventListener('click', async () => {
+        if (processSKUBtn) processSKUBtn.addEventListener('click', async () => {
             const skuList = skuInput.value.trim();
             if (!skuList) {
                 alert('请输入SKU列表');
@@ -725,7 +749,7 @@
             document.getElementById('processing-status').textContent = 'Processing SKUs...';
 
             try {
-                const response = await fetch('/process_skus', {
+                const response = await fetch("{{ url_for('lori_automation.process_skus') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -774,18 +798,18 @@
                 // Hide loading overlay
                 document.getElementById('loading-overlay').style.display = 'none';
             }
-        });
+    });
 
         // Database management
-        downloadDbBtn.addEventListener('click', async () => {
-            window.location.href = '/download_database';
+        if (downloadDbBtn) downloadDbBtn.addEventListener('click', async () => {
+            window.location.href = "{{ url_for('lori_automation.download_database') }}";
         });
 
-        uploadDbBtn.addEventListener('click', () => {
+        if (uploadDbBtn && uploadDbInput) uploadDbBtn.addEventListener('click', () => {
             uploadDbInput.click();
         });
 
-        uploadDbInput.addEventListener('change', async (e) => {
+        if (uploadDbInput) uploadDbInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             
@@ -796,7 +820,7 @@
             try {
                 const formData = new FormData();
                 formData.append('file', file);
-                const response = await fetch('/upload_database', { 
+                const response = await fetch("{{ url_for('lori_automation.upload_database') }}", { 
                     method: 'POST', 
                     body: formData 
                 });
@@ -811,7 +835,7 @@
                 // Reset file input
                 uploadDbInput.value = '';
             }
-        });
+    });
 
         // Delete button event handlers
 
@@ -822,17 +846,15 @@
 
         if (deletePdfDataBtn) {
             deletePdfDataBtn.addEventListener('click', async () => {
-                if (confirm('🚨 确定要删除所有PDF文件和订单数据吗？此操作无法撤销！\n\n这将删除：\n- 所有下载的PDF文件\n- 所有订单数据\n- 所有相关的Excel输出文件')) {
-                    // Show loading overlay
+                    if (confirm('🚨 Are you sure you want to delete all PDF files and order data? This action cannot be undone!\n\nThis will delete:\n- All downloaded PDF files\n- All order data\n- All related Excel output files')) {                    // Show loading overlay
                     document.getElementById('loading-overlay').style.display = 'flex';
                     document.getElementById('processing-status').textContent = 'Deleting PDF files and orders...';
                     
                     try {
-                        const response = await fetch('/delete_pdf_data', {
+                        const data = await fetchJson("{{ url_for('lori_automation.delete_pdf_data') }}", {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' }
+                            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                         });
-                        const data = await response.json();
                         
                         if (data.error) {
                             throw new Error(data.error);
@@ -849,9 +871,10 @@
                         }
                         
                         // Clear uploaded files
-                        uploadedPdfFiles = [];
-                        updatePdfFileList();
-                        processPdfBtn.style.display = 'none';
+                        if (window.uploadedPdfFiles) { window.uploadedPdfFiles = []; }
+                        if (typeof updatePdfFileList === 'function') { updatePdfFileList(); }
+                        const ppb = document.getElementById('process-pdf-btn');
+                        if (ppb) { ppb.style.display = 'none'; }
                         
                     } catch (error) {
                         console.error('Error:', error);
@@ -958,7 +981,7 @@
                     formData.append('files[]', file);
                 });
 
-                const response = await fetch('/upload_and_process_pdfs', {
+                const response = await fetch("{{ url_for('lori_automation.upload_and_process_pdfs') }}", {
                     method: 'POST',
                     body: formData
                 });
@@ -1003,7 +1026,7 @@
 
             try {
                 // Use the new simplified endpoint that does everything automatically
-                const response = await fetch('/fetch_and_process_emails', {
+                const response = await fetch("{{ url_for('lori_automation.fetch_and_process_emails') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1062,7 +1085,7 @@
             document.getElementById('processing-status').textContent = `Processing batch for ${batchDate}...`;
 
             try {
-                const response = await fetch('/fetch_email_pdfs', {
+                const response = await fetch("{{ url_for('lori_automation.fetch_email_pdfs') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1096,7 +1119,7 @@
             document.getElementById('processing-status').textContent = '正在处理所有批次到数据库...';
 
             try {
-                const response = await fetch('/fetch_and_process_emails', {
+                const response = await fetch("{{ url_for('lori_automation.fetch_and_process_emails') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1191,12 +1214,15 @@
             });
         }
 
-        // Event listeners for batch processing
-        processAllBatchesBtn.addEventListener('click', processAllBatches);
-        
-        hideBatchesBtn.addEventListener('click', () => {
-            batchSelectionSection.style.display = 'none';
-        });
+        // Event listeners for batch processing (guarded if elements exist)
+        if (processAllBatchesBtn) {
+            processAllBatchesBtn.addEventListener('click', processAllBatches);
+        }
+        if (hideBatchesBtn) {
+            hideBatchesBtn.addEventListener('click', () => {
+                if (batchSelectionSection) batchSelectionSection.style.display = 'none';
+            });
+        }
     });
 </script>
 

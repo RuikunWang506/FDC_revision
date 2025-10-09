@@ -78,7 +78,7 @@ def register_routes(app):
     app.register_blueprint(dailytodo)
     app.register_blueprint(v6_listcreator_bp)
     app.register_blueprint(gpgtmx_bp)
-    app.register_blueprint(lori_automation_bp)
+    app.register_blueprint(lori_automation_bp, url_prefix='/lori_automation')
     app.register_blueprint(customer_bp)
     app.register_blueprint(order_processor_bp)
     app.register_blueprint(tk_label_zoom_bp)
