@@ -11,6 +11,12 @@ from openpyxl import load_workbook
 from decimal import Decimal
 import copy
 import zipfile
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 import mysql.connector
 from mysql.connector import Error
 import pyodbc
@@ -3030,6 +3036,578 @@ def combine_pdfs():
     except Exception as e:
         current_app.logger.error(f"Error combining PDFs: {str(e)}")
         return jsonify({'error': f'Failed to combine PDFs: {str(e)}'}), 500
+
+
+@lori_automation_bp.route("/custom_picklist", methods=["POST"])
+def custom_picklist():
+    """Create custom picklist with summary and orders, sorted by SKU groupings"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_numbers = data.get('po_numbers', [])
+        if not po_numbers:
+            return jsonify({'error': 'No PO numbers provided'}), 400
+        
+        # Group orders by SKU combinations for summary
+        grouped_orders = group_orders_by_sku_combination(po_numbers)
+        if not grouped_orders:
+            return jsonify({'error': 'Failed to group orders by SKU'}), 500
+            
+        # Create custom picklist: Summary only (no PDFs)
+        summary_only_pdf = create_summary_only_pdf(grouped_orders)
+        
+        # Return the custom picklist PDF
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        summary_only_pdf.seek(0)
+        return send_file(
+            summary_only_pdf,
+            as_attachment=True,
+            download_name=f'Custom_Picklist_Summary_{timestamp}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in custom_picklist: {str(e)}")
+        return jsonify({'error': f'Failed to create custom picklist: {str(e)}'}), 500
+
+
+@lori_automation_bp.route("/duplex_printing_pdf", methods=["POST"])
+def duplex_printing_pdf():
+    """Generate just the duplex printing PDF for easy opening in new window"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_numbers = data.get('po_numbers', [])
+        if not po_numbers:
+            return jsonify({'error': 'No PO numbers provided'}), 400
+        
+        # Step 1: Group orders by SKU combinations
+        grouped_orders = group_orders_by_sku_combination(po_numbers)
+        if not grouped_orders:
+            return jsonify({'error': 'Failed to group orders by SKU'}), 500
+            
+        # Step 2: Reorder PO numbers based on groups
+        reordered_po_numbers = []
+        for group in grouped_orders:
+            reordered_po_numbers.extend(group['po_numbers'])
+            
+        # Step 3: Find and process PDFs
+        base_path = email_config['download_path']
+        processed_pdfs = []
+        missing_pdfs = []
+        
+        for po_number in reordered_po_numbers:
+            pdf_found = False
+            
+            if os.path.exists(base_path):
+                for root, dirs, files in os.walk(base_path):
+                    for filename in files:
+                        if filename.lower().endswith('.pdf') and po_number in filename:
+                            pdf_path = os.path.join(root, filename)
+                            try:
+                                # Trim PDF after TOTAL COST
+                                trimmed_pdf = trim_pdf_after_total_cost(pdf_path)
+                                if trimmed_pdf:
+                                    # Validate the trimmed PDF before adding
+                                    page_count = get_pdf_page_count(trimmed_pdf)
+                                    if page_count > 0:
+                                        processed_pdfs.append({
+                                            'po_number': po_number,
+                                            'filename': filename,
+                                            'pdf_content': trimmed_pdf,
+                                            'page_count': page_count
+                                        })
+                                        pdf_found = True
+                                        current_app.logger.info(f"Successfully processed PDF for PO {po_number}: {filename} ({page_count} pages)")
+                                        break
+                                    else:
+                                        current_app.logger.warning(f"Trimmed PDF for PO {po_number} has 0 pages")
+                                else:
+                                    current_app.logger.warning(f"Failed to trim PDF for PO {po_number}")
+                            except Exception as e:
+                                current_app.logger.error(f"Failed to process PDF {pdf_path}: {str(e)}")
+                                continue
+                    
+                    if pdf_found:
+                        break
+            
+            if not pdf_found:
+                missing_pdfs.append(po_number)
+                current_app.logger.warning(f"PDF not found for PO: {po_number}")
+        
+        if not processed_pdfs:
+            return jsonify({
+                'error': f'No PDF files found for any of the selected orders: {", ".join(po_numbers)}'
+            }), 404
+            
+        # Create processed PDFs only version (for duplex printing)
+        processed_only_pdf = create_processed_pdfs_only(processed_pdfs)
+        processed_only_pdf.seek(0)
+        
+        if missing_pdfs:
+            current_app.logger.warning(f"Missing PDFs for orders: {missing_pdfs}")
+        
+        # Return just the duplex printing PDF
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return send_file(
+            processed_only_pdf,
+            as_attachment=False,  # Don't force download, allow inline viewing
+            download_name=f'Orders_Only_for_Duplex_Printing_{timestamp}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in duplex_printing_pdf: {str(e)}")
+        return jsonify({'error': f'Failed to process PDFs: {str(e)}'}), 500
+
+
+def group_orders_by_sku_combination(po_numbers):
+    """Group PO numbers by identical SKU combinations"""
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return None
+            
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get all items for the selected orders
+        placeholders = ','.join(['%s'] * len(po_numbers))
+        query = f"""
+            SELECT poi.po_number, poi.vendor_item, poi.color, poi.quantity, lo.batch_date
+            FROM lori_order_items poi
+            JOIN lori_orders lo ON poi.po_number = lo.po_number
+            WHERE poi.po_number IN ({placeholders})
+            ORDER BY poi.po_number, poi.vendor_item, poi.color
+        """
+        cursor.execute(query, po_numbers)
+        items = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        # Create SKU fingerprints for each order
+        order_fingerprints = {}
+        order_batch_dates = {}
+        
+        for item in items:
+            po_number = item['po_number']
+            sku_key = f"{item['vendor_item']}-{item['color']}-{item['quantity']}"
+            
+            if po_number not in order_fingerprints:
+                order_fingerprints[po_number] = []
+                order_batch_dates[po_number] = item['batch_date']
+                
+            order_fingerprints[po_number].append(sku_key)
+        
+        # Convert fingerprints to sortable strings
+        for po_number in order_fingerprints:
+            order_fingerprints[po_number] = '|'.join(sorted(order_fingerprints[po_number]))
+        
+        # Group orders with identical fingerprints
+        fingerprint_groups = {}
+        for po_number, fingerprint in order_fingerprints.items():
+            if fingerprint not in fingerprint_groups:
+                fingerprint_groups[fingerprint] = []
+            fingerprint_groups[fingerprint].append(po_number)
+        
+        # Create grouped orders with SKU details for summary
+        grouped_orders = []
+        for fingerprint, po_list in fingerprint_groups.items():
+            # Get SKU details for the first order in the group (they're all identical)
+            first_po = po_list[0]
+            sku_details = []
+            
+            for item in items:
+                if item['po_number'] == first_po:
+                    sku_details.append({
+                        'vendor_item': item['vendor_item'],
+                        'color': item['color'], 
+                        'quantity': item['quantity']
+                    })
+            
+            group_info = {
+                'fingerprint': fingerprint,
+                'po_numbers': sorted(po_list),  # Sort PO numbers within group
+                'sku_details': sku_details,
+                'batch_date': order_batch_dates[first_po]
+            }
+            grouped_orders.append(group_info)
+        
+        # Sort groups: multiple store numbers first, then by batch date, then by fingerprint
+        grouped_orders.sort(key=lambda x: (-len(x['po_numbers']), x['batch_date'], x['fingerprint']))
+        
+        return grouped_orders
+        
+    except Exception as e:
+        current_app.logger.error(f"Error grouping orders by SKU: {str(e)}")
+        return None
+
+
+def trim_pdf_after_total_cost(pdf_path):
+    """Trim PDF by removing pages after 'TOTAL COST:' is found"""
+    try:
+        reader = PdfReader(pdf_path)
+        total_cost_page = None
+        
+        # Find the page with "TOTAL COST:"
+        for page_num, page in enumerate(reader.pages):
+            try:
+                page_text = page.extract_text()
+                if "TOTAL COST:" in page_text.upper():
+                    total_cost_page = page_num
+                    current_app.logger.info(f"Found 'TOTAL COST:' on page {page_num + 1}, trimming after this page")
+                    break
+            except Exception as e:
+                current_app.logger.warning(f"Could not extract text from page {page_num + 1}: {str(e)}")
+                continue
+        
+        # If no TOTAL COST found, return the original PDF
+        if total_cost_page is None:
+            current_app.logger.warning(f"'TOTAL COST:' not found in PDF {pdf_path}, using original PDF")
+            with open(pdf_path, 'rb') as f:
+                original_content = f.read()
+            return io.BytesIO(original_content)
+        
+        # Create new PDF with only pages up to and including the TOTAL COST page
+        output = io.BytesIO()
+        merger = PdfMerger()
+        
+        # Use page range to include pages from 0 to total_cost_page (inclusive)
+        merger.append(pdf_path, pages=(0, total_cost_page + 1))
+        merger.write(output)
+        merger.close()
+        output.seek(0)
+        
+        return output
+        
+    except Exception as e:
+        current_app.logger.error(f"Error trimming PDF {pdf_path}: {str(e)}")
+        # Return original PDF on error
+        try:
+            with open(pdf_path, 'rb') as f:
+                original_content = f.read()
+            return io.BytesIO(original_content)
+        except:
+            return None
+
+
+def get_pdf_page_count(pdf_content):
+    """Get the number of pages in a PDF"""
+    try:
+        pdf_content.seek(0)  # Reset to beginning
+        reader = PdfReader(pdf_content)
+        count = len(reader.pages)
+        pdf_content.seek(0)  # Reset again for later use
+        current_app.logger.debug(f"PDF has {count} pages")
+        return count
+    except Exception as e:
+        current_app.logger.error(f"Error counting PDF pages: {str(e)}")
+        return 0  # Return 0 to indicate error - don't assume 1
+
+
+def create_blank_pdf_page():
+    """Create a blank PDF page in US Letter landscape size (11" x 8.5")"""
+    buffer = io.BytesIO()
+    # US Letter landscape size: 11" x 8.5" (792 x 612 points)
+    from reportlab.lib.pagesizes import landscape
+    c = canvas.Canvas(buffer, pagesize=landscape(letter))
+    c.showPage()  # Create blank page
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+
+def create_summary_only_pdf(grouped_orders):
+    """Create PDF with only the summary page (no orders)"""
+    try:
+        # Create summary PDF
+        summary_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(summary_buffer, pagesize=letter, 
+                               title="Custom Picklist Summary",
+                               author="FDC Lori Automation",
+                               subject="Order Picking Summary")
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # Title (English and Spanish)
+        title_en = Paragraph("Custom Picklist Summary", styles['Title'])
+        story.append(title_en)
+        story.append(Spacer(1, 5))
+        title_es = Paragraph("Resumen de Lista de Selección Personalizada", styles['Heading2'])
+        story.append(title_es)
+        story.append(Spacer(1, 20))
+        
+        # Create summary table data with header - English first row, Spanish second row
+        header_row_english = ['PO Numbers', 'SKU Items', 'Dim', 'Weight']
+        header_row_spanish = ['Números de PO', 'Artículos SKU', 'Dim', 'Peso']
+        summary_data = [header_row_english, header_row_spanish]
+        
+        for i, group in enumerate(grouped_orders, 1):
+            po_numbers = group['po_numbers']
+            sku_details = group['sku_details']
+            
+            # Create full PO numbers list with store count summary
+            po_list = sorted(po_numbers)
+            unique_stores = list(set([po[:4] for po in po_numbers if len(po) >= 4]))
+            store_count = len(unique_stores)
+            
+            # Format: Full PO numbers + total stores summary at bottom (English/Spanish)
+            po_numbers_with_summary = '<br/>'.join(po_list) + f'<br/><br/><b>Total: {store_count} stores/tiendas</b>'
+            
+            # Create SKU items string - improved format with integer quantities
+            sku_items = []
+            total_qty = 0
+            total_styles = len(sku_details)  # Count unique styles
+            total_bags = total_qty  # Total bags is sum of all quantities
+            for item in sku_details:
+                # Format: Bold integer quantity + clear SKU with better spacing
+                qty = int(float(item['quantity']))  # Convert to integer
+                sku = item['vendor_item']
+                sku_line = f"<b>{qty}</b> × {sku}"  # Using multiplication symbol for better clarity
+                sku_items.append(sku_line)
+                total_qty += qty
+            
+            # Update total_bags after calculating total_qty
+            total_bags = total_qty
+            
+            # Add total summary at bottom like PO numbers (English/Spanish)
+            sku_items_with_summary = '<br/>'.join(sku_items) + f'<br/><br/><b>Total: {total_styles} styles/estilos</b><br/><b>Total: {total_bags} bags/bolsas</b>'
+            
+            # Create wrapped paragraphs for cells with improved formatting
+            store_cell = Paragraph(po_numbers_with_summary, styles['Normal'])
+            sku_cell = Paragraph(sku_items_with_summary, styles['Normal'])
+            dimensions_cell = Paragraph('', styles['Normal'])  # Blank dimensions column
+            weight_cell = Paragraph('', styles['Normal'])  # Blank weight column
+            
+            summary_data.append([
+                store_cell,
+                sku_cell,
+                dimensions_cell,
+                weight_cell
+            ])
+        
+        # Create table with improved warehouse-friendly formatting (4 columns now)
+        table = Table(summary_data, colWidths=[1.5*inch, 2.2*inch, 0.7*inch, 0.7*inch], 
+                     repeatRows=2, splitByRow=True)  # Allow table to split across pages
+        table.setStyle(TableStyle([
+            # Header rows (English and Spanish)
+            ('BACKGROUND', (0, 0), (-1, 1), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 1), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 1), 10),  # Smaller header font
+            ('BOTTOMPADDING', (0, 0), (-1, 1), 6),
+            ('TOPPADDING', (0, 0), (-1, 1), 6),
+            # Data rows
+            ('BACKGROUND', (0, 2), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Thinner grid lines
+            ('FONTSIZE', (0, 2), (-1, -1), 9),  # Smaller data font
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('WORDWRAP', (0, 0), (-1, -1), True),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ('TOPPADDING', (0, 2), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 2), (-1, -1), 4),
+        ]))
+        
+        story.append(table)
+        story.append(Spacer(1, 20))
+
+        # Build PDF
+        doc.build(story)
+        summary_buffer.seek(0)
+        return summary_buffer
+        
+    except Exception as e:
+        current_app.logger.error(f"Error creating summary PDF: {str(e)}")
+        raise e
+
+
+def create_combined_pdf_with_summary(grouped_orders, processed_pdfs):
+    """Create final PDF with summary page followed by processed PDFs with blank page insertion"""
+    try:
+        # Create summary PDF
+        summary_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(summary_buffer, pagesize=letter,
+                               title="Order Processing Summary",
+                               author="FDC Lori Automation",
+                               subject="Combined Order Processing Summary")
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # Title
+        title = Paragraph("Order Processing Summary", styles['Title'])
+        story.append(title)
+        story.append(Spacer(1, 20))
+        
+        # Process each batch/group
+        for group_idx, group in enumerate(grouped_orders):
+            # Group header
+            batch_title = Paragraph(f"Batch {group_idx + 1} - Date: {group['batch_date']}", styles['Heading2'])
+            story.append(batch_title)
+            story.append(Spacer(1, 10))
+            
+            # Create table data
+            table_data = [['Store Numbers', 'SKU Details']]
+            
+            # Store numbers column
+            stores_list = [po[:4] for po in group['po_numbers']]  # First 4 chars of PO number
+            stores_text = '<br/>'.join(stores_list)
+            
+            # SKU details column - improved format with integer quantities
+            sku_lines = []
+            for sku in group['sku_details']:
+                # Format: Bold integer quantity + clear SKU with better spacing
+                qty = int(float(sku['quantity']))  # Convert to integer
+                vendor_item = sku['vendor_item']
+                sku_line = f"<b>{qty}</b> × {vendor_item}"  # Using multiplication symbol for better clarity
+                sku_lines.append(sku_line)
+            sku_text = '<br/>'.join(sku_lines)
+            
+            # Create Paragraph objects for proper HTML rendering
+            stores_cell = Paragraph(stores_text, styles['Normal'])
+            sku_cell = Paragraph(sku_text, styles['Normal'])
+            
+            table_data.append([stores_cell, sku_cell])
+            
+            # Create table with improved warehouse-friendly formatting
+            table = Table(table_data, colWidths=[2.2*inch, 4.3*inch])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 15),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 11),  # Larger font for better readability
+                ('GRID', (0, 0), (-1, -1), 2, colors.black),  # Thicker grid lines
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ]))
+            
+            story.append(table)
+            story.append(Spacer(1, 20))
+        
+        doc.build(story)
+        summary_buffer.seek(0)
+        
+        # Combine summary with processed PDFs
+        final_merger = PdfMerger()
+        
+        # Add summary page
+        final_merger.append(summary_buffer)
+        
+        # Add processed PDFs with blank page insertion
+        for pdf_info in processed_pdfs:
+            pdf_content = pdf_info['pdf_content']
+            page_count = pdf_info['page_count']
+            po_number = pdf_info['po_number']
+            
+            try:
+                # Validate and add the processed PDF
+                pdf_content.seek(0)
+                
+                # Test if PDF is readable before adding
+                test_reader = PdfReader(pdf_content)
+                actual_pages = len(test_reader.pages)
+                
+                # Reset and add to merger
+                pdf_content.seek(0)
+                final_merger.append(pdf_content)
+                current_app.logger.info(f"Added PDF for PO {po_number} to summary ({actual_pages} pages)")
+                
+                # Add blank page if odd number of pages
+                if actual_pages % 2 == 1:
+                    blank_page = create_blank_pdf_page()
+                    final_merger.append(blank_page)
+                    blank_page.close()
+                    current_app.logger.info(f"Added blank page after PO {po_number}")
+                    
+            except Exception as e:
+                current_app.logger.error(f"Error adding PDF for PO {po_number} to summary: {str(e)}")
+                continue  # Skip corrupted PDFs
+        
+        # Create final output
+        final_output = io.BytesIO()
+        final_merger.write(final_output)
+        final_merger.close()
+        final_output.seek(0)
+        
+        # Close summary buffer
+        summary_buffer.close()
+        
+        return final_output
+        
+    except Exception as e:
+        current_app.logger.error(f"Error creating combined PDF with summary: {str(e)}")
+        raise e
+
+
+def create_processed_pdfs_only(processed_pdfs):
+    """Create PDF with only processed PDFs and blank pages for duplex printing"""
+    try:
+        # Create merger for processed PDFs only
+        processed_merger = PdfMerger()
+        
+        # Add processed PDFs with blank page insertion
+        for pdf_info in processed_pdfs:
+            pdf_content = pdf_info['pdf_content']
+            page_count = pdf_info['page_count']
+            po_number = pdf_info['po_number']
+            
+            try:
+                # Reset to beginning and validate PDF
+                pdf_content.seek(0)
+                
+                # Test if PDF is readable
+                test_reader = PdfReader(pdf_content)
+                actual_page_count = len(test_reader.pages)
+                
+                # Reset again for merger
+                pdf_content.seek(0)
+                
+                # Add the processed PDF
+                processed_merger.append(pdf_content)
+                current_app.logger.info(f"Added processed PDF for PO {po_number} with {actual_page_count} pages")
+                
+                # Add blank page if odd number of pages
+                if actual_page_count % 2 == 1:
+                    blank_page = create_blank_pdf_page()
+                    processed_merger.append(blank_page)
+                    blank_page.close()
+                    current_app.logger.info(f"Added blank page after PO {po_number}")
+                    
+            except Exception as e:
+                current_app.logger.error(f"Error processing PDF for PO {po_number}: {str(e)}")
+                continue  # Skip this PDF if corrupted
+        
+        # Create final output
+        processed_output = io.BytesIO()
+        processed_merger.write(processed_output)
+        processed_merger.close()
+        processed_output.seek(0)
+        
+        return processed_output
+        
+    except Exception as e:
+        current_app.logger.error(f"Error creating processed PDFs only: {str(e)}")
+        raise e
 
 
 @lori_automation_bp.route("/download_invoices", methods=["POST"])

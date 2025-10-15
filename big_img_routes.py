@@ -66,6 +66,60 @@ def register_big_img_routes(app):
                     flash(f"Error processing image {file_path}: {str(e)}", "danger")
 
         return render_template('big_img.html', image_data=image_data, quote=quote,current_user=current_user)
+
+    @app.route('/tk', methods=['GET', 'POST'])
+    def tk():
+        current_user = 'TK_User'  # Set a default user for logging
+        image_data = []
+        
+        if request.method == 'POST':
+            # Handle password submission and image search
+            password = request.form.get('password', '')
+            search_str = request.form.get('search_str', '').lower()
+            
+            # Check password first
+            if password != 'ucandoit':
+                return jsonify({'error': 'Incorrect password'}), 401
+            
+            # If password is correct and there's a search, process it
+            if search_str:  # Only search if search string is provided
+                white_background = request.form.get('white_background', False)
+                include_folders = request.form.get('include_folders', False)
+                
+                index_file = os.path.join(Config.BIG_PICTURE_DIR, 'white_background_images.json') if white_background else os.path.join(Config.BIG_PICTURE_DIR, 'index.json')
+                current_app.logger.info(f" ***{current_user}***___@@@TK images @@@__ {search_str}")
+                
+                if not os.path.exists(index_file):
+                    return jsonify({'error': 'Index file not found. Please generate the index first.'}), 500
+
+                with open(index_file, 'r') as f:
+                    index = json.load(f)
+
+                # Ensure file paths are strings
+                matching_files = [str(file_path) for file_path in index if search_str in (file_path.lower() if include_folders else os.path.basename(file_path).lower())]
+
+                for file_path in matching_files:
+                    full_path = prepend_path_to_file(file_path)
+                    try:
+                        with Image.open(full_path) as img:
+                            buffer = io.BytesIO()
+                            img.save(buffer, format="JPEG")
+                            buffer.seek(0)
+                            base64_image = base64.b64encode(buffer.read()).decode('utf-8')
+                            modified_time = os.path.getmtime(full_path)
+                            modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
+                            file_size = format_file_size(os.path.getsize(full_path) // 1024)
+                            ratio = f"1:{round(img.height / img.width, 1)}"
+                            filename = os.path.basename(file_path)
+                            image_data.append((filename, base64_image, modified_date, file_size, ratio, file_path))
+                    except Exception as e:
+                        current_app.logger.error(f"Error processing image {file_path}: {str(e)}")
+
+            return render_template('tk_main.html', image_data=image_data, quote=quote, current_user=current_user)
+        
+        # GET request - show the main page (password popup will be handled by JavaScript)
+        return render_template('tk_main.html', image_data=image_data, quote=quote, current_user=current_user)
+
     @app.route('/get_image_data', methods=['GET'])
     @login_required
     def get_image_data():

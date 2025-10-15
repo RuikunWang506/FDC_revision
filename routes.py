@@ -1,10 +1,8 @@
-from flask import (request, render_template, jsonify, redirect, url_for, 
-                   session, flash, send_from_directory,send_file, Response, make_response,render_template_string)
+from flask import (request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory,send_file, Response, make_response,render_template_string)
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.utils import secure_filename
-
 # Standard library imports
 import os
 import re
@@ -16,7 +14,6 @@ import subprocess
 import mysql.connector
 from mysql.connector import Error
 import pyodbc
-
 # External library imports
 import pandas as pd
 import requests
@@ -25,8 +22,6 @@ from slack_sdk.errors import SlackApiError
 from user_agents import parse
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-
-
 # Application-specific imports
 from custom_query import execute_custom_query
 from config import Config
@@ -35,14 +30,11 @@ from big_img_routes import register_big_img_routes
 from location_service import location_service_bp
 from container import container_bp
 from boat import boat_service_bp
-from chatgpt import chatgpt_bp
 from mobile_lite import mobile_lite_bp
 import Label_Maker, order_search, SQL_connector
 from macy_special import process_orders
 from loris_sticker import main, process_input_data
 from datetime import timedelta,datetime
-from dailytodo import dailytodo
-from gpgtmx import gpgtmx_bp
 from memo_routes import memo_bp
 from auth import login_required  # Import the login_required decorator
 
@@ -56,10 +48,7 @@ from V6listcreator import v6_listcreator_bp
 from lori_automation import lori_automation_bp
 from customer import customer_bp
 from order_processor import order_processor_bp
-from tk_label_zoom import tk_label_zoom_bp
-from auth import auth_bp
-from Toolkits import pdf_toolkit_bp
-from auth import log_event
+from auth import auth_bp,log_event
 from warehousemap import warehousemap_bp
 from master_audit import master_audit_bp
 
@@ -73,17 +62,12 @@ def register_routes(app):
     app.register_blueprint(location_service_bp)
     app.register_blueprint(container_bp)
     app.register_blueprint(boat_service_bp)
-    app.register_blueprint(chatgpt_bp)
     app.register_blueprint(mobile_lite_bp)
-    app.register_blueprint(dailytodo)
     app.register_blueprint(v6_listcreator_bp)
-    app.register_blueprint(gpgtmx_bp)
     app.register_blueprint(lori_automation_bp, url_prefix='/lori_automation')
     app.register_blueprint(customer_bp)
     app.register_blueprint(order_processor_bp)
-    app.register_blueprint(tk_label_zoom_bp)
     app.register_blueprint(auth_bp)
-    app.register_blueprint(pdf_toolkit_bp)
     app.register_blueprint(warehousemap_bp)
     app.register_blueprint(master_audit_bp)
     app.register_blueprint(memo_bp)
@@ -1198,7 +1182,7 @@ def register_routes(app):
     def savvy_images():
         
         # Path to the Dropbox folder
-        dropbox_path = r"C:\Users\stream\Dropbox\分享del"
+        dropbox_path = r"C:\Users\stream\Dropbox\savvy_image_automatic"
         
         # Check if the directory exists
         if not os.path.exists(dropbox_path):
@@ -1257,7 +1241,7 @@ def register_routes(app):
     def serve_savvy_image(image_path):
 
         # Base path for the Dropbox folder
-        dropbox_path = r"C:\Users\stream\Dropbox\分享del"
+        dropbox_path = r"C:\Users\stream\Dropbox\savvy_image_automatic"
         
         # Construct the full path
         full_path = os.path.join(dropbox_path, image_path)
@@ -1291,7 +1275,7 @@ def register_routes(app):
         folder = request.form.get('folder', '')
         
         # Base path for the Dropbox folder
-        dropbox_path = r"C:\Users\stream\Dropbox\分享del"
+        dropbox_path = r"C:\Users\stream\Dropbox\savvy_image_automatic"
         
         # Create a zip file in memory
         memory_file = io.BytesIO()

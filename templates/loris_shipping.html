@@ -489,10 +489,13 @@
                 </div>
                 <div class="mt-3">
                     <button id="process-selected-btn" class="btn btn-success btn-block w-100 mb-2">
-                        <i class="fas fa-shipping-fast"></i> Generate Fedex File & Ship Order
+                        <i class="fas fa-shipping-fast"></i> Fedex Excel & two-sides PDF
                     </button>
                     <button id="combine-pdf-btn" class="btn btn-info btn-block w-100 mb-2">
                         <i class="fas fa-file-pdf"></i> Combine PDF Files
+                    </button>
+                    <button id="custom-picklist-btn" class="btn btn-secondary btn-block w-100 mb-2">
+                        <i class="fas fa-list-alt"></i> Custom Picklist
                     </button>
                     <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
                         <i class="fas fa-file-invoice"></i> Download Invoices
@@ -2774,7 +2777,11 @@
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
 
-                alert(`Successfully processed ${selectedPOs.length} orders!\n\nExcel file downloaded successfully.\nOrders status updated to SHIPPED`);
+                // Also generate and open the duplex printing PDF
+                console.log('Generating duplex printing PDF...');
+                await generateAndOpenDuplexPDF(selectedPOs);
+
+                alert(`Successfully processed ${selectedPOs.length} orders!\n\n✅ Excel file downloaded successfully\n✅ Duplex printing PDF opened in new window\n✅ Orders status updated to SHIPPED`);
 
                 // Clear selections and hide sidebar
                 checkboxes.forEach(cb => cb.checked = false);
@@ -2852,6 +2859,67 @@
             }
         }
 
+        // Custom Picklist function
+        async function customPicklist() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedPOs.length === 0) {
+                alert('Please select at least one order to process.');
+                return;
+            }
+            
+            const picklistBtn = document.getElementById('custom-picklist-btn');
+            const originalText = picklistBtn.innerHTML;
+            
+            try {
+                // Update button state
+                picklistBtn.disabled = true;
+                picklistBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Picklist...';
+                
+                const response = await fetch('/lori_automation/custom_picklist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        po_numbers: selectedPOs
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                // Get the custom picklist PDF as blob
+                const blob = await response.blob();
+                
+                // Create download link for PDF file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `custom_picklist_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                alert('Custom Picklist Summary created successfully!\n\nSUMMARY INCLUDES:\n• Orders grouped by identical SKU combinations\n• Batch information organized for efficient picking\n• Store numbers and quantities per batch\n• SKU items with colors and quantities\n\nPDF SUMMARY DOWNLOADED: Picklist summary ready for warehouse planning.\n\nTip: Use "Generate Fedex File & Ship Order" for full processing with duplex printing PDFs.');
+                
+                alert(`Custom Picklist Summary created successfully!\n\n✅ FEATURES INCLUDED:\n✓ Summary page with batch information by SKU groupings\n✓ Orders grouped by identical SKU combinations\n✓ Sorted and organized for efficient picking\n✓ Trimmed pages after "TOTAL COST:" to save ink\n\n� PDF FILE DOWNLOADED:\nCustom Picklist with summary and all orders ready for warehouse operations.`);
+                
+            } catch (error) {
+                console.error('Error creating custom picklist:', error);
+                alert('Error creating custom picklist: ' + error.message);
+            } finally {
+                // Restore button state
+                picklistBtn.disabled = false;
+                picklistBtn.innerHTML = originalText;
+            }
+        }
+
         // Download invoices function
         async function downloadInvoices() {
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
@@ -2922,16 +2990,80 @@
             }
         }
 
+        // Generate and open duplex printing PDF
+        async function generateAndOpenDuplexPDF(selectedPOs) {
+            try {
+                console.log('Generating duplex printing PDF...');
+                
+                const response = await fetch('/lori_automation/duplex_printing_pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        po_numbers: selectedPOs
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage;
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error || `HTTP ${response.status}`;
+                    } catch {
+                        errorMessage = `HTTP ${response.status}: ${errorText}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                // Get the PDF as blob
+                const pdfBlob = await response.blob();
+                const pdfUrl = window.URL.createObjectURL(pdfBlob);
+                
+                // Open in new window
+                const newWindow = window.open(pdfUrl, '_blank');
+                if (newWindow) {
+                    console.log('Duplex printing PDF opened in new window');
+                    // Clean up URL after a delay to allow window to load
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(pdfUrl);
+                    }, 10000);
+                } else {
+                    // Fallback: download the PDF if popup is blocked
+                    console.log('Popup blocked, downloading duplex PDF instead...');
+                    const a = document.createElement('a');
+                    a.href = pdfUrl;
+                    a.download = `Orders_Only_for_Duplex_Printing_${new Date().toISOString().split('T')[0]}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(pdfUrl);
+                }
+                
+            } catch (error) {
+                console.error('Error generating duplex PDF:', error);
+                // Don't show error alert here since this is a bonus feature
+                console.log('Duplex PDF generation failed, continuing with Excel download only');
+            }
+        }
+
         // Make the function globally available
         window.processSelectedOrders = processSelectedOrders;
         window.combinePDFFiles = combinePDFFiles;
+        window.customPicklist = customPicklist;
         window.downloadInvoices = downloadInvoices;
+        window.generateAndOpenDuplexPDF = generateAndOpenDuplexPDF;
+
 
         // Add event listener for process selected orders button
         document.getElementById('process-selected-btn')?.addEventListener('click', processSelectedOrders);
         
         // Add event listener for combine PDF button
         document.getElementById('combine-pdf-btn')?.addEventListener('click', combinePDFFiles);
+        
+        // Add event listener for shrink sort combine button
+        document.getElementById('custom-picklist-btn')?.addEventListener('click', customPicklist);
         
         // Add event listener for download invoices button
         document.getElementById('download-invoices-btn')?.addEventListener('click', downloadInvoices);
