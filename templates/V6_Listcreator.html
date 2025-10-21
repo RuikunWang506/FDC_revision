@@ -749,7 +749,7 @@
                         </td>
                         <td>
                             <input type="hidden" name="style_{{ loop.index }}" value="{{ style }}">
-                            <a href="/item_lookup/{{ style.lower() }}" target="_blank">
+                            <a href="{{ url_for('item_lookup.item_lookup', user_input=style.lower()) }}" target="_blank">
                                 {{ style }}
                                 {% if session.get('verified_' + style) %}
                                     <span class="badge badge-success">(IN_OMS)</span>

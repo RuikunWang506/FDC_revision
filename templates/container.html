@@ -51,10 +51,8 @@
         <!-- Upload Section -->
         <div class="upload-section text-center">
             <h1>集装箱处理文件</h1>
-            <h5>所有这里处理的都有备份，你没下载可以找我，自动会把多余的空格全清除，每个格子最多一个空格</h5>
-            <h5>现在可以一次上传多个集装箱文件了！选择多个文件一起处理</h5>
+            <h5>多个文件一起处理</h5>
             <h5>上传oms还需要手动</h5>
-            <h5>upload multiple container files Fxxxxx here and upload the generated files to oms</h5>
             <form method="POST" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
                 <div class="mb-3 w-50">
                     <input type="file" name="container_files" accept=".xlsx" class="form-control" multiple required>
@@ -70,9 +68,16 @@
             <h2>Download Generated Files:</h2>
             <div class="d-flex flex-wrap gap-3">
                 {% for file in files %}
-                    {# Extract the filename from the full path #}
+                    {# Extract container number and file type from filename #}
                     {% set filename = file.split('\\')[-1] %}
-                    <a href="{{ url_for('container.download_file55', filename=filename) }}" class="btn btn-primary">
+                    {% set parts = filename.split('-') %}
+                    {% set container_number = parts[0] %}
+                    {% if '-styles.csv' in filename %}
+                        {% set file_type = 'styles' %}
+                    {% elif '-PO.csv' in filename %}
+                        {% set file_type = 'po' %}
+                    {% endif %}
+                    <a href="{{ url_for('container.download_container_csv', container_number=container_number, file_type=file_type) }}" class="btn btn-primary">
                         <i class="bi bi-download me-2"></i> Download {{ filename }}
                     </a>
                 {% endfor %}

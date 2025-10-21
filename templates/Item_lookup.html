@@ -699,25 +699,86 @@ body.sidebar-closed #sidebarToggleBtn {
             {% for image_url, info in image_urls | zip(file_info) %}
                 <div class="col-6 col-md-4 col-lg-2 mb-3">
                     <div class="img-container text-center">
-                        <img src="{{ url_for('serve_image', filename=info[0], size=300) }}" 
-                            alt="Image" 
-                            class="img-fluid mx-auto d-block" 
-                            loading="lazy" 
-                            onclick="enlargeImage(this, '{{ url_for('serve_image', filename=info[0], size='full') }}')" 
-                            style="cursor: pointer;">
-                        <p>
-                            <a href="{{ url_for('serve_image', filename=info[0], size='full') }}" target="_blank">{{ info[0] }}</a>
-                            {% if current_user == 'yetimaster' %}
-                            <br>Original Size:
-                            {% if info[1] > 1000000 %}
-                                {{ (info[1] / (1024 * 1024)) | round(2) }} MB
-                            {% else %}
-                                {{ (info[1] / 1024) | round(2) }} KB
+                        {# Prefer DB source column when available #}
+                        {% if info is mapping and info.get('source') %}
+                            {% set src_val = info.get('source') %}
+                        {% else %}
+                            {% set src_val = image_url %}
+                        {% endif %}
+
+                        {# Determine source host/type if provided #}
+                        {% set source_host = '' %}
+                        {% if info is mapping %}
+                            {% if info.get('source_type') %}
+                                {% set source_host = info.get('source_type') %}
+                            {% elif info.get('host') %}
+                                {% set source_host = info.get('host') %}
                             {% endif %}
-                            <br>Modified: {{ info[2] }}
-                            <button class="btn btn-danger btn-sm delete-button" data-file-name="{{ info[0] }}">Delete</button>
+                        {% endif %}
+
+                        {# Default to 'catalog' for plain filenames or /image/filename if no host specified #}
+                        {% if not source_host %}
+                            {% if '/' not in src_val %}
+                                {% set source_host = 'catalog' %}
+                            {% elif '/image/' in src_val and not src_val.split('/')[2].isdigit() %}
+                                {% set source_host = 'catalog' %}
                             {% endif %}
-                        </p>
+                        {% endif %}
+
+                        {# DAM asset case: /image/<id>/... with numeric id #}
+                        {% if '/image/' in src_val and src_val.split('/')[2].isdigit() %}
+                            <img src="{{ src_val }}"
+                                 alt="Catalog image"
+                                 class="img-fluid mx-auto d-block"
+                                 loading="lazy"
+                                 data-source-host="{{ source_host or 'dam' }}"
+                                 data-full-url="{{ url_for('serve_dam_image', asset_id=src_val.split('/')[2], width='1500') }}"
+                                 onclick="enlargeImage(this, this.dataset.fullUrl)"
+                                 style="cursor: pointer;">
+
+                        {# Absolute URL (http/https) - use as-is #}
+                        {% elif src_val.startswith('http') %}
+                            {# Handle Dropbox links: convert to dl=1 raw if necessary #}
+                            {% set final_url = src_val %}
+                            {% if 'dropbox.com' in src_val and 'dl=1' not in src_val %}
+                                {% if '?' in src_val %}
+                                    {% set final_url = src_val + '&dl=1' %}
+                                {% else %}
+                                    {% set final_url = src_val + '?dl=1' %}
+                                {% endif %}
+                            {% endif %}
+                            <img src="{{ final_url }}"
+                                 alt="Catalog image"
+                                 class="img-fluid mx-auto d-block"
+                                 loading="lazy"
+                                 data-source-host="{{ source_host or 'external' }}"
+                                 data-full-url="{{ final_url }}"
+                                 onclick="enlargeImage(this, this.dataset.fullUrl)"
+                                 style="cursor: pointer;">
+
+                        {# Plain filename (no slash) - serve via serve_image endpoint #}
+                        {% elif '/' not in src_val %}
+                            <img src="{{ url_for('serve_image', filename=src_val, size=500) }}"
+                                 alt="Catalog image"
+                                 class="img-fluid mx-auto d-block"
+                                 loading="lazy"
+                                 data-source-host="{{ source_host or 'catalog' }}"
+                                 data-full-url="{{ url_for('serve_image', filename=src_val, size='1500') }}"
+                                 onclick="enlargeImage(this, this.dataset.fullUrl)"
+                                 style="cursor: pointer;">
+
+                        {# Fallback: use src_val as-is #}
+                        {% else %}
+                            <img src="{{ src_val }}"
+                                 alt="Catalog image"
+                                 class="img-fluid mx-auto d-block"
+                                 loading="lazy"
+                                 data-source-host="{{ source_host or 'unknown' }}"
+                                 data-full-url="{{ src_val }}"
+                                 onclick="enlargeImage(this, this.dataset.fullUrl)"
+                                 style="cursor: pointer;">
+                        {% endif %}
+
                     </div>
                 </div>
             {% endfor %}
@@ -1374,6 +1435,7 @@ function toggleSidebar() {
         }
     </script>
     <script>
+        const updateLocationUrl = {{ url_for('mysql_connector.update_location') | tojson }};
         function updateLocation() {
             const location = document.getElementById('locationInput').value.trim();
             const rows = document.querySelectorAll('#excel_table tbody tr');
@@ -1391,7 +1453,7 @@ function toggleSidebar() {
                 const style = row.querySelector('td:nth-child(5)').textContent.trim();
 
                 if (sku && style) {
-                    fetch('/update_location', {
+                    fetch(updateLocationUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ sku, style, location }),
@@ -1450,7 +1512,7 @@ function toggleSidebar() {
                 }
     
                 $.ajax({
-                    url: '/update_location',
+                    url: updateLocationUrl,
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ sku: sku, style: style, location: newValue }),

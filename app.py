@@ -1,11 +1,12 @@
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.serving import WSGIRequestHandler
+import os
 
-from logging_setup import configure_logging
-from config import Config
+from py.utilities.logging_setup import configure_logging, log_event
+from py.utilities.setting import Config
 from routes import register_routes
-from auth import log_event
+from py.utilities.auth import log_event
 
 class CustomRequestHandler(WSGIRequestHandler):
     def log_request(self, code='-', size='-'):
@@ -63,11 +64,13 @@ def zip_filter(a, b):
 app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
-    app.logger.info(
-        "--------------------------------------------------------------------"
-        "system restarted"
-        "--------------------------------------------------------------------"
-    )
+    # Only log restart in the main process, not in the reloader subprocess
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        app.logger.info(
+            "--------------------------------------------------------------------"
+            "system restarted"
+            "--------------------------------------------------------------------"
+        )
     app.run(
         host='0.0.0.0',
         port=5555,

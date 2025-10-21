@@ -309,7 +309,7 @@
             {% set current_index = loop.index %}
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Style: <a href="/item_lookup/{{ style }}">{{ style }}</a></h5>
+                    <h5 class="mb-0">Style: <a href="{{ url_for('item_lookup.item_lookup', user_input=style) }}">{{ style }}</a></h5>
                     <div class="colors-container">
                         <span class="color-toggle rainbow-toggle" onclick="clearAllColors(this, '{{ current_index }}')" title="Hide All Colors">
                             clear
@@ -411,7 +411,7 @@
                                                     
                                                     {% for sku, totals in combined.items() %}
                                                     <tr data-style-index="{{ current_index }}" data-color="{{ sku.split()[-1].strip().upper() }}" class="product-row">
-                                                        <td><a href="/item_lookup/{{ sku | replace(' ', '%20') }}">{{ sku }}</a></td>
+                                                        <td><a href="{{ url_for('item_lookup.item_lookup', user_input=sku | replace(' ', '%20')) }}">{{ sku }}</a></td>
                                                     <td>{{ totals.stock }}</td>
                                                     <td>{{ totals.sold }}</td>
                                                     <td>{{ totals.available }}</td>
@@ -441,7 +441,7 @@
                                                         {% if product.db == 'FDC' %}
                                                         <tr data-style-index="{{ current_index }}" data-color="{{ product.sku.upper().split()[-1].strip() }}" class="product-row">
 
-                                                            <td><a href="/item_lookup/{{ product.sku.upper() | replace(' ', '%20') }}">{{ product.sku.upper() }}</a></td>
+                                                            <td><a href="{{ url_for('item_lookup.item_lookup', user_input=product.sku.upper() | replace(' ', '%20')) }}">{{ product.sku.upper() }}</a></td>
                                                             <td>{{ product.inventory.stock }}</td>
                                                             <td>{{ product.inventory.sold }}</td>
                                                             <td>{{ product.inventory.available }}</td>
@@ -473,7 +473,7 @@
                                                     {% for product in style_data.products %}
                                                         {% if product.db == 'oms_EF' %}
                                                         <tr data-style-index="{{ current_index }}" data-color="{{ product.sku.upper().split()[-1].strip() }}" class="product-row">
-                                                            <td><a href="/item_lookup/{{ product.sku.upper() | replace(' ', '%20') }}">{{ product.sku.upper() }}</a></td>
+                                                            <td><a href="{{ url_for('item_lookup.item_lookup', user_input=product.sku.upper() | replace(' ', '%20')) }}">{{ product.sku.upper() }}</a></td>
                                                             <td>{{ product.inventory.stock }}</td>
                                                             <td>{{ product.inventory.sold }}</td>
                                                             <td>{{ product.inventory.available }}</td>
@@ -552,7 +552,7 @@
                                             {% if product.info.description | trim not in unique_boats %}
                                                 {% set _ = unique_boats.append(product.info.description | trim) %}
                                                 <tr data-style-index="{{ current_index }}" data-color="{{ product.sku.upper().split()[-1] }}" class="product-row">
-                                                    <td><a href="/item_lookup/%25{{ product.info.description | trim }}%25">{{ product.info.description | trim }}</a></td>
+                                                    <td><a href="{{ url_for('item_lookup.item_lookup', user_input='%25' + (product.info.description | trim) + '%25') }}">{{ product.info.description | trim }}</a></td>
                                                     <td>${{ "%.2f"|format(product.info.cost) }}</td>
                                                     <td>${{ "%.2f"|format(product.info.price) }}</td>
                                                 </tr>

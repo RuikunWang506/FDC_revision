@@ -113,19 +113,19 @@
                             <div class="form-group">
                                 <label for="sku">SKU:</label><br>
                                 <label for="sku">N1237-S or N1237 S</label>
-                                <textarea id="sku" class="form-control" name="sku">{{ sku }}</textarea>
+                                <textarea id="sku" class="form-control" name="sku" rows="14">{{ sku }}</textarea>
                             </div>
                             <div class="form-group">
                                 <label for="barcode">Barcode:</label><br>
                                 <label for="barcode">
                                     <a href="https://eancheck.com/" target="_blank">Check</a>
                                 </label>
-                                <textarea id="barcode" class="form-control" name="barcode">{{ barcode }}</textarea>
+                                <textarea id="barcode" class="form-control" name="barcode" rows="14">{{ barcode }}</textarea>
                             </div>
                             <div class="form-group">
                                 <label for="quantity">Quantity:</label><br>
                                 <label for="quantity">100</label>
-                                <textarea id="quantity" class="form-control" name="quantity">{{ quantity }}</textarea>
+                                <textarea id="quantity" class="form-control" name="quantity" rows="14">{{ quantity }}</textarea>
                             </div>
                             <div class="form-group" style="flex: 2;">
                                 <label for="input_data">Paste your list here:</label><br>
@@ -171,23 +171,14 @@
                         </table>
                     </div>
                     {% endif %}
-                    
-                    <!-- Debug info (temporary) -->
-                    {% if filename_30stickers or filename_exact %}
-                    <div class="alert alert-info mt-3">
-                        <strong>Debug Info:</strong><br>
-                        30 Stickers File: {{ filename_30stickers or 'None' }}<br>
-                        Exact File: {{ filename_exact or 'None' }}<br>
-                        Error: {{ error_message or 'None' }}
-                    </div>
-                    {% endif %}
+
                     
                     {% if filename_30stickers and filename_exact %}
                     <div class="text-center" style="padding-top: 50px;">
-                        <h2>Download Labels</h2>
+                        <h2>View Labels</h2>
                         <div class="d-flex flex-wrap justify-content-center" style="padding-top: 10px;">
-                            <a href="{{ url_for('download_file3', filename=filename_30stickers) }}" class="btn btn-primary btn-lg m-2" target="_blank">Download 30 Stickers Version</a>
-                            <a href="{{ url_for('download_file3', filename=filename_exact) }}" class="btn btn-secondary btn-lg m-2" target="_blank">Download Exact Quantity Version</a>
+                            <a href="{{ url_for('lori_automation.download_loris_labels', filename=filename_30stickers) }}" class="btn btn-primary btn-lg m-2" target="_blank">View 30 Stickers Version</a>
+                            <a href="{{ url_for('lori_automation.download_loris_labels', filename=filename_exact) }}" class="btn btn-secondary btn-lg m-2" target="_blank">View Exact Quantity Version</a>
                         </div>
                     </div>
                     {% endif %}
@@ -285,7 +276,6 @@
             </div>
         </div>
 
-                <!-- 后宫翻牌机 Section -->
                 <div class="card mt-4" >
                     <div class="card-header bg-danger text-white">
                         <h4 class="mb-0">

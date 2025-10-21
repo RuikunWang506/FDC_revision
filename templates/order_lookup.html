@@ -70,7 +70,7 @@
             {% endif %}
             {% if current_user != 'fdc' %}
                 <form method="POST" action="/order_lookup" id="submitOrderForm">
-                    <a href="/macy"><h5>⭐Macy Special Click here⭐</h5></a>
+                    <a href="{{ url_for('macy.macy_maker') }}"><h5>⭐Macy Special Click here⭐</h5></a>
                     <h4>Enter Order Number:</h4>
                     <p>4 digits for E-fashion</p>
                     <p>5 digits for FDC</p>
@@ -96,11 +96,7 @@
             {% endif %}
         </div>
         {% if order_number %}
-        <div class="row justify-content-center text-center">            
-            <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
-                Your search input was: <br>{{ order_number }}
-            </p>           
-        </div>
+
         <div class="row justify-content-center text-center">            
             <p style="font-size: 20px; font-weight: bold; color: #333; text-align: center; background-color: #88ff00; padding: 10px; border-radius: 5px;">
                 确认descrip这里已经改过, 格式为 1-25,25 ( 25箱,第25是mix), loose piece 会自动输入
@@ -123,15 +119,15 @@
         {{ error_message }}, check description , check notes ( 30 boxes, L-1), ask tristen
     </div>
     {% endif %}
-    {% if filename %}
+    {% if filename or labels_generated %}
         <div class="text-center">
-            <h2>
-                <p>现在mix的数字也自动输入了, loose piece 也自动了，但是需要确认装箱数（每箱多少只）！</p>
-                <p><u>{{ filename }}</u></p>
-            </h2>
-            <a href="{{ url_for('download_file2', filename=filename) }}" class="btn btn-primary">
-                Download
+
+            <a href="{{ url_for('download_label_excel') }}" class="btn btn-primary">
+                Download Excel File / 下载excel 文件
             </a>
+            <div class="alert alert-success mt-3">
+                <strong>✓ Labels have been generated and are ready for printing</strong>
+            </div>
             <div class="alert alert-info mt-3">
                 {% if number_of_labels % 4 == 0 %}
                     {% set labels_divided = "[JENNIFER][信息单][可除尽] 打印 1 - " ~ number_of_labels %}
@@ -145,8 +141,10 @@
                          {{ labels_divided }}
                     </span>
                 </h3>
+                {% if duplicate_numbers %}
                 <h3>混装的是: {{ duplicate_numbers }}，请再次确认这些数字</h3>
-                <h4>还有对方地址！{{ addresslist }}</h4>
+                {% endif %}
+                <h4>对方地址:{{ addresslist }}</h4>
                 {% if warnings %}
                     <div class="alert alert-warning mt-3">
                         <strong>警告:</strong>
@@ -160,7 +158,6 @@
                 {% endif %}
                 
                 <div class="info-list mt-4 text-center">
-                    <h2>特别箱数，点开关打开所有</h2>
                     <div class="table-container">
                         <table id="info_list_table" class="display nowrap" style="width:auto;">
                             <thead>

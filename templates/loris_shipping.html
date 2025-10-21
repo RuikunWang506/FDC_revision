@@ -488,17 +488,22 @@
                     <ul id="selected-orders-ul" class="list-unstyled"></ul>
                 </div>
                 <div class="mt-3">
-                    <button id="process-selected-btn" class="btn btn-success btn-block w-100 mb-2">
-                        <i class="fas fa-shipping-fast"></i> Fedex Excel & two-sides PDF
-                    </button>
+                    <div class="d-grid gap-2">
+                        <button id="process-excel-btn" class="btn btn-success btn-block w-100 mb-2">
+                            <i class="fas fa-file-excel"></i> Fedex Excel *DENNIS*
+                        </button>
+                        <button id="process-duplex-btn" class="btn btn-primary btn-block w-100 mb-2">
+                            <i class="fas fa-file-pdf"></i> Two-sides PDF 老头
+                        </button>
+                    </div>
                     <button id="combine-pdf-btn" class="btn btn-info btn-block w-100 mb-2">
-                        <i class="fas fa-file-pdf"></i> Combine PDF Files
+                        <i class="fas fa-file-pdf"></i> Combine PDF Files 原始pdf
                     </button>
                     <button id="custom-picklist-btn" class="btn btn-secondary btn-block w-100 mb-2">
-                        <i class="fas fa-list-alt"></i> Custom Picklist
+                        <i class="fas fa-list-alt"></i> Custom Picklist 老头
                     </button>
                     <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
-                        <i class="fas fa-file-invoice"></i> Download Invoices
+                        <i class="fas fa-file-invoice"></i> Download Invoices 徐锦
                     </button>
 
                 </div>
@@ -1799,13 +1804,13 @@
                             <!-- Action Buttons at Bottom -->
                             <div class="d-flex justify-content-between gap-2 mt-3 pt-2 package-actions-border">
                                 <button class="btn btn-success btn-sm flex-fill save-pkg-btn" data-po="${order.po_number}">
-                                    <i class="fas fa-save"></i> Save
+                                    <i class="fas fa-save"></i> SAVE
                                 </button>
                                 <button class="btn btn-primary btn-sm flex-fill add-row-btn" data-po="${order.po_number}">
-                                    <i class="fas fa-plus"></i> Add Row
+                                    <i class="fas fa-plus"></i> ADD ROW
                                 </button>
                                 <button class="btn btn-danger btn-sm flex-fill delete-pkg-btn" data-po="${order.po_number}">
-                                    <i class="fas fa-trash"></i> remove pkg info
+                                    <i class="fas fa-trash"></i> REMOVE PKG
                                 </button>
                             </div>
                             <div class="pkg-status-indicator mt-1"></div>
@@ -3056,8 +3061,72 @@
         window.generateAndOpenDuplexPDF = generateAndOpenDuplexPDF;
 
 
-        // Add event listener for process selected orders button
-        document.getElementById('process-selected-btn')?.addEventListener('click', processSelectedOrders);
+        // Backwards-compatible: keep original combined handler available
+        window.processSelectedOrders = processSelectedOrders;
+
+        // New handlers: call parts of the existing flow as needed
+        async function processSelectedExcel() {
+            // Trigger the existing flow but skip generating the duplex PDF
+            console.log('processSelectedExcel called');
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            if (checkboxes.length === 0) { alert('Please select at least one order to process'); return; }
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.getAttribute('data-po'));
+            const confirmed = confirm(`Generate Excel for ${selectedPOs.length} orders and mark as SHIPPED?`);
+            if (!confirmed) return;
+
+            const processBtn = document.getElementById('process-excel-btn');
+            const originalText = processBtn.innerHTML;
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            try {
+                const response = await fetch('/lori_automation/process_selected_orders', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ po_numbers: selectedPOs })
+                });
+                if (!response.ok) throw new Error(await response.text());
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `FedEx_Labels_${new Date().toISOString().split('T')[0]}.xlsx`; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove();
+                checkboxes.forEach(cb => cb.checked = false);
+                hideSidebar();
+                await loadAndRenderOrders();
+                alert('Excel generated and downloaded successfully');
+            } catch (err) {
+                console.error(err);
+                alert('Error generating Excel: ' + err.message);
+            } finally {
+                processBtn.disabled = false;
+                processBtn.innerHTML = originalText;
+            }
+        }
+
+        async function processSelectedDuplex() {
+            console.log('processSelectedDuplex called');
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            if (checkboxes.length === 0) { alert('Please select at least one order'); return; }
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.getAttribute('data-po'));
+            const confirmed = confirm(`Generate duplex PDF for ${selectedPOs.length} orders?`);
+            if (!confirmed) return;
+            const btn = document.getElementById('process-duplex-btn');
+            const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            try {
+                await generateAndOpenDuplexPDF(selectedPOs);
+                checkboxes.forEach(cb => cb.checked = false);
+                hideSidebar();
+                alert('Duplex PDF generated and opened successfully');
+            } catch (err) {
+                console.error(err);
+                alert('Error generating duplex PDF: ' + err.message);
+            } finally {
+                btn.disabled = false; btn.innerHTML = originalText;
+            }
+        }
+
+        // Add event listeners for the new buttons
+        document.getElementById('process-excel-btn')?.addEventListener('click', processSelectedExcel);
+        document.getElementById('process-duplex-btn')?.addEventListener('click', processSelectedDuplex);
         
         // Add event listener for combine PDF button
         document.getElementById('combine-pdf-btn')?.addEventListener('click', combinePDFFiles);
@@ -3068,6 +3137,413 @@
         // Add event listener for download invoices button
         document.getElementById('download-invoices-btn')?.addEventListener('click', downloadInvoices);
 
+    </script>
+
+    <!-- Apply To Modal (apply package info to other invoices) -->
+    <div class="modal fade" id="applyToModal" tabindex="-1" aria-labelledby="applyToModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="applyToModalLabel">Apply Package Info to Other stores</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <strong>Source:</strong> <span id="apply-source-po">N/A</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Preview:</label>
+                        <div id="apply-source-dims" class="d-flex flex-wrap gap-2" style="margin-top:8px;"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">select stores</label>
+                        <div class="position-relative mb-2">
+                            <div class="input-group">
+                                <input id="apply-target-input" class="form-control" placeholder="651-.....">
+                                <button id="apply-target-clear" class="btn btn-outline-secondary" type="button" title="Clear selections">Clear</button>
+                            </div>
+                            <div id="apply-target-suggestions" class="list-group position-absolute w-100" style="max-height:200px;overflow:auto;display:none;top:100%;left:0;z-index:2050;"></div>
+                        </div>
+                        <div id="apply-target-chips" class="mb-2" style="min-height:40px"></div>
+                    </div>
+
+                    <div class="form-check form-switch mb-2" style="padding-top: 200px;">
+                        <input class="form-check-input" type="checkbox" id="apply-overwrite-existing" checked>
+                        <label class="form-check-label" for="apply-overwrite-existing">replace existing pkg info?覆盖有尺寸的店？</label>
+                    </div>
+
+                    <div id="apply-progress" style="display:none;margin-top:8px;">
+                        <div class="progress">
+                            <div id="apply-progress-bar" class="progress-bar" role="progressbar" style="width:0%"></div>
+                        </div>
+                        <div id="apply-progress-msg" style="margin-top:6px;font-size:0.9rem"></div>
+                    </div>
+                </div>
+                <div class="modal-footer" >
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="apply-to-confirm-btn" class="btn btn-primary">Apply to selected invoices</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Apply To modal JS: inject button, collect source box dimensions, and apply to selected POs
+    (function(){
+        // Helper: read box dimensions from a package-info container
+        function getBoxDimensionsFromContainer(poNumber) {
+            const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+            if (!container) return null;
+
+            const rows = [];
+
+            // Main row
+            const mainRow = container.querySelector('.main-box-row');
+            const mainCmCheckbox = mainRow ? mainRow.querySelector('.cm-checkbox') : null;
+            const isMainCm = mainCmCheckbox && mainCmCheckbox.checked;
+
+            const mainLength = mainRow ? mainRow.querySelector('.box-length')?.value : '';
+            const mainWidth = mainRow ? mainRow.querySelector('.box-width')?.value : '';
+            const mainHeight = mainRow ? mainRow.querySelector('.box-height')?.value : '';
+            const mainWeight = mainRow ? mainRow.querySelector('.box-weight')?.value : '';
+
+            if (mainLength && mainWidth && mainHeight && mainWeight) {
+                const length = isMainCm ? parseFloat(mainLength)/2.54 : parseFloat(mainLength);
+                const width = isMainCm ? parseFloat(mainWidth)/2.54 : parseFloat(mainWidth);
+                const height = isMainCm ? parseFloat(mainHeight)/2.54 : parseFloat(mainHeight);
+                const weight = parseFloat(mainWeight);
+                rows.push({ length: Math.round(length*100)/100, width: Math.round(width*100)/100, height: Math.round(height*100)/100, weight: Math.round(weight*100)/100 });
+            }
+
+            // Additional rows
+            const additionalRows = container.querySelectorAll('.package-row');
+            additionalRows.forEach(row => {
+                const rowCm = row.querySelector('.cm-checkbox');
+                const isCm = rowCm && rowCm.checked;
+                const length = row.querySelector('.box-length')?.value || '';
+                const width = row.querySelector('.box-width')?.value || '';
+                const height = row.querySelector('.box-height')?.value || '';
+                const weight = row.querySelector('.box-weight')?.value || '';
+                if (length && width && height && weight) {
+                    const l = isCm ? parseFloat(length)/2.54 : parseFloat(length);
+                    const w = isCm ? parseFloat(width)/2.54 : parseFloat(width);
+                    const h = isCm ? parseFloat(height)/2.54 : parseFloat(height);
+                    const wt = parseFloat(weight);
+                    rows.push({ length: Math.round(l*100)/100, width: Math.round(w*100)/100, height: Math.round(h*100)/100, weight: Math.round(wt*100)/100 });
+                }
+            });
+
+            return rows.length ? rows : null;
+        }
+
+        // Show modal and populate suggestion source
+        window.openApplyToModalFromPO = function(sourcePo) {
+            const dims = getBoxDimensionsFromContainer(sourcePo);
+            if (!dims) {
+                alert('Source PO has no complete box dimensions to apply.');
+                return;
+            }
+
+            document.getElementById('apply-source-po').textContent = sourcePo;
+            // store dims on modal for later use
+            const modalEl = document.getElementById('applyToModal');
+            modalEl.dataset.sourceDims = JSON.stringify(dims);
+
+            // Render friendly dimension cards
+            const dimsContainer = document.getElementById('apply-source-dims');
+            dimsContainer.innerHTML = '';
+            dims.forEach((d, idx) => {
+                const card = document.createElement('div');
+                card.className = 'border rounded p-2 bg-light';
+                card.style.minWidth = '180px';
+                card.innerHTML = `<strong>Box ${idx+1}</strong><div>${d.length} × ${d.width} × ${d.height} in</div><div>${d.weight} lbs</div>`;
+                dimsContainer.appendChild(card);
+            });
+
+            // Reset chips and suggestions
+            document.getElementById('apply-target-chips').innerHTML = '';
+            document.getElementById('apply-target-suggestions').innerHTML = '';
+            document.getElementById('apply-target-suggestions').style.display = 'none';
+            document.getElementById('apply-target-input').value = '';
+
+            // Prepare suggestion source: prefer window.allOrders (loaded earlier), else fetch /lori_automation
+            (async function prepareSuggestions(){
+                let orders = [];
+                if (window.allOrders && Array.isArray(window.allOrders) && window.allOrders.length>0) {
+                    orders = window.allOrders;
+                } else {
+                    try {
+                        // Use the JSON API that returns orders list
+                        const resp = await fetch('/lori_automation/get_orders', { credentials: 'same-origin' });
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            orders = data.orders || [];
+                        }
+                    } catch(e) { /* ignore */ }
+                }
+
+                // save pending POs into modal dataset for quick lookup
+                const pending = (orders || []).filter(o => (o.status === 'pending' || (o.status && o.status.toLowerCase()==='pending')) && o.po_number && o.po_number !== sourcePo).map(o=>o.po_number.trim());
+                modalEl.dataset.pendingPos = JSON.stringify(pending);
+            })();
+
+            // Show modal
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        };
+
+        // Perform apply to selected targets
+        async function applyToSelected() {
+            const sourcePo = document.getElementById('apply-source-po').textContent;
+            const modalEl = document.getElementById('applyToModal');
+            let boxDimensions = null;
+            try {
+                boxDimensions = JSON.parse(modalEl.dataset.sourceDims || 'null');
+            } catch (e) {
+                console.error('Failed to parse source dims from modal dataset:', e);
+            }
+            if (!boxDimensions || !Array.isArray(boxDimensions) || boxDimensions.length===0) {
+                alert('Source PO has no valid box dimensions to apply. Please ensure you saved package info for the source PO first.');
+                return;
+            }
+
+            // Collect targets from chips (selected PO chips), fallback to manual textarea if present
+            let targets = [];
+            const chips = Array.from(document.querySelectorAll('#apply-target-chips .apply-target-chip'));
+            if (chips.length) targets = chips.map(ch=>ch.dataset.po);
+            else {
+                const manualArea = document.getElementById('apply-manual-targets');
+                if (manualArea) {
+                    const txt = manualArea.value || '';
+                    targets = txt.split(/[,\n\r]+/).map(s => s.trim()).filter(Boolean);
+                }
+            }
+
+            if (!targets.length) { alert('Please select at least one target PO'); return; }
+
+            const overwrite = document.getElementById('apply-overwrite-existing')?.checked;
+
+            // Progress UI
+            const progressWrap = document.getElementById('apply-progress');
+            const progressBar = document.getElementById('apply-progress-bar');
+            const progressMsg = document.getElementById('apply-progress-msg');
+            progressWrap.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressMsg.textContent = `Preparing to apply to ${targets.length} invoices...`;
+
+            const results = [];
+
+            // For each target, optionally check whether it already has package info (skip if not overwrite)
+            // We'll try to read package info via GET endpoint if available: /lori_automation/get_package_info/<po>
+            for (let i=0;i<targets.length;i++) {
+                const target = targets[i];
+                progressMsg.textContent = `Processing ${i+1}/${targets.length}: ${target}`;
+
+                // Optionally check existing
+                let skip = false;
+                if (!overwrite) {
+                    try {
+                        const resp = await fetch(`/lori_automation/get_package_info/${encodeURIComponent(target)}`, { credentials: 'same-origin' });
+                        if (resp.ok) {
+                            const existing = await resp.json();
+                            if (existing && existing.box_dimensions && existing.box_dimensions.length > 0) {
+                                skip = true;
+                                results.push({ target, skipped: true, reason: 'Existing package info' });
+                            }
+                        }
+                    } catch (e) {
+                        // ignore check failures and continue to save
+                    }
+                }
+
+                if (skip) {
+                    progressBar.style.width = `${Math.round(((i+1)/targets.length)*100)}%`;
+                    continue;
+                }
+
+                // Build save payload
+                const payload = {
+                    poNumber: target,
+                    boxDimensions: boxDimensions,
+                    fedexServiceType: 'FEDEX_GROUND',
+                    fedexPackagingType: 'YOUR_PACKAGING',
+                    specialInstructions: ''
+                };
+
+                try {
+                    const r = await fetch('/lori_automation/save_package_info', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const jr = await r.json().catch(()=>({}));
+                    if (r.ok && jr.success) {
+                        results.push({ target, success: true });
+                        // Trigger refresh for that row if present
+                        try { refreshOrderRow(target); } catch(e){ }
+                    } else {
+                        results.push({ target, success: false, error: jr.error || 'Save failed' });
+                    }
+                } catch (e) {
+                    results.push({ target, success: false, error: e.message });
+                }
+
+                progressBar.style.width = `${Math.round(((i+1)/targets.length)*100)}%`;
+            }
+
+            // Summarize results
+            const successCount = results.filter(r=>r.success).length;
+            const skippedCount = results.filter(r=>r.skipped).length;
+            const failed = results.filter(r=>r.success===false);
+            progressMsg.textContent = `Done. Success: ${successCount}, Skipped: ${skippedCount}, Failed: ${failed.length}`;
+
+            if (failed.length > 0) {
+                showToast(`Apply finished with ${failed.length} failures`, 'error', 6000);
+            } else {
+                showToast(`Applied package info to ${successCount} invoices`,'success',4000);
+            }
+
+            // Auto-hide modal after short delay
+            setTimeout(()=>{
+                try { const m = bootstrap.Modal.getInstance(document.getElementById('applyToModal')); if (m) m.hide(); } catch(e){}
+            }, 900);
+        }
+
+        document.getElementById('apply-to-confirm-btn').addEventListener('click', function(){
+            this.disabled = true;
+            applyToSelected().finally(()=>{ this.disabled = false; });
+        });
+
+        // Autocomplete and chips behavior
+        const targetInput = document.getElementById('apply-target-input');
+        const suggestionsBox = document.getElementById('apply-target-suggestions');
+        const chipsContainer = document.getElementById('apply-target-chips');
+        const clearBtn = document.getElementById('apply-target-clear');
+
+        function addChip(po) {
+            if (!po) return;
+            // Only allow adding if PO is in suggested pending list
+            const modalEl = document.getElementById('applyToModal');
+            let pending = [];
+            try { pending = JSON.parse(modalEl.dataset.pendingPos || '[]'); } catch(e){ pending = []; }
+            const isSuggested = pending.includes(po);
+            if (!isSuggested) {
+                showToast(`'${po}' is not a pending order. Please choose from suggested pending POs.`, 'error', 5000);
+                return;
+            }
+            // avoid duplicates
+            if (Array.from(chipsContainer.querySelectorAll('.apply-target-chip')).some(c=>c.dataset.po===po)) return;
+            const chip = document.createElement('div');
+            chip.className = 'badge bg-secondary text-white me-1 mb-1 apply-target-chip';
+            chip.style.padding = '8px 10px';
+            chip.dataset.po = po;
+            chip.innerHTML = `${po} <span style="cursor:pointer;margin-left:8px;font-weight:700;">&times;</span>`;
+            chip.querySelector('span').addEventListener('click', ()=>chip.remove());
+            chipsContainer.appendChild(chip);
+        }
+
+        function showSuggestions(list) {
+            suggestionsBox.innerHTML = '';
+            if (!list || list.length===0) { suggestionsBox.style.display = 'none'; return; }
+            list.forEach(po => {
+                const a = document.createElement('a');
+                a.className = 'list-group-item list-group-item-action';
+                a.textContent = po;
+                a.href = '#';
+                a.addEventListener('click', (ev)=>{ ev.preventDefault(); addChip(po); suggestionsBox.style.display='none'; targetInput.value=''; });
+                suggestionsBox.appendChild(a);
+            });
+            suggestionsBox.style.display = 'block';
+        }
+
+        targetInput.addEventListener('input', function(){
+            const q = this.value.trim().toLowerCase();
+            const modalEl = document.getElementById('applyToModal');
+            let pending = [];
+            try { pending = JSON.parse(modalEl.dataset.pendingPos || '[]'); } catch(e){ pending = []; }
+            if (!q) { showSuggestions(pending.slice(0,50)); return; }
+            const filtered = pending.filter(p => p.toLowerCase().includes(q));
+            showSuggestions(filtered.slice(0,100));
+        });
+
+        // Keyboard navigation for suggestions: ArrowUp/ArrowDown to move, Enter to select, Escape to close
+        let activeSuggestionIndex = -1;
+        function setActiveSuggestion(index) {
+            const items = Array.from(suggestionsBox.querySelectorAll('.list-group-item'));
+            items.forEach((it, i) => it.classList.toggle('active', i === index));
+            activeSuggestionIndex = (index >= 0 && index < items.length) ? index : -1;
+            if (activeSuggestionIndex !== -1) {
+                const el = items[activeSuggestionIndex];
+                if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        targetInput.addEventListener('keydown', function(e){
+            const items = Array.from(suggestionsBox.querySelectorAll('.list-group-item'));
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (items.length === 0) return;
+                const next = (activeSuggestionIndex + 1) % items.length;
+                setActiveSuggestion(next);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (items.length === 0) return;
+                const prev = (activeSuggestionIndex <= 0) ? items.length - 1 : activeSuggestionIndex - 1;
+                setActiveSuggestion(prev);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeSuggestionIndex !== -1 && items[activeSuggestionIndex]) {
+                    items[activeSuggestionIndex].click();
+                    } else {
+                    // No active suggestion: instruct user to pick from suggestions
+                    showToast('Please select a PO from the suggestions (only pending orders are allowed).', 'error', 4000);
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        clearBtn.addEventListener('click', function(){ chipsContainer.innerHTML=''; document.getElementById('apply-target-input').value=''; suggestionsBox.innerHTML=''; suggestionsBox.style.display='none'; });
+
+        // Function to inject an 'Apply To' button into package-info containers when they are created
+        function addApplyButtonToContainer(container) {
+            if (!container) return;
+            if (container.querySelector('.apply-to-btn')) return; // already added
+
+            // Find buttons container used by existing code
+            const buttonsContainer = container.querySelector('.d-flex.justify-content-between.gap-2.mt-3') || container.querySelector('.d-flex.justify-content-between');
+            const po = container.getAttribute('data-po') || container.dataset.po;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            // Match other package action buttons: use small, fillable buttons for consistent layout
+            btn.className = 'btn btn-secondary btn-sm flex-fill apply-to-btn';
+            btn.textContent = 'Apply To/复制到其他店🧠';
+            btn.addEventListener('click', function(){
+                openApplyToModalFromPO(po);
+            });
+
+            if (buttonsContainer) buttonsContainer.appendChild(btn);
+            else container.appendChild(btn);
+        }
+
+        // Observe DOM for package-info containers to add the button dynamically
+        const mo = new MutationObserver(muts => {
+            muts.forEach(m => {
+                m.addedNodes && m.addedNodes.forEach(n => {
+                    if (!(n instanceof HTMLElement)) return;
+                    if (n.classList && n.classList.contains('package-info-container')) addApplyButtonToContainer(n);
+                    // also search inside for any package-info-container
+                    n.querySelectorAll && n.querySelectorAll('.package-info-container').forEach(c=>addApplyButtonToContainer(c));
+                });
+            });
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+
+        // On initial load, attach to existing containers
+        document.querySelectorAll('.package-info-container').forEach(c=>addApplyButtonToContainer(c));
+    })();
     </script>
 
     <!-- Store Info Management JavaScript -->

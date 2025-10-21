@@ -137,10 +137,10 @@
     </div>
     
     <!-- Search Box -->
-    <form action="{{ url_for('search_logs') }}" method="post" class="search-container">
+    <form action="{{ url_for('log_viewer.search_logs') }}" method="post" class="search-container">
         <input type="text" id="search-input" name="search_term" placeholder="Search logs..." value="{{ search_term }}">
         <button type="submit" id="search-button">Search</button>
-        <a href="{{ url_for('display') }}" id="clear-search">Clear</a>
+        <a href="{{ url_for('log_viewer.display') }}" id="clear-search">Clear</a>
     </form>
     
     <!-- Search Results Info -->
@@ -165,8 +165,8 @@
     <!-- Pagination Controls -->
     <div class="pagination">
         {% if page > 1 %}
-            <a href="{{ url_for('display', page=1, search=search_term) }}">First</a>
-            <a href="{{ url_for('display', page=page-1, search=search_term) }}">Previous</a>
+            <a href="{{ url_for('log_viewer.display', page=1, search=search_term) }}">First</a>
+            <a href="{{ url_for('log_viewer.display', page=page-1, search=search_term) }}">Previous</a>
         {% else %}
             <a class="disabled">First</a>
             <a class="disabled">Previous</a>
@@ -175,8 +175,8 @@
         <span>Page {{ page }} of {{ total_pages }}</span>
 
         {% if page < total_pages %}
-            <a href="{{ url_for('display', page=page+1, search=search_term) }}">Next</a>
-            <a href="{{ url_for('display', page=total_pages, search=search_term) }}">Last</a>
+            <a href="{{ url_for('log_viewer.display', page=page+1, search=search_term) }}">Next</a>
+            <a href="{{ url_for('log_viewer.display', page=total_pages, search=search_term) }}">Last</a>
         {% else %}
             <a class="disabled">Next</a>
             <a class="disabled">Last</a>
