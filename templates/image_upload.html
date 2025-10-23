@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload System - FDC Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .upload-zone {
+            border: 3px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+            margin: 1rem 0;
+        }
+        .upload-zone:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9ff;
+        }
+        .upload-zone.dragover {
+            border-color: #198754;
+            background-color: #f8fff9;
+            transform: scale(1.02);
+        }
+        .upload-icon {
+            font-size: 4rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+        .card-header {
+            font-weight: 600;
+        }
+        .progress-container {
+            display: none;
+            margin-top: 1rem;
+        }
+        .file-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            background: white;
+        }
+        .file-icon {
+            margin-right: 0.5rem;
+            color: #28a745;
+        }
+        .result-alert {
+            margin-top: 1rem;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .feature-card {
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+        }
+        .btn-upload {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex align-items-center mb-4">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-primary me-3"></i>
+                    <div>
+                        <h1 class="mb-1">Image Upload & Organization System</h1>
+                        <p class="text-muted mb-0">Efficiently organize catalog images and product details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-images fa-2x mb-2"></i>
+                        <h5 class="card-title">Total Images</h5>
+                        <h3 id="totalImages">163,607</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-book fa-2x mb-2"></i>
+                        <h5 class="card-title">Catalog Images</h5>
+                        <h3 id="catalogImages">4,610</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-picture-o fa-2x mb-2"></i>
+                        <h5 class="card-title">Product Details</h5>
+                        <h3 id="bigPictureImages">132,439</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-dropbox fa-2x mb-2"></i>
+                        <h5 class="card-title">Dropbox Images</h5>
+                        <h3 id="dropboxImages">26,558</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Sections -->
+        <div class="row">
+            <!-- Catalog Upload -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 feature-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-book me-2"></i>Catalog Images Upload
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="catalogForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="catalogSku" class="form-label fw-bold">Product SKU</label>
+                                <input type="text" class="form-control form-control-lg" id="catalogSku" 
+                                       name="sku" placeholder="Enter SKU (e.g., T3305, N1151)" required>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> This will be used for automatic versioning
+                                </small>
+                            </div>
+                            
+                            <div class="upload-zone" id="catalogDropzone">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h5>Drop catalog images here</h5>
+                                <p class="text-muted">or click to browse your files</p>
+                                <input type="file" id="catalogFiles" name="catalog_files" 
+                                       multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" style="display: none;">
+                                <button type="button" class="btn btn-outline-primary btn-lg" 
+                                        onclick="document.getElementById('catalogFiles').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choose Files
+                                </button>
+                            </div>
+                            
+                            <div class="file-preview" id="catalogPreview"></div>
+                            
+                            <div class="progress-container">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted">Uploading and organizing...</small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-upload w-100">
+                                <i class="fas fa-upload me-2"></i>Upload Catalog Images
+                            </button>
+                        </form>
+                        
+                        <div id="catalogResults" class="result-alert"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Big Picture Upload -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 feature-card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-images me-2"></i>Product Detail Images
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="bigPictureForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="bigPictureSku" class="form-label fw-bold">Product SKU</label>
+                                <input type="text" class="form-control form-control-lg" id="bigPictureSku" 
+                                       name="sku" placeholder="Enter SKU (e.g., T3305, N1151)" required>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Creates organized folder structure
+                                </small>
+                            </div>
+                            
+                            <div class="upload-zone" id="bigPictureDropzone">
+                                <div class="upload-icon">
+                                    <i class="fas fa-images"></i>
+                                </div>
+                                <h5>Drop detail images here</h5>
+                                <p class="text-muted">Colors, details, angles, lifestyle shots</p>
+                                <input type="file" id="bigPictureFiles" name="big_picture_files" 
+                                       multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" style="display: none;">
+                                <button type="button" class="btn btn-outline-success btn-lg" 
+                                        onclick="document.getElementById('bigPictureFiles').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choose Files
+                                </button>
+                            </div>
+                            
+                            <div class="file-preview" id="bigPicturePreview"></div>
+                            
+                            <div class="progress-container">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted">Uploading and organizing...</small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-upload w-100">
+                                <i class="fas fa-upload me-2"></i>Upload Detail Images
+                            </button>
+                        </form>
+                        
+                        <div id="bigPictureResults" class="result-alert"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZIP Upload Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card feature-card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-archive me-2"></i>Bulk ZIP Upload
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <form id="zipForm" enctype="multipart/form-data">
+                                    <div class="upload-zone" id="zipDropzone">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-file-archive"></i>
+                                        </div>
+                                        <h5>Drop ZIP archive here</h5>
+                                        <p class="text-muted">Automatic SKU detection and smart classification</p>
+                                        <input type="file" id="zipFile" name="zip_file" 
+                                               accept=".zip" style="display: none;">
+                                        <button type="button" class="btn btn-outline-warning btn-lg" 
+                                                onclick="document.getElementById('zipFile').click()">
+                                            <i class="fas fa-archive me-2"></i>Choose ZIP File
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="progress-container">
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted">Processing archive...</small>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-warning btn-upload">
+                                        <i class="fas fa-magic me-2"></i>Process ZIP Archive
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="fw-bold">ZIP Processing Features:</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Automatic SKU detection</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Smart image classification</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Folder structure preservation</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Duplicate handling</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div id="zipResults" class="result-alert"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-sync me-2"></i>System Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-outline-primary me-2 mb-2" onclick="syncDAM()">
+                            <i class="fas fa-database me-1"></i>Sync DAM
+                        </button>
+                        <button class="btn btn-outline-info me-2 mb-2" onclick="runAutoFilter()">
+                            <i class="fas fa-filter me-1"></i>Run Auto-Filter
+                        </button>
+                        <button class="btn btn-outline-secondary mb-2" onclick="viewLogs()">
+                            <i class="fas fa-file-alt me-1"></i>View Logs
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions</h6>
+                    </div>
+                    <div class="card-body">
+                        <small>
+                            <strong>Catalog Images:</strong> Product specs, dimensions, white background<br>
+                            <strong>Detail Images:</strong> Close-ups, colors, lifestyle shots<br>
+                            <strong>ZIP Upload:</strong> Bulk processing with automatic organization
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // File upload handling
+        function setupUploadZone(formId, fileInputId, dropzoneId, uploadUrl, resultContainerId, previewId) {
+            const form = document.getElementById(formId);
+            const fileInput = document.getElementById(fileInputId);
+            const dropzone = document.getElementById(dropzoneId);
+            const resultContainer = document.getElementById(resultContainerId);
+            const preview = document.getElementById(previewId);
+            
+            // Drag and drop events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight(e) {
+                dropzone.classList.add('dragover');
+            }
+            
+            function unhighlight(e) {
+                dropzone.classList.remove('dragover');
+            }
+            
+            dropzone.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInput.files = files;
+                updatePreview(files, preview);
+            }
+            
+            fileInput.addEventListener('change', function() {
+                updatePreview(this.files, preview);
+            });
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                const progressContainer = form.querySelector('.progress-container');
+                const progressBar = form.querySelector('.progress-bar');
+                
+                progressContainer.style.display = 'block';
+                
+                // Animate progress
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 30;
+                    if (progress > 90) progress = 90;
+                    progressBar.style.width = progress + '%';
+                }, 200);
+                
+                try {
+                    const response = await fetch(uploadUrl, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showResult(resultContainer, result.message, 'success');
+                        if (result.files && result.files.length > 0) {
+                            showFileList(resultContainer, result.files);
+                        }
+                        form.reset();
+                        if (preview) preview.innerHTML = '';
+                        updateUploadZoneDisplay(dropzone, false);
+                    } else {
+                        showResult(resultContainer, result.message, 'error');
+                    }
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    showResult(resultContainer, 'Upload failed: ' + error.message, 'error');
+                } finally {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }, 2000);
+                }
+            });
+        }
+        
+        function updatePreview(files, preview) {
+            if (!preview) return;
+            
+            preview.innerHTML = '';
+            
+            Array.from(files).forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <i class="fas fa-file-image file-icon"></i>
+                    <span class="flex-grow-1">${file.name}</span>
+                    <small class="text-muted">${formatFileSize(file.size)}</small>
+                `;
+                preview.appendChild(fileItem);
+            });
+        }
+        
+        function updateUploadZoneDisplay(dropzone, hasFiles) {
+            const icon = dropzone.querySelector('.upload-icon i');
+            const title = dropzone.querySelector('h5');
+            const subtitle = dropzone.querySelector('p');
+            
+            if (hasFiles) {
+                icon.className = 'fas fa-check-circle';
+                icon.style.color = '#28a745';
+                title.textContent = 'Files ready to upload';
+                subtitle.textContent = 'Click upload button to process';
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function showResult(container, message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            
+            container.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="${icon} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+        
+        function showFileList(container, files) {
+            const fileListHtml = files.map(file => `
+                <li class="list-group-item d-flex align-items-center">
+                    <i class="fas fa-check text-success me-2"></i>
+                    <span>${file}</span>
+                </li>
+            `).join('');
+            
+            container.innerHTML += `
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <small><i class="fas fa-list me-1"></i>Processed Files</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            ${fileListHtml}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // System action functions
+        function syncDAM() {
+            showSystemAction('Syncing DAM database...', 'info');
+            fetch('/sync_dam', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSystemAction('DAM sync completed successfully!', 'success');
+                    } else {
+                        showSystemAction('DAM sync failed: ' + data.message, 'error');
+                    }
+                });
+        }
+        
+        function runAutoFilter() {
+            showSystemAction('Running auto-filter...', 'info');
+            fetch('/run_auto_filter', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSystemAction(`Auto-filter completed! Processed ${data.count} files.`, 'success');
+                    } else {
+                        showSystemAction('Auto-filter failed: ' + data.message, 'error');
+                    }
+                });
+        }
+        
+        function viewLogs() {
+            window.open('/view_logs', '_blank');
+        }
+        
+        function showSystemAction(message, type) {
+            const container = document.querySelector('.container-fluid');
+            const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 5000);
+        }
+        
+        // Initialize upload zones
+        setupUploadZone('catalogForm', 'catalogFiles', 'catalogDropzone', '/upload_catalog', 'catalogResults', 'catalogPreview');
+        setupUploadZone('bigPictureForm', 'bigPictureFiles', 'bigPictureDropzone', '/upload_big_pictures', 'bigPictureResults', 'bigPicturePreview');
+        setupUploadZone('zipForm', 'zipFile', 'zipDropzone', '/upload_zip', 'zipResults', null);
+    </script>
+</body>
+</html>

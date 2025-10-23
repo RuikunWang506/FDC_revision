@@ -174,15 +174,34 @@ def register_dam_routes(app):
             return jsonify({"error": "Permission denied"}), 403
 
         file_name = request.form.get("file_name")
-        if file_name:
-            try:
-                original_path = os.path.join(Config.CATALOG_ORIGINAL, file_name)
-                if os.path.exists(original_path):
-                    os.remove(original_path)
-                    app.logger.info(f"{current_user} deleted {original_path}")
-                return jsonify({"message": "File deleted successfully"}), 200
-            except Exception as e:
-                app.logger.error(f"Error deleting file {file_name}: {e}")
-                return jsonify({"error": "Error deleting file"}), 500
-        else:
+        if not file_name:
             return jsonify({"error": "No file name provided"}), 400
+
+        try:
+            db = py.utilities.models.SessionLocal()
+            
+            # Find the asset by filename
+            asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                filename=file_name,
+                is_active=True
+            ).first()
+            
+            if not asset:
+                return jsonify({"error": "Asset not found in DAM system"}), 404
+            
+            # Soft delete: mark as inactive and set deleted_at timestamp
+            from datetime import datetime
+            asset.is_active = False
+            asset.deleted_at = datetime.utcnow()
+            
+            db.commit()
+            app.logger.info(f"{current_user} soft-deleted asset {asset.id} ({file_name})")
+            
+            return jsonify({"message": "Image deleted successfully"}), 200
+            
+        except Exception as e:
+            db.rollback()
+            app.logger.error(f"Error deleting image {file_name}: {e}")
+            return jsonify({"error": "Error deleting image"}), 500
+        finally:
+            db.close()

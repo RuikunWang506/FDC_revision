@@ -45,6 +45,7 @@ from py.other.master_audit import master_audit_bp
 from py.order.order_search import order_lookup_bp
 from py.order.macy_special import macy_bp
 from py.utilities.mysql_connector import mysql_connector_bp
+from py.utilities.image_upload_routes import image_upload_bp
 
 
 def register_routes(app):
@@ -68,6 +69,7 @@ def register_routes(app):
     app.register_blueprint(order_lookup_bp)
     app.register_blueprint(macy_bp)
     app.register_blueprint(mysql_connector_bp)
+    app.register_blueprint(image_upload_bp)
 
 
     app.permanent_session_lifetime = timedelta(days=30)

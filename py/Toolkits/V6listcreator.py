@@ -11,6 +11,8 @@ import pyodbc
 import pandas as pd
 from py.utilities.setting import Config
 from py.utilities.setting import resize_image
+from py.utilities.dam_utils import get_canonical_assets_for_skus, get_asset_url
+import py.utilities.models
 import datetime
 import mysql.connector
 from mysql.connector import Error
@@ -595,72 +597,40 @@ def get_images_for_selection(sku_list):
                 
                 image_set = []
                 
-                # Check for exact match with full SKU (with or without dash)
-                full_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{full_sku}.jpg")
-                if os.path.exists(full_image_path):
-                    image_set.append({
-                        'filename': f"{full_sku}.jpg",
-                        'path': f"/list_image/{full_sku}.jpg",
-                        'default': True
-                    })
+                # Use DAM system to find assets for this SKU
+                from py.utilities.dam_utils import search_assets_by_sku_pattern, get_asset_url
+                import py.utilities.models
                 
-                # If the SKU contains a dash, also check for the no-dash version
+                # Search for assets matching the full SKU - only catalog source for V6 list creator
+                matching_assets = search_assets_by_sku_pattern(full_sku, source_filter='catalog')
+                
+                # Also search for no-dash version if SKU contains dash
                 if '-' in full_sku:
                     no_dash_sku = full_sku.replace('-', '')
-                    no_dash_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{no_dash_sku}.jpg")
-                    if os.path.exists(no_dash_image_path):
-                        image_set.append({
-                            'filename': f"{no_dash_sku}.jpg",
-                            'path': f"/list_image/{no_dash_sku}.jpg",
-                            'default': len(image_set) == 0  # Default if no other image found
-                        })
+                    matching_assets.extend(search_assets_by_sku_pattern(no_dash_sku, source_filter='catalog'))
                 
-                # If the SKU doesn't contain a dash, also check for the dash version
+                # Also search for dash version if SKU doesn't contain dash
                 if '-' not in full_sku and len(full_sku) > len(base_sku):
-                    # Extract suffix and create dash version
                     suffix = full_sku[len(base_sku):]
                     dash_sku = f"{base_sku}-{suffix}"
-                    dash_image_path = os.path.join(Config.CATALOG_ORIGINAL, f"{dash_sku}.jpg")
-                    if os.path.exists(dash_image_path):
-                        image_set.append({
-                            'filename': f"{dash_sku}.jpg",
-                            'path': f"/list_image/{dash_sku}.jpg",
-                            'default': len(image_set) == 0  # Default if no other image found
-                        })
+                    matching_assets.extend(search_assets_by_sku_pattern(dash_sku, source_filter='catalog'))
                 
-                # Dynamically fetch all versioned images for both formats
-                for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                    # Check for versioned images with full SKU (with dash if present)
-                    versioned_match = re.match(rf'{re.escape(full_sku)}_v\d+\.jpg', filename, re.IGNORECASE)
-                    if versioned_match:
-                        image_set.append({
-                            'filename': filename,
-                            'path': f"/list_image/{filename}",
-                            'default': False
-                        })
-                    
-                    # If SKU has a dash, also check for no-dash versioned images
-                    if '-' in full_sku:
-                        no_dash_sku = full_sku.replace('-', '')
-                        no_dash_versioned_match = re.match(rf'{re.escape(no_dash_sku)}_v\d+\.jpg', filename, re.IGNORECASE)
-                        if no_dash_versioned_match:
-                            image_set.append({
-                                'filename': filename,
-                                'path': f"/list_image/{filename}",
-                                'default': False
-                            })
-                    
-                    # If SKU doesn't have a dash, also check for dash versioned images
-                    if '-' not in full_sku and len(full_sku) > len(base_sku):
-                        suffix = full_sku[len(base_sku):]
-                        dash_sku = f"{base_sku}-{suffix}"
-                        dash_versioned_match = re.match(rf'{re.escape(dash_sku)}_v\d+\.jpg', filename, re.IGNORECASE)
-                        if dash_versioned_match:
-                            image_set.append({
-                                'filename': filename,
-                                'path': f"/list_image/{filename}",
-                                'default': False
-                            })
+                # Remove duplicates by asset ID
+                unique_assets = {}
+                for asset in matching_assets:
+                    unique_assets[asset.id] = asset
+                matching_assets = list(unique_assets.values())
+                
+                # Sort by canonical first, then by version
+                matching_assets.sort(key=lambda x: (not x.is_canonical, x.version))
+                
+                # Convert assets to image_set format
+                for i, asset in enumerate(matching_assets):
+                    image_set.append({
+                        'filename': asset.filename,
+                        'path': get_asset_url(asset.id),
+                        'default': asset.is_canonical or (i == 0 and not any(a.is_canonical for a in matching_assets))
+                    })
 
                 # Add SKU and its images to the dictionary
                 if image_set:  # Only include SKUs that have images
@@ -682,25 +652,34 @@ def serve_dropbox_image(filename):
 
 @v6_listcreator_bp.route('/list_image/<path:filename>')
 def serve_list_image(filename):
-    image_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
+    # Use DAM system to find asset by filename
+    import py.utilities.models
     
-    # Check if image exists
-    if not os.path.exists(image_path):
-        return send_from_directory('static', 'no_image_available.jpg')
-    
-    # Get size parameter for optional resizing
-    size = request.args.get('size', 'full')
-    
-    if size == 'full':
-        return send_from_directory(Config.CATALOG_ORIGINAL, filename)
-    
+    db = py.utilities.models.SessionLocal()
     try:
-        # Resize image on demand
-        buffer = resize_image(image_path, int(size) if size.isdigit() else 300)
-        return send_file(buffer, mimetype='image/jpeg')
-    except Exception as e:
-        current_app.logger.error(f"Error serving image {filename}: {e}")
-        return send_from_directory('static', 'no_image_available.jpg')
+        asset = db.query(py.utilities.models.ImageAsset).filter_by(
+            filename=filename,
+            is_active=True
+        ).first()
+        
+        if not asset or not os.path.exists(asset.path):
+            return send_from_directory('static', 'no_image_available.jpg')
+        
+        # Get size parameter for optional resizing
+        size = request.args.get('size', 'full')
+        
+        if size == 'full':
+            return send_file(asset.path)
+        else:
+            try:
+                # Resize image on demand
+                buffer = resize_image(asset.path, int(size) if size.isdigit() else 300)
+                return send_file(buffer, mimetype='image/jpeg')
+            except Exception as e:
+                current_app.logger.error(f"Error serving image {filename}: {e}")
+                return send_from_directory('static', 'no_image_available.jpg')
+    finally:
+        db.close()
     
 def set_border(ws, cell_range):
     thin = Border(left=Side(style='thin'), right=Side(style='thin'),
@@ -772,9 +751,30 @@ def export_images():
             style = item['style']
             image_path = item['path']
             
-            if '/list_image/' in image_path:
-                image_path = re.sub(r'/list_image/', '', image_path)
-                full_path = os.path.join(Config.CATALOG_ORIGINAL, image_path)
+            if '/image/' in image_path:
+                # DAM system URL - extract asset ID
+                asset_id_match = re.search(r'/image/(\d+)/', image_path)
+                if asset_id_match:
+                    asset_id = int(asset_id_match.group(1))
+                    db = py.utilities.models.SessionLocal()
+                    try:
+                        asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
+                        full_path = asset.path if asset else None
+                    finally:
+                        db.close()
+                else:
+                    full_path = None
+            elif '/list_image/' in image_path:
+                # Legacy path format - get filename and find in DAM
+                filename = re.sub(r'/list_image/', '', image_path)
+                db = py.utilities.models.SessionLocal()
+                try:
+                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                        filename=filename, is_active=True
+                    ).first()
+                    full_path = asset.path if asset else None
+                finally:
+                    db.close()
             else:
                 # Handle dropbox path
                 full_path = image_path
@@ -837,14 +837,43 @@ def export_list():
             image_filename = item['image']
             price = item['price']
 
-            if '/list_image/' in image_filename:
-                image_filename = re.sub(r'/list_image/', '', image_filename)
-                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
+            # Handle DAM system URLs and legacy paths
+            image_path = None
+            if '/image/' in image_filename:
+                # DAM system URL - extract asset ID
+                asset_id_match = re.search(r'/image/(\d+)/', image_filename)
+                if asset_id_match:
+                    asset_id = int(asset_id_match.group(1))
+                    db = py.utilities.models.SessionLocal()
+                    try:
+                        asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
+                        image_path = asset.path if asset else None
+                    finally:
+                        db.close()
+            elif '/list_image/' in image_filename:
+                # Legacy path format
+                filename = re.sub(r'/list_image/', '', image_filename)
+                db = py.utilities.models.SessionLocal()
+                try:
+                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                        filename=filename, is_active=True
+                    ).first()
+                    image_path = asset.path if asset else None
+                finally:
+                    db.close()
             else:
-                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
+                # Direct filename - search in DAM
+                db = py.utilities.models.SessionLocal()
+                try:
+                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                        filename=image_filename, is_active=True
+                    ).first()
+                    image_path = asset.path if asset else None
+                finally:
+                    db.close()
 
-            if not os.path.exists(image_path):
-                current_app.logger.error(f"Image not found: {image_path}")
+            if not image_path or not os.path.exists(image_path):
+                current_app.logger.error(f"Image not found: {image_filename}")
                 image_path = os.path.join('static', 'no_image_available.jpg')
 
             if processing_image_size is not None:
@@ -974,10 +1003,32 @@ def export_pdf():
         style = item['style']
         image_path = item['path']
         
-        if '/list_image/' in image_path:
-            image_path = re.sub(r'/list_image/', '', image_path)
-            full_path = os.path.join(Config.CATALOG_ORIGINAL, image_path)
+        if '/image/' in image_path:
+            # DAM system URL - extract asset ID
+            asset_id_match = re.search(r'/image/(\d+)/', image_path)
+            if asset_id_match:
+                asset_id = int(asset_id_match.group(1))
+                db = py.utilities.models.SessionLocal()
+                try:
+                    asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
+                    full_path = asset.path if asset else None
+                finally:
+                    db.close()
+            else:
+                full_path = None
+        elif '/list_image/' in image_path:
+            # Legacy path format
+            filename = re.sub(r'/list_image/', '', image_path)
+            db = py.utilities.models.SessionLocal()
+            try:
+                asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                    filename=filename, is_active=True
+                ).first()
+                full_path = asset.path if asset else None
+            finally:
+                db.close()
         else:
+            # Handle dropbox path
             full_path = image_path
             
         if os.path.exists(full_path):
@@ -1172,15 +1223,43 @@ def export_lori_format():
             price = float(price_str) if price_str and price_str != 'N/A' else 0
             image_filename = item['image']
             
-            # Process image path
-            if '/list_image/' in image_filename:
-                image_filename = re.sub(r'/list_image/', '', image_filename)
-                image_path = os.path.join(Config.CATALOG_ORIGINAL, image_filename)
+            # Process image path using DAM system
+            image_path = None
+            if '/image/' in image_filename:
+                # DAM system URL - extract asset ID
+                asset_id_match = re.search(r'/image/(\d+)/', image_filename)
+                if asset_id_match:
+                    asset_id = int(asset_id_match.group(1))
+                    db = py.utilities.models.SessionLocal()
+                    try:
+                        asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
+                        image_path = asset.path if asset else None
+                    finally:
+                        db.close()
+            elif '/list_image/' in image_filename:
+                # Legacy path format
+                filename = re.sub(r'/list_image/', '', image_filename)
+                db = py.utilities.models.SessionLocal()
+                try:
+                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                        filename=filename, is_active=True
+                    ).first()
+                    image_path = asset.path if asset else None
+                finally:
+                    db.close()
             else:
-                image_path = image_filename
+                # Direct filename - search in DAM
+                db = py.utilities.models.SessionLocal()
+                try:
+                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                        filename=image_filename, is_active=True
+                    ).first()
+                    image_path = asset.path if asset else None
+                finally:
+                    db.close()
                 
-            if not os.path.exists(image_path):
-                current_app.logger.error(f"Image not found: {image_path}")
+            if not image_path or not os.path.exists(image_path):
+                current_app.logger.error(f"Image not found: {image_filename}")
                 image_path = os.path.join('static', 'no_image_available.jpg')
                 
             # Resize image if needed
