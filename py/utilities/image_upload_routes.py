@@ -10,6 +10,10 @@ import zipfile
 import tempfile
 from pathlib import Path
 import shutil
+from datetime import datetime
+
+from py.utilities.database_utils import get_mysql_connection
+from py.utilities.dam_sync_service_v2 import DAMSyncServiceV2
 
 image_upload_bp = Blueprint('image_upload', __name__)
 
@@ -35,6 +39,7 @@ def upload_catalog_images():
             return jsonify({'success': False, 'message': 'SKU is required'})
         
         uploaded_files = []
+        saved_paths = []
         catalog_dir = r"D:\Catalog_pictures\catalog_original"
         os.makedirs(catalog_dir, exist_ok=True)
         
@@ -57,10 +62,19 @@ def upload_catalog_images():
                 optimize_image(file_path)
                 
                 uploaded_files.append(new_filename)
+                saved_paths.append(file_path)
+
+        # Auto-record in DAM DB
+        if saved_paths:
+            try:
+                _record_catalog_uploads(saved_paths, sku)
+            except Exception as e:
+                # Log but don't fail the upload response
+                print(f"Auto-record (catalog) failed: {e}")
         
         return jsonify({
             'success': True, 
-            'message': f'Uploaded {len(uploaded_files)} catalog images for {sku}',
+            'message': f'Uploaded {len(uploaded_files)} catalog images for {sku}. Recorded in DAM.',
             'files': uploaded_files
         })
         
@@ -78,6 +92,7 @@ def upload_big_pictures():
             return jsonify({'success': False, 'message': 'SKU is required'})
         
         uploaded_files = []
+        saved_paths = []
         big_picture_dir = os.path.join(r"D:\Individual_big_picture", sku)
         os.makedirs(big_picture_dir, exist_ok=True)
         
@@ -97,10 +112,18 @@ def upload_big_pictures():
                 file.save(file_path)
                 optimize_image(file_path)
                 uploaded_files.append(os.path.basename(file_path))
+                saved_paths.append(file_path)
+
+        # Auto-record in DAM DB
+        if saved_paths:
+            try:
+                _record_big_picture_uploads(saved_paths, sku)
+            except Exception as e:
+                print(f"Auto-record (big_picture) failed: {e}")
         
         return jsonify({
             'success': True,
-            'message': f'Uploaded {len(uploaded_files)} big pictures for {sku}',
+            'message': f'Uploaded {len(uploaded_files)} big pictures for {sku}. Recorded in DAM.',
             'files': uploaded_files
         })
         
@@ -185,11 +208,160 @@ def process_extracted_files(temp_dir):
                     if organizer.is_catalog_image(str(file_path)):
                         organizer.process_catalog_image(str(file_path), sku)
                         processed_files.append(f"Catalog: {sku}/{file}")
+                        # Note: DAM DB recording for ZIP uploads is handled by full sync; per-file would require detecting exact dest path
                     else:
                         organizer.process_big_picture_image(str(file_path), sku)
                         processed_files.append(f"Big Picture: {sku}/{file}")
+                        # Note: DAM DB recording for ZIP uploads is handled by full sync
     
     return processed_files
+
+
+# ===== Helper functions: auto-record uploads into DAM DB =====
+def _get_image_info_and_hash(file_path: str):
+    svc = DAMSyncServiceV2()
+    info = svc.get_image_info(file_path)
+    sha256 = svc.calculate_file_hash(file_path) if info else None
+    return info, sha256
+
+def _record_catalog_uploads(file_paths, sku: str):
+    conn = get_mysql_connection()
+    if not conn:
+        raise RuntimeError('Cannot connect to MySQL')
+    cur = conn.cursor()
+    try:
+        for file_path in file_paths:
+            filename = os.path.basename(file_path)
+            info, sha256 = _get_image_info_and_hash(file_path)
+            if not info or not sha256:
+                continue
+            # Check existing by hash
+            cur.execute("SELECT id, source, path FROM image_assets WHERE sha256 = %s", (sha256,))
+            row = cur.fetchone()
+            if row:
+                img_id, existing_source, existing_path = row
+                if existing_source in ['dropbox', 'big_picture']:
+                    # Upgrade to catalog_original
+                    import re
+                    m = re.search(r'_v(\d+)', os.path.splitext(filename)[0])
+                    version = int(m.group(1)) if m else 1
+                    is_canonical = os.path.splitext(filename)[0] == sku
+                    cur.execute("""
+                        UPDATE image_assets SET 
+                            sku=%s, version=%s, filename=%s, path=%s, source=%s,
+                            width=%s, height=%s, file_size=%s,
+                            is_active=TRUE, is_canonical=%s, updated_at=%s
+                        WHERE id=%s
+                    """, (
+                        sku, version, filename, file_path, 'catalog_original',
+                        info['width'], info['height'], info['size_bytes'],
+                        is_canonical, datetime.now(), img_id
+                    ))
+                else:
+                    # Already catalog-original (or other), no action
+                    pass
+                continue
+            # Check by filename/source
+            cur.execute(
+                "SELECT id, is_active, path FROM image_assets WHERE filename=%s AND source=%s",
+                (filename, 'catalog_original')
+            )
+            row = cur.fetchone()
+            if row:
+                img_id, is_active, existing_path = row
+                if (not is_active) or (existing_path != file_path):
+                    cur.execute("""
+                        UPDATE image_assets SET 
+                            path=%s, is_active=TRUE,
+                            width=%s, height=%s, file_size=%s, sha256=%s, updated_at=%s
+                        WHERE id=%s
+                    """, (
+                        file_path, info['width'], info['height'], info['size_bytes'], sha256, datetime.now(), img_id
+                    ))
+                continue
+            # Insert new
+            import re
+            m = re.search(r'_v(\d+)', os.path.splitext(filename)[0])
+            version = int(m.group(1)) if m else 1
+            is_canonical = os.path.splitext(filename)[0] == sku
+            cur.execute("""
+                INSERT INTO image_assets
+                (sku, version, filename, path, source, width, height, file_size, sha256,
+                 is_active, is_canonical, created_at, updated_at)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                sku, version, filename, file_path, 'catalog_original',
+                info['width'], info['height'], info['size_bytes'], sha256,
+                True, is_canonical, datetime.now(), datetime.now()
+            ))
+        conn.commit()
+        # Update canonical for this SKU
+        _update_canonical_for_sku(conn, sku)
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+def _record_big_picture_uploads(file_paths, sku: str):
+    conn = get_mysql_connection()
+    if not conn:
+        raise RuntimeError('Cannot connect to MySQL')
+    cur = conn.cursor()
+    try:
+        for file_path in file_paths:
+            filename = os.path.basename(file_path)
+            info, sha256 = _get_image_info_and_hash(file_path)
+            if not info or not sha256:
+                continue
+            # If hash exists with higher or equal priority, skip
+            cur.execute("SELECT id, source FROM image_assets WHERE sha256=%s", (sha256,))
+            row = cur.fetchone()
+            if row:
+                _, existing_source = row
+                # Skip if duplicate content exists in any source
+                if existing_source in ['catalog_original', 'dropbox', 'big_picture']:
+                    continue
+            # If already exists by filename/source/sku, skip
+            cur.execute(
+                "SELECT id FROM image_assets WHERE filename=%s AND source=%s AND sku=%s",
+                (filename, 'big_picture', sku)
+            )
+            if cur.fetchone():
+                continue
+            # Insert new
+            cur.execute("""
+                INSERT INTO image_assets
+                (sku, version, filename, path, source, width, height, file_size, sha256,
+                 is_active, is_canonical, created_at, updated_at)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                sku, 1, filename, file_path, 'big_picture',
+                info['width'], info['height'], info['size_bytes'], sha256,
+                True, False, datetime.now(), datetime.now()
+            ))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+def _update_canonical_for_sku(conn, sku: str):
+    cur = conn.cursor()
+    try:
+        # Clear all canonical for SKU
+        cur.execute("UPDATE image_assets SET is_canonical=FALSE WHERE sku=%s", (sku,))
+        # Set best catalog_original (highest resolution)
+        cur.execute("""
+            SELECT id FROM image_assets
+            WHERE sku=%s AND source='catalog_original' AND is_active=TRUE
+            ORDER BY width*height DESC, filename ASC
+            LIMIT 1
+        """, (sku,))
+        row = cur.fetchone()
+        if row:
+            best_id = row[0]
+            cur.execute("UPDATE image_assets SET is_canonical=TRUE WHERE id=%s", (best_id,))
+    finally:
+        cur.close()
 
 
 @image_upload_bp.route('/sync_dam', methods=['POST'])
@@ -211,8 +383,8 @@ def sync_dam():
         # 1) Run Smart Auto-Filter (incremental fetch from Dropbox → catalog_original / big pictures)
         auto_filter_result = run_script('py/standalone/smart_auto_filter.py')
 
-        # 2) Run DAM Sync to update database from organized folders
-        dam_sync_result = run_script('py/utilities/dam_sync_service.py')
+        # 2) Run DAM Sync V2 to update database from organized folders (with catalog_original priority)
+        dam_sync_result = run_script('py/utilities/dam_sync_service_v2.py')
 
         # Prepare combined response
         success = (dam_sync_result.returncode == 0)

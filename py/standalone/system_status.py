@@ -151,7 +151,7 @@ def main():
     
     # Check if Flask app is running
     actions_needed.append("3. Start Flask app with: python app.py")
-    actions_needed.append("4. Access web interface at: http://localhost:8888/image_upload")
+    actions_needed.append("4. Access web interface at: http://localhost:5555/image_upload")
     
     if actions_needed:
         for action in actions_needed:

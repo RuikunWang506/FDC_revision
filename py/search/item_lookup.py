@@ -184,16 +184,16 @@ def item_lookup(user_input=None):
     # Prepare image and file information - Enhanced with DAM system
     search_terms = [term.split()[0].strip() for term in user_input.split(",")]
     
-    # First, try to get assets from DAM database - only catalog source for item lookup
+    # First, try to get assets from DAM database - only catalog_original source
     dam_assets = []
     try:
         db = py.utilities.models.SessionLocal()
         for term in search_terms:
-            # Query for assets matching the search term (case-insensitive) - only catalog source
+            # Query for assets matching the search term (case-insensitive) - only catalog_original source
             assets = db.query(ImageAsset).filter(
                 ImageAsset.sku.ilike(f'{term}%'),
                 ImageAsset.is_active == True,
-                ImageAsset.source == 'catalog'
+                ImageAsset.source == 'catalog_original'
             ).order_by(ImageAsset.version).all()
             dam_assets.extend(assets)
         
@@ -239,10 +239,10 @@ def item_lookup(user_input=None):
         sorted_image_urls, file_info = zip(*combined) if combined else ([], [])
         
     else:
-        # Use DAM system to search for assets - only catalog source for item lookup
+        # Use DAM system to search for assets - only catalog_original source for item lookup
         matching_assets = []
         for term in search_terms:
-            assets = search_assets_by_sku_pattern(term, source_filter='catalog')
+            assets = search_assets_by_sku_pattern(term, source_filter='catalog_original')
             matching_assets.extend(assets)
             
         # Remove duplicates by asset ID

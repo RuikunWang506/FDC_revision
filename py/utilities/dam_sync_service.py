@@ -99,7 +99,7 @@ class DAMSyncService:
                 # Check if already exists (and whether inactive)
                 cursor.execute(
                     "SELECT id, is_active, path FROM image_assets WHERE filename = %s AND source = %s",
-                    (filename, 'catalog')
+                    (filename, 'catalog_original')
                 )
                 existing = cursor.fetchone()
                 
@@ -109,7 +109,7 @@ class DAMSyncService:
                     continue
                 
                 sha256_hash = self.calculate_file_hash(str(file_path))
-                is_canonical = self.is_canonical_image(sku, filename, 'catalog')
+                is_canonical = self.is_canonical_image(sku, filename, 'catalog_original')
                 
                 # Determine version number from filename
                 version = 1
@@ -164,7 +164,7 @@ class DAMSyncService:
                     (sku, version, filename, path, source, width, height, file_size, sha256, is_active, is_canonical, created_at, updated_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    sku, version, filename, str(file_path), 'catalog',
+                    sku, version, filename, str(file_path), 'catalog_original',
                     image_info['width'], image_info['height'], image_info['size_bytes'],
                     sha256_hash, True, is_canonical,
                     datetime.now(), datetime.now()
@@ -229,7 +229,7 @@ class DAMSyncService:
                     cursor.execute("""
                         INSERT INTO image_assets 
                         (sku, version, filename, path, source, width, height, file_size, sha256, is_active, is_canonical, created_at, updated_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         sku, version, filename, str(file_path), 'big_picture',
                         image_info['width'], image_info['height'], image_info['size_bytes'],
@@ -279,7 +279,7 @@ class DAMSyncService:
         cursor = connection.cursor()
         
         # Check catalog images
-        cursor.execute("SELECT id, filename FROM image_assets WHERE source = 'catalog'")
+        cursor.execute("SELECT id, filename FROM image_assets WHERE source = 'catalog_original'")
         catalog_images = cursor.fetchall()
         
         deleted_count = 0
@@ -327,7 +327,7 @@ class DAMSyncService:
             cursor.execute("""
                 SELECT id, filename, width, height, source
                 FROM image_assets 
-                WHERE sku = %s AND source = 'catalog' AND is_active = TRUE
+                WHERE sku = %s AND source = 'catalog_original' AND is_active = TRUE
                 ORDER BY width * height DESC, filename ASC
             """, (sku,))
             

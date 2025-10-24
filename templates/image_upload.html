@@ -303,15 +303,13 @@
                         <h6 class="mb-0"><i class="fas fa-sync me-2"></i>System Actions</h6>
                     </div>
                     <div class="card-body">
-                        <button class="btn btn-outline-primary me-2 mb-2" onclick="syncDAM()">
-                            <i class="fas fa-database me-1"></i>Sync DAM
-                        </button>
-                        <button class="btn btn-outline-info me-2 mb-2" onclick="runAutoFilter()">
-                            <i class="fas fa-filter me-1"></i>Run Auto-Filter
-                        </button>
                         <button class="btn btn-outline-secondary mb-2" onclick="viewLogs()">
                             <i class="fas fa-file-alt me-1"></i>View Logs
                         </button>
+                        <div class="text-muted small mt-2">
+                            For Dropbox fetching and full DAM sync, use the DAM page.
+                            <a href="/dam/">Open DAM Control Panel</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -324,7 +322,8 @@
                         <small>
                             <strong>Catalog Images:</strong> Product specs, dimensions, white background<br>
                             <strong>Detail Images:</strong> Close-ups, colors, lifestyle shots<br>
-                            <strong>ZIP Upload:</strong> Bulk processing with automatic organization
+                            <strong>ZIP Upload:</strong> Bulk processing with automatic organization<br>
+                            <em>Note:</em> Uploads here are automatically recorded in the DAM database.
                         </small>
                     </div>
                 </div>
@@ -505,32 +504,6 @@
         }
         
         // System action functions
-        function syncDAM() {
-            showSystemAction('Syncing DAM database...', 'info');
-            fetch('/sync_dam', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showSystemAction('DAM sync completed successfully!', 'success');
-                    } else {
-                        showSystemAction('DAM sync failed: ' + data.message, 'error');
-                    }
-                });
-        }
-        
-        function runAutoFilter() {
-            showSystemAction('Running auto-filter...', 'info');
-            fetch('/run_auto_filter', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showSystemAction(`Auto-filter completed! Processed ${data.count} files.`, 'success');
-                    } else {
-                        showSystemAction('Auto-filter failed: ' + data.message, 'error');
-                    }
-                });
-        }
-        
         function viewLogs() {
             window.open('/view_logs', '_blank');
         }
