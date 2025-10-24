@@ -14,6 +14,16 @@ sys.path.insert(0, os.path.abspath('.'))
 
 from py.utilities.database_utils import get_mysql_connection
 
+# Ensure stdout/stderr can handle Unicode on Windows consoles
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    # Best-effort only; fall back silently if reconfigure isn't supported
+    pass
+
 class SmartAutoFilter:
     def __init__(self):
         from py.utilities.setting import Config

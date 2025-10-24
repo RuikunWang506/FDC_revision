@@ -194,28 +194,55 @@ def process_extracted_files(temp_dir):
 
 @image_upload_bp.route('/sync_dam', methods=['POST'])
 def sync_dam():
-    """Sync newly uploaded images with DAM database"""
+    """Run Smart Auto-Filter (fetch from Dropbox) then sync DAM database"""
     try:
-        # Import and run DAM sync service
         import subprocess
         import sys
-        
-        result = subprocess.run([
-            sys.executable, 
-            'py/utilities/dam_sync_service.py'
-        ], capture_output=True, text=True, cwd=os.getcwd())
-        
-        if result.returncode == 0:
-            return jsonify({
-                'success': True, 
-                'message': 'DAM synchronization completed successfully'
-            })
+
+        # Helper to run a Python script and capture output
+        def run_script(script_path):
+            return subprocess.run(
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                cwd=os.getcwd()
+            )
+
+        # 1) Run Smart Auto-Filter (incremental fetch from Dropbox → catalog_original / big pictures)
+        auto_filter_result = run_script('py/standalone/smart_auto_filter.py')
+
+        # 2) Run DAM Sync to update database from organized folders
+        dam_sync_result = run_script('py/utilities/dam_sync_service.py')
+
+        # Prepare combined response
+        success = (dam_sync_result.returncode == 0)
+
+        # Build a concise message; prefer stderr details if failures occur
+        messages = []
+        if auto_filter_result.returncode == 0:
+            messages.append('Smart Auto-Filter completed successfully.')
         else:
-            return jsonify({
-                'success': False, 
-                'message': f'DAM sync failed: {result.stderr}'
-            })
-            
+            messages.append(f"Smart Auto-Filter failed: {auto_filter_result.stderr.strip() or 'See server logs.'}")
+
+        if dam_sync_result.returncode == 0:
+            messages.append('DAM synchronization completed successfully.')
+        else:
+            messages.append(f"DAM sync failed: {dam_sync_result.stderr.strip() or 'See server logs.'}")
+
+        # Optionally include brief stdout tails for visibility
+        details = {
+            'auto_filter_stdout': auto_filter_result.stdout[-2000:],
+            'auto_filter_stderr': auto_filter_result.stderr[-2000:],
+            'dam_sync_stdout': dam_sync_result.stdout[-2000:],
+            'dam_sync_stderr': dam_sync_result.stderr[-2000:],
+        }
+
+        return jsonify({
+            'success': success,
+            'message': ' '.join(messages),
+            'details': details
+        })
+
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
@@ -229,7 +256,7 @@ def run_auto_filter():
         
         result = subprocess.run([
             sys.executable, 
-            'smart_auto_filter.py'
+            'py/standalone/smart_auto_filter.py'
         ], capture_output=True, text=True, cwd=os.getcwd())
         
         if result.returncode == 0:

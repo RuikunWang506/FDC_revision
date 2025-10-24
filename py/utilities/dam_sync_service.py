@@ -17,6 +17,16 @@ sys.path.insert(0, os.path.abspath('.'))
 from py.utilities.database_utils import get_mysql_connection
 from py.utilities.models import ImageAsset
 
+# Ensure stdout/stderr can handle Unicode on Windows consoles
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    # Best-effort only; fall back silently if reconfigure isn't supported
+    pass
+
 class DAMSyncService:
     def __init__(self):
         self.catalog_dir = r"D:\Catalog_pictures\catalog_original"
@@ -86,14 +96,12 @@ class DAMSyncService:
                     print(f"Could not extract SKU from {filename}")
                     continue
                 
-                # Check if already exists
+                # Check if already exists (and whether inactive)
                 cursor.execute(
-                    "SELECT id FROM image_assets WHERE filename = %s AND source = %s",
+                    "SELECT id, is_active, path FROM image_assets WHERE filename = %s AND source = %s",
                     (filename, 'catalog')
                 )
-                
-                if cursor.fetchone():
-                    continue  # Already exists
+                existing = cursor.fetchone()
                 
                 # Get image info
                 image_info = self.get_image_info(str(file_path))
@@ -110,6 +118,45 @@ class DAMSyncService:
                     match = re.search(r'_v(\d+)', filename)
                     if match:
                         version = int(match.group(1))
+                
+                if existing:
+                    # Reactivate and refresh metadata if previously inactive or path changed
+                    img_id, is_active, existing_path = existing
+                    try:
+                        cursor.execute(
+                            """
+                            UPDATE image_assets
+                            SET sku = %s,
+                                version = %s,
+                                path = %s,
+                                width = %s,
+                                height = %s,
+                                file_size = %s,
+                                sha256 = %s,
+                                is_active = TRUE,
+                                is_canonical = %s,
+                                updated_at = %s
+                            WHERE id = %s
+                            """,
+                            (
+                                sku,
+                                version,
+                                str(file_path),
+                                image_info['width'],
+                                image_info['height'],
+                                image_info['size_bytes'],
+                                sha256_hash,
+                                is_canonical,
+                                datetime.now(),
+                                img_id,
+                            )
+                        )
+                        # Only count as synced if we actually changed state from inactive or path/metadata differs
+                        synced_count += 1 if not is_active or existing_path != str(file_path) else 0
+                        print(f"Reactivated/updated catalog image: {filename} (SKU: {sku})")
+                    except Exception as e:
+                        print(f"Error updating existing record for {filename}: {e}")
+                    continue
                 
                 # Insert into database
                 cursor.execute("""

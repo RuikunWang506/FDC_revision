@@ -6,169 +6,683 @@
   <title>FDC Main Menu</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   <style>
-    .menu-theme {
-      background-color: #0b0f1a;
-      font-family: 'Segoe UI', sans-serif;
-      color: #0ff;
+    /* Scope all styles to dashboard only - avoid navbar conflicts */
+    .dashboard-wrapper {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      color: #e8f4fd;
+      min-height: 100vh;
+      padding-top: 70px; /* Account for fixed navbar */
     }
-    .menu-theme .main-title {
+    
+    .dashboard-wrapper * {
+      box-sizing: border-box;
+    }
+    
+    .dashboard-wrapper .main-title {
       text-align: center;
-      font-size: 2.5rem;
-      color: #0ff;
-    }
-    .menu-theme .sub-title {
-      grid-column: 1 / -1;
-      text-align: center;
-      color: #09eafa;
-      font-size: 1.5rem;
-      margin-top: -10px;
-    }
-    .menu-theme .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.5rem;
-      padding: 2rem;
-      max-width: 1200px;
-      margin: auto;
-    }
-    .menu-theme .card {
-      background: #121e2f;
-      border: 2px solid #00f0ff55;
-      border-radius: 15px;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: 0 0 15px #00f0ff44;
-      transition: transform 0.3s, box-shadow 0.3s;
-      position: relative;
-      color: #fff;
-      text-decoration: none;
-    }
-    .menu-theme .card:hover {
-      transform: translateY(-5px) scale(1.02);
-      box-shadow: 0 0 25px #00f0ffcc;
-    }
-    .menu-theme .card i {
-      font-size: 2.5rem;
+      font-size: 2.8rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #00d4ff, #1cc88a, #36b9cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 1rem;
-      color: #0ff;
-      transition: color 0.3s;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
     }
-    .menu-theme .card:hover i {
-      color: #1cc88a;
+    
+    .dashboard-wrapper .dashboard-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 3rem;
+      align-items: start;
     }
-    .menu-theme .card h3 {
-      margin-bottom: 0.5rem;
-      color: #0ff;
+    
+    /* Smart Navigation Panel */
+    .dashboard-wrapper .nav-panel {
+      background: rgba(18, 25, 38, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      position: sticky;
+      top: 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     }
-    .menu-theme .card p {
-      color: #b0dfff;
-      font-size: 0.95rem;
+    
+    .dashboard-wrapper .nav-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
     }
-    .menu-theme .badge {
+    
+    .dashboard-wrapper .nav-header h2 {
+      color: #00d4ff;
+      font-size: 1.3rem;
+      margin: 0;
+      font-weight: 600;
+    }
+    
+    .dashboard-wrapper .nav-header p {
+      color: #8892b0;
+      font-size: 0.9rem;
+      margin: 0.5rem 0 0 0;
+    }
+    
+    .dashboard-wrapper .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.2rem;
+      margin: 0.5rem 0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(26, 35, 50, 0.5);
+      border: 1px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .dashboard-wrapper .nav-item::before {
+      content: '';
       position: absolute;
-      top: 10px;
-      right: 10px;
-      background: linear-gradient(90deg, #ff0055, #ff9900, #ff0055);
-      background-size: 200% auto;
-      color: #fff;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+      transition: left 0.3s;
+    }
+    
+    .dashboard-wrapper .nav-item:hover::before {
+      left: 100%;
+    }
+    
+    .dashboard-wrapper .nav-item:hover {
+      background: rgba(0, 212, 255, 0.1);
+      border-color: rgba(0, 212, 255, 0.3);
+      transform: translateX(8px);
+      box-shadow: 0 8px 25px rgba(0, 212, 255, 0.2);
+    }
+    
+    .dashboard-wrapper .nav-item.active {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(28, 200, 138, 0.2));
+      border-color: #00d4ff;
+      transform: translateX(12px);
+      box-shadow: 0 12px 30px rgba(0, 212, 255, 0.3);
+    }
+    
+    .dashboard-wrapper .nav-item i {
+      font-size: 1.4rem;
+      color: #00d4ff;
+      margin-right: 1rem;
+      width: 24px;
+      text-align: center;
+    }
+    
+    .dashboard-wrapper .nav-item .nav-text h4 {
+      color: #e8f4fd;
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    
+    .dashboard-wrapper .nav-item .nav-text p {
+      color: #8892b0;
+      margin: 0;
+      font-size: 0.8rem;
+    }
+    
+    .dashboard-wrapper .nav-item .count {
+      margin-left: auto;
+      background: rgba(0, 212, 255, 0.2);
+      color: #00d4ff;
       padding: 2px 8px;
       border-radius: 12px;
-      font-size: 0.7rem;
-      animation: badgeGlow 3s linear infinite;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
-    @keyframes badgeGlow {
-      0% { background-position: 0% center; }
-      100% { background-position: 200% center; }
+    
+    /* Main Dashboard Grid */
+    .dashboard-wrapper .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      opacity: 0;
+      animation: fadeInUp 0.4s ease-out 0.1s forwards;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .dashboard-wrapper .tool-card {
+      background: rgba(18, 25, 38, 0.6);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(0, 240, 255, 0.15);
+      border-radius: 18px;
+      padding: 2rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .dashboard-wrapper .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00d4ff, #1cc88a, #36b9cc);
+      transform: scaleX(0);
+      transition: transform 0.2s ease;
+    }
+    
+    .dashboard-wrapper .tool-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .dashboard-wrapper .tool-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      background: rgba(0, 212, 255, 0.05);
+      border-color: rgba(0, 212, 255, 0.4);
+      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.15);
+    }
+    
+    .dashboard-wrapper .tool-card .card-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .dashboard-wrapper .tool-card i {
+      font-size: 2.2rem;
+      margin-right: 1rem;
+      background: linear-gradient(135deg, #00d4ff, #1cc88a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .dashboard-wrapper .tool-card h3 {
+      color: #e8f4fd;
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    
+    .dashboard-wrapper .tool-card p {
+      color: #8892b0;
+      font-size: 0.95rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+    
+    .dashboard-wrapper .tool-card .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    
+    .dashboard-wrapper .tool-card .category {
+      background: rgba(0, 212, 255, 0.1);
+      color: #00d4ff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .dashboard-wrapper .badge {
+      background: linear-gradient(45deg, #ff6b6b, #ff8e53, #ff6b6b);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      animation: pulse 1.5s infinite;
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    /* Category Colors */
+    .dashboard-wrapper .tool-card[data-category="core"] {
+      border-left: 4px solid #00d4ff;
+    }
+    
+    .dashboard-wrapper .tool-card[data-category="toolkit"] {
+      border-left: 4px solid #1cc88a;
+    }
+    
+    .dashboard-wrapper .tool-card[data-category="additional"] {
+      border-left: 4px solid #36b9cc;
+    }
+    
+    .dashboard-wrapper .tool-card[data-category="legacy"] {
+      border-left: 4px solid #8892b0;
+      opacity: 0.8;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .dashboard-wrapper .dashboard-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      .dashboard-wrapper .nav-panel {
+        position: relative;
+        top: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-wrapper .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+      }
+      .dashboard-wrapper .tool-card {
+        height: 180px;
+        padding: 1.5rem;
+      }
     }
 
   </style>
 </head>
-<body class="menu-theme">
+<body>
   {% include 'navbar.html' %}
 
-
-  <!-- Main Content -->
-  <div class="main-content" id="mainContent">
-    <div class="main-title">FDC Main Menu </div>
-    <div class="sub-title">Session enabled</div>
-    <div class="container">
-      <div class="sub-title">
-          — Find SKU  —
-          <div class="sub-title"> 找款 </div>
+  <!-- Dashboard Wrapper - Scoped styles to avoid navbar conflicts -->
+  <div class="dashboard-wrapper">
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+    <div class="main-title">FDC Command Center</div>
+    
+    <div class="dashboard-container">
+      <!-- Smart Navigation Panel -->
+      <div class="nav-panel">
+        <div class="nav-header">
+          <h2>Quick Access</h2>
+          <p>Navigate by category</p>
+        </div>
+        
+        <div class="nav-item active" onclick="filterCategory('all')">
+          <i class="fas fa-th-large"></i>
+          <div class="nav-text">
+            <h4>All Tools</h4>
+            <p>Show everything</p>
+          </div>
+          <span class="count">16</span>
+        </div>
+        
+        <div class="nav-item" onclick="filterCategory('core')">
+          <i class="fas fa-star"></i>
+          <div class="nav-text">
+            <h4>Core Search</h4>
+            <p>核心搜索功能</p>
+          </div>
+          <span class="count">4</span>
+        </div>
+        
+        <div class="nav-item" onclick="filterCategory('toolkit')">
+          <i class="fas fa-tools"></i>
+          <div class="nav-text">
+            <h4>Toolkits</h4>
+            <p>工具包</p>
+          </div>
+          <span class="count">4</span>
+        </div>
+        
+        <div class="nav-item" onclick="filterCategory('additional')">
+          <i class="fas fa-plus-circle"></i>
+          <div class="nav-text">
+            <h4>Additional Tools</h4>
+            <p>附加工具</p>
+          </div>
+          <span class="count">6</span>
+        </div>
+        
+        <div class="nav-item" onclick="filterCategory('legacy')">
+          <i class="fas fa-archive"></i>
+          <div class="nav-text">
+            <h4>Legacy Services</h4>
+            <p>旧服务</p>
+          </div>
+          <span class="count">2</span>
+        </div>
       </div>
-      <a href="{{ url_for('item_lookup.item_lookup') }}" class="card">
-        <i class="fas fa-search"></i>
-        <h3>Item Lookup</h3>
-        <p>Find products and styles</p>
-      </a>
-      <a href="/location_service" class="card">
-        <i class="fas fa-map-marker-alt"></i>
-        <h3>Location Service</h3>
-        <p>Find item locations in warehouse</p>
-      </a>
-      <a href="/mobile" class="card">
-        <i class="fas fa-mobile-alt"></i>
-        <h3>Mobile View</h3>
-        <p>Mobile-friendly product lookup</p>
-      </a>
-      <a href="/product_image" class="card">
-          <i class="fas fa-image"></i>
-          <h3>Big Images</h3>
-          <p>Download high-resolution product images</p>
+      
+      <!-- Main Dashboard Grid -->
+      <div class="dashboard-grid" id="toolGrid">
+        
+        <!-- Core Functions -->
+        <a href="{{ url_for('item_lookup.item_lookup') }}" class="tool-card" data-category="core">
+          <div class="card-header">
+            <i class="fas fa-search"></i>
+            <h3>SKU/STYLE Lookup</h3>
+          </div>
+          <p>Advanced product and style search with intelligent filtering and real-time results</p>
+          <div class="card-footer">
+            <span class="category">Core</span>
+          </div>
         </a>
-      <div class="sub-title">
-          — Office Processing  —
-          <div class="sub-title"> 打单，做单 </div>
+        
+        <a href="{{ url_for('order_lookup.order_lookup') }}" class="tool-card" data-category="core">
+          <div class="card-header">
+            <i class="fas fa-file-invoice"></i>
+            <h3>Sales Orders</h3>
+          </div>
+          <p>Find, manage and print sales orders with advanced search capabilities</p>
+          <div class="card-footer">
+            <span class="category">Core</span>
+            <span class="badge">Jennifer专用</span>
+          </div>
+        </a>
+        
+        <a href="/product_image" class="tool-card" data-category="core">
+          <div class="card-header">
+            <i class="fas fa-image"></i>
+            <h3>Product Images</h3>
+          </div>
+          <p>Download high-resolution product images and manage visual assets</p>
+          <div class="card-footer">
+            <span class="category">Core</span>
+          </div>
+        </a>
+        
+        <a href="/customer" class="tool-card" data-category="core">
+          <div class="card-header">
+            <i class="fas fa-users"></i>
+            <h3>Customer Analytics</h3>
+          </div>
+          <p>View detailed customer purchase history and behavior insights</p>
+          <div class="card-footer">
+            <span class="category">Core</span>
+          </div>
+        </a>
+        
+        <!-- Toolkits -->
+        <a href="/v6_listcreator" class="tool-card" data-category="toolkit">
+          <div class="card-header">
+            <i class="fas fa-list-ol"></i>
+            <h3>List Creator V6.2</h3>
+          </div>
+          <p>Create sophisticated product lists with advanced filtering and export options</p>
+          <div class="card-footer">
+            <span class="category">Toolkit</span>
+          </div>
+        </a>
+        
+        <a href="/order_processor" class="tool-card" data-category="toolkit">
+          <div class="card-header">
+            <i class="fas fa-edit"></i>
+            <h3>Order Processor</h3>
+          </div>
+          <p>Edit invoice prices, quantities and bulk import to OMS system</p>
+          <div class="card-footer">
+            <span class="category">Toolkit</span>
+          </div>
+        </a>
+        
+        <a href="/lori_automation/loris_fedex" class="tool-card" data-category="toolkit">
+          <div class="card-header">
+            <i class="fas fa-robot"></i>
+            <h3>Loris Automation</h3>
+          </div>
+          <p>Automated workflow management and intelligent process optimization</p>
+          <div class="card-footer">
+            <span class="category">Toolkit</span>
+          </div>
+        </a>
+        
+        <a href="/container" class="tool-card" data-category="toolkit">
+          <div class="card-header">
+            <i class="fas fa-book"></i>
+            <h3>Container Import</h3>
+          </div>
+          <p>Process container import files and integrate with OMS workflows</p>
+          <div class="card-footer">
+            <span class="category">Toolkit</span>
+          </div>
+        </a>
+        
+        <!-- Additional Tools -->
+        <a href="/image_upload" class="tool-card" data-category="additional">
+          <div class="card-header">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Smart Image Upload</h3>
+          </div>
+          <p>Bulk upload and AI-powered organization of product images</p>
+          <div class="card-footer">
+            <span class="category">Additional</span>
+            <span class="badge">NEW</span>
+          </div>
+        </a>
+        
+        <a href="/boat" class="tool-card" data-category="additional">
+          <div class="card-header">
+            <i class="fas fa-ship"></i>
+            <h3>Shipping Intelligence</h3>
+          </div>
+          <p>Real-time boat status tracking and shipping schedule optimization</p>
+          <div class="card-footer">
+            <span class="category">Additional</span>
+          </div>
+        </a>
+        
+        <a href="/audit" class="tool-card" data-category="additional">
+          <div class="card-header">
+            <i class="fas fa-clipboard-check"></i>
+            <h3>Master Audit</h3>
+          </div>
+          <p>Comprehensive system auditing and compliance tracking tools</p>
+          <div class="card-footer">
+            <span class="category">Additional</span>
+          </div>
+        </a>
+        
+        <a href="/manage_users" class="tool-card" data-category="additional">
+          <div class="card-header">
+            <i class="fas fa-users-cog"></i>
+            <h3>User Management</h3>
+          </div>
+          <p>Manage user accounts, permissions and access control settings</p>
+          <div class="card-footer">
+            <span class="category">Additional</span>
+          </div>
+        </a>
+        
+        <a href="/warehousemap" class="tool-card" data-category="additional">
+          <div class="card-header">
+            <i class="fas fa-map"></i>
+            <h3>Warehouse Map</h3>
+          </div>
+          <p>Interactive warehouse layout and location mapping system</p>
+          <div class="card-footer">
+            <span class="category">Additional</span>
+          </div>
+        </a>
+        
+        <a href="/master_image_viewer" class="tool-card" data-category="additional">
+          <div class="card-header">
+            <i class="fas fa-images"></i>
+            <h3>Master Image Viewer</h3>
+          </div>
+          <p>Search and view all images for any SKU across all sources with zoom</p>
+          <div class="card-footer">
+            <span class="category">Additional</span>
+            <span class="badge">NEW</span>
+          </div>
+        </a>
+        
+        <!-- Legacy Services -->
+        <a href="/mobile" class="tool-card" data-category="legacy">
+          <div class="card-header">
+            <i class="fas fa-mobile-alt"></i>
+            <h3>Mobile View</h3>
+          </div>
+          <p>Legacy mobile-friendly product lookup interface</p>
+          <div class="card-footer">
+            <span class="category">Legacy</span>
+          </div>
+        </a>
+        
+        <a href="/location_service" class="tool-card" data-category="legacy">
+          <div class="card-header">
+            <i class="fas fa-map-marker-alt"></i>
+            <h3>Location Service</h3>
+          </div>
+          <p>Find item locations in warehouse using legacy mapping system</p>
+          <div class="card-footer">
+            <span class="category">Legacy</span>
+          </div>
+        </a>
+        
       </div>
-      <a href="{{ url_for('order_lookup.order_lookup') }}" class="card">
-        <i class="fas fa-file-invoice"></i>
-        <h3>Order Lookup</h3>
-        <p>Jennifer专用 - Find and print orders</p>
-        <div class="badge">Jennifer专用</div>
-      </a>
-      <a href="/v6_listcreator" class="card">
-          <i class="fas fa-list-ol"></i>
-          <h3>List Creator V6.2 </h3>
-          <p>Create product lists</p>
-        </a>
-        <a href="/lori_automation/loris_fedex" class="card">
-          <i class="fas fa-robot"></i>
-          <h3>洛瑞丝庄园V2</h3>
-          <p>Lori Automation</p>
-        </a>
-        <a href="/order_processor" class="card">
-          <i class="fas fa-edit"></i>
-          <h3>订单机</h3>
-          <p>Edit invoice prices/quantities <br>改价格，excel导入oms </p>
-        </a>
-      <div class="sub-title">
-          — Customer，orders —
-          <div class="sub-title"> 客户信息，订单信息 </div>
-      </div>
-      <a href="/customer" class="card">
-        <i class="fas fa-users"></i>
-        <h3>Customer</h3>
-        <p>View customer purchase history</p>
-      </a>
-      <div class="sub-title">
-          — Boat  —
-          <div class="sub-title"> 船期 </div>
-      </div>
-      <a href="/boat" class="card">
-        <i class="fas fa-ship"></i>
-        <h3>Boat Service</h3>
-        <p>Check shipping boat status and schedules</p>
-      </a>
-      <a href="/container" class="card">
-          <i class="fas fa-book"></i>
-            <h3>Container file</h3>
-          <p>Container import files for oms</p>
-      </a>
     </div>
+  </div>
   </div>
 
   {% include 'footer.html' %}
 
+  <script>
+    let currentFilter = 'all';
+    
+    function filterCategory(category) {
+      currentFilter = category;
+      
+      // Update navigation active state
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.target.closest('.nav-item').classList.add('active');
+      
+      // Filter cards with animation
+      const cards = document.querySelectorAll('.tool-card');
+      const grid = document.getElementById('toolGrid');
+      
+      // Fade out all cards
+      cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+      });
+      
+      setTimeout(() => {
+        cards.forEach((card, index) => {
+          const cardCategory = card.getAttribute('data-category');
+          
+          if (category === 'all' || cardCategory === category) {
+            card.style.display = 'flex';
+            setTimeout(() => {
+              card.style.opacity = '1';
+              card.style.transform = 'translateY(0)';
+            }, index * 25);
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }, 100);
+      
+      // Add visual feedback
+      addFilterFeedback(category);
+    }
+    
+    function addFilterFeedback(category) {
+      const categoryNames = {
+        'all': 'All Tools',
+        'core': 'Core Functions',
+        'toolkit': 'Toolkits', 
+        'additional': 'Additional Tools',
+        'legacy': 'Legacy Services'
+      };
+      
+      // Create feedback element
+      const feedback = document.createElement('div');
+      feedback.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 212, 255, 0.9);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: 600;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      `;
+      feedback.textContent = `Showing: ${categoryNames[category]}`;
+      
+      document.body.appendChild(feedback);
+      
+      // Animate in
+      setTimeout(() => feedback.style.opacity = '1', 5);
+      
+      // Remove after delay
+      setTimeout(() => {
+        feedback.style.opacity = '0';
+        setTimeout(() => document.body.removeChild(feedback), 200);
+      }, 1000);
+    }
+    
+    // Initialize with smooth card entrance animation
+    document.addEventListener('DOMContentLoaded', function() {
+      const cards = document.querySelectorAll('.tool-card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+          card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 50 + 200);
+      });
+    });
+    
+    // Add search functionality
+    function searchTools(query) {
+      const cards = document.querySelectorAll('.tool-card');
+      const searchTerm = query.toLowerCase();
+      
+      cards.forEach(card => {
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        const description = card.querySelector('p').textContent.toLowerCase();
+        
+        if (title.includes(searchTerm) || description.includes(searchTerm)) {
+          card.style.display = 'flex';
+          card.style.opacity = '1';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
 
 </body>
 </html>

@@ -111,6 +111,16 @@ def register_dam_routes(app):
             if not os.path.exists(asset.path):
                 return jsonify({'error': 'Image file not found'}), 404
 
+            # If width is 0, serve original image
+            if width == 0:
+                # Determine MIME type based on file extension
+                import mimetypes
+                mime_type, _ = mimetypes.guess_type(asset.path)
+                if not mime_type:
+                    mime_type = 'application/octet-stream'
+                
+                return send_file(asset.path, mimetype=mime_type, as_attachment=False)
+            
             # Resize image on demand
             resized_image = resize_image(asset.path, width)
 
