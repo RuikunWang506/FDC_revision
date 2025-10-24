@@ -254,6 +254,12 @@
                 } else {
                     $('#nullEntries').collapse('hide'); // Hide if there are none
                 }
+                
+                // Auto-click the first customer ID link if there's only one valid result
+                if (response.data.length === 1) {
+                    const firstResult = response.data[0];
+                    getCustomerDetails(firstResult.cus_id, firstResult.database_origin);
+                }
             } else {
                 resultsDiv.innerHTML = `<div class='alert alert-danger'>${response.message}</div>`;
             }
@@ -397,6 +403,19 @@
             const visible = table.style.display === 'block';
             table.style.display = visible ? 'none' : 'block';
             this.textContent = (visible ? '▶' : '▼') + ' Customers Without Valid Orders';
+        });
+
+        // Auto-fill and search if URL hash is present
+        $(document).ready(function() {
+            const hash = window.location.hash;
+            if (hash && hash.length > 1) {
+                // Remove the # and get the customer ID
+                const customerId = hash.substring(1);
+                // Fill the input field
+                $('#customerNameInput').val(customerId);
+                // Automatically trigger the search
+                checkCustomerId();
+            }
         });
     </script>
 </body>
