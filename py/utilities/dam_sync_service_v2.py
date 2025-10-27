@@ -80,7 +80,13 @@ class DAMSyncServiceV2:
                     'size_bytes': os.path.getsize(file_path)
                 }
         except Exception as e:
-            print(f"Error reading image {file_path}: {e}")
+            print(f"Error reading image {file_path}: {e}", file=sys.stderr)
+            print(f"Removing corrupted image: {file_path}")
+            try:
+                os.remove(file_path)
+                print(f"Successfully removed corrupted image: {file_path}")
+            except Exception as remove_error:
+                print(f"Error removing corrupted image {file_path}: {remove_error}", file=sys.stderr)
             return None
     
     def extract_sku_from_filename(self, filename):

@@ -304,7 +304,20 @@ class SmartAutoFilter:
         print(f"📖 Catalog images: {catalog_count}")
         print(f"🖼️  Big pictures: {big_picture_count}")
         print(f"⚡ Processing time: Minimal (incremental)")
+        
+        # Flush stdout/stderr before exit to prevent errors
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 if __name__ == "__main__":
-    filter_service = SmartAutoFilter()
-    filter_service.run_incremental_filter()
+    try:
+        filter_service = SmartAutoFilter()
+        filter_service.run_incremental_filter()
+        
+        # Ensure clean exit
+        sys.stdout.flush()
+        sys.stderr.flush()
+    except Exception as e:
+        print(f"Error in Smart Auto-Filter: {e}", file=sys.stderr)
+        sys.stderr.flush()
+        sys.exit(1)

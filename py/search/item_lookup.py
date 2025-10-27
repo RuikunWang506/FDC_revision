@@ -184,17 +184,26 @@ def item_lookup(user_input=None):
     # Prepare image and file information - Enhanced with DAM system
     search_terms = [term.split()[0].strip() for term in user_input.split(",")]
     
+    # Determine if we should filter to canonical only (when multiple SKUs with comma)
+    has_comma = ',' in user_input
+    
     # First, try to get assets from DAM database - only catalog_original source
     dam_assets = []
     try:
         db = py.utilities.models.SessionLocal()
         for term in search_terms:
-            # Query for assets matching the search term (case-insensitive) - only catalog_original source
-            assets = db.query(ImageAsset).filter(
+            # Build query - only filter canonical if input has comma (multiple SKUs)
+            query = db.query(ImageAsset).filter(
                 ImageAsset.sku.ilike(f'{term}%'),
                 ImageAsset.is_active == True,
                 ImageAsset.source == 'catalog_original'
-            ).order_by(ImageAsset.version).all()
+            )
+            
+            # Only filter to canonical images if input has comma
+            if has_comma:
+                query = query.filter(ImageAsset.is_canonical == True)
+            
+            assets = query.order_by(ImageAsset.version).all()
             dam_assets.extend(assets)
         
         # Remove duplicates based on filename
@@ -251,12 +260,22 @@ def item_lookup(user_input=None):
             unique_assets[asset.id] = asset
         matching_assets = list(unique_assets.values())
         
+        # Filter to only canonical images if input has comma (multiple SKUs)
+        if has_comma:
+            canonical_assets = [asset for asset in matching_assets if asset.is_canonical]
+            # If no canonical assets found, fall back to all assets
+            if not canonical_assets:
+                canonical_assets = matching_assets
+        else:
+            # Single SKU - show all images
+            canonical_assets = matching_assets
+        
         # Convert assets to file_info format expected by template
         file_info = []
         file_names = []
         sorted_image_urls = []
         
-        for asset in matching_assets:
+        for asset in canonical_assets:
             file_names.append(asset.filename)
             
             # Get file size if path exists

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bag Style Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <style>
+        .container { max-width: 95% !important; }
+        .style-card { border: 1px solid #e5e5e5; border-radius: 6px; padding: 10px; margin-bottom: 12px; }
+        .style-img { width: 100%; height: auto; max-height: 250px; object-fit: contain; background: #fafafa; border: 1px solid #eee; display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+        .top-actions { display:flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        
+        /* Image Modal Styles */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        }
+        .image-modal.show { display: block !important; }
+        body.modal-open { overflow: hidden !important; }
+        
+        .modal-content-custom {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+        }
+        .modal-main-custom {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px;
+        }
+        .modal-image-container-custom {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .modal-image-custom {
+            max-width: 100%;
+            max-height: calc(100vh - 160px);
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        .modal-sidebar-custom {
+            width: 380px;
+            min-width: 380px;
+            background: rgba(26, 35, 50, 0.98);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            overflow-y: auto;
+            color: #e8f4fd;
+        }
+        .modal-header-custom {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-filename-custom {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #00d4ff;
+        }
+        .modal-details-custom {
+            color: #e8f4fd;
+        }
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+        .detail-section h4 {
+            color: #00d4ff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .detail-label {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+        .detail-value {
+            color: #e6f1ff;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .modal-close-custom {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1.5rem;
+            z-index: 10002;
+        }
+        .modal-close-custom:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        .modal-nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1.8rem;
+            z-index: 10002;
+            transition: all 0.2s;
+        }
+        .modal-nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .modal-nav-arrow.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .modal-nav-arrow.disabled:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-50%);
+        }
+        .modal-nav-left {
+            left: 2rem;
+        }
+        .modal-nav-right {
+            right: 420px; /* Sidebar width + padding */
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container mt-3">
+        <h3>Bag Style Viewer</h3>
+        <div class="top-actions my-2">
+            <form method="get" action="{{ url_for('bag_style_viewer.index') }}" class="form-inline" id="mainForm">
+                <label class="mr-2">Select Description:</label>
+                <select name="description" class="form-control mr-2" onchange="this.form.submit()">
+                    <option value="">-- Choose --</option>
+                    {% for d in descriptions %}
+                        <option value="{{ d }}" {% if selected_desc == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+                
+                <label class="mr-2">Stock Filter:</label>
+                <select name="stock_filter" class="form-control mr-2" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    <option value="instock" {% if stock_filter == 'instock' %}selected{% endif %}>In Stock Only</option>
+                    <option value="ocean" {% if stock_filter == 'ocean' %}selected{% endif %}>Ocean Only</option>
+                    <option value="both" {% if stock_filter == 'both' %}selected{% endif %}>Both Stock & Ocean</option>
+                </select>
+            </form>
+
+            <form method="get" action="{{ url_for('bag_style_viewer.index') }}" class="form-inline">
+                <input type="hidden" name="description" value="{{ selected_desc or '' }}">
+                <input type="hidden" name="stock_filter" value="{{ stock_filter or '' }}">
+                <input type="text" class="form-control mr-2" name="sku" placeholder="Search SKU (e.g., L1343M)" value="{{ request.args.get('sku','') }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+
+            <button class="btn btn-success" onclick="window.location='{{ url_for('bag_style_viewer.export_template') }}'">Download Template</button>
+
+            <form id="uploadForm" class="form-inline" onsubmit="return false;">
+                <input type="file" id="uploadFile" class="form-control-file mr-2" accept=".xlsx,.xls">
+                <button class="btn btn-warning" onclick="uploadTemplate()">Upload Template</button>
+            </form>
+        </div>
+
+        {% if search_result %}
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <img src="{{ search_result.image }}" class="style-img mr-3" alt="image">
+                <div>
+                    <div><strong>SKU:</strong> {{ search_result.style }}</div>
+                    <div><strong>Description:</strong> {{ search_result.description }}</div>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="openEdit('{{ search_result.style }}')">Edit Description</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if selected_desc %}
+        <h5 class="mt-3">Styles for "{{ selected_desc }}" ({{ styles|length }})</h5>
+        <div class="grid">
+            {% for s in styles %}
+            <div class="style-card">
+                <div class="text-center">
+                    <img src="{{ s.image }}" class="style-img" alt="{{ s.style }}" onclick="openImageModal('{{ s.style }}', '{{ s.image }}', '{{ s.description }}')" style="cursor: pointer;">
+                </div>
+                <div class="mt-2"><strong>{{ s.style }}</strong></div>
+                <div class="text-muted small">{{ s.description }}</div>
+                <button class="btn btn-sm btn-outline-primary mt-2" onclick="openEdit('{{ s.style }}')">Edit Description</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Image Modal with Stock Info -->
+    <div class="image-modal" id="imageModal">
+        <div class="modal-content-custom">
+            <button class="modal-close-custom" onclick="closeImageModal()">
+                <i class="fas fa-times">x</i>
+            </button>
+            
+            <button class="modal-nav-arrow modal-nav-left" id="modalNavLeft" onclick="navigateModal(-1)">
+                <i class="fas fa-chevron-left">⬅️</i>
+            </button>
+            
+            <button class="modal-nav-arrow modal-nav-right" id="modalNavRight" onclick="navigateModal(1)">
+                <i class="fas fa-chevron-right">➡️</i>
+            </button>
+            
+            <div class="modal-main-custom">
+                <div class="modal-image-container-custom">
+                    <img class="modal-image-custom" id="modalImage" src="" alt="">
+                </div>
+            </div>
+            
+            <div class="modal-sidebar-custom">
+                <div class="modal-header-custom">
+                    <div class="modal-filename-custom" id="modalFilename"></div>
+                </div>
+                
+                <div class="modal-details-custom" id="modalDetails">
+                    <div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading stock info...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Modify Description</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div><strong>Style:</strong> <span id="editStyle"></span></div>
+            <label class="mt-2">Select Description</label>
+            <select id="editDesc" class="form-control">
+                {% for d in descriptions %}
+                    <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="saveEdit()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<script>
+let currentStyle = null;
+function openEdit(style){
+    currentStyle = style;
+    document.getElementById('editStyle').innerText = style;
+    $('#editModal').modal('show');
+}
+function saveEdit(){
+    const desc = document.getElementById('editDesc').value;
+    fetch('{{ url_for('bag_style_viewer.update_description') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ style: currentStyle, description: desc })
+    }).then(r => r.json()).then(d => {
+        if(d.success){
+            location.reload();
+        }else{
+            alert('Update failed');
+        }
+    }).catch(() => alert('Update failed'));
+}
+function uploadTemplate(){
+    const f = document.getElementById('uploadFile').files[0];
+    if(!f){ alert('Choose a file'); return; }
+    const fd = new FormData();
+    fd.append('file', f);
+    fetch('{{ url_for('bag_style_viewer.upload_template') }}', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(d => {
+            if(d.success){
+                alert('Upload processed. Rows applied: ' + (d.applied ? d.applied.length : 0));
+                location.reload();
+            } else {
+                alert('Upload failed: ' + (d.message || '')); }
+        })
+        .catch(() => alert('Upload failed'));
+}
+
+// Global variables for modal navigation
+let currentModalIndex = 0;
+let modalStylesData = [];
+
+function openImageModal(style, imageUrl, description) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalFilename = document.getElementById('modalFilename');
+    const modalDetails = document.getElementById('modalDetails');
+    
+    // Build styles array from the DOM if not already built
+    if (modalStylesData.length === 0) {
+        const styleCards = document.querySelectorAll('.style-card img');
+        styleCards.forEach(img => {
+            const styleMatch = img.getAttribute('onclick').match(/'([^']+)'/g);
+            if (styleMatch && styleMatch.length >= 3) {
+                modalStylesData.push({
+                    style: styleMatch[0].replace(/'/g, ''),
+                    image: styleMatch[1].replace(/'/g, ''),
+                    description: styleMatch[2].replace(/'/g, '')
+                });
+            }
+        });
+    }
+    
+    // Find current index
+    currentModalIndex = modalStylesData.findIndex(item => item.style === style);
+    if (currentModalIndex === -1) currentModalIndex = 0;
+    
+    // Load the image and data
+    loadModalContent(currentModalIndex);
+    
+    // Show modal
+    modal.classList.add('show');
+    document.body.classList.add('modal-open');
+    
+    // Update navigation buttons
+    updateNavigationButtons();
+}
+
+function loadModalContent(index) {
+    if (index < 0 || index >= modalStylesData.length) return;
+    
+    const styleData = modalStylesData[index];
+    const modalImage = document.getElementById('modalImage');
+    const modalFilename = document.getElementById('modalFilename');
+    const modalDetails = document.getElementById('modalDetails');
+    
+    // Set image and title
+    modalImage.src = styleData.image;
+    modalFilename.textContent = styleData.style + " - " + styleData.description;
+    
+    // Show loading state
+    modalDetails.innerHTML = '<div style="text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> Loading stock info...</div>';
+    
+    // Fetch stock data
+    fetch('/bag_style_viewer/stock/' + styleData.style)
+        .then(response => response.json())
+        .then(data => {
+            // Build table rows for detailed stock
+            let tableRows = '';
+            let tableRowsAll = '';  // Keep all rows for toggle
+            
+            if (data.details && data.details.length > 0) {
+                data.details.forEach(item => {
+                    const hasStock = item.quantity > 0 || item.ocean > 0 || item.total > 0;
+                    const rowClass = hasStock ? 'stock-row-has-value' : 'stock-row-zero';
+                    const rowHTML = `
+                        <tr class="${rowClass}">
+                            <td style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">${item.sku}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${item.quantity}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${item.ocean}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right; font-weight: 600;">${item.total}</td>
+                        </tr>
+                    `;
+                    tableRowsAll += rowHTML;
+                });
+            } else {
+                tableRowsAll = '<tr><td colspan="4" style="padding: 1rem; text-align: center;">No stock data available</td></tr>';
+            }
+            
+            // Populate stock info with table
+            modalDetails.innerHTML = `
+                <div class="detail-section">
+                    <h4>Stock Summary</h4>
+                    <div class="detail-item">
+                        <span class="detail-label">Style:</span>
+                        <span class="detail-value">${data.style}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Total In Stock:</span>
+                        <span class="detail-value">${data.total_quantity}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Total Ocean:</span>
+                        <span class="detail-value">${data.total_ocean}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Total Available:</span>
+                        <span class="detail-value">${data.total}</span>
+                    </div>
+                </div>
+                <div class="detail-section" style="margin-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0;">Stock by SKU</h4>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem;">
+                            <input type="checkbox" id="toggleZeroStock" onchange="toggleZeroStockRows()" style="cursor: pointer;">
+                            <span>Show 0</span>
+                        </label>
+                    </div>
+                    <table id="stockTable" style="width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,255,255,0.2);">
+                                <th style="padding: 8px; text-align: left; color: #00d4ff;">SKU</th>
+                                <th style="padding: 8px; text-align: right; color: #00d4ff;">In Stock</th>
+                                <th style="padding: 8px; text-align: right; color: #00d4ff;">Ocean</th>
+                                <th style="padding: 8px; text-align: right; color: #00d4ff;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsAll}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // Hide zero rows by default
+            toggleZeroStockRows();
+        })
+        .catch(error => {
+            console.error('Error fetching stock info:', error);
+            modalDetails.innerHTML = '<div class="detail-section"><p>Error loading stock information.</p></div>';
+        });
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('show');
+    document.body.classList.remove('modal-open');
+    // Reset styles data for next open
+    modalStylesData = [];
+}
+
+function navigateModal(direction) {
+    const newIndex = currentModalIndex + direction;
+    if (newIndex >= 0 && newIndex < modalStylesData.length) {
+        currentModalIndex = newIndex;
+        loadModalContent(currentModalIndex);
+        updateNavigationButtons();
+    }
+}
+
+function toggleZeroStockRows() {
+    const checkbox = document.getElementById('toggleZeroStock');
+    const zeroRows = document.querySelectorAll('.stock-row-zero');
+    
+    if (checkbox && checkbox.checked) {
+        // Show all rows including zeros
+        zeroRows.forEach(row => {
+            row.style.display = '';
+        });
+    } else {
+        // Hide zero rows (default)
+        zeroRows.forEach(row => {
+            row.style.display = 'none';
+        });
+    }
+}
+
+function updateNavigationButtons() {
+    const leftBtn = document.getElementById('modalNavLeft');
+    const rightBtn = document.getElementById('modalNavRight');
+    
+    // Disable/enable buttons based on position
+    if (currentModalIndex <= 0) {
+        leftBtn.classList.add('disabled');
+        leftBtn.style.pointerEvents = 'none';
+    } else {
+        leftBtn.classList.remove('disabled');
+        leftBtn.style.pointerEvents = 'auto';
+    }
+    
+    if (currentModalIndex >= modalStylesData.length - 1) {
+        rightBtn.classList.add('disabled');
+        rightBtn.style.pointerEvents = 'none';
+    } else {
+        rightBtn.classList.remove('disabled');
+        rightBtn.style.pointerEvents = 'auto';
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('imageModal');
+    if (modal.classList.contains('show')) {
+        if (e.key === 'Escape') {
+            closeImageModal();
+        } else if (e.key === 'ArrowLeft') {
+            navigateModal(-1);
+        } else if (e.key === 'ArrowRight') {
+            navigateModal(1);
+        }
+    }
+});
+</script>
+</body>
+</html>

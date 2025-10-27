@@ -1095,11 +1095,11 @@ function toggleSidebar() {
                         api.rows({search:'applied'}).every(function() {
                             var data = this.data();
                             
-                            // Use the detected column indices
-                            if ('stock' in indices) stockSum += parseFloat(data[indices.stock]) || 0;
-                            if ('sold' in indices) soldSum += parseFloat(data[indices.sold]) || 0;
-                            if ('avail' in indices) availSum += parseFloat(data[indices.avail]) || 0;
-                            if ('ocean' in indices) oceanSum += parseFloat(data[indices.ocean]) || 0;
+                            // Use the detected column indices - parse as integers for stock/sold/avail
+                            if ('stock' in indices) stockSum += parseInt(data[indices.stock]) || 0;
+                            if ('sold' in indices) soldSum += parseInt(data[indices.sold]) || 0;
+                            if ('avail' in indices) availSum += parseInt(data[indices.avail]) || 0;
+                            if ('ocean' in indices) oceanSum += parseInt(data[indices.ocean]) || 0;
                             
                             if ('cost' in indices && 'msrp' in indices) {
                                 var costVal = parseFloat(data[indices.cost].replace(/[$,]/g, '')) || 0;
@@ -1125,13 +1125,13 @@ function toggleSidebar() {
                             if (i === 0) {
                                 cellContent = '<strong>TOTALS</strong>';
                             } else if (i === indices.stock) {
-                                cellContent = '<strong>' + stockSum.toFixed(0) + '</strong>';
+                                cellContent = '<strong>' + stockSum + '</strong>';
                             } else if (i === indices.sold) {
-                                cellContent = '<strong>' + soldSum.toFixed(0) + '</strong>';
+                                cellContent = '<strong>' + soldSum + '</strong>';
                             } else if (i === indices.avail) {
-                                cellContent = '<strong>' + availSum.toFixed(0) + '</strong>';
+                                cellContent = '<strong>' + availSum + '</strong>';
                             } else if (i === indices.ocean) {
-                                cellContent = '<strong>' + oceanSum.toFixed(0) + '</strong>';
+                                cellContent = '<strong>' + oceanSum + '</strong>';
                             } else if (i === indices.cost) {
                                 cellContent = '<strong>$' + costAvg + '</strong>';
                             } else if (i === indices.msrp) {

@@ -808,11 +808,9 @@
             allImages = [];
             
             const categories = [
+                { key: 'dam_other', name: 'Catalog_Original Disk', icon: 'fas fa-server' },
                 { key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' },
-                { key: 'dam_catalog', name: 'Catalog Images (item_lookup)', icon: 'fas fa-folder' },
-                { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' },
-                { key: 'filesystem_missing', name: 'Missing from DAM', icon: 'fas fa-exclamation-triangle' },
-                { key: 'dam_other', name: 'Other Sources', icon: 'fas fa-server' }
+                { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' }
             ];
 
             // Build allImages array
@@ -1083,7 +1081,7 @@
 
         function restoreCategoryStates() {
             // Restore previously saved collapse states
-            const categories = ['dam_dropbox', 'dam_catalog', 'dam_big_picture', 'filesystem_missing', 'dam_other'];
+            const categories = ['dam_other', 'dam_dropbox', 'dam_big_picture'];
             categories.forEach(categoryKey => {
                 const savedState = localStorage.getItem(`category-${categoryKey}`);
                 if (savedState === 'collapsed') {

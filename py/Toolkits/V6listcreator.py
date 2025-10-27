@@ -601,19 +601,19 @@ def get_images_for_selection(sku_list):
                 from py.utilities.dam_utils import search_assets_by_sku_pattern, get_asset_url
                 import py.utilities.models
                 
-                # Search for assets matching the full SKU - only catalog source for V6 list creator
-                matching_assets = search_assets_by_sku_pattern(full_sku, source_filter='catalog')
+                # Search for assets matching the full SKU - only catalog_original source for V6 list creator
+                matching_assets = search_assets_by_sku_pattern(full_sku, source_filter='catalog_original')
                 
                 # Also search for no-dash version if SKU contains dash
                 if '-' in full_sku:
                     no_dash_sku = full_sku.replace('-', '')
-                    matching_assets.extend(search_assets_by_sku_pattern(no_dash_sku, source_filter='catalog'))
+                    matching_assets.extend(search_assets_by_sku_pattern(no_dash_sku, source_filter='catalog_original'))
                 
                 # Also search for dash version if SKU doesn't contain dash
                 if '-' not in full_sku and len(full_sku) > len(base_sku):
                     suffix = full_sku[len(base_sku):]
                     dash_sku = f"{base_sku}-{suffix}"
-                    matching_assets.extend(search_assets_by_sku_pattern(dash_sku, source_filter='catalog'))
+                    matching_assets.extend(search_assets_by_sku_pattern(dash_sku, source_filter='catalog_original'))
                 
                 # Remove duplicates by asset ID
                 unique_assets = {}
@@ -628,7 +628,9 @@ def get_images_for_selection(sku_list):
                 for i, asset in enumerate(matching_assets):
                     image_set.append({
                         'filename': asset.filename,
-                        'path': get_asset_url(asset.id),
+                        'path': get_asset_url(asset.id, width=150),  # Default thumbnail size
+                        'fullsize_path': get_asset_url(asset.id),  # Full size for enlargement
+                        'asset_id': asset.id,
                         'default': asset.is_canonical or (i == 0 and not any(a.is_canonical for a in matching_assets))
                     })
 
@@ -823,6 +825,7 @@ def export_list():
         headers = ["Image", "Description", "Price", "Style", "Color", "Quantity"]
         if not removed_columns.get('ocean'):
             headers.append("Ocean")
+        headers.append("Total")  # Always include Total column
         if not removed_columns.get('pcsBox'):
             headers.append("PCS/BOX")
         if not removed_columns.get('dimensions'):
@@ -839,7 +842,12 @@ def export_list():
 
             # Handle DAM system URLs and legacy paths
             image_path = None
-            if '/image/' in image_filename:
+            
+            # Check if it's a local dropbox file path (absolute path)
+            if os.path.isabs(image_filename) and os.path.exists(image_filename):
+                # It's a local dropbox file path
+                image_path = image_filename
+            elif '/image/' in image_filename:
                 # DAM system URL - extract asset ID
                 asset_id_match = re.search(r'/image/(\d+)/', image_filename)
                 if asset_id_match:
@@ -889,8 +897,14 @@ def export_list():
                     style,
                     "",  # Empty color
                     "",   # Zero quantity
-                    ""    # Zero ocean
                 ]
+                
+                # Add ocean if not removed
+                if not removed_columns.get('ocean'):
+                    row_data.append("")  # Zero ocean
+                
+                # Add total (always included)
+                row_data.append("")  # Zero total
                 
                 # Add optional columns
                 if not removed_columns.get('pcsBox'):
@@ -922,17 +936,23 @@ def export_list():
                         sheet.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
             if rows:    
                 for index, row in enumerate(rows):
+                    quantity = int(float(row['quantity'])) if row['quantity'] else 0
+                    ocean = int(float(row['ocean'])) if row.get('ocean') else 0
+                    
                     row_data = [
                         "",  # Image placeholder
                         description if index == 0 else "",
                         price if index == 0 else "",
                         style if index == 0 else "",
                         row['color'],
-                        int(float(row['quantity'])) if row['quantity'] else 0
+                        quantity
                     ]
                     # Only add ocean if it's not removed
                     if not removed_columns.get('ocean'):
-                        row_data.append(int(float(row['ocean'])) if row.get('ocean') else 0)
+                        row_data.append(ocean)
+                    
+                    # Always add total (quantity + ocean)
+                    row_data.append(quantity + ocean)
                     
                     # Only add PCS/BOX if not removed
                     if not removed_columns.get('pcsBox'):
@@ -974,7 +994,7 @@ def export_list():
         if not removed_columns.get('pcsBox'):
             last_col = 'H'
         if not removed_columns.get('dimensions'):
-            last_col = 'I'
+            last_col = 'J'
         
             
         set_border(sheet, f'A2:{last_col}{sheet.max_row}')
