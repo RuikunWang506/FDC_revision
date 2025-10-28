@@ -255,11 +255,11 @@
         }
 
         .location-badge {
-            background: linear-gradient(135deg, #002fff, #00e1ff);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             padding: 6px 12px;
             border-radius: 15px;
-            font-size: 16px;
+            font-size: 12px;
             display: inline-block;
             margin: 3px;
             box-shadow: var(--shadow);
@@ -607,7 +607,7 @@
                         <div class="text-center">
                             {% for location in header_info.locations %}
                                 <span class="location-badge">
-                                    {{ location }}
+                                    <i class="fas fa-warehouse mr-1"></i>{{ location }}
                                 </span>
                             {% endfor %}
                         </div>
