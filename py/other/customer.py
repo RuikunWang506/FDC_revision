@@ -39,6 +39,7 @@ def check_customer():
                 f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
             )
             cursor = conn.cursor()
+            # Updated query to search by both customer name OR customer ID
             query = f"""
                 SELECT
                     c.cus_nm,
@@ -60,9 +61,9 @@ def check_customer():
                 ) AS max_orders ON c.cus_id = max_orders.cus_id
                 LEFT JOIN orders o ON max_orders.cus_id = o.cus_id AND max_orders.max_ord_num = o.ord_num
                 WHERE
-                    c.cus_nm LIKE ?
+                    c.cus_nm LIKE ? OR c.cus_id LIKE ?
             """
-            cursor.execute(query, ('%' + customer_name + '%',))
+            cursor.execute(query, ('%' + customer_name + '%', '%' + customer_name + '%'))
             rows = cursor.fetchall()
 
             for row in rows:
@@ -94,7 +95,6 @@ def check_customer():
         "null_data": null_results  # Return the null results as a separate key
     })
 
-@customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
 @customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
 @login_required
 def customer_details(customer_id):
@@ -184,7 +184,7 @@ def customer_details(customer_id):
     history_df = pd.DataFrame.from_records(results, columns=history_columns)
 
     # Add hyperlinks
-    history_df['order#'] = history_df['order#'].apply(lambda x: f'<a href="{url_for("order_lookup", order_number=x)}" target="_blank">{x}</a>')
+    history_df['order#'] = history_df['order#'].apply(lambda x: f'<a href="{url_for("order_lookup.order_lookup", order_number=x)}" target="_blank">{x}</a>')
 
     # Modify the sku column to use the new URL format
     history_df['sku'] = history_df['sku'].apply(lambda x: f'<a href="/item_lookup/{x}" target="_blank">{x}</a>')
@@ -224,7 +224,7 @@ def customer_details(customer_id):
         'ord_amt': details['ord_amt'],
         'handl_fee': details['handl_fee'],
         'total': details['total'],
-        'order_lookup_url': url_for('order_lookup', order_number=ord_num)  # Add URL for order lookup
+        'order_lookup_url': url_for('order_lookup.order_lookup', order_number=ord_num)  # Add URL for order lookup
     }
     for ord_num, details in unique_order_numbers.items()
 ]
