@@ -96,6 +96,7 @@
         .table td, .table th {
             padding: 0.5rem;
             vertical-align: middle;
+            text-align: center;
         }
     
         .btn-sm {
@@ -238,6 +239,13 @@
             margin-left: 5px;
             opacity: 0.5;
         }
+
+        /* Wide container for large screens */
+        @media (min-width: 1200px) {
+            .container, .container-lg, .container-md, .container-sm, .container-xl {
+                max-width: 1840px !important;
+            }
+        }
     </style>
     <!-- Add this in the head section, after the existing styles -->
 <style>
@@ -283,10 +291,13 @@
     }
     
     /* Simplify tables on mobile by hiding less important columns */
+    /* Hide Ocean, PCS/BOX and Dimensions columns on mobile - keep Color, Quantity, Total, Remove */
     .table th:nth-child(3),
     .table td:nth-child(3),
     .table th:nth-child(5),
-    .table td:nth-child(5) {
+    .table td:nth-child(5),
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
         display: none !important;
     }
     
@@ -652,6 +663,7 @@
                                         <th>Color</th>
                                         <th>Quantity</th>
                                         <th>Ocean</th>
+                                        <th>Total</th>
                                         <th>PCS/BOX</th>
                                         <th>Dimensions</th>
                                         <th>Remove</th>
@@ -661,8 +673,9 @@
                                     {% for row in style_group %}
                                     <tr>
                                         <td>{{ row.color }}</td>
-                                        <td contenteditable="true">{{ row.quantity }}</td>
-                                        <td>{{ row.ocean }}</td>
+                                        <td contenteditable="true" class="quantity-cell">{{ row.quantity }}</td>
+                                        <td class="ocean-cell">{{ row.ocean }}</td>
+                                        <td class="total-cell">{{ row.quantity + row.ocean }}</td>
                                         <td>{{ row.pcsBox }}</td>
                                         <td>{{ row.dimensions }}</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
@@ -690,18 +703,20 @@
                                     </label>
                                 </div>
                                 {% endif %}
-                                {% for image in image_urls[style] %}
-                                <div class="image-option">
-                                    <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
-                                    <label for="catalog_image_{{ style }}_{{ loop.index }}">
-                                    <img src="{{ image['path'] }}?size=150" 
-                                        data-fullsize="{{ image['path'] }}"
-                                        alt="{{ style }}" 
-                                        class="img-thumbnail"
-                                        onclick="enlargeImage(this, this.dataset.fullsize)">
-                                    </label>
-                                </div>
-                                {% endfor %}
+                                {% if style in image_urls %}
+                                    {% for image in image_urls[style] %}
+                                    <div class="image-option">
+                                        <input type="radio" id="catalog_image_{{ style }}_{{ loop.index }}" name="image_option_{{ style }}" value="{{ image['fullsize_path'] }}" {% if loop.index == 1 and style not in dropbox_images %}checked{% endif %}>
+                                        <label for="catalog_image_{{ style }}_{{ loop.index }}">
+                                        <img src="{{ image['path'] }}" 
+                                            data-fullsize="{{ image['fullsize_path'] }}"
+                                            alt="{{ style }}" 
+                                            class="img-thumbnail"
+                                            onclick="enlargeImage(this, this.dataset.fullsize)">
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -742,8 +757,9 @@
                                      style="width: 150px; height: auto;">
                             {% elif style in image_urls and image_urls[style] %}
                                 <img src="{{ image_urls[style][0]['path'] }}" 
+                                     data-fullsize="{{ image_urls[style][0]['fullsize_path'] }}"
                                      alt="{{ style }}" 
-                                     onclick="enlargeImage(this, this.src)",
+                                     onclick="enlargeImage(this, this.dataset.fullsize)",
                                      style="width: 150px; height: auto;">
                             {% endif %}
                         </td>
@@ -866,9 +882,10 @@
     color: { index: 0, removable: false, name: 'Color', visible: true, required: true },
     quantity: { index: 1, removable: false, name: 'quantity', visible: true, required: true },
     ocean: { index: 2, removable: true, name: 'Ocean', visible: true },
-    pcsBox: { index: 3, removable: true, name: 'PCS/BOX', visible: true },
-    dimensions: { index: 4, removable: true, name: 'Dimensions', visible: true },
-    remove: { index: 5, removable: false, name: 'Remove', exportExclude: true, required: true }
+    total: { index: 3, removable: false, name: 'Total', visible: true, required: true, calculated: true },
+    pcsBox: { index: 4, removable: true, name: 'PCS/BOX', visible: true },
+    dimensions: { index: 5, removable: true, name: 'Dimensions', visible: true },
+    remove: { index: 6, removable: false, name: 'Remove', exportExclude: true, required: true }
 };
 
 let selectedImageSize = null;
@@ -989,20 +1006,68 @@ function addRow(button) {
         if (!config.exportExclude) {
             const display = config.visible ? '' : 'none';
             const value = '';
-            const numberOnly = ['quantity', 'ocean', 'pcsBox'].includes(key) ? 
-                'onkeypress="return event.charCode >= 48 && event.charCode <= 57"' : '';
-            cellsHtml += `<td contenteditable="true" ${numberOnly} style="display: ${display}" data-placeholder="fill">${value}</td>`;
+            
+            if (config.calculated) {
+                // Total column is calculated, not editable
+                cellsHtml += `<td class="total-cell" style="display: ${display}">0</td>`;
+            } else {
+                const numberOnly = ['quantity', 'ocean', 'pcsBox'].includes(key) ? 
+                    'onkeypress="return event.charCode >= 48 && event.charCode <= 57"' : '';
+                const cellClass = key === 'quantity' ? 'quantity-cell' : (key === 'ocean' ? 'ocean-cell' : '');
+                cellsHtml += `<td contenteditable="true" class="${cellClass}" ${numberOnly} style="display: ${display}" data-placeholder="fill">${value}</td>`;
+            }
         }
     });
     cellsHtml += '<td><span class="remove-row" onclick="removeRow(this)">X</span></td>';
     
     newRow.innerHTML = cellsHtml;
     tableBody.appendChild(newRow);
+    
+    // Add event listeners for quantity and ocean changes
+    attachTotalCalculationListeners(newRow);
 }
 
 function removeRow(button) {
     button.closest('tr').remove();
 }
+
+// Function to calculate and update total for a row
+function updateRowTotal(row) {
+    const quantityCell = row.querySelector('.quantity-cell');
+    const oceanCell = row.querySelector('.ocean-cell');
+    const totalCell = row.querySelector('.total-cell');
+    
+    if (quantityCell && oceanCell && totalCell) {
+        const quantity = parseInt(quantityCell.innerText) || 0;
+        const ocean = parseInt(oceanCell.innerText) || 0;
+        totalCell.innerText = quantity + ocean;
+    }
+}
+
+// Attach event listeners to quantity and ocean cells
+function attachTotalCalculationListeners(row) {
+    const quantityCell = row.querySelector('.quantity-cell');
+    const oceanCell = row.querySelector('.ocean-cell');
+    
+    if (quantityCell) {
+        quantityCell.addEventListener('input', function() {
+            updateRowTotal(row);
+        });
+    }
+    
+    if (oceanCell) {
+        oceanCell.addEventListener('input', function() {
+            updateRowTotal(row);
+        });
+    }
+}
+
+// Initialize event listeners for all existing rows on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('tbody tr').forEach(row => {
+        attachTotalCalculationListeners(row);
+    });
+});
 
 function removeZeroQuantityRows() {
     const rows = document.querySelectorAll('tbody tr');

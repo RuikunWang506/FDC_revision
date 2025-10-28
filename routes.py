@@ -45,6 +45,11 @@ from py.other.master_audit import master_audit_bp
 from py.order.order_search import order_lookup_bp
 from py.order.macy_special import macy_bp
 from py.utilities.mysql_connector import mysql_connector_bp
+from py.utilities.image_upload_routes import image_upload_bp
+from py.other.master_image_viewer import master_image_viewer_bp
+from py.dam.dam_sync_routes import dam_sync_bp
+from py.other.bag_style_viewer import bag_style_viewer_bp
+
 
 
 def register_routes(app):
@@ -68,6 +73,10 @@ def register_routes(app):
     app.register_blueprint(order_lookup_bp)
     app.register_blueprint(macy_bp)
     app.register_blueprint(mysql_connector_bp)
+    app.register_blueprint(image_upload_bp)
+    app.register_blueprint(master_image_viewer_bp)
+    app.register_blueprint(dam_sync_bp)
+    app.register_blueprint(bag_style_viewer_bp)
 
 
     app.permanent_session_lifetime = timedelta(days=30)

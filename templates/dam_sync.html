@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAM Sync Control Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <style>
+        body {
+            padding-top: 70px;
+            background-color: #f8f9fa;
+        }
+        .status-badge {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+        }
+        #progress-log {
+            height: 350px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 200px;
+        }
+        .log-line {
+            padding: 2px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .log-line:last-child {
+            border-bottom: none;
+        }
+        .card {
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .btn-block {
+            display: block;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+<div class="container mt-4">
+    <h2>DAM Sync Control Panel</h2>
+    
+    <!-- Status Card -->
+    <div class="card mt-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Sync Status</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Status:</strong> 
+                        <span id="sync-status" class="badge">
+                            {% if status and status.is_running %}
+                                <span class="badge bg-warning">Running</span>
+                            {% else %}
+                                <span class="badge bg-success">Idle</span>
+                            {% endif %}
+                        </span>
+                    </p>
+                    <p><strong>Last Run:</strong> <span id="last-run">{{ (status.last_run if status else None) or 'Never' }}</span></p>
+                </div>
+                <div class="col-md-6">
+                    {% if status and status.last_stats %}
+                    <p><strong>Last Sync Stats:</strong></p>
+                    <ul>
+                        <li>Processed: {{ status.last_stats.total_processed }}</li>
+                        <li>Added: {{ status.last_stats.total_added }}</li>
+                        <li>Updated: {{ status.last_stats.total_updated }}</li>
+                        <li>Skipped: {{ status.last_stats.total_skipped }}</li>
+                        <li>Errors: {{ status.last_stats.total_errors }}</li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if status and status.error %}
+            <div class="alert alert-danger mt-3">
+                <strong>Error:</strong> {{ status.error }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Control Buttons -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">Controls</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <button id="btn-sync" class="btn btn-primary btn-block" onclick="startSync(false, true)" data-bs-toggle="tooltip" title="Fetch new images from Dropbox, then update the DAM database using existing index files.">
+                        <i class="fas fa-sync"></i> Start Full Sync (Fetch + Sync)
+                    </button>
+                    <small class="text-muted">Fetches from Dropbox, then syncs using existing index</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button id="btn-sync-rebuild" class="btn btn-warning btn-block" onclick="startSync(true, true)" data-bs-toggle="tooltip" title="Rebuild index files for both sources, fetch new Dropbox images, then perform full database sync.">
+                        <i class="fas fa-sync-alt"></i> Rebuild Index & Full Sync
+                    </button>
+                    <small class="text-muted">Rebuild index, fetch, then sync</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button id="btn-index" class="btn btn-info btn-block" onclick="generateIndex()" data-bs-toggle="tooltip" title="Create or refresh index files without modifying the database.">
+                        <i class="fas fa-list"></i> Generate Index Only
+                    </button>
+                    <small class="text-muted">Creates index files without syncing</small>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-md-4 mb-3">
+                    <button class="btn btn-success btn-block" onclick="checkScheduledSync()" data-bs-toggle="tooltip" title="If it has been 3+ days since last sync, start a scheduled sync automatically.">
+                        <i class="fas fa-clock"></i> Check Scheduled Sync
+                    </button>
+                    <small class="text-muted">Runs if 3+ days since last sync</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button class="btn btn-outline-success btn-block" onclick="fetchDropbox()" data-bs-toggle="tooltip" title="Run Smart Auto-Filter to bring in new images from Dropbox only (no DB sync).">
+                        <i class="fas fa-cloud-download-alt"></i> Fetch from Dropbox Only
+                    </button>
+                    <small class="text-muted">Runs Smart Auto-Filter (no database sync)</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button class="btn btn-secondary btn-block" onclick="refreshStatus()" data-bs-toggle="tooltip" title="Refresh the current status and logs without starting a new job.">
+                        <i class="fas fa-refresh"></i> Refresh Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Log -->
+    <div class="card mt-3">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">Progress Log</h5>
+            <div class="d-flex align-items-center gap-2">
+                <div class="form-check form-switch me-3">
+                    <input class="form-check-input" type="checkbox" id="autoScrollToggle" checked>
+                    <label class="form-check-label" for="autoScrollToggle">Auto-scroll</label>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()" data-bs-toggle="tooltip" title="Clear the log view (does not stop the job)"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="progress-log">
+                <div class="text-muted">No sync running...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Documentation -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">About DAM Sync V2</h5>
+        </div>
+        <div class="card-body">
+            <h6>Features:</h6>
+            <ul>
+                <li><strong>Batch Processing:</strong> Commits data every 100 records to prevent rollback on failure</li>
+                <li><strong>Progress Tracking:</strong> Real-time progress updates every 100 files</li>
+                <li><strong>Index Files:</strong> Pre-scans directories and creates index files for faster processing</li>
+                <li><strong>Scheduled Sync:</strong> Automatically runs every 3 days when triggered</li>
+                <li><strong>Error Recovery:</strong> Continues processing even if individual files fail</li>
+            </ul>
+            
+            <h6>Index Files:</h6>
+            <ul>
+                <li><code>D:\Individual_big_picture\index.json</code> - Big picture images index</li>
+                <li><code>D:\Catalog_pictures\catalog_original\index.json</code> - Catalog images index</li>
+            </ul>
+            
+            <h6>Scheduled Task Setup:</h6>
+            <p>To set up automated sync every 3 days:</p>
+            <ol>
+                <li>Open Windows Task Scheduler</li>
+                <li>Create New Task</li>
+                <li>Trigger: Every 3 days at 2:00 AM</li>
+                <li>Action: Run <code>C:\FDC_FLASK_APP\run_scheduled_dam_sync.bat</code></li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+let pollInterval;
+let lastLogIndex = 0;
+let autoScroll = true;
+
+function startSync(forceRebuild, includeFetch) {
+    const data = { force_rebuild_index: forceRebuild, include_fetch: !!includeFetch };
+    
+    fetch('/dam/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Sync started! Check progress below.');
+            startPolling();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error starting sync: ' + error);
+    });
+}
+
+function fetchDropbox() {
+    fetch('/dam/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Dropbox fetch started. Check progress below.');
+            startPolling();
+        } else {
+            alert('Error: ' + (data.message || data.error));
+        }
+    })
+    .catch(error => {
+        alert('Error starting Dropbox fetch: ' + error);
+    });
+}
+
+function generateIndex() {
+    fetch('/dam/generate-index', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'both' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let message = 'Index files generated:\n';
+            if (data.results.catalog) {
+                message += `Catalog: ${data.results.catalog.count} files\n`;
+            }
+            if (data.results.big_picture) {
+                message += `Big Picture: ${data.results.big_picture.count} files\n`;
+            }
+            alert(message);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error generating index: ' + error);
+    });
+}
+
+function checkScheduledSync() {
+    fetch('/dam/scheduled-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            if (data.should_run) {
+                startPolling();
+            }
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error checking scheduled sync: ' + error);
+    });
+}
+
+function refreshStatus() {
+    fetch('/dam/status')
+        .then(response => response.json())
+        .then(data => {
+            updateStatus(data);
+        })
+        .catch(error => {
+            console.error('Error refreshing status:', error);
+        });
+}
+
+function updateStatus(status) {
+    const statusBadge = document.getElementById('sync-status');
+    const lastRun = document.getElementById('last-run');
+    const progressLog = document.getElementById('progress-log');
+    
+    if (status.is_running) {
+        statusBadge.innerHTML = '<span class="badge bg-warning">Running</span>';
+        
+        // Display logs
+        if (status.logs) {
+            // If logs reset (new job), clear and start fresh
+            if (status.logs.length < lastLogIndex) {
+                progressLog.innerHTML = '';
+                lastLogIndex = 0;
+            }
+            // Append new lines
+            for (let i = lastLogIndex; i < status.logs.length; i++) {
+                const div = document.createElement('div');
+                div.textContent = status.logs[i];
+                div.className = 'log-line';
+                progressLog.appendChild(div);
+            }
+            if (status.logs.length === 0 && lastLogIndex === 0 && progressLog.children.length === 0) {
+                progressLog.innerHTML = '<div class="text-muted">Starting sync...</div>';
+            }
+            lastLogIndex = status.logs.length;
+            if (autoScroll) {
+                progressLog.scrollTop = progressLog.scrollHeight;
+            }
+        }
+    } else {
+        statusBadge.innerHTML = '<span class="badge bg-success">Idle</span>';
+        
+        // Preserve existing log content; just add a completion marker once
+        if (status.last_stats && lastLogIndex >= 0) {
+            const marker = document.createElement('div');
+            marker.textContent = '✓ Sync completed. See statistics below.';
+            marker.className = 'log-line text-success';
+            progressLog.appendChild(marker);
+            if (autoScroll) progressLog.scrollTop = progressLog.scrollHeight;
+        }
+    }
+    
+    lastRun.textContent = status.last_run || 'Never';
+    
+    if (status.error) {
+        const err = document.createElement('div');
+        err.innerHTML = `Error: ${status.error}`;
+        err.className = 'text-danger log-line';
+        progressLog.appendChild(err);
+    }
+    
+    // If sync finished, stop polling
+    if (!status.is_running && pollInterval) {
+        stopPolling();
+        // No page reload; preserve the log as requested
+    }
+}
+
+function startPolling() {
+    if (pollInterval) return;
+    
+    pollInterval = setInterval(() => {
+        refreshStatus();
+    }, 2000); // Poll every 2 seconds
+}
+
+function stopPolling() {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+}
+
+// Auto-start polling if sync is running
+{% if status and status.is_running %}
+startPolling();
+{% endif %}
+
+// Enable Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+    const toggle = document.getElementById('autoScrollToggle');
+    if (toggle) {
+        toggle.addEventListener('change', function(){
+            autoScroll = this.checked;
+        });
+    }
+});
+
+function clearLog() {
+    const progressLog = document.getElementById('progress-log');
+    progressLog.innerHTML = '';
+    lastLogIndex = 0;
+}
+</script>
+
+<!-- Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

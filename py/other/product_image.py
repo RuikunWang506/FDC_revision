@@ -6,6 +6,7 @@ import io
 from PIL import Image, ImageOps
 import time
 from py.utilities.setting import Config
+from py.utilities.dam_utils import search_assets_by_sku_pattern, get_canonical_assets_for_skus, DAMAssetInfo
 import subprocess
 import sys
 import base64
@@ -21,51 +22,60 @@ def basename_filter(path):
 def register_product_image_routes(app):
     app.jinja_env.filters['basename'] = basename_filter
 
-    def prepend_path_to_file(file_path):
-    # Construct the full path by prepending the missing directory structure
-        return os.path.join(Config.BIG_PICTURE_DIR, file_path)
+    # Legacy function removed - now using DAM system
 
     @app.route('/product_image', methods=['GET', 'POST'])
     @login_required
     def product_image():
         current_user = session['username']
-
         image_data = []
 
         if request.method == 'POST':
-            search_str = request.form.get('search_str', '').lower()
-            white_background = request.form.get('white_background', False)
-            include_folders = request.form.get('include_folders', False)
+            search_str = request.form.get('search_str', '').strip()
+            current_app.logger.info(f" ***{current_user}***___@@@product images DAM search @@@__ {search_str}")
             
-            index_file = os.path.join(Config.BIG_PICTURE_DIR, 'white_background_images.json') if white_background else os.path.join(Config.BIG_PICTURE_DIR, 'index.json')
-            current_app.logger.info(f" ***{current_user}***___@@@product images @@@__ {search_str}")
-            if not os.path.exists(index_file):
-                return "Index file not found. Please generate the index first.", 500
-
-            with open(index_file, 'r') as f:
-                index = json.load(f)
-
-            # Ensure file paths are strings
-            matching_files = [str(file_path) for file_path in index if search_str in (file_path.lower() if include_folders else os.path.basename(file_path).lower())]
-
-            for file_path in matching_files:
-                full_path = prepend_path_to_file(file_path)
+            if search_str:
                 try:
-                    with Image.open(full_path) as img:
-                        buffer = io.BytesIO()
-                        img.save(buffer, format="JPEG")
-                        buffer.seek(0)
-                        base64_image = base64.b64encode(buffer.read()).decode('utf-8')
-                        modified_time = os.path.getmtime(full_path)
-                        modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
-                        file_size = format_file_size(os.path.getsize(full_path) // 1024)
-                        ratio = f"1:{round(img.height / img.width, 1)}"
-                        filename = os.path.basename(file_path)
-                        image_data.append((filename, base64_image, modified_date, file_size, ratio, file_path))
+                    # Use DAM system to search for assets - only big_picture source for product images
+                    matching_assets = search_assets_by_sku_pattern(search_str, source_filter='big_picture')
+                    
+                    for asset in matching_assets:
+                        try:
+                            # Create DAM asset info object for easy access to URLs
+                            asset_info = DAMAssetInfo(asset)
+                            
+                            # Get image from asset path for processing
+                            if os.path.exists(asset.path):
+                                with Image.open(asset.path) as img:
+                                    buffer = io.BytesIO()
+                                    img.save(buffer, format="JPEG")
+                                    buffer.seek(0)
+                                    base64_image = base64.b64encode(buffer.read()).decode('utf-8')
+                                    modified_date = asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown'
+                                    file_size = format_file_size(os.path.getsize(asset.path) // 1024)
+                                    ratio = f"1:{round(img.height / img.width, 1)}"
+                                    
+                                    # Use DAM asset info instead of file path
+                                    image_data.append((
+                                        asset.filename, 
+                                        base64_image, 
+                                        modified_date, 
+                                        file_size, 
+                                        ratio, 
+                                        asset_info.url  # Use DAM URL instead of file path
+                                    ))
+                            else:
+                                current_app.logger.warning(f"Asset file not found: {asset.path}")
+                                
+                        except Exception as e:
+                            current_app.logger.error(f"Error processing asset {asset.filename}: {str(e)}")
+                            flash(f"Error processing image {asset.filename}: {str(e)}", "danger")
+                            
                 except Exception as e:
-                    flash(f"Error processing image {file_path}: {str(e)}", "danger")
+                    current_app.logger.error(f"Error searching DAM assets: {str(e)}")
+                    flash(f"Error searching images: {str(e)}", "danger")
 
-        return render_template('product_image.html', image_data=image_data, quote=quote,current_user=current_user)
+        return render_template('product_image.html', image_data=image_data, quote=quote, current_user=current_user)
 
     @app.route('/tk', methods=['GET', 'POST'])
     def tk():
@@ -75,7 +85,7 @@ def register_product_image_routes(app):
         if request.method == 'POST':
             # Handle password submission and image search
             password = request.form.get('password', '')
-            search_str = request.form.get('search_str', '').lower()
+            search_str = request.form.get('search_str', '').strip()
             
             # Check password first
             if password != 'ucandoit':
@@ -83,37 +93,46 @@ def register_product_image_routes(app):
             
             # If password is correct and there's a search, process it
             if search_str:  # Only search if search string is provided
-                white_background = request.form.get('white_background', False)
-                include_folders = request.form.get('include_folders', False)
+                current_app.logger.info(f" ***{current_user}***___@@@TK DAM search @@@__ {search_str}")
                 
-                index_file = os.path.join(Config.BIG_PICTURE_DIR, 'white_background_images.json') if white_background else os.path.join(Config.BIG_PICTURE_DIR, 'index.json')
-                current_app.logger.info(f" ***{current_user}***___@@@TK images @@@__ {search_str}")
-                
-                if not os.path.exists(index_file):
-                    return jsonify({'error': 'Index file not found. Please generate the index first.'}), 500
-
-                with open(index_file, 'r') as f:
-                    index = json.load(f)
-
-                # Ensure file paths are strings
-                matching_files = [str(file_path) for file_path in index if search_str in (file_path.lower() if include_folders else os.path.basename(file_path).lower())]
-
-                for file_path in matching_files:
-                    full_path = prepend_path_to_file(file_path)
-                    try:
-                        with Image.open(full_path) as img:
-                            buffer = io.BytesIO()
-                            img.save(buffer, format="JPEG")
-                            buffer.seek(0)
-                            base64_image = base64.b64encode(buffer.read()).decode('utf-8')
-                            modified_time = os.path.getmtime(full_path)
-                            modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
-                            file_size = format_file_size(os.path.getsize(full_path) // 1024)
-                            ratio = f"1:{round(img.height / img.width, 1)}"
-                            filename = os.path.basename(file_path)
-                            image_data.append((filename, base64_image, modified_date, file_size, ratio, file_path))
-                    except Exception as e:
-                        current_app.logger.error(f"Error processing image {file_path}: {str(e)}")
+                try:
+                    # Use DAM system to search for assets - only big_picture source for TK images
+                    matching_assets = search_assets_by_sku_pattern(search_str, source_filter='big_picture')
+                    
+                    for asset in matching_assets:
+                        try:
+                            # Create DAM asset info object for easy access to URLs
+                            asset_info = DAMAssetInfo(asset)
+                            
+                            # Get image from asset path for processing
+                            if os.path.exists(asset.path):
+                                with Image.open(asset.path) as img:
+                                    buffer = io.BytesIO()
+                                    img.save(buffer, format="JPEG")
+                                    buffer.seek(0)
+                                    base64_image = base64.b64encode(buffer.read()).decode('utf-8')
+                                    modified_date = asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown'
+                                    file_size = format_file_size(os.path.getsize(asset.path) // 1024)
+                                    ratio = f"1:{round(img.height / img.width, 1)}"
+                                    
+                                    # Use DAM asset info instead of file path
+                                    image_data.append((
+                                        asset.filename, 
+                                        base64_image, 
+                                        modified_date, 
+                                        file_size, 
+                                        ratio, 
+                                        asset_info.url  # Use DAM URL instead of file path
+                                    ))
+                            else:
+                                current_app.logger.warning(f"Asset file not found: {asset.path}")
+                                
+                        except Exception as e:
+                            current_app.logger.error(f"Error processing asset {asset.filename}: {str(e)}")
+                            
+                except Exception as e:
+                    current_app.logger.error(f"Error searching DAM assets: {str(e)}")
+                    return jsonify({'error': f'Error searching images: {str(e)}'}), 500
 
             return render_template('tk_main.html', image_data=image_data, quote=quote, current_user=current_user)
         
@@ -124,9 +143,20 @@ def register_product_image_routes(app):
     @login_required
     def get_image_data():
         filename = request.args.get('filename')
-        image_path = os.path.join(app.config['BIG_PICTURE_DIR'], filename)
+        
+        # Use DAM system to find asset by filename
+        import py.utilities.models
+        db = py.utilities.models.SessionLocal()
         try:
-            with Image.open(image_path) as img:
+            asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                filename=filename,
+                is_active=True
+            ).first()
+            
+            if not asset or not os.path.exists(asset.path):
+                return jsonify({'error': 'Image not found'}), 404
+                
+            with Image.open(asset.path) as img:
                 buffer = io.BytesIO()
                 img.save(buffer, format="JPEG")
                 buffer.seek(0)
@@ -134,6 +164,8 @@ def register_product_image_routes(app):
                 return jsonify({'base64_image': base64_image})
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+        finally:
+            db.close()
     
     @app.route('/reindex', methods=['POST'])
     @login_required
@@ -161,41 +193,54 @@ def register_product_image_routes(app):
     def download_product_images():
         current_user = session['username']
 
-        search_str = request.args.get('search_str', '').lower() if request.method == 'GET' else None
-        selected_images = request.form.getlist('selected_images') if request.method == 'POST' else None
+        search_str = request.args.get('search_str', '').strip() if request.method == 'GET' else None
+        selected_asset_ids = request.form.getlist('selected_images') if request.method == 'POST' else None
         image_type = request.args.get('image_type', 'normal')
         download_type = request.args.get('download_type', 'all')  # 'all' or 'selected'
 
-        # Determine the correct image list
-        if download_type == 'all':
-            index_file = os.path.join(Config.BIG_PICTURE_DIR, 'index.json')
-            if not os.path.exists(index_file):
-                return "Index file not found. Please generate the index first.", 500
-            with open(index_file, 'r') as f:
-                index = json.load(f)
-            matching_files = [file_path for file_path in index if search_str in file_path.lower()]
-            file_list = matching_files
-        else:
-            file_list = selected_images  # selected_images now contains the relative paths
+        # Determine assets to download
+        assets_to_download = []
+        
+        if download_type == 'all' and search_str:
+            # Get all assets matching the search pattern - only big_picture source for product downloads
+            assets_to_download = search_assets_by_sku_pattern(search_str, source_filter='big_picture')
+        elif download_type == 'selected' and selected_asset_ids:
+            try:
+                import py.utilities.models
+                db = py.utilities.models.SessionLocal()
+                # Convert asset IDs to integers and get assets
+                asset_ids = [int(aid.split('/')[-2]) for aid in selected_asset_ids if aid.startswith('/image/')]
+                assets_to_download = db.query(py.utilities.models.ImageAsset).filter(
+                    py.utilities.models.ImageAsset.id.in_(asset_ids),
+                    py.utilities.models.ImageAsset.is_active == True
+                ).all()
+                db.close()
+            except Exception as e:
+                current_app.logger.error(f"Error getting selected assets: {str(e)}")
+                return f"Error processing selected images: {str(e)}", 400
 
-        if not file_list:
+        if not assets_to_download:
             return "No images selected or found.", 404
 
         # Generate zip file for download
         memory_file = io.BytesIO()
         with zipfile.ZipFile(memory_file, 'w') as zf:
-            for file_path in file_list:
-                # Ensure the full path is constructed by combining the base directory and the relative path
-                image_path = os.path.join(Config.BIG_PICTURE_DIR, file_path)  # Now uses the full relative path
-                if not os.path.exists(image_path):
-                    return f"File {image_path} not found.", 404  # Better error handling
-                if image_type == '1_1':
-                    output_image = create_square_image(image_path)
-                    if output_image:
-                        zip_filename = os.path.splitext(os.path.basename(file_path))[0].lower() + '.jpg'
-                        zf.writestr(zip_filename, output_image.getvalue())
-                else:
-                    zf.write(image_path, os.path.basename(image_path))
+            for asset in assets_to_download:
+                if not os.path.exists(asset.path):
+                    current_app.logger.warning(f"Asset file not found: {asset.path}")
+                    continue
+                    
+                try:
+                    if image_type == '1_1':
+                        output_image = create_square_image(asset.path)
+                        if output_image:
+                            zip_filename = os.path.splitext(asset.filename)[0].lower() + '.jpg'
+                            zf.writestr(zip_filename, output_image.getvalue())
+                    else:
+                        zf.write(asset.path, asset.filename)
+                except Exception as e:
+                    current_app.logger.error(f"Error processing asset {asset.filename}: {str(e)}")
+                    continue
 
         memory_file.seek(0)
         zip_filename = f"{search_str or 'selected'}_{image_type}.zip"
@@ -227,46 +272,76 @@ def register_product_image_routes(app):
         image_size = request.form.get('image_size')
 
         memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w') as zf:
+        assets_to_download = []
+        
+        try:
             if selected_images:
-                selected_files = selected_images.split(',')
-                for filename in selected_files:
-                    if filename:
-                        file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-                        if os.path.exists(file_path):
-                            # Skip resizing if image_size is 'full' or None
-                            if image_size and image_size != 'full':
-                                try:
-                                    with open(file_path, 'rb') as img_file:
-                                        resized_img = resize_image(img_file, int(image_size))
-                                        zf.writestr(filename, resized_img.getvalue())
-                                except (ValueError, TypeError):
-                                    # Fallback to original file if size conversion fails
-                                    zf.write(file_path, arcname=filename)
-                            else:
-                                # Use original file for 'full' size or when size is not specified
-                                zf.write(file_path, arcname=filename)
+                # Handle selected images - expect filenames
+                selected_filenames = [f.strip() for f in selected_images.split(',') if f.strip()]
+                
+                import py.utilities.models
+                db = py.utilities.models.SessionLocal()
+                try:
+                    for filename in selected_filenames:
+                        asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                            filename=filename,
+                            is_active=True
+                        ).first()
+                        if asset:
+                            assets_to_download.append(asset)
+                finally:
+                    db.close()
             else:
-                # Original logic for all images remains unchanged
+                # Handle search terms
                 search_terms = [term.split()[0].strip() for term in user_input.split(",")]
                 for term in search_terms:
+                    if term:
+                        assets = search_assets_by_sku_pattern(term, source_filter='big_picture')
+                        assets_to_download.extend(assets)
+            
+            # Remove duplicates
+            unique_assets = {}
+            for asset in assets_to_download:
+                unique_assets[asset.id] = asset
+            assets_to_download = list(unique_assets.values())
+            
+            with zipfile.ZipFile(memory_file, 'w') as zf:
+                for asset in assets_to_download:
+                    if not os.path.exists(asset.path):
+                        current_app.logger.warning(f"Asset file not found: {asset.path}")
+                        continue
+                        
                     try:
-                        for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                            if filename.lower().startswith(term.lower()):
-                                file_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-                                if os.path.exists(file_path):
-                                    if image_type == 'resized':
-                                        with Image.open(file_path) as img:
-                                            buffer = io.BytesIO()
-                                            if img.mode != 'RGB':
-                                                img = img.convert('RGB')
-                                            img.save(buffer, format='JPEG', quality=20)
-                                            buffer.seek(0)
-                                            zf.writestr(filename, buffer.getvalue())
+                        if image_size and image_size != 'full':
+                            # Resize image
+                            try:
+                                with open(asset.path, 'rb') as img_file:
+                                    resized_img = resize_image(img_file, int(image_size))
+                                    if resized_img:
+                                        zf.writestr(asset.filename, resized_img.getvalue())
                                     else:
-                                        zf.write(file_path, arcname=filename)
-                    except FileNotFoundError:
-                        app.logger.error("Directory not found: %s", Config.CATALOG_ORIGINAL)
+                                        zf.write(asset.path, arcname=asset.filename)
+                            except (ValueError, TypeError):
+                                zf.write(asset.path, arcname=asset.filename)
+                        elif image_type == 'resized':
+                            # Apply quality compression
+                            with Image.open(asset.path) as img:
+                                buffer = io.BytesIO()
+                                if img.mode != 'RGB':
+                                    img = img.convert('RGB')
+                                img.save(buffer, format='JPEG', quality=20)
+                                buffer.seek(0)
+                                zf.writestr(asset.filename, buffer.getvalue())
+                        else:
+                            # Use original file
+                            zf.write(asset.path, arcname=asset.filename)
+                    except Exception as e:
+                        current_app.logger.error(f"Error processing asset {asset.filename}: {str(e)}")
+                        continue
+
+        except Exception as e:
+            current_app.logger.error(f"Error in download_images: {str(e)}")
+            return f"Error downloading images: {str(e)}", 500
 
         memory_file.seek(0)
         zip_filename = "selected_images.zip" if selected_images else "images.zip"
@@ -330,7 +405,7 @@ def register_product_image_routes(app):
     def serve_file3(encoded_path):
         # Decode the path and serve the file from the correct location
         decoded_path = urllib.parse.unquote(encoded_path)
-        full_path = os.path.join(Config.BIG_PICTURE_DIR, decoded_path)
+        full_path = os.path.join(Config.IMAGE_DAM_BIG_PICTURE_DIR, decoded_path)
         directory, filename = os.path.split(full_path)
         return send_from_directory(directory, filename, as_attachment=False)
 
@@ -338,14 +413,14 @@ def register_product_image_routes(app):
     def download_file5(encoded_path):
         # Decode the path and serve the file for download
         decoded_path = urllib.parse.unquote(encoded_path)
-        full_path = os.path.join(Config.BIG_PICTURE_DIR, decoded_path)
+        full_path = os.path.join(Config.IMAGE_DAM_BIG_PICTURE_DIR, decoded_path)
         directory, filename = os.path.split(full_path)
         return send_from_directory(directory, filename, as_attachment=True)
 
     @app.route('/json_data')
     def get_json_data():
-        index_file_path = os.path.join(app.config['BIG_PICTURE_DIR'], 'index.json')
-        white_bg_file_path = os.path.join(app.config['BIG_PICTURE_DIR'], 'white_background_images.json')
+        index_file_path = os.path.join(Config.IMAGE_DAM_BIG_PICTURE_DIR, 'index.json')
+        white_bg_file_path = os.path.join(Config.IMAGE_DAM_BIG_PICTURE_DIR, 'white_background_images.json')
 
         if os.path.exists(index_file_path) and os.path.exists(white_bg_file_path):
             with open(index_file_path, 'r') as index_file, open(white_bg_file_path, 'r') as white_bg_file:

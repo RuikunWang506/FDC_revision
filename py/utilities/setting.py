@@ -22,13 +22,12 @@ class Config:
         'database_oms_ef': 'oms_EF'
     }
     
-    CATALOG_ORIGINAL = r"D:\Catalog_pictures\catalog_original"
-    BIG_PICTURE_DIR  = r"D:\Individual_big_picture"
-    LOCAL_DROPBOX_DIR = r"C:\users\stream\dropbox"
-    Dimension_DIR = r"D:\Individual_big_picture\picture-temu"
+    # Legacy paths - DEPRECATED: Use DAM system instead
+    LOCAL_DROPBOX_DIR = r"C:\users\stream\dropbox"  # Still used by V6listcreator
+    DROPBOX_CONTAINER_CATALOG_DIR = r"C:\users\stream\Dropbox\Pictures-China (1)\container catalog"
     FTP = r"D:\FTP"
     
-    # Image DAM paths
+    # Image DAM paths - Use these for DAM system
     IMAGE_DAM_CATALOG_DIR = r"D:\Catalog_pictures\catalog_original"
     IMAGE_DAM_BIG_PICTURE_DIR = r"D:\Individual_big_picture"
     IMAGE_DAM_DROPBOX_DIR = r"C:\Users\Stream\Dropbox"
@@ -64,10 +63,10 @@ class Config:
     # Database URL for SQLAlchemy
     DATABASE_URL = f"mysql+mysqlconnector://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 
-    # Folder paths for image ingestion
-    CATALOG_ORIGINAL_DIR = Path(r"D:\Catalog_pictures\catalog_original")
-    INDIVIDUAL_BIG_PICTURE_DIR = Path(r"D:\Individual_big_picture")
-    DROPBOX_DIR = Path(r"C:\Users\Stream\Dropbox")
+    # Folder paths for image ingestion - use DAM system paths
+    CATALOG_ORIGINAL_DIR = Path(IMAGE_DAM_CATALOG_DIR)
+    INDIVIDUAL_BIG_PICTURE_DIR = Path(IMAGE_DAM_BIG_PICTURE_DIR)
+    DROPBOX_DIR = Path(IMAGE_DAM_DROPBOX_DIR)
 
     # Trash directory for duplicates
     TRASH_DIR = Path(r"D:\catalog\trash")

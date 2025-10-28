@@ -10,6 +10,7 @@ import pyodbc
 from flask import current_app
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_mysql_connection, get_sql_server_connection_fdc, get_sql_server_connection_oms_ef
+from py.utilities.dam_utils import get_canonical_asset_url
 
 mobile_lite_bp = Blueprint('mobile_lite', __name__, template_folder='templates')
 
@@ -236,10 +237,10 @@ def get_product_data(user_input):
                     }
                 }
 
-                # Add image URL
+                # Add image URL using DAM system
                 style_number = style.split()[0].strip() if style else ''
-                image_path = os.path.join(current_app.config['CATALOG_ORIGINAL'], f"{style_number}.jpg")
-                product_data['image_url'] = f"/image/{style_number}.jpg" if os.path.exists(image_path) else "/static/no_image_available.jpg"
+                canonical_image_url = get_canonical_asset_url(style_number, source_filter='catalog')
+                product_data['image_url'] = canonical_image_url if canonical_image_url else "/static/no_image_available.jpg"
 
                 results.append(product_data)
         

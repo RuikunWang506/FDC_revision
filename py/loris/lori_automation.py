@@ -3807,68 +3807,7 @@ def generate_invoice_from_data(order, items):
         return None
 
 
-# test_fedx_auth endpoint removed - production-only integration
-@lori_automation_bp.route('/test_fedx_auth', methods=['GET'])
-def test_fedex_auth():
-    """Test FedEx OAuth auth_url and token acquisition (returns masked token info).
-
-    This endpoint is authenticated (requires session). It is safe to call from a browser
-    while logged in. It will NOT return the raw access_token, only a masked suffix.
-    """
-    if 'username' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-
-    credentials = load_fedex_credentials()
-    if not credentials:
-        return jsonify({'error': 'FedEx credentials not configured'}), 500
-
-    env = (credentials.get('environment') or 'production').lower()
-    if env == 'sandbox' or 'sandbox' in env:
-        auth_url = "https://apis-sandbox.fedex.com/oauth/token"
-    else:
-        auth_url = "https://apis.fedex.com/oauth/token"
-
-    current_app.logger.debug(f"[test_fedex_auth] env={env}, auth_url={auth_url}")
-
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    data = {
-        'grant_type': 'client_credentials',
-        'client_id': credentials.get('api_key'),
-        'client_secret': credentials.get('secret_key')
-    }
-
-    try:
-        resp = requests.post(auth_url, headers=headers, data=data, timeout=15)
-    except Exception as e:
-        current_app.logger.error(f"Error contacting FedEx auth URL: {str(e)}")
-        return jsonify({'error': 'Error contacting FedEx auth URL', 'detail': str(e)}), 500
-
-    result = {
-        'environment': env,
-        'auth_url': auth_url,
-        'status_code': resp.status_code
-    }
-
-    try:
-        body = resp.json()
-    except Exception:
-        body = {'raw': resp.text}
-
-    # If success, return masked token info only
-    if resp.status_code == 200 and isinstance(body, dict):
-        access_token = body.get('access_token')
-        if access_token:
-            masked = f"***{access_token[-8:]}" if len(access_token) > 8 else '***'
-            result['masked_token'] = masked
-            result['expires_in'] = body.get('expires_in')
-        else:
-            result['masked_token'] = None
-        # keep minimal response data for safety
-        return jsonify(result)
-
-    # For non-200, include the FedEx JSON body to show error codes/messages (already logged)
-    result['fedex_response'] = body
-    return jsonify(result), resp.status_code
+## Removed test-only endpoint /test_fedx_auth to keep production surface minimal
 
 @lori_automation_bp.route('/download_loris_labels/<path:filename>')
 @login_required

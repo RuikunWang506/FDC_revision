@@ -9,6 +9,7 @@ from py.utilities.SQL_connector import generate_excel
 from py.utilities.models import SessionLocal, ImageAsset
 from py.utilities.logging_setup import log_event
 from py.utilities.setting import Config
+from py.utilities.dam_utils import search_assets_by_sku_pattern, get_canonical_assets_for_skus, get_asset_url
 import py.utilities.models
 
 item_lookup_bp = Blueprint('item_lookup', __name__)
@@ -183,16 +184,26 @@ def item_lookup(user_input=None):
     # Prepare image and file information - Enhanced with DAM system
     search_terms = [term.split()[0].strip() for term in user_input.split(",")]
     
-    # First, try to get assets from DAM database
+    # Determine if we should filter to canonical only (when multiple SKUs with comma)
+    has_comma = ',' in user_input
+    
+    # First, try to get assets from DAM database - only catalog_original source
     dam_assets = []
     try:
         db = py.utilities.models.SessionLocal()
         for term in search_terms:
-            # Query for assets matching the search term (case-insensitive)
-            assets = db.query(ImageAsset).filter(
+            # Build query - only filter canonical if input has comma (multiple SKUs)
+            query = db.query(ImageAsset).filter(
                 ImageAsset.sku.ilike(f'{term}%'),
-                ImageAsset.is_active == True
-            ).order_by(ImageAsset.version).all()
+                ImageAsset.is_active == True,
+                ImageAsset.source == 'catalog_original'
+            )
+            
+            # Only filter to canonical images if input has comma
+            if has_comma:
+                query = query.filter(ImageAsset.is_canonical == True)
+            
+            assets = query.order_by(ImageAsset.version).all()
             dam_assets.extend(assets)
         
         # Remove duplicates based on filename
@@ -237,45 +248,54 @@ def item_lookup(user_input=None):
         sorted_image_urls, file_info = zip(*combined) if combined else ([], [])
         
     else:
-        # Fallback to filesystem search (original logic)
-        file_names = []
+        # Use DAM system to search for assets - only catalog_original source for item lookup
+        matching_assets = []
         for term in search_terms:
-            # Check in CATALOG_ORIGINAL
-            try:
-                for filename in os.listdir(Config.CATALOG_ORIGINAL):
-                    if filename.lower().startswith(term):
-                        file_names.append(filename)
-            except FileNotFoundError:
-                current_app.logger.error("Directory not found: %s", Config.CATALOG_ORIGINAL)
-
-        # Remove duplicates from file_names
-        file_names = list(dict.fromkeys(file_names))
-
-        # Get file information (size and modification date)
+            assets = search_assets_by_sku_pattern(term, source_filter='catalog_original')
+            matching_assets.extend(assets)
+            
+        # Remove duplicates by asset ID
+        unique_assets = {}
+        for asset in matching_assets:
+            unique_assets[asset.id] = asset
+        matching_assets = list(unique_assets.values())
+        
+        # Filter to only canonical images if input has comma (multiple SKUs)
+        if has_comma:
+            canonical_assets = [asset for asset in matching_assets if asset.is_canonical]
+            # If no canonical assets found, fall back to all assets
+            if not canonical_assets:
+                canonical_assets = matching_assets
+        else:
+            # Single SKU - show all images
+            canonical_assets = matching_assets
+        
+        # Convert assets to file_info format expected by template
         file_info = []
-        for filename in file_names:
-            original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-            file_path = original_path 
-
-            if os.path.exists(file_path):
-                size = os.path.getsize(file_path)
-                modified_time = os.path.getmtime(file_path)
-                modified_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_time))
-                file_info.append((filename, size, modified_date, None, None, 1, False, filename.split('.')[0].upper()))
-            else:
-                current_app.logger.warning("File not found: %s", file_path)
-
-        # Prepare image URLs based on file_info
-        sorted_file_names = sort_filenames(file_names)
+        file_names = []
         sorted_image_urls = []
-        for filename in sorted_file_names:
-            original_path = os.path.join(Config.CATALOG_ORIGINAL, filename)
-            if os.path.exists(original_path):
-                image_url = os.path.join('/image', filename)
-            else:
-                image_url = '/static/no_image_available.jpg'  # Placeholder image
-
+        
+        for asset in canonical_assets:
+            file_names.append(asset.filename)
+            
+            # Get file size if path exists
+            size = 0
+            if os.path.exists(asset.path):
+                size = os.path.getsize(asset.path)
+            
+            modified_date = asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown'
+            
+            # Extract SKU from filename (remove extension and convert to uppercase)
+            sku = asset.filename.split('.')[0].upper()
+            
+            file_info.append((asset.filename, size, modified_date, None, None, asset.version, asset.is_canonical, sku))
+            
+            # Use DAM URL for image access
+            image_url = get_asset_url(asset.id)
             sorted_image_urls.append(image_url)
+        
+        # Sort file names using existing function
+        sorted_file_names = sort_filenames(file_names)
 
     current_app.logger.info("***%s***__@@@search SKU@@@__ %s",current_user, user_input)
     return render_template(

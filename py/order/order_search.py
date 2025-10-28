@@ -368,4 +368,3 @@ def order_lookup(order_number=None):
         current_user=current_user,
         latest_orders=latest_orders
     )
-
