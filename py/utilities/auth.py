@@ -25,10 +25,7 @@ def log_request():
     path = request.path
     http_version = request.environ.get('SERVER_PROTOCOL', 'HTTP/1.1')
     
-    # Log the request
-    log_event('INFO', f'{client_ip} "{method} {path} {http_version}"')
-    
-    # Store the request details for after_request logging
+    # Store the request details for after_request logging (don't log here)
     request._logging_details = {
         'client_ip': client_ip,
         'method': method,
@@ -41,7 +38,29 @@ def log_response(response):
     if hasattr(request, '_logging_details'):
         details = request._logging_details
         status_code = response.status_code
-        log_event('INFO', f'{details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}')
+        
+        # Skip logging for server IP
+        if details['client_ip'] == '173.198.50.202':
+            return response
+        
+        # Get username if available
+        username = session.get('username', 'anonymous')
+        
+        # Format log message with color coding
+        if 200 <= status_code < 300:
+            # Success - green with username
+            log_message = f'🟢 SUCCESS: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code} [User: {username}]'
+        elif 400 <= status_code < 500:
+            # Client error - red
+            log_message = f'🔴 CLIENT_ERROR: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}'
+        elif 500 <= status_code < 600:
+            # Server error - red
+            log_message = f'🔴 SERVER_ERROR: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}'
+        else:
+            # Other status codes
+            log_message = f'🟡 OTHER: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}'
+        
+        log_event('INFO', log_message)
     return response
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():

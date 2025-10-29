@@ -9,6 +9,8 @@
         .log-entry { margin-bottom: 10px; }
         .info { color: green; }
         .error { color: red; }
+        .success { color: green; font-weight: bold; }
+        .warning { color: orange; }
         .timestamp { font-weight: bold; }
         .pagination {
             position: fixed;
@@ -114,6 +116,29 @@
             background-color: #5a6268;
         }
         
+        .live-toggle-btn {
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        
+        .live-toggle-btn:hover {
+            background-color: #218838;
+        }
+        
+        .live-toggle-btn.active {
+            background-color: #dc3545;
+        }
+        
+        .live-toggle-btn.active:hover {
+            background-color: #c82333;
+        }
+        
         .highlight-search {
             background-color: yellow;
             color: black;
@@ -141,6 +166,7 @@
         <input type="text" id="search-input" name="search_term" placeholder="Search logs..." value="{{ search_term }}">
         <button type="submit" id="search-button">Search</button>
         <a href="{{ url_for('log_viewer.display') }}" id="clear-search">Clear</a>
+        <button type="button" id="live-toggle" class="live-toggle-btn">Enable Live Logs</button>
     </form>
     
     <!-- Search Results Info -->
@@ -186,54 +212,90 @@
     <script>
         const logContainer = document.getElementById("log-container");
         const searchInput = document.getElementById("search-input");
+        const liveToggleBtn = document.getElementById("live-toggle");
+        
+        let evtSource = null;
+        let liveLogsEnabled = false;
+        
+        // Toggle live logging
+        liveToggleBtn.addEventListener('click', function() {
+            liveLogsEnabled = !liveLogsEnabled;
+            
+            if (liveLogsEnabled) {
+                liveToggleBtn.textContent = 'Disable Live Logs';
+                liveToggleBtn.classList.add('active');
+                connectEventSource();
+            } else {
+                liveToggleBtn.textContent = 'Enable Live Logs';
+                liveToggleBtn.classList.remove('active');
+                if (evtSource) {
+                    evtSource.close();
+                    evtSource = null;
+                }
+            }
+        });
         
         // For live log updates
         function connectEventSource() {
-            const evtSource = new EventSource("/log/stream");
+            if (evtSource) {
+                evtSource.close();
+            }
+            
+            evtSource = new EventSource("{{ url_for('log_viewer.live_logs') }}");
 
             evtSource.onmessage = function(event) {
+                if (!liveLogsEnabled) return;
+                
+                const line = event.data.trim();
+                if (!line) return; // Skip empty heartbeats
+                
                 try {
-                    const data = JSON.parse(event.data);
-                    const { log_class, formatted_line } = data;
-
-                    if (formatted_line) {
-                        const logEntry = document.createElement("div");
-                        logEntry.className = "log-entry";
-
-                        if (log_class === 'error') {
-                            logEntry.classList.add('error');
-                        } else if (log_class === 'info') {
-                            logEntry.classList.add('info');
-                        }
-
-                        // If we're searching, highlight the search term in new entries
-                        const searchTerm = "{{ search_term }}";
-                        if (searchTerm && formatted_line.toLowerCase().includes(searchTerm.toLowerCase())) {
-                            const regex = new RegExp(searchTerm, 'gi');
-                            logEntry.innerHTML = formatted_line.replace(
-                                regex, 
-                                match => `<mark class="highlight-search">${match}</mark>`
-                            );
-                        } else {
-                            logEntry.innerHTML = formatted_line;
-                        }
-                        
-                        // Prepend the new line at the top
-                        logContainer.insertBefore(logEntry, logContainer.firstChild);
+                    // Format the line (simple approach - could be enhanced)
+                    let logClass = '';
+                    if (line.includes('ERROR')) {
+                        logClass = 'error';
+                    } else if (line.includes('INFO')) {
+                        logClass = 'info';
                     }
+                    
+                    const logEntry = document.createElement("div");
+                    logEntry.className = "log-entry " + logClass;
+                    
+                    // If we're searching, highlight the search term in new entries
+                    const searchTerm = "{{ search_term }}";
+                    if (searchTerm && line.toLowerCase().includes(searchTerm.toLowerCase())) {
+                        const regex = new RegExp(searchTerm, 'gi');
+                        logEntry.innerHTML = line.replace(
+                            regex, 
+                            match => `<mark class="highlight-search">${match}</mark>`
+                        );
+                    } else {
+                        logEntry.innerHTML = line;
+                    }
+                    
+                    // Prepend the new line at the top
+                    logContainer.insertBefore(logEntry, logContainer.firstChild);
+                    
+                    // Auto-scroll to top to show new logs
+                    window.scrollTo(0, 0);
+                    
                 } catch (e) {
-                    console.error("Failed to parse log line:", e);
+                    console.error("Failed to process log line:", e);
                 }
             };
 
             evtSource.onerror = function(err) {
-                console.error("EventSource error, reconnecting...", err);
-                evtSource.close();
-                setTimeout(connectEventSource, 3000); // Retry connection after 3 seconds
+                console.error("EventSource error:", err);
+                if (liveLogsEnabled) {
+                    // Auto-reconnect after 3 seconds
+                    setTimeout(() => {
+                        if (liveLogsEnabled) {
+                            connectEventSource();
+                        }
+                    }, 3000);
+                }
             };
         }
-
-        connectEventSource();
         
         // Focus the search input when the page loads
         window.onload = function() {

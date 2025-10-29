@@ -49,6 +49,7 @@ from py.utilities.image_upload_routes import image_upload_bp
 from py.other.master_image_viewer import master_image_viewer_bp
 from py.dam.dam_sync_routes import dam_sync_bp
 from py.other.bag_style_viewer import bag_style_viewer_bp
+from py.utilities.monitor import send_discord_notification
 
 
 
@@ -85,7 +86,6 @@ def register_routes(app):
     @login_required
     def home():
         client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-        log_event("INFO", f'{client_ip} "{request.method} {request.path}"')
         
         current_user = session['username']
         return render_template("index.html", current_user=current_user)
@@ -99,4 +99,36 @@ def register_routes(app):
         return send_from_directory(app.static_folder, "robots.txt")
     
     
+    @app.route("/health")
+    def health_check():
+        """Health check endpoint for monitoring"""
+        return jsonify({
+            "status": "healthy",
+            "timestamp": time.time(),
+            "service": "FDC Flask App"
+        })
     
+    
+    @app.route("/notify", methods=["POST"])
+    @login_required
+    def send_notification():
+        """Send a Discord notification"""
+        data = request.get_json()
+        message = data.get("message", "")
+        color = data.get("color", 0x00ff00)  # Default to green
+        
+        if not message:
+            return jsonify({"error": "Message is required"}), 400
+        
+        try:
+            send_discord_notification(message, color)
+            return jsonify({"status": "Notification sent successfully"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500@app.route("/health")
+    def health_check():
+        """Health check endpoint for monitoring"""
+        return jsonify({
+            "status": "healthy",
+            "timestamp": time.time(),
+            "service": "FDC Flask App"
+        })

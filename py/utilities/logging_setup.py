@@ -3,7 +3,7 @@ import os
 from py.utilities.setting import Config
 
 import datetime
-from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session, current_app
+from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session, current_app, Response
 from py.utilities.setting import login_required
 import re
 
@@ -109,8 +109,14 @@ def configure_logging(app):
 def format_logs(lines):
     formatted = []
     for line in lines:
-        # Determine log class
-        if 'ERROR' in line:
+        # Determine log class based on new format
+        if '🔴' in line or 'SERVER_ERROR' in line or 'CLIENT_ERROR' in line:
+            log_class = 'error'
+        elif '🟢' in line or 'SUCCESS' in line:
+            log_class = 'success'
+        elif '🟡' in line or 'OTHER' in line:
+            log_class = 'warning'
+        elif 'ERROR' in line:
             log_class = 'error'
         elif 'INFO' in line:
             log_class = 'info'
@@ -216,3 +222,60 @@ def search_logs():
         return redirect(url_for('.display'))
     
     return redirect(url_for('.display', search=search_term, page=1))
+
+
+@log_viewer_bp.route('/log/live')
+@login_required
+def live_logs():
+    """Stream live log events using Server-Sent Events"""
+    def generate():
+        # Get initial log content
+        try:
+            with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
+                lines = file.readlines()
+            
+            # Send last 50 lines as initial data
+            recent_lines = lines[-50:] if len(lines) > 50 else lines
+            for line in recent_lines:
+                formatted_lines = format_logs([line])
+                if formatted_lines:
+                    log_class, stripped_line = formatted_lines[0]
+                    yield f"data: {stripped_line}\n\n"
+        except Exception as e:
+            yield f"data: Error reading log file: {str(e)}\n\n"
+
+        # Keep connection alive and check for new log entries
+        last_size = os.path.getsize(Config.LOG_FILE) if os.path.exists(Config.LOG_FILE) else 0
+        
+        while True:
+            try:
+                current_size = os.path.getsize(Config.LOG_FILE) if os.path.exists(Config.LOG_FILE) else 0
+                
+                if current_size > last_size:
+                    # New content added
+                    with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
+                        file.seek(last_size)
+                        new_content = file.read()
+                    
+                    if new_content:
+                        new_lines = new_content.strip().split('\n')
+                        for line in new_lines:
+                            if line.strip():
+                                formatted_lines = format_logs([line])
+                                if formatted_lines:
+                                    log_class, stripped_line = formatted_lines[0]
+                                    yield f"data: {stripped_line}\n\n"
+                    
+                    last_size = current_size
+                
+                # Send heartbeat every 30 seconds to keep connection alive
+                import time
+                time.sleep(1)
+                # Yield empty data every 30 seconds to keep connection alive
+                yield f"data: \n\n"
+                
+            except Exception as e:
+                yield f"data: Error in live stream: {str(e)}\n\n"
+                break
+
+    return Response(generate(), mimetype='text/event-stream')
