@@ -405,7 +405,7 @@ def debug_date_format(days_back=1):
         app.logger.error(f"Debug query failed: {e}")
         return []
 
-def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None, since_date=None):
+def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None, since_date=None, user=None):
     """Get orders based on various criteria with proper date filtering"""
     all_orders = []
     
@@ -517,7 +517,8 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
             
             # Log a sample of the results
             if rows:
-                app.logger.info(f"Sample order from {db_display}: Order {rows[0][0]}, Date: {rows[0][1]}")
+                user_prefix = f"{user}__" if user else ""
+                app.logger.info(f"{user_prefix}Sample order from {db_display}: Order {rows[0][0]}, Date: {rows[0][1]}")
             
             # Add database source column
             rows_with_db = [(db_display,) + tuple(row) for row in rows]
@@ -680,7 +681,7 @@ def get_all_skus_from_orders(orders_data):
     
     return list(all_skus)
 
-def get_sku_inventory_from_both_databases(sku_list):
+def get_sku_inventory_from_both_databases(sku_list, user=None):
     """Get inventory information for a list of SKUs from both FDC and E-Fashion databases"""
     all_inventory = []
     
@@ -693,7 +694,8 @@ def get_sku_inventory_from_both_databases(sku_list):
     if not sku_list:
         return all_inventory
     
-    app.logger.info(f"Getting inventory for {len(sku_list)} SKUs: {sku_list[:5]}...")  # Log first 5 SKUs
+    user_prefix = f"{user}__" if user else ""
+    app.logger.info(f"{user_prefix}Getting inventory for {len(sku_list)} SKUs: {sku_list[:5]}...")  # Log first 5 SKUs
     
     # Process SKUs in batches to avoid parameter limit (SQL Server limit is ~2100 parameters)
     batch_size = 1000  # Conservative batch size for inventory queries
@@ -742,7 +744,7 @@ def get_sku_inventory_from_both_databases(sku_list):
     
     return all_inventory
 
-def get_sku_order_quantities(orders_data, sku_list):
+def get_sku_order_quantities(orders_data, sku_list, user=None):
     """Get the quantities ordered for each SKU in the given orders"""
     sku_order_data = []
     
@@ -765,7 +767,8 @@ def get_sku_order_quantities(orders_data, sku_list):
     fdc_orders = [order[1] for order in orders_data if order[0] == 'FDC']
     efas_orders = [order[1] for order in orders_data if order[0] == 'E_FAS']
     
-    app.logger.info(f"Getting order quantities for {len(fdc_orders)} FDC orders and {len(efas_orders)} E-FAS orders, {len(sku_list)} SKUs")
+    user_prefix = f"{user}__" if user else ""
+    app.logger.info(f"{user_prefix}Getting order quantities for {len(fdc_orders)} FDC orders and {len(efas_orders)} E-FAS orders, {len(sku_list)} SKUs")
     
     # Process SKUs in batches to avoid parameter limit (SQL Server limit is ~2100 parameters)
     batch_size = 500  # Safe batch size

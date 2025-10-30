@@ -1406,8 +1406,25 @@ function toggleSidebar() {
             event.preventDefault();
             var userInput = document.getElementById('user_input').value.trim();
             if (userInput) {
-                // Redirect to path parameter format instead of query parameter
-                window.location.href = '/item_lookup/' + encodeURIComponent(userInput);
+                // Check if input is too long for URL (around 2000 characters is safe limit)
+                if (userInput.length > 2000) {
+                    // For long inputs, create a hidden form and submit as POST
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/item_lookup';
+                    
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'user_input';
+                    input.value = userInput;
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                } else {
+                    // For shorter inputs, use the original URL parameter approach
+                    window.location.href = '/item_lookup/' + encodeURIComponent(userInput);
+                }
             }
             return false;
         }

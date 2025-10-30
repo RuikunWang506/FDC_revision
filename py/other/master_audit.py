@@ -43,11 +43,11 @@ def audit():
     try:
         if search_type == 'days' and days_back is not None:
 
-            orders_data = SQL_connector.get_orders_by_criteria(database_filter=database_filter, days_back=days_back)
+            orders_data = SQL_connector.get_orders_by_criteria(database_filter=database_filter, days_back=days_back, user=current_user)
         elif search_type == 'since' and since_date:
-            orders_data = SQL_connector.get_orders_by_criteria(database_filter=database_filter, since_date=since_date)
+            orders_data = SQL_connector.get_orders_by_criteria(database_filter=database_filter, since_date=since_date, user=current_user)
         else:
-            orders_data = SQL_connector.get_orders_by_criteria(num_orders=num_orders, database_filter=database_filter)
+            orders_data = SQL_connector.get_orders_by_criteria(num_orders=num_orders, database_filter=database_filter, user=current_user)
         
         if orders_data:
             orders_df = pd.DataFrame.from_records(orders_data, 
@@ -107,10 +107,10 @@ def audit():
             
             if all_skus:
                 # Step 2: Check inventory for all SKUs in both databases
-                all_inventory = SQL_connector.get_sku_inventory_from_both_databases(all_skus)
+                all_inventory = SQL_connector.get_sku_inventory_from_both_databases(all_skus, current_user)
                 
                 # Step 3: Get order quantities for all SKUs
-                order_quantities = SQL_connector.get_sku_order_quantities(orders_data, all_skus)
+                order_quantities = SQL_connector.get_sku_order_quantities(orders_data, all_skus, current_user)
                 
                 if all_inventory:
                     # Create DataFrame from inventory data

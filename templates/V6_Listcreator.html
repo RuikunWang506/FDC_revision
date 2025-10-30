@@ -609,7 +609,12 @@
         <div class="form-group">
             <label for="random_strings_input"><h6>Paste your raw list, can be from excel, seperator is comma "," or new line "enter</p></h6></label>
             <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5"></textarea>
-
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="convert_newlines_checkbox">
+                <label class="form-check-label" for="convert_newlines_checkbox">
+                    Convert each line to comma-separated format (e.g., T3508 BK, T3508 BR, T3508 TN)
+                </label>
+            </div>
         </div>
         {% endif %}
         {% if list_input %}
@@ -1966,5 +1971,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
+<script>
+// Handle the convert newlines checkbox functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('convert_newlines_checkbox');
+    const textarea = document.getElementById('random_strings_input');
+    const topInput = document.getElementById('list_input');
+    
+    if (checkbox && textarea && topInput) {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Convert from new lines to comma separated and put in top field only
+                const lines = textarea.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                const commaSeparated = lines.join(', ');
+                
+                // Display the converted text in the top input field only
+                topInput.value = commaSeparated;
+                // Bottom field stays unchanged
+            } else {
+                // Clear the top field when unchecked
+                topInput.value = '';
+            }
+        });
+        
+        // Clear top field when user types in textarea (regardless of checkbox state)
+        textarea.addEventListener('input', function() {
+            if (!checkbox.checked) {
+                topInput.value = '';
+            }
+        });
+    }
+});
+</script>
+
 </body>
 </html>
