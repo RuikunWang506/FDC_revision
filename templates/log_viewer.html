@@ -162,11 +162,10 @@
     </div>
     
     <!-- Search Box -->
-    <form action="{{ url_for('log_viewer.search_logs') }}" method="post" class="search-container">
+    <form action="{{ url_for('search_logs') }}" method="post" class="search-container">
         <input type="text" id="search-input" name="search_term" placeholder="Search logs..." value="{{ search_term }}">
         <button type="submit" id="search-button">Search</button>
-        <a href="{{ url_for('log_viewer.display') }}" id="clear-search">Clear</a>
-        <button type="button" id="live-toggle" class="live-toggle-btn">Enable Live Logs</button>
+        <a href="{{ url_for('display') }}" id="clear-search">Clear</a>
     </form>
     
     <!-- Search Results Info -->
@@ -191,8 +190,8 @@
     <!-- Pagination Controls -->
     <div class="pagination">
         {% if page > 1 %}
-            <a href="{{ url_for('log_viewer.display', page=1, search=search_term) }}">First</a>
-            <a href="{{ url_for('log_viewer.display', page=page-1, search=search_term) }}">Previous</a>
+            <a href="{{ url_for('display', page=1, search=search_term) }}">First</a>
+            <a href="{{ url_for('display', page=page-1, search=search_term) }}">Previous</a>
         {% else %}
             <a class="disabled">First</a>
             <a class="disabled">Previous</a>
@@ -201,8 +200,8 @@
         <span>Page {{ page }} of {{ total_pages }}</span>
 
         {% if page < total_pages %}
-            <a href="{{ url_for('log_viewer.display', page=page+1, search=search_term) }}">Next</a>
-            <a href="{{ url_for('log_viewer.display', page=total_pages, search=search_term) }}">Last</a>
+            <a href="{{ url_for('display', page=page+1, search=search_term) }}">Next</a>
+            <a href="{{ url_for('display', page=total_pages, search=search_term) }}">Last</a>
         {% else %}
             <a class="disabled">Next</a>
             <a class="disabled">Last</a>
@@ -212,90 +211,54 @@
     <script>
         const logContainer = document.getElementById("log-container");
         const searchInput = document.getElementById("search-input");
-        const liveToggleBtn = document.getElementById("live-toggle");
-        
-        let evtSource = null;
-        let liveLogsEnabled = false;
-        
-        // Toggle live logging
-        liveToggleBtn.addEventListener('click', function() {
-            liveLogsEnabled = !liveLogsEnabled;
-            
-            if (liveLogsEnabled) {
-                liveToggleBtn.textContent = 'Disable Live Logs';
-                liveToggleBtn.classList.add('active');
-                connectEventSource();
-            } else {
-                liveToggleBtn.textContent = 'Enable Live Logs';
-                liveToggleBtn.classList.remove('active');
-                if (evtSource) {
-                    evtSource.close();
-                    evtSource = null;
-                }
-            }
-        });
         
         // For live log updates
         function connectEventSource() {
-            if (evtSource) {
-                evtSource.close();
-            }
-            
-            evtSource = new EventSource("{{ url_for('log_viewer.live_logs') }}");
+            const evtSource = new EventSource("/log/stream");
 
             evtSource.onmessage = function(event) {
-                if (!liveLogsEnabled) return;
-                
-                const line = event.data.trim();
-                if (!line) return; // Skip empty heartbeats
-                
                 try {
-                    // Format the line (simple approach - could be enhanced)
-                    let logClass = '';
-                    if (line.includes('ERROR')) {
-                        logClass = 'error';
-                    } else if (line.includes('INFO')) {
-                        logClass = 'info';
+                    const data = JSON.parse(event.data);
+                    const { log_class, formatted_line } = data;
+
+                    if (formatted_line) {
+                        const logEntry = document.createElement("div");
+                        logEntry.className = "log-entry";
+
+                        if (log_class === 'error') {
+                            logEntry.classList.add('error');
+                        } else if (log_class === 'info') {
+                            logEntry.classList.add('info');
+                        }
+
+                        // If we're searching, highlight the search term in new entries
+                        const searchTerm = "{{ search_term }}";
+                        if (searchTerm && formatted_line.toLowerCase().includes(searchTerm.toLowerCase())) {
+                            const regex = new RegExp(searchTerm, 'gi');
+                            logEntry.innerHTML = formatted_line.replace(
+                                regex, 
+                                match => `<mark class="highlight-search">${match}</mark>`
+                            );
+                        } else {
+                            logEntry.innerHTML = formatted_line;
+                        }
+                        
+                        // Prepend the new line at the top
+                        logContainer.insertBefore(logEntry, logContainer.firstChild);
                     }
-                    
-                    const logEntry = document.createElement("div");
-                    logEntry.className = "log-entry " + logClass;
-                    
-                    // If we're searching, highlight the search term in new entries
-                    const searchTerm = "{{ search_term }}";
-                    if (searchTerm && line.toLowerCase().includes(searchTerm.toLowerCase())) {
-                        const regex = new RegExp(searchTerm, 'gi');
-                        logEntry.innerHTML = line.replace(
-                            regex, 
-                            match => `<mark class="highlight-search">${match}</mark>`
-                        );
-                    } else {
-                        logEntry.innerHTML = line;
-                    }
-                    
-                    // Prepend the new line at the top
-                    logContainer.insertBefore(logEntry, logContainer.firstChild);
-                    
-                    // Auto-scroll to top to show new logs
-                    window.scrollTo(0, 0);
-                    
                 } catch (e) {
-                    console.error("Failed to process log line:", e);
+                    console.error("Failed to parse log line:", e);
                 }
             };
 
             evtSource.onerror = function(err) {
-                console.error("EventSource error:", err);
-                if (liveLogsEnabled) {
-                    // Auto-reconnect after 3 seconds
-                    setTimeout(() => {
-                        if (liveLogsEnabled) {
-                            connectEventSource();
-                        }
-                    }, 3000);
-                }
+                console.error("EventSource error, reconnecting...", err);
+                evtSource.close();
+                setTimeout(connectEventSource, 3000); // Retry connection after 3 seconds
             };
         }
+
+        connectEventSource();
         
         // Focus the search input when the page loads
         window.onload = function() {

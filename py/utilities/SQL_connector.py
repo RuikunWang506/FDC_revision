@@ -437,7 +437,6 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
                 DATEDIFF(day, '20230101', DATEADD(day, 1, CAST(GETDATE() AS DATE))) + 81088
             )
             """
-            app.logger.info(f"Date filter: Looking for orders from TODAY only")
         else:
             # Last X days: days_back=1 means today + yesterday, days_back=2 means today + yesterday + day before, etc.
             where_clause = f"""
@@ -445,7 +444,6 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
                 DATEDIFF(day, '20230101', DATEADD(day, -{days_back}, CAST(GETDATE() AS DATE))) + 81088
             )
             """
-            app.logger.info(f"Date filter: Looking for orders from last {days_back} days (including today)")
 
     elif since_date:
         try:
@@ -458,13 +456,11 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
                 DATEDIFF(day, '20230101', '{sql_date}') + 81088
             )
             """
-            app.logger.info(f"Date filter: Looking for orders since {since_date}")
         except ValueError as e:
             top_clause = f"TOP {num_orders}"
             app.logger.info(f"Invalid date format: {since_date}, error: {e}, falling back to TOP {num_orders}")
     else:
         top_clause = f"TOP {num_orders}"
-        app.logger.info(f"No date filter: Getting TOP {num_orders} orders")
     
     # Connect to databases and fetch data
     for db_name, db_display in databases_to_query:
@@ -485,7 +481,6 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
                 """
                 cursor.execute(debug_query)
                 debug_result = cursor.fetchone()
-                app.logger.info(f"NEW Debug info for {db_display}: Current datetime: {debug_result[0]}, Today in NEW format: {debug_result[1]}, Cutoff in NEW format: {debug_result[2]}, Latest order date: {debug_result[3]}, Total orders: {debug_result[4]}")
                 
                 # Check how many orders match our criteria
                 count_query = f"""
@@ -495,7 +490,6 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
                 """
                 cursor.execute(count_query)
                 count_result = cursor.fetchone()
-                app.logger.info(f"Orders matching NEW criteria in {db_display}: {count_result[0]}")
             
             # Main query to get orders
             query = f"""
@@ -518,10 +512,8 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
                 ORDER BY o.ord_dt DESC
             """
             
-            app.logger.info(f"Executing NEW query on {db_display}")
             cursor.execute(query)
             rows = cursor.fetchall()
-            app.logger.info(f"Found {len(rows)} orders in {db_display}")
             
             # Log a sample of the results
             if rows:
@@ -537,7 +529,6 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
         except Exception as e:
             app.logger.info(f"General error in {db_name}: {e}")
     
-    app.logger.info(f"Total orders found across all databases: {len(all_orders)}")
     return all_orders
 def get_sold_out_skus_from_orders(orders_data):
     """Get SKUs from the provided orders that are sold out (combined available quantity is 0 or negative)"""

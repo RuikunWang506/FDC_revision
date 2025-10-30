@@ -43,6 +43,10 @@ def log_response(response):
         if details['client_ip'] == '173.198.50.202':
             return response
         
+        # Skip logging successful login attempts (only log failures)
+        if details['path'] == '/login' and 200 <= status_code < 300:
+            return response
+        
         # Get username if available
         username = session.get('username', 'anonymous')
         
@@ -127,7 +131,8 @@ def login():
             return redirect(redirect_url)
         else:
             flash("Invalid username or password")
-            log_event('WARNING', f'Failed login attempt - Username: {username}, IP: {client_ip}')
+            # Log failed login attempt with detailed information
+            log_event('WARNING', f'🔴 FAILED_LOGIN: Username: "{username}", Password: "[REDACTED]", IP: {client_ip}, Location: {location_data.get("city", "Unknown")}, User-Agent: {request.headers.get("User-Agent", "Unknown")}')
     
     return render_template("login.html", client_ip=client_ip, location=location_data)
 

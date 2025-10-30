@@ -39,7 +39,7 @@ from py.loris.lori_automation import lori_automation_bp
 from py.other.customer import customer_bp
 from py.order.order_processor import order_processor_bp
 from py.utilities.auth import auth_bp
-from py.utilities.logging_setup import log_event, log_viewer_bp
+from py.utilities.logging_setup import log_event
 from py.other.warehousemap import warehousemap_bp
 from py.other.master_audit import master_audit_bp
 from py.order.order_search import order_lookup_bp
@@ -70,7 +70,6 @@ def register_routes(app):
     app.register_blueprint(auth_bp)
     app.register_blueprint(warehousemap_bp)
     app.register_blueprint(master_audit_bp)
-    app.register_blueprint(log_viewer_bp)
     app.register_blueprint(order_lookup_bp)
     app.register_blueprint(macy_bp)
     app.register_blueprint(mysql_connector_bp)
@@ -124,11 +123,152 @@ def register_routes(app):
             send_discord_notification(message, color)
             return jsonify({"status": "Notification sent successfully"})
         except Exception as e:
-            return jsonify({"error": str(e)}), 500@app.route("/health")
-    def health_check():
-        """Health check endpoint for monitoring"""
-        return jsonify({
-            "status": "healthy",
-            "timestamp": time.time(),
-            "service": "FDC Flask App"
-        })
+            return jsonify({"error": str(e)}), 500
+
+
+    @app.route('/log')
+    def display():
+        if 'username' not in session:
+            return redirect(url_for("auth.login"))
+        current_user = session['username']
+        search_term = request.args.get('search', '').strip()
+
+        try:
+            with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
+                lines = file.readlines()
+            
+            # If there's a search term, filter logs across all pages
+            if search_term:
+                filtered_lines = []
+                for line in lines:
+                    if search_term.lower() in line.lower():
+                        filtered_lines.append(line)
+                
+                formatted_lines = format_logs(filtered_lines)
+                reversed_lines = list(reversed(formatted_lines))
+                
+                # Return search results with pagination
+                per_page = 100
+                page = request.args.get('page', 1, type=int)
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated_log_lines = reversed_lines[start:end]
+                
+                # Calculate total pages for search results
+                total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
+                
+                return render_template('log_viewer.html', 
+                                    log_lines=paginated_log_lines, 
+                                    page=page, 
+                                    total_pages=total_pages,
+                                    current_user=current_user,
+                                    search_term=search_term), 200
+            else:
+                # Original pagination logic for all logs
+                formatted_lines = format_logs(lines)
+                reversed_lines = list(reversed(formatted_lines))
+                
+                per_page = 100
+                page = request.args.get('page', 1, type=int)
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated_log_lines = reversed_lines[start:end]
+                
+                total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
+                
+                return render_template('log_viewer.html', 
+                                    log_lines=paginated_log_lines, 
+                                    page=page, 
+                                    total_pages=total_pages,
+                                    current_user=current_user,
+                                    search_term=''), 200
+
+        except Exception as e:
+            app.logger.error('Error accessing log file: %s', e)
+            return jsonify(error=str(e)), 500
+
+    @app.route('/log/search', methods=['POST'])
+    def search_logs():
+        if 'username' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+        
+        search_term = request.form.get('search_term', '').strip()
+        if not search_term:
+            return redirect(url_for('display'))
+        
+        return redirect(url_for('display', search=search_term, page=1))
+
+        
+    @app.route('/log/stream', methods=['GET'])
+    def stream_log():
+       # if 'username' not in session:
+       #     return redirect(url_for("auth.login"))
+        def generate():
+            with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
+                file.seek(0, 2)  # Move to the end of the file
+                while True:
+                    line = file.readline()
+                    if not line:
+                        time.sleep(1)  # Wait for new log lines
+                        continue
+
+                    # Format the new log line
+                    formatted_line_tuple = format_logs([line.strip()])
+
+                    # format_logs returns a list of tuples, take the first tuple
+                    if formatted_line_tuple:
+                        log_class, formatted_line = formatted_line_tuple[0]
+                    else:
+                        log_class, formatted_line = '', line.strip()
+
+                    # Prepare the formatted line as a single string
+                    # You can choose to send both log_class and formatted_line or just the formatted_line
+                    # For simplicity, we'll send a JSON string with both
+                    import json
+                    data = json.dumps({
+                        'log_class': log_class,
+                        'formatted_line': formatted_line
+                    })
+
+                    yield f"data: {data}\n\n"  # SSE format: data:<line>
+        return Response(generate(), mimetype='text/event-stream')
+    
+    def format_logs(lines):
+        formatted = []
+        for line in lines:
+            # Determine log class
+            if 'ERROR' in line:
+                log_class = 'error'
+            elif 'INFO' in line:
+                log_class = 'info'
+            else:
+                log_class = ''
+
+            # Strip newline characters
+            stripped_line = line.strip()
+
+            # Highlight ***text*** in blue and remove ***
+            stripped_line = re.sub(
+                r'\*\*\*(.*?)\*\*\*',  # Match text between ***
+                lambda m: f'<span class="highlight-blue">{m.group(1).upper()}</span>',  # Apply highlight and exclude ***
+                stripped_line
+            )
+
+            # Highlight @@@text@@@ in purple and remove @@@
+            stripped_line = re.sub(
+                r'@@@(.*?)@@@',  # Match text between @@@
+                r'<span class="highlight-purple">\1</span>',  # Apply highlight and exclude @@@
+                stripped_line
+            )
+
+            # Highlight and capitalize the word after __
+            stripped_line = re.sub(
+                r'__(.*?)__\s*(.*)',  # Match the second occurrence of __ and capture everything after it
+                lambda m: f'__{m.group(1)}__ <span class="highlight-red">{m.group(2).upper()}</span>',
+                stripped_line
+            )
+
+            # Append the formatted line as a two-element tuple
+            formatted.append((log_class, stripped_line))
+        
+        return formatted
