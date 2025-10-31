@@ -288,3 +288,26 @@ def fetch_from_dropbox():
     thread.start()
 
     return jsonify({'success': True, 'message': 'Dropbox fetch started'})
+
+@dam_sync_bp.route('/cleanup', methods=['POST'])
+def cleanup_broken_links():
+    """Scan DAM image records and mark missing files as inactive."""
+    import py.utilities.models
+    import os
+    db = py.utilities.models.SessionLocal()
+    try:
+        assets = db.query(py.utilities.models.ImageAsset).filter(
+            py.utilities.models.ImageAsset.is_active == True
+        ).all()
+        cleaned = 0
+        for asset in assets:
+            if hasattr(asset, 'path') and asset.path:
+                if not os.path.exists(asset.path):
+                    asset.is_active = False
+                    cleaned += 1
+        db.commit()
+        return jsonify({'success': True, 'cleaned': cleaned, 'total_checked': len(assets)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()

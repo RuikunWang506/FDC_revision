@@ -505,7 +505,13 @@
                     <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
                         <i class="fas fa-file-invoice"></i> Download Invoices 徐锦
                     </button>
-
+                    <button id="send-to-shipped-btn" class="btn btn-success btn-block w-100 mb-2">
+                        <i class="fas fa-truck"></i> Send to Shipped Only
+                    </button>
+                    <div class="input-group mb-2">
+                        <input type="date" id="bulk-batch-date-input" class="form-control" placeholder="New Batch Date (YYYY-MM-DD)">
+                        <button id="bulk-batch-date-btn" class="btn btn-info">Bulk Modify Batch Date</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2927,6 +2933,65 @@
 
         // Download invoices function
         async function downloadInvoices() {
+        // Send to shipped only (no package info required)
+        async function sendToShippedOnly() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            if (selectedPOs.length === 0) { alert('Please select at least one order'); return; }
+            const btn = document.getElementById('send-to-shipped-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            try {
+                const response = await fetch('/lori_automation/send_to_shipped_only', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ po_numbers: selectedPOs })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                alert(data.message || 'Orders sent to shipped!');
+                checkboxes.forEach(cb => cb.checked = false);
+                hideSidebar();
+                await loadAndRenderOrders();
+            } catch (err) {
+                alert('Error sending to shipped: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // Bulk modify batch date
+        async function bulkModifyBatchDate() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            if (selectedPOs.length === 0) { alert('Please select at least one order'); return; }
+            const newDate = document.getElementById('bulk-batch-date-input').value;
+            if (!newDate) { alert('Please enter a new batch date (YYYY-MM-DD)'); return; }
+            const btn = document.getElementById('bulk-batch-date-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            try {
+                const response = await fetch('/lori_automation/bulk_modify_batch_date', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ po_numbers: selectedPOs, new_batch_date: newDate })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                alert(data.message || 'Batch dates updated!');
+                checkboxes.forEach(cb => cb.checked = false);
+                hideSidebar();
+                await loadAndRenderOrders();
+            } catch (err) {
+                alert('Error updating batch dates: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
             const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
             
@@ -3135,7 +3200,9 @@
         document.getElementById('custom-picklist-btn')?.addEventListener('click', customPicklist);
         
         // Add event listener for download invoices button
-        document.getElementById('download-invoices-btn')?.addEventListener('click', downloadInvoices);
+    document.getElementById('download-invoices-btn')?.addEventListener('click', downloadInvoices);
+    document.getElementById('send-to-shipped-btn')?.addEventListener('click', sendToShippedOnly);
+    document.getElementById('bulk-batch-date-btn')?.addEventListener('click', bulkModifyBatchDate);
 
     </script>
 

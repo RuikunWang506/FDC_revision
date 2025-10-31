@@ -221,29 +221,22 @@ def fetch_email_attachments():
                 if part.get_content_disposition() == 'attachment':
                     filename = part.get_filename()
                     if filename and filename.lower().endswith('.pdf'):
-                        # Check if file already exists in batch directory
+                        # Always append new files, never replace
                         file_path = os.path.join(batch_dir, filename)
-                        
-                        if os.path.exists(file_path):
-                            print(f"[fetch_email_attachments] File already exists, skipping: {filename}")
-                            # Still add to downloaded_files list for tracking
-                            downloaded_files.append({
-                                'filename': filename,
-                                'filepath': file_path,
-                                'batch_date': batch_date,
-                                'status': 'skipped_existing'
-                            })
-                            continue
-                        
-                        # Download PDF file
+                        base, ext = os.path.splitext(filename)
+                        unique_path = file_path
+                        counter = 1
+                        # If file exists, create a unique filename by appending a counter
+                        while os.path.exists(unique_path):
+                            unique_path = os.path.join(batch_dir, f"{base}_{counter}{ext}")
+                            counter += 1
                         try:
-                            with open(file_path, 'wb') as f:
+                            with open(unique_path, 'wb') as f:
                                 f.write(part.get_payload(decode=True))
-                            
-                            print(f"[fetch_email_attachments] Downloaded: {filename}")
+                            print(f"[fetch_email_attachments] Downloaded: {os.path.basename(unique_path)}")
                             downloaded_files.append({
-                                'filename': filename,
-                                'filepath': file_path,
+                                'filename': os.path.basename(unique_path),
+                                'filepath': unique_path,
                                 'batch_date': batch_date,
                                 'status': 'downloaded'
                             })
@@ -1533,6 +1526,7 @@ def get_order_items(po_number):
         return jsonify({'error': str(e)}), 500
     finally:
         if connection.is_connected():
+            cursor.close()
             connection.close()
 
 @lori_automation_bp.route("/update_order_status", methods=["POST"])
@@ -1869,7 +1863,7 @@ def save_package_info():
             return jsonify({'error': 'PO number is required'}), 400
         
         if not box_dimensions:
-            return jsonify({'error': 'At least one box is required'}), 400
+                       return jsonify({'error': 'At least one box is required'}), 400
         
         # Calculate total weight
         total_weight = sum(float(box.get('weight', 0)) for box in box_dimensions)
@@ -2278,7 +2272,7 @@ def fedex_upload_to_draft():
             
             # Get order items
             items_query = """
-                SELECT vendor_item, color, quantity, description, unit_price, extended_cost, upc
+                SELECT vendor_item, color, quantity, description, unit_price, extended_cost
                 FROM lori_order_items 
                 WHERE po_number = %s
             """
@@ -2288,8 +2282,8 @@ def fedex_upload_to_draft():
             # Get store information for shipper address
             store_number = po_number[:4] if po_number else ''
             store_query = """
-                SELECT store_number, store_name, company, address1, address2, address3, 
-                       city, state, zip_code, phone
+                SELECT store_name, company, phone, address1, address2, address3, 
+                       city, state, zip_code
                 FROM loris_store_info 
                 WHERE store_number = %s
             """
@@ -2398,16 +2392,16 @@ def fedex_upload_to_draft():
                 'Recipient Postal Code': shipment_data['recipient']['zip'],
                 'Recipient Country': 'US',
                 'Recipient Phone': shipment_data['recipient']['phone'],
-                'Service Type': map_fedex_service_type(service_type),
-                'Package Type': map_fedex_packaging_type(packaging_type),
-                'Weight': sum([float(box['weight']) for box in boxes]),
-                'Declared Value': shipment_data['order_info']['total_cost'],
+                'Service Type': map_fedex_service_type(pkg_info['fedex_service_type']),
+                'Package Type': map_fedex_packaging_type(pkg_info['fedex_packaging_type']),
+                'Weight': pkg_info['total_weight'],
+                'Declared Value': order['total_cost'],
                 'Reference 1': po_number,
-                'Reference 2': f"Batch: {shipment_data['order_info']['batch_date']}",
-                'Special Instructions': special_instructions,
-                'Length': boxes[0]['length'] if boxes else '12',
-                'Width': boxes[0]['width'] if boxes else '12',
-                'Height': boxes[0]['height'] if boxes else '6'
+                'Reference 2': f"Batch: {order['batch_date']}",
+                'Special Instructions': pkg_info['special_instructions'] or '',
+                'Length': box_dimensions[0]['length'] if box_dimensions else '12',
+                'Width': box_dimensions[0]['width'] if box_dimensions else '12',
+                'Height': box_dimensions[0]['height'] if box_dimensions else '6'
             }
             
             csv_filename = f"fedex_import_{po_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -2714,6 +2708,7 @@ def process_selected_orders():
             excel_data = []
             processed_orders = []
             
+            # Process each order
             for po_number in po_numbers:
                 # Get order info
                 order_query = """
@@ -2728,18 +2723,14 @@ def process_selected_orders():
                     current_app.logger.warning(f"Order not found: {po_number}")
                     continue
                 
-                # Get package info
-                package_query = """
-                    SELECT box_dimensions, fedex_service_type, fedex_packaging_type
-                    FROM loris_pkg_info 
+                # Get order items
+                items_query = """
+                    SELECT vendor_item, quantity, upc, description, unit_price, extended_cost
+                    FROM lori_order_items 
                     WHERE po_number = %s
                 """
-                cursor.execute(package_query, (po_number,))
-                package_info = cursor.fetchone()
-                
-                if not package_info:
-                    current_app.logger.warning(f"No package info found for: {po_number}")
-                    continue
+                cursor.execute(items_query, (po_number,))
+                items = cursor.fetchall()
                 
                 # Get store information for additional contact details
                 store_number = po_number[:4] if po_number else ''
@@ -2911,6 +2902,9 @@ def process_selected_orders():
                             pass
                     adjusted_width = min(max_length + 2, 50)
                     worksheet.column_dimensions[column_letter].width = adjusted_width
+            
+            # Update order statuses to 'shipped'
+            update_query = "UPDATE lori_orders SET status = 'shipped', updated_at = NOW() WHERE po_number = %s"
             
             # Update order statuses to 'shipped'
             update_query = "UPDATE lori_orders SET status = 'shipped', updated_at = NOW() WHERE po_number = %s"
@@ -3677,6 +3671,40 @@ def download_invoices():
             if not invoice_files:
                 return jsonify({'error': 'No valid invoices could be generated'}), 400
             
+            # --- Build summary file ---
+            if len(invoice_files) > 1:
+                import openpyxl
+                from openpyxl import Workbook
+                summary_wb = Workbook()
+                summary_ws = summary_wb.active
+                total_amount = Decimal(0)
+                total_quantity = Decimal(0)
+                summary_rows = []
+                for invoice in invoice_files:
+                    invoice['excel'].seek(0)
+                    wb = openpyxl.load_workbook(invoice['excel'])
+                    ws = wb.active
+                    found_qty = 0
+                    found_amt = 0
+                    for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
+                        if row[2].value == "Total Quantity":
+                            found_qty = row[3].value or 0
+                        if row[6].value == "Total Amount":
+                            amt_val = row[7].value
+                            if amt_val and isinstance(amt_val, str) and amt_val.startswith("$"):
+                                amt_val = amt_val.replace("$", "")
+                            found_amt = Decimal(amt_val or 0)
+                    summary_rows.append([invoice['filename'], invoice.get('po_number', ''), float(found_amt), float(found_qty)])
+                    total_amount += found_amt
+                    total_quantity += Decimal(found_qty)
+                    
+                # Add total row
+                summary_ws.append(['Invoice File Name', 'Invoice Number', 'Total Amount', 'Total Quantity'])
+                for row in summary_rows:
+                    summary_ws.append(row)
+                summary_ws.append(['TOTAL', '', float(total_amount), float(total_quantity)])
+            # --- End summary file build ---
+
             # Return single Excel file or ZIP based on count
             if len(invoice_files) == 1:
                 invoice = invoice_files[0]
@@ -3689,13 +3717,16 @@ def download_invoices():
             else:
                 # Create ZIP file for multiple invoices
                 zip_buffer = io.BytesIO()
+                summary_stream = io.BytesIO()
+                summary_wb.save(summary_stream)
+                summary_stream.seek(0)
                 with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                     for invoice in invoice_files:
                         invoice['excel'].seek(0)
                         zip_file.writestr(invoice['filename'], invoice['excel'].read())
-                
+                    # Add summary file
+                    zip_file.writestr('aaa_summary.xlsx', summary_stream.read())
                 zip_buffer.seek(0)
-                
                 return send_file(
                     zip_buffer,
                     as_attachment=True,
@@ -3820,3 +3851,56 @@ def download_loris_labels(filename):
     else:
         flash('File not found.', 'error')
         return redirect(url_for('lori_automation.loris_fedex'))
+    
+@lori_automation_bp.route("/send_to_shipped_only", methods=["POST"])
+def send_to_shipped_only():
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    data = request.get_json()
+    po_numbers = data.get('po_numbers', [])
+    if not po_numbers:
+        return jsonify({'error': 'No PO numbers provided'}), 400
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        cursor = connection.cursor()
+        updated = 0
+        for po in po_numbers:
+            cursor.execute("UPDATE lori_orders SET status = 'shipped' WHERE po_number = %s", (po,))
+            if cursor.rowcount > 0:
+                updated += 1
+        connection.commit()
+        return jsonify({'success': True, 'message': f'Status updated to shipped for {updated} orders.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@lori_automation_bp.route("/bulk_modify_batch_date", methods=["POST"])
+def bulk_modify_batch_date():
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    data = request.get_json()
+    po_numbers = data.get('po_numbers', [])
+    new_batch_date = data.get('new_batch_date', None)
+    if not po_numbers or not new_batch_date:
+        return jsonify({'error': 'PO numbers and new batch date required'}), 400
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        cursor = connection.cursor()
+        updated = 0
+        for po in po_numbers:
+            cursor.execute("UPDATE lori_orders SET batch_date = %s WHERE po_number = %s", (new_batch_date, po))
+            if cursor.rowcount > 0:
+                updated += 1
+        connection.commit()
+        return jsonify({'success': True, 'message': f'Batch date updated for {updated} orders.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()

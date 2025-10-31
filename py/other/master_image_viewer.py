@@ -29,16 +29,20 @@ def find_images_by_sku(sku):
             'dam_other': []
         }
         
+        import os
         for asset in assets:
+            # Skip if file does not exist (for assets with a local path)
+            if hasattr(asset, 'path') and asset.path:
+                if not os.path.exists(asset.path):
+                    continue
             # Extract directory information for better organization
             directory = None
             relative_path = None
             if hasattr(asset, 'path') and asset.path:
-                import os
                 directory = os.path.dirname(asset.path)
                 # Get relative path from common base directories
                 common_bases = [
-                    r'C:\Users\Stream\Dropbox\Pictures-China (1)',  # Fixed case
+                    r'C:\Users\Stream\Dropbox\Pictures-China (1)',
                     r'C:\users\stream\Dropbox\Pictures-China (1)',
                     r'\\192.168.1.8\public'
                 ]
@@ -46,11 +50,8 @@ def find_images_by_sku(sku):
                     if asset.path.startswith(base):
                         relative_path = os.path.relpath(asset.path, base)
                         break
-                
-                # If no relative path found, just show the folder name
                 if not relative_path and directory:
                     relative_path = os.path.basename(directory)
-            
             asset_info = {
                 'id': asset.id,
                 'sku': asset.sku,
@@ -61,18 +62,15 @@ def find_images_by_sku(sku):
                 'height': asset.height,
                 'is_canonical': asset.is_canonical,
                 'created_at': asset.created_at.isoformat() if asset.created_at else None,
-                'url': f'/image/{asset.id}/800',  # Default medium size for preview
-                'full_url': f'/image/{asset.id}/2000',  # Large size for modal
-                'original_url': f'/image/{asset.id}/0',  # Original size for download
+                'url': f'/image/{asset.id}/800',
+                'full_url': f'/image/{asset.id}/2000',
+                'original_url': f'/image/{asset.id}/0',
                 'directory': directory,
                 'relative_path': relative_path,
                 'file_path': asset.path if hasattr(asset, 'path') else None,
                 'file_size': asset.file_size if hasattr(asset, 'file_size') else None
             }
-            
-            # Categorize by actual source from DAM
             source = asset.source.lower() if asset.source else 'unknown'
-            
             if source == 'dropbox':
                 grouped_images['dam_dropbox'].append(asset_info)
             elif source == 'catalog':

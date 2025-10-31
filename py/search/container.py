@@ -18,24 +18,34 @@ def upload_container_file():
             all_tables = []
             processing_errors = []
             
+            # Ensure output directory exists
+            output_dir = os.path.join(current_app.root_path, 'output', 'container_csvs')
+            os.makedirs(output_dir, exist_ok=True)
             for file in files:
                 try:
                     df_header = pd.read_excel(file, sheet_name='System File', nrows=2, header=None)
                     container_number_raw = df_header.iloc[0, 0]
                     container_number = container_number_raw.split('-')[-1].strip().replace('FT', 'F')
                     step3_csv_data, step4_csv_data, df_step3, df_step4 = process_container_file(file, container_number)
-                    
-                    # Store CSV data in session for download
-                    session[f'container_{container_number}_step3'] = step3_csv_data
-                    session[f'container_{container_number}_step4'] = step4_csv_data
+
+                    # Save CSVs to disk
+                    step3_filename = f"{container_number}-styles.csv"
+                    step4_filename = f"{container_number}-PO.csv"
+                    step3_path = os.path.join(output_dir, step3_filename)
+                    step4_path = os.path.join(output_dir, step4_filename)
+                    with open(step3_path, 'w', encoding='utf-8') as f3:
+                        f3.write(step3_csv_data)
+                    with open(step4_path, 'w', encoding='utf-8') as f4:
+                        f4.write(step4_csv_data)
+
+                    # Store only filenames in session
+                    session[f'container_{container_number}_step3_file'] = step3_filename
+                    session[f'container_{container_number}_step4_file'] = step4_filename
                     session[f'container_{container_number}_processed'] = True
-                    
+
                     # Add download links to the list
-                    all_files.extend([
-                        f"{container_number}-styles.csv",
-                        f"{container_number}-PO.csv"
-                    ])
-                    
+                    all_files.extend([step3_filename, step4_filename])
+
                     # Add table data with container info
                     all_tables.append({
                         'container_number': container_number,
@@ -43,9 +53,9 @@ def upload_container_file():
                         'table2': df_step4.to_html(classes="table table-bordered", index=False),
                         'success': True
                     })
-                    
+
                     current_app.logger.info(f"Successfully processed container file: {file.filename}")
-                    
+
                 except Exception as e:
                     error_msg = f"Error processing file {file.filename}: {str(e)}"
                     current_app.logger.error(error_msg)
@@ -160,21 +170,22 @@ def download_container_csv(container_number, file_type):
         flash('Container data not found. Please re-upload the file.', 'error')
         return redirect(url_for('container.upload_container_file'))
     
-    # Get the stored CSV data from session
+    # Get the stored filename from session
     if file_type == 'styles':
-        csv_data = session.get(f'container_{container_number}_step3')
-        filename = f"{container_number}-styles.csv"
+        filename = session.get(f'container_{container_number}_step3_file')
     elif file_type == 'po':
-        csv_data = session.get(f'container_{container_number}_step4') 
-        filename = f"{container_number}-PO.csv"
+        filename = session.get(f'container_{container_number}_step4_file')
     else:
         return "Invalid file type", 400
-    
-    if not csv_data:
-        flash('CSV data not found. Please re-upload the file.', 'error')
+
+    if not filename:
+        flash('CSV file not found. Please re-upload the file.', 'error')
         return redirect(url_for('container.upload_container_file'))
-    
-    # Convert to bytes and send
-    from io import BytesIO
-    bio = BytesIO(csv_data.encode('utf-8'))
-    return send_file(bio, as_attachment=True, download_name=filename, mimetype='text/csv')
+
+    # Read file from disk and send
+    output_dir = os.path.join(current_app.root_path, 'output', 'container_csvs')
+    file_path = os.path.join(output_dir, filename)
+    if not os.path.exists(file_path):
+        flash('CSV file not found on server. Please re-upload the file.', 'error')
+        return redirect(url_for('container.upload_container_file'))
+    return send_file(file_path, as_attachment=True, download_name=filename, mimetype='text/csv')
