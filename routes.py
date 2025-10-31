@@ -21,6 +21,7 @@ from py.utilities.dam_routes import register_dam_routes
 from py.Toolkits.Label_Maker import register_label_maker_routes
 from py.Toolkits.view_all_routes import register_view_all_routes
 from py.search.location_service import location_service_bp
+from py.search.Location_massive_audit import location_massive_audit_bp
 from py.search.container import container_bp
 from py.search.item_lookup import item_lookup_bp
 from py.other.mobile_lite import mobile_lite_bp
@@ -77,6 +78,7 @@ def register_routes(app):
     app.register_blueprint(master_image_viewer_bp)
     app.register_blueprint(dam_sync_bp)
     app.register_blueprint(bag_style_viewer_bp)
+    app.register_blueprint(location_massive_audit_bp)
 
 
     app.permanent_session_lifetime = timedelta(days=30)

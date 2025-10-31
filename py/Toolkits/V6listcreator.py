@@ -432,7 +432,7 @@ def get_sql_data(style_list):
                 RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
                 RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
                 CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR) AS create_dt
-            FROM wm_skufile
+            FROM wm_skufile where wm_skufile.WHS_NUM = '01'
         ) AS fcd ON i.PROD_CD = fcd.prod_cd
         WHERE i.PROD_CD IN (SELECT value FROM SplitValues)
         OR i.ALT_CD IN (SELECT value FROM dbo.SplitString(@ExactStyles, ','));
