@@ -33,26 +33,32 @@ def fetch_locations(skus):
         
         cursor = connection.cursor()
         placeholders = ', '.join(['%s'] * len(skus))
-        query = f"SELECT SKU, Location FROM products WHERE SKU IN ({placeholders})"
-        
+        # With one row per SKU-Location, we aggregate locations with GROUP_CONCAT
+        query = f"""
+            SELECT SKU, GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') as locations
+            FROM products 
+            WHERE SKU IN ({placeholders}) AND Location IS NOT NULL AND Location != ''
+            GROUP BY SKU
+        """
         
         cursor.execute(query, skus)
         results = cursor.fetchall()
         
-        for sku, location in results:
-            location_dict[sku.lower()] = location
+        for sku, locations in results:
+            location_dict[sku.lower()] = locations
         
+        # Fallback for SKUs not found - try stripped version
         for sku in skus:
-            if sku.lower() not in location_dict or not location_dict[sku.lower()]:
+            if sku.lower() not in location_dict:
                 stripped_sku = sku.split(' ')[0]
                 if stripped_sku != sku:
                     cursor.execute(
-                        "SELECT SKU, Location, Update_Date FROM products WHERE SKU = %s",
+                        "SELECT GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') FROM products WHERE SKU = %s",
                         (stripped_sku,)
                     )
                     result = cursor.fetchone()
-                    if result:
-                        location_dict[sku.lower()] = result[1]
+                    if result and result[0]:
+                        location_dict[sku.lower()] = result[0]
     
     except Exception as e:
         current_app.logger.error(f"Error fetching locations: {e}")

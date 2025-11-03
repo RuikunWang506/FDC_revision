@@ -1873,7 +1873,6 @@
                             console.error('Error in direct delete handler:', error);
                         }
                     });
-                    console.log('Direct delete handler attached for PO:', order.po_number);
                 }
                 
                 // Load existing package info for this order
@@ -2931,30 +2930,34 @@
             }
         }
 
-        // Download invoices function
-        async function downloadInvoices() {
         // Send to shipped only (no package info required)
         async function sendToShippedOnly() {
+            console.log('sendToShippedOnly called');
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
             const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            console.log('Selected POs for shipped:', selectedPOs);
             if (selectedPOs.length === 0) { alert('Please select at least one order'); return; }
             const btn = document.getElementById('send-to-shipped-btn');
             const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             try {
+                console.log('Sending fetch to /lori_automation/send_to_shipped_only');
                 const response = await fetch('/lori_automation/send_to_shipped_only', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ po_numbers: selectedPOs })
                 });
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
                 if (data.error) throw new Error(data.error);
                 alert(data.message || 'Orders sent to shipped!');
                 checkboxes.forEach(cb => cb.checked = false);
                 hideSidebar();
                 await loadAndRenderOrders();
             } catch (err) {
+                console.error('Error:', err);
                 alert('Error sending to shipped: ' + err.message);
             } finally {
                 btn.disabled = false;
@@ -2964,39 +2967,61 @@
 
         // Bulk modify batch date
         async function bulkModifyBatchDate() {
+            console.log('bulkModifyBatchDate called');
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
             const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            console.log('Selected POs:', selectedPOs);
             if (selectedPOs.length === 0) { alert('Please select at least one order'); return; }
             const newDate = document.getElementById('bulk-batch-date-input').value;
+            console.log('New date:', newDate);
             if (!newDate) { alert('Please enter a new batch date (YYYY-MM-DD)'); return; }
             const btn = document.getElementById('bulk-batch-date-btn');
             const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
             try {
+                console.log('Sending fetch to /lori_automation/bulk_modify_batch_date');
                 const response = await fetch('/lori_automation/bulk_modify_batch_date', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ po_numbers: selectedPOs, new_batch_date: newDate })
                 });
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
                 if (data.error) throw new Error(data.error);
                 alert(data.message || 'Batch dates updated!');
                 checkboxes.forEach(cb => cb.checked = false);
                 hideSidebar();
                 await loadAndRenderOrders();
             } catch (err) {
+                console.error('Error:', err);
                 alert('Error updating batch dates: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
         }
+
+        // Download invoices function
+        async function downloadInvoices() {
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
             const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
             
             if (selectedPOs.length === 0) {
                 alert('Please select at least one order to download invoices.');
+                return;
+            }
+            
+            // Prompt user for date
+            const today = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+            const dateInput = prompt('Enter date for invoices (MM/DD/YYYY):', today);
+            if (!dateInput) return; // User cancelled
+            
+            // Validate date format
+            const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (!dateRegex.test(dateInput)) {
+                alert('Please enter date in MM/DD/YYYY format');
                 return;
             }
             
@@ -3014,7 +3039,8 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        po_numbers: selectedPOs
+                        po_numbers: selectedPOs,
+                        invoice_date: dateInput
                     })
                 });
                 
@@ -3124,6 +3150,8 @@
         window.customPicklist = customPicklist;
         window.downloadInvoices = downloadInvoices;
         window.generateAndOpenDuplexPDF = generateAndOpenDuplexPDF;
+        window.sendToShippedOnly = sendToShippedOnly;
+        window.bulkModifyBatchDate = bulkModifyBatchDate;
 
 
         // Backwards-compatible: keep original combined handler available
@@ -3202,7 +3230,9 @@
         // Add event listener for download invoices button
     document.getElementById('download-invoices-btn')?.addEventListener('click', downloadInvoices);
     document.getElementById('send-to-shipped-btn')?.addEventListener('click', sendToShippedOnly);
+    console.log('Event listener attached to send-to-shipped-btn');
     document.getElementById('bulk-batch-date-btn')?.addEventListener('click', bulkModifyBatchDate);
+    console.log('Event listener attached to bulk-batch-date-btn');
 
     </script>
 

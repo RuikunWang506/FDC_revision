@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
     <title>Massive Location Update</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <style>
         .location-row { margin-bottom: 10px; }
         .location-label { font-weight: bold; margin-right: 10px; }
-        .style-input { width: 200px; }
+        .style-input { 
+            width: 200px; 
+            text-transform: uppercase;
+        }
         .occupied-field {
             background-color: #fff8b3 !important;
         }
@@ -16,47 +20,104 @@
             background-color: #fff3cd;
             border-color: #ffeeba;
         }
+        .badge {
+            font-size: 1.1em !important;
+            padding: 0.6em 0.9em !important;
+            text-transform: uppercase;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .add-style-btn {
+            font-size: 1.1em !important;
+            padding: 0.55em 0.85em !important;
+            line-height: 1;
+            vertical-align: middle;
+            display: inline-block;
+            border-width: 1px !important;
+        }
+        .section-header {
+            cursor: pointer;
+            user-select: none;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .section-header:hover {
+            background-color: #e9ecef;
+        }
+        .section-header .toggle-icon {
+            float: right;
+            transition: transform 0.3s;
+        }
+        .section-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
+    <div id="notification" class="alert alert-success" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999; text-align:center; font-size:1.5em; font-weight:bold; margin:0;"></div>
     <div class="container">
-    <h2>Massive Location Update</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Massive Location Update</h2>
+        <button type="button" class="btn btn-info" id="map-btn">View Map</button>
+    </div>
     <form method="POST">
-        <div class="row font-weight-bold mb-2">
-            <div class="col-md-4 text-center">BOT (Left)</div>
-            <div class="col-md-4 text-center">MID (Middle)</div>
-            <div class="col-md-4 text-center">TOP (Right)</div>
+        {% for base, sub_locs in groups.items() %}
+        <div class="section-header collapsed" data-section="{{ base }}">
+            <h4 style="display: inline; margin: 0;">{{ base }}</h4>
+            <span class="toggle-icon">▼</span>
         </div>
-        {% for loc in LOCATIONS %}
-        {% if '-' in loc %}
+        <div class="section-content" id="section-{{ base }}" style="display: none;">
+        {% for loc in sub_locs %}
+        {% if '-' in loc and 'wall' not in loc.lower() %}
         <div class="row location-row">
             <div class="col-md-4">
                 <span class="location-label">{{ loc }} BOT</span>
-                <input name="style_{{ loc }} BOT" class="form-control style-input{% if location_styles[loc ~ ' BOT']|length > 0 %} occupied-field{% endif %}" list="styles_list_{{ loc }}_BOT" placeholder="Enter or select style" {% if location_styles[loc ~ ' BOT']|length > 0 %} value="{{ location_styles[loc ~ ' BOT'][0] }}"{% endif %}>
-                <datalist id="styles_list_{{ loc }}_BOT">
-                    {% for style in styles %}
-                    <option value="{{ style }}">{{ style }}</option>
-                    {% endfor %}
-                </datalist>
+                <div class="sku-container" data-location="{{ loc }} BOT">
+                    <input type="text" name="input_{{ loc }}_BOT" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc ~ ' BOT'] %}style="display: none;"{% endif %}>
+                    <div class="sku-badges mt-2">
+                        {% for style in location_styles[loc ~ ' BOT'] %}
+                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                        {% endfor %}
+                        {% if location_styles[loc ~ ' BOT'] %}
+                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                        {% endif %}
+                    </div>
+                    <input type="hidden" name="skus_{{ loc }} BOT" value='{{ location_styles[loc ~ " BOT"]|tojson }}'>
+                </div>
             </div>
             <div class="col-md-4">
                 <span class="location-label">{{ loc }} MID</span>
-                <input name="style_{{ loc }} MID" class="form-control style-input{% if location_styles[loc ~ ' MID']|length > 0 %} occupied-field{% endif %}" list="styles_list_{{ loc }}_MID" placeholder="Enter or select style" {% if location_styles[loc ~ ' MID']|length > 0 %} value="{{ location_styles[loc ~ ' MID'][0] }}"{% endif %}>
-                <datalist id="styles_list_{{ loc }}_MID">
-                    {% for style in styles %}
-                    <option value="{{ style }}">{{ style }}</option>
-                    {% endfor %}
-                </datalist>
+                <div class="sku-container" data-location="{{ loc }} MID">
+                    <input type="text" name="input_{{ loc }}_MID" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc ~ ' MID'] %}style="display: none;"{% endif %}>
+                    <div class="sku-badges mt-2">
+                        {% for style in location_styles[loc ~ ' MID'] %}
+                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                        {% endfor %}
+                        {% if location_styles[loc ~ ' MID'] %}
+                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                        {% endif %}
+                    </div>
+                    <input type="hidden" name="skus_{{ loc }} MID" value='{{ location_styles[loc ~ " MID"]|tojson }}'>
+                </div>
             </div>
             <div class="col-md-4">
                 <span class="location-label">{{ loc }} TOP</span>
-                <input name="style_{{ loc }} TOP" class="form-control style-input{% if location_styles[loc ~ ' TOP']|length > 0 %} occupied-field{% endif %}" list="styles_list_{{ loc }}_TOP" placeholder="Enter or select style" {% if location_styles[loc ~ ' TOP']|length > 0 %} value="{{ location_styles[loc ~ ' TOP'][0] }}"{% endif %}>
-                <datalist id="styles_list_{{ loc }}_TOP">
-                    {% for style in styles %}
-                    <option value="{{ style }}">{{ style }}</option>
-                    {% endfor %}
-                </datalist>
+                <div class="sku-container" data-location="{{ loc }} TOP">
+                    <input type="text" name="input_{{ loc }}_TOP" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc ~ ' TOP'] %}style="display: none;"{% endif %}>
+                    <div class="sku-badges mt-2">
+                        {% for style in location_styles[loc ~ ' TOP'] %}
+                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                        {% endfor %}
+                        {% if location_styles[loc ~ ' TOP'] %}
+                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                        {% endif %}
+                    </div>
+                    <input type="hidden" name="skus_{{ loc }} TOP" value='{{ location_styles[loc ~ " TOP"]|tojson }}'>
+                </div>
             </div>
         </div>
         {% else %}
@@ -64,19 +125,31 @@
             <div class="col-md-4"></div>
             <div class="col-md-4">
                 <span class="location-label">{{ loc }}</span>
-                <input name="style_{{ loc }}" class="form-control style-input{% if location_styles[loc]|length > 0 %} occupied-field{% endif %}" list="styles_list_{{ loc }}" placeholder="Enter or select style" {% if location_styles[loc]|length > 0 %} value="{{ location_styles[loc][0] }}"{% endif %}>
-                <datalist id="styles_list_{{ loc }}">
-                    {% for style in styles %}
-                    <option value="{{ style }}">{{ style }}</option>
-                    {% endfor %}
-                </datalist>
+                <div class="sku-container" data-location="{{ loc }}">
+                    <input type="text" name="input_{{ loc }}" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc] %}style="display: none;"{% endif %}>
+                    <div class="sku-badges mt-2">
+                        {% for style in location_styles[loc] %}
+                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                        {% endfor %}
+                        {% if location_styles[loc] %}
+                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                        {% endif %}
+                    </div>
+                    <input type="hidden" name="skus_{{ loc }}" value='{{ location_styles[loc]|tojson }}'>
+                </div>
             </div>
             <div class="col-md-4"></div>
         </div>
         {% endif %}
         {% endfor %}
-        <button type="submit" class="btn btn-primary mt-3">Update Locations</button>
+        </div>
+        {% endfor %}
     </form>
+    <datalist id="styles-list">
+        {% for style in styles %}
+        <option value="{{ style }}">
+        {% endfor %}
+    </datalist>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="mt-3">
@@ -91,5 +164,178 @@
             {% endif %}
         {% endwith %}
 </div>
+<div id="map-tooltip" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; border: 1px solid #ccc; padding: 10px; width: 80%; height: 80%; overflow: hidden;"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Toggle section collapse/expand
+    document.querySelectorAll('.section-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            const sectionName = this.dataset.section;
+            const content = document.getElementById('section-' + sectionName);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                this.classList.remove('collapsed');
+            } else {
+                content.style.display = 'none';
+                this.classList.add('collapsed');
+            }
+        });
+    });
+
+    // Add Style on Enter
+    document.addEventListener('keydown', function(e) {
+        if (e.target.classList.contains('sku-input') && e.key === 'Enter') {
+            e.preventDefault();
+            const input = e.target;
+            const style = input.value.trim();
+            if (style) {
+                const container = input.closest('.sku-container');
+                const loc = container.dataset.location;
+                fetch('/add_style_to_location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location: loc, style: style })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const badgesDiv = container.querySelector('.sku-badges');
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-success me-2 mt-2';
+                        badge.dataset.style = style.toUpperCase();
+                        badge.innerHTML = `${style.toUpperCase()}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span>`;
+                        // Insert before the + button if exists
+                        const addBtn = badgesDiv.querySelector('.add-style-btn');
+                        if (addBtn) {
+                            badgesDiv.insertBefore(badge, addBtn);
+                        } else {
+                            badgesDiv.appendChild(badge);
+                        }
+                        input.style.display = 'none';
+                        let addBtn2 = badgesDiv.querySelector('.add-style-btn');
+                        if (!addBtn2) {
+                            addBtn2 = document.createElement('button');
+                            addBtn2.type = 'button';
+                            addBtn2.className = 'btn btn-sm btn-outline-primary add-style-btn';
+                            addBtn2.textContent = '🌟';
+                            badgesDiv.appendChild(addBtn2);
+                        } else {
+                            addBtn2.style.display = 'block';
+                        }
+                        input.value = '';
+                        showNotification('success', data.message);
+                    } else {
+                        showNotification('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'An error occurred');
+                });
+            }
+        }
+    });
+
+    // Remove Style on click ×
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-x') || e.target.textContent === '❌') {
+            console.log('× clicked');
+            const badge = e.target.closest('.badge');
+            const style = badge.dataset.style;
+            console.log('Extracted style from data-style:', style);
+            if (!style) {
+                console.log('Empty style, removing invalid badge');
+                badge.remove();
+                return;
+            }
+            const container = badge.closest('.sku-container');
+            const loc = container.dataset.location;
+            console.log('Location:', loc);
+            fetch('/remove_style_from_location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ location: loc, style: style })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Remove response:', data);
+                if (data.success) {
+                    badge.remove();
+                    const badgesDiv = container.querySelector('.sku-badges');
+                    const badges = badgesDiv.querySelectorAll('.badge');
+                    if (badges.length === 0) {
+                        container.querySelector('.sku-input').style.display = 'block';
+                        const addBtn = container.querySelector('.add-style-btn');
+                        if (addBtn) addBtn.remove();
+                    }
+                    showNotification('success', data.message);
+                } else {
+                    showNotification('error', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'An error occurred');
+            });
+        }
+    });
+
+    // Add Style Input on click +
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-style-btn')) {
+            const container = e.target.closest('.sku-container');
+            container.querySelector('.sku-input').style.display = 'block';
+            e.target.style.display = 'none';
+        }
+    });
+
+    // Notification function
+    function showNotification(type, message) {
+        const notification = document.getElementById('notification');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        notification.textContent = message;
+        notification.style.display = 'block';
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 5000);
+    }
+
+    // Map tooltip
+    document.getElementById('map-btn').addEventListener('mouseenter', function() {
+        const tooltip = document.getElementById('map-tooltip');
+        if (!tooltip.innerHTML.trim()) {
+            fetch('/static/drawing.svg')
+            .then(response => response.text())
+            .then(svg => {
+                tooltip.innerHTML = svg;
+                const svgElement = tooltip.querySelector('svg');
+                if (svgElement) {
+                    if (!svgElement.getAttribute('viewBox')) {
+                        const bbox = svgElement.getBBox();
+                        svgElement.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+                    }
+                    svgElement.style.maxWidth = '100%';
+                    svgElement.style.maxHeight = '100%';
+                    svgElement.style.width = 'auto';
+                    svgElement.style.height = 'auto';
+                    svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                }
+                tooltip.style.display = 'block';
+            })
+            .catch(error => {
+                tooltip.innerHTML = '<p>Error loading map.</p>';
+                tooltip.style.display = 'block';
+            });
+        } else {
+            tooltip.style.display = 'block';
+        }
+    });
+    document.getElementById('map-btn').addEventListener('mouseleave', function() {
+        document.getElementById('map-tooltip').style.display = 'none';
+    });
+});
+</script>
 </body>
 </html>

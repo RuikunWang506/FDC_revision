@@ -982,8 +982,19 @@
                     throw new Error(data.error);
                 }
 
+                // Build detailed message
+                let message = data.message;
+                
+                // Add skipped files details if any
+                if (data.skipped_files && data.skipped_files.length > 0) {
+                    message += '\n\n跳过的文件详情:';
+                    data.skipped_files.forEach(file => {
+                        message += `\n• ${file.filename}: ${file.reason}`;
+                    });
+                }
+
                 // Show success message
-                alert(data.message);
+                alert(message);
                 
                 // Clear uploaded files
                 uploadedPdfFiles = [];
@@ -1029,8 +1040,19 @@
                     throw new Error(data.error);
                 }
 
+                // Build detailed message
+                let message = data.message;
+                
+                // Add skipped files details if any
+                if (data.skipped_files && data.skipped_files.length > 0) {
+                    message += '\n\n跳过的文件详情:';
+                    data.skipped_files.forEach(file => {
+                        message += `\n• ${file.filename}: ${file.reason}`;
+                    });
+                }
+
                 // Show success message
-                alert(data.message);
+                alert(message);
                 
                 // Automatically refresh the Orders Management section
                 const ordersSection = document.getElementById('ordersSection');
@@ -1122,8 +1144,19 @@
                     throw new Error(data.error);
                 }
 
+                // Build detailed message
+                let message = data.message;
+                
+                // Add skipped files details if any
+                if (data.skipped_files && data.skipped_files.length > 0) {
+                    message += '\n\n跳过的文件详情:';
+                    data.skipped_files.forEach(file => {
+                        message += `\n• ${file.filename}: ${file.reason}`;
+                    });
+                }
+
                 // Show success message
-                alert(data.message);
+                alert(message);
                 
                 // Hide batch selection section since we're done
                 batchSelectionSection.style.display = 'none';

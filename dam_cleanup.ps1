@@ -1,1 +1,0 @@
-Invoke-WebRequest -Uri 'https://fdcef.com/dam/cleanup' -Method POST

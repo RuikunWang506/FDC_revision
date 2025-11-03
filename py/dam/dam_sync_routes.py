@@ -14,6 +14,7 @@ from contextlib import redirect_stdout
 sys.path.insert(0, os.path.abspath('.'))
 
 from py.utilities.dam_sync_service_v2 import DAMSyncServiceV2
+from py.utilities.logging_setup import log_event
 
 dam_sync_bp = Blueprint('dam_sync', __name__, url_prefix='/dam')
 
@@ -292,6 +293,8 @@ def fetch_from_dropbox():
 @dam_sync_bp.route('/cleanup', methods=['POST'])
 def cleanup_broken_links():
     """Scan DAM image records and mark missing files as inactive."""
+    log_event('info', 'Starting DAM cleanup process')
+    
     import py.utilities.models
     import os
     db = py.utilities.models.SessionLocal()
@@ -299,15 +302,24 @@ def cleanup_broken_links():
         assets = db.query(py.utilities.models.ImageAsset).filter(
             py.utilities.models.ImageAsset.is_active == True
         ).all()
+        
+        log_event('info', f'Found {len(assets)} active DAM image records to check')
+        
         cleaned = 0
         for asset in assets:
             if hasattr(asset, 'path') and asset.path:
                 if not os.path.exists(asset.path):
                     asset.is_active = False
                     cleaned += 1
+                    log_event('info', f'Marked missing file as inactive: {asset.path}')
+        
         db.commit()
+        log_event('info', f'DAM cleanup completed: {cleaned} files marked inactive out of {len(assets)} checked')
+        
         return jsonify({'success': True, 'cleaned': cleaned, 'total_checked': len(assets)})
     except Exception as e:
+        log_event('error', f'DAM cleanup failed: {str(e)}')
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
+    

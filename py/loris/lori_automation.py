@@ -271,12 +271,16 @@ def fetch_email_attachments():
         print(f"[fetch_email_attachments] Files skipped (already exist): {skipped_count}")
         print(f"[fetch_email_attachments] Batch dates: {batch_dates}")
         
+        # Extract skipped files for detailed reporting
+        skipped_files = [{'filename': f['filename'], 'reason': 'File already exists'} for f in downloaded_files if f.get('status') == 'skipped_existing']
+        
         return {
             'success': True,
             'total_emails_processed': len(email_ids),
             'total_files': len(downloaded_files),
             'files_downloaded': downloaded_count,
             'files_skipped': skipped_count,
+            'skipped_files': skipped_files,
             'files': downloaded_files,
             'batches': batch_dates,
             'batch_summary': batch_summary,
@@ -331,6 +335,7 @@ def process_email_pdfs(selected_batch_date=None):
         
         processed_orders = []
         skipped_orders = 0
+        skipped_files = []
         new_orders = 0
         
         # Process each PDF file and store in database
@@ -353,6 +358,10 @@ def process_email_pdfs(selected_batch_date=None):
                     continue
                 elif result.get('skipped'):
                     skipped_orders += 1
+                    skipped_files.append({
+                        'filename': pdf_file['filename'],
+                        'reason': result.get('message', 'Order already exists in database')
+                    })
                 else:
                     processed_orders.append({
                         'filename': pdf_file['filename'],
@@ -376,6 +385,7 @@ def process_email_pdfs(selected_batch_date=None):
             'total_files': len(pdf_files),
             'new_orders': new_orders,
             'skipped_orders': skipped_orders,
+            'skipped_files': skipped_files,
             'processed_files': len(processed_orders)
         }
         
@@ -1168,6 +1178,7 @@ def process_local_pdfs():
             'combined_pdf': process_result['combined_pdf'],
             'shipstation_data': process_result['shipstation_data'],
             'individual_excel_files': process_result['individual_excel_files'],
+            'skipped_files': process_result.get('skipped_files', []),
             'selected_batch': selected_batch_date
         })
     except Exception as e:
@@ -1187,6 +1198,7 @@ def upload_and_process_pdfs():
         
         processed_orders = []
         skipped_orders = 0
+        skipped_files = []
         new_orders = 0
         batch_date = datetime.now().date()  # Use current date as batch date
         
@@ -1194,27 +1206,10 @@ def upload_and_process_pdfs():
         manual_dir = os.path.join(email_config['download_path'], 'manual')
         os.makedirs(manual_dir, exist_ok=True)
         
-        # Helper function to check if filename exists in any folder
-        def file_exists_anywhere(filename, base_path):
-            """Check if a filename exists in any subfolder of base_path"""
-            if not os.path.exists(base_path):
-                return False
-            
-            for root, dirs, files in os.walk(base_path):
-                if filename in files:
-                    return True
-            return False
-        
         for file in files:
             if file and file.filename.lower().endswith('.pdf'):
                 try:
                     filename = file.filename
-                    
-                    # Check if this filename already exists anywhere in the download directory
-                    if file_exists_anywhere(filename, email_config['download_path']):
-                        print(f"Skipping duplicate file: {filename} (already exists in download directory)")
-                        skipped_orders += 1
-                        continue
                     
                     # Read file content
                     file_content = file.read()
@@ -1235,6 +1230,10 @@ def upload_and_process_pdfs():
                         continue
                     elif result.get('skipped'):
                         skipped_orders += 1
+                        skipped_files.append({
+                            'filename': filename,
+                            'reason': result.get('message', 'Order already exists in database')
+                        })
                     else:
                         processed_orders.append({
                             'filename': filename,
@@ -1262,6 +1261,7 @@ def upload_and_process_pdfs():
             'message': message,
             'new_orders': new_orders,
             'skipped_orders': skipped_orders,
+            'skipped_files': skipped_files,
             'processed_files': len(processed_orders),
             'saved_directory': manual_dir,
             'count': new_orders  # For compatibility with existing frontend
@@ -1654,6 +1654,7 @@ def fetch_and_process_emails():
             'total_files_found': fetch_result['total_files'],
             'files_downloaded': files_downloaded,
             'files_skipped': files_skipped,
+            'skipped_files': fetch_result.get('skipped_files', []) + process_result.get('skipped_files', []),
             'new_orders': process_result['new_orders'],
             'skipped_orders': process_result['skipped_orders'],
             'count': process_result['new_orders']  # For compatibility with existing frontend
@@ -1701,6 +1702,7 @@ def fetch_email_pdfs():
             'message': f'Successfully processed {process_result["new_orders"]} new orders from {fetch_result["total_emails_processed"]} emails',
             'total_emails_processed': fetch_result['total_emails_processed'],
             'total_files_downloaded': fetch_result['total_files'],
+            'skipped_files': fetch_result.get('skipped_files', []) + process_result.get('skipped_files', []),
             'new_orders': process_result['new_orders'],
             'skipped_orders': process_result['skipped_orders'],
             'batches': fetch_result['batches']
@@ -3614,6 +3616,9 @@ def download_invoices():
         if not po_numbers:
             return jsonify({'error': 'No PO numbers provided'}), 400
         
+        # Get invoice date from request, default to today if not provided
+        invoice_date = data.get('invoice_date', datetime.now().strftime("%m/%d/%Y"))
+        
         # Get database connection
         connection = get_db_connection()
         if not connection:
@@ -3656,7 +3661,7 @@ def download_invoices():
                         continue
                     
                     # Generate invoice using the existing logic
-                    invoice_data = generate_invoice_from_data(order, items)
+                    invoice_data = generate_invoice_from_data(order, items, invoice_date)
                     if invoice_data:
                         invoice_files.append(invoice_data)
                         processed_orders.append(po_number)
@@ -3746,7 +3751,7 @@ def download_invoices():
         return jsonify({'error': f'Failed to generate invoices: {str(e)}'}), 500
 
 
-def generate_invoice_from_data(order, items):
+def generate_invoice_from_data(order, items, invoice_date=None):
     """Generate invoice Excel file from database data"""
     try:
         # Load Excel template
@@ -3766,14 +3771,17 @@ def generate_invoice_from_data(order, items):
         cancel_date = order.get('cancel_date', 'N/A')
         ship_to_address = order.get('ship_to_address', 'N/A')
         
+        # Use provided invoice date or default to today
+        if invoice_date is None:
+            invoice_date = datetime.now().strftime("%m/%d/%Y")
+        
         # Generate filename
-        today = datetime.now().strftime("%m/%d/%Y")
-        file_date = today.replace("/", "").lstrip("0")
+        file_date = invoice_date.replace("/", "").lstrip("0")
         target_filename = f"{file_date}_{po_number[:4]}"
         
         # Fill Excel template
-        ws['F7'] = order_date if order_date != 'N/A' else today
-        ws['F8'] = today
+        ws['F7'] = order_date if order_date != 'N/A' else invoice_date
+        ws['F8'] = invoice_date
         ws['H6'] = target_filename.replace("_", "-")
         ws['G11'] = f"GIFT STORE {po_number[:4]}"
         ws['F9'] = cancel_date if cancel_date != 'N/A' else ''
@@ -3858,6 +3866,7 @@ def send_to_shipped_only():
         return jsonify({'error': 'Not authenticated'}), 401
     data = request.get_json()
     po_numbers = data.get('po_numbers', [])
+    print(f"DEBUG send_to_shipped: Received po_numbers: {po_numbers}")
     if not po_numbers:
         return jsonify({'error': 'No PO numbers provided'}), 400
     connection = get_db_connection()
@@ -3867,12 +3876,16 @@ def send_to_shipped_only():
         cursor = connection.cursor()
         updated = 0
         for po in po_numbers:
+            print(f"DEBUG send_to_shipped: Updating po {po} to shipped")
             cursor.execute("UPDATE lori_orders SET status = 'shipped' WHERE po_number = %s", (po,))
+            print(f"DEBUG send_to_shipped: Rowcount: {cursor.rowcount}")
             if cursor.rowcount > 0:
                 updated += 1
         connection.commit()
+        print(f"DEBUG send_to_shipped: Total updated: {updated}")
         return jsonify({'success': True, 'message': f'Status updated to shipped for {updated} orders.'})
     except Exception as e:
+        print(f"DEBUG send_to_shipped: Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
@@ -3885,6 +3898,7 @@ def bulk_modify_batch_date():
     data = request.get_json()
     po_numbers = data.get('po_numbers', [])
     new_batch_date = data.get('new_batch_date', None)
+    print(f"DEBUG: Received po_numbers: {po_numbers}, new_batch_date: {new_batch_date}")
     if not po_numbers or not new_batch_date:
         return jsonify({'error': 'PO numbers and new batch date required'}), 400
     connection = get_db_connection()
@@ -3894,12 +3908,16 @@ def bulk_modify_batch_date():
         cursor = connection.cursor()
         updated = 0
         for po in po_numbers:
+            print(f"DEBUG: Updating po {po} to {new_batch_date}")
             cursor.execute("UPDATE lori_orders SET batch_date = %s WHERE po_number = %s", (new_batch_date, po))
+            print(f"DEBUG: Rowcount: {cursor.rowcount}")
             if cursor.rowcount > 0:
                 updated += 1
         connection.commit()
+        print(f"DEBUG: Total updated: {updated}")
         return jsonify({'success': True, 'message': f'Batch date updated for {updated} orders.'})
     except Exception as e:
+        print(f"DEBUG: Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
