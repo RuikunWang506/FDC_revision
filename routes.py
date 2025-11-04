@@ -50,6 +50,7 @@ from py.utilities.image_upload_routes import image_upload_bp
 from py.other.master_image_viewer import master_image_viewer_bp
 from py.dam.dam_sync_routes import dam_sync_bp
 from py.other.bag_style_viewer import bag_style_viewer_bp
+from py.Toolkits.boat import boat_service_bp
 from py.utilities.monitor import send_discord_notification
 
 
@@ -79,6 +80,7 @@ def register_routes(app):
     app.register_blueprint(dam_sync_bp)
     app.register_blueprint(bag_style_viewer_bp)
     app.register_blueprint(location_massive_audit_bp)
+    app.register_blueprint(boat_service_bp)
 
 
     app.permanent_session_lifetime = timedelta(days=30)

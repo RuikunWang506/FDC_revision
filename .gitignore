@@ -30,3 +30,11 @@ static/DB_log/LIVEROOM1-PC-bin.000015
 log.txt
 log.txt
 log.txt
+
+# Ignore Google Sheets API credentials
+google_sheets_credentials.json
+google_sheets_service_account.json
+google_oauth_credentials.json
+google_sheets_token.json
+credentials/
+*.json

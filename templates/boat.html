@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boat Service V2.0</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Full jQuery version with AJAX support -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .custom-btn {
+            padding: 5px 5px !important;
+            font-size: 20px !important;
+            border-radius: 50px !important; /* Changed from 100px to 50px to create oval shapes */
+            margin: 10px !important;
+            width: 150px !important; /* Adjust width to desired oval shape */
+            height: 150px !important; /* Adjust height to desired oval shape */
+            transition: background-color 0.3s, transform 0.3s !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-direction: column !important;
+            line-height: 1 !important; /* Adjusted line-height to reduce space between lines */
+        }
+        .custom-btn:hover {
+            transform: translateY(-30px) !important;
+        }
+        .custom-btn img {
+            margin-right: 10px !important;
+            width: 100px !important;
+            height: 100px !important;
+        }
+        .btn-info {
+            color: #fff !important;
+            background-color: #d57bac !important;
+            border-color: #17a2b8 !important;
+        }
+        .custom-btn h4 {
+            margin-top: 5px !important; /* Reduced margin to reduce space between lines */
+            margin-bottom: 0 !important; /* Reduced bottom margin */
+        }
+        table.editable td {
+            text-align: center; /* Horizontally center */
+            vertical-align: middle; /* Vertically center */
+        }
+
+        /* Styling for rows based on status */
+        .status-ocean {
+            background-color: rgba(172, 212, 255, 0.3) !important; /* Lighter blue with more transparency */
+        }
+
+        .status-landed {
+            background-color: rgba(255, 239, 190, 0.3) !important; /* Light golden yellow with more transparency */
+        }
+
+        .status-memo {
+            background-color: rgba(216, 127, 136, 0.3) !important; /* Light red with more transparency */
+            color: white; /* White text for better contrast */
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <h1 class="text-center">Boat Service V2.0</h1>
+    <div class="container mt-5">
+        <div class="alert alert-info text-center" role="alert">
+            <i class="bi bi-cloud-download"></i> Data is fetched live from <a href="https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/edit?gid=0#gid=0" target="_blank" class="alert-link">Google Sheets</a>
+        </div>
+        <div class="row mt-6">
+            <div class="col-md-8">
+                <h4>Click on Container to see styles</h4>
+                <h4 style="margin-left: 4em;">if Ocean >0 --> on the way</h4> 
+                <h4 style="margin-left: 4em;">if Ocean =0 --> arrived</h4>
+                <h4>Click on link to track container</h4>
+                <h5 style="margin-left: 4em;">theres a daily limit, you can login with google to track more</h5>
+                <h4>Container files are auto-detected from Dropbox and processed automatically</h4>
+            </div>
+            
+            <div class="col-md-4 text-right">
+                <a href="/container" class="btn btn-info custom-btn">
+                    <img src="/static/icons/container.png" alt="containers">
+                    Container 文件处理
+                </a>
+            </div>
+        </div>
+        
+
+        <div class="table-responsive mt-4">
+            <div class="row mt-4">
+                <div class="col-md-12 text-center">
+                    <h3>Last Updated: <span id="lastUpdated">{{ last_modified_date }}</span></h3>
+                </div>
+            </div>
+            
+            <!-- Loading spinner -->
+            <div id="loadingSpinner" class="text-center my-5">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-3"><strong>Loading boat data from Google Sheets...</strong></p>
+                <p class="text-muted">Fetching container information and status updates</p>
+            </div>
+            
+            <!-- Table container -->
+            <table class="table table-bordered editable" id="boat_table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Reserved</th>
+                        <th>container</th>
+                        <th>link</th>
+                        <th>COMPANY</th>
+                        <th>ETA</th>
+                        <th>RCD</th>
+                        <th>MEMO</th>
+                        <th>Status</th>
+                        <th>Files</th>
+                    </tr>
+                </thead>
+                <tbody id="boatTableBody">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+      <script>
+          function formatDate(dateString) {
+              // Return empty string for empty or invalid dates
+              if (!dateString || dateString === 'NaT' || dateString === '') {
+                  return '';
+              }
+              
+              // If already formatted, return as is
+              if (dateString.includes('/')) {
+                  return dateString;
+              }
+              
+              // Parse the date string and format it
+              const date = new Date(dateString);
+              if (isNaN(date.getTime())) {
+                  return dateString;
+              }
+              
+              return date.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+              });
+          }
+
+          function applyRowStyling() {
+              $('#boat_table tbody tr').each(function() {
+                  var status = $(this).find('td:nth-child(8)').text().trim();  // Status is now column 8
+                  var memo1 = $(this).find('td:nth-child(7)').text().trim();   // MEMO is now column 7
+                  var reserved = $(this).find('td:nth-child(1)').text().trim();
+
+                  // Apply status classes
+                  if (status === '🚢ocean🚢') {
+                      $(this).addClass('status-ocean');
+                      if (memo1 !== '' || reserved !== '') {
+                          $(this).addClass('status-memo');
+                      }
+                  } else if (status === '📍landed📍') {
+                      $(this).addClass('status-landed');
+                  }
+              });
+          }
+
+          function loadBoatData() {
+              $.ajax({
+                  url: '/boat/data',
+                  method: 'GET',
+                  success: function(response) {
+                      if (response.success) {
+                          // Update last modified date
+                          $('#lastUpdated').text(response.last_modified);
+                          
+                          // Build table rows
+                          var tbody = $('#boatTableBody');
+                          tbody.empty();
+                          
+                          response.data.forEach(function(row) {
+                              var tr = $('<tr></tr>');
+                              
+                              // Reserved
+                              tr.append($('<td></td>').text(row.Reserved || ''));
+                              
+                              // Container with link to item lookup
+                              var containerHtml = '';
+                              if (row.container) {
+                                  containerHtml = '<a href="/item_lookup/%25' + row.container + '%25" target="_blank">' + row.container + '</a>';
+                              }
+                              tr.append($('<td></td>').html(containerHtml));
+                              
+                              // Link to searates tracking
+                              var linkHtml = '';
+                              if (row.link) {
+                                  linkHtml = '<a href="https://www.searates.com/container/tracking/?number=' + row.link + '&sealine=AUTO" target="_blank">' + row.link + '</a>';
+                              }
+                              tr.append($('<td></td>').html(linkHtml));
+                              
+                              // COMPANY
+                              tr.append($('<td></td>').text(row.company || ''));
+                              
+                              // ETA
+                              tr.append($('<td></td>').text(row.ETA || ''));
+                              
+                              // RCD
+                              tr.append($('<td></td>').text(row.RCD || ''));
+                              
+                              // MEMO
+                              tr.append($('<td></td>').text(row.MEMO || ''));
+                              
+                              // Status
+                              tr.append($('<td></td>').text(row.Status || ''));
+                              
+                              // Files - Process button or download buttons
+                              var filesHtml = '';
+                              if (row.has_styles_csv && row.has_po_csv) {
+                                  // Both files exist - show original + download buttons
+                                  filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
+                                  filesHtml += '<a href="/boat/download/' + row.container + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
+                                  filesHtml += '<a href="/boat/download/' + row.container + '/po" class="btn btn-sm btn-success" download>PO CSV</a>';
+                              } else if (row.can_process) {
+                                  // Can be processed - show original + process button
+                                  filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
+                                  filesHtml += '<button class="btn btn-sm btn-warning process-btn" data-container="' + row.container + '">Process</button>';
+                              } else {
+                                  // No file in Dropbox
+                                  filesHtml = '<span class="text-muted">No Dropbox file</span>';
+                              }
+                              tr.append($('<td></td>').html(filesHtml));
+                              
+                              tbody.append(tr);
+                          });
+                          
+                          // Hide loading spinner, show table
+                          $('#loadingSpinner').hide();
+                          $('#boat_table').show();
+                          
+                          // Apply styling
+                          applyRowStyling();
+                      } else {
+                          $('#loadingSpinner').html('<div class="alert alert-danger">Error: ' + response.error + '</div>');
+                      }
+                  },
+                  error: function(xhr, status, error) {
+                      $('#loadingSpinner').html('<div class="alert alert-danger">Failed to load data: ' + error + '</div>');
+                  }
+              });
+          }
+
+          function processContainer(containerNumber, button) {
+              // Disable button and show loading
+              $(button).prop('disabled', true).text('Processing...');
+              
+              $.ajax({
+                  url: '/boat/process/' + containerNumber,
+                  method: 'POST',
+                  success: function(response) {
+                      if (response.success) {
+                          // Replace button with original + download links
+                          var downloadHtml = '<a href="/boat/download/' + containerNumber + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
+                          downloadHtml += '<a href="/boat/download/' + containerNumber + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
+                          downloadHtml += '<a href="/boat/download/' + containerNumber + '/po" class="btn btn-sm btn-success" download>PO CSV</a>';
+                          $(button).parent().html(downloadHtml);
+                          
+                          alert('Successfully processed ' + containerNumber);
+                      } else {
+                          alert('Error: ' + response.error);
+                          $(button).prop('disabled', false).text('Process');
+                      }
+                  },
+                  error: function(xhr, status, error) {
+                      alert('Failed to process container: ' + error);
+                      $(button).prop('disabled', false).text('Process');
+                  }
+              });
+          }
+
+          $(document).ready(function() {
+              // Load data after page is rendered
+              setTimeout(loadBoatData, 100);
+              
+              // Handle process button clicks (delegated event)
+              $(document).on('click', '.process-btn', function() {
+                  var containerNumber = $(this).data('container');
+                  processContainer(containerNumber, this);
+              });
+          });
+      </script>
+</body>
+</html>
