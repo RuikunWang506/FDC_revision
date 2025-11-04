@@ -279,22 +279,50 @@
       50% { transform: scale(1.05); }
     }
     
-    /* Category Colors */
+    /* Category Colors with Different Backgrounds */
     .dashboard-wrapper .tool-card[data-category="core"] {
       border-left: 4px solid #00d4ff;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(0, 140, 200, 0.15));
+      border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+    
+    .dashboard-wrapper .tool-card[data-category="core"]:hover {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.35), rgba(0, 140, 200, 0.25));
+      border-color: rgba(0, 212, 255, 0.5);
     }
     
     .dashboard-wrapper .tool-card[data-category="toolkit"] {
       border-left: 4px solid #1cc88a;
+      background: linear-gradient(135deg, rgba(28, 200, 138, 0.25), rgba(20, 150, 100, 0.15));
+      border: 1px solid rgba(28, 200, 138, 0.3);
+    }
+    
+    .dashboard-wrapper .tool-card[data-category="toolkit"]:hover {
+      background: linear-gradient(135deg, rgba(28, 200, 138, 0.35), rgba(20, 150, 100, 0.25));
+      border-color: rgba(28, 200, 138, 0.5);
     }
     
     .dashboard-wrapper .tool-card[data-category="additional"] {
       border-left: 4px solid #36b9cc;
+      background: linear-gradient(135deg, rgba(54, 185, 204, 0.25), rgba(40, 140, 160, 0.15));
+      border: 1px solid rgba(54, 185, 204, 0.3);
+    }
+    
+    .dashboard-wrapper .tool-card[data-category="additional"]:hover {
+      background: linear-gradient(135deg, rgba(54, 185, 204, 0.35), rgba(40, 140, 160, 0.25));
+      border-color: rgba(54, 185, 204, 0.5);
     }
     
     .dashboard-wrapper .tool-card[data-category="legacy"] {
       border-left: 4px solid #8892b0;
-      opacity: 0.8;
+      background: linear-gradient(135deg, rgba(136, 146, 176, 0.25), rgba(100, 110, 140, 0.15));
+      border: 1px solid rgba(136, 146, 176, 0.3);
+      opacity: 0.9;
+    }
+    
+    .dashboard-wrapper .tool-card[data-category="legacy"]:hover {
+      background: linear-gradient(135deg, rgba(136, 146, 176, 0.35), rgba(100, 110, 140, 0.25));
+      border-color: rgba(136, 146, 176, 0.5);
     }
     
     /* Responsive Design */
@@ -337,8 +365,7 @@
     <div class="main-content" id="mainContent">
     <div class="main-title">FDC Command Center</div>
     <div class="dashboard-content" style="text-align: center; font-size: 2rem; font-weight: 700; color: #b61515; margin: 1rem 0 2rem 0; padding: 1.5rem; background: linear-gradient(45deg, #ff6b6b6b, #ffd93d); border-radius: 20px; border: 2px solid #ff6b6b; box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4); animation: pulse 2s infinite;">
-        🎉 1 Year Anniversary of FDCEF Online! 10-15-2024 🎉<br>
-        <span style="font-size: 1.2rem; color: white;">👻Also Happy Halloween!🎃</span>
+        🎉 1 Year Anniversary of FDCEF Webkit! 10-15-2024 🎉<br>
     </div>
     
     <div class="dashboard-container">
@@ -399,16 +426,7 @@
       <div class="dashboard-grid" id="toolGrid">
         
         <!-- Core Functions -->
-        <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="core">
-          <div class="card-header">
-            <i class="fas fa-warehouse"></i>
-            <h3>Massive Location Update</h3>
-          </div>
-          <p>Bulk update locations for styles and all colors with smart suggestions.</p>
-          <div class="card-footer">
-            <span class="category">Core</span>
-          </div>
-        </a>
+        
         <a href="{{ url_for('item_lookup.item_lookup') }}" class="tool-card" data-category="core">
           <div class="card-header">
             <i class="fas fa-search"></i>
@@ -513,7 +531,16 @@
             <span class="badge">NEW</span>
           </div>
         </a>
-        
+        <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="additional">
+          <div class="card-header">
+            <i class="fas fa-warehouse"></i>
+            <h3>Massive Location Update</h3>
+          </div>
+          <p>Bulk update locations for styles and all colors with smart suggestions.</p>
+          <div class="card-footer">
+            <span class="category">Core</span>
+          </div>
+        </a>
         <a href="/image_upload" class="tool-card" data-category="additional">
           <div class="card-header">
             <i class="fas fa-cloud-upload-alt"></i>

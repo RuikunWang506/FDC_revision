@@ -504,9 +504,18 @@ def sync_to_oms():
         mysql_connection = mysql.connector.connect(**db_config)
         mysql_cursor = mysql_connection.cursor(dictionary=True)
 
-        mysql_cursor.execute("SELECT style, sku, location, Update_Date FROM products")
+        # Use GROUP_CONCAT to aggregate all locations for each SKU
+        mysql_cursor.execute("""
+            SELECT sku, 
+                   GROUP_CONCAT(location ORDER BY location SEPARATOR ', ') as location
+            FROM products
+            GROUP BY sku
+        """)
         products = mysql_cursor.fetchall()
-        current_app.logger.info(f"Fetched {len(products)} products from online database")
+        current_app.logger.info(f"Fetched {len(products)} unique SKUs from online database")
+
+        if not products:
+            return jsonify({'message': 'No products found to sync.'}), 200
 
         fdc_conn = get_sql_server_connection_fdc()
         fdc_cursor = fdc_conn.cursor()
@@ -514,34 +523,239 @@ def sync_to_oms():
         oms_ef_conn = get_sql_server_connection_oms_ef()
         oms_ef_cursor = oms_ef_conn.cursor()
 
-        updated_count = 0
+        # Prepare bulk update data with abbreviations if needed
+        update_data = []
+        truncated_skus = []  # Collect SKUs that were truncated
+        long_sku_list = []  # Collect SKUs that are too long
+        
+        # SQL Server inv_loc column is char(20) - CONFIRMED from table structure query
+        MAX_LOCATION_LENGTH = 20
+        
         for product in products:
-            try:
-                sku = product['sku']
-                new_location = product['location'][:50]  # Truncate location to 50 characters
-                current_app.logger.info(f"Updating location for SKU: {sku} to {new_location}")
-
-                fdc_cursor.execute("SELECT * FROM inv_data WHERE prod_cd=?", sku)
-                fdc_result = fdc_cursor.fetchone()
-
-                query = "UPDATE inv_data SET inv_loc=? WHERE prod_cd=?"
-                if fdc_result:
-                    oms_ef_cursor.execute(query, (new_location, sku))
-                    fdc_cursor.execute(query, (new_location, sku))
+            sku = (product['sku'] if product['sku'] else '').strip()
+            location = (product['location'] if product['location'] else '').strip()
+            original_location = location
+            original_sku = sku
+            
+            # Check SKU length (SQL Server prod_cd column limit - typically 20-30 chars)
+            if len(sku) > 20:
+                long_sku_list.append({'sku': sku, 'length': len(sku)})
+                sku = sku[:20].strip()  # Truncate SKU to 20 characters
+            
+            # Always apply abbreviations first to save space
+            location = location.replace(' MID', ' M').replace(' TOP', ' T').replace(' BOT', ' B')
+            
+            # Clean up location format: remove "L", remove "-", remove space after comma
+            # Example: "L1-A B, L2-C M" becomes "1AB,2CM"
+            if location:
+                parts = location.split(', ')
+                cleaned_parts = []
+                for part in parts:
+                    if part.startswith('L'):
+                        part = part[1:]  # Remove leading 'L'
+                    part = part.replace('-', '')  # Remove all dashes
+                    part = part.replace(' ', '')  # Remove all spaces
+                    cleaned_parts.append(part)
+                location = ','.join(cleaned_parts)  # Join with comma (no space)
+            
+            # Store if truncation will be needed
+            needs_truncation = len(location) > MAX_LOCATION_LENGTH
+            
+            # Ensure location is within 40 character limit - FORCE truncation
+            if len(location) > MAX_LOCATION_LENGTH:
+                # Truncate at last comma before position 40
+                truncated = location[:MAX_LOCATION_LENGTH]
+                last_comma = truncated.rfind(', ')
+                if last_comma > 0:
+                    location = truncated[:last_comma]
                 else:
-                    query = "UPDATE inv_data SET inv_loc=? WHERE prod_cd LIKE ?"
-                    fdc_cursor.execute(query, (new_location, f'%{sku}%'))
-                    oms_ef_cursor.execute(query, (new_location, f'%{sku}%'))
+                    # Hard truncate at 40 if no comma found
+                    location = location[:MAX_LOCATION_LENGTH]
+            
+            # CRITICAL: ABSOLUTE FINAL CHECK - force limit to prevent ANY string over 40
+            if len(location) > MAX_LOCATION_LENGTH:
+                current_app.logger.error(f"CRITICAL: Location still exceeds {MAX_LOCATION_LENGTH} chars for SKU {sku}: {len(location)} chars - '{location}'")
+                location = location[:MAX_LOCATION_LENGTH]
+            
+            # Log truncation after all processing
+            if needs_truncation:
+                truncated_skus.append({
+                    'sku': original_sku,
+                    'original': original_location,
+                    'truncated': location,
+                    'original_length': len(original_location),
+                    'final_length': len(location)
+                })
+            
+            update_data.append((location, sku))
 
-                updated_count += fdc_cursor.rowcount + oms_ef_cursor.rowcount
-            except Exception as e:
-                current_app.logger.error(f"Error updating SKU {sku}: {str(e)}")
+        current_app.logger.info(f"Prepared {len(update_data)} SKUs for bulk update ({len(truncated_skus)} locations truncated, {len(long_sku_list)} SKUs truncated)")
+        
+        # Validate all fields are within limits and find any violators
+        max_loc_length = 0
+        max_sku_length = 0
+        violators = []
+        
+        for loc, sku in update_data:
+            loc_len = len(loc)
+            sku_len = len(sku)
+            
+            if loc_len > max_loc_length:
+                max_loc_length = loc_len
+            if sku_len > max_sku_length:
+                max_sku_length = sku_len
+            
+            # Find any that exceed limits
+            if loc_len > MAX_LOCATION_LENGTH:
+                violators.append({'sku': sku, 'location': loc, 'length': loc_len})
+        
+        current_app.logger.info(f"Maximum location length: {max_loc_length} chars (limit: {MAX_LOCATION_LENGTH}), Maximum SKU length: {max_sku_length} chars")
+        
+        # Log violators
+        if violators:
+            current_app.logger.error(f"CRITICAL: {len(violators)} locations STILL exceed {MAX_LOCATION_LENGTH} character limit after truncation!")
+            for v in violators[:10]:
+                current_app.logger.error(f"VIOLATOR - SKU: {v['sku']} | Length: {v['length']} | Location: '{v['location']}'")
+        
+        # Log long SKUs
+        if long_sku_list:
+            current_app.logger.warning(f"=== LONG SKU SUMMARY: {len(long_sku_list)} SKUs exceeded 20 character limit ===")
+            for item in long_sku_list[:10]:  # Show first 10
+                current_app.logger.warning(f"SKU: {item['sku']} | Length: {item['length']}")
+        
+        # Log summary of truncated SKUs
+        if truncated_skus:
+            current_app.logger.warning(f"=== TRUNCATION SUMMARY: {len(truncated_skus)} SKUs exceeded {MAX_LOCATION_LENGTH} character limit ===")
+            for item in truncated_skus:
+                current_app.logger.warning(f"SKU: {item['sku']} | Original Length: {item['original_length']} -> Final: {item['final_length']} | Original: {item['original']} | Truncated: {item['truncated']}")
+
+        # Check if records exist and get current values to skip unchanged records
+        current_app.logger.info("Fetching existing SKUs and current locations from FDC database...")
+        sku_list = [sku for _, sku in update_data]
+        
+        # Fetch existing records with current locations in batches
+        check_batch_size = 100
+        fdc_sku_map = {}  # Maps trimmed SKU to actual prod_cd
+        fdc_current_locations = {}  # Maps trimmed SKU to current inv_loc value
+        
+        for i in range(0, len(sku_list), check_batch_size):
+            batch_skus = sku_list[i:i+check_batch_size]
+            placeholders = ','.join(['?' for _ in batch_skus])
+            fdc_cursor.execute(f"SELECT prod_cd, inv_loc FROM inv_data WHERE prod_cd IN ({placeholders})", batch_skus)
+            for row in fdc_cursor.fetchall():
+                actual_prod_cd = row[0]
+                current_inv_loc = (row[1] or '').strip()  # Current location in database
+                trimmed_sku = actual_prod_cd.strip() if actual_prod_cd else actual_prod_cd
+                fdc_sku_map[trimmed_sku] = actual_prod_cd
+                fdc_current_locations[trimmed_sku] = current_inv_loc
+        
+        current_app.logger.info(f"Found {len(fdc_sku_map)} existing SKUs in FDC out of {len(sku_list)}")
+        
+        # Filter update_data: only include records where location has actually changed
+        fdc_update_data = []
+        fdc_skipped_unchanged = 0
+        for loc, sku in update_data:
+            if sku in fdc_sku_map:
+                current_loc = fdc_current_locations.get(sku, '')
+                if current_loc != loc:  # Only update if changed
+                    fdc_update_data.append((loc, fdc_sku_map[sku]))
+                else:
+                    fdc_skipped_unchanged += 1
+        
+        current_app.logger.info(f"FDC: {len(fdc_update_data)} SKUs need updates, {fdc_skipped_unchanged} already have correct location")
+        
+        if not fdc_update_data:
+            current_app.logger.warning("No matching SKUs found in FDC database")
+            fdc_updated = 0
+        else:
+            update_query = "UPDATE inv_data SET inv_loc = ? WHERE prod_cd = ?"
+            
+            current_app.logger.info(f"Executing FDC bulk update for {len(fdc_update_data)} existing SKUs...")
+            fdc_updated = 0
+            batch_size = 500
+            
+            for i in range(0, len(fdc_update_data), batch_size):
+                batch = fdc_update_data[i:i+batch_size]
+                try:
+                    fdc_cursor.executemany(update_query, batch)
+                    # executemany with pyodbc returns -1 for rowcount, so count the batch size
+                    batch_updated = len(batch)
+                    fdc_updated += batch_updated
+                    current_app.logger.info(f"FDC batch {i//batch_size + 1}: Updated {batch_updated} records")
+                except Exception as e:
+                    current_app.logger.error(f"FDC batch {i//batch_size + 1} FAILED: {str(e)}")
+                    # Skip batch
+                    continue
+            
+            current_app.logger.info(f"FDC total updates: {fdc_updated}")
+
+        # Check if records exist in OMS_EF and get current values to skip unchanged records
+        current_app.logger.info("Fetching existing SKUs and current locations from OMS_EF database...")
+        oms_sku_map = {}  # Maps trimmed SKU to actual prod_cd
+        oms_current_locations = {}  # Maps trimmed SKU to current inv_loc value
+        
+        for i in range(0, len(sku_list), check_batch_size):
+            batch_skus = sku_list[i:i+check_batch_size]
+            placeholders = ','.join(['?' for _ in batch_skus])
+            oms_ef_cursor.execute(f"SELECT prod_cd, inv_loc FROM inv_data WHERE prod_cd IN ({placeholders})", batch_skus)
+            for row in oms_ef_cursor.fetchall():
+                actual_prod_cd = row[0]
+                current_inv_loc = (row[1] or '').strip()  # Current location in database
+                trimmed_sku = actual_prod_cd.strip() if actual_prod_cd else actual_prod_cd
+                oms_sku_map[trimmed_sku] = actual_prod_cd
+                oms_current_locations[trimmed_sku] = current_inv_loc
+        
+        current_app.logger.info(f"Found {len(oms_sku_map)} existing SKUs in OMS_EF out of {len(sku_list)}")
+        
+        # Filter update_data: only include records where location has actually changed
+        oms_update_data = []
+        oms_skipped_unchanged = 0
+        for loc, sku in update_data:
+            if sku in oms_sku_map:
+                current_loc = oms_current_locations.get(sku, '')
+                if current_loc != loc:  # Only update if changed
+                    oms_update_data.append((loc, oms_sku_map[sku]))
+                else:
+                    oms_skipped_unchanged += 1
+        
+        current_app.logger.info(f"OMS_EF: {len(oms_update_data)} SKUs need updates, {oms_skipped_unchanged} already have correct location")
+        
+        if not oms_update_data:
+            current_app.logger.warning("No matching SKUs found in OMS_EF database")
+            oms_updated = 0
+        else:
+            oms_update_query = "UPDATE inv_data SET inv_loc = ? WHERE prod_cd = ?"
+            
+            current_app.logger.info(f"Executing OMS_EF bulk update for {len(oms_update_data)} existing SKUs...")
+            oms_updated = 0
+            
+            for i in range(0, len(oms_update_data), batch_size):
+                batch = oms_update_data[i:i+batch_size]
+                try:
+                    oms_ef_cursor.executemany(oms_update_query, batch)
+                    # executemany with pyodbc returns -1 for rowcount, so count the batch size
+                    batch_updated = len(batch)
+                    oms_updated += batch_updated
+                    current_app.logger.info(f"OMS_EF batch {i//batch_size + 1}: Updated {batch_updated} records")
+                except Exception as e:
+                    current_app.logger.error(f"OMS_EF batch {i//batch_size + 1} FAILED: {str(e)}")
+                    # Skip batch
+                    continue
+            
+            current_app.logger.info(f"OMS_EF total updates: {oms_updated}")
 
         fdc_conn.commit()
         oms_ef_conn.commit()
 
-        current_app.logger.info(f"Sync completed successfully. Updated {updated_count} records.")
-        return jsonify({'message': f'Sync completed successfully. Updated {updated_count} records.'})
+        updated_count = fdc_updated + oms_updated
+        total_skipped_unchanged = fdc_skipped_unchanged + oms_skipped_unchanged
+        total_existing = len(fdc_sku_map) + len(oms_sku_map)
+        skipped_not_exists = len(update_data) - total_existing
+        
+        current_app.logger.info(f"Skipped {skipped_not_exists} SKUs that don't exist in either database")
+        current_app.logger.info(f"Skipped {total_skipped_unchanged} SKUs that already have the correct location")
+        current_app.logger.info(f"Sync completed successfully. Updated {updated_count} records total.")
+        return jsonify({'message': f'Sync completed. Updated {updated_count} records, skipped {total_skipped_unchanged} unchanged.'})
 
     except Exception as e:
         current_app.logger.error(f"An error occurred during sync: {str(e)}")

@@ -76,7 +76,7 @@ def process_container_file(file, container_number):
     df_f24213.columns = df_f24213.columns.str.replace('\n', ' ').str.strip()
     df_f24213 = df_f24213.dropna(subset=['OMS', 'RMB'])
     df_f24213['WT/PCS (LBS)'] = df_f24213['WT/PCS (LBS)'].round(2)
-    df_f24213 = df_f24213.applymap(lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x)
+    df_f24213 = df_f24213.map(lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x)
 
     step3_columns = [
         'Item#', 'WHS#', 'Descrip', 'Unit', 'OrdSize', 'MinStk', 'Price Type', 'Price1', 'Price2', 'Price3', 

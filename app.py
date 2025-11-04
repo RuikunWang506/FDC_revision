@@ -71,6 +71,31 @@ if __name__ == "__main__":
             "system restarted"
             "--------------------------------------------------------------------"
         )
+    
+    # Configure reloader to exclude log file and output directories
+    import sys
+    from werkzeug._reloader import ReloaderLoop
+    
+    # Get absolute paths for exclusions
+    exclude_dirs = [
+        os.path.abspath('log.txt'),
+        os.path.abspath('output'),
+        os.path.abspath('static/file backup'),
+        os.path.abspath('__pycache__'),
+    ]
+    
+    # Patch the reloader to exclude these paths
+    original_trigger_reload = ReloaderLoop.trigger_reload
+    def patched_trigger_reload(self, filename):
+        # Don't trigger reload for excluded files/directories
+        abs_filename = os.path.abspath(filename) if filename else ''
+        for exclude in exclude_dirs:
+            if abs_filename.startswith(exclude):
+                return
+        return original_trigger_reload(self, filename)
+    
+    ReloaderLoop.trigger_reload = patched_trigger_reload
+    
     app.run(
         host='0.0.0.0',
         port=5555,

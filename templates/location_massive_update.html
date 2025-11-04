@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Massive Location Update</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <style>
@@ -54,16 +55,157 @@
         .section-header.collapsed .toggle-icon {
             transform: rotate(-90deg);
         }
+        /* Compact location rows */
+        .location-row {
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+        .location-label {
+            display: inline-block;
+            min-width: 100px;
+            font-weight: bold;
+            color: #495057;
+        }
+        .sku-container {
+            display: inline-block;
+            width: calc(100% - 110px);
+            vertical-align: top;
+        }
+        .sku-badges {
+            display: inline-block;
+        }
+        .sku-input {
+            max-width: 200px;
+            display: inline-block;
+        }
+        /* Filter controls */
+        .filter-controls {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 100;
+            padding: 15px;
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        .stats-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #e7f3ff;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        /* Show only locations with styles */
+        .location-row.empty {
+            display: none;
+        }
+        .show-all .location-row.empty {
+            display: block;
+            opacity: 0.6;
+        }
+        /* Sidebar bookmark navigation */
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            width: 70px;
+            height: calc(100vh - 60px);
+            background: #f8f9fa;
+            border-right: 2px solid #dee2e6;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 90;
+            padding: 5px 3px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .sidebar-nav-btn {
+            display: block;
+            width: 100%;
+            padding: 6px 3px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75em;
+            text-align: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-nav-btn:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .sidebar-nav-btn.active {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        .main-content {
+            margin-left: 75px;
+        }
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        /* Hide scrollbar but keep functionality */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #dee2e6;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
     <div id="notification" class="alert alert-success" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999; text-align:center; font-size:1.5em; font-weight:bold; margin:0;"></div>
-    <div class="container">
+    
+    <!-- Sidebar Navigation -->
+    <div class="sidebar-nav">
+        {% for base, sub_locs in groups.items() %}
+        <button class="sidebar-nav-btn" data-section="{{ base }}">{{ base }}</button>
+        {% endfor %}
+    </div>
+    
+    <div class="container-fluid main-content" style="max-width: 1800px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Massive Location Update</h2>
         <button type="button" class="btn btn-info" id="map-btn">View Map</button>
     </div>
+    
+    <div class="filter-controls">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="form-check form-switch d-inline-block me-3">
+                    <input class="form-check-input" type="checkbox" id="showEmptyToggle">
+                    <label class="form-check-label" for="showEmptyToggle">Show Empty Locations</label>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="expandAllBtn">Expand All</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="collapseAllBtn">Collapse All</button>
+            </div>
+            <div class="col-md-6 text-end">
+                <span class="stats-badge" id="totalLocations">0 Locations</span>
+                <span class="stats-badge" id="occupiedLocations">0 Occupied</span>
+            </div>
+        </div>
+    </div>
+    
     <form method="POST">
         {% for base, sub_locs in groups.items() %}
         <div class="section-header collapsed" data-section="{{ base }}">
@@ -73,83 +215,73 @@
         <div class="section-content" id="section-{{ base }}" style="display: none;">
         {% for loc in sub_locs %}
         {% if '-' in loc and 'wall' not in loc.lower() %}
-        <div class="row location-row">
-            <div class="col-md-4">
-                <span class="location-label">{{ loc }} BOT</span>
-                <div class="sku-container" data-location="{{ loc }} BOT">
-                    <input type="text" name="input_{{ loc }}_BOT" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc ~ ' BOT'] %}style="display: none;"{% endif %}>
-                    <div class="sku-badges mt-2">
-                        {% for style in location_styles[loc ~ ' BOT'] %}
-                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
-                        {% endfor %}
-                        {% if location_styles[loc ~ ' BOT'] %}
-                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
-                        {% endif %}
+        <div class="location-row {% if not location_styles[loc ~ ' BOT'] and not location_styles[loc ~ ' MID'] and not location_styles[loc ~ ' TOP'] %}empty{% endif %}">
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <span class="location-label">{{ loc }} BOT</span>
+                    <div class="sku-container" data-location="{{ loc }} BOT">
+                        <input type="text" name="input_{{ loc }}_BOT" class="form-control sku-input" placeholder="+" list="styles-list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" {% if location_styles[loc ~ ' BOT'] %}style="display: none;"{% endif %}>
+                        <div class="sku-badges">
+                            {% for style in location_styles[loc ~ ' BOT'] %}
+                            <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                            {% endfor %}
+                            {% if location_styles[loc ~ ' BOT'] %}
+                            <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                            {% endif %}
+                        </div>
                     </div>
-                    <input type="hidden" name="skus_{{ loc }} BOT" value='{{ location_styles[loc ~ " BOT"]|tojson }}'>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <span class="location-label">{{ loc }} MID</span>
-                <div class="sku-container" data-location="{{ loc }} MID">
-                    <input type="text" name="input_{{ loc }}_MID" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc ~ ' MID'] %}style="display: none;"{% endif %}>
-                    <div class="sku-badges mt-2">
-                        {% for style in location_styles[loc ~ ' MID'] %}
-                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
-                        {% endfor %}
-                        {% if location_styles[loc ~ ' MID'] %}
-                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
-                        {% endif %}
+                <div style="flex: 1; min-width: 250px;">
+                    <span class="location-label">{{ loc }} MID</span>
+                    <div class="sku-container" data-location="{{ loc }} MID">
+                        <input type="text" name="input_{{ loc }}_MID" class="form-control sku-input" placeholder="+" list="styles-list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" {% if location_styles[loc ~ ' MID'] %}style="display: none;"{% endif %}>
+                        <div class="sku-badges">
+                            {% for style in location_styles[loc ~ ' MID'] %}
+                            <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                            {% endfor %}
+                            {% if location_styles[loc ~ ' MID'] %}
+                            <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                            {% endif %}
+                        </div>
                     </div>
-                    <input type="hidden" name="skus_{{ loc }} MID" value='{{ location_styles[loc ~ " MID"]|tojson }}'>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <span class="location-label">{{ loc }} TOP</span>
-                <div class="sku-container" data-location="{{ loc }} TOP">
-                    <input type="text" name="input_{{ loc }}_TOP" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc ~ ' TOP'] %}style="display: none;"{% endif %}>
-                    <div class="sku-badges mt-2">
-                        {% for style in location_styles[loc ~ ' TOP'] %}
-                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
-                        {% endfor %}
-                        {% if location_styles[loc ~ ' TOP'] %}
-                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
-                        {% endif %}
+                <div style="flex: 1; min-width: 250px;">
+                    <span class="location-label">{{ loc }} TOP</span>
+                    <div class="sku-container" data-location="{{ loc }} TOP">
+                        <input type="text" name="input_{{ loc }}_TOP" class="form-control sku-input" placeholder="+" list="styles-list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" {% if location_styles[loc ~ ' TOP'] %}style="display: none;"{% endif %}>
+                        <div class="sku-badges">
+                            {% for style in location_styles[loc ~ ' TOP'] %}
+                            <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                            {% endfor %}
+                            {% if location_styles[loc ~ ' TOP'] %}
+                            <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                            {% endif %}
+                        </div>
                     </div>
-                    <input type="hidden" name="skus_{{ loc }} TOP" value='{{ location_styles[loc ~ " TOP"]|tojson }}'>
                 </div>
             </div>
         </div>
         {% else %}
-        <div class="row location-row">
-            <div class="col-md-4"></div>
-            <div class="col-md-4">
-                <span class="location-label">{{ loc }}</span>
-                <div class="sku-container" data-location="{{ loc }}">
-                    <input type="text" name="input_{{ loc }}" class="form-control sku-input" placeholder="Enter Style" list="styles-list" {% if location_styles[loc] %}style="display: none;"{% endif %}>
-                    <div class="sku-badges mt-2">
-                        {% for style in location_styles[loc] %}
-                        <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
-                        {% endfor %}
-                        {% if location_styles[loc] %}
-                        <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
-                        {% endif %}
-                    </div>
-                    <input type="hidden" name="skus_{{ loc }}" value='{{ location_styles[loc]|tojson }}'>
+        <div class="location-row {% if not location_styles[loc] %}empty{% endif %}">
+            <span class="location-label">{{ loc }}</span>
+            <div class="sku-container" data-location="{{ loc }}">
+                <input type="text" name="input_{{ loc }}" class="form-control sku-input" placeholder="+" list="styles-list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" {% if location_styles[loc] %}style="display: none;"{% endif %}>
+                <div class="sku-badges">
+                    {% for style in location_styles[loc] %}
+                    <span class="badge bg-success me-2 mt-2" data-style="{{ style }}">{{ style }}<span class="remove-x" style="margin-left: 8px; cursor: pointer;">❌</span></span>
+                    {% endfor %}
+                    {% if location_styles[loc] %}
+                    <button type="button" class="btn btn-sm btn-outline-primary add-style-btn">🌟</button>
+                    {% endif %}
                 </div>
             </div>
-            <div class="col-md-4"></div>
         </div>
         {% endif %}
         {% endfor %}
         </div>
         {% endfor %}
     </form>
-    <datalist id="styles-list">
-        {% for style in styles %}
-        <option value="{{ style }}">
-        {% endfor %}
-    </datalist>
+    <datalist id="styles-list"></datalist>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="mt-3">
@@ -167,6 +299,107 @@
 <div id="map-tooltip" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; border: 1px solid #ccc; padding: 10px; width: 80%; height: 80%; overflow: hidden;"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Optimized autocomplete - store all styles and filter dynamically
+    let allStyles = [{% for style in styles %}'{{ style }}',{% endfor %}];
+    
+    // Remove list attribute from all inputs initially
+    document.querySelectorAll('.sku-input').forEach(input => {
+        input.removeAttribute('list');
+        
+        // Add input listener for dynamic filtering
+        input.addEventListener('input', function(e) {
+            const value = e.target.value.toUpperCase();
+            const datalist = document.getElementById('styles-list');
+
+            // Only show suggestions after 4+ characters
+            if (value.length >= 4) {
+                // Filter and limit to 30 results for performance
+                const matches = allStyles.filter(style => 
+                    style.toUpperCase().includes(value)
+                ).slice(0, 30);
+                
+                // Update datalist options
+                datalist.innerHTML = matches.map(style => 
+                    `<option value="${style}">`
+                ).join('');
+                
+                // Attach datalist to input
+                e.target.setAttribute('list', 'styles-list');
+            } else {
+                // Remove datalist if less than 3 characters
+                e.target.removeAttribute('list');
+                datalist.innerHTML = '';
+            }
+        });
+    });
+
+    // Update statistics
+    function updateStats() {
+        const allRows = document.querySelectorAll('.location-row');
+        const occupiedRows = document.querySelectorAll('.location-row:not(.empty)');
+        document.getElementById('totalLocations').textContent = allRows.length + ' Locations';
+        document.getElementById('occupiedLocations').textContent = occupiedRows.length + ' Occupied';
+    }
+    updateStats();
+
+    // Sidebar navigation
+    document.querySelectorAll('.sidebar-nav-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const sectionName = this.dataset.section;
+            const header = document.querySelector(`.section-header[data-section="${sectionName}"]`);
+            const content = document.getElementById('section-' + sectionName);
+            
+            // Collapse all other sections
+            document.querySelectorAll('.section-header').forEach(function(h) {
+                if (h !== header) {
+                    const c = document.getElementById('section-' + h.dataset.section);
+                    c.style.display = 'none';
+                    h.classList.add('collapsed');
+                }
+            });
+            
+            // Expand target section
+            content.style.display = 'block';
+            header.classList.remove('collapsed');
+            
+            // Scroll to section
+            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Update active state
+            document.querySelectorAll('.sidebar-nav-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Toggle show empty locations
+    document.getElementById('showEmptyToggle').addEventListener('change', function() {
+        if (this.checked) {
+            document.querySelector('form').classList.add('show-all');
+        } else {
+            document.querySelector('form').classList.remove('show-all');
+        }
+    });
+
+    // Expand all sections
+    document.getElementById('expandAllBtn').addEventListener('click', function() {
+        document.querySelectorAll('.section-header').forEach(function(header) {
+            const sectionName = header.dataset.section;
+            const content = document.getElementById('section-' + sectionName);
+            content.style.display = 'block';
+            header.classList.remove('collapsed');
+        });
+    });
+
+    // Collapse all sections
+    document.getElementById('collapseAllBtn').addEventListener('click', function() {
+        document.querySelectorAll('.section-header').forEach(function(header) {
+            const sectionName = header.dataset.section;
+            const content = document.getElementById('section-' + sectionName);
+            content.style.display = 'none';
+            header.classList.add('collapsed');
+        });
+    });
 
     // Toggle section collapse/expand
     document.querySelectorAll('.section-header').forEach(function(header) {
@@ -224,7 +457,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             addBtn2.style.display = 'block';
                         }
+                        // Mark row as occupied
+                        const locationRow = container.closest('.location-row');
+                        locationRow.classList.remove('empty');
                         input.value = '';
+                        updateStats();
                         showNotification('success', data.message);
                     } else {
                         showNotification('error', data.message);
@@ -265,11 +502,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     badge.remove();
                     const badgesDiv = container.querySelector('.sku-badges');
                     const badges = badgesDiv.querySelectorAll('.badge');
+                    const locationRow = container.closest('.location-row');
                     if (badges.length === 0) {
                         container.querySelector('.sku-input').style.display = 'block';
                         const addBtn = container.querySelector('.add-style-btn');
                         if (addBtn) addBtn.remove();
+                        // Mark row as empty
+                        locationRow.classList.add('empty');
                     }
+                    updateStats();
                     showNotification('success', data.message);
                 } else {
                     showNotification('error', data.message);
@@ -286,7 +527,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('add-style-btn')) {
             const container = e.target.closest('.sku-container');
-            container.querySelector('.sku-input').style.display = 'block';
+            const input = container.querySelector('.sku-input');
+            input.style.display = 'block';
+            input.focus();
             e.target.style.display = 'none';
         }
     });
