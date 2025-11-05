@@ -487,7 +487,7 @@ def boat_data():
         container_list = df_cleaned['container_raw'].tolist()
         
         if not container_list:
-            df_cleaned['Status'] = '🔄Need Import🔄'
+            df_cleaned['Status'] = '🔄upload🔄'
         else:
             placeholders = ','.join(['?' for _ in container_list])
             
@@ -525,14 +525,19 @@ def boat_data():
                 
                 if rcvd_qty is not None and rcvd_qty > 0:
                     df_cleaned.at[index, 'Status'] = '📍landed📍'
+                    # Hide process button for landed containers
+                    df_cleaned.at[index, 'can_process'] = False
                     # Store received date for Google Sheets update
                     received_date = date_lookup.get(container_raw, '')
                     if received_date:
                         landed_containers_with_dates[container_raw] = received_date
                 elif rcvd_qty is not None and rcvd_qty == 0:
                     df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
+                    # Hide process button for ocean containers
+                    df_cleaned.at[index, 'can_process'] = False
                 else:
-                    df_cleaned.at[index, 'Status'] = '🔄Need Import🔄'
+                    df_cleaned.at[index, 'Status'] = '🔄upload🔄'
+                    # Keep can_process as set earlier (based on Dropbox file existence)
         
         # Close database connection
         conn.close()

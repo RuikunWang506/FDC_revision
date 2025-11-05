@@ -65,7 +65,7 @@
     <h1 class="text-center">Boat Service V2.0</h1>
     <div class="container mt-5">
         <div class="alert alert-info text-center" role="alert">
-            <i class="bi bi-cloud-download"></i> Data is fetched live from <a href="https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/edit?gid=0#gid=0" target="_blank" class="alert-link">Google Sheets</a>
+            <i class="bi bi-cloud-download"></i> Data is fetched live from <a href="https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/edit?gid=0#gid=0" target="_blank" class="alert-link">This 📙Google Sheets</a>
         </div>
         <div class="row mt-6">
             <div class="col-md-8">
@@ -223,8 +223,8 @@
                                   filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
                                   filesHtml += '<button class="btn btn-sm btn-warning process-btn" data-container="' + row.container + '">Process</button>';
                               } else {
-                                  // No file in Dropbox
-                                  filesHtml = '<span class="text-muted">No Dropbox file</span>';
+                                  // No Dropbox file or already in database - show only Original button
+                                  filesHtml = '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info" download>Original</a>';
                               }
                               tr.append($('<td></td>').html(filesHtml));
                               
