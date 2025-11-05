@@ -105,21 +105,22 @@
             font-weight: 500;
         }
         /* Show only locations with styles */
-        .location-row.empty {
+        .sublocation-col.empty {
             display: none;
         }
-        .show-all .location-row.empty {
+        .show-all .sublocation-col.empty {
             display: block;
             opacity: 0.6;
         }
-        .show-only-empty .location-row:not(.empty) {
+        /* Hide entire row if all sublocations are occupied */
+        .show-only-empty .location-row:not(:has(.sublocation-col.empty)) {
             display: none !important;
         }
-        /* Only show empty location-rows with a dash in the title */
-        .show-only-empty .location-row.empty {
+        /* Show only empty sublocations with dash */
+        .show-only-empty .sublocation-col:not(.empty) {
             display: none !important;
         }
-        .show-only-empty .location-row.empty[data-has-dash="true"] {
+        .show-only-empty .sublocation-col.empty {
             display: block !important;
             opacity: 1 !important;
         }
@@ -257,9 +258,9 @@
         <div class="section-content" id="section-{{ base }}" style="display: none;">
         {% for loc in sub_locs %}
     {% if '-' in loc and 'wall' not in loc.lower() %}
-    <div class="location-row {% if not location_styles[loc ~ ' BOT'] and not location_styles[loc ~ ' MID'] and not location_styles[loc ~ ' TOP'] %}empty{% endif %}" data-has-dash="true">
+    <div class="location-row" data-has-dash="true">
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 250px;">
+                <div style="flex: 1; min-width: 250px;" class="sublocation-col {% if not location_styles[loc ~ ' BOT'] %}empty{% endif %}" data-sublocation="{{ loc }} BOT">
                     <span class="location-label highlight-yellow">{{ loc }} BOT</span>
                     <div class="sku-container" data-location="{{ loc }} BOT">
                         <input type="text" name="input_{{ loc }}_BOT" class="form-control sku-input" placeholder="+" list="styles-list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" {% if location_styles[loc ~ ' BOT'] %}style="display: none;"{% endif %}>
@@ -273,7 +274,7 @@
                         </div>
                     </div>
                 </div>
-                <div style="flex: 1; min-width: 250px;">
+                <div style="flex: 1; min-width: 250px;" class="sublocation-col {% if not location_styles[loc ~ ' MID'] %}empty{% endif %}" data-sublocation="{{ loc }} MID">
                     <span class="location-label highlight-yellow">{{ loc }} MID</span>
                     <div class="sku-container" data-location="{{ loc }} MID">
                         <input type="text" name="input_{{ loc }}_MID" class="form-control sku-input" placeholder="+" list="styles-list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" {% if location_styles[loc ~ ' MID'] %}style="display: none;"{% endif %}>
@@ -287,7 +288,7 @@
                         </div>
                     </div>
                 </div>
-                <div style="flex: 1; min-width: 250px;">
+                <div style="flex: 1; min-width: 250px;" class="sublocation-col {% if not location_styles[loc ~ ' TOP'] %}empty{% endif %}" data-sublocation="{{ loc }} TOP">
                     <span class="location-label highlight-yellow">{{ loc }} TOP</span>
                     <div class="sku-container" data-location="{{ loc }} TOP">
                         <input type="text" name="input_{{ loc }}_TOP" class="form-control sku-input" placeholder="+" list="styles-list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" {% if location_styles[loc ~ ' TOP'] %}style="display: none;"{% endif %}>
@@ -396,23 +397,20 @@ document.addEventListener('DOMContentLoaded', function() {
             showEmptyBtn.style.borderColor = '#28a745';
             showEmptyBtn.textContent = 'Showing empty';
         } else {
-            // Show all locations
+            // Show all locations and refresh empty/occupied classes from server state
             document.querySelector('form').classList.remove('show-only-empty');
             document.querySelector('form').classList.add('show-all');
-            // Button red and text
-            showEmptyBtn.style.background = '#dc3545';
-            showEmptyBtn.style.color = 'white';
-            showEmptyBtn.style.borderColor = '#dc3545';
-            showEmptyBtn.textContent = 'Showing all';
+            // Refresh the page to get accurate empty/occupied state
+            location.reload();
         }
     });
 
     // Update statistics
     function updateStats() {
-        const allRows = document.querySelectorAll('.location-row');
-        const occupiedRows = document.querySelectorAll('.location-row:not(.empty)');
-        document.getElementById('totalLocations').textContent = allRows.length + ' Locations';
-        document.getElementById('occupiedLocations').textContent = occupiedRows.length + ' Occupied';
+        const allSublocations = document.querySelectorAll('.sublocation-col');
+        const occupiedSublocations = document.querySelectorAll('.sublocation-col:not(.empty)');
+        document.getElementById('totalLocations').textContent = allSublocations.length + ' Locations';
+        document.getElementById('occupiedLocations').textContent = occupiedSublocations.length + ' Occupied';
     }
     updateStats();
 
@@ -554,11 +552,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             addBtn2.style.display = 'block';
                         }
-                        // Mark row as occupied
-                        const locationRow = container.closest('.location-row');
-                        locationRow.classList.remove('empty');
+                        // Mark sublocation column as occupied (only if not in show-empty mode)
+                        if (!showEmptyActive) {
+                            const sublocationCol = container.closest('.sublocation-col');
+                            if (sublocationCol) {
+                                sublocationCol.classList.remove('empty');
+                            }
+                            updateStats();
+                        }
                         input.value = '';
-                        updateStats();
                         showNotification('success', data.message);
                     } else {
                         showNotification('error', data.message);
@@ -599,15 +601,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     badge.remove();
                     const badgesDiv = container.querySelector('.sku-badges');
                     const badges = badgesDiv.querySelectorAll('.badge');
-                    const locationRow = container.closest('.location-row');
+                    const sublocationCol = container.closest('.sublocation-col');
                     if (badges.length === 0) {
                         container.querySelector('.sku-input').style.display = 'block';
                         const addBtn = container.querySelector('.add-style-btn');
                         if (addBtn) addBtn.remove();
-                        // Mark row as empty
-                        locationRow.classList.add('empty');
+                        // Mark sublocation column as empty (only if not in show-empty mode)
+                        if (!showEmptyActive && sublocationCol) {
+                            sublocationCol.classList.add('empty');
+                        }
                     }
-                    updateStats();
+                    if (!showEmptyActive) {
+                        updateStats();
+                    }
                     showNotification('success', data.message);
                 } else {
                     showNotification('error', data.message);
