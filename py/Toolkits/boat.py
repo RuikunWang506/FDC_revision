@@ -34,7 +34,6 @@ def get_db_connection():
         f"DRIVER={{{driver}}};"
         f"SERVER={server};"
         f"DATABASE={database_fdc};"
-        f"Trusted_Connection=yes;"
         f"UID={username};"
         f"PWD={password};"
     )
@@ -197,6 +196,49 @@ def batch_update_column_o(container_numbers):
         
     except Exception as e:
         current_app.logger.error(f"Error batch updating Google Sheets: {e}")
+        return False
+
+def update_received_dates_in_sheets(container_dates_dict):
+    """Update RCD (Received Date) in Google Sheets Column F for landed containers"""
+    try:
+        client = get_sheets_client()
+        if not client:
+            return False
+            
+        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
+        
+        # Get all data at once (single read)
+        all_data = sheet.get_all_values()
+        
+        # Find rows to update (Container # is in Column A)
+        updates = []
+        for row_idx, row in enumerate(all_data):
+            if len(row) >= 1:  # Make sure row has at least column A
+                container = row[0]  # Column A (index 0) = Container #
+                if container in container_dates_dict:
+                    # Check if Column F (index 5) already has data
+                    existing_rcd = row[5].strip() if len(row) > 5 else ''
+                    
+                    # Only update if the cell is empty
+                    if not existing_rcd:
+                        # Row index in sheet (1-based, +1 because enumerate is 0-based)
+                        sheet_row = row_idx + 1
+                        received_date = container_dates_dict[container]
+                        updates.append({
+                            'range': f'F{sheet_row}',  # Column F = RCD
+                            'values': [[received_date]]
+                        })
+        
+        # Batch update all cells at once
+        if updates:
+            sheet.batch_update(updates)
+            current_app.logger.info(f"Updated {len(updates)} received dates in Google Sheets")
+            return True
+        
+        return False
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating received dates in Google Sheets: {e}")
         return False
 
 def scan_dropbox_containers():
@@ -441,37 +483,63 @@ def boat_data():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Build batch query for all containers (optimized - single query instead of N queries)
+        # Build batch query for all containers
         container_list = df_cleaned['container_raw'].tolist()
         
         if not container_list:
-            df_cleaned['Status'] = '❌no data❌'
+            df_cleaned['Status'] = '🔄Need Import🔄'
         else:
             placeholders = ','.join(['?' for _ in container_list])
             
-            # Batch query with GROUP BY
-            query = f"SELECT descrip, SUM(on_order_qty) as total_qty FROM dbo.inv_data WHERE descrip IN ({placeholders}) GROUP BY descrip"
+            # Query bin_pur.RCVD_QTY - DIRECT and FAST method
+            # RCVD_QTY > 0 means items have been physically received (landed)
+            # RCVD_QTY = 0 means items haven't been received yet (ocean)
+            query = f"SELECT PUR_NUM, SUM(RCVD_QTY) as total_rcvd FROM dbo.bin_pur WHERE PUR_NUM IN ({placeholders}) GROUP BY PUR_NUM"
             cursor.execute(query, container_list)
             results = cursor.fetchall()
-
-            # Create lookup dictionary for fast access (strip trailing spaces from DB)
-            qty_lookup = {row[0].strip(): row[1] for row in results}
+            rcvd_lookup = {row[0].strip(): row[1] for row in results}
             
-            # Apply status based on batch results
+            # Get received dates for landed containers (from inv_data.LASTRCV_DT)
+            # Use the same date format as SQL_connector.py
+            date_query = f"""
+                SELECT DESCRIP, 
+                       MAX(LASTRCV_DT) as last_rcv_dt,
+                       RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', MAX(LASTRCV_DT)) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                       RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', MAX(LASTRCV_DT)) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                       CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', MAX(LASTRCV_DT)) - 81088, '20230101')) AS VARCHAR) AS formatted_date
+                FROM dbo.inv_data 
+                WHERE DESCRIP IN ({placeholders})
+                GROUP BY DESCRIP
+            """
+            cursor.execute(date_query, container_list)
+            date_results = cursor.fetchall()
+            date_lookup = {row[0].strip(): row[2] if row[1] and row[1] > 0 else '' for row in date_results}
+            
+            # Collect landed containers with dates for Google Sheets update
+            landed_containers_with_dates = {}
+            
+            # Apply status based on RCVD_QTY
             for index, row in df_cleaned.iterrows():
                 container_raw = row['container_raw']
-                qty = qty_lookup.get(container_raw)
+                rcvd_qty = rcvd_lookup.get(container_raw)
                 
-                if qty is not None:
-                    if qty > 0:
-                        df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
-                    elif qty == 0:
-                        df_cleaned.at[index, 'Status'] = '📍landed📍'
+                if rcvd_qty is not None and rcvd_qty > 0:
+                    df_cleaned.at[index, 'Status'] = '📍landed📍'
+                    # Store received date for Google Sheets update
+                    received_date = date_lookup.get(container_raw, '')
+                    if received_date:
+                        landed_containers_with_dates[container_raw] = received_date
+                elif rcvd_qty is not None and rcvd_qty == 0:
+                    df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
                 else:
-                    df_cleaned.at[index, 'Status'] = '❌no data❌'
+                    df_cleaned.at[index, 'Status'] = '🔄Need Import🔄'
         
         # Close database connection
         conn.close()
+        
+        # Update Google Sheets with received dates for landed containers
+        if landed_containers_with_dates:
+            update_received_dates_in_sheets(landed_containers_with_dates)
 
         # Drop the 'container_raw' column before rendering (keep the other metadata columns)
         df_cleaned = df_cleaned.drop('container_raw', axis=1)
