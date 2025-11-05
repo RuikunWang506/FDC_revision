@@ -443,6 +443,56 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Scroll spy - update sidebar active button based on scroll position
+    let scrollTimeout;
+    window.addEventListener('scroll', function() {
+        // Debounce scroll events for performance
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function() {
+            let currentSection = null;
+            let closestDistance = Infinity;
+            
+            // Find which section is currently closest to the top of viewport
+            document.querySelectorAll('.section-header').forEach(function(section) {
+                const rect = section.getBoundingClientRect();
+                // Calculate distance from top of viewport
+                const distance = Math.abs(rect.top);
+                
+                // If this section is above or near the top and closer than previous
+                if (rect.top <= 200 && distance < closestDistance) {
+                    closestDistance = distance;
+                    currentSection = section.dataset.section;
+                }
+            });
+            
+            // Also check location-rows to find which section they belong to
+            if (!currentSection) {
+                document.querySelectorAll('.location-row').forEach(function(row) {
+                    const rect = row.getBoundingClientRect();
+                    if (rect.top <= 200 && rect.bottom >= 0) {
+                        // Find parent section
+                        let parent = row.closest('.section-content');
+                        if (parent) {
+                            const sectionId = parent.id.replace('section-', '');
+                            currentSection = sectionId;
+                        }
+                    }
+                });
+            }
+            
+            // If we found a current section, update active button
+            if (currentSection) {
+                document.querySelectorAll('.sidebar-nav-btn').forEach(function(btn) {
+                    if (btn.dataset.section === currentSection) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        }, 50); // 50ms debounce for more responsive feel
+    });
+
     // Expand all sections
     document.getElementById('expandAllBtn').addEventListener('click', function() {
         document.querySelectorAll('.section-header').forEach(function(header) {
