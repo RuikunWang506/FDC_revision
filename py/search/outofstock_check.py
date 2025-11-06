@@ -159,3 +159,102 @@ def wipe_location():
     except Exception as e:
         current_app.logger.error(f"Error wiping location: {str(e)}")
         return jsonify({'success': False, 'message': f'An error occurred: {str(e)}'}), 500
+
+
+@outofstock_check_bp.route('/get_style_skus', methods=['GET'])
+@login_required
+def get_style_skus():
+    """Return SKU and Location list for a given style (lazy-loaded)."""
+    try:
+        style = request.args.get('style', '').strip()
+        if not style:
+            return jsonify({'error': 'Style parameter is required'}), 400
+
+        mysql_conn = get_db_connection()
+        if mysql_conn is None:
+            return jsonify({'error': 'Database connection failed'}), 500
+
+        cursor = mysql_conn.cursor(dictionary=True)
+        query = "SELECT SKU, Location FROM products WHERE Style = %s ORDER BY SKU"
+        cursor.execute(query, (style,))
+        rows = cursor.fetchall()
+
+        # If no SKUs, return empty
+        sku_list = [r['SKU'] for r in rows] if rows else []
+
+        # Fetch stock info from FDC SQL Server for these SKUs
+        sku_data_map = {}
+        if sku_list:
+            try:
+                fdc_conn = get_fdc_connection()
+                if fdc_conn:
+                    fdc_cursor = fdc_conn.cursor()
+                    # Query PROD_CD rows that begin with the style code (covers variations like spaces/dashes)
+                    like_pattern = style + '%'
+                    sku_stock_query = """
+                        SELECT i.PROD_CD as PROD_CD,
+                            SUM(CAST(ISNULL(id.in_stock, 0) AS INT)) as Stock,
+                            SUM(CAST(ISNULL(id.order_qty, 0) AS INT)) as Sold,
+                            SUM(CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT)) as Available,
+                            SUM(CAST(ISNULL(id.on_order_qty, 0) AS INT)) as Ocean
+                        FROM dbo.inv AS i
+                        LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+                        WHERE i.PROD_CD LIKE ?
+                        GROUP BY i.PROD_CD
+                    """
+                    fdc_cursor.execute(sku_stock_query, (like_pattern,))
+                    stock_rows = fdc_cursor.fetchall()
+                    # Build map keyed by normalized PROD_CD (upper, no spaces/dashes)
+                    def norm(s):
+                        return (s or '').upper().replace(' ', '').replace('-', '')
+
+                    for r in stock_rows:
+                        prod = r[0]
+                        key = norm(prod)
+                        sku_data_map[key] = {
+                            'Stock': int(r[1]) if r[1] is not None else 0,
+                            'Sold': int(r[2]) if r[2] is not None else 0,
+                            'Available': int(r[3]) if r[3] is not None else 0,
+                            'Ocean': int(r[4]) if r[4] is not None else 0,
+                            'PROD_CD': prod
+                        }
+                    fdc_cursor.close()
+                    fdc_conn.close()
+            except Exception as e:
+                current_app.logger.error(f"Error fetching SKU stock data from FDC: {e}")
+
+        # Merge MySQL rows with stock map using normalization (remove spaces/dashes)
+        merged = []
+        def norm(s):
+            return (s or '').upper().replace(' ', '').replace('-', '')
+
+        for r in rows:
+            sku = r.get('SKU')
+            loc = r.get('Location')
+            key = norm(sku)
+            stock_info = sku_data_map.get(key)
+
+            # fallback: if exact normalized SKU not found, try using first token (e.g., style only)
+            if not stock_info and sku and ' ' in sku:
+                first = norm(sku.split(' ')[0])
+                stock_info = sku_data_map.get(first)
+
+            if not stock_info:
+                stock_info = {'Stock': 0, 'Sold': 0, 'Available': 0, 'Ocean': 0}
+
+            merged.append({
+                'SKU': sku,
+                'Location': loc,
+                'Stock': stock_info['Stock'],
+                'Sold': stock_info['Sold'],
+                'Available': stock_info['Available'],
+                'Ocean': stock_info['Ocean']
+            })
+
+        cursor.close()
+        mysql_conn.close()
+
+        return jsonify({'skus': merged})
+    except Exception as e:
+        current_app.logger.error(f"Error getting SKUs for style {style}: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500

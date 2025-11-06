@@ -38,11 +38,12 @@
             width: 100% !important;
             margin: 0 auto !important;
             border-collapse: collapse;
+            table-layout: fixed; /* enforce fixed column widths */
         }
 
         table.dataTable thead th {
             background: linear-gradient(135deg, #2c3e50, #34495e) !important;
-            color: white !important;
+            color: rgb(0, 0, 0) !important;
             padding: 15px !important;
             text-align: center !important;
             font-weight: 600 !important;
@@ -61,6 +62,20 @@
             padding: 12px;
             text-align: center;
             border-bottom: 1px solid #eee;
+        }
+
+        /* Prevent wrapping and show ellipsis for overflow so fixed widths behave nicely */
+        table.dataTable thead th,
+        table.dataTable tbody td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Force center alignment for headers and cells (overrides dt-body-right) */
+        table.dataTable thead th,
+        table.dataTable tbody td {
+            text-align: center !important;
         }
 
         table.dataTable tbody tr:hover {
@@ -157,9 +172,36 @@
             margin: 10px 0;
         }
 
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
+        /* Hide DataTables sorting icons/pseudo-elements and remove any background images that reserve space */
+        table.dataTable thead th.sorting::after,
+        table.dataTable thead th.sorting_asc::after,
+        table.dataTable thead th.sorting_desc::after,
+        table.dataTable thead th.sorting::before,
+        table.dataTable thead th.sorting_asc::before,
+        table.dataTable thead th.sorting_desc::before,
+        table.dataTable thead th:after,
+        table.dataTable thead th:before {
+            display: none !important;
+            content: none !important;
+            background: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Explicitly remove only the background-image used for sort arrows (preserve header gradient) */
+        table.dataTable thead th.sorting,
+        table.dataTable thead th.sorting_asc,
+        table.dataTable thead th.sorting_desc {
+            background-image: none !important;
+            -webkit-background-size: 0 !important;
+            background-size: 0 !important;
+        }
+
+        /* Keep header padding consistent with the original design */
+        table.dataTable thead th {
+            padding: 15px !important;
         }
     </style>
 </head>
@@ -208,9 +250,9 @@
                     <tr>
                         <th><i class="fas fa-tag mr-1"></i>Style</th>
                         <th><i class="fas fa-boxes mr-1"></i>Stock</th>
+                        <th><i class="fas fa-ship mr-1"></i>Ocean</th>
                         <th><i class="fas fa-shopping-cart mr-1"></i>Sold</th>
                         <th><i class="fas fa-box-open mr-1"></i>Available</th>
-                        <th><i class="fas fa-ship mr-1"></i>Ocean</th>
                         <th><i class="fas fa-tools mr-1"></i>Action</th>
                     </tr>
                 </thead>
@@ -230,15 +272,20 @@
                         </td>
                         <td>{{ item.Ocean }}</td>
                         <td>
-                            {% if item.Available < 0 %}
-                            <button class="wipe-btn" onclick="wipeLocation('{{ item.Style }}', this)">
-                                <i class="fas fa-trash-alt mr-1"></i>Wipe Location
-                            </button>
-                            {% else %}
-                            <span style="color: #28a745;">
-                                <i class="fas fa-check-circle"></i> OK
-                            </span>
-                            {% endif %}
+                            <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
+                                <button class="btn btn-sm btn-info details-btn" onclick="toggleDetails('{{ item.Style }}', this)">
+                                    <i class="fas fa-info-circle mr-1"></i>Details
+                                </button>
+                                {% if item.Available < 0 %}
+                                <button class="wipe-btn" onclick="wipeLocation('{{ item.Style }}', this)">
+                                    <i class="fas fa-trash-alt mr-1"></i>Wipe Location
+                                </button>
+                                {% else %}
+                                <span style="color: #28a745;">
+                                    <i class="fas fa-check-circle"></i> OK
+                                </span>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -291,6 +338,14 @@
                 ],
                 responsive: true,
                 "order": [[3, "asc"]], // Sort by Available column (ascending, so negatives first)
+                "columns": [
+                    { "width": "140px" },   // Style
+                    { "width": "100px", "className": 'dt-body-right' }, // Stock
+                    { "width": "120px", "className": 'dt-body-right' }, // Ocean
+                    { "width": "100px", "className": 'dt-body-right' }, // Sold
+                    { "width": "120px", "className": 'dt-body-right' }, // Available
+                    { "width": "260px" }    // Action
+                ],
                 "columnDefs": [
                     {
                         "targets": [1, 2, 3, 4],
@@ -308,7 +363,8 @@
             let positiveCount = 0;
 
             $('#oosc_table tbody tr').each(function() {
-                const availCell = $(this).find('td:eq(3)');
+                // New column order: 0 Style, 1 Stock, 2 Ocean, 3 Sold, 4 Available, 5 Action
+                const availCell = $(this).find('td:eq(4)');
                 const availValue = parseInt(availCell.text().trim());
                 
                 if (availValue < 0) {
@@ -360,6 +416,58 @@
                 alert('An error occurred while wiping the location.');
                 $button.prop('disabled', false).html('<i class="fas fa-trash-alt mr-1"></i>Wipe Location');
             });
+        }
+
+        // Toggle details: fetch SKUs for a style and show/hide a child row with SKU table
+        function toggleDetails(style, button) {
+            const $btn = $(button);
+            const row = $btn.closest('tr');
+            const dt = $('#oosc_table').DataTable();
+            const dtRow = dt.row(row);
+
+            // If already shown, hide it
+            if (dtRow.child && dtRow.child.isShown()) {
+                dtRow.child.hide();
+                $btn.prop('disabled', false).html('<i class="fas fa-info-circle mr-1"></i>Details');
+                return;
+            }
+
+            // Show loading state
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Loading...');
+
+            fetch('/get_style_skus?style=' + encodeURIComponent(style))
+                .then(response => response.json())
+                .then(data => {
+                    let skus = data.skus || [];
+                    // compact table: SKU | Stock | Sold | Available | Ocean | Location
+                    let html = '<div style="padding:6px 12px; background:#f9f9fb; border-radius:6px; font-size:0.9rem;">';
+                    html += '<table class="table table-sm table-bordered mb-0" style="margin:0;font-size:0.9rem;">';
+                    html += '<thead><tr><th style="width:140px">SKU</th><th style="width:80px">Stock</th><th style="width:80px">Sold</th><th style="width:100px">Available</th><th style="width:80px">Ocean</th><th>Location</th></tr></thead><tbody>';
+
+                    if (skus.length === 0) {
+                        html += '<tr><td colspan="6">No SKUs found for this style.</td></tr>';
+                    } else {
+                        skus.forEach(s => {
+                            let sku = s.SKU || s.sku || '';
+                            let loc = s.Location || s.location || '';
+                            let stock = typeof s.Stock !== 'undefined' ? s.Stock : (s.stock || 0);
+                            let sold = typeof s.Sold !== 'undefined' ? s.Sold : (s.sold || 0);
+                            let avail = typeof s.Available !== 'undefined' ? s.Available : (s.available || 0);
+                            let ocean = typeof s.Ocean !== 'undefined' ? s.Ocean : (s.ocean || 0);
+                            html += `<tr><td><a href="/item_lookup/${sku}" target="_blank" style="font-weight:600">${sku}</a></td><td class="text-center">${stock}</td><td class="text-center">${sold}</td><td class="text-center">${avail}</td><td class="text-center">${ocean}</td><td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${loc || ''}</td></tr>`;
+                        });
+                    }
+
+                    html += '</tbody></table></div>';
+
+                    dtRow.child(html).show();
+                    $btn.prop('disabled', false).html('<i class="fas fa-info-circle mr-1"></i>Hide');
+                })
+                .catch(err => {
+                    console.error('Error fetching SKUs for style', style, err);
+                    alert('Failed to fetch SKU details.');
+                    $btn.prop('disabled', false).html('<i class="fas fa-info-circle mr-1"></i>Details');
+                });
         }
     </script>
 </body>
