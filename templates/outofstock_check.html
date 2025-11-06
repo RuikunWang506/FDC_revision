@@ -41,14 +41,20 @@
         }
 
         table.dataTable thead th {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 1px;
+            background: linear-gradient(135deg, #2c3e50, #34495e) !important;
+            color: white !important;
+            padding: 15px !important;
+            text-align: center !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            font-size: 12px !important;
+            letter-spacing: 1px !important;
+            border-bottom: 2px solid #667eea !important;
+        }
+        
+        table.dataTable thead {
+            display: table-header-group !important;
+            visibility: visible !important;
         }
 
         table.dataTable tbody td {
@@ -265,7 +271,8 @@
                 "autoWidth": false,
                 "pageLength": 50,
                 "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                dom: '<"d-flex justify-content-between align-items-center mb-3"<"dataTables_length"l><"dataTables_buttons"B><"dataTables_filter"f>>tip',
+                dom: '<"d-flex justify-content-between align-items-center mb-3"<"dataTables_length"l><"dataTables_buttons"B><"dataTables_filter"f>>t<"d-flex justify-content-between mt-3"ip>',
+                "bDestroy": true,
                 buttons: [
                     {
                         extend: 'copy',

@@ -285,8 +285,12 @@ def generate_order(order_number):
         # Create items DataFrame with item-specific columns including Location
         items_df = df[['line', 'SKU', 'Descrip', 'Qty', 'price', 'per_box']].copy()
         
+        # Adjust price to list price by adding discount per unit
+        discount_amount = df.iloc[0]['discount_amount'] if pd.notna(df.iloc[0]['discount_amount']) else 0
+        items_df['price'] = items_df['price'] + (discount_amount / items_df['Qty'])
+        
         # Add Location column (will be populated via AJAX)
-        items_df['Location'] = 'Loading...'
+        items_df['Location'] = 'N/A'
         
         # Format Qty and per_box as integers (removing decimals)
         items_df['Qty'] = items_df['Qty'].fillna(0).astype(int)
