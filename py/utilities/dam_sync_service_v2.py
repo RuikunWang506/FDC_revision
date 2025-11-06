@@ -21,6 +21,7 @@ import time
 sys.path.insert(0, os.path.abspath('.'))
 
 from py.utilities.database_utils import get_mysql_connection
+from py.utilities.logging_setup import log_event
 
 # Ensure stdout/stderr can handle Unicode on Windows consoles
 try:
@@ -536,6 +537,11 @@ class DAMSyncServiceV2:
         print("\n" + "="*60)
         print("SYNC SUMMARY")
         print("="*60)
+        # Persistent log of final stats
+        try:
+            log_event('info', f"DAM SYNC SUMMARY - Processed: {self.stats['total_processed']}, Added: {self.stats['total_added']}, Updated: {self.stats['total_updated']}, Skipped: {self.stats['total_skipped']}, Errors: {self.stats['total_errors']}, Elapsed(min): {elapsed/60:.2f}")
+        except Exception:
+            pass
         print(f"Total Processed: {self.stats['total_processed']}")
         print(f"  - Added:       {self.stats['total_added']}")
         print(f"  - Updated:     {self.stats['total_updated']}")
@@ -550,6 +556,10 @@ class DAMSyncServiceV2:
         print("\n" + "="*60)
         print("STARTING FULL DAM SYNCHRONIZATION (V2)")
         print("="*60)
+        try:
+            log_event('info', f"Starting full DAM sync (force_rebuild_index={force_rebuild_index})")
+        except Exception:
+            pass
         print(f"Batch Size: {self.batch_size}")
         print(f"Progress Interval: {self.progress_interval}")
         print(f"Force Rebuild Index: {force_rebuild_index}")
@@ -604,12 +614,33 @@ class DAMSyncServiceV2:
     
     def run_scheduled_sync(self):
         """Run sync if scheduled (every 3 days)"""
-        if self.should_run_scheduled_sync():
-            print("Running scheduled sync (3-day interval)...")
-            self.run_full_sync(force_rebuild_index=True)
-            self.update_sync_marker()
-        else:
-            print("Sync not needed yet (last sync was less than 3 days ago)")
+        try:
+            if self.should_run_scheduled_sync():
+                print("Running scheduled sync (3-day interval)...")
+                try:
+                    log_event('info', 'Scheduled DAM sync starting (3-day interval)')
+                except Exception:
+                    pass
+
+                self.run_full_sync(force_rebuild_index=True)
+                self.update_sync_marker()
+
+                try:
+                    log_event('info', 'Scheduled DAM sync completed successfully')
+                except Exception:
+                    pass
+            else:
+                print("Sync not needed yet (last sync was less than 3 days ago)")
+                try:
+                    log_event('info', 'Scheduled DAM sync skipped (less than 3 days since last)')
+                except Exception:
+                    pass
+        except Exception as e:
+            try:
+                log_event('error', f'Scheduled DAM sync failed: {e}')
+            except Exception:
+                pass
+            raise
 
 if __name__ == "__main__":
     import argparse

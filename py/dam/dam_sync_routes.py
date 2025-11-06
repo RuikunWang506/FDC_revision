@@ -95,7 +95,27 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False):
                 try:
                     rc = stream_process([_sys.executable, 'py/standalone/smart_auto_filter.py'], capture_print)
                     if rc != 0:
-                        capture_print(f"Smart Auto-Filter exited with code {rc}")
+                        # If the subprocess returned non-zero, inspect recent output for a completion marker.
+                        recent = '\n'.join(sync_status.get('logs', [])[-200:])
+                        success_markers = [
+                            'Full scan complete',
+                            '✅ Full scan complete',
+                            'Processing Complete',
+                            '✅ Processing Complete!',
+                            'SCAN_COMPLETE|',
+                        ]
+                        if any(marker in recent for marker in success_markers):
+                            capture_print(f"Smart Auto-Filter exited with code {rc} but reported completion in output — treating as SUCCESS")
+                            try:
+                                log_event('warning', f"Smart Auto-Filter returned code {rc} but output contains completion marker. Recent output:\n{recent}")
+                            except Exception:
+                                pass
+                        else:
+                            capture_print(f"Smart Auto-Filter exited with code {rc}")
+                            try:
+                                log_event('error', f"Smart Auto-Filter exited with code {rc}. Recent output:\n{recent}")
+                            except Exception:
+                                pass
                 except Exception as fetch_err:
                     capture_print(f"Error running Smart Auto-Filter: {fetch_err}")
 
@@ -277,7 +297,23 @@ def fetch_from_dropbox():
             t_out.join(timeout=1)
             t_err.join(timeout=1)
             if rc != 0:
-                sync_status['error'] = f"Smart Auto-Filter exited with code {rc}"
+                # Inspect recent output for an incremental completion marker; if present, treat as success
+                recent = '\n'.join(sync_status.get('logs', [])[-200:])
+                incremental_markers = ['Processing Complete', '✅ Processing Complete!', 'SCAN_COMPLETE|']
+                if any(marker in recent for marker in incremental_markers):
+                    # Treat as success but persist a warning
+                    try:
+                        log_event('warning', f"Smart Auto-Filter exited with code {rc} but reported incremental completion. Recent output:\n{recent}")
+                    except Exception:
+                        pass
+                else:
+                    sync_status['error'] = f"Smart Auto-Filter exited with code {rc}"
+                    # Persist the failure and recent output to the persistent app log for post-mortem
+                    try:
+                        log_event('error', f"Smart Auto-Filter exited with code {rc}. Recent output:\n{recent}")
+                    except Exception as _log_err:
+                        # Best-effort logging, don't let logging failures crash the thread
+                        print(f"Failed to write persistent log for Smart Auto-Filter error: {_log_err}")
         except Exception as e:
             sync_status['error'] = str(e)
             print(f"Error during fetch: {e}")
@@ -289,6 +325,82 @@ def fetch_from_dropbox():
     thread.start()
 
     return jsonify({'success': True, 'message': 'Dropbox fetch started'})
+
+
+@dam_sync_bp.route('/fetch-full', methods=['POST'])
+def fetch_from_dropbox_full():
+    """Run Smart Auto-Filter in full-scan mode (process all files) in background"""
+    if sync_status['is_running']:
+        return jsonify({
+            'success': False,
+            'message': 'Another operation is already running'
+        }), 400
+
+    def _run_full_fetch():
+        global sync_status
+        sync_status['is_running'] = True
+        sync_status['error'] = None
+        sync_status['logs'] = []
+        try:
+            import sys as _sys, subprocess, threading
+            def _log(line):
+                sync_status['logs'].append(line)
+                if len(sync_status['logs']) > MAX_LOG_LINES:
+                    sync_status['logs'] = sync_status['logs'][-MAX_LOG_LINES:]
+                try:
+                    print(line)
+                except Exception:
+                    pass
+            _log("\n=== Fetching ALL images from Dropbox (Smart Auto-Filter FULL) ===")
+            proc = subprocess.Popen([
+                _sys.executable,
+                'py/standalone/smart_auto_filter.py',
+                '--full'
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, cwd=os.getcwd())
+            def reader(stream, prefix=""):
+                try:
+                    for line in iter(stream.readline, ''):
+                        if line:
+                            _log(prefix + line.rstrip())
+                finally:
+                    try:
+                        stream.close()
+                    except Exception:
+                        pass
+            t_out = threading.Thread(target=reader, args=(proc.stdout, ""), daemon=True)
+            t_err = threading.Thread(target=reader, args=(proc.stderr, "[stderr] "), daemon=True)
+            t_out.start(); t_err.start()
+            rc = proc.wait()
+            t_out.join(timeout=1)
+            t_err.join(timeout=1)
+            if rc != 0:
+                # Inspect recent output for a full-scan completion marker; if present, treat as success
+                recent = '\n'.join(sync_status.get('logs', [])[-200:])
+                full_markers = ['Full scan complete', '✅ Full scan complete', 'SCAN_COMPLETE|FULL']
+                if any(marker in recent for marker in full_markers):
+                    try:
+                        log_event('warning', f"Smart Auto-Filter (full) exited with code {rc} but reported completion. Recent output:\n{recent}")
+                    except Exception:
+                        pass
+                    _log(f"Smart Auto-Filter (full) exited with code {rc} but reported completion — treating as SUCCESS")
+                else:
+                    sync_status['error'] = f"Smart Auto-Filter (full) exited with code {rc}"
+                    # Persist the failure and recent output to the persistent app log for post-mortem
+                    try:
+                        log_event('error', f"Smart Auto-Filter (full) exited with code {rc}. Recent output:\n{recent}")
+                    except Exception as _log_err:
+                        print(f"Failed to write persistent log for Smart Auto-Filter full error: {_log_err}")
+        except Exception as e:
+            sync_status['error'] = str(e)
+            print(f"Error during full fetch: {e}")
+        finally:
+            sync_status['is_running'] = False
+
+    thread = Thread(target=_run_full_fetch)
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({'success': True, 'message': 'Dropbox full fetch started'})
 
 @dam_sync_bp.route('/cleanup', methods=['POST'])
 def cleanup_broken_links():

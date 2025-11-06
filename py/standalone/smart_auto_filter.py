@@ -309,11 +309,68 @@ class SmartAutoFilter:
         sys.stdout.flush()
         sys.stderr.flush()
 
+    def run_full_scan(self):
+        """Walk the entire Dropbox folder and attempt to process every image file.
+        This is intended for ad-hoc full imports when incremental mode may have skipped files.
+        """
+        print("🚀 Starting Smart Auto-Filter (Full Scan Mode)")
+        print("=" * 50)
+
+        if not os.path.exists(self.dropbox_path):
+            print(f"⚠️  Dropbox path not accessible: {self.dropbox_path}")
+            return
+
+        processed_count = 0
+        catalog_count = 0
+        big_picture_count = 0
+
+        for root, dirs, files in os.walk(self.dropbox_path):
+            for file in files:
+                file_path = str(Path(root) / file)
+                if Path(file_path).suffix.lower() not in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}:
+                    continue
+
+                sku = self.extract_sku_fast(file_path)
+                classification = self.classify_image_fast(file_path)
+
+                if self.process_file_fast(file_path):
+                    processed_count += 1
+                    if classification == 'catalog':
+                        catalog_count += 1
+                    else:
+                        big_picture_count += 1
+
+                    # Log processed file
+                    self.log_processed_file(file_path, sku, classification)
+
+        # Finalize
+        with open(self.processed_files_log, 'a', encoding='utf-8') as f:
+            f.write(f"{datetime.now().isoformat()}|SCAN_COMPLETE|FULL\n")
+
+        print("\n" + "=" * 50)
+        print(f"✅ Full scan complete")
+        print(f"📊 Total processed: {processed_count}")
+        print(f"📖 Catalog images: {catalog_count}")
+        print(f"🖼️  Big pictures: {big_picture_count}")
+        sys.stdout.flush()
+        sys.stderr.flush()
+
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description='Smart Auto-Filter')
+    parser.add_argument('--full', action='store_true', help='Run full scan of Dropbox folder (process all files)')
+    parser.add_argument('--force', action='store_true', help='Force processing even if already present (not implemented)')
+    args = parser.parse_args()
+
     try:
         filter_service = SmartAutoFilter()
-        filter_service.run_incremental_filter()
-        
+        if args.full:
+            print('🔁 Running full Dropbox scan (this may take a while)')
+            # Walk all files and process each one (does internal skip if already processed)
+            filter_service.run_full_scan()
+        else:
+            filter_service.run_incremental_filter()
+
         # Ensure clean exit
         sys.stdout.flush()
         sys.stderr.flush()

@@ -132,6 +132,12 @@
                     <small class="text-muted">Runs Smart Auto-Filter (no database sync)</small>
                 </div>
                 <div class="col-md-4 mb-3">
+                    <button class="btn btn-outline-danger btn-block" onclick="fetchDropboxFull()" data-bs-toggle="tooltip" title="Run Smart Auto-Filter in FULL mode (scan all Dropbox files).">
+                        <i class="fas fa-cloud-download-alt"></i> Fetch (Full Scan)
+                    </button>
+                    <small class="text-muted">Scans all Dropbox files (use for missed files)</small>
+                </div>
+                <div class="col-md-4 mb-3">
                     <button class="btn btn-secondary btn-block" onclick="refreshStatus()" data-bs-toggle="tooltip" title="Refresh the current status and logs without starting a new job.">
                         <i class="fas fa-refresh"></i> Refresh Status
                     </button>
@@ -235,6 +241,25 @@ function fetchDropbox() {
     })
     .catch(error => {
         alert('Error starting Dropbox fetch: ' + error);
+    });
+}
+
+function fetchDropboxFull() {
+    fetch('/dam/fetch-full', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Dropbox FULL fetch started. This will scan all Dropbox files. Check progress below.');
+            startPolling();
+        } else {
+            alert('Error: ' + (data.message || data.error));
+        }
+    })
+    .catch(error => {
+        alert('Error starting Dropbox full fetch: ' + error);
     });
 }
 
