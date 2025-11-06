@@ -512,7 +512,6 @@ def sync_to_oms():
             GROUP BY sku
         """)
         products = mysql_cursor.fetchall()
-        current_app.logger.info(f"Fetched {len(products)} unique SKUs from online database")
 
         if not products:
             return jsonify({'message': 'No products found to sync.'}), 200
@@ -574,7 +573,6 @@ def sync_to_oms():
             
             # CRITICAL: ABSOLUTE FINAL CHECK - force limit to prevent ANY string over 40
             if len(location) > MAX_LOCATION_LENGTH:
-                current_app.logger.error(f"CRITICAL: Location still exceeds {MAX_LOCATION_LENGTH} chars for SKU {sku}: {len(location)} chars - '{location}'")
                 location = location[:MAX_LOCATION_LENGTH]
             
             # Log truncation after all processing
@@ -589,7 +587,6 @@ def sync_to_oms():
             
             update_data.append((location, sku))
 
-        current_app.logger.info(f"Prepared {len(update_data)} SKUs for bulk update ({len(truncated_skus)} locations truncated, {len(long_sku_list)} SKUs truncated)")
         
         # Validate all fields are within limits and find any violators
         max_loc_length = 0
@@ -609,28 +606,8 @@ def sync_to_oms():
             if loc_len > MAX_LOCATION_LENGTH:
                 violators.append({'sku': sku, 'location': loc, 'length': loc_len})
         
-        current_app.logger.info(f"Maximum location length: {max_loc_length} chars (limit: {MAX_LOCATION_LENGTH}), Maximum SKU length: {max_sku_length} chars")
-        
-        # Log violators
-        if violators:
-            current_app.logger.error(f"CRITICAL: {len(violators)} locations STILL exceed {MAX_LOCATION_LENGTH} character limit after truncation!")
-            for v in violators[:10]:
-                current_app.logger.error(f"VIOLATOR - SKU: {v['sku']} | Length: {v['length']} | Location: '{v['location']}'")
-        
-        # Log long SKUs
-        if long_sku_list:
-            current_app.logger.warning(f"=== LONG SKU SUMMARY: {len(long_sku_list)} SKUs exceeded 20 character limit ===")
-            for item in long_sku_list[:10]:  # Show first 10
-                current_app.logger.warning(f"SKU: {item['sku']} | Length: {item['length']}")
-        
-        # Log summary of truncated SKUs
-        if truncated_skus:
-            current_app.logger.warning(f"=== TRUNCATION SUMMARY: {len(truncated_skus)} SKUs exceeded {MAX_LOCATION_LENGTH} character limit ===")
-            for item in truncated_skus:
-                current_app.logger.warning(f"SKU: {item['sku']} | Original Length: {item['original_length']} -> Final: {item['final_length']} | Original: {item['original']} | Truncated: {item['truncated']}")
 
         # Check if records exist and get current values to skip unchanged records
-        current_app.logger.info("Fetching existing SKUs and current locations from FDC database...")
         sku_list = [sku for _, sku in update_data]
         
         # Fetch existing records with current locations in batches
@@ -649,7 +626,6 @@ def sync_to_oms():
                 fdc_sku_map[trimmed_sku] = actual_prod_cd
                 fdc_current_locations[trimmed_sku] = current_inv_loc
         
-        current_app.logger.info(f"Found {len(fdc_sku_map)} existing SKUs in FDC out of {len(sku_list)}")
         
         # Filter update_data: only include records where location has actually changed
         fdc_update_data = []
@@ -662,15 +638,12 @@ def sync_to_oms():
                 else:
                     fdc_skipped_unchanged += 1
         
-        current_app.logger.info(f"FDC: {len(fdc_update_data)} SKUs need updates, {fdc_skipped_unchanged} already have correct location")
         
         if not fdc_update_data:
-            current_app.logger.warning("No matching SKUs found in FDC database")
             fdc_updated = 0
         else:
             update_query = "UPDATE inv_data SET inv_loc = ? WHERE prod_cd = ?"
             
-            current_app.logger.info(f"Executing FDC bulk update for {len(fdc_update_data)} existing SKUs...")
             fdc_updated = 0
             batch_size = 500
             
@@ -681,16 +654,13 @@ def sync_to_oms():
                     # executemany with pyodbc returns -1 for rowcount, so count the batch size
                     batch_updated = len(batch)
                     fdc_updated += batch_updated
-                    current_app.logger.info(f"FDC batch {i//batch_size + 1}: Updated {batch_updated} records")
                 except Exception as e:
                     current_app.logger.error(f"FDC batch {i//batch_size + 1} FAILED: {str(e)}")
                     # Skip batch
                     continue
             
-            current_app.logger.info(f"FDC total updates: {fdc_updated}")
 
         # Check if records exist in OMS_EF and get current values to skip unchanged records
-        current_app.logger.info("Fetching existing SKUs and current locations from OMS_EF database...")
         oms_sku_map = {}  # Maps trimmed SKU to actual prod_cd
         oms_current_locations = {}  # Maps trimmed SKU to current inv_loc value
         
@@ -705,7 +675,6 @@ def sync_to_oms():
                 oms_sku_map[trimmed_sku] = actual_prod_cd
                 oms_current_locations[trimmed_sku] = current_inv_loc
         
-        current_app.logger.info(f"Found {len(oms_sku_map)} existing SKUs in OMS_EF out of {len(sku_list)}")
         
         # Filter update_data: only include records where location has actually changed
         oms_update_data = []
@@ -718,7 +687,6 @@ def sync_to_oms():
                 else:
                     oms_skipped_unchanged += 1
         
-        current_app.logger.info(f"OMS_EF: {len(oms_update_data)} SKUs need updates, {oms_skipped_unchanged} already have correct location")
         
         if not oms_update_data:
             current_app.logger.warning("No matching SKUs found in OMS_EF database")
@@ -726,7 +694,6 @@ def sync_to_oms():
         else:
             oms_update_query = "UPDATE inv_data SET inv_loc = ? WHERE prod_cd = ?"
             
-            current_app.logger.info(f"Executing OMS_EF bulk update for {len(oms_update_data)} existing SKUs...")
             oms_updated = 0
             
             for i in range(0, len(oms_update_data), batch_size):
@@ -736,13 +703,11 @@ def sync_to_oms():
                     # executemany with pyodbc returns -1 for rowcount, so count the batch size
                     batch_updated = len(batch)
                     oms_updated += batch_updated
-                    current_app.logger.info(f"OMS_EF batch {i//batch_size + 1}: Updated {batch_updated} records")
                 except Exception as e:
                     current_app.logger.error(f"OMS_EF batch {i//batch_size + 1} FAILED: {str(e)}")
                     # Skip batch
                     continue
             
-            current_app.logger.info(f"OMS_EF total updates: {oms_updated}")
 
         fdc_conn.commit()
         oms_ef_conn.commit()

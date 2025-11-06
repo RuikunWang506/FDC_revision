@@ -417,28 +417,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove list attribute from all inputs initially
     document.querySelectorAll('.sku-input').forEach(input => {
         input.removeAttribute('list');
-        // Add input listener for dynamic filtering
-        input.addEventListener('input', function(e) {
-            const value = e.target.value.toUpperCase();
-            const datalist = document.getElementById('styles-list');
-            // Only show suggestions after 4+ characters
-            if (value.length >= 4) {
-                // Filter and limit to 30 results for performance
-                const matches = allStyles.filter(style => 
-                    style.toUpperCase().includes(value)
-                ).slice(0, 30);
-                // Update datalist options
-                datalist.innerHTML = matches.map(style => 
-                    `<option value="${style}">`
-                ).join('');
-                // Attach datalist to input
-                e.target.setAttribute('list', 'styles-list');
-            } else {
-                // Remove datalist if less than 3 characters
-                e.target.removeAttribute('list');
-                datalist.innerHTML = '';
-            }
-        });
+        // Only enable autocomplete on larger screens (not small/mobile)
+        if (window.innerWidth > 768) {
+            // Add input listener for dynamic filtering
+            input.addEventListener('input', function(e) {
+                const value = e.target.value.toUpperCase();
+                const datalist = document.getElementById('styles-list');
+                // Only show suggestions after 4+ characters
+                if (value.length >= 4) {
+                    // Filter and limit to 30 results for performance
+                    const matches = allStyles.filter(style => 
+                        style.toUpperCase().includes(value)
+                    ).slice(0, 30);
+                    // Update datalist options
+                    datalist.innerHTML = matches.map(style => 
+                        `<option value="${style}">`
+                    ).join('');
+                    // Attach datalist to input
+                    e.target.setAttribute('list', 'styles-list');
+                } else {
+                    // Remove datalist if less than 3 characters
+                    e.target.removeAttribute('list');
+                    datalist.innerHTML = '';
+                }
+            });
+        }
     });
 
     // By default, show all locations (not just empty)

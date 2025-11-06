@@ -24,6 +24,7 @@ from py.search.location_service import location_service_bp
 from py.search.Location_massive_audit import location_massive_audit_bp
 from py.search.container import container_bp
 from py.search.item_lookup import item_lookup_bp
+from py.search.outofstock_check import outofstock_check_bp
 from py.other.mobile_lite import mobile_lite_bp
 import py.Toolkits.Label_Maker, py.order.order_search, py.utilities.SQL_connector
 from py.order.macy_special import process_orders
@@ -64,6 +65,7 @@ def register_routes(app):
     app.register_blueprint(location_service_bp)
     app.register_blueprint(container_bp)
     app.register_blueprint(item_lookup_bp)
+    app.register_blueprint(outofstock_check_bp)
     app.register_blueprint(mobile_lite_bp)
     app.register_blueprint(v6_listcreator_bp)
     app.register_blueprint(lori_automation_bp, url_prefix='/lori_automation')
