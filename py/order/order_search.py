@@ -282,8 +282,11 @@ def generate_order(order_number):
         cursor.close()
         conn.close()
 
-        # Create items DataFrame with only item-specific columns (excluding Location)
+        # Create items DataFrame with item-specific columns including Location
         items_df = df[['line', 'SKU', 'Descrip', 'Qty', 'price', 'per_box']].copy()
+        
+        # Add Location column (will be populated via AJAX)
+        items_df['Location'] = 'Loading...'
         
         # Format Qty and per_box as integers (removing decimals)
         items_df['Qty'] = items_df['Qty'].fillna(0).astype(int)

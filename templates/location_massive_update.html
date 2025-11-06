@@ -213,6 +213,52 @@
             color: white;
             border-color: #007bff;
         }
+        
+        /* Map location indicators */
+        .location-indicator {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff0000;
+            animation: blink 3s infinite ease-in-out;
+            pointer-events: none;
+            z-index: 1001;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
+        }
+        
+        /* No blinking for fully occupied locations */
+        .location-indicator.no-blink {
+            animation: none;
+            opacity: 1;
+        }
+        
+        .location-indicator.bot {
+            background: #ff0000;
+            box-shadow: 0 0 5px rgba(255, 102, 102, 0.8);
+        }
+        
+        .location-indicator.mid {
+            background: #fffb00;
+            box-shadow: 0 0 5px rgba(255, 204, 102, 0.8);
+        }
+        
+        .location-indicator.top {
+            background: #66ff66;
+            box-shadow: 0 0 5px rgba(102, 255, 102, 0.8);
+        }
+        @keyframes blink {
+            50%, 100% { opacity: 1; transform: scale(1); }
+            70% { opacity: 0.5; transform: scale(1.1); }
+        }
+        
+
+        .map-loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+            color: #666;
+        }
 
     </style>
 </head>
@@ -698,45 +744,117 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
-    // Map tooltip
+    // Map tooltip with occupied location indicators
     const mapBtn = document.getElementById('map-btn');
     const mapTooltip = document.getElementById('map-tooltip');
     const mapCloseBtn = document.getElementById('map-close-btn');
+    
+    function addLocationIndicators(occupiedData) {
+        // Remove any existing indicators
+        document.querySelectorAll('.location-indicator').forEach(el => el.remove());
+        
+        const svgElement = mapTooltip.querySelector('svg');
+        if (!svgElement) return;
+        
+        // Get SVG bounding box for positioning
+        const svgRect = svgElement.getBoundingClientRect();
+        
+        // Iterate through occupied locations
+        for (const [location, status] of Object.entries(occupiedData)) {
+            // Find text elements in SVG that match this location
+            const textElements = svgElement.querySelectorAll('text');
+            
+            textElements.forEach(textEl => {
+                const textContent = textEl.textContent.trim();
+                
+                // Check if this text matches the location
+                if (textContent === location || textContent.startsWith(location + ' ') || textContent.startsWith(location + '-')) {
+                    const textRect = textEl.getBoundingClientRect();
+                    
+                    // Calculate position relative to map tooltip
+                    const x = textRect.left - svgRect.left + textRect.width / 2;
+                    const y = textRect.top - svgRect.top;
+                    
+                    // Create indicators based on status
+                    if (status.bot || status.mid || status.top) {
+                        // Has sublocations (BOT/MID/TOP)
+                        // Check if all three are occupied (no blinking) or partially occupied (blink)
+                        const allOccupied = status.bot && status.mid && status.top;
+                        
+                        const sublocations = [];
+                        if (status.bot) sublocations.push({type: 'bot', offset: -8});
+                        if (status.mid) sublocations.push({type: 'mid', offset: 0});
+                        if (status.top) sublocations.push({type: 'top', offset: 8});
+                        
+                        sublocations.forEach(sub => {
+                            const indicator = document.createElement('div');
+                            // Add 'no-blink' class if all three (BOT/MID/TOP) are occupied
+                            indicator.className = `location-indicator ${sub.type}${allOccupied ? ' no-blink' : ''}`;
+                            indicator.style.left = (x + sub.offset) + 'px';
+                            indicator.style.top = y + 'px';
+                            indicator.title = `${location} ${sub.type.toUpperCase()} - Occupied${allOccupied ? ' (Full)' : ''}`;
+                            mapTooltip.appendChild(indicator);
+                        });
+                    } else if (status.occupied) {
+                        // Regular location without sublocations - don't blink
+                        const indicator = document.createElement('div');
+                        indicator.className = 'location-indicator no-blink';
+                        indicator.style.left = x + 'px';
+                        indicator.style.top = y + 'px';
+                        indicator.title = `${location} - Occupied`;
+                        mapTooltip.appendChild(indicator);
+                    }
+                }
+            });
+        }
+    }
+    
     if (mapBtn && mapTooltip && mapCloseBtn) {
         mapBtn.addEventListener('click', function() {
-            if (!mapTooltip.innerHTML.trim()) {
-                fetch('/static/drawing.svg')
-                .then(response => response.text())
-                .then(svg => {
-                    mapTooltip.innerHTML = svg;
-                    const svgElement = mapTooltip.querySelector('svg');
-                    if (svgElement) {
-                        if (!svgElement.getAttribute('viewBox')) {
-                            const bbox = svgElement.getBBox();
-                            svgElement.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
-                        }
-                        svgElement.style.maxWidth = '100%';
-                        svgElement.style.maxHeight = '100%';
-                        svgElement.style.width = 'auto';
-                        svgElement.style.height = 'auto';
-                        svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            // Show loading message
+            mapTooltip.innerHTML = '<div class="map-loading">Loading map and occupied locations...</div>';
+            mapTooltip.style.display = 'block';
+            mapCloseBtn.style.display = 'block';
+            
+            // Fetch both the SVG and occupied locations
+            Promise.all([
+                fetch('/static/drawing.svg').then(response => response.text()),
+                fetch('/get_occupied_locations').then(response => response.json())
+            ])
+            .then(([svg, occupiedResponse]) => {
+                // Load SVG
+                mapTooltip.innerHTML = svg;
+                const svgElement = mapTooltip.querySelector('svg');
+                if (svgElement) {
+                    if (!svgElement.getAttribute('viewBox')) {
+                        const bbox = svgElement.getBBox();
+                        svgElement.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
                     }
-                    mapTooltip.style.display = 'block';
-                    mapCloseBtn.style.display = 'block';
-                })
-                .catch(error => {
-                    mapTooltip.innerHTML = '<p>Error loading map.</p>';
-                    mapTooltip.style.display = 'block';
-                    mapCloseBtn.style.display = 'block';
-                });
-            } else {
-                mapTooltip.style.display = 'block';
-                mapCloseBtn.style.display = 'block';
-            }
+                    svgElement.style.maxWidth = '100%';
+                    svgElement.style.maxHeight = '100%';
+                    svgElement.style.width = 'auto';
+                    svgElement.style.height = 'auto';
+                    svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                }
+                
+                // Add indicators after SVG is loaded and rendered
+                setTimeout(() => {
+                    if (occupiedResponse.success && occupiedResponse.occupied) {
+                        addLocationIndicators(occupiedResponse.occupied);
+                    }
+                }, 100);
+            })
+            .catch(error => {
+                console.error('Error loading map:', error);
+                mapTooltip.innerHTML = '<p class="map-loading">Error loading map.</p>';
+            });
         });
+        
         mapCloseBtn.addEventListener('click', function() {
             mapTooltip.style.display = 'none';
             mapCloseBtn.style.display = 'none';
+            // Clear indicators when closing
+            document.querySelectorAll('.location-indicator').forEach(el => el.remove());
         });
     }
 });

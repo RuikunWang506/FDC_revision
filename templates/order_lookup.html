@@ -668,6 +668,7 @@
                             <th><i class="fas fa-hashtag mr-1"></i>Line</th>
                             <th><i class="fas fa-barcode mr-1"></i>SKU</th>
                             <th><i class="fas fa-align-left mr-1"></i>Description</th>
+                            <th><i class="fas fa-map-marker-alt mr-1"></i>Location</th>
                             <th><i class="fas fa-sort-numeric-up mr-1"></i>Qty</th>
                             <th><i class="fas fa-dollar-sign mr-1"></i>Price</th>
                             <th><i class="fas fa-box mr-1"></i>Per Box</th>
@@ -938,10 +939,33 @@
                         { "width": "60px", "targets": 0 },  // Line
                         { "width": "100px", "targets": 1 }, // SKU
                         { "width": "200px", "targets": 2 }, // Description
-                        { "width": "80px", "targets": 3 },  // Qty
-                        { "width": "80px", "targets": 4 },  // Price
-                        { "width": "80px", "targets": 5 }   // Per Box
-                    ]
+                        { "width": "120px", "targets": 3 }, // Location
+                        { "width": "80px", "targets": 4 },  // Qty
+                        { "width": "80px", "targets": 5 },  // Price
+                        { "width": "80px", "targets": 6 }   // Per Box
+                    ],
+                    "initComplete": function() {
+                        // Fetch locations for each SKU
+                        $('#items_table tbody tr').each(function() {
+                            var row = $(this);
+                            var sku = row.find('td').eq(1).text().trim(); // SKU is in second column (index 1)
+                            if (sku) {
+                                fetch('/get_item_location?sku=' + encodeURIComponent(sku))
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.location) {
+                                        row.find('td').eq(3).text(data.location); // Location is in fourth column (index 3)
+                                    } else {
+                                        row.find('td').eq(3).text('N/A');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching location for SKU ' + sku + ':', error);
+                                    row.find('td').eq(3).text('Error');
+                                });
+                            }
+                        });
+                    }
                 });
             }
 

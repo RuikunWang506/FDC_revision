@@ -155,6 +155,60 @@ def remove_style_from_location():
         current_app.logger.error(f"Error removing style from location: {e}")
         return {'success': False, 'message': f'Error: {str(e)}'}
 
+@location_massive_audit_bp.route('/get_occupied_locations', methods=['GET'])
+def get_occupied_locations():
+    """Get all occupied locations with their sublocation status (BOT/MID/TOP)"""
+    try:
+        connection = get_mysql_connection()
+        cursor = connection.cursor()
+        
+        # Query to get all distinct locations that have products
+        cursor.execute("""
+            SELECT DISTINCT Location 
+            FROM products 
+            WHERE Location IS NOT NULL 
+            AND Location != '' 
+            AND Style IS NOT NULL
+        """)
+        results = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        # Parse locations to determine which have BOT/MID/TOP occupied
+        occupied = {}
+        for (location,) in results:
+            if not location:
+                continue
+            
+            location = location.strip()
+            
+            # Check if it's a sublocation (ends with BOT/MID/TOP)
+            if location.endswith(' BOT') or location.endswith(' MID') or location.endswith(' TOP'):
+                # Extract base location and sublocation
+                parts = location.rsplit(' ', 1)
+                base = parts[0]
+                subloc = parts[1]  # BOT, MID, or TOP
+                
+                if base not in occupied:
+                    occupied[base] = {'bot': False, 'mid': False, 'top': False}
+                
+                if subloc == 'BOT':
+                    occupied[base]['bot'] = True
+                elif subloc == 'MID':
+                    occupied[base]['mid'] = True
+                elif subloc == 'TOP':
+                    occupied[base]['top'] = True
+            else:
+                # Regular location without sublocation
+                if location not in occupied:
+                    occupied[location] = {'occupied': True}
+        
+        return {'success': True, 'occupied': occupied}
+    
+    except Exception as e:
+        current_app.logger.error(f"Error getting occupied locations: {e}")
+        return {'success': False, 'message': f'Error: {str(e)}'}
+
 @location_massive_audit_bp.route('/location_massive_update', methods=['GET', 'POST'])
 def location_massive_update():
     styles = get_available_styles()

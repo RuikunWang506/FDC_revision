@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, session, current_app
+from flask import Blueprint, request, render_template, session, current_app, jsonify
 from py.utilities.setting import login_required
 import os
 import time
@@ -316,3 +316,17 @@ def item_lookup(user_input=None):
         current_user=current_user,
         user_input=user_input.capitalize()
     )
+
+@item_lookup_bp.route('/get_item_location', methods=['GET'])
+def get_item_location():
+    sku = request.args.get('sku', '').strip()
+    if not sku:
+        return jsonify({'error': 'SKU parameter is required'}), 400
+    
+    try:
+        locations = fetch_locations([sku])
+        location = locations.get(sku.lower(), 'N/A')
+        return jsonify({'location': location})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching location for SKU {sku}: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
