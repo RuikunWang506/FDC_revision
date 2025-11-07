@@ -3323,7 +3323,8 @@ def create_summary_only_pdf(grouped_orders):
     try:
         # Create summary PDF
         summary_buffer = io.BytesIO()
-        doc = SimpleDocTemplate(summary_buffer, pagesize=letter, 
+        doc = SimpleDocTemplate(summary_buffer, pagesize=letter,
+                               rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30,
                                title="Custom Picklist Summary",
                                author="FDC Lori Automation",
                                subject="Order Picking Summary")
@@ -3352,9 +3353,6 @@ def create_summary_only_pdf(grouped_orders):
             unique_stores = list(set([po[:4] for po in po_numbers if len(po) >= 4]))
             store_count = len(unique_stores)
             
-            # Format: Full PO numbers + total stores summary at bottom (English/Spanish)
-            po_numbers_with_summary = '<br/>'.join(po_list) + f'<br/><br/><b>Total: {store_count} stores/tiendas</b>'
-            
             # Create SKU items string - improved format with integer quantities
             sku_items = []
             total_qty = 0
@@ -3372,10 +3370,18 @@ def create_summary_only_pdf(grouped_orders):
             total_bags = total_qty
             
             # Add total summary at bottom like PO numbers (English/Spanish)
-            sku_items_with_summary = '<br/>'.join(sku_items) + f'<br/><br/><b>Total: {total_styles} styles/estilos</b><br/><b>Total: {total_bags} bags/bolsas</b>'
+            # Limit SKU display to prevent overflow
+            if len(sku_items) > 15:
+                display_sku_items = sku_items[:15] + [f"... and {len(sku_items) - 15} more items"]
+            else:
+                display_sku_items = sku_items
+            sku_items_with_summary = '<br/>'.join(display_sku_items) + f'<br/><br/><b>Total: {total_styles} styles/estilos</b><br/><b>Total: {total_bags} bags/bolsas</b>'
+            
+            # Format PO numbers - put all in one cell with word wrapping
+            po_numbers_text = ', '.join(po_list) + f'<br/><br/><b>Total: {store_count} stores/tiendas</b>'
             
             # Create wrapped paragraphs for cells with improved formatting
-            store_cell = Paragraph(po_numbers_with_summary, styles['Normal'])
+            store_cell = Paragraph(po_numbers_text, styles['Normal'])
             sku_cell = Paragraph(sku_items_with_summary, styles['Normal'])
             dimensions_cell = Paragraph('', styles['Normal'])  # Blank dimensions column
             weight_cell = Paragraph('', styles['Normal'])  # Blank weight column
@@ -3388,7 +3394,7 @@ def create_summary_only_pdf(grouped_orders):
             ])
         
         # Create table with improved warehouse-friendly formatting (4 columns now)
-        table = Table(summary_data, colWidths=[1.5*inch, 2.2*inch, 0.7*inch, 0.7*inch], 
+        table = Table(summary_data, colWidths=[4.0*inch, 2.5*inch, 1.0*inch, 1.0*inch], 
                      repeatRows=2, splitByRow=True)  # Allow table to split across pages
         table.setStyle(TableStyle([
             # Header rows (English and Spanish)
@@ -3402,13 +3408,13 @@ def create_summary_only_pdf(grouped_orders):
             # Data rows
             ('BACKGROUND', (0, 2), (-1, -1), colors.beige),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Thinner grid lines
-            ('FONTSIZE', (0, 2), (-1, -1), 9),  # Smaller data font
+            ('FONTSIZE', (0, 2), (-1, -1), 6),  # Smaller data font
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('WORDWRAP', (0, 0), (-1, -1), True),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-            ('TOPPADDING', (0, 2), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 2), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 2), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 2), (-1, -1), 2),
         ]))
         
         story.append(table)

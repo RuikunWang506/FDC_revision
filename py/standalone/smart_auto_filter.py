@@ -8,11 +8,40 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+import traceback
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath('.'))
 
 from py.utilities.database_utils import get_mysql_connection
+
+# Install a safe print wrapper to avoid Unicode/OSError issues when printing
+import builtins
+_original_print = builtins.print
+def _safe_print(*args, **kwargs):
+    try:
+        _original_print(*args, **kwargs)
+    except (UnicodeEncodeError, OSError) as e:
+        # Fallback: try to coerce arguments to safe strings and print a simplified message
+        try:
+            safe_parts = []
+            for a in args:
+                try:
+                    safe_parts.append(str(a))
+                except Exception:
+                    try:
+                        safe_parts.append(repr(a))
+                    except Exception:
+                        safe_parts.append('<unprintable>')
+            _original_print(' '.join(safe_parts), **kwargs)
+        except Exception:
+            try:
+                _original_print('<<print failed: unable to render args>>')
+            except Exception:
+                pass
+
+# Monkey-patch builtins.print for the lifetime of this script to reduce Errno 22 on exit
+builtins.print = _safe_print
 
 # Ensure stdout/stderr can handle Unicode on Windows consoles
 try:
@@ -259,9 +288,19 @@ class SmartAutoFilter:
         """Log processed file for tracking"""
         timestamp = datetime.now().isoformat()
         log_entry = f"{timestamp}|{file_path}|{sku}|{classification}\n"
-        
-        with open(self.processed_files_log, 'a', encoding='utf-8') as f:
-            f.write(log_entry)
+        try:
+            with open(self.processed_files_log, 'a', encoding='utf-8') as f:
+                f.write(log_entry)
+        except Exception as e:
+            # Best-effort: write traceback to stderr and a fallback error file
+            try:
+                print(f"❌ Failed to write processed file log: {e}", file=sys.stderr)
+                traceback.print_exc()
+                with open('smart_auto_filter_error.log', 'a', encoding='utf-8') as ef:
+                    ef.write(f"{datetime.now().isoformat()} - Failed to write processed file log: {e}\n")
+                    ef.write(''.join(traceback.format_exc()))
+            except Exception:
+                pass
     
     def run_incremental_filter(self):
         """Run smart incremental filtering"""
@@ -295,8 +334,17 @@ class SmartAutoFilter:
                 self.log_processed_file(file_path, sku, classification)
         
         # Update scan timestamp
-        with open(self.processed_files_log, 'a', encoding='utf-8') as f:
-            f.write(f"{datetime.now().isoformat()}|SCAN_COMPLETE|\n")
+        try:
+            with open(self.processed_files_log, 'a', encoding='utf-8') as f:
+                f.write(f"{datetime.now().isoformat()}|SCAN_COMPLETE|\n")
+        except Exception as e:
+            print(f"❌ Failed to write scan complete marker: {e}", file=sys.stderr)
+            try:
+                with open('smart_auto_filter_error.log', 'a', encoding='utf-8') as ef:
+                    ef.write(f"{datetime.now().isoformat()} - Failed to write scan complete marker: {e}\n")
+                    ef.write(''.join(traceback.format_exc()))
+            except Exception:
+                pass
         
         print("\n" + "=" * 50)
         print(f"✅ Processing Complete!")
@@ -344,8 +392,17 @@ class SmartAutoFilter:
                     self.log_processed_file(file_path, sku, classification)
 
         # Finalize
-        with open(self.processed_files_log, 'a', encoding='utf-8') as f:
-            f.write(f"{datetime.now().isoformat()}|SCAN_COMPLETE|FULL\n")
+        try:
+            with open(self.processed_files_log, 'a', encoding='utf-8') as f:
+                f.write(f"{datetime.now().isoformat()}|SCAN_COMPLETE|FULL\n")
+        except Exception as e:
+            print(f"❌ Failed to write full scan complete marker: {e}", file=sys.stderr)
+            try:
+                with open('smart_auto_filter_error.log', 'a', encoding='utf-8') as ef:
+                    ef.write(f"{datetime.now().isoformat()} - Failed to write full scan complete marker: {e}\n")
+                    ef.write(''.join(traceback.format_exc()))
+            except Exception:
+                pass
 
         print("\n" + "=" * 50)
         print(f"✅ Full scan complete")
@@ -360,6 +417,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Smart Auto-Filter')
     parser.add_argument('--full', action='store_true', help='Run full scan of Dropbox folder (process all files)')
     parser.add_argument('--force', action='store_true', help='Force processing even if already present (not implemented)')
+    parser.add_argument('--debug', action='store_true', help='Enable debug output and full tracebacks to logs')
     args = parser.parse_args()
 
     try:

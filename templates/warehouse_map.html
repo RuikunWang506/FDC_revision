@@ -342,18 +342,18 @@ th, td {
         color: #999;
     }
 
-    .sku-link {
+    .style-link {
     color: #007bff;
     text-decoration: none;
     font-weight: 500;
 }
 
-.sku-link:hover {
+.style-link:hover {
     color: #0056b3;
     text-decoration: underline;
 }
 
-.sku-cell {
+.style-cell {
     padding: 8px 12px;
 }
 </style>
@@ -483,12 +483,12 @@ th, td {
             <!-- Combined controls section -->
             <div class="upload-form">
                 <div class="controls-section" style="display: flex; width: 100%; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <!-- Left side: SKU entry and file upload -->
+                    <!-- Left side: Style entry and file upload -->
                     <div style="flex: 2; display: flex; gap: 10px;">
                         <div style="flex: 1;">
-                            <form id="singleSkuForm" method="POST" style="display: flex; gap: 10px; align-items: center;">
-                                <input type="text" id="singleSkuInput" name="single_sku" placeholder="Enter SKU" style="flex: 1;">
-                                <button type="submit" id="addSkuBtn">Add</button>
+                            <form id="singleStyleForm" method="POST" style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="singleStyleInput" name="single_style" placeholder="Enter Style" style="flex: 1;">
+                                <button type="submit" id="addStyleBtn">Add</button>
                             </form>
 
                         </div>
@@ -510,7 +510,7 @@ th, td {
                         </form>
                     </div>
                 </div>
-                <div id="skuStatus" style="margin-top: 8px; font-size: 0.95em;"></div>
+                <div id="styleStatus" style="margin-top: 8px; font-size: 0.95em;"></div>
             </div>
             
             {% with messages = get_flashed_messages() %}
@@ -535,7 +535,7 @@ th, td {
             {% if not items %}
     <!-- No items message -->
     <div class="note" style="margin-top: 20px;">
-        <p><strong>No items to display.</strong> Add items by entering SKUs or uploading a file.</p>
+        <p><strong>No items to display.</strong> Add items by entering Styles or uploading a file.</p>
     </div>
 {% else %}
 <div id="map-container"></div>
@@ -556,7 +556,7 @@ th, td {
                     <table>
                         <thead>
                             <tr>
-                                <th class="sortable" data-column="sku">SKU</th>
+                                <th class="sortable" data-column="style">Style</th>
                                 <th class="sortable" data-column="qty">Qty</th>
                                 <th class="sortable" data-column="loc">Loc</th>
                                 <th>Show</th>
@@ -664,11 +664,11 @@ mapContainer.parentElement.appendChild(legend);
 
 
 
-        // Highlight the sidebar row for a SKU
-        function highlightSidebarRow(sku) {
+        // Highlight the sidebar row for a style
+        function highlightSidebarRow(style) {
             const rows = document.querySelectorAll('#itemsTableBody tr');
             rows.forEach(row => {
-                if (row.firstChild && row.firstChild.textContent.trim().toLowerCase() === sku.toLowerCase()) {
+                if (row.firstChild && row.firstChild.textContent.trim().toLowerCase() === style.toLowerCase()) {
                     row.style.backgroundColor = "#ffff99";
                     setTimeout(() => { row.style.backgroundColor = ""; }, 1500);
                 }
@@ -717,7 +717,7 @@ function placeItemsOnMap(tooltip) {
     });
     
     // Create markers for each location
-    for (const [location, skuData] of Object.entries(locationGroups)) {
+    for (const [location, styleData] of Object.entries(locationGroups)) {
         // Determine marker type based on location
         let markerType = 'primary';
         let baseLocation = location;
@@ -783,11 +783,11 @@ function placeItemsOnMap(tooltip) {
             marker.style.display = "block"; // Initially visible
             
             // Count total items at this location
-            const totalItems = Object.keys(skuData).length;
+            const totalItems = Object.keys(styleData).length;
             function buildTooltipContent() {
             let tooltipContent = `<div class="tooltip-count">${totalItems} item(s) at location ${location}</div>`;
-            for (const [sku, data] of Object.entries(skuData)) {
-                tooltipContent += `<div class="tooltip-item"><strong>SKU:</strong> ${sku}<br><strong>Quantity:</strong> ${data.qty}</div>`;
+            for (const [style, data] of Object.entries(styleData)) {
+                tooltipContent += `<div class="tooltip-item"><strong>Style:</strong> ${style}<br><strong>Quantity:</strong> ${data.qty}</div>`;
             }
             return tooltipContent;
         }
@@ -842,7 +842,7 @@ function placeItemsOnMap(tooltip) {
         markers.push({
             element: marker,
             loc: location,
-            skuData: skuData,
+            styleData: styleData,
             visible: true
         });
         }
@@ -851,7 +851,7 @@ function placeItemsOnMap(tooltip) {
 
 // Helper function to add an item to the location group
 function addItemToLocationGroup(locationGroups, loc, item) {
-    const sku = item.sku;
+    const style = item.style;
     
     // Normalize the location to handle case differences
     const normalizedLoc = normalizeLocation(loc);
@@ -860,19 +860,19 @@ function addItemToLocationGroup(locationGroups, loc, item) {
         locationGroups[normalizedLoc] = {};
     }
     
-    if (!locationGroups[normalizedLoc][sku]) {
-        locationGroups[normalizedLoc][sku] = {
+    if (!locationGroups[normalizedLoc][style]) {
+        locationGroups[normalizedLoc][style] = {
             qty: 0,
             orders: []
         };
     }
     
     // Sum quantities
-    locationGroups[normalizedLoc][sku].qty += parseInt(item.qty) || 0;
+    locationGroups[normalizedLoc][style].qty += parseInt(item.qty) || 0;
     
     // Collect order information
     if (item.order_number && item.order_number !== 'N/A') {
-        locationGroups[normalizedLoc][sku].orders.push({
+        locationGroups[normalizedLoc][style].orders.push({
             order: item.order_number
         });
     }
@@ -885,12 +885,16 @@ function normalizeLocation(loc) {
     
     // Check for position indicators with case-insensitive matching
     const locLower = loc.toLowerCase();
-    if (locLower.includes(' mid')) {
-        baseLocation += ' MID';
-    } else if (locLower.includes(' top') || locLower.includes(' up')) {
+    // Preserve explicit position indicators so we don't collapse e.g. "L18-A BOT" into "L18-A"
+    // Check TOP first, then MID, then BOT/BOTTOM
+    if (locLower.includes(' top') || locLower.includes(' up')) {
         baseLocation += ' TOP';
+    } else if (locLower.includes(' mid')) {
+        baseLocation += ' MID';
+    } else if (locLower.includes(' bot') || locLower.includes(' bottom')) {
+        baseLocation += ' BOT';
     }
-    
+
     return baseLocation;
 }        
 console.log(items);
@@ -898,36 +902,40 @@ console.log(items);
     const tableBody = document.getElementById('itemsTableBody');
     tableBody.innerHTML = ''; // Clear existing content
 
-    // Create a pivot table structure: group by location and SKU, sum quantities
+    // Create a pivot table structure: group by normalized location and style, sum quantities
+    // If an item has multiple comma-separated locations in `item.loc`, add it to each location
     const pivotData = {};
 
     items.forEach(item => {
         // Ensure item has all required properties
-        const loc = item.loc || 'storage';
-        const sku = item.sku || '';
+        const rawLoc = item.loc || 'storage';
+        const style = item.style || '';
         const qty = parseInt(item.qty) || 0;
 
-        // Normalize location for display consistency
-        const normalizedLoc = normalizeLocation(loc);
+        // Split possible comma-separated locations and handle each separately
+        const locParts = rawLoc.split(',').map(s => s.trim()).filter(Boolean);
+        locParts.forEach(locPart => {
+            const normalizedLoc = normalizeLocation(locPart);
 
-        if (!pivotData[normalizedLoc]) {
-            pivotData[normalizedLoc] = {};
-        }
+            if (!pivotData[normalizedLoc]) {
+                pivotData[normalizedLoc] = {};
+            }
 
-        if (!pivotData[normalizedLoc][sku]) {
-            pivotData[normalizedLoc][sku] = {
-                qty: 0,
-                orders: new Set()
-            };
-        }
+            if (!pivotData[normalizedLoc][style]) {
+                pivotData[normalizedLoc][style] = {
+                    qty: 0,
+                    orders: new Set()
+                };
+            }
 
-        // Sum quantities
-        pivotData[normalizedLoc][sku].qty += parseInt(item.qty) || 0;
+            // Sum quantities for this style at this specific location
+            pivotData[normalizedLoc][style].qty += qty;
 
-        // Collect order numbers (if available and not N/A)
-        if (item.order_number && item.order_number !== 'N/A') {
-            pivotData[normalizedLoc][sku].orders.add(item.order_number);
-        }
+            // Collect order numbers (if available and not N/A)
+            if (item.order_number && item.order_number !== 'N/A') {
+                pivotData[normalizedLoc][style].orders.add(item.order_number);
+            }
+        });
     });
 
     // Convert pivot data to sorted array for display
@@ -939,26 +947,26 @@ console.log(items);
 
     // Populate table with pivot data
     sortedLocations.forEach(loc => {
-        const skus = Object.keys(pivotData[loc]).sort();
+        const styles = Object.keys(pivotData[loc]).sort();
 
-        skus.forEach(sku => {
-            const pivotItem = pivotData[loc][sku];
+        styles.forEach(style => {
+            const pivotItem = pivotData[loc][style];
 
             const row = document.createElement('tr');
             row.setAttribute('data-loc', loc);
 
             // Create cells
-            const skuCell = document.createElement('td');
-            skuCell.className = 'sku-cell';
+            const styleCell = document.createElement('td');
+            styleCell.className = 'style-cell';
 
-            // Create hyperlink for SKU
-            const skuLink = document.createElement('a');
-            skuLink.href = `https://www.fdcef.com/item_lookup/${encodeURIComponent(sku)}`;
-            skuLink.target = '_blank';
-            skuLink.className = 'sku-link';
-            skuLink.textContent = sku;
+            // Create hyperlink for style
+            const styleLink = document.createElement('a');
+            styleLink.href = `https://www.fdcef.com/item_lookup/${encodeURIComponent(style)}`;
+            styleLink.target = '_blank';
+            styleLink.className = 'style-link';
+            styleLink.textContent = style;
 
-            skuCell.appendChild(skuLink);
+            styleCell.appendChild(styleLink);
 
             const qtyCell = document.createElement('td');
             qtyCell.textContent = pivotItem.qty;
@@ -1001,29 +1009,42 @@ const deleteBtn = document.createElement('button');
 deleteBtn.textContent = "Delete";
 deleteBtn.className = "toggle-btn delete-btn";
 deleteBtn.style.marginLeft = "8px";
-deleteBtn.onclick = function() {
-    fetch("/warehousemap/delete", {
+    deleteBtn.onclick = function() {
+    fetch("/delete_item", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
             "X-Requested-With": "XMLHttpRequest"
         },
-        body: `sku=${encodeURIComponent(sku)}&loc=${encodeURIComponent(loc)}`
+        body: `style=${encodeURIComponent(style)}&loc=${encodeURIComponent(loc)}`
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
 
-            // 1) remove that SKU/loc from our client-side items array
-            items = items.filter(item =>
-                !(item.sku === sku && normalizeLocation(item.loc) === loc)
-            );
-        
+            // 1) remove only that specific loc from items with matching style.
+            // If an item had multiple comma-separated locs, remove the matching loc only.
+            items = items.map(item => {
+                if (item.style !== style) return item;
+
+                const parts = (item.loc || '').split(',').map(s => s.trim()).filter(Boolean);
+                const remaining = parts.filter(p => normalizeLocation(p) !== loc);
+
+                if (remaining.length === 0) {
+                    // no locations left -> item should be removed
+                    return null;
+                }
+
+                // update item.loc to remaining locations
+                item.loc = remaining.join(', ');
+                return item;
+            }).filter(Boolean);
 
             // 2) only remove the SVG marker if *no* items remain at that loc
-            const stillHasLoc = items.some(item =>
-                normalizeLocation(item.loc) === loc
-            );
+            const stillHasLoc = items.some(item => {
+                const parts = (item.loc || '').split(',').map(s => s.trim()).filter(Boolean);
+                return parts.some(p => normalizeLocation(p) === loc);
+            });
             if (!stillHasLoc) {
                 for (let i = markers.length - 1; i >= 0; i--) {
                     if (markers[i].loc === loc) {
@@ -1044,7 +1065,7 @@ deleteBtn.onclick = function() {
 buttonCell.appendChild(deleteBtn);
 
             // Add cells to row
-            row.appendChild(skuCell);
+            row.appendChild(styleCell);
             row.appendChild(qtyCell);
             row.appendChild(locCell);
             row.appendChild(buttonCell);
@@ -1152,7 +1173,7 @@ function toggleMarker(button) {
                 tableRows.forEach(row => {
                     if (row.cells.length >= 3) { // Make sure row has enough cells
                         exportData.push({
-                            SKU: row.cells[0].textContent.trim(),
+                            Style: row.cells[0].textContent.trim(),
                             Qty: parseInt(row.cells[1].textContent.trim()) || 0,
                             Loc: row.cells[2].textContent.trim()
                         });
@@ -1215,7 +1236,7 @@ function toggleMarker(button) {
         rows.sort((a, b) => {
             let valueA, valueB, comparison;
             
-            if (column === 'sku') {
+            if (column === 'style') {
                 valueA = a.cells[0].textContent.trim().toLowerCase();
                 valueB = b.cells[0].textContent.trim().toLowerCase();
                 comparison = valueA.localeCompare(valueB);
@@ -1321,7 +1342,7 @@ function toggleMarker(button) {
                     // Only create input if not already editing
                     if (!this.querySelector('input')) {
                         const currentValue = this.textContent.trim();
-                        const sku = row.cells[0].textContent.trim();
+                        const style = row.cells[0].textContent.trim();
                         const loc = row.cells[2].textContent.trim();
                         
                         // Create input element
@@ -1350,7 +1371,7 @@ function toggleMarker(button) {
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify({
-                                    sku: sku,
+                                    style: style,
                                     loc: loc,
                                     qty: newQty
                                 })
@@ -1418,7 +1439,7 @@ function toggleMarker(button) {
             });
         
         // Wait for table to be populated
-        setTimeout(setupEditableLocations, 500);
+        // setTimeout(setupEditableLocations, 500); // Disabled location editing
     });
 </script>
 

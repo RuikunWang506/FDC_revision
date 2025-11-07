@@ -2871,8 +2871,23 @@
 
         // Custom Picklist function
         async function customPicklist() {
-            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
-            const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            let selectedPOs = [];
+            
+            // Check if sidebar is visible and has selected orders
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('show')) {
+                const selectedOrdersUl = document.getElementById('selected-orders-ul');
+                if (selectedOrdersUl) {
+                    const listItems = selectedOrdersUl.querySelectorAll('li');
+                    selectedPOs = Array.from(listItems).map(li => li.textContent.trim());
+                }
+            }
+            
+            // Fallback to checkboxes if no orders from sidebar
+            if (selectedPOs.length === 0) {
+                const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+                selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            }
             
             if (selectedPOs.length === 0) {
                 alert('Please select at least one order to process.');

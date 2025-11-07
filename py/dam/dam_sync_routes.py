@@ -139,6 +139,37 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False):
     finally:
         sync_status['is_running'] = False
 
+
+def _reconcile_false_errors():
+    """If a non-zero exit was recorded but the captured logs show a completion marker,
+    treat it as success for UI presentation and persist a warning.
+    This helps when the child prints completion but the process returns a strange code
+    due to pipe/encoding/host issues.
+    """
+    try:
+        err = sync_status.get('error')
+        if not err:
+            return
+
+        # Only consider subprocess exit code messages
+        if 'exited with code' not in str(err):
+            return
+
+        recent = '\n'.join(sync_status.get('logs', [])[-400:])
+        markers = ['Full scan complete', '✅ Full scan complete', 'Processing Complete', '✅ Processing Complete!', 'SCAN_COMPLETE|FULL', 'SCAN_COMPLETE|']
+        if any(m in recent for m in markers):
+            # Persist a warning and clear the transient error for UI
+            try:
+                log_event('warning', f"Clearing false-positive subprocess error: {err}. Recent output indicates completion.\n{recent}")
+            except Exception:
+                pass
+            # Append a UI-visible note
+            sync_status['logs'].append(f"[warning] Cleared subprocess exit error because output contains completion marker.")
+            sync_status['error'] = None
+    except Exception:
+        # Don't let reconciliation raise
+        pass
+
 @dam_sync_bp.route('/')
 def dam_sync_home():
     """DAM sync control panel"""
@@ -147,6 +178,8 @@ def dam_sync_home():
 @dam_sync_bp.route('/status')
 def get_sync_status():
     """Get current sync status"""
+    # Reconcile transient false-positive subprocess errors before returning
+    _reconcile_false_errors()
     return jsonify(sync_status)
 
 @dam_sync_bp.route('/start', methods=['POST'])
@@ -299,7 +332,7 @@ def fetch_from_dropbox():
             if rc != 0:
                 # Inspect recent output for an incremental completion marker; if present, treat as success
                 recent = '\n'.join(sync_status.get('logs', [])[-200:])
-                incremental_markers = ['Processing Complete', '✅ Processing Complete!', 'SCAN_COMPLETE|']
+                incremental_markers = ['Processing Complete', '✅ Processing Complete!', 'SCAN_COMPLETE|', 'Full scan complete', '✅ Full scan complete']
                 if any(marker in recent for marker in incremental_markers):
                     # Treat as success but persist a warning
                     try:
@@ -314,6 +347,11 @@ def fetch_from_dropbox():
                     except Exception as _log_err:
                         # Best-effort logging, don't let logging failures crash the thread
                         print(f"Failed to write persistent log for Smart Auto-Filter error: {_log_err}")
+            # Attempt to reconcile false-positive errors (if the child printed completion but returned a strange code)
+            try:
+                _reconcile_false_errors()
+            except Exception:
+                pass
         except Exception as e:
             sync_status['error'] = str(e)
             print(f"Error during fetch: {e}")
@@ -325,7 +363,7 @@ def fetch_from_dropbox():
     thread.start()
 
     return jsonify({'success': True, 'message': 'Dropbox fetch started'})
-
+    
 
 @dam_sync_bp.route('/fetch-full', methods=['POST'])
 def fetch_from_dropbox_full():
