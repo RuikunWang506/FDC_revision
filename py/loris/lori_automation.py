@@ -1082,7 +1082,6 @@ def loris_fedex():
     if request.method == "POST":
         if "submit_data" in request.form:
             try:
-                current_app.logger.info("Processing data in Loris fedex for %s", current_user)
                 
                 # Import the main function from loris_sticker
                 from py.loris.loris_sticker import main
@@ -1090,7 +1089,6 @@ def loris_fedex():
                 # Generate PDFs for both versions
                 pdf_30stickers_bytes, pdf_exact_bytes = main(input_data)
                 
-                current_app.logger.info("PDF generation completed")
                 
                 if not pdf_30stickers_bytes or not pdf_exact_bytes:
                     error_message = "An error occurred while generating the PDFs."
@@ -1114,7 +1112,6 @@ def loris_fedex():
                     with open(output_dir / filename_exact, 'wb') as f:
                         f.write(pdf_exact_bytes)
                     
-                    current_app.logger.info("PDFs saved successfully: %s, %s", filename_30stickers, filename_exact)
             except Exception as e:
                 error_message = f"An error occurred: {e}"
                 current_app.logger.error("Exception in Loris fedex: %s", e)
@@ -1134,7 +1131,6 @@ def loris_fedex():
     if table_data is None:
         table_data = []
     
-    current_app.logger.info("Rendering template with error='%s'", error_message)
     
     return render_template("loris_fedex.html", 
                          filename_30stickers=filename_30stickers, 
@@ -1436,10 +1432,8 @@ def get_orders():
             GROUP BY o.po_number
             ORDER BY o.batch_date DESC, o.created_at DESC
         """
-        current_app.logger.info("Executing orders query: %s", query)
         cursor.execute(query)
         orders = cursor.fetchall()
-        current_app.logger.info("Found %d orders", len(orders))
         
         # For each order, get the internal address using first 4 digits
         for order in orders:
@@ -1812,7 +1806,6 @@ def get_fedex_auth_token(credentials):
         else:
             auth_url = "https://apis.fedex.com/oauth/token"
 
-        current_app.logger.debug(f"FedEx auth env='{env}', using auth_url={auth_url}")
 
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -1830,7 +1823,6 @@ def get_fedex_auth_token(credentials):
             token_data = response.json()
             access_token = token_data.get('access_token')
             masked = f"***{access_token[-8:]}" if access_token else None
-            current_app.logger.debug(f"FedEx auth successful (masked token): {masked}")
             return access_token
         else:
             current_app.logger.error(f"FedEx auth failed: {response.status_code} - {response.text}")
@@ -2250,7 +2242,6 @@ def fedex_upload_to_draft():
         if not po_number or not service_type or not packaging_type or not boxes:
             return jsonify({'error': 'Missing required fields'}), 400
         
-        current_app.logger.info(f"Creating FedEx shipment draft for PO {po_number} using alternative file method")
         
         # Get order details from database
         connection = get_db_connection()
@@ -2920,7 +2911,6 @@ def process_selected_orders():
             # Prepare file for download
             output.seek(0)
             
-            current_app.logger.info(f"Successfully processed {len(processed_orders)} orders: {processed_orders}")
             
             return send_file(
                 output,
@@ -2982,7 +2972,6 @@ def combine_pdfs():
                                     'path': pdf_path
                                 })
                                 pdf_found = True
-                                current_app.logger.info(f"Added PDF for PO {po_number}: {filename}")
                                 break  # Found the PDF for this PO, move to next PO
                             except Exception as e:
                                 current_app.logger.warning(f"Failed to add PDF {pdf_path}: {str(e)}")
@@ -3011,7 +3000,6 @@ def combine_pdfs():
         
         # Log results
         success_pos = [pdf['po_number'] for pdf in found_pdfs]
-        current_app.logger.info(f"Successfully combined PDFs for {len(found_pdfs)} orders: {success_pos}")
         
         if missing_pdfs:
             current_app.logger.warning(f"Missing PDFs for orders: {missing_pdfs}")
@@ -3119,7 +3107,6 @@ def duplex_printing_pdf():
                                             'page_count': page_count
                                         })
                                         pdf_found = True
-                                        current_app.logger.info(f"Successfully processed PDF for PO {po_number}: {filename} ({page_count} pages)")
                                         break
                                     else:
                                         current_app.logger.warning(f"Trimmed PDF for PO {po_number} has 0 pages")
@@ -3256,7 +3243,6 @@ def trim_pdf_after_total_cost(pdf_path):
                 page_text = page.extract_text()
                 if "TOTAL COST:" in page_text.upper():
                     total_cost_page = page_num
-                    current_app.logger.info(f"Found 'TOTAL COST:' on page {page_num + 1}, trimming after this page")
                     break
             except Exception as e:
                 current_app.logger.warning(f"Could not extract text from page {page_num + 1}: {str(e)}")
@@ -3299,7 +3285,6 @@ def get_pdf_page_count(pdf_content):
         reader = PdfReader(pdf_content)
         count = len(reader.pages)
         pdf_content.seek(0)  # Reset again for later use
-        current_app.logger.debug(f"PDF has {count} pages")
         return count
     except Exception as e:
         current_app.logger.error(f"Error counting PDF pages: {str(e)}")
@@ -3527,14 +3512,12 @@ def create_combined_pdf_with_summary(grouped_orders, processed_pdfs):
                 # Reset and add to merger
                 pdf_content.seek(0)
                 final_merger.append(pdf_content)
-                current_app.logger.info(f"Added PDF for PO {po_number} to summary ({actual_pages} pages)")
                 
                 # Add blank page if odd number of pages
                 if actual_pages % 2 == 1:
                     blank_page = create_blank_pdf_page()
                     final_merger.append(blank_page)
                     blank_page.close()
-                    current_app.logger.info(f"Added blank page after PO {po_number}")
                     
             except Exception as e:
                 current_app.logger.error(f"Error adding PDF for PO {po_number} to summary: {str(e)}")
@@ -3581,14 +3564,14 @@ def create_processed_pdfs_only(processed_pdfs):
                 
                 # Add the processed PDF
                 processed_merger.append(pdf_content)
-                current_app.logger.info(f"Added processed PDF for PO {po_number} with {actual_page_count} pages")
+
                 
                 # Add blank page if odd number of pages
                 if actual_page_count % 2 == 1:
                     blank_page = create_blank_pdf_page()
                     processed_merger.append(blank_page)
                     blank_page.close()
-                    current_app.logger.info(f"Added blank page after PO {po_number}")
+
                     
             except Exception as e:
                 current_app.logger.error(f"Error processing PDF for PO {po_number}: {str(e)}")
@@ -3650,7 +3633,7 @@ def download_invoices():
                     order = cursor.fetchone()
                     
                     if not order:
-                        current_app.logger.warning(f"Order not found: {po_number}")
+
                         continue
                     
                     # Get order items
@@ -3663,7 +3646,6 @@ def download_invoices():
                     items = cursor.fetchall()
                     
                     if not items:
-                        current_app.logger.warning(f"No items found for order: {po_number}")
                         continue
                     
                     # Generate invoice using the existing logic
