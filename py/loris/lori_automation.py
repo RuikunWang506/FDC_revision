@@ -2736,6 +2736,11 @@ def process_selected_orders():
                 cursor.execute(store_query, (store_number,))
                 store_info = cursor.fetchone()
                 
+                # Get package information
+                package_query = "SELECT * FROM loris_pkg_info WHERE po_number = %s"
+                cursor.execute(package_query, (po_number,))
+                package_info = cursor.fetchone()
+                
                 # Build recipient info primarily from DB (store_info). Fallback to parsed ship_to only if DB missing.
                 recipient_from_db = {}
                 if store_info:
@@ -2762,9 +2767,12 @@ def process_selected_orders():
                         recipient_from_db[k] = ''
                 
                 # Parse box dimensions
-                try:
-                    box_dimensions = json.loads(package_info['box_dimensions']) if isinstance(package_info['box_dimensions'], str) else package_info['box_dimensions']
-                except:
+                if package_info and package_info.get('box_dimensions'):
+                    try:
+                        box_dimensions = json.loads(package_info['box_dimensions']) if isinstance(package_info['box_dimensions'], str) else package_info['box_dimensions']
+                    except:
+                        box_dimensions = [{'length': 0, 'width': 0, 'height': 0, 'weight': 0}]
+                else:
                     box_dimensions = [{'length': 0, 'width': 0, 'height': 0, 'weight': 0}]
                 
                 # Build one shipment-level row, then package rows per box (multi-package format)

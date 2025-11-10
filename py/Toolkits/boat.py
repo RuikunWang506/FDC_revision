@@ -95,22 +95,24 @@ def add_multiple_containers_to_sheets(container_numbers):
         # Sort containers before adding (F26108, F26109, F26110, F26111)
         containers_to_add.sort()
         
+        # Get container files for reading Invoice data
+        container_files = scan_dropbox_containers()
+        
         # Get the header row to determine the correct number of columns
         try:
             header_row = sheet.row_values(1)
             num_columns = len(header_row)
         except:
-            num_columns = 15  # Default fallback for O column
-        
-        # Get container files for reading Invoice data
-        container_files = scan_dropbox_containers()
+            num_columns = 16  # Default fallback
         
         # Batch add all new containers in ONE write operation
         # Column A = Container #, Column B = Company Code, Column C = Invoice Container #, Column O = fdc_flask_app marker
         new_rows = []
         for container_num in containers_to_add:
-            # Create row with enough columns (ensure at least 16 for timestamp)
-            new_row = [''] * max(num_columns, 16)
+            # Create row with the exact number of columns as the sheet
+            new_row = [''] * num_columns
+            
+            # Set specific columns by their 0-based index
             new_row[0] = container_num  # Column A (index 0) = Container #
             
             # Extract invoice data if file exists
@@ -137,17 +139,31 @@ def add_multiple_containers_to_sheets(container_numbers):
                 except Exception as e:
                     current_app.logger.error(f"Error reading Invoice for {container_num}: {e}")
             
-            new_row[14] = 'fdc_flask_app'  # Column O (index 14) = Marker
-            new_row[15] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')  # Column P (index 15) = Timestamp
+            # Set marker and timestamp in correct columns (O and P)
+            if num_columns > 14:  # Column O (index 14)
+                new_row[14] = 'fdc_flask_app'
+            if num_columns > 15:  # Column P (index 15)
+                new_row[15] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
+            
             new_rows.append(new_row)
         
-        # Append all rows at once
+        # Append all rows using batch update to ensure correct column placement
         if new_rows:
-            sheet.append_rows(new_rows, value_input_option='RAW')
+            # Get current data to find the last row
+            all_data = sheet.get_all_values()
+            last_row = len(all_data)
+            
+            # Update each new row explicitly
+            for i, new_row in enumerate(new_rows):
+                row_num = last_row + i + 1
+                # Update from column A to the column corresponding to len(new_row)
+                end_col = chr(ord('A') + len(new_row) - 1)
+                range_str = f'A{row_num}:{end_col}{row_num}'
+                sheet.update(range_str, [new_row], value_input_option='RAW')
             
             # Center align Columns A, B, and C for the new rows
-            start_row = len(sheet.get_all_values()) - len(new_rows) + 1
-            end_row = len(sheet.get_all_values())
+            start_row = last_row + 1
+            end_row = last_row + len(new_rows)
             
             try:
                 sheet.format(f'A{start_row}:C{end_row}', {
@@ -182,9 +198,14 @@ def batch_update_column_o(container_numbers):
                 if container in container_numbers:
                     # Row index in sheet (1-based, +1 because enumerate is 0-based)
                     sheet_row = row_idx + 1
+                    # Update both column O and column P
                     updates.append({
                         'range': f'O{sheet_row}',  # Column O
                         'values': [['fdc_flask_app']]
+                    })
+                    updates.append({
+                        'range': f'P{sheet_row}',  # Column P
+                        'values': [[datetime.now().strftime('%m/%d/%Y %H:%M:%S')]]
                     })
         
         # Batch update all cells at once
@@ -384,15 +405,33 @@ def boat_data():
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     
-    # Fetch data from Google Sheets
     try:
-        df = pd.read_csv(GOOGLE_SHEETS_URL)
-        last_modified_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (Live from Google Sheets)"
-    except Exception as e:
-        current_app.logger.error(f"Error fetching data from Google Sheets: {e}")
-        return jsonify({'error': str(e)}), 500
-
-    try:
+        # First, scan Dropbox for container files
+        container_files = scan_dropbox_containers()
+        
+        # Get current containers from Google Sheets to check for missing ones
+        try:
+            df_current = pd.read_csv(GOOGLE_SHEETS_URL)
+            current_containers = set(df_current['Container #'].dropna().tolist())
+            containers_in_dropbox = set(container_files.keys())
+            new_containers = containers_in_dropbox - current_containers
+            
+            # Batch add new containers to Google Sheets first
+            if new_containers:
+                added_containers = add_multiple_containers_to_sheets(list(new_containers))
+                if added_containers:
+                    current_app.logger.info(f"Successfully added {len(added_containers)} containers")
+        except Exception as e:
+            current_app.logger.error(f"Error checking/updating Google Sheets: {e}")
+            # Continue with data fetching even if update fails
+        
+        # Now fetch the updated data from Google Sheets
+        try:
+            df = pd.read_csv(GOOGLE_SHEETS_URL)
+            last_modified_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (Live from Google Sheets)"
+        except Exception as e:
+            current_app.logger.error(f"Error fetching data from Google Sheets: {e}")
+            return jsonify({'error': str(e)}), 500
 
         # Map columns directly by name
         df_cleaned = df[['Container #', 'COMPANY', 'CONTAINER Tracking', 'Memo', 'Exam', 'ETA', 'RCD']].copy()
@@ -449,20 +488,6 @@ def boat_data():
         # Remove empty containers to avoid SQL errors
         df_cleaned = df_cleaned[df_cleaned['container_raw'].notna() & (df_cleaned['container_raw'] != '')]
 
-        # Scan Dropbox for container files
-        container_files = scan_dropbox_containers()
-        
-        # Check for containers in Dropbox that are NOT in Google Sheets
-        containers_in_sheets = set(df_cleaned['container_raw'].tolist())
-        containers_in_dropbox = set(container_files.keys())
-        new_containers = containers_in_dropbox - containers_in_sheets
-        
-        # Batch add new containers (single API call instead of N calls)
-        if new_containers:
-            added_containers = add_multiple_containers_to_sheets(list(new_containers))
-            if added_containers:
-                current_app.logger.info(f"Successfully added {len(added_containers)} containers")
-        
         # Check which containers have CSV files already generated and which can be processed
         df_cleaned['has_styles_csv'] = False
         df_cleaned['has_po_csv'] = False
