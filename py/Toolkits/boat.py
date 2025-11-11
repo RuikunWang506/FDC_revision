@@ -9,6 +9,13 @@ import glob
 from io import StringIO
 import gspread
 from google.oauth2.service_account import Credentials
+import requests
+from datetime import timezone, timedelta
+
+# Terminal49 configuration
+TERMINAL49_API_URL = "https://api.terminal49.com/v2/tracking_requests"
+TERMINAL49_API_KEY = "TT78TLzvD4q41D74aapnSUJA"
+TERMINAL49_CUSTOMER_ID = "f7cb530a-9e60-412c-a5bc-205a2f34ba54"  # Default customer ID
 
 
 boat_service_bp = Blueprint('boat_service', __name__, template_folder='../templates')
@@ -39,6 +46,29 @@ def get_db_connection():
     )
     return pyodbc.connect(conn_str)
 
+def get_los_angeles_time(dt_str):
+    """Convert ISO datetime string to Los Angeles time"""
+    if not dt_str:
+        return ''
+    try:
+        # Parse the ISO datetime string (assuming UTC)
+        dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+        
+        # Los Angeles is UTC-8 (PST) or UTC-7 (PDT)
+        # For simplicity, we'll use UTC-8
+        la_tz = timezone(timedelta(hours=-8))
+        la_time = dt.astimezone(la_tz)
+        
+        return la_time.strftime('%m/%d/%Y %H:%M')
+    except Exception as e:
+        # Log error if in Flask context, otherwise just return original
+        try:
+            current_app.logger.error(f"Error converting time {dt_str}: {e}")
+        except RuntimeError:
+            # Outside Flask context, just print to console
+            print(f"Error converting time {dt_str}: {e}")
+        return dt_str
+
 def get_sheets_client():
     """Initialize Google Sheets client with service account"""
     try:
@@ -51,8 +81,6 @@ def get_sheets_client():
     except Exception as e:
         current_app.logger.error(f"Error initializing Google Sheets client: {e}")
         return None
-
-def add_multiple_containers_to_sheets(container_numbers):
     """Add multiple new container rows to Google Sheets in batch"""
     try:
         client = get_sheets_client()
@@ -106,7 +134,7 @@ def add_multiple_containers_to_sheets(container_numbers):
             num_columns = 16  # Default fallback
         
         # Batch add all new containers in ONE write operation
-        # Column A = Container #, Column B = Company Code, Column C = Invoice Container #, Column O = fdc_flask_app marker
+        # Column A = Container #, Column B = Company Code, Column C = Invoice Container #, Column D = Carrier, Column E = B/L, Column O = fdc_flask_app marker
         new_rows = []
         for container_num in containers_to_add:
             # Create row with the exact number of columns as the sheet
@@ -171,6 +199,10 @@ def add_multiple_containers_to_sheets(container_numbers):
                 })
             except Exception as e:
                 current_app.logger.error(f"Error applying alignment: {e}")
+            
+            # Create Terminal49 tracking requests for new containers
+            for container_num in containers_to_add:
+                create_terminal49_tracking_request(container_num)
         
         return containers_to_add
         
@@ -262,6 +294,48 @@ def update_received_dates_in_sheets(container_dates_dict):
         current_app.logger.error(f"Error updating received dates in Google Sheets: {e}")
         return False
 
+def add_multiple_containers_to_sheets(container_list):
+    """Add multiple new containers to Google Sheets as new rows"""
+    try:
+        client = get_sheets_client()
+        if not client:
+            return []
+            
+        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
+        
+        # Get all existing containers to avoid duplicates
+        all_data = sheet.get_all_values()
+        existing_containers = set()
+        for row in all_data:
+            if row and row[0]:  # Column A has container number
+                existing_containers.add(row[0])
+        
+        # Filter out containers that already exist
+        new_containers = [c for c in container_list if c not in existing_containers]
+        
+        if not new_containers:
+            return []
+        
+        # Find the last row to append after
+        last_row = len(all_data) + 1
+        
+        # Prepare new rows - each container gets a new row with just the container number in column A
+        new_rows = []
+        for container in new_containers:
+            new_rows.append([container])  # Just container number in column A
+        
+        # Add all new rows at once
+        if new_rows:
+            sheet.append_rows(new_rows)
+            current_app.logger.info(f"Added {len(new_rows)} new containers to Google Sheets")
+            return new_containers
+            
+        return []
+        
+    except Exception as e:
+        current_app.logger.error(f"Error adding containers to Google Sheets: {e}")
+        return []
+
 def scan_dropbox_containers():
     """Scan Dropbox folder for all container Excel files and extract container numbers"""
     container_files = {}
@@ -288,6 +362,472 @@ def scan_dropbox_containers():
     except Exception as e:
         current_app.logger.error(f"Error scanning Dropbox containers: {e}")
         return {}
+
+def list_terminal49_shipments():
+    """List all shipments from Terminal49 API"""
+    try:
+        headers = {
+            'Authorization': f'Token {TERMINAL49_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get("https://api.terminal49.com/v2/shipments", headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            current_app.logger.info(f"Successfully retrieved {len(data.get('data', []))} shipments from Terminal49")
+            return data
+        else:
+            current_app.logger.error(f"Terminal49 API error listing shipments: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        current_app.logger.error(f"Error listing Terminal49 shipments: {e}")
+        return None
+
+def find_existing_tracking_request(container_number):
+    """Find existing tracking request for a container number by checking shipments"""
+    try:
+        shipments_data = get_terminal49_shipments()
+        if not shipments_data or 'data' not in shipments_data:
+            return None
+
+        shipments = shipments_data['data']
+
+        for shipment in shipments:
+            attributes = shipment.get('attributes', {})
+            bill_of_lading = attributes.get('bill_of_lading_number', '')
+
+            # Check if this shipment matches our container number
+            if bill_of_lading == container_number:
+                # Get the tracking request relationship if available
+                relationships = shipment.get('relationships', {})
+                tracking_request = relationships.get('tracking_request', {})
+                tracking_request_data = tracking_request.get('data', {})
+
+                if tracking_request_data:
+                    tracking_id = tracking_request_data.get('id')
+                    current_app.logger.info(f"Found existing tracking request {tracking_id} for container {container_number}")
+                    return tracking_id
+
+        current_app.logger.info(f"No existing tracking request found for container {container_number}")
+        return None
+
+    except Exception as e:
+        current_app.logger.error(f"Error finding existing tracking request for {container_number}: {e}")
+        return None
+
+def create_terminal49_tracking_request(container_number, scac=None):
+    """Create a tracking request with Terminal49 and return the tracking ID"""
+    try:
+        headers = {
+            'Authorization': f'Token {TERMINAL49_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Send two separate requests - one for OOCL and one for EGLV
+        scac_codes = ["OOLU", "EGLV"]
+        
+        for attempt_sac in scac_codes:
+            payload = {
+                "data": {
+                    "attributes": {
+                        "request_type": "container",
+                        "request_number": container_number,
+                        "ref_numbers": [],  # Can be populated with PO/BL numbers if available
+                        "shipment_tags": [],
+                        "scac": attempt_sac
+                    },
+
+                    "type": "tracking_request"
+                }
+            }
+
+            # Retry logic for 500 errors
+            max_retries = 2
+            for retry in range(max_retries + 1):
+                try:
+                    response = requests.post(TERMINAL49_API_URL, headers=headers, json=payload, timeout=30)
+
+                    if response.status_code == 201:
+                        data = response.json()
+                        tracking_id = data.get('data', {}).get('id')
+                        current_app.logger.info(f"Successfully created tracking request for container {container_number} with SCAC {attempt_sac}, ID: {tracking_id}")
+                        return tracking_id
+                    elif response.status_code == 422:
+                        # Check if it's a duplicate error with existing tracking request
+                        error_data = response.json()
+                        errors = error_data.get('errors', [])
+
+                        for error in errors:
+                            if error.get('code') == 'duplicate':
+                                # Extract the existing tracking request ID from meta
+                                meta = error.get('meta', {})
+                                existing_tracking_id = meta.get('tracking_request_id')
+                                if existing_tracking_id:
+                                    current_app.logger.info(f"Found existing tracking request {existing_tracking_id} for container {container_number} with SCAC {attempt_sac}")
+                                    return existing_tracking_id
+
+                        # Check if it's a SCAC-related error
+                        scac_error = any('scac' in str(error.get('source', {}).get('pointer', '')) for error in errors)
+                        container_error = any('container' in str(error.get('detail', '')).lower() or 'number' in str(error.get('detail', '')).lower() for error in errors)
+
+                        if scac_error:
+                            current_app.logger.warning(f"SCAC {attempt_sac} not recognized for {container_number}, trying next SCAC")
+                            break  # Try next SCAC
+                        elif container_error:
+                            current_app.logger.warning(f"Container {container_number} not valid for SCAC {attempt_sac}, trying next SCAC")
+                            break  # Try next SCAC
+                        else:
+                            # Other validation error, don't retry this SCAC
+                            current_app.logger.error(f"Terminal49 validation error for {container_number} with SCAC {attempt_sac}: {response.text}")
+                            break
+                    elif response.status_code == 404:
+                        current_app.logger.warning(f"Container {container_number} not found for SCAC {attempt_sac}, trying next SCAC")
+                        break  # Try next SCAC
+                    elif response.status_code == 500:
+                        # Server errors may be temporary - use more aggressive retry
+                        server_max_retries = 3
+                        if retry < server_max_retries:
+                            current_app.logger.warning(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{server_max_retries})")
+                            import time
+                            time.sleep(3)  # Longer wait for server errors
+                            continue
+                        else:
+                            current_app.logger.error(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac} after {server_max_retries} retries")
+                            break  # Try next SCAC
+                    elif response.status_code == 429:
+                        # Rate limited
+                        current_app.logger.warning(f"Rate limited by Terminal49 for {container_number}, waiting before retry")
+                        import time
+                        time.sleep(5)
+                        if retry < max_retries:
+                            continue
+                        else:
+                            break
+                    else:
+                        current_app.logger.error(f"Terminal49 API error for {container_number} with SCAC {attempt_sac}: {response.status_code} - {response.text}")
+                        break  # Don't retry other errors
+
+                except requests.exceptions.Timeout:
+                    if retry < max_retries:
+                        current_app.logger.warning(f"Timeout error for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{max_retries})")
+                        continue
+                    else:
+                        current_app.logger.error(f"Timeout error for {container_number} with SCAC {attempt_sac} after {max_retries} retries")
+                        break
+                except requests.exceptions.RequestException as e:
+                    current_app.logger.error(f"Request error for {container_number} with SCAC {attempt_sac}: {e}")
+                    break
+
+            # If we get here, this SCAC failed, try the next one
+            continue
+            payload = {
+                "data": {
+                    "attributes": {
+                        "request_type": "container",
+                        "request_number": container_number,
+                        "ref_numbers": [],  # Can be populated with PO/BL numbers if available
+                        "shipment_tags": [],
+                        "scac": attempt_sac
+                    },
+                    
+                    "type": "tracking_request"
+                }
+            }
+
+            # Retry logic for 500 errors
+            max_retries = 2
+            for retry in range(max_retries + 1):
+                try:
+                    response = requests.post(TERMINAL49_API_URL, headers=headers, json=payload, timeout=30)
+
+                    if response.status_code == 201:
+                        data = response.json()
+                        tracking_id = data.get('data', {}).get('id')
+                        current_app.logger.info(f"Successfully created tracking request for container {container_number} with SCAC {attempt_sac}, ID: {tracking_id}")
+                        return tracking_id
+                    elif response.status_code == 422:
+                        # Check if it's a duplicate error with existing tracking request
+                        error_data = response.json()
+                        errors = error_data.get('errors', [])
+
+                        for error in errors:
+                            if error.get('code') == 'duplicate':
+                                # Extract the existing tracking request ID from meta
+                                meta = error.get('meta', {})
+                                existing_tracking_id = meta.get('tracking_request_id')
+                                if existing_tracking_id:
+                                    current_app.logger.info(f"Found existing tracking request {existing_tracking_id} for container {container_number} with SCAC {attempt_sac}")
+                                    return existing_tracking_id
+
+                        # Check if it's a SCAC-related error
+                        scac_error = any('scac' in str(error.get('source', {}).get('pointer', '')) for error in errors)
+                        container_error = any('container' in str(error.get('detail', '')).lower() or 'number' in str(error.get('detail', '')).lower() for error in errors)
+
+                        if scac_error:
+                            current_app.logger.warning(f"SCAC {attempt_sac} not recognized for {container_number}, trying next SCAC")
+                            break  # Try next SCAC
+                        elif container_error:
+                            current_app.logger.warning(f"Container {container_number} not valid for SCAC {attempt_sac}, trying next SCAC")
+                            break  # Try next SCAC
+                        else:
+                            # Other validation error, don't retry this SCAC
+                            current_app.logger.error(f"Terminal49 validation error for {container_number} with SCAC {attempt_sac}: {response.text}")
+                            break
+                    elif response.status_code == 404:
+                        current_app.logger.warning(f"Container {container_number} not found for SCAC {attempt_sac}, trying next SCAC")
+                        break  # Try next SCAC
+                    elif response.status_code == 500:
+                        # Server errors may be temporary - use more aggressive retry
+                        server_max_retries = 3
+                        if retry < server_max_retries:
+                            current_app.logger.warning(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{server_max_retries})")
+                            import time
+                            time.sleep(3)  # Longer wait for server errors
+                            continue
+                        else:
+                            current_app.logger.error(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac} after {server_max_retries} retries")
+                            break  # Try next SCAC
+                    elif response.status_code == 429:
+                        # Rate limited
+                        current_app.logger.warning(f"Rate limited by Terminal49 for {container_number}, waiting before retry")
+                        import time
+                        time.sleep(5)
+                        if retry < max_retries:
+                            continue
+                        else:
+                            break
+                    else:
+                        current_app.logger.error(f"Terminal49 API error for {container_number} with SCAC {attempt_sac}: {response.status_code} - {response.text}")
+                        break  # Don't retry other errors
+
+                except requests.exceptions.Timeout:
+                    if retry < max_retries:
+                        current_app.logger.warning(f"Timeout error for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{max_retries})")
+                        continue
+                    else:
+                        current_app.logger.error(f"Timeout error for {container_number} with SCAC {attempt_sac} after {max_retries} retries")
+                        break
+                except requests.exceptions.RequestException as e:
+                    current_app.logger.error(f"Request error for {container_number} with SCAC {attempt_sac}: {e}")
+                    break
+
+            # If we get here, this SCAC failed, try the next one
+            continue
+
+        # If we get here, all SCACs failed
+        current_app.logger.error(f"All SCAC options failed for container {container_number}")
+        return None
+            
+    except Exception as e:
+        current_app.logger.error(f"Error creating Terminal49 tracking request for {container_number}: {e}")
+        return None
+
+def get_terminal49_tracking_data(tracking_id):
+    """Get tracking data from Terminal49 using the tracking ID"""
+    try:
+        headers = {
+            'Authorization': f'Token {TERMINAL49_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(f"{TERMINAL49_API_URL}/{tracking_id}", headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            current_app.logger.info(f"Successfully retrieved tracking data for ID: {tracking_id}")
+            return data
+        else:
+            current_app.logger.error(f"Terminal49 API error getting tracking data for ID {tracking_id}: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        current_app.logger.error(f"Error getting Terminal49 tracking data for ID {tracking_id}: {e}")
+        return None
+
+def get_terminal49_shipments():
+    """Get all shipments from Terminal49 API"""
+    try:
+        headers = {
+            'Authorization': f'Token {TERMINAL49_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.get(f"{TERMINAL49_API_URL.replace('/tracking_requests', '/shipments')}", headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            current_app.logger.info(f"Successfully retrieved {data.get('meta', {}).get('total', 0)} shipments from Terminal49")
+            return data
+        else:
+            current_app.logger.error(f"Terminal49 shipments API error: {response.status_code} - {response.text}")
+            return None
+
+    except Exception as e:
+        current_app.logger.error(f"Error getting Terminal49 shipments: {e}")
+        return None
+
+def find_shipment_by_container(container_number):
+    """Find a shipment by container number in the shipments list"""
+    shipments_data = get_terminal49_shipments()
+
+    if not shipments_data or 'data' not in shipments_data:
+        return None
+
+    for shipment in shipments_data['data']:
+        # Check bill_of_lading_number (container number)
+        if shipment['attributes'].get('bill_of_lading_number') == container_number:
+            current_app.logger.info(f"Found existing shipment for container {container_number}: {shipment['id']}")
+            return shipment
+
+    current_app.logger.info(f"No existing shipment found for container {container_number}")
+    return None
+
+def get_shipment_details(shipment_id):
+    """Get detailed information for a specific shipment"""
+    try:
+        headers = {
+            'Authorization': f'Token {TERMINAL49_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.get(f"{TERMINAL49_API_URL.replace('/tracking_requests', '/shipments')}/{shipment_id}", headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            current_app.logger.info(f"Successfully retrieved detailed shipment info for ID {shipment_id}")
+            return data
+        else:
+            current_app.logger.error(f"Terminal49 shipment details API error for ID {shipment_id}: {response.status_code} - {response.text}")
+            return None
+
+    except Exception as e:
+        current_app.logger.error(f"Error getting Terminal49 shipment details for ID {shipment_id}: {e}")
+        return None
+
+def get_container_tracking_info(container_number):
+    """Get tracking information for a container from Terminal49 - uses shipments API when available"""
+    try:
+        # First, look up the actual container number from the 'link' column in Google Sheets
+        try:
+            df = pd.read_csv(GOOGLE_SHEETS_URL)
+            # Find the row where Container # matches our container_number
+            matching_row = df[df['Container #'] == container_number]
+            if not matching_row.empty:
+                actual_container_number = str(matching_row['CONTAINER Tracking'].iloc[0]).strip()
+                if actual_container_number and actual_container_number != 'nan':
+                    current_app.logger.info(f"Found actual container number for {container_number}: {actual_container_number}")
+                else:
+                    return {
+                        'error': f'No container tracking number found for {container_number}',
+                        'container_number': container_number,
+                        'raw_json': None
+                    }
+            else:
+                return {
+                    'error': f'Container {container_number} not found in Google Sheets',
+                    'container_number': container_number,
+                    'raw_json': None
+                }
+        except Exception as e:
+            current_app.logger.error(f"Error looking up container tracking number: {e}")
+            return {
+                'error': f'Failed to look up tracking number: {str(e)}',
+                'container_number': container_number,
+                'raw_json': None
+            }
+
+        # First check if the container is already being tracked (exists in shipments)
+        existing_shipment = find_shipment_by_container(actual_container_number)
+
+        if existing_shipment:
+            # Container is already being tracked - get data directly from shipments
+            current_app.logger.info(f"Container {actual_container_number} found in shipments - getting data directly")
+            shipment_details = get_shipment_details(existing_shipment['id'])
+
+            if shipment_details:
+                return {
+                    'container_number': container_number,
+                    'actual_container': actual_container_number,
+                    'shipment_id': existing_shipment['id'],
+                    'raw_json': shipment_details,
+                    'source': 'shipments_api'
+                }
+            else:
+                return {
+                    'error': 'Failed to retrieve shipment details',
+                    'container_number': container_number,
+                    'actual_container': actual_container_number,
+                    'shipment_id': existing_shipment['id'],
+                    'raw_json': None
+                }
+        else:
+            # Container not found in shipments - create a tracking request
+            current_app.logger.info(f"Container {actual_container_number} not found in shipments - creating tracking request")
+
+            # First check if there's already an existing tracking request for this container
+            existing_tracking_id = find_existing_tracking_request(actual_container_number)
+
+            if existing_tracking_id:
+                current_app.logger.info(f"Using existing tracking request {existing_tracking_id} for container {actual_container_number}")
+                tracking_id = existing_tracking_id
+            else:
+                # No existing tracking request found, create a new one
+                tracking_id = create_terminal49_tracking_request(actual_container_number)
+
+            if not tracking_id:
+                return {
+                    'error': f'Unable to create tracking request for container {actual_container_number}. This container may not be trackable through Terminal49 or may be using an unsupported shipping line.',
+                    'container_number': container_number,
+                    'actual_container': actual_container_number,
+                    'raw_json': None
+                }
+
+            # Wait for the tracking request to be processed and shipment data to become available
+            import time
+            max_wait_attempts = 5
+            wait_interval = 2  # seconds between checks
+            
+            for attempt in range(max_wait_attempts):
+                current_app.logger.info(f"Waiting for shipment data... attempt {attempt + 1}/{max_wait_attempts}")
+                time.sleep(wait_interval)
+                
+                # Check if the container now appears in shipments after creating tracking request
+                updated_shipment = find_shipment_by_container(actual_container_number)
+                
+                if updated_shipment:
+                    # Now get the shipment data
+                    shipment_details = get_shipment_details(updated_shipment['id'])
+                    if shipment_details:
+                        current_app.logger.info(f"Shipment data became available after {attempt + 1} attempts")
+                        return {
+                            'container_number': container_number,
+                            'actual_container': actual_container_number,
+                            'shipment_id': updated_shipment['id'],
+                            'tracking_id': tracking_id,
+                            'raw_json': shipment_details,
+                            'source': 'shipments_api_after_request'
+                        }
+            
+            current_app.logger.warning(f"Shipment data not available after {max_wait_attempts} attempts, returning tracking request info")
+
+            # If we still can't get shipment data, return tracking request info
+            return {
+                'container_number': container_number,
+                'actual_container': actual_container_number,
+                'tracking_id': tracking_id,
+                'raw_json': {'tracking_request_created': True, 'message': 'Tracking request created. Container may appear in shipments soon.'},
+                'source': 'tracking_request_only'
+            }
+        
+    except Exception as e:
+        current_app.logger.error(f"Error getting tracking info for {container_number}: {e}")
+        return {
+            'error': str(e),
+            'container_number': container_number,
+            'raw_json': None
+        }
 
 def process_container_file(file_path, container_number):
     """Process a container Excel file and generate CSV files"""
@@ -577,6 +1117,119 @@ def boat_data():
         # Replace NaN values with empty strings for JSON serialization
         df_cleaned = df_cleaned.fillna('')
         
+        # Fetch Terminal49 shipment data and create tracking requests for containers without shipments
+        try:
+            # Get all shipments from Terminal49
+            shipments_data = get_terminal49_shipments()
+            shipment_lookup = {}
+            
+            if shipments_data and 'data' in shipments_data:
+                for shipment in shipments_data['data']:
+                    attrs = shipment.get('attributes', {})
+                    bill_of_lading = attrs.get('bill_of_lading_number', '')
+                    if bill_of_lading:
+                        shipment_lookup[bill_of_lading] = shipment
+            
+            # For each container in our display data, check if it needs a tracking request
+            containers_needing_tracking = []
+            for index, row in df_cleaned.iterrows():
+                container_num = row['container']
+                actual_container = row.get('link', '').strip()
+                
+                if actual_container and actual_container != 'nan' and actual_container not in shipment_lookup:
+                    containers_needing_tracking.append(actual_container)
+            
+            # Create tracking requests for containers that need them (limit to avoid rate limits)
+            if containers_needing_tracking:
+                current_app.logger.info(f"Creating tracking requests for {len(containers_needing_tracking)} containers without shipments")
+                created_count = 0
+                failed_containers = []
+                for container_num in containers_needing_tracking[:50]:  # Limit to 50 at a time to avoid rate limits
+                    try:
+                        tracking_id = create_terminal49_tracking_request(container_num)
+                        if tracking_id:
+                            current_app.logger.info(f"Created tracking request for {container_num}: {tracking_id}")
+                            created_count += 1
+                        else:
+                            current_app.logger.warning(f"Failed to create tracking request for {container_num}")
+                            failed_containers.append(container_num)
+                    except Exception as e:
+                        current_app.logger.error(f"Error creating tracking request for {container_num}: {e}")
+                        failed_containers.append(container_num)
+                
+                # If we created any tracking requests, wait and verify they were recorded
+                if created_count > 0:
+                    current_app.logger.info(f"Created {created_count} tracking requests, waiting to verify...")
+                    import time
+                    
+                    # Wait longer and retry verification a few times
+                    verified_count = 0
+                    max_verification_attempts = 3
+                    
+                    for attempt in range(max_verification_attempts):
+                        wait_time = 5 * (attempt + 1)  # 5s, 10s, 15s
+                        current_app.logger.info(f"Verification attempt {attempt + 1}/{max_verification_attempts}, waiting {wait_time} seconds...")
+                        time.sleep(wait_time)
+                        
+                        # Re-fetch shipments to verify the new containers are recorded
+                        try:
+                            updated_shipments_data = get_terminal49_shipments()
+                            if updated_shipments_data and 'data' in updated_shipments_data:
+                                updated_shipment_lookup = {}
+                                for shipment in updated_shipments_data['data']:
+                                    attrs = shipment.get('attributes', {})
+                                    bill_of_lading = attrs.get('bill_of_lading_number', '')
+                                    if bill_of_lading:
+                                        updated_shipment_lookup[bill_of_lading] = shipment
+                                
+                                verified_count = 0
+                                for container_num in containers_needing_tracking[:50]:
+                                    if container_num in updated_shipment_lookup:
+                                        verified_count += 1
+                                
+                                current_app.logger.info(f"Verification attempt {attempt + 1}: {verified_count}/{created_count} containers recorded")
+                                
+                                # If all containers are verified, break early
+                                if verified_count == created_count:
+                                    break
+                                
+                        except Exception as e:
+                            current_app.logger.error(f"Error in verification attempt {attempt + 1}: {e}")
+                    
+                    current_app.logger.info(f"Final verification: {verified_count}/{created_count} containers successfully recorded in Terminal49 shipments")
+                    if failed_containers:
+                        current_app.logger.warning(f"Additionally, {len(failed_containers)} containers failed to create tracking requests: {failed_containers[:5]}{'...' if len(failed_containers) > 5 else ''}")
+            
+            # Add shipment data to the response
+            for index, row in df_cleaned.iterrows():
+                container_num = row['container']
+                actual_container = row.get('link', '').strip()
+                
+                if actual_container and actual_container in shipment_lookup:
+                    shipment = shipment_lookup[actual_container]
+                    df_cleaned.at[index, 'has_shipment_data'] = True
+                    df_cleaned.at[index, 'shipment_id'] = shipment.get('id')
+                    # Add key shipment attributes
+                    attrs = shipment.get('attributes', {})
+                    df_cleaned.at[index, 'shipping_line'] = attrs.get('shipping_line_name', '')
+                    df_cleaned.at[index, 'pod_eta'] = attrs.get('pod_eta_at', '')
+                    df_cleaned.at[index, 'voyage'] = attrs.get('pod_voyage_number', '')
+                    # Add new columns with Los Angeles time
+                    df_cleaned.at[index, 'real_eta'] = get_los_angeles_time(attrs.get('pod_eta_at', ''))
+                    df_cleaned.at[index, 'last_updated'] = get_los_angeles_time(attrs.get('line_tracking_last_succeeded_at', ''))
+                else:
+                    df_cleaned.at[index, 'has_shipment_data'] = False
+                    df_cleaned.at[index, 'shipment_id'] = ''
+                    df_cleaned.at[index, 'shipping_line'] = ''
+                    df_cleaned.at[index, 'pod_eta'] = ''
+                    df_cleaned.at[index, 'voyage'] = ''
+                    df_cleaned.at[index, 'real_eta'] = ''
+                    df_cleaned.at[index, 'last_updated'] = ''
+        
+        except Exception as e:
+            current_app.logger.error(f"Error fetching Terminal49 data: {e}")
+            # Continue without Terminal49 data if there's an error
+        
         # Log columns being sent for debugging
         
         # Convert DataFrame to list of dictionaries for JSON response
@@ -636,39 +1289,170 @@ def process_container(container_number):
         current_app.logger.error(f"Error processing container {container_number}: {e}")
         return jsonify({'error': str(e)}), 500
 
-@boat_service_bp.route('/boat/download/<container_number>/<file_type>')
-def download_container_csv(container_number, file_type):
-    """Download generated CSV files or original Excel file for a container"""
+@boat_service_bp.route('/boat/tracking/<container_number>')
+def get_container_tracking(container_number):
+    """Get tracking information for a container and return HTML for popup display"""
     if 'username' not in session:
-        return redirect(url_for("auth.login"))
-    
+        return jsonify({'error': 'Unauthorized'}), 401
+
     try:
-        if file_type == 'original':
-            # Download original Excel file from Dropbox
-            container_files = scan_dropbox_containers()
-            
-            if container_number not in container_files:
-                return f"Original file not found for {container_number}", 404
-            
-            file_path = container_files[container_number]
-            filename = os.path.basename(file_path)
-            
-            return send_file(file_path, as_attachment=True, download_name=filename)
-            
-        elif file_type == 'styles':
-            filename = f"{container_number}-styles.csv"
-        elif file_type == 'po':
-            filename = f"{container_number}-PO.csv"
+        tracking_info = get_container_tracking_info(container_number)
+
+        if 'error' in tracking_info:
+            return f"""
+            <div class="tracking-popup">
+                <h3>Container Tracking: {container_number}</h3>
+                <div class="tracking-error">
+                    <p>Error: {tracking_info['error']}</p>
+                </div>
+            </div>
+            """
+
+        # Handle different response types
+        source = tracking_info.get('source', 'unknown')
+        raw_json = tracking_info.get('raw_json', {})
+
+        if source in ['shipments_api', 'shipments_api_after_request']:
+            # We have full shipment data - display nicely formatted info
+            shipment_data = raw_json.get('data', {}) if isinstance(raw_json, dict) and 'data' in raw_json else raw_json
+            attrs = shipment_data.get('attributes', {}) if isinstance(shipment_data, dict) else {}
+
+            # Format dates
+            def format_datetime(dt_str):
+                if not dt_str:
+                    return 'N/A'
+                try:
+                    from datetime import datetime
+                    dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+                    return dt.strftime('%Y-%m-%d %H:%M UTC')
+                except:
+                    return dt_str
+
+            html = f"""
+            <div class="tracking-popup">
+                <h3>Container Tracking: {tracking_info['container_number']}</h3>
+                <div class="tracking-info">
+                    <div class="tracking-row">
+                        <span class="label">Actual Container:</span>
+                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Shipping Line:</span>
+                        <span class="value">{attrs.get('shipping_line_name', 'N/A')} ({attrs.get('shipping_line_scac', 'N/A')})</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Origin:</span>
+                        <span class="value">{attrs.get('port_of_lading_name', 'N/A')} ({attrs.get('port_of_lading_locode', 'N/A')})</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Destination:</span>
+                        <span class="value">{attrs.get('port_of_discharge_name', 'N/A')} ({attrs.get('port_of_discharge_locode', 'N/A')})</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">ETA:</span>
+                        <span class="value">{format_datetime(attrs.get('pod_eta_at'))}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Departure:</span>
+                        <span class="value">{format_datetime(attrs.get('pol_atd_at'))}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Voyage:</span>
+                        <span class="value">{attrs.get('pod_voyage_number', 'N/A')}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Last Updated:</span>
+                        <span class="value">{format_datetime(attrs.get('line_tracking_last_succeeded_at'))}</span>
+                    </div>
+                </div>
+                <div class="tracking-success">
+                    <h4>✅ Tracking Information Retrieved</h4>
+                    <p>Real-time container tracking data from Terminal49.</p>
+                </div>
+            </div>
+            """
+        elif source == 'tracking_request_only':
+            # Only tracking request created, no shipment data yet
+            html = f"""
+            <div class="tracking-popup">
+                <h3>Container Tracking: {tracking_info['container_number']}</h3>
+                <div class="tracking-info">
+                    <div class="tracking-row">
+                        <span class="label">Actual Container:</span>
+                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Tracking ID:</span>
+                        <span class="value">{tracking_info.get('tracking_id', 'N/A')}</span>
+                    </div>
+                </div>
+            </div>
+            """
+        elif source == 'tracking_request_only':
+            # Only tracking request created, no shipment data yet
+            html = f"""
+            <div class="tracking-popup">
+                <h3>Container Tracking: {tracking_info['container_number']}</h3>
+                <div class="tracking-info">
+                    <div class="tracking-row">
+                        <span class="label">Actual Container:</span>
+                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Tracking ID:</span>
+                        <span class="value">{tracking_info.get('tracking_id', 'N/A')}</span>
+                    </div>
+                </div>
+                <div class="tracking-note">
+                    <p><strong>Note:</strong> {raw_json.get('message', 'Tracking request has been created. Container tracking data should be available soon.')}</p>
+                    <p>The container may take a few minutes to appear in the tracking system.</p>
+                    <p><em>Alternative tracking options:</em></p>
+                    <ul>
+                        <li>Check with your shipping line directly</li>
+                        <li>Use general container tracking websites</li>
+                        <li>Contact freight forwarder for updates</li>
+                    </ul>
+                </div>
+            </div>
+            """
         else:
-            return "Invalid file type", 400
-        
-        file_path = os.path.join(OUTPUT_DIR, filename)
-        
-        if not os.path.exists(file_path):
-            return f"File not found: {filename}", 404
-        
-        return send_file(file_path, as_attachment=True, download_name=filename)
-    
+            # Fallback - display raw JSON
+            import json
+            formatted_json = json.dumps(raw_json, indent=2, default=str)
+
+            html = f"""
+            <div class="tracking-popup">
+                <h3>Container Tracking: {tracking_info['container_number']}</h3>
+                <div class="tracking-info">
+                    <div class="tracking-row">
+                        <span class="label">Actual Container:</span>
+                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Tracking ID:</span>
+                        <span class="value">{tracking_info.get('tracking_id', 'N/A')}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Source:</span>
+                        <span class="value">{source}</span>
+                    </div>
+                </div>
+                <div class="tracking-json">
+                    <h4>Raw JSON Response</h4>
+                    <pre class="json-display">{formatted_json}</pre>
+                </div>
+            </div>
+            """
+
+        return html
+
     except Exception as e:
-        current_app.logger.error(f"Error downloading file: {e}")
-        return str(e), 500
+        current_app.logger.error(f"Error getting tracking for {container_number}: {e}")
+        return f"""
+        <div class="tracking-popup">
+            <h3>Container Tracking: {container_number}</h3>
+            <div class="tracking-error">
+                <p>Error: {str(e)}</p>
+            </div>
+        </div>
+        """, 500

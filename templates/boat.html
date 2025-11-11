@@ -9,7 +9,11 @@
     <!-- Full jQuery version with AJAX support -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        
+        @media (min-width: 1600px) {
+            .container, .container-lg, .container-md, .container-sm, .container-xl {
+                max-width: 1500px !important;
+            }
+        }
         .custom-btn {
             padding: 5px 5px !important;
             font-size: 20px !important;
@@ -57,6 +61,129 @@
         .status-memo {
             background-color: rgba(216, 127, 136, 0.3) !important; /* Light red with more transparency */
             color: white; /* White text for better contrast */
+        }
+
+        /* Tracking popup styles */
+        .tracking-popup {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .tracking-popup h3 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tracking-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .tracking-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .tracking-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .tracking-row .label {
+            font-weight: bold;
+            color: #495057;
+            flex: 0 0 140px;
+        }
+        
+        .tracking-row .value {
+            color: #212529;
+            flex: 1;
+        }
+        
+        .tracking-events {
+            margin-bottom: 20px;
+        }
+        
+        .tracking-events h4 {
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 5px;
+        }
+        
+        .tracking-event {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .tracking-event .event-date {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        
+        .tracking-event .event-description {
+            color: #495057;
+            margin-bottom: 3px;
+        }
+        
+        .tracking-event .event-location {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .tracking-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        /* JSON display styles */
+        .tracking-json {
+            margin-top: 20px;
+        }
+        
+        .tracking-json h4 {
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 5px;
+        }
+        
+        .json-display {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #495057;
+        }
+        
+        .tracking-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -106,9 +233,11 @@
                         <th>link</th>
                         <th>COMPANY</th>
                         <th>ETA</th>
+                        <th>Real ETA</th>
                         <th>RCD</th>
                         <th>MEMO</th>
                         <th>Status</th>
+                        <th>Last Updated</th>
                         <th>Files</th>
                     </tr>
                 </thead>
@@ -147,8 +276,8 @@
 
           function applyRowStyling() {
               $('#boat_table tbody tr').each(function() {
-                  var status = $(this).find('td:nth-child(8)').text().trim();  // Status is now column 8
-                  var memo1 = $(this).find('td:nth-child(7)').text().trim();   // MEMO is now column 7
+                  var status = $(this).find('td:nth-child(9)').text().trim();  // Status is now column 9
+                  var memo1 = $(this).find('td:nth-child(8)').text().trim();   // MEMO is now column 8
                   var reserved = $(this).find('td:nth-child(1)').text().trim();
 
                   // Apply status classes
@@ -202,6 +331,9 @@
                               // ETA
                               tr.append($('<td></td>').text(row.ETA || ''));
                               
+                              // Real ETA
+                              tr.append($('<td></td>').text(row.real_eta || ''));
+                              
                               // RCD
                               tr.append($('<td></td>').text(row.RCD || ''));
                               
@@ -211,20 +343,26 @@
                               // Status
                               tr.append($('<td></td>').text(row.Status || ''));
                               
-                              // Files - Process button or download buttons
+                              // Last Updated
+                              tr.append($('<td></td>').text(row.last_updated || ''));
+                              
+                              // Files - Process button or download buttons + tracking button
                               var filesHtml = '';
                               if (row.has_styles_csv && row.has_po_csv) {
-                                  // Both files exist - show original + download buttons
+                                  // Both files exist - show original + download buttons + tracking
                                   filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
                                   filesHtml += '<a href="/boat/download/' + row.container + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
-                                  filesHtml += '<a href="/boat/download/' + row.container + '/po" class="btn btn-sm btn-success" download>PO CSV</a>';
+                                  filesHtml += '<a href="/boat/download/' + row.container + '/po" class="btn btn-sm btn-success mr-1" download>PO CSV</a>';
+                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '">📍Track</button>';
                               } else if (row.can_process) {
-                                  // Can be processed - show original + process button
+                                  // Can be processed - show original + process button + tracking
                                   filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
-                                  filesHtml += '<button class="btn btn-sm btn-warning process-btn" data-container="' + row.container + '">Process</button>';
+                                  filesHtml += '<button class="btn btn-sm btn-warning process-btn mr-1" data-container="' + row.container + '">Process</button>';
+                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '">📍Track</button>';
                               } else {
-                                  // No Dropbox file or already in database - show only Original button
-                                  filesHtml = '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info" download>Original</a>';
+                                  // No Dropbox file or already in database - show only Original button + tracking
+                                  filesHtml = '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
+                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '">📍Track</button>';
                               }
                               tr.append($('<td></td>').html(filesHtml));
                               
@@ -284,7 +422,66 @@
                   var containerNumber = $(this).data('container');
                   processContainer(containerNumber, this);
               });
+              
+              // Handle tracking button clicks (delegated event)
+              $(document).on('click', '.tracking-btn', function() {
+                  var containerNumber = $(this).data('container');
+                  showTrackingPopup(containerNumber);
+              });
           });
+
+          function showTrackingPopup(containerNumber) {
+              // Create modal HTML
+              var modalHtml = `
+                  <div class="modal fade" id="trackingModal" tabindex="-1" role="dialog">
+                      <div class="modal-dialog modal-lg" role="document">
+                          <div class="modal-content">
+                              <div class="modal-header">
+                                  <h5 class="modal-title">Container Tracking: ${containerNumber}</h5>
+                                  <button type="button" class="close" data-dismiss="modal">
+                                      <span>&times;</span>
+                                  </button>
+                              </div>
+                              <div class="modal-body">
+                                  <div class="text-center">
+                                      <div class="spinner-border" role="status">
+                                          <span class="sr-only">Loading...</span>
+                                      </div>
+                                      <p>Loading tracking information...</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+              
+              // Remove existing modal if present
+              $('#trackingModal').remove();
+              
+              // Add modal to body
+              $('body').append(modalHtml);
+              
+              // Show modal
+              $('#trackingModal').modal('show');
+              
+              // Load tracking data
+              $.ajax({
+                  url: '/boat/tracking/' + containerNumber,
+                  method: 'GET',
+                  success: function(response) {
+                      $('.modal-body').html(response);
+                  },
+                  error: function(xhr, status, error) {
+                      $('.modal-body').html(`
+                          <div class="alert alert-danger">
+                              Failed to load tracking information: ${error}
+                          </div>
+                      `);
+                  }
+              });
+          }
       </script>
+      <!-- Bootstrap JS -->
+      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
