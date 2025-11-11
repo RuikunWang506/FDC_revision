@@ -11,6 +11,9 @@ import gspread
 from google.oauth2.service_account import Credentials
 import requests
 from datetime import timezone, timedelta
+import imaplib
+import email
+from email.header import decode_header
 
 # Terminal49 configuration
 TERMINAL49_API_URL = "https://api.terminal49.com/v2/tracking_requests"
@@ -1302,6 +1305,54 @@ def boat_data():
                 # Otherwise, keep the existing status (landed or upload)
                 pass
         
+        # Fetch email counts for port containers
+        port_containers = df_cleaned[df_cleaned['Status'] == '⚓port⚓']
+        
+        # Initialize email_count column for all containers
+        df_cleaned['email_count'] = 0
+        
+        if not port_containers.empty:
+            try:
+                # Email credentials
+                EMAIL_USER = 'yihao@fdcus.com'
+                EMAIL_PASS = 'Fdc2640$$'
+                IMAP_SERVER = 'imap.fatcow.com'
+                IMAP_PORT = 993
+
+                # Connect to IMAP server
+                mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
+                mail.login(EMAIL_USER, EMAIL_PASS)
+                mail.select('inbox')
+
+                # Calculate date one month ago
+                one_month_ago = (datetime.now() - timedelta(days=30)).strftime('%d-%b-%Y')
+
+                # Get email counts for each port container
+                for index, row in port_containers.iterrows():
+                    bol_num = str(row.get('link', '')).strip()
+                    if bol_num and bol_num != 'nan':
+                        try:
+                            # Search for emails containing the BOL number
+                            search_criteria = f'(OR SUBJECT "{bol_num}" BODY "{bol_num}" SINCE {one_month_ago})'
+                            status, messages = mail.search(None, search_criteria)
+                            
+                            email_count = 0
+                            if status == 'OK' and messages[0]:
+                                message_nums = messages[0].split()
+                                email_count = len(message_nums)
+                            
+                            df_cleaned.at[index, 'email_count'] = int(email_count)
+                        except Exception as e:
+                            current_app.logger.error(f"Error fetching email count for BOL {bol_num}: {e}")
+                            df_cleaned.at[index, 'email_count'] = 0
+                    else:
+                        df_cleaned.at[index, 'email_count'] = 0
+
+                mail.logout()
+            except Exception as e:
+                current_app.logger.error(f"Error connecting to email server: {e}")
+                # email_count is already initialized to 0 for all containers
+        
         # Update Last Updated column for ALL containers with the fetch timestamp
         update_last_updated_for_all_containers(df_cleaned['container'].tolist(), fetch_timestamp)
         
@@ -1579,3 +1630,147 @@ def get_container_tracking_popup(fdc_container):
             </div>
         </div>
         """, 500
+
+@boat_service_bp.route('/boat/emails/<bol_num>')
+def get_bol_emails(bol_num):
+    """Get emails related to BOL number from the last month"""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Email credentials
+        EMAIL_USER = 'yihao@fdcus.com'
+        EMAIL_PASS = 'Fdc2640$$'
+        IMAP_SERVER = 'imap.fatcow.com'
+        IMAP_PORT = 993
+
+        # Connect to IMAP server
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
+        mail.login(EMAIL_USER, EMAIL_PASS)
+
+        # Select inbox
+        mail.select('inbox')
+
+        # Calculate date one month ago
+        one_month_ago = (datetime.now() - timedelta(days=30)).strftime('%d-%b-%Y')
+
+        # Search for emails containing the BOL number in subject or body
+        search_criteria = f'(OR SUBJECT "{bol_num}" BODY "{bol_num}" SINCE {one_month_ago})'
+        status, messages = mail.search(None, search_criteria)
+
+        email_list = []
+
+        if status == 'OK':
+            message_nums = messages[0].split()
+
+            # Get last 20 emails to avoid too many results
+            for num in message_nums[-20:]:
+                # Fetch email
+                status, msg_data = mail.fetch(num, '(RFC822)')
+                if status != 'OK':
+                    continue
+
+                # Parse email
+                email_body = msg_data[0][1]
+                email_message = email.message_from_bytes(email_body)
+
+                # Decode subject
+                subject, encoding = decode_header(email_message['Subject'])[0]
+                if isinstance(subject, bytes):
+                    subject = subject.decode(encoding or 'utf-8')
+
+                # Get sender
+                sender = email_message.get('From', '')
+
+                # Get date
+                date_str = email_message.get('Date', '')
+                try:
+                    # Parse email date
+                    email_date = email.utils.parsedate_to_datetime(date_str)
+                    formatted_date = email_date.strftime('%Y-%m-%d %H:%M')
+                except:
+                    formatted_date = date_str
+
+                # Get body content
+                body_content = ""
+                if email_message.is_multipart():
+                    for part in email_message.walk():
+                        if part.get_content_type() == "text/plain":
+                            try:
+                                body_content = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                                break
+                            except:
+                                continue
+                else:
+                    try:
+                        body_content = email_message.get_payload(decode=True).decode('utf-8', errors='ignore')
+                    except:
+                        body_content = "Unable to decode email content"
+
+                # Truncate body if too long
+                if len(body_content) > 1000:
+                    body_content = body_content[:1000] + "..."
+
+                email_list.append({
+                    'subject': subject,
+                    'sender': sender,
+                    'date': formatted_date,
+                    'body': body_content,
+                    'message_id': num.decode()
+                })
+
+        mail.logout()
+
+        # Sort by date descending
+        email_list.sort(key=lambda x: x['date'], reverse=True)
+
+        return render_template('boat_yihao_email.html',
+                             bol_num=bol_num,
+                             emails=email_list)
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching emails for BOL {bol_num}: {e}")
+        return render_template('boat_yihao_email.html',
+                             bol_num=bol_num,
+                             emails=[],
+                             error=str(e))
+
+@boat_service_bp.route('/boat/emails/<bol_num>/count')
+def get_bol_emails_count(bol_num):
+    """Get email count for BOL number from the last month"""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Email credentials
+        EMAIL_USER = 'yihao@fdcus.com'
+        EMAIL_PASS = 'Fdc2640$$'
+        IMAP_SERVER = 'imap.fatcow.com'
+        IMAP_PORT = 993
+
+        # Connect to IMAP server
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
+        mail.login(EMAIL_USER, EMAIL_PASS)
+
+        # Select inbox
+        mail.select('inbox')
+
+        # Calculate date one month ago
+        one_month_ago = (datetime.now() - timedelta(days=30)).strftime('%d-%b-%Y')
+
+        # Search for emails containing the BOL number in subject or body
+        search_criteria = f'(OR SUBJECT "{bol_num}" BODY "{bol_num}" SINCE {one_month_ago})'
+        status, messages = mail.search(None, search_criteria)
+
+        email_count = 0
+        if status == 'OK' and messages[0]:
+            message_nums = messages[0].split()
+            email_count = len(message_nums)
+
+        mail.logout()
+
+        return jsonify({'count': email_count})
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching email count for BOL {bol_num}: {e}")
+        return jsonify({'error': str(e), 'count': 0}), 500

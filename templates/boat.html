@@ -395,7 +395,16 @@
                               tr.append($('<td></td>').text(row.MEMO || ''));
                               
                               // Status
-                              tr.append($('<td></td>').text(row.Status || ''));
+                              var statusHtml = row.Status || '';
+                              if (row.Status === '⚓port⚓') {
+                                  var emailCount = row.email_count || 0;
+                                  var displayText = '⚓port⚓';
+                                  if (emailCount > 0) {
+                                      displayText += ' (' + emailCount + ')';
+                                  }
+                                  statusHtml = '<button class="btn btn-info email-btn" data-bol="' + row.link + '">' + displayText + '</button>';
+                              }
+                              tr.append($('<td></td>').html(statusHtml));
                               
                               // Ship Name
                               tr.append($('<td></td>').text(row.ship_name || ''));
@@ -481,6 +490,12 @@
               $(document).on('click', '.tracking-btn', function() {
                   var fdc_container = $(this).data('container');
                   showTrackingPopup(fdc_container);
+              });
+              
+              // Handle email button clicks (delegated event)
+              $(document).on('click', '.email-btn', function() {
+                  var bol_num = $(this).data('bol');
+                  showEmailPopup(bol_num);
               });
               
               // Handle steps button click
@@ -583,6 +598,51 @@
                   },
                   error: function(xhr, status, error) {
                       $('.modal-body').html('<div class="alert alert-danger">Failed to load tracking information: ' + error + '</div>');
+                  }
+              });
+          }
+          
+          function showEmailPopup(bol_num) {
+              // Create modal HTML
+              var modalHtml = '<div class="modal fade" id="emailModal" tabindex="-1" role="dialog">' +
+                  '<div class="modal-dialog modal-xl" role="document">' +
+                      '<div class="modal-content">' +
+                          '<div class="modal-header">' +
+                              '<h5 class="modal-title">Emails for BOL: ' + bol_num + '</h5>' +
+                              '<button type="button" class="close" data-dismiss="modal">' +
+                                  '<span>&times;</span>' +
+                              '</button>' +
+                          '</div>' +
+                          '<div class="modal-body">' +
+                              '<div class="text-center">' +
+                                  '<div class="spinner-border" role="status">' +
+                                      '<span class="sr-only">Loading...</span>' +
+                                  '</div>' +
+                                  '<p>Loading emails...</p>' +
+                              '</div>' +
+                          '</div>' +
+                      '</div>' +
+                  '</div>' +
+              '</div>';
+              
+              // Remove existing modal if present
+              $('#emailModal').remove();
+              
+              // Add modal to body
+              $('body').append(modalHtml);
+              
+              // Show modal
+              $('#emailModal').modal('show');
+              
+              // Load email data
+              $.ajax({
+                  url: '/boat/emails/' + bol_num,
+                  method: 'GET',
+                  success: function(response) {
+                      $('.modal-body').html(response);
+                  },
+                  error: function(xhr, status, error) {
+                      $('.modal-body').html('<div class="alert alert-danger">Failed to load emails: ' + error + '</div>');
                   }
               });
           }
