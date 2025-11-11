@@ -227,20 +227,19 @@
             <!-- Loading spinner -->
             <div id="loadingSpinner" class="text-center my-5">
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                    <span class="sr-only">Loading...</span>
+                    <span class="sr-only">Loading...takes around 9 seconds</span>
                 </div>
                     <p class="mt-3"><strong>Step 1: Scan Dropbox for available container files</strong></p>
-                    <p class="mt-3"><strong>Step 2: Check Google Sheets for existing containers</strong></p>
-                    <p class="mt-3"><strong>Step 3: Process new container files from Dropbox and add to Google Sheets</strong></p>
-                    <p class="mt-3"><strong>Step 4: Fetch updated container data from Google Sheets</strong></p>
-                    <p class="mt-3"><strong>Step 5: Clean and format data for display</strong></p>
-                    <p class="mt-3"><strong>Step 6: Query OMS database to determine container status</strong></p>
+                    <p class="mt-3"><strong>Step 2: Check Google Sheets for existing containers and add new ones</strong></p>
+                    <p class="mt-3"><strong>Step 3: Fetch updated container data from Google Sheets</strong></p>
+                    <p class="mt-3"><strong>Step 4: Clean and format data for display</strong></p>
+                    <p class="mt-3"><strong>Step 5: Query OMS database to determine container status (ocean/landed/upload)</strong></p>
+                    <p class="mt-3"><strong>Step 6: Update Google Sheets with received dates for landed containers</strong></p>
                     <p class="mt-3"><strong>Step 7: Set file processing flags and button visibility</strong></p>
-                    <p class="mt-3"><strong>Step 8: Fetch tracking data from Terminal49 API</strong></p>
-                    <p class="mt-3"><strong>Step 9: Update Google Sheets with tracking information</strong></p>
-                    <p class="mt-3"><strong>Step 10: Finalize and display data in the table</strong></p>
-
-
+                    <p class="mt-3"><strong>Step 8: Fetch tracking data from Terminal49 API and create tracking requests</strong></p>
+                    <p class="mt-3"><strong>Step 9: Update Google Sheets with tracking information (ETA, shipping line, voyage)</strong></p>
+                    <p class="mt-3"><strong>Step 10: Fetch email counts for port containers</strong></p>
+                    <p class="mt-3"><strong>Step 11: Update Last Updated timestamps and finalize display</strong></p>
             </div>
             
             <!-- Table container -->
@@ -281,15 +280,16 @@
                         <h4 class="mb-4">🔄 Data Processing Workflow</h4>
                         <div class="text-left">
                             <p class="mt-3"><strong>Step 1: Scan Dropbox for available container files</strong></p>
-                            <p class="mt-3"><strong>Step 2: Check Google Sheets for existing containers</strong></p>
-                            <p class="mt-3"><strong>Step 3: Process new container files from Dropbox and add to Google Sheets</strong></p>
-                            <p class="mt-3"><strong>Step 4: Fetch updated container data from Google Sheets</strong></p>
-                            <p class="mt-3"><strong>Step 5: Clean and format data for display</strong></p>
-                            <p class="mt-3"><strong>Step 6: Query OMS database to determine container status</strong></p>
+                            <p class="mt-3"><strong>Step 2: Check Google Sheets for existing containers and add new ones</strong></p>
+                            <p class="mt-3"><strong>Step 3: Fetch updated container data from Google Sheets</strong></p>
+                            <p class="mt-3"><strong>Step 4: Clean and format data for display</strong></p>
+                            <p class="mt-3"><strong>Step 5: Query OMS database to determine container status (ocean/landed/upload)</strong></p>
+                            <p class="mt-3"><strong>Step 6: Update Google Sheets with received dates for landed containers</strong></p>
                             <p class="mt-3"><strong>Step 7: Set file processing flags and button visibility</strong></p>
-                            <p class="mt-3"><strong>Step 8: Fetch tracking data from Terminal49 API</strong></p>
-                            <p class="mt-3"><strong>Step 9: Update Google Sheets with tracking information</strong></p>
-                            <p class="mt-3"><strong>Step 10: Finalize and display data in the table</strong></p>
+                            <p class="mt-3"><strong>Step 8: Fetch tracking data from Terminal49 API and create tracking requests</strong></p>
+                            <p class="mt-3"><strong>Step 9: Update Google Sheets with tracking information (ETA, shipping line, voyage)</strong></p>
+                            <p class="mt-3"><strong>Step 10: Fetch email counts for port containers</strong></p>
+                            <p class="mt-3"><strong>Step 11: Update Last Updated timestamps and finalize display</strong></p>
                         </div>
                     </div>
                 </div>
