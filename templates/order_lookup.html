@@ -393,9 +393,11 @@
             <form method="POST" action="/order_lookup" id="orderForm">
                 <div class="search-form-wrapper">
                     <!-- Macy Special Button -->
+                    {% if header_info and header_info.customer_id|string == '01221' %}
                     <a href="{{ url_for('macy.macy_maker') }}" class="macy-special-btn">
                         <i class="fas fa-star mr-2"></i>Macy Special
                     </a>
+                    {% endif %}
 
                     <!-- Latest Orders Info -->
                     <div class="d-flex align-items-center flex-wrap justify-content-center" style="gap: 10px;">
@@ -431,7 +433,7 @@
                     </button>
 
                     <!-- Generate Label Button -->
-                    {% if items_html %}
+                    {% if items_html and all_descriptions_have_dash %}
                     <button type="button" class="label-btn" onclick="generateLabel()">
                         <i class="fas fa-barcode mr-2"></i>Generate Label/打label这里
                     </button>
@@ -450,7 +452,7 @@
         {% endif %}
 
         <!-- Chinese Instruction Alert -->
-        {% if order_number %}
+        {% if items_html and all_descriptions_have_dash %}
         <div class="alert-custom">
             <i class="fas fa-info-circle mr-2"></i>
             确认descrip这里已经改过, 格式为 1-25,25 ( 25箱,第25是mix), loose piece 会自动输入

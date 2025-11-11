@@ -203,7 +203,7 @@ def generate_order(order_number):
         if df.empty:
             cursor.close()
             conn.close()
-            return None, None
+            return None, None, False
 
         # Extract header information (same for all rows)
         # Calculate discount as percentage of package amount
@@ -219,7 +219,7 @@ def generate_order(order_number):
         header_info = {
             'order_number': str(df.iloc[0]['order#']),
             'customer': df.iloc[0]['Customer'],
-            'customer_id': df.iloc[0]['CUS#'],
+            'customer_id': str(df.iloc[0]['CUS#']).strip(),
             'po_number': df.iloc[0]['PO#'],
             'package_amount': f"${package_amount:.2f}" if package_amount > 0 else 'N/A',
             'discount': f"${calculated_discount:.2f}" if calculated_discount > 0 else 'N/A',
@@ -296,6 +296,9 @@ def generate_order(order_number):
         items_df['Qty'] = items_df['Qty'].fillna(0).astype(int)
         items_df['per_box'] = items_df['per_box'].fillna(0).astype(int)
         
+        # Check if ALL descriptions contain a dash "-" for label generation
+        all_descriptions_have_dash = items_df['Descrip'].str.contains('-', na=False).all()
+        
         # Add hyperlinks to SKU column
         items_df['SKU'] = items_df['SKU'].apply(
             lambda sku: f'<a href="https://www.fdcef.com/item_lookup/{sku}" target="_blank" style="color: #4a90e2; text-decoration: none; font-weight: 600;">{sku}</a>'
@@ -312,11 +315,11 @@ def generate_order(order_number):
         else:
             items_html = full_table_html
         
-        return header_info, items_html
+        return header_info, items_html, all_descriptions_have_dash
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-        return None, None
+        return None, None, False
 
 
 @order_lookup_bp.route("/order_lookup", methods=["GET", "POST"])
@@ -326,6 +329,7 @@ def order_lookup(order_number=None):
     current_user = session['username']
     header_info = None
     items_html = None
+    all_descriptions_have_dash = False
     
     # Get latest order IDs from both databases
     latest_orders = get_latest_order_ids()
@@ -335,30 +339,31 @@ def order_lookup(order_number=None):
         order_number = request.form.get("order_number", "").strip()
         
         if not order_number:
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False)
 
         session['order_number'] = order_number
 
         if current_user == 'fdc':
             current_app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False)
 
-        header_info, items_html = generate_order(order_number)
+        header_info, items_html, all_descriptions_have_dash = generate_order(order_number)
         
         if items_html:
             current_app.logger.info("***%s***__@@@search order@@@__ %s",current_user, order_number)
         else:
             header_info = None
             items_html = None
+            all_descriptions_have_dash = False
 
     elif order_number:
         # Handle GET request with order_number in the URL
         
         if current_user == 'fdc':
             current_app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False)
         
-        header_info, items_html = generate_order(order_number)
+        header_info, items_html, all_descriptions_have_dash = generate_order(order_number)
         
         if items_html:
             current_app.logger.info("***%s***__@@@search order@@@__ %s",current_user, order_number)
@@ -366,6 +371,7 @@ def order_lookup(order_number=None):
             current_app.logger.info("No data found for order number: %s via URL", order_number)
             header_info = None
             items_html = None
+            all_descriptions_have_dash = False
 
     return render_template(
         "order_lookup.html",
@@ -373,5 +379,6 @@ def order_lookup(order_number=None):
         items_html=items_html,
         order_number=order_number,
         current_user=current_user,
-        latest_orders=latest_orders
+        latest_orders=latest_orders,
+        all_descriptions_have_dash=all_descriptions_have_dash
     )

@@ -1000,7 +1000,7 @@ def boat_service():
     current_app.logger.info(f"***{current_user}***__@@@checked boat page@@@")
     
     # Render page immediately with loading state
-    last_modified_date = "Loading..."
+    last_modified_date = "Loading...takes around 9 seconds"
     return render_template('boat.html', table_data=None, last_modified_date=last_modified_date, current_user=current_user)
 
 @boat_service_bp.route('/boat/data', methods=['GET'])
@@ -1413,6 +1413,55 @@ def process_container(container_number):
     
     except Exception as e:
         current_app.logger.error(f"Error processing container {container_number}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/download/<container_number>/<file_type>', methods=['GET'])
+def download_boat_file(container_number, file_type):
+    """Download original Excel or generated CSVs for a container.
+
+    file_type: 'original' | 'styles' | 'po'
+    """
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Styles and PO files are stored in OUTPUT_DIR
+        if file_type == 'styles':
+            filename = f"{container_number}-styles.csv"
+            file_path = os.path.join(OUTPUT_DIR, filename)
+            if os.path.exists(file_path):
+                return send_file(file_path, as_attachment=True, download_name=filename, mimetype='text/csv')
+            else:
+                return (f"Styles CSV for {container_number} not found", 404)
+
+        elif file_type == 'po':
+            filename = f"{container_number}-PO.csv"
+            file_path = os.path.join(OUTPUT_DIR, filename)
+            if os.path.exists(file_path):
+                return send_file(file_path, as_attachment=True, download_name=filename, mimetype='text/csv')
+            else:
+                return (f"PO CSV for {container_number} not found", 404)
+
+        elif file_type == 'original':
+            # Try to find the original Excel file in Dropbox
+            container_files = scan_dropbox_containers()
+            if container_number in container_files:
+                orig_path = container_files[container_number]
+                if os.path.exists(orig_path):
+                    filename = os.path.basename(orig_path)
+                    # Serve the original file (don't force CSV mimetype)
+                    return send_file(orig_path, as_attachment=True, download_name=filename)
+                else:
+                    return (f"Original file for {container_number} not found on disk", 404)
+            else:
+                return (f"Original file for {container_number} not found in Dropbox scan", 404)
+
+        else:
+            return ("Invalid file type", 400)
+
+    except Exception as e:
+        current_app.logger.error(f"Error downloading file for {container_number} type {file_type}: {e}")
         return jsonify({'error': str(e)}), 500
 
 @boat_service_bp.route('/boat/update_dennis_eta', methods=['POST'])
