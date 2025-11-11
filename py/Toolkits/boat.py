@@ -1,5 +1,5 @@
 import pandas as pd
-from flask import Blueprint, render_template, session, redirect, url_for, current_app, jsonify, send_file
+from flask import Blueprint, render_template, session, redirect, url_for, current_app, jsonify, send_file, request
 import pyodbc
 import os
 from datetime import datetime
@@ -81,134 +81,6 @@ def get_sheets_client():
     except Exception as e:
         current_app.logger.error(f"Error initializing Google Sheets client: {e}")
         return None
-    """Add multiple new container rows to Google Sheets in batch"""
-    try:
-        client = get_sheets_client()
-        if not client:
-            return []
-            
-        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
-        
-        # Get ALL existing containers in ONE read operation (Column A)
-        existing_containers = set()
-        try:
-            # Get all values from column A (Container #) at once
-            container_column = sheet.col_values(1)  # Column A = index 1
-            existing_containers = set(container_column)
-        except Exception as e:
-            current_app.logger.error(f"Error reading existing containers: {e}")
-        
-        # Find containers that need to be added
-        # Check for both F##### and FT##### versions
-        containers_to_add = []
-        for container_num in container_numbers:
-            if not container_num:
-                continue
-            
-            # Check if F version exists
-            if container_num in existing_containers:
-                continue
-            
-            # Check if FT version exists (convert F25131 -> FT25131)
-            if container_num.startswith('F') and len(container_num) > 1:
-                ft_version = 'FT' + container_num[1:]  # F25131 -> FT25131
-                if ft_version in existing_containers:
-                    continue
-            
-            containers_to_add.append(container_num)
-        
-        if not containers_to_add:
-            return []
-        
-        # Sort containers before adding (F26108, F26109, F26110, F26111)
-        containers_to_add.sort()
-        
-        # Get container files for reading Invoice data
-        container_files = scan_dropbox_containers()
-        
-        # Get the header row to determine the correct number of columns
-        try:
-            header_row = sheet.row_values(1)
-            num_columns = len(header_row)
-        except:
-            num_columns = 16  # Default fallback
-        
-        # Batch add all new containers in ONE write operation
-        # Column A = Container #, Column B = Company Code, Column C = Invoice Container #, Column D = Carrier, Column E = B/L, Column O = fdc_flask_app marker
-        new_rows = []
-        for container_num in containers_to_add:
-            # Create row with the exact number of columns as the sheet
-            new_row = [''] * num_columns
-            
-            # Set specific columns by their 0-based index
-            new_row[0] = container_num  # Column A (index 0) = Container #
-            
-            # Extract invoice data if file exists
-            if container_num in container_files:
-                try:
-                    file_path = container_files[container_num]
-                    # Read Invoice tab
-                    df_invoice = pd.read_excel(file_path, sheet_name='Invoice', header=None)
-                    
-                    # Check A5 for T-FASHION
-                    if len(df_invoice) > 4:  # A5 is row index 4
-                        a5_value = str(df_invoice.iloc[4, 0]) if pd.notna(df_invoice.iloc[4, 0]) else ''
-                        if 'T-FASHION' in a5_value:
-                            new_row[1] = 'TF'  # Column B (index 1) = Company Code
-                    
-                    # Get container number from A6
-                    if len(df_invoice) > 5:  # A6 is row index 5
-                        a6_value = str(df_invoice.iloc[5, 0]) if pd.notna(df_invoice.iloc[5, 0]) else ''
-                        # Extract container number after "CONTAINER #："
-                        match = re.search(r'CONTAINER\s*#[：:]\s*([A-Z0-9]+)', a6_value, re.IGNORECASE)
-                        if match:
-                            new_row[2] = match.group(1)  # Column C (index 2) = Invoice Container #
-                    
-                except Exception as e:
-                    current_app.logger.error(f"Error reading Invoice for {container_num}: {e}")
-            
-            # Set marker and timestamp in correct columns (O and P)
-            if num_columns > 14:  # Column O (index 14)
-                new_row[14] = 'fdc_flask_app'
-            if num_columns > 15:  # Column P (index 15)
-                new_row[15] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')
-            
-            new_rows.append(new_row)
-        
-        # Append all rows using batch update to ensure correct column placement
-        if new_rows:
-            # Get current data to find the last row
-            all_data = sheet.get_all_values()
-            last_row = len(all_data)
-            
-            # Update each new row explicitly
-            for i, new_row in enumerate(new_rows):
-                row_num = last_row + i + 1
-                # Update from column A to the column corresponding to len(new_row)
-                end_col = chr(ord('A') + len(new_row) - 1)
-                range_str = f'A{row_num}:{end_col}{row_num}'
-                sheet.update(range_str, [new_row], value_input_option='RAW')
-            
-            # Center align Columns A, B, and C for the new rows
-            start_row = last_row + 1
-            end_row = last_row + len(new_rows)
-            
-            try:
-                sheet.format(f'A{start_row}:C{end_row}', {
-                    'horizontalAlignment': 'CENTER'
-                })
-            except Exception as e:
-                current_app.logger.error(f"Error applying alignment: {e}")
-            
-            # Create Terminal49 tracking requests for new containers
-            for container_num in containers_to_add:
-                create_terminal49_tracking_request(container_num)
-        
-        return containers_to_add
-        
-    except Exception as e:
-        current_app.logger.error(f"Error adding containers to Google Sheets: {e}")
-        return []
 
 def batch_update_column_o(container_numbers):
     """Update column O for multiple containers in batch"""
@@ -230,13 +102,9 @@ def batch_update_column_o(container_numbers):
                 if container in container_numbers:
                     # Row index in sheet (1-based, +1 because enumerate is 0-based)
                     sheet_row = row_idx + 1
-                    # Update both column O and column P
+                    # Update column O with timestamp
                     updates.append({
                         'range': f'O{sheet_row}',  # Column O
-                        'values': [['fdc_flask_app']]
-                    })
-                    updates.append({
-                        'range': f'P{sheet_row}',  # Column P
                         'values': [[datetime.now().strftime('%m/%d/%Y %H:%M:%S')]]
                     })
         
@@ -285,13 +153,106 @@ def update_received_dates_in_sheets(container_dates_dict):
         # Batch update all cells at once
         if updates:
             sheet.batch_update(updates)
-            current_app.logger.info(f"Updated {len(updates)} received dates in Google Sheets")
             return True
         
         return False
         
     except Exception as e:
         current_app.logger.error(f"Error updating received dates in Google Sheets: {e}")
+        return False
+
+def update_last_updated_for_all_containers(container_list, fetch_timestamp):
+    """Update the Last Updated column (T) for all containers with the fetch timestamp"""
+    try:
+        client = get_sheets_client()
+        if not client:
+            return False
+            
+        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
+        
+        # Get all data at once (single read)
+        all_data = sheet.get_all_values()
+        
+        # Find rows to update (Container # is in Column A)
+        updates = []
+        for row_idx, row in enumerate(all_data):
+            if len(row) >= 1:  # Make sure row has at least column A
+                container = row[0]  # Column A (index 0) = Container #
+                if container in container_list:
+                    # Row index in sheet (1-based, +1 because enumerate is 0-based)
+                    sheet_row = row_idx + 1
+                    
+                    # Update column T = Last Updated
+                    updates.append({
+                        'range': f'T{sheet_row}',  # Column T = Last Updated
+                        'values': [[fetch_timestamp]]
+                    })
+        
+        # Batch update all cells at once
+        if updates:
+            sheet.batch_update(updates)
+            return True
+        
+        return False
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating Last Updated for all containers: {e}")
+        return False
+
+def update_tracking_data_in_sheets(container_tracking_dict):
+    """Update tracking data in Google Sheets columns P-S for containers with shipment data"""
+    try:
+        client = get_sheets_client()
+        if not client:
+            return False
+            
+        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
+        
+        # Get all data at once (single read)
+        all_data = sheet.get_all_values()
+        
+        # Find rows to update (Container # is in Column A)
+        updates = []
+        for row_idx, row in enumerate(all_data):
+            if len(row) >= 1:  # Make sure row has at least column A
+                container = row[0]  # Column A (index 0) = Container #
+                if container in container_tracking_dict:
+                    # Row index in sheet (1-based, +1 because enumerate is 0-based)
+                    sheet_row = row_idx + 1
+                    tracking_data = container_tracking_dict[container]
+                    
+                    # Replace "Orient Overseas Container Line" with "OOCL" for shipping line
+                    shipping_line = tracking_data.get('shipping_line', '')
+                    if shipping_line == 'Orient Overseas Container Line':
+                        shipping_line = 'OOCL'
+                    
+                    # Update columns P, Q, S, T with tracking data
+                    updates.append({
+                        'range': f'P{sheet_row}',  # Column P = Shipping Line
+                        'values': [[shipping_line]]
+                    })
+                    updates.append({
+                        'range': f'Q{sheet_row}',  # Column Q = ETA
+                        'values': [[tracking_data.get('real_eta', '')]]
+                    })
+                    updates.append({
+                        'range': f'S{sheet_row}',  # Column S = Voyage
+                        'values': [[tracking_data.get('voyage', '')]]
+                    })
+                    updates.append({
+                        'range': f'T{sheet_row}',  # Column T = Last Updated
+                        'values': [[tracking_data.get('last_updated', '')]]
+                    })
+        
+        # Batch update all cells at once
+        if updates:
+            sheet.batch_update(updates)
+            return True
+        
+        return False
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating tracking data in Google Sheets: {e}")
         return False
 
 def add_multiple_containers_to_sheets(container_list):
@@ -310,25 +271,90 @@ def add_multiple_containers_to_sheets(container_list):
             if row and row[0]:  # Column A has container number
                 existing_containers.add(row[0])
         
-        # Filter out containers that already exist
-        new_containers = [c for c in container_list if c not in existing_containers]
+        # Specific containers mentioned by user
+        specific_containers = {'F25131', 'F25141', 'F25132', 'F25143', 'F25142'}
         
-        if not new_containers:
+        # Filter containers - skip F versions if FT versions exist
+        containers_to_add = []
+        for container_num in container_list:
+            if not container_num:
+                continue
+            
+            # Check if container already exists
+            if container_num in existing_containers:
+                continue
+            
+            # Special logic for specific containers: skip F versions if FT versions exist
+            if container_num in specific_containers:
+                # Check if FT version exists (F25131 -> FT25131)
+                if container_num.startswith('F') and len(container_num) > 1:
+                    ft_version = 'FT' + container_num[1:]  # F25131 -> FT25131
+                    if ft_version in existing_containers:
+                        continue
+            
+            containers_to_add.append(container_num)
+        
+        
+        if not containers_to_add:
             return []
         
-        # Find the last row to append after
-        last_row = len(all_data) + 1
+        # Find the last row with data to append after
+        last_row_with_data = 0
+        for i, row in enumerate(all_data):
+            if any(cell.strip() for cell in row if cell):
+                last_row_with_data = i + 1
         
-        # Prepare new rows - each container gets a new row with just the container number in column A
+        
+        # Get container files for reading Invoice data and tracking info
+        container_files = scan_dropbox_containers()
+        
+        # Prepare new rows - each container gets a new row with full data
         new_rows = []
-        for container in new_containers:
-            new_rows.append([container])  # Just container number in column A
+        for container_num in containers_to_add:
+            # Create row with basic structure
+            new_row = [container_num, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']  # Extend to at least column T
+            
+            # Extract invoice data if file exists
+            if container_num in container_files:
+                try:
+                    file_path = container_files[container_num]
+                    # Read Invoice tab
+                    df_invoice = pd.read_excel(file_path, sheet_name='Invoice', header=None)
+                    
+                    # Check A5 for T-FASHION
+                    if len(df_invoice) > 4:  # A5 is row index 4
+                        a5_value = str(df_invoice.iloc[4, 0]) if pd.notna(df_invoice.iloc[4, 0]) else ''
+                        if 'T-FASHION' in a5_value:
+                            new_row[1] = 'TF'  # Column B (index 1) = Company Code
+                    
+                    # Get container number from A6
+                    if len(df_invoice) > 5:  # A6 is row index 5
+                        a6_value = str(df_invoice.iloc[5, 0]) if pd.notna(df_invoice.iloc[5, 0]) else ''
+                        # Extract container number after "CONTAINER #："
+                        match = re.search(r'CONTAINER\s*#[：:]\s*([A-Z0-9]+)', a6_value, re.IGNORECASE)
+                        if match:
+                            actual_container_number = match.group(1)
+                            new_row[2] = actual_container_number  # Column C (index 2) = Invoice Container #
+                except Exception as e:
+                    current_app.logger.error(f"Error reading Invoice for {container_num}: {e}")
+                    actual_container_number = None
+            
+            # Set timestamp in column O
+            new_row[14] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')  # Column O (index 14)
+            
+            new_rows.append(new_row)
         
-        # Add all new rows at once
+        # Add all new rows at once using explicit ranges
         if new_rows:
-            sheet.append_rows(new_rows)
-            current_app.logger.info(f"Added {len(new_rows)} new containers to Google Sheets")
-            return new_containers
+            # Find the next available row (after the last row with data)
+            next_row = last_row_with_data + 1
+            
+            # Update each row individually with explicit ranges
+            for i, row_data in enumerate(new_rows):
+                range_str = f'A{next_row + i}:T{next_row + i}'
+                sheet.update(range_str, [row_data])
+            
+            return containers_to_add
             
         return []
         
@@ -373,9 +399,11 @@ def list_terminal49_shipments():
         
         response = requests.get("https://api.terminal49.com/v2/shipments", headers=headers)
         
+        # Log the raw response regardless of status code
+
+        
         if response.status_code == 200:
             data = response.json()
-            current_app.logger.info(f"Successfully retrieved {len(data.get('data', []))} shipments from Terminal49")
             return data
         else:
             current_app.logger.error(f"Terminal49 API error listing shipments: {response.status_code} - {response.text}")
@@ -407,10 +435,8 @@ def find_existing_tracking_request(container_number):
 
                 if tracking_request_data:
                     tracking_id = tracking_request_data.get('id')
-                    current_app.logger.info(f"Found existing tracking request {tracking_id} for container {container_number}")
                     return tracking_id
 
-        current_app.logger.info(f"No existing tracking request found for container {container_number}")
         return None
 
     except Exception as e:
@@ -420,201 +446,158 @@ def find_existing_tracking_request(container_number):
 def create_terminal49_tracking_request(container_number, scac=None):
     """Create a tracking request with Terminal49 and return the tracking ID"""
     try:
+        import threading
+        import queue
         headers = {
             'Authorization': f'Token {TERMINAL49_API_KEY}',
             'Content-Type': 'application/json'
         }
         
-        # Send two separate requests - one for OOCL and one for EGLV
+        # Send two concurrent requests - one for OOCL and one for EGLV
         scac_codes = ["OOLU", "EGLV"]
+        results_queue = queue.Queue()
         
-        for attempt_sac in scac_codes:
-            payload = {
-                "data": {
-                    "attributes": {
-                        "request_type": "container",
-                        "request_number": container_number,
-                        "ref_numbers": [],  # Can be populated with PO/BL numbers if available
-                        "shipment_tags": [],
-                        "scac": attempt_sac
-                    },
-
-                    "type": "tracking_request"
+        def send_request(scac_code):
+            """Send a single tracking request for a SCAC code"""
+            try:
+                payload = {
+                    "data": {
+                        "attributes": {
+                            "request_type": "container",
+                            "request_number": container_number,
+                            "ref_numbers": [],  # Can be populated with PO/BL numbers if available
+                            "shipment_tags": [],
+                            "scac": scac_code
+                        },
+                        "type": "tracking_request"
+                    }
                 }
-            }
 
-            # Retry logic for 500 errors
-            max_retries = 2
-            for retry in range(max_retries + 1):
-                try:
-                    response = requests.post(TERMINAL49_API_URL, headers=headers, json=payload, timeout=30)
+                # Retry logic for 500 errors
+                max_retries = 2
+                for retry in range(max_retries + 1):
+                    try:
+                        response = requests.post(TERMINAL49_API_URL, headers=headers, json=payload, timeout=30)
 
-                    if response.status_code == 201:
-                        data = response.json()
-                        tracking_id = data.get('data', {}).get('id')
-                        current_app.logger.info(f"Successfully created tracking request for container {container_number} with SCAC {attempt_sac}, ID: {tracking_id}")
-                        return tracking_id
-                    elif response.status_code == 422:
-                        # Check if it's a duplicate error with existing tracking request
-                        error_data = response.json()
-                        errors = error_data.get('errors', [])
+                        if response.status_code == 201:
+                            data = response.json()
+                            tracking_id = data.get('data', {}).get('id')
+                            results_queue.put(('success', scac_code, tracking_id))
+                            return
+                        elif response.status_code == 422:
+                            # Check if it's a duplicate error with existing tracking request
+                            error_data = response.json()
+                            errors = error_data.get('errors', [])
 
-                        for error in errors:
-                            if error.get('code') == 'duplicate':
-                                # Extract the existing tracking request ID from meta
-                                meta = error.get('meta', {})
-                                existing_tracking_id = meta.get('tracking_request_id')
-                                if existing_tracking_id:
-                                    current_app.logger.info(f"Found existing tracking request {existing_tracking_id} for container {container_number} with SCAC {attempt_sac}")
-                                    return existing_tracking_id
+                            for error in errors:
+                                if error.get('code') == 'duplicate':
+                                    # Extract the existing tracking request ID from meta
+                                    meta = error.get('meta', {})
+                                    existing_tracking_id = meta.get('tracking_request_id')
+                                    if existing_tracking_id:
+                                        results_queue.put(('duplicate', scac_code, existing_tracking_id))
+                                        return
 
-                        # Check if it's a SCAC-related error
-                        scac_error = any('scac' in str(error.get('source', {}).get('pointer', '')) for error in errors)
-                        container_error = any('container' in str(error.get('detail', '')).lower() or 'number' in str(error.get('detail', '')).lower() for error in errors)
+                            # Check if it's a SCAC-related error
+                            scac_error = any('scac' in str(error.get('source', {}).get('pointer', '')) for error in errors)
+                            container_error = any('container' in str(error.get('detail', '')).lower() or 'number' in str(error.get('detail', '')).lower() for error in errors)
 
-                        if scac_error:
-                            current_app.logger.warning(f"SCAC {attempt_sac} not recognized for {container_number}, trying next SCAC")
-                            break  # Try next SCAC
-                        elif container_error:
-                            current_app.logger.warning(f"Container {container_number} not valid for SCAC {attempt_sac}, trying next SCAC")
-                            break  # Try next SCAC
-                        else:
-                            # Other validation error, don't retry this SCAC
-                            current_app.logger.error(f"Terminal49 validation error for {container_number} with SCAC {attempt_sac}: {response.text}")
-                            break
-                    elif response.status_code == 404:
-                        current_app.logger.warning(f"Container {container_number} not found for SCAC {attempt_sac}, trying next SCAC")
-                        break  # Try next SCAC
-                    elif response.status_code == 500:
-                        # Server errors may be temporary - use more aggressive retry
-                        server_max_retries = 3
-                        if retry < server_max_retries:
-                            current_app.logger.warning(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{server_max_retries})")
+                            if scac_error or container_error:
+                                results_queue.put(('scac_error', scac_code, None))
+                                return
+                            else:
+                                # Other validation error
+                                results_queue.put(('validation_error', scac_code, None))
+                                return
+                        elif response.status_code == 404:
+                            results_queue.put(('not_found', scac_code, None))
+                            return
+                        elif response.status_code == 500:
+                            # Server errors may be temporary - use more aggressive retry
+                            server_max_retries = 3
+                            if retry < server_max_retries:
+                                current_app.logger.warning(f"Terminal49 server error (500) for {container_number} with SCAC {scac_code}, retrying ({retry + 1}/{server_max_retries})")
+                                import time
+                                time.sleep(3)  # Longer wait for server errors
+                                continue
+                            else:
+                                results_queue.put(('server_error', scac_code, None))
+                                return
+                        elif response.status_code == 429:
+                            # Rate limited
+                            current_app.logger.warning(f"Rate limited by Terminal49 for {container_number}, waiting before retry")
                             import time
-                            time.sleep(3)  # Longer wait for server errors
-                            continue
+                            time.sleep(5)
+                            if retry < max_retries:
+                                continue
+                            else:
+                                results_queue.put(('rate_limited', scac_code, None))
+                                return
                         else:
-                            current_app.logger.error(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac} after {server_max_retries} retries")
-                            break  # Try next SCAC
-                    elif response.status_code == 429:
-                        # Rate limited
-                        current_app.logger.warning(f"Rate limited by Terminal49 for {container_number}, waiting before retry")
-                        import time
-                        time.sleep(5)
+                            results_queue.put(('api_error', scac_code, response.status_code))
+                            return
+
+                    except requests.exceptions.Timeout:
                         if retry < max_retries:
+                            current_app.logger.warning(f"Timeout error for {container_number} with SCAC {scac_code}, retrying ({retry + 1}/{max_retries})")
                             continue
                         else:
-                            break
-                    else:
-                        current_app.logger.error(f"Terminal49 API error for {container_number} with SCAC {attempt_sac}: {response.status_code} - {response.text}")
-                        break  # Don't retry other errors
-
-                except requests.exceptions.Timeout:
-                    if retry < max_retries:
-                        current_app.logger.warning(f"Timeout error for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{max_retries})")
-                        continue
-                    else:
-                        current_app.logger.error(f"Timeout error for {container_number} with SCAC {attempt_sac} after {max_retries} retries")
-                        break
-                except requests.exceptions.RequestException as e:
-                    current_app.logger.error(f"Request error for {container_number} with SCAC {attempt_sac}: {e}")
-                    break
-
-            # If we get here, this SCAC failed, try the next one
-            continue
-            payload = {
-                "data": {
-                    "attributes": {
-                        "request_type": "container",
-                        "request_number": container_number,
-                        "ref_numbers": [],  # Can be populated with PO/BL numbers if available
-                        "shipment_tags": [],
-                        "scac": attempt_sac
-                    },
-                    
-                    "type": "tracking_request"
-                }
-            }
-
-            # Retry logic for 500 errors
-            max_retries = 2
-            for retry in range(max_retries + 1):
-                try:
-                    response = requests.post(TERMINAL49_API_URL, headers=headers, json=payload, timeout=30)
-
-                    if response.status_code == 201:
-                        data = response.json()
-                        tracking_id = data.get('data', {}).get('id')
-                        current_app.logger.info(f"Successfully created tracking request for container {container_number} with SCAC {attempt_sac}, ID: {tracking_id}")
-                        return tracking_id
-                    elif response.status_code == 422:
-                        # Check if it's a duplicate error with existing tracking request
-                        error_data = response.json()
-                        errors = error_data.get('errors', [])
-
-                        for error in errors:
-                            if error.get('code') == 'duplicate':
-                                # Extract the existing tracking request ID from meta
-                                meta = error.get('meta', {})
-                                existing_tracking_id = meta.get('tracking_request_id')
-                                if existing_tracking_id:
-                                    current_app.logger.info(f"Found existing tracking request {existing_tracking_id} for container {container_number} with SCAC {attempt_sac}")
-                                    return existing_tracking_id
-
-                        # Check if it's a SCAC-related error
-                        scac_error = any('scac' in str(error.get('source', {}).get('pointer', '')) for error in errors)
-                        container_error = any('container' in str(error.get('detail', '')).lower() or 'number' in str(error.get('detail', '')).lower() for error in errors)
-
-                        if scac_error:
-                            current_app.logger.warning(f"SCAC {attempt_sac} not recognized for {container_number}, trying next SCAC")
-                            break  # Try next SCAC
-                        elif container_error:
-                            current_app.logger.warning(f"Container {container_number} not valid for SCAC {attempt_sac}, trying next SCAC")
-                            break  # Try next SCAC
-                        else:
-                            # Other validation error, don't retry this SCAC
-                            current_app.logger.error(f"Terminal49 validation error for {container_number} with SCAC {attempt_sac}: {response.text}")
-                            break
-                    elif response.status_code == 404:
-                        current_app.logger.warning(f"Container {container_number} not found for SCAC {attempt_sac}, trying next SCAC")
-                        break  # Try next SCAC
-                    elif response.status_code == 500:
-                        # Server errors may be temporary - use more aggressive retry
-                        server_max_retries = 3
-                        if retry < server_max_retries:
-                            current_app.logger.warning(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{server_max_retries})")
-                            import time
-                            time.sleep(3)  # Longer wait for server errors
-                            continue
-                        else:
-                            current_app.logger.error(f"Terminal49 server error (500) for {container_number} with SCAC {attempt_sac} after {server_max_retries} retries")
-                            break  # Try next SCAC
-                    elif response.status_code == 429:
-                        # Rate limited
-                        current_app.logger.warning(f"Rate limited by Terminal49 for {container_number}, waiting before retry")
-                        import time
-                        time.sleep(5)
-                        if retry < max_retries:
-                            continue
-                        else:
-                            break
-                    else:
-                        current_app.logger.error(f"Terminal49 API error for {container_number} with SCAC {attempt_sac}: {response.status_code} - {response.text}")
-                        break  # Don't retry other errors
-
-                except requests.exceptions.Timeout:
-                    if retry < max_retries:
-                        current_app.logger.warning(f"Timeout error for {container_number} with SCAC {attempt_sac}, retrying ({retry + 1}/{max_retries})")
-                        continue
-                    else:
-                        current_app.logger.error(f"Timeout error for {container_number} with SCAC {attempt_sac} after {max_retries} retries")
-                        break
-                except requests.exceptions.RequestException as e:
-                    current_app.logger.error(f"Request error for {container_number} with SCAC {attempt_sac}: {e}")
-                    break
-
-            # If we get here, this SCAC failed, try the next one
-            continue
+                            results_queue.put(('timeout', scac_code, None))
+                            return
+                    except requests.exceptions.RequestException as e:
+                        results_queue.put(('request_error', scac_code, str(e)))
+                        return
+                        
+            except Exception as e:
+                results_queue.put(('exception', scac_code, str(e)))
+        
+        # Start both requests concurrently
+        threads = []
+        for scac_code in scac_codes:
+            thread = threading.Thread(target=send_request, args=(scac_code,))
+            threads.append(thread)
+            thread.start()
+        
+        # Wait for both threads to complete
+        for thread in threads:
+            thread.join()
+        
+        # Process results
+        results = []
+        while not results_queue.empty():
+            results.append(results_queue.get())
+        
+        # Look for successful results first
+        for result_type, scac_code, data in results:
+            if result_type == 'success':
+                return data
+            elif result_type == 'duplicate':
+                return data
+        
+        # If no success, log the failures
+        for result_type, scac_code, data in results:
+            if result_type == 'scac_error':
+                current_app.logger.warning(f"SCAC {scac_code} not recognized for {container_number}")
+            elif result_type == 'not_found':
+                current_app.logger.warning(f"Container {container_number} not found for SCAC {scac_code}")
+            elif result_type == 'validation_error':
+                current_app.logger.error(f"Terminal49 validation error for {container_number} with SCAC {scac_code}")
+            elif result_type == 'server_error':
+                current_app.logger.error(f"Terminal49 server error for {container_number} with SCAC {scac_code}")
+            elif result_type == 'rate_limited':
+                current_app.logger.warning(f"Rate limited by Terminal49 for {container_number}")
+            elif result_type == 'timeout':
+                current_app.logger.error(f"Timeout error for {container_number} with SCAC {scac_code}")
+            elif result_type == 'request_error':
+                current_app.logger.error(f"Request error for {container_number} with SCAC {scac_code}: {data}")
+            elif result_type == 'api_error':
+                current_app.logger.error(f"Terminal49 API error for {container_number} with SCAC {scac_code}: {data}")
+            elif result_type == 'exception':
+                current_app.logger.error(f"Exception for {container_number} with SCAC {scac_code}: {data}")
+        
+        # If we get here, all requests failed
+        current_app.logger.error(f"All SCAC options failed for container {container_number}")
+        return None
 
         # If we get here, all SCACs failed
         current_app.logger.error(f"All SCAC options failed for container {container_number}")
@@ -636,7 +619,6 @@ def get_terminal49_tracking_data(tracking_id):
         
         if response.status_code == 200:
             data = response.json()
-            current_app.logger.info(f"Successfully retrieved tracking data for ID: {tracking_id}")
             return data
         else:
             current_app.logger.error(f"Terminal49 API error getting tracking data for ID {tracking_id}: {response.status_code} - {response.text}")
@@ -655,10 +637,12 @@ def get_terminal49_shipments():
         }
 
         response = requests.get(f"{TERMINAL49_API_URL.replace('/tracking_requests', '/shipments')}", headers=headers)
+        
+        # Log the raw response regardless of status code
+
 
         if response.status_code == 200:
             data = response.json()
-            current_app.logger.info(f"Successfully retrieved {data.get('meta', {}).get('total', 0)} shipments from Terminal49")
             return data
         else:
             current_app.logger.error(f"Terminal49 shipments API error: {response.status_code} - {response.text}")
@@ -678,10 +662,8 @@ def find_shipment_by_container(container_number):
     for shipment in shipments_data['data']:
         # Check bill_of_lading_number (container number)
         if shipment['attributes'].get('bill_of_lading_number') == container_number:
-            current_app.logger.info(f"Found existing shipment for container {container_number}: {shipment['id']}")
             return shipment
 
-    current_app.logger.info(f"No existing shipment found for container {container_number}")
     return None
 
 def get_shipment_details(shipment_id):
@@ -696,7 +678,6 @@ def get_shipment_details(shipment_id):
 
         if response.status_code == 200:
             data = response.json()
-            current_app.logger.info(f"Successfully retrieved detailed shipment info for ID {shipment_id}")
             return data
         else:
             current_app.logger.error(f"Terminal49 shipment details API error for ID {shipment_id}: {response.status_code} - {response.text}")
@@ -706,50 +687,49 @@ def get_shipment_details(shipment_id):
         current_app.logger.error(f"Error getting Terminal49 shipment details for ID {shipment_id}: {e}")
         return None
 
-def get_container_tracking_info(container_number):
+def get_container_tracking_info(fdc_container):
     """Get tracking information for a container from Terminal49 - uses shipments API when available"""
     try:
         # First, look up the actual container number from the 'link' column in Google Sheets
         try:
             df = pd.read_csv(GOOGLE_SHEETS_URL)
             # Find the row where Container # matches our container_number
-            matching_row = df[df['Container #'] == container_number]
+            matching_row = df[df['FDC container'] == fdc_container]
             if not matching_row.empty:
-                actual_container_number = str(matching_row['CONTAINER Tracking'].iloc[0]).strip()
-                if actual_container_number and actual_container_number != 'nan':
-                    current_app.logger.info(f"Found actual container number for {container_number}: {actual_container_number}")
+                bol_num = str(matching_row['BOL NUM'].iloc[0]).strip()
+                if bol_num and bol_num != 'nan':
+                    bol_num = bol_num
                 else:
                     return {
-                        'error': f'No container tracking number found for {container_number}',
-                        'container_number': container_number,
+                        'error': f'No container tracking number found for {fdc_container}',
+                        'fdc_container': fdc_container,
                         'raw_json': None
                     }
             else:
                 return {
-                    'error': f'Container {container_number} not found in Google Sheets',
-                    'container_number': container_number,
+                    'error': f'Container {fdc_container} not found in Google Sheets',
+                    'fdc_container': fdc_container,
                     'raw_json': None
                 }
         except Exception as e:
             current_app.logger.error(f"Error looking up container tracking number: {e}")
             return {
                 'error': f'Failed to look up tracking number: {str(e)}',
-                'container_number': container_number,
+                'fdc_container': fdc_container,
                 'raw_json': None
             }
 
         # First check if the container is already being tracked (exists in shipments)
-        existing_shipment = find_shipment_by_container(actual_container_number)
+        existing_shipment = find_shipment_by_container(bol_num)
 
         if existing_shipment:
             # Container is already being tracked - get data directly from shipments
-            current_app.logger.info(f"Container {actual_container_number} found in shipments - getting data directly")
             shipment_details = get_shipment_details(existing_shipment['id'])
 
             if shipment_details:
                 return {
-                    'container_number': container_number,
-                    'actual_container': actual_container_number,
+                    'fdc_container': fdc_container,
+                    'bol_num': bol_num,
                     'shipment_id': existing_shipment['id'],
                     'raw_json': shipment_details,
                     'source': 'shipments_api'
@@ -757,30 +737,28 @@ def get_container_tracking_info(container_number):
             else:
                 return {
                     'error': 'Failed to retrieve shipment details',
-                    'container_number': container_number,
-                    'actual_container': actual_container_number,
+                    'fdc_container': fdc_container,
+                    'bol_num': bol_num,
                     'shipment_id': existing_shipment['id'],
                     'raw_json': None
                 }
         else:
             # Container not found in shipments - create a tracking request
-            current_app.logger.info(f"Container {actual_container_number} not found in shipments - creating tracking request")
 
             # First check if there's already an existing tracking request for this container
-            existing_tracking_id = find_existing_tracking_request(actual_container_number)
+            existing_tracking_id = find_existing_tracking_request(bol_num)
 
             if existing_tracking_id:
-                current_app.logger.info(f"Using existing tracking request {existing_tracking_id} for container {actual_container_number}")
                 tracking_id = existing_tracking_id
             else:
                 # No existing tracking request found, create a new one
-                tracking_id = create_terminal49_tracking_request(actual_container_number)
+                tracking_id = create_terminal49_tracking_request(bol_num)
 
             if not tracking_id:
                 return {
-                    'error': f'Unable to create tracking request for container {actual_container_number}. This container may not be trackable through Terminal49 or may be using an unsupported shipping line.',
-                    'container_number': container_number,
-                    'actual_container': actual_container_number,
+                    'error': f'Unable to create tracking request for container {bol_num}. This container may not be trackable through Terminal49 or may be using an unsupported shipping line.',
+                    'fdc_container': fdc_container,
+                    'bol_num': bol_num,
                     'raw_json': None
                 }
 
@@ -788,44 +766,127 @@ def get_container_tracking_info(container_number):
             import time
             max_wait_attempts = 5
             wait_interval = 2  # seconds between checks
-            
+
             for attempt in range(max_wait_attempts):
-                current_app.logger.info(f"Waiting for shipment data... attempt {attempt + 1}/{max_wait_attempts}")
                 time.sleep(wait_interval)
-                
+
                 # Check if the container now appears in shipments after creating tracking request
-                updated_shipment = find_shipment_by_container(actual_container_number)
-                
+                updated_shipment = find_shipment_by_container(bol_num)
+
                 if updated_shipment:
                     # Now get the shipment data
                     shipment_details = get_shipment_details(updated_shipment['id'])
                     if shipment_details:
-                        current_app.logger.info(f"Shipment data became available after {attempt + 1} attempts")
                         return {
-                            'container_number': container_number,
-                            'actual_container': actual_container_number,
+                            'fdc_container': fdc_container,
+                            'bol_num': bol_num,
                             'shipment_id': updated_shipment['id'],
                             'tracking_id': tracking_id,
                             'raw_json': shipment_details,
                             'source': 'shipments_api_after_request'
                         }
-            
-            current_app.logger.warning(f"Shipment data not available after {max_wait_attempts} attempts, returning tracking request info")
+
 
             # If we still can't get shipment data, return tracking request info
             return {
-                'container_number': container_number,
-                'actual_container': actual_container_number,
+                'fdc_container': fdc_container,
+                'bol_num': bol_num,
                 'tracking_id': tracking_id,
                 'raw_json': {'tracking_request_created': True, 'message': 'Tracking request created. Container may appear in shipments soon.'},
                 'source': 'tracking_request_only'
             }
-        
+
     except Exception as e:
-        current_app.logger.error(f"Error getting tracking info for {container_number}: {e}")
+        current_app.logger.error(f"Error getting tracking info for {fdc_container}: {e}")
+    except Exception as e:
+        current_app.logger.error(f"Error getting tracking info for {fdc_container}: {e}")
         return {
             'error': str(e),
-            'container_number': container_number,
+            'fdc_container': fdc_container,
+            'raw_json': None
+        }
+
+def get_container_tracking_info_for_new_container(bol_num):
+    """Get tracking information for a new container using the actual container number directly"""
+    try:
+        # First check if the container is already being tracked (exists in shipments)
+        existing_shipment = find_shipment_by_container(bol_num)
+
+        if existing_shipment:
+            # Container is already being tracked - get data directly from shipments
+            shipment_details = get_shipment_details(existing_shipment['id'])
+
+            if shipment_details:
+                return {
+                    'bol_num': bol_num,
+                    'shipment_id': existing_shipment['id'],
+                    'raw_json': shipment_details,
+                    'source': 'shipments_api'
+                }
+            else:
+                return {
+                    'error': 'Failed to retrieve shipment details',
+                    'bol_num': bol_num,
+                    'shipment_id': existing_shipment['id'],
+                    'raw_json': None
+                }
+        else:
+            # Container not found in shipments - create a tracking request
+
+            # First check if there's already an existing tracking request for this container
+            existing_tracking_id = find_existing_tracking_request(bol_num)
+
+            if existing_tracking_id:
+                tracking_id = existing_tracking_id
+            else:
+                # No existing tracking request found, create a new one
+                tracking_id = create_terminal49_tracking_request(bol_num)
+
+            if not tracking_id:
+                return {
+                    'error': f'Unable to create tracking request for container {bol_num}. This container may not be trackable through Terminal49 or may be using an unsupported shipping line.',
+                    'bol_num': bol_num,
+                    'raw_json': None
+                }
+
+            # Wait for the tracking request to be processed and shipment data to become available
+            import time
+            max_wait_attempts = 5
+            wait_interval = 2  # seconds between checks
+
+            for attempt in range(max_wait_attempts):
+                time.sleep(wait_interval)
+
+                # Check if the container now appears in shipments after creating tracking request
+                updated_shipment = find_shipment_by_container(bol_num)
+
+                if updated_shipment:
+                    # Now get the shipment data
+                    shipment_details = get_shipment_details(updated_shipment['id'])
+                    if shipment_details:
+                        return {
+                            'bol_num': bol_num,
+                            'shipment_id': updated_shipment['id'],
+                            'tracking_id': tracking_id,
+                            'raw_json': shipment_details,
+                            'source': 'shipments_api_after_request'
+                        }
+
+            current_app.logger.warning(f"Shipment data not available after {max_wait_attempts} attempts, returning tracking request info")
+
+            # If we still can't get shipment data, return tracking request info
+            return {
+                'bol_num': bol_num,
+                'tracking_id': tracking_id,
+                'raw_json': {'tracking_request_created': True, 'message': 'Tracking request created. Container may appear in shipments soon.'},
+                'source': 'tracking_request_only'
+            }
+
+    except Exception as e:
+        current_app.logger.error(f"Error getting tracking info for new container {bol_num}: {e}")
+        return {
+            'error': str(e),
+            'bol_num': bol_num,
             'raw_json': None
         }
 
@@ -952,15 +1013,16 @@ def boat_data():
         # Get current containers from Google Sheets to check for missing ones
         try:
             df_current = pd.read_csv(GOOGLE_SHEETS_URL)
-            current_containers = set(df_current['Container #'].dropna().tolist())
+            current_containers = set(df_current['FDC container'].dropna().tolist())
             containers_in_dropbox = set(container_files.keys())
             new_containers = containers_in_dropbox - current_containers
-            
+
             # Batch add new containers to Google Sheets first
             if new_containers:
-                added_containers = add_multiple_containers_to_sheets(list(new_containers))
-                if added_containers:
-                    current_app.logger.info(f"Successfully added {len(added_containers)} containers")
+                # Sort containers by container number (small to large) before adding
+                sorted_new_containers = sorted(list(new_containers))
+                added_containers = add_multiple_containers_to_sheets(sorted_new_containers)
+
         except Exception as e:
             current_app.logger.error(f"Error checking/updating Google Sheets: {e}")
             # Continue with data fetching even if update fails
@@ -973,8 +1035,11 @@ def boat_data():
             current_app.logger.error(f"Error fetching data from Google Sheets: {e}")
             return jsonify({'error': str(e)}), 500
 
+        # Store the fetch timestamp for Last Updated column
+        fetch_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
         # Map columns directly by name
-        df_cleaned = df[['Container #', 'COMPANY', 'CONTAINER Tracking', 'Memo', 'Exam', 'ETA', 'RCD']].copy()
+        df_cleaned = df[['FDC container', 'BOL NUM', 'Memo', 'Exam', 'ETA', 'ATA', 'RCD']].copy()
         
         # Combine Memo and Exam columns with "-" separator
         def combine_memo_exam(row):
@@ -992,12 +1057,9 @@ def boat_data():
         
         df_cleaned['MEMO'] = df_cleaned.apply(combine_memo_exam, axis=1)
         
-        # Add Reserved column (empty for now)
-        df_cleaned['Reserved'] = ''
-        
         # Rename and reorder columns
-        df_cleaned = df_cleaned.rename(columns={'Container #': 'container', 'CONTAINER Tracking': 'link', 'COMPANY': 'company'})
-        df_cleaned = df_cleaned[['Reserved', 'container', 'link', 'company', 'ETA', 'RCD', 'MEMO']]
+        df_cleaned = df_cleaned.rename(columns={'FDC container': 'container', 'BOL NUM': 'link', 'ETA': 'Dennis ETA', 'ATA': 'pod_ata_at'})
+        df_cleaned = df_cleaned[['container', 'link', 'Dennis ETA', 'pod_ata_at', 'RCD', 'MEMO']]
         
 
         # Convert dates - handle both Excel serial dates and date strings
@@ -1016,7 +1078,8 @@ def boat_data():
             except:
                 return str(date_val)
 
-        df_cleaned['ETA'] = df_cleaned['ETA'].apply(convert_date)
+        df_cleaned['Dennis ETA'] = df_cleaned['Dennis ETA'].apply(convert_date)
+        df_cleaned['pod_ata_at'] = df_cleaned['pod_ata_at'].apply(convert_date)
         df_cleaned['RCD'] = df_cleaned['RCD'].apply(convert_date)
 
         # Get the last 30 rows first, then sort by 'container' in descending order
@@ -1089,20 +1152,25 @@ def boat_data():
                 rcvd_qty = rcvd_lookup.get(container_raw)
                 
                 if rcvd_qty is not None and rcvd_qty > 0:
-                    df_cleaned.at[index, 'Status'] = '📍landed📍'
-                    # Hide process button for landed containers
+                    df_cleaned.at[index, 'Status'] = '✔️827✔️'
+                    # Hide process button and CSV buttons for landed containers
                     df_cleaned.at[index, 'can_process'] = False
+                    df_cleaned.at[index, 'has_styles_csv'] = False
+                    df_cleaned.at[index, 'has_po_csv'] = False
                     # Store received date for Google Sheets update
                     received_date = date_lookup.get(container_raw, '')
                     if received_date:
                         landed_containers_with_dates[container_raw] = received_date
                 elif rcvd_qty is not None and rcvd_qty == 0:
                     df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
-                    # Hide process button for ocean containers
+                    # Hide process button and CSV buttons for ocean containers
                     df_cleaned.at[index, 'can_process'] = False
+                    df_cleaned.at[index, 'has_styles_csv'] = False
+                    df_cleaned.at[index, 'has_po_csv'] = False
                 else:
                     df_cleaned.at[index, 'Status'] = '🔄upload🔄'
                     # Keep can_process as set earlier (based on Dropbox file existence)
+                    # Keep has_styles_csv and has_po_csv as set earlier (based on file existence)
         
         # Close database connection
         conn.close()
@@ -1116,6 +1184,9 @@ def boat_data():
 
         # Replace NaN values with empty strings for JSON serialization
         df_cleaned = df_cleaned.fillna('')
+        
+        # Set Last Updated timestamp for all containers to current fetch time
+        df_cleaned['last_updated'] = fetch_timestamp
         
         # Fetch Terminal49 shipment data and create tracking requests for containers without shipments
         try:
@@ -1141,66 +1212,25 @@ def boat_data():
             
             # Create tracking requests for containers that need them (limit to avoid rate limits)
             if containers_needing_tracking:
-                current_app.logger.info(f"Creating tracking requests for {len(containers_needing_tracking)} containers without shipments")
                 created_count = 0
                 failed_containers = []
                 for container_num in containers_needing_tracking[:50]:  # Limit to 50 at a time to avoid rate limits
                     try:
                         tracking_id = create_terminal49_tracking_request(container_num)
                         if tracking_id:
-                            current_app.logger.info(f"Created tracking request for {container_num}: {tracking_id}")
                             created_count += 1
                         else:
-                            current_app.logger.warning(f"Failed to create tracking request for {container_num}")
                             failed_containers.append(container_num)
                     except Exception as e:
                         current_app.logger.error(f"Error creating tracking request for {container_num}: {e}")
                         failed_containers.append(container_num)
                 
-                # If we created any tracking requests, wait and verify they were recorded
-                if created_count > 0:
-                    current_app.logger.info(f"Created {created_count} tracking requests, waiting to verify...")
-                    import time
-                    
-                    # Wait longer and retry verification a few times
-                    verified_count = 0
-                    max_verification_attempts = 3
-                    
-                    for attempt in range(max_verification_attempts):
-                        wait_time = 5 * (attempt + 1)  # 5s, 10s, 15s
-                        current_app.logger.info(f"Verification attempt {attempt + 1}/{max_verification_attempts}, waiting {wait_time} seconds...")
-                        time.sleep(wait_time)
-                        
-                        # Re-fetch shipments to verify the new containers are recorded
-                        try:
-                            updated_shipments_data = get_terminal49_shipments()
-                            if updated_shipments_data and 'data' in updated_shipments_data:
-                                updated_shipment_lookup = {}
-                                for shipment in updated_shipments_data['data']:
-                                    attrs = shipment.get('attributes', {})
-                                    bill_of_lading = attrs.get('bill_of_lading_number', '')
-                                    if bill_of_lading:
-                                        updated_shipment_lookup[bill_of_lading] = shipment
-                                
-                                verified_count = 0
-                                for container_num in containers_needing_tracking[:50]:
-                                    if container_num in updated_shipment_lookup:
-                                        verified_count += 1
-                                
-                                current_app.logger.info(f"Verification attempt {attempt + 1}: {verified_count}/{created_count} containers recorded")
-                                
-                                # If all containers are verified, break early
-                                if verified_count == created_count:
-                                    break
-                                
-                        except Exception as e:
-                            current_app.logger.error(f"Error in verification attempt {attempt + 1}: {e}")
-                    
-                    current_app.logger.info(f"Final verification: {verified_count}/{created_count} containers successfully recorded in Terminal49 shipments")
-                    if failed_containers:
-                        current_app.logger.warning(f"Additionally, {len(failed_containers)} containers failed to create tracking requests: {failed_containers[:5]}{'...' if len(failed_containers) > 5 else ''}")
+                # Log summary of tracking request creation
+                if failed_containers:
+                    current_app.logger.warning(f"Failed to create tracking requests for {len(failed_containers)} containers: {failed_containers[:5]}{'...' if len(failed_containers) > 5 else ''}")
             
-            # Add shipment data to the response
+            # Add shipment data to the response and collect tracking data for Google Sheets update
+            containers_with_tracking_data = {}
             for index, row in df_cleaned.iterrows():
                 container_num = row['container']
                 actual_container = row.get('link', '').strip()
@@ -1211,24 +1241,69 @@ def boat_data():
                     df_cleaned.at[index, 'shipment_id'] = shipment.get('id')
                     # Add key shipment attributes
                     attrs = shipment.get('attributes', {})
-                    df_cleaned.at[index, 'shipping_line'] = attrs.get('shipping_line_name', '')
+                    shipping_line = attrs.get('shipping_line_name', '')
+                    # Replace "Orient Overseas Container Line" with "OOCL"
+                    if shipping_line == 'Orient Overseas Container Line':
+                        shipping_line = 'OOCL'
+                    real_eta = get_los_angeles_time(attrs.get('pod_eta_at', ''))
+                    # Strip time part, keep only date
+                    if real_eta and ' ' in real_eta:
+                        real_eta = real_eta.split(' ')[0]
+                    vessel_name = attrs.get('pod_vessel_name', '')
+                    voyage_number = attrs.get('pod_voyage_number', '')
+                    # Combine vessel name and voyage number for voyage field
+                    voyage = f"{vessel_name} {voyage_number}".strip() if vessel_name or voyage_number else ''
+                    
+                    df_cleaned.at[index, 'shipping_line'] = shipping_line
                     df_cleaned.at[index, 'pod_eta'] = attrs.get('pod_eta_at', '')
-                    df_cleaned.at[index, 'voyage'] = attrs.get('pod_voyage_number', '')
+                    df_cleaned.at[index, 'voyage'] = voyage
                     # Add new columns with Los Angeles time
-                    df_cleaned.at[index, 'real_eta'] = get_los_angeles_time(attrs.get('pod_eta_at', ''))
-                    df_cleaned.at[index, 'last_updated'] = get_los_angeles_time(attrs.get('line_tracking_last_succeeded_at', ''))
+                    df_cleaned.at[index, 'Auto ETA'] = real_eta
+                    df_cleaned.at[index, 'ship_name'] = vessel_name
+                    
+                    # Collect tracking data for Google Sheets update
+                    containers_with_tracking_data[container_num] = {
+                        'shipping_line': shipping_line,
+                        'real_eta': real_eta,
+                        'voyage': voyage,
+                        'last_updated': fetch_timestamp
+                    }
                 else:
                     df_cleaned.at[index, 'has_shipment_data'] = False
                     df_cleaned.at[index, 'shipment_id'] = ''
                     df_cleaned.at[index, 'shipping_line'] = ''
                     df_cleaned.at[index, 'pod_eta'] = ''
                     df_cleaned.at[index, 'voyage'] = ''
-                    df_cleaned.at[index, 'real_eta'] = ''
-                    df_cleaned.at[index, 'last_updated'] = ''
+                    df_cleaned.at[index, 'Auto ETA'] = ''
+                    df_cleaned.at[index, 'pod_ata_at'] = ''
+                    df_cleaned.at[index, 'ship_name'] = ''
         
         except Exception as e:
             current_app.logger.error(f"Error fetching Terminal49 data: {e}")
             # Continue without Terminal49 data if there's an error
+        
+        # Update Google Sheets with tracking data for containers that have shipment data
+        if containers_with_tracking_data:
+            update_tracking_data_in_sheets(containers_with_tracking_data)
+        
+        # Update Status column based on new logic: Auto ETA/Auto Arrv/internal RCD
+        for index, row in df_cleaned.iterrows():
+            auto_eta = str(row.get('Auto ETA', '')).strip()
+            auto_arrv = str(row.get('pod_ata_at', '')).strip()
+            internal_rcd = str(row.get('RCD', '')).strip()
+            
+            if auto_eta:
+                # If Auto ETA has value, it's ocean
+                df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
+            elif auto_arrv and not internal_rcd:
+                # If Auto Arrv has value and internal RCD is empty, it's at port
+                df_cleaned.at[index, 'Status'] = '⚓port⚓'
+            else:
+                # Otherwise, keep the existing status (landed or upload)
+                pass
+        
+        # Update Last Updated column for ALL containers with the fetch timestamp
+        update_last_updated_for_all_containers(df_cleaned['container'].tolist(), fetch_timestamp)
         
         # Log columns being sent for debugging
         
@@ -1289,19 +1364,76 @@ def process_container(container_number):
         current_app.logger.error(f"Error processing container {container_number}: {e}")
         return jsonify({'error': str(e)}), 500
 
-@boat_service_bp.route('/boat/tracking/<container_number>')
-def get_container_tracking(container_number):
+@boat_service_bp.route('/boat/update_dennis_eta', methods=['POST'])
+def update_dennis_eta():
+    """Update Dennis ETA for a container in Google Sheets"""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        container = data.get('container')
+        dennis_eta = data.get('dennis_eta', '').strip()
+        
+        if not container:
+            return jsonify({'success': False, 'error': 'Container number is required'}), 400
+        
+        # Get current data from Google Sheets to find the original value
+        try:
+            df = pd.read_csv(GOOGLE_SHEETS_URL)
+            matching_row = df[df['FDC container'] == container]
+            if matching_row.empty:
+                return jsonify({'success': False, 'error': 'Container not found in Google Sheets'}), 404
+            
+            original_value = str(matching_row['ETA'].iloc[0]) if pd.notna(matching_row['ETA'].iloc[0]) else ''
+            
+        except Exception as e:
+            current_app.logger.error(f"Error reading Google Sheets: {e}")
+            return jsonify({'success': False, 'error': 'Failed to read current data'}), 500
+        
+        # Update Google Sheets
+        client = get_sheets_client()
+        if not client:
+            return jsonify({'success': False, 'error': 'Failed to connect to Google Sheets'}), 500
+        
+        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
+        
+        # Get all data at once
+        all_data = sheet.get_all_values()
+        
+        # Find the row for this container
+        for row_idx, row in enumerate(all_data):
+            if len(row) >= 1 and row[0] == container:
+                sheet_row = row_idx + 1  # 1-based indexing
+                
+                # Update column E (ETA column, 0-indexed as 4)
+                sheet.update(f'E{sheet_row}', [[dennis_eta]])
+                
+                current_app.logger.info(f"Updated Dennis ETA for container {container} from '{original_value}' to '{dennis_eta}'")
+                return jsonify({
+                    'success': True,
+                    'original_value': original_value
+                })
+        
+        return jsonify({'success': False, 'error': 'Container not found in sheet'}), 404
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating Dennis ETA: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@boat_service_bp.route('/boat/tracking/<fdc_container>')
+def get_container_tracking_popup(fdc_container):
     """Get tracking information for a container and return HTML for popup display"""
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     try:
-        tracking_info = get_container_tracking_info(container_number)
+        tracking_info = get_container_tracking_info(fdc_container)
 
         if 'error' in tracking_info:
             return f"""
             <div class="tracking-popup">
-                <h3>Container Tracking: {container_number}</h3>
+                <h3>Container Tracking: {fdc_container}</h3>
                 <div class="tracking-error">
                     <p>Error: {tracking_info['error']}</p>
                 </div>
@@ -1330,11 +1462,11 @@ def get_container_tracking(container_number):
 
             html = f"""
             <div class="tracking-popup">
-                <h3>Container Tracking: {tracking_info['container_number']}</h3>
+                <h3>Container Tracking: {tracking_info['fdc_container']}</h3>
                 <div class="tracking-info">
                     <div class="tracking-row">
-                        <span class="label">Actual Container:</span>
-                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
+                        <span class="label">BOL NUM:</span>
+                        <span class="value">{tracking_info.get('bol_num', 'N/A')}</span>
                     </div>
                     <div class="tracking-row">
                         <span class="label">Shipping Line:</span>
@@ -1353,8 +1485,16 @@ def get_container_tracking(container_number):
                         <span class="value">{format_datetime(attrs.get('pod_eta_at'))}</span>
                     </div>
                     <div class="tracking-row">
+                        <span class="label">ATA:</span>
+                        <span class="value">{format_datetime(attrs.get('pod_ata_at'))}</span>
+                    </div>
+                    <div class="tracking-row">
                         <span class="label">Departure:</span>
                         <span class="value">{format_datetime(attrs.get('pol_atd_at'))}</span>
+                    </div>
+                    <div class="tracking-row">
+                        <span class="label">Vessel:</span>
+                        <span class="value">{attrs.get('pod_vessel_name', 'N/A')} (IMO: {attrs.get('pod_vessel_imo', 'N/A')})</span>
                     </div>
                     <div class="tracking-row">
                         <span class="label">Voyage:</span>
@@ -1375,28 +1515,11 @@ def get_container_tracking(container_number):
             # Only tracking request created, no shipment data yet
             html = f"""
             <div class="tracking-popup">
-                <h3>Container Tracking: {tracking_info['container_number']}</h3>
+                <h3>Container Tracking: {tracking_info['fdc_container']}</h3>
                 <div class="tracking-info">
                     <div class="tracking-row">
-                        <span class="label">Actual Container:</span>
-                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
-                    </div>
-                    <div class="tracking-row">
-                        <span class="label">Tracking ID:</span>
-                        <span class="value">{tracking_info.get('tracking_id', 'N/A')}</span>
-                    </div>
-                </div>
-            </div>
-            """
-        elif source == 'tracking_request_only':
-            # Only tracking request created, no shipment data yet
-            html = f"""
-            <div class="tracking-popup">
-                <h3>Container Tracking: {tracking_info['container_number']}</h3>
-                <div class="tracking-info">
-                    <div class="tracking-row">
-                        <span class="label">Actual Container:</span>
-                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
+                        <span class="label">BOL NUM:</span>
+                        <span class="value">{tracking_info.get('bol_num', 'N/A')}</span>
                     </div>
                     <div class="tracking-row">
                         <span class="label">Tracking ID:</span>
@@ -1422,11 +1545,11 @@ def get_container_tracking(container_number):
 
             html = f"""
             <div class="tracking-popup">
-                <h3>Container Tracking: {tracking_info['container_number']}</h3>
+                <h3>Container Tracking: {tracking_info['fdc_container']}</h3>
                 <div class="tracking-info">
                     <div class="tracking-row">
-                        <span class="label">Actual Container:</span>
-                        <span class="value">{tracking_info.get('actual_container', 'N/A')}</span>
+                        <span class="label">BOL NUM:</span>
+                        <span class="value">{tracking_info.get('bol_num', 'N/A')}</span>
                     </div>
                     <div class="tracking-row">
                         <span class="label">Tracking ID:</span>
@@ -1447,10 +1570,10 @@ def get_container_tracking(container_number):
         return html
 
     except Exception as e:
-        current_app.logger.error(f"Error getting tracking for {container_number}: {e}")
+        current_app.logger.error(f"Error getting tracking for {fdc_container}: {e}")
         return f"""
         <div class="tracking-popup">
-            <h3>Container Tracking: {container_number}</h3>
+            <h3>Container Tracking: {fdc_container}</h3>
             <div class="tracking-error">
                 <p>Error: {str(e)}</p>
             </div>

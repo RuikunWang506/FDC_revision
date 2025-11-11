@@ -76,7 +76,10 @@ def configure_logging(app):
         # Custom filter to ignore HTTP GET and POST requests
         class IgnoreHTTPRequestFilter(logging.Filter):
             def filter(self, record):
-                return not ('GET /' in record.getMessage() or 'POST /' in record.getMessage())
+                message = record.getMessage()
+                # Only filter messages that look like actual HTTP request logs
+                # Pattern: IP - - [timestamp] "METHOD /path HTTP/version" status size
+                return not (' - - [' in message and ('"GET /' in message or '"POST /' in message))
 
         # Add the filter to handlers
         file_handler.addFilter(IgnoreHTTPRequestFilter())
