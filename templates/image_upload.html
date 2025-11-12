@@ -76,17 +76,36 @@
             padding: 0.75rem 2rem;
             font-weight: 600;
         }
+        .image-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .image-thumbnail:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .modal-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
+    {% include 'navbar.html' %}
     <div class="container-fluid py-4">
         <div class="row">
             <div class="col-12">
                 <div class="d-flex align-items-center mb-4">
                     <i class="fas fa-cloud-upload-alt fa-3x text-primary me-3"></i>
                     <div>
-                        <h1 class="mb-1">Image Upload & Organization System</h1>
-                        <p class="text-muted mb-0">Efficiently organize catalog images and product details</p>
+                        <h1 class="mb-1">Image Upload & Organization System / 图片上传和管理系统</h1>
+                        <p class="text-muted mb-0">Efficiently organize catalog images and product details / 高效组织产品目录图和产品细节图</p>
                     </div>
                 </div>
             </div>
@@ -98,7 +117,7 @@
                 <div class="card stats-card">
                     <div class="card-body text-center">
                         <i class="fas fa-images fa-2x mb-2"></i>
-                        <h5 class="card-title">Total Images</h5>
+                        <h5 class="card-title">Total Images / 总图片数</h5>
                         <h3 id="totalImages">163,607</h3>
                     </div>
                 </div>
@@ -107,7 +126,7 @@
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
                         <i class="fas fa-book fa-2x mb-2"></i>
-                        <h5 class="card-title">Catalog Images</h5>
+                        <h5 class="card-title">Catalog Images / 目录图片</h5>
                         <h3 id="catalogImages">4,610</h3>
                     </div>
                 </div>
@@ -116,7 +135,7 @@
                 <div class="card bg-info text-white">
                     <div class="card-body text-center">
                         <i class="fas fa-picture-o fa-2x mb-2"></i>
-                        <h5 class="card-title">Product Details</h5>
+                        <h5 class="card-title">Product Details / 产品细节图</h5>
                         <h3 id="bigPictureImages">132,439</h3>
                     </div>
                 </div>
@@ -125,171 +144,159 @@
                 <div class="card bg-warning text-white">
                     <div class="card-body text-center">
                         <i class="fas fa-dropbox fa-2x mb-2"></i>
-                        <h5 class="card-title">Dropbox Images</h5>
+                        <h5 class="card-title">Dropbox Images / Dropbox图片</h5>
                         <h3 id="dropboxImages">26,558</h3>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Upload Sections -->
+        <!-- Bulk Upload Sections -->
         <div class="row">
-            <!-- Catalog Upload -->
+            <!-- Bulk Catalog Upload -->
             <div class="col-lg-6 mb-4">
                 <div class="card h-100 feature-card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-warning text-dark">
                         <h5 class="mb-0">
-                            <i class="fas fa-book me-2"></i>Catalog Images Upload
+                            <i class="fas fa-images me-2"></i>Bulk Catalog Images Upload / 批量上传产品目录图
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form id="catalogForm" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="catalogSku" class="form-label fw-bold">Product SKU</label>
-                                <input type="text" class="form-control form-control-lg" id="catalogSku" 
-                                       name="sku" placeholder="Enter SKU (e.g., T3305, N1151)" required>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> This will be used for automatic versioning
-                                </small>
-                            </div>
-                            
-                            <div class="upload-zone" id="catalogDropzone">
+                        <form id="bulkCatalogForm" enctype="multipart/form-data">
+                            <div class="upload-zone" id="bulkCatalogDropzone">
                                 <div class="upload-icon">
-                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <i class="fas fa-folder-open"></i>
                                 </div>
-                                <h5>Drop catalog images here</h5>
-                                <p class="text-muted">or click to browse your files</p>
-                                <input type="file" id="catalogFiles" name="catalog_files" 
-                                       multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" style="display: none;">
-                                <button type="button" class="btn btn-outline-primary btn-lg" 
-                                        onclick="document.getElementById('catalogFiles').click()">
-                                    <i class="fas fa-folder-open me-2"></i>Choose Files
-                                </button>
+                                <h5>Drop catalog images or archives here / 拖放目录图或压缩包到此处</h5>
+                                <p class="text-muted">Multiple files, folders, ZIP/RAR archives supported / 支持多个文件、文件夹、ZIP/RAR压缩包</p>
+                                <input type="file" id="bulkCatalogFiles" name="catalog_files" 
+                                       multiple webkitdirectory directory accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp,.zip,.rar" style="display: none;">
+                                <input type="file" id="bulkCatalogFilesOnly" name="catalog_files" 
+                                       multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp,.zip,.rar" style="display: none;">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-warning" 
+                                            onclick="document.getElementById('bulkCatalogFilesOnly').click()">
+                                        <i class="fas fa-file-image me-1"></i>Choose Files / 选择文件
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning" 
+                                            onclick="document.getElementById('bulkCatalogFiles').click()">
+                                        <i class="fas fa-folder me-1"></i>Choose Folder / 选择文件夹
+                                    </button>
+                                </div>
                             </div>
                             
-                            <div class="file-preview" id="catalogPreview"></div>
+                            <div class="file-preview" id="bulkCatalogPreview"></div>
                             
                             <div class="progress-container">
                                 <div class="progress mb-2">
-                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
                                 </div>
-                                <small class="text-muted">Uploading and organizing...</small>
+                                <small class="text-muted">Processing files... / 处理文件中...</small>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary btn-upload w-100">
-                                <i class="fas fa-upload me-2"></i>Upload Catalog Images
+                            <button type="submit" class="btn btn-warning btn-upload w-100">
+                                <i class="fas fa-upload me-2"></i>Upload Bulk Catalog Images / 批量上传目录图
                             </button>
                         </form>
                         
-                        <div id="catalogResults" class="result-alert"></div>
+                        <!-- Preview & Edit Section -->
+                        <div id="bulkCatalogReviewSection" style="display: none;">
+                            <hr class="my-3">
+                            <h6 class="fw-bold"><i class="fas fa-edit me-2"></i>Review & Edit SKUs / 审查和编辑款号</h6>
+                            <div id="bulkCatalogGrid" class="row g-2"></div>
+                            <button type="button" class="btn btn-success w-100 mt-3" onclick="processBulkCatalog()">
+                                <i class="fas fa-check-circle me-2"></i>Confirm & Process All Images / 确认并处理所有图片
+                            </button>
+                        </div>
+                        
+                        <div id="bulkCatalogResults" class="result-alert"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Big Picture Upload -->
+            <!-- Bulk Detail Images Upload -->
             <div class="col-lg-6 mb-4">
                 <div class="card h-100 feature-card">
-                    <div class="card-header bg-success text-white">
+                    <div class="card-header bg-info text-white">
                         <h5 class="mb-0">
-                            <i class="fas fa-images me-2"></i>Product Detail Images
+                            <i class="fas fa-layer-group me-2"></i>Bulk Product Detail Images / 批量上传细节图（按款式分类）
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form id="bigPictureForm" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="bigPictureSku" class="form-label fw-bold">Product SKU</label>
-                                <input type="text" class="form-control form-control-lg" id="bigPictureSku" 
-                                       name="sku" placeholder="Enter SKU (e.g., T3305, N1151)" required>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> Creates organized folder structure
-                                </small>
-                            </div>
-                            
-                            <div class="upload-zone" id="bigPictureDropzone">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Folder Structure / 文件夹结构:</strong> Each TOP-LEVEL folder = one style/SKU.
+                            All images inside (including subfolders) belong to that style. / 每个顶层文件夹=一个款式/款号。里面所有图片（包括子文件夹）都属于该款式。
+                            <br><small><strong>Example / 例子:</strong> t9998/image.jpg + t9998/New folder/image2.jpg → Both are T9998</small>
+                            <br><small><strong>📁 Subfolders:</strong> Use subfolders to organize (colors, angles, etc). All group under top-level style. / 使用子文件夹组织（颜色、角度等）。都归入顶层款式。</small>
+                        </div>
+                        
+                        <form id="bulkDetailForm" enctype="multipart/form-data">
+                            <div class="upload-zone" id="bulkDetailDropzone">
                                 <div class="upload-icon">
-                                    <i class="fas fa-images"></i>
+                                    <i class="fas fa-layer-group"></i>
                                 </div>
-                                <h5>Drop detail images here</h5>
-                                <p class="text-muted">Colors, details, angles, lifestyle shots</p>
-                                <input type="file" id="bigPictureFiles" name="big_picture_files" 
-                                       multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" style="display: none;">
-                                <button type="button" class="btn btn-outline-success btn-lg" 
-                                        onclick="document.getElementById('bigPictureFiles').click()">
-                                    <i class="fas fa-folder-open me-2"></i>Choose Files
-                                </button>
+                                <h5>Drop folders with style names / 拖放按款式命名的文件夹</h5>
+                                <p class="text-muted">Folders, multiple files, or archives / 文件夹、多个文件或压缩包</p>
+                                <input type="file" id="bulkDetailFiles" name="detail_files" 
+                                       multiple webkitdirectory directory style="display: none;">
+                                <input type="file" id="bulkDetailFilesOnly" name="detail_files" 
+                                       multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp,.zip,.rar" style="display: none;">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-info" 
+                                            onclick="document.getElementById('bulkDetailFilesOnly').click()">
+                                        <i class="fas fa-file-image me-1"></i>Choose Files / 选择文件
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info" 
+                                            onclick="document.getElementById('bulkDetailFiles').click()">
+                                        <i class="fas fa-folder-tree me-1"></i>Choose Folders / 选择文件夹
+                                    </button>
+                                </div>
                             </div>
                             
-                            <div class="file-preview" id="bigPicturePreview"></div>
+                            <div class="file-preview" id="bulkDetailPreview"></div>
                             
                             <div class="progress-container">
                                 <div class="progress mb-2">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 0%"></div>
                                 </div>
-                                <small class="text-muted">Uploading and organizing...</small>
+                                <small class="text-muted">Organizing by style... / 按款式整理中...</small>
                             </div>
                             
-                            <button type="submit" class="btn btn-success btn-upload w-100">
-                                <i class="fas fa-upload me-2"></i>Upload Detail Images
+                            <button type="submit" class="btn btn-info btn-upload w-100">
+                                <i class="fas fa-upload me-2"></i>Upload Bulk Detail Images / 批量上传细节图
                             </button>
                         </form>
                         
-                        <div id="bigPictureResults" class="result-alert"></div>
+                        <!-- Preview & Edit Section -->
+                        <div id="bulkDetailReviewSection" style="display: none;">
+                            <hr class="my-3">
+                            <h6 class="fw-bold"><i class="fas fa-check me-2"></i>Review Styles / 审查款式</h6>
+                            <div id="bulkDetailStylesList"></div>
+                            <button type="button" class="btn btn-success w-100 mt-3" onclick="processBulkDetail()">
+                                <i class="fas fa-check-circle me-2"></i>Confirm & Process All Styles / 确认并处理所有款式
+                            </button>
+                        </div>
+                        
+                        <div id="bulkDetailResults" class="result-alert"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ZIP Upload Section -->
-        <div class="row">
+        <!-- Legacy ZIP Upload Section (hidden by default for backward compatibility) -->
+        <div class="row" style="display: none;">
             <div class="col-12">
                 <div class="card feature-card">
-                    <div class="card-header bg-warning text-dark">
+                    <div class="card-header bg-secondary text-white">
                         <h5 class="mb-0">
-                            <i class="fas fa-file-archive me-2"></i>Bulk ZIP Upload
+                            <i class="fas fa-file-archive me-2"></i>Legacy ZIP Upload (Deprecated)
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <form id="zipForm" enctype="multipart/form-data">
-                                    <div class="upload-zone" id="zipDropzone">
-                                        <div class="upload-icon">
-                                            <i class="fas fa-file-archive"></i>
-                                        </div>
-                                        <h5>Drop ZIP archive here</h5>
-                                        <p class="text-muted">Automatic SKU detection and smart classification</p>
-                                        <input type="file" id="zipFile" name="zip_file" 
-                                               accept=".zip" style="display: none;">
-                                        <button type="button" class="btn btn-outline-warning btn-lg" 
-                                                onclick="document.getElementById('zipFile').click()">
-                                            <i class="fas fa-archive me-2"></i>Choose ZIP File
-                                        </button>
-                                    </div>
-                                    
-                                    <div class="progress-container">
-                                        <div class="progress mb-2">
-                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
-                                        </div>
-                                        <small class="text-muted">Processing archive...</small>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-warning btn-upload">
-                                        <i class="fas fa-magic me-2"></i>Process ZIP Archive
-                                    </button>
-                                </form>
-                            </div>
-                            <div class="col-md-4">
-                                <h6 class="fw-bold">ZIP Processing Features:</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success me-2"></i>Automatic SKU detection</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Smart image classification</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Folder structure preservation</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Duplicate handling</li>
-                                </ul>
-                            </div>
+                        <div class="alert alert-warning">
+                            This feature has been replaced by Bulk Catalog and Bulk Detail uploads above.
                         </div>
-                        
-                        <div id="zipResults" class="result-alert"></div>
                     </div>
                 </div>
             </div>
@@ -300,15 +307,14 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-sync me-2"></i>System Actions</h6>
+                        <h6 class="mb-0"><i class="fas fa-sync me-2"></i>System Actions / 系统操作</h6>
                     </div>
                     <div class="card-body">
-                        <button class="btn btn-outline-secondary mb-2" onclick="viewLogs()">
-                            <i class="fas fa-file-alt me-1"></i>View Logs
-                        </button>
+
                         <div class="text-muted small mt-2">
-                            For Dropbox fetching and full DAM sync, use the DAM page.
-                            <a href="/dam/">Open DAM Control Panel</a>
+                            For Dropbox fetching and full DAM sync, use the DAM page. / 
+                            要使用Dropbox获取和完整DAM同步，请使用DAM页面。
+                            <a href="/dam/">Open DAM Control Panel / 打开DAM控制面板</a>
                         </div>
                     </div>
                 </div>
@@ -316,16 +322,38 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions</h6>
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions / 说明</h6>
                     </div>
                     <div class="card-body">
                         <small>
-                            <strong>Catalog Images:</strong> Product specs, dimensions, white background<br>
-                            <strong>Detail Images:</strong> Close-ups, colors, lifestyle shots<br>
-                            <strong>ZIP Upload:</strong> Bulk processing with automatic organization<br>
-                            <em>Note:</em> Uploads here are automatically recorded in the DAM database.
+                            <strong>Catalog Images / 目录图片:</strong> Main product images with white background, specs, dimensions. Supports versioning (T9998.jpg, T9998_v2.jpg, etc.) / 主产品图片，白色背景、规格、尺寸。支持版本控制<br>
+                            <strong>Detail Images / 细节图片:</strong> Organized by style folders. Each folder name = SKU, images inside belong to that style. Duplicate filenames get auto-suffix (_01, _02, etc.) / 按款式文件夹组织。文件夹名=款号，里面的图片属于该款式。重复文件名自动添加后缀<br>
+                            <strong>Supported Formats / 支持格式:</strong> JPG, PNG, BMP, TIFF, WEBP + ZIP/RAR archives / 图片格式及ZIP/RAR压缩包<br>
+                            <strong>Upload Methods / 上传方式:</strong> Drag & drop, select multiple files, select folders, or upload archives / 拖放、选择多个文件、选择文件夹或上传压缩包<br>
+                            <strong>Upload Time / 上传时间:</strong> ~1-2 seconds per MB (167MB ≈ 3-5 minutes). Archives take longer due to extraction. / 每MB约1-2秒（167MB约3-5分钟）。压缩包因解压需更长时间。<br>
+                            <em>Note / 注意:</em> All uploads are automatically recorded in the DAM database with automatic SKU detection. / 
+                            所有上传都会自动记录到DAM数据库，并自动识别款号。
                         </small>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Enlarge Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Image Preview / 图片预览</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center bg-dark">
+                    <img id="modalImage" src="" alt="Preview" class="modal-image">
+                </div>
+                <div class="modal-footer">
+                    <span id="modalImageInfo" class="me-auto text-muted"></span>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close / 关闭</button>
                 </div>
             </div>
         </div>
@@ -532,10 +560,701 @@
             }, 5000);
         }
         
-        // Initialize upload zones
-        setupUploadZone('catalogForm', 'catalogFiles', 'catalogDropzone', '/upload_catalog', 'catalogResults', 'catalogPreview');
-        setupUploadZone('bigPictureForm', 'bigPictureFiles', 'bigPictureDropzone', '/upload_big_pictures', 'bigPictureResults', 'bigPicturePreview');
-        setupUploadZone('zipForm', 'zipFile', 'zipDropzone', '/upload_zip', 'zipResults', null);
+        // Global variables for ZIP processing (legacy)
+        let currentZipSession = null;
+        let zipImageData = [];
+        
+        function setupZipUploadWithPreview() {
+            const form = document.getElementById('zipForm');
+            if (!form) return; // Skip if form doesn't exist
+            
+            const fileInput = document.getElementById('zipFile');
+            const dropzone = document.getElementById('zipDropzone');
+            const resultContainer = document.getElementById('zipResults');
+            
+            // Drag and drop events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+            });
+            
+            dropzone.addEventListener('drop', function(e) {
+                const files = e.dataTransfer.files;
+                fileInput.files = files;
+            }, false);
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                const progressContainer = form.querySelector('.progress-container');
+                const progressBar = form.querySelector('.progress-bar');
+                
+                progressContainer.style.display = 'block';
+                resultContainer.innerHTML = '';
+                document.getElementById('zipPreviewSection').style.display = 'none';
+                
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress > 90) progress = 90;
+                    progressBar.style.width = progress + '%';
+                }, 200);
+                
+                try {
+                    const response = await fetch('/upload_zip', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        currentZipSession = result.session_id;
+                        zipImageData = result.images;
+                        displayZipPreview(result.images);
+                        showResult(resultContainer, result.message, 'success');
+                    } else {
+                        showResult(resultContainer, result.message, 'error');
+                    }
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    showResult(resultContainer, 'Upload failed: ' + error.message, 'error');
+                } finally {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }, 2000);
+                }
+            });
+        }
+        
+        function displayZipPreview(images) {
+            const previewSection = document.getElementById('zipPreviewSection');
+            const gridContainer = document.getElementById('imagePreviewGrid');
+            
+            gridContainer.innerHTML = '';
+            
+            images.forEach((img, index) => {
+                const confidenceBadge = img.confidence === 'high' ? 'success' : 'warning';
+                const typeIcon = img.suggested_type === 'catalog' ? 'fa-file-alt' : 'fa-image';
+                const thumbnailUrl = `/zip_thumbnail/${currentZipSession}/${encodeURIComponent(img.path)}`;
+                
+                // Escape special characters for use in HTML attributes
+                const escapedFilename = img.filename.replace(/'/g, "\\'");
+                const escapedSku = img.sku.replace(/'/g, "\\'");
+                const escapedType = img.suggested_type.replace(/'/g, "\\'");
+                const escapedPath = img.path.replace(/'/g, "\\'");
+                
+                const card = document.createElement('div');
+                card.className = 'col-md-4 col-lg-3';
+                card.innerHTML = `
+                    <div class="card h-100 image-preview-card" data-index="${index}">
+                        <img src="${thumbnailUrl}" 
+                             class="image-thumbnail" 
+                             alt="${img.filename}"
+                             onclick="showImageModal('${thumbnailUrl}', '${escapedFilename}', '${escapedSku}', '${escapedType}')"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EError%3C/text%3E%3C/svg%3E';"
+                             loading="lazy">
+                        <div class="card-body">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input image-select-checkbox" type="checkbox" value="${index}" id="img_${index}">
+                                <label class="form-check-label fw-bold" for="img_${index}">
+                                    ${img.filename}
+                                </label>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <span class="badge bg-${confidenceBadge}">
+                                    <i class="fas ${typeIcon} me-1"></i>${img.suggested_type}
+                                </span>
+                                <small class="text-muted ms-2">${img.text_percentage}% text</small>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <label class="form-label small mb-1">Type:</label>
+                                <select class="form-select form-select-sm type-select" data-index="${index}">
+                                    <option value="catalog" ${img.suggested_type === 'catalog' ? 'selected' : ''}>Catalog</option>
+                                    <option value="big_picture" ${img.suggested_type === 'big_picture' ? 'selected' : ''}>Big Picture</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <label class="form-label small mb-1">SKU:</label>
+                                <input type="text" class="form-control form-control-sm sku-input" 
+                                       data-index="${index}" value="${img.sku}" 
+                                       placeholder="Enter SKU">
+                            </div>
+                            
+                            <div class="small text-muted">
+                                <i class="fas fa-folder me-1"></i>${escapedPath}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                gridContainer.appendChild(card);
+            });
+            
+            previewSection.style.display = 'block';
+            
+            // Scroll to preview
+            previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function selectAllImages() {
+            document.querySelectorAll('.image-select-checkbox').forEach(cb => cb.checked = true);
+        }
+        
+        function deselectAllImages() {
+            document.querySelectorAll('.image-select-checkbox').forEach(cb => cb.checked = false);
+        }
+        
+        function applyBulkChanges() {
+            const selectedCheckboxes = document.querySelectorAll('.image-select-checkbox:checked');
+            const newType = document.getElementById('bulkTypeChange').value;
+            const newSku = document.getElementById('bulkSkuChange').value.trim().toUpperCase();
+            
+            if (!newType && !newSku) {
+                alert('Please select a type or enter a SKU to apply');
+                return;
+            }
+            
+            let count = 0;
+            selectedCheckboxes.forEach(checkbox => {
+                const index = checkbox.value;
+                
+                if (newType) {
+                    const typeSelect = document.querySelector(`.type-select[data-index="${index}"]`);
+                    if (typeSelect) {
+                        typeSelect.value = newType;
+                        count++;
+                    }
+                }
+                
+                if (newSku) {
+                    const skuInput = document.querySelector(`.sku-input[data-index="${index}"]`);
+                    if (skuInput) {
+                        skuInput.value = newSku;
+                    }
+                }
+            });
+            
+            showSystemAction(`Applied changes to ${count} selected images`, 'success');
+            
+            // Clear bulk inputs
+            document.getElementById('bulkTypeChange').value = '';
+            document.getElementById('bulkSkuChange').value = '';
+        }
+        
+        async function processZipImages() {
+            if (!currentZipSession) {
+                alert('No ZIP session active');
+                return;
+            }
+            
+            // Collect all image data with user edits
+            const images = [];
+            zipImageData.forEach((img, index) => {
+                const typeSelect = document.querySelector(`.type-select[data-index="${index}"]`);
+                const skuInput = document.querySelector(`.sku-input[data-index="${index}"]`);
+                
+                images.push({
+                    path: img.path,
+                    sku: skuInput ? skuInput.value.trim().toUpperCase() : img.sku,
+                    type: typeSelect ? typeSelect.value : img.suggested_type
+                });
+            });
+            
+            // Validate
+            const invalidImages = images.filter(img => !img.sku || img.sku === 'UNKNOWN');
+            if (invalidImages.length > 0) {
+                if (!confirm(`${invalidImages.length} images have invalid SKUs. Continue anyway?`)) {
+                    return;
+                }
+            }
+            
+            const resultContainer = document.getElementById('zipResults');
+            resultContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Processing images...</div>';
+            
+            try {
+                const response = await fetch('/process_zip_images', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: currentZipSession,
+                        images: images
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(resultContainer, result.message, 'success');
+                    
+                    if (result.processed && result.processed.length > 0) {
+                        showFileList(resultContainer, result.processed);
+                    }
+                    
+                    if (result.errors && result.errors.length > 0) {
+                        const errorHtml = result.errors.map(err => `<li>${err}</li>`).join('');
+                        resultContainer.innerHTML += `
+                            <div class="alert alert-warning mt-2">
+                                <strong>Errors:</strong>
+                                <ul class="mb-0">${errorHtml}</ul>
+                            </div>
+                        `;
+                    }
+                    
+                    // Reset form
+                    document.getElementById('zipForm').reset();
+                    document.getElementById('zipPreviewSection').style.display = 'none';
+                    currentZipSession = null;
+                    zipImageData = [];
+                } else {
+                    showResult(resultContainer, result.message, 'error');
+                }
+            } catch (error) {
+                showResult(resultContainer, 'Processing failed: ' + error.message, 'error');
+            }
+        }
+        
+        function showImageModal(imageUrl, filename, sku, type) {
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            const modalImage = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('imageModalLabel');
+            const modalInfo = document.getElementById('modalImageInfo');
+            
+            modalImage.src = imageUrl;
+            modalTitle.textContent = filename;
+            modalInfo.innerHTML = `<strong>SKU:</strong> ${sku} | <strong>Type:</strong> ${type}`;
+            
+            modal.show();
+        }
+        
+        // ===== NEW BULK UPLOAD FUNCTIONALITY =====
+        
+        // Global variables for bulk uploads
+        let currentBulkCatalogSession = null;
+        let bulkCatalogImageData = [];
+        let currentBulkDetailSession = null;
+        let bulkDetailStyleData = {};
+        
+        // Setup bulk catalog upload
+        function setupBulkCatalogUpload() {
+            const form = document.getElementById('bulkCatalogForm');
+            const fileInputFolder = document.getElementById('bulkCatalogFiles');
+            const fileInputOnly = document.getElementById('bulkCatalogFilesOnly');
+            const dropzone = document.getElementById('bulkCatalogDropzone');
+            const preview = document.getElementById('bulkCatalogPreview');
+            
+            // Drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+            });
+            
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInputOnly.files = files;
+                updatePreview(files, preview);
+            }, false);
+            
+            fileInputFolder.addEventListener('change', function() {
+                updatePreview(this.files, preview);
+            });
+            
+            fileInputOnly.addEventListener('change', function() {
+                updatePreview(this.files, preview);
+            });
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const files = fileInputFolder.files.length > 0 ? fileInputFolder.files : fileInputOnly.files;
+                if (files.length === 0) {
+                    showSystemAction('Please select files or folders to upload', 'error');
+                    return;
+                }
+                
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('catalog_files', files[i]);
+                }
+                
+                const progressContainer = form.querySelector('.progress-container');
+                const progressBar = form.querySelector('.progress-bar');
+                const resultContainer = document.getElementById('bulkCatalogResults');
+                
+                progressContainer.style.display = 'block';
+                
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress > 85) progress = 85;
+                    progressBar.style.width = progress + '%';
+                }, 300);
+                
+                try {
+                    const response = await fetch('/upload_bulk_catalog', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.images) {
+                        currentBulkCatalogSession = result.session_id;
+                        bulkCatalogImageData = result.images;
+                        displayBulkCatalogReview(result.images);
+                        showSystemAction(result.message, 'success');
+                    } else {
+                        showResult(resultContainer, result.message, 'error');
+                    }
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    showResult(resultContainer, 'Upload failed: ' + error.message, 'error');
+                } finally {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }, 1500);
+                }
+            });
+        }
+        
+        function displayBulkCatalogReview(images) {
+            const reviewSection = document.getElementById('bulkCatalogReviewSection');
+            const gridContainer = document.getElementById('bulkCatalogGrid');
+            
+            gridContainer.innerHTML = '';
+            
+            images.forEach((img, index) => {
+                const thumbnailUrl = `/bulk_catalog_thumbnail/${currentBulkCatalogSession}/${encodeURIComponent(img.path)}`;
+                
+                const card = document.createElement('div');
+                card.className = 'col-md-3';
+                card.innerHTML = `
+                    <div class="card h-100">
+                        <img src="${thumbnailUrl}" class="card-img-top" alt="${img.filename}" 
+                             style="height: 120px; object-fit: cover;"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22120%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22120%22/%3E%3C/svg%3E';">
+                        <div class="card-body p-2">
+                            <small class="d-block text-truncate mb-1" title="${img.filename}">${img.filename}</small>
+                            <input type="text" class="form-control form-control-sm sku-input-catalog" 
+                                   data-index="${index}" value="${img.sku}" placeholder="SKU">
+                        </div>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+            
+            reviewSection.style.display = 'block';
+            reviewSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        async function processBulkCatalog() {
+            if (!currentBulkCatalogSession) {
+                alert('No session active');
+                return;
+            }
+            
+            const images = bulkCatalogImageData.map((img, index) => {
+                const skuInput = document.querySelector(`.sku-input-catalog[data-index="${index}"]`);
+                return {
+                    path: img.path,
+                    sku: skuInput ? skuInput.value.trim().toUpperCase() : img.sku
+                };
+            });
+            
+            const resultContainer = document.getElementById('bulkCatalogResults');
+            resultContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Processing catalog images...</div>';
+            
+            try {
+                const response = await fetch('/process_bulk_catalog', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentBulkCatalogSession,
+                        images: images
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(resultContainer, result.message, 'success');
+                    if (result.processed) showFileList(resultContainer, result.processed);
+                    if (result.errors && result.errors.length > 0) {
+                        const errorHtml = result.errors.map(err => `<li>${err}</li>`).join('');
+                        resultContainer.innerHTML += `<div class="alert alert-warning mt-2"><strong>Errors:</strong><ul class="mb-0">${errorHtml}</ul></div>`;
+                    }
+                    
+                    document.getElementById('bulkCatalogForm').reset();
+                    document.getElementById('bulkCatalogPreview').innerHTML = '';
+                    document.getElementById('bulkCatalogReviewSection').style.display = 'none';
+                    currentBulkCatalogSession = null;
+                    bulkCatalogImageData = [];
+                } else {
+                    showResult(resultContainer, result.message, 'error');
+                }
+            } catch (error) {
+                showResult(resultContainer, 'Processing failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Setup bulk detail upload
+        function setupBulkDetailUpload() {
+            const form = document.getElementById('bulkDetailForm');
+            const fileInputFolder = document.getElementById('bulkDetailFiles');
+            const fileInputOnly = document.getElementById('bulkDetailFilesOnly');
+            const dropzone = document.getElementById('bulkDetailDropzone');
+            const preview = document.getElementById('bulkDetailPreview');
+            
+            // Drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+            });
+            
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInputOnly.files = files;
+                updatePreview(files, preview);
+            }, false);
+            
+            fileInputFolder.addEventListener('change', function() {
+                updatePreview(this.files, preview);
+            });
+            
+            fileInputOnly.addEventListener('change', function() {
+                updatePreview(this.files, preview);
+            });
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const files = fileInputFolder.files.length > 0 ? fileInputFolder.files : fileInputOnly.files;
+                if (files.length === 0) {
+                    showSystemAction('Please select files or folders to upload', 'error');
+                    return;
+                }
+                
+                // Check if any archives are included
+                let hasArchives = false;
+                for (let i = 0; i < files.length; i++) {
+                    if (files[i].name.toLowerCase().endsWith('.zip') || files[i].name.toLowerCase().endsWith('.rar')) {
+                        hasArchives = true;
+                        break;
+                    }
+                }
+                
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('detail_files', files[i]);
+                    // Send relative path with unique index (not filename which can be duplicate)
+                    if (files[i].webkitRelativePath) {
+                        formData.append(`path_${i}`, files[i].webkitRelativePath);
+                    }
+                }
+                
+                const progressContainer = form.querySelector('.progress-container');
+                const progressBar = form.querySelector('.progress-bar');
+                const progressText = progressContainer.querySelector('small');
+                const resultContainer = document.getElementById('bulkDetailResults');
+                
+                progressContainer.style.display = 'block';
+                
+                // Update message based on content type
+                if (hasArchives) {
+                    progressText.innerHTML = '<i class="fas fa-archive me-1"></i>Extracting archives and organizing by style... This may take a while. / 解压缩中并按款式整理... 这可能需要一些时间。';
+                } else {
+                    progressText.innerHTML = '<i class="fas fa-upload me-1"></i>Uploading files to server... Large uploads take time. / 上传文件到服务器... 大文件需要时间。';
+                }
+                
+                let progress = 0;
+                const progressSpeed = hasArchives ? 5 : 20; // Slower for archives
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * progressSpeed;
+                    if (progress > 85) progress = 85;
+                    progressBar.style.width = progress + '%';
+                }, 300);
+                
+                try {
+                    const response = await fetch('/upload_bulk_detail', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.styles) {
+                        currentBulkDetailSession = result.session_id;
+                        bulkDetailStyleData = result.styles;
+                        displayBulkDetailReview(result.styles);
+                        
+                        let message = result.message;
+                        if (result.had_archives) {
+                            message += ' Archives extracted successfully. / 压缩包解压成功。';
+                        }
+                        showSystemAction(message, 'success');
+                    } else {
+                        showResult(resultContainer, result.message, 'error');
+                    }
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    showResult(resultContainer, 'Upload failed: ' + error.message, 'error');
+                } finally {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                        progressText.textContent = 'Organizing by style... / 按款式整理中...';
+                    }, 1500);
+                }
+            });
+        }
+        
+        function displayBulkDetailReview(styles) {
+            const reviewSection = document.getElementById('bulkDetailReviewSection');
+            const listContainer = document.getElementById('bulkDetailStylesList');
+            
+            listContainer.innerHTML = '';
+            
+            for (const [sku, images] of Object.entries(styles)) {
+                // Build detailed file list with directory info
+                const fileListHtml = images.map(img => {
+                    // Show directory in blue if exists, otherwise just filename
+                    if (img.directory && img.directory !== '.') {
+                        return `<li class="small"><i class="fas fa-folder text-muted me-1"></i><span class="text-primary">${img.directory}/</span>${img.filename}</li>`;
+                    } else {
+                        return `<li class="small"><i class="fas fa-file text-muted me-1"></i>${img.filename}</li>`;
+                    }
+                }).join('');
+                
+                const styleCard = document.createElement('div');
+                styleCard.className = 'card mb-2';
+                styleCard.innerHTML = `
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong><i class="fas fa-tag me-2"></i>${sku}</strong>
+                            <span class="badge bg-info">${images.length} images</span>
+                        </div>
+                    </div>
+                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                        <ul class="mb-0" style="list-style-type: none; padding-left: 0;">
+                            ${fileListHtml}
+                        </ul>
+                    </div>
+                `;
+                listContainer.appendChild(styleCard);
+            }
+            
+            reviewSection.style.display = 'block';
+            reviewSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        async function processBulkDetail() {
+            if (!currentBulkDetailSession) {
+                alert('No session active');
+                return;
+            }
+            
+            const resultContainer = document.getElementById('bulkDetailResults');
+            resultContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Processing detail images...</div>';
+            
+            try {
+                const response = await fetch('/process_bulk_detail', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentBulkDetailSession,
+                        styles: bulkDetailStyleData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(resultContainer, result.message, 'success');
+                    if (result.processed) showFileList(resultContainer, result.processed);
+                    if (result.errors && result.errors.length > 0) {
+                        const errorHtml = result.errors.map(err => `<li>${err}</li>`).join('');
+                        resultContainer.innerHTML += `<div class="alert alert-warning mt-2"><strong>Errors:</strong><ul class="mb-0">${errorHtml}</ul></div>`;
+                    }
+                    
+                    document.getElementById('bulkDetailForm').reset();
+                    document.getElementById('bulkDetailPreview').innerHTML = '';
+                    document.getElementById('bulkDetailReviewSection').style.display = 'none';
+                    currentBulkDetailSession = null;
+                    bulkDetailStyleData = {};
+                } else {
+                    showResult(resultContainer, result.message, 'error');
+                }
+            } catch (error) {
+                showResult(resultContainer, 'Processing failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Initialize new bulk upload handlers
+        setupBulkCatalogUpload();
+        setupBulkDetailUpload();
     </script>
+    <style>
+        .image-preview-card {
+            transition: all 0.2s;
+        }
+        .image-preview-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .image-select-checkbox {
+            cursor: pointer;
+        }
+    </style>
 </body>
 </html>

@@ -63,49 +63,6 @@ class ImageOrganizerService:
         
         return None
     
-    def is_catalog_image(self, image_path):
-        """
-        Determine if image is a catalog image based on:
-        - Aspect ratio (catalog images are usually wider)
-        - File size (catalog images tend to be larger)
-        - Naming patterns
-        """
-        try:
-            with Image.open(image_path) as img:
-                width, height = img.size
-                aspect_ratio = width / height
-                
-                # Catalog images typically have specific characteristics
-                filename = Path(image_path).name.lower()
-                
-                # Check for catalog indicators
-                catalog_indicators = [
-                    'catalog', 'spec', 'dimension', 'size',
-                    '.jpg' in filename and aspect_ratio > 1.2,  # Wide aspect ratio
-                    img.size[0] > 800 and img.size[1] > 600,   # Reasonable resolution
-                ]
-                
-                # Check for big picture indicators
-                big_picture_indicators = [
-                    'detail', 'color', 'variant', 'close',
-                    'lifestyle', 'angle', 'view'
-                ]
-                
-                has_catalog_indicators = any(indicator in filename for indicator in ['catalog', 'spec', 'dimension'])
-                has_big_picture_indicators = any(indicator in filename for indicator in big_picture_indicators)
-                
-                if has_catalog_indicators:
-                    return True
-                elif has_big_picture_indicators:
-                    return False
-                else:
-                    # Default classification based on aspect ratio and size
-                    return aspect_ratio > 1.3 and width > 800
-                    
-        except Exception as e:
-            self.logger.error(f"Error analyzing image {image_path}: {e}")
-            return False
-    
     def get_image_hash(self, image_path):
         """Generate hash for duplicate detection"""
         try:
@@ -207,6 +164,24 @@ class ImageOrganizerService:
             
         except Exception as e:
             self.logger.error(f"Error processing big picture {source_path}: {e}")
+    
+    # Legacy methods below - kept for backward compatibility with smart_auto_filter.py
+    # Not used by bulk upload system
+    
+    def is_catalog_image(self, image_path):
+        """
+        Legacy method for automatic classification.
+        Used by smart_auto_filter.py background service.
+        Not used by bulk upload system (user manually chooses catalog vs detail).
+        """
+        try:
+            from py.utilities.image_text_detector import ImageTextDetector
+            detector = ImageTextDetector()
+            classification = detector.classify_image_type(image_path)
+            return (classification == 'catalog')
+        except Exception as e:
+            self.logger.error(f"Error analyzing image {image_path}: {e}")
+            return False
     
     def scan_dropbox_folder(self):
         """Scan dropbox folder for new images"""

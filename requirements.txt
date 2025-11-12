@@ -20,3 +20,6 @@ click==8.1.7
 colorama==0.4.6
 bcrypt==4.0.1
 PyJWT==2.8.0
+opencv-python==4.8.1.78
+numpy<2.0
+rarfile==4.1  # Optional: for RAR archive support in bulk uploads
