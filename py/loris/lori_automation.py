@@ -3887,6 +3887,55 @@ def send_to_shipped_only():
         cursor.close()
         connection.close()
 
+@lori_automation_bp.route("/send_back_pending", methods=["POST"])
+def send_back_pending():
+    """Send orders back to pending status, but only those without package info"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    data = request.get_json()
+    po_numbers = data.get('po_numbers', [])
+    print(f"DEBUG send_back_pending: Received po_numbers: {po_numbers}")
+    if not po_numbers:
+        return jsonify({'error': 'No PO numbers provided'}), 400
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        cursor = connection.cursor(dictionary=True)
+        updated = 0
+        skipped = 0
+        for po in po_numbers:
+            # Check if this PO has package info
+            cursor.execute("SELECT COUNT(*) as count FROM loris_pkg_info WHERE po_number = %s", (po,))
+            result = cursor.fetchone()
+            has_pkg_info = result['count'] > 0
+            
+            if has_pkg_info:
+                print(f"DEBUG send_back_pending: Skipping po {po} - has package info")
+                skipped += 1
+                continue
+            
+            # Update to pending if no package info
+            print(f"DEBUG send_back_pending: Updating po {po} to pending")
+            cursor.execute("UPDATE lori_orders SET status = 'pending' WHERE po_number = %s", (po,))
+            print(f"DEBUG send_back_pending: Rowcount: {cursor.rowcount}")
+            if cursor.rowcount > 0:
+                updated += 1
+        connection.commit()
+        print(f"DEBUG send_back_pending: Total updated: {updated}, skipped: {skipped}")
+        
+        message = f'Status updated to pending for {updated} order(s).'
+        if skipped > 0:
+            message += f' {skipped} order(s) skipped (have package info).'
+        
+        return jsonify({'success': True, 'message': message})
+    except Exception as e:
+        print(f"DEBUG send_back_pending: Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
 @lori_automation_bp.route("/bulk_modify_batch_date", methods=["POST"])
 def bulk_modify_batch_date():
     if 'username' not in session:
