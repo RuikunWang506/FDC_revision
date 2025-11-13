@@ -464,6 +464,32 @@
             
             preview.innerHTML = '';
             
+            // Calculate statistics
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp', '.gif'];
+            let imageCount = 0;
+            let totalSize = 0;
+            
+            Array.from(files).forEach(file => {
+                const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                if (imageExtensions.includes(ext)) {
+                    imageCount++;
+                    totalSize += file.size;
+                }
+            });
+            
+            // Show statistics banner
+            if (imageCount > 0) {
+                const statsDiv = document.createElement('div');
+                statsDiv.className = 'alert alert-info mb-3';
+                statsDiv.innerHTML = `
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Selected:</strong> ${imageCount} image(s) | 
+                    <strong>Total Size:</strong> ${formatFileSize(totalSize)}
+                `;
+                preview.appendChild(statsDiv);
+            }
+            
+            // Show file list
             Array.from(files).forEach(file => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
@@ -495,6 +521,25 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function showFileSelectionStats(files, uploadType) {
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp', '.gif'];
+            let imageCount = 0;
+            let totalSize = 0;
+            
+            Array.from(files).forEach(file => {
+                const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                if (imageExtensions.includes(ext)) {
+                    imageCount++;
+                    totalSize += file.size;
+                }
+            });
+            
+            if (imageCount > 0) {
+                const message = `📁 Selected ${imageCount} image(s) | 💾 ${formatFileSize(totalSize)} total`;
+                showSystemAction(message, 'info');
+            }
         }
         
         function showResult(container, message, type) {
@@ -886,14 +931,17 @@
                 const files = dt.files;
                 fileInputOnly.files = files;
                 updatePreview(files, preview);
+                showFileSelectionStats(files, 'catalog');
             }, false);
             
             fileInputFolder.addEventListener('change', function() {
                 updatePreview(this.files, preview);
+                showFileSelectionStats(this.files, 'catalog');
             });
             
             fileInputOnly.addEventListener('change', function() {
                 updatePreview(this.files, preview);
+                showFileSelectionStats(this.files, 'catalog');
             });
             
             form.addEventListener('submit', async function(e) {
@@ -937,7 +985,7 @@
                     if (result.success && result.images) {
                         currentBulkCatalogSession = result.session_id;
                         bulkCatalogImageData = result.images;
-                        displayBulkCatalogReview(result.images);
+                        displayBulkCatalogReview(result.images, result.duplicates || []);
                         showSystemAction(result.message, 'success');
                     } else {
                         showResult(resultContainer, result.message, 'error');
@@ -954,12 +1002,31 @@
             });
         }
         
-        function displayBulkCatalogReview(images) {
+        function displayBulkCatalogReview(images, duplicates = []) {
             const reviewSection = document.getElementById('bulkCatalogReviewSection');
             const gridContainer = document.getElementById('bulkCatalogGrid');
             
             gridContainer.innerHTML = '';
             
+            // Show duplicates alert if any
+            if (duplicates.length > 0) {
+                const dupAlert = document.createElement('div');
+                dupAlert.className = 'col-12 mb-3';
+                dupAlert.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong><i class="fas fa-exclamation-triangle me-2"></i>Duplicates Detected</strong>
+                        <p class="mb-1">${duplicates.length} duplicate file(s) were found and skipped:</p>
+                        <ul class="mb-0 small">
+                            ${duplicates.map(dup => `
+                                <li><strong>${dup.filename}</strong> (SKU: ${dup.sku}) - Already exists in ${dup.duplicate_of?.source || 'database'}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+                gridContainer.appendChild(dupAlert);
+            }
+            
+            // Show new images to be uploaded
             images.forEach((img, index) => {
                 const thumbnailUrl = `/bulk_catalog_thumbnail/${currentBulkCatalogSession}/${encodeURIComponent(img.path)}`;
                 
@@ -1063,14 +1130,17 @@
                 const files = dt.files;
                 fileInputOnly.files = files;
                 updatePreview(files, preview);
+                showFileSelectionStats(files, 'detail');
             }, false);
             
             fileInputFolder.addEventListener('change', function() {
                 updatePreview(this.files, preview);
+                showFileSelectionStats(this.files, 'detail');
             });
             
             fileInputOnly.addEventListener('change', function() {
                 updatePreview(this.files, preview);
+                showFileSelectionStats(this.files, 'detail');
             });
             
             form.addEventListener('submit', async function(e) {
@@ -1136,7 +1206,7 @@
                     if (result.success && result.styles) {
                         currentBulkDetailSession = result.session_id;
                         bulkDetailStyleData = result.styles;
-                        displayBulkDetailReview(result.styles);
+                        displayBulkDetailReview(result.styles, result.duplicates || {});
                         
                         let message = result.message;
                         if (result.had_archives) {
@@ -1159,12 +1229,41 @@
             });
         }
         
-        function displayBulkDetailReview(styles) {
+        function displayBulkDetailReview(styles, duplicates = {}) {
             const reviewSection = document.getElementById('bulkDetailReviewSection');
             const listContainer = document.getElementById('bulkDetailStylesList');
             
             listContainer.innerHTML = '';
             
+            // Show duplicates alert if any exist
+            const totalDuplicates = Object.values(duplicates).reduce((sum, dups) => sum + dups.length, 0);
+            if (totalDuplicates > 0) {
+                const dupAlert = document.createElement('div');
+                dupAlert.className = 'alert alert-warning mb-3';
+                dupAlert.innerHTML = `
+                    <strong><i class="fas fa-exclamation-triangle me-2"></i>Duplicates Detected</strong>
+                    <p class="mb-1">${totalDuplicates} duplicate file(s) were found and skipped:</p>
+                `;
+                
+                const dupList = document.createElement('ul');
+                dupList.className = 'mb-0 small';
+                for (const [sku, skuDups] of Object.entries(duplicates)) {
+                    const skuItem = document.createElement('li');
+                    skuItem.innerHTML = `<strong>${sku}</strong>: ${skuDups.length} duplicate(s)`;
+                    const fileList = document.createElement('ul');
+                    skuDups.forEach(dup => {
+                        const fileItem = document.createElement('li');
+                        fileItem.textContent = `${dup.filename} - Already exists in ${dup.duplicate_of?.source || 'database'}`;
+                        fileList.appendChild(fileItem);
+                    });
+                    skuItem.appendChild(fileList);
+                    dupList.appendChild(skuItem);
+                }
+                dupAlert.appendChild(dupList);
+                listContainer.appendChild(dupAlert);
+            }
+            
+            // Show new images to be uploaded
             for (const [sku, images] of Object.entries(styles)) {
                 // Build detailed file list with directory info
                 const fileListHtml = images.map(img => {

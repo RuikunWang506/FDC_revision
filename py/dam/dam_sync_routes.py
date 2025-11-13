@@ -31,7 +31,7 @@ sync_status = {
     'current_progress': None  # Current progress info
 }
 
-def run_sync_background(force_rebuild_index=False, include_fetch=False):
+def run_sync_background(force_rebuild_index=False, include_fetch=False, include_cleanup=False):
     """Run sync in background thread"""
     global sync_status
     
@@ -124,6 +124,36 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False):
             
             sync_status['last_stats'] = sync_service.stats
             sync_status['last_run'] = str(sync_service.stats.get('end_time'))
+            
+            # Optional: cleanup broken links after sync
+            if include_cleanup:
+                capture_print("\n=== Cleaning up broken links ===")
+                try:
+                    import py.utilities.models
+                    db = py.utilities.models.SessionLocal()
+                    try:
+                        assets = db.query(py.utilities.models.ImageAsset).filter(
+                            py.utilities.models.ImageAsset.is_active == True
+                        ).all()
+                        
+                        capture_print(f"Checking {len(assets)} active image records...")
+                        log_event('info', f'DAM cleanup started as part of sync: checking {len(assets)} active records')
+                        
+                        cleaned = 0
+                        for asset in assets:
+                            if hasattr(asset, 'path') and asset.path:
+                                if not os.path.exists(asset.path):
+                                    asset.is_active = False
+                                    cleaned += 1
+                        
+                        db.commit()
+                        capture_print(f"✅ Cleanup complete: {cleaned} broken links marked inactive")
+                        log_event('info', f'DAM cleanup completed: {cleaned} files marked inactive out of {len(assets)} checked')
+                    finally:
+                        db.close()
+                except Exception as cleanup_err:
+                    capture_print(f"⚠️ Cleanup error: {cleanup_err}")
+                    log_event('error', f'DAM cleanup failed during sync: {str(cleanup_err)}')
         finally:
             # Restore original print
             builtins.print = original_print
@@ -194,9 +224,10 @@ def start_sync():
     data = request.get_json() or {}
     force_rebuild_index = data.get('force_rebuild_index', False)
     include_fetch = data.get('include_fetch', False)
+    include_cleanup = data.get('include_cleanup', False)
     
     # Start sync in background thread
-    thread = Thread(target=run_sync_background, args=(force_rebuild_index, include_fetch))
+    thread = Thread(target=run_sync_background, args=(force_rebuild_index, include_fetch, include_cleanup))
     thread.daemon = True
     thread.start()
     

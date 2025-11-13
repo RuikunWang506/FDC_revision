@@ -77,7 +77,9 @@ def upload_bulk_catalog():
         organizer = ImageOrganizerService()
         
         # Collect all image files from temp directory
+        # Duplicates are checked and removed immediately to save disk space
         image_data = []
+        duplicates = []
         for root, dirs, files_in_dir in os.walk(temp_dir):
             for file in files_in_dir:
                 file_path = os.path.join(root, file)
@@ -89,27 +91,46 @@ def upload_bulk_catalog():
                     # Create relative path for display
                     rel_path = os.path.relpath(file_path, temp_dir)
                     
-                    image_data.append({
-                        'filename': file,
-                        'path': rel_path,
-                        'sku': sku or 'UNKNOWN'
-                    })
+                    # Check if duplicate IMMEDIATELY
+                    is_dup, dup_info = _check_duplicate_by_hash(file_path)
+                    
+                    if is_dup:
+                        duplicates.append({
+                            'filename': file,
+                            'path': rel_path,
+                            'sku': sku or 'UNKNOWN',
+                            'duplicate_of': dup_info
+                        })
+                        # DELETE duplicate file immediately to save disk space
+                        try:
+                            os.remove(file_path)
+                            print(f"  [DUPLICATE REMOVED] {file} - already exists in {dup_info.get('source', 'database')}")
+                        except Exception as e:
+                            print(f"  [ERROR] Could not remove duplicate {file}: {e}")
+                    else:
+                        image_data.append({
+                            'filename': file,
+                            'path': rel_path,
+                            'sku': sku or 'UNKNOWN'
+                        })
         
-        if not image_data:
+        if not image_data and not duplicates:
             shutil.rmtree(temp_dir, ignore_errors=True)
             return jsonify({'success': False, 'message': 'No valid images found in uploaded files'})
         
         # Store session info for later processing
         session[f'bulk_catalog_session_{session_id}'] = {
             'temp_dir': temp_dir,
-            'image_count': len(image_data)
+            'image_count': len(image_data),
+            'duplicates_count': len(duplicates)
         }
         
         return jsonify({
             'success': True,
             'session_id': session_id,
             'images': image_data,
-            'message': f'Found {len(image_data)} images. Please review and confirm.'
+            'duplicates': duplicates,
+            'message': f'Found {len(image_data)} new images. Skipped {len(duplicates)} duplicates. Please review and confirm.'
         })
         
     except Exception as e:
@@ -124,6 +145,13 @@ def upload_bulk_detail():
         
         if not files or len(files) == 0:
             return jsonify({'success': False, 'message': 'No files uploaded'})
+        
+        # Log upload stats
+        total_size_mb = sum(file.content_length or 0 for file in files) / (1024 * 1024)
+        print(f"\n{'=' * 60}")
+        print(f"BULK DETAIL UPLOAD STARTED")
+        print(f"Files: {len(files)}, Total size: {total_size_mb:.2f} MB")
+        print(f"{'=' * 60}\n")
         
         # Create session-specific temp directory
         session_id = session.get('username', 'anonymous') + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
@@ -142,6 +170,7 @@ def upload_bulk_detail():
         from py.utilities.image_organizer_service import ImageOrganizerService
         organizer = ImageOrganizerService()
         style_groups = {}  # {style_name: [file_info]}
+        duplicate_stats = {'count': 0, 'size_mb': 0}  # Track duplicates
         
         print(f"\n=== DEBUG: Processing {len(files)} files ===")
         print(f"has_archives: {has_archives}")
@@ -166,6 +195,17 @@ def upload_bulk_detail():
             
             os.makedirs(os.path.dirname(target_path), exist_ok=True)
             file.save(target_path)
+            
+            # Check if this single file is a duplicate IMMEDIATELY (before extraction)
+            if Path(target_path).suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}:
+                is_dup, dup_info = _check_duplicate_by_hash(target_path)
+                if is_dup:
+                    file_size_mb = os.path.getsize(target_path) / (1024 * 1024)
+                    duplicate_stats['count'] += 1
+                    duplicate_stats['size_mb'] += file_size_mb
+                    print(f"  [SKIP DUPLICATE] {os.path.basename(target_path)} ({file_size_mb:.2f} MB) - already in {dup_info.get('source', 'DB')}")
+                    os.remove(target_path)  # Delete immediately
+                    continue  # Skip further processing
             
             # Extract archives immediately
             if target_path.lower().endswith('.zip'):
@@ -220,7 +260,7 @@ def upload_bulk_detail():
                         'directory': rel_parent_normalized
                     })
         
-        # If archives were extracted, rescan directory
+        # If archives were extracted, rescan directory and check duplicates
         if has_archives:
             style_groups = {}  # Reset
             for root, dirs, files_in_dir in os.walk(temp_dir):
@@ -233,6 +273,17 @@ def upload_bulk_detail():
                         # Root level images - extract SKU from filename
                         for img_file in image_files:
                             file_path = os.path.join(root, img_file)
+                            
+                            # Check duplicate IMMEDIATELY after extraction
+                            is_dup, dup_info = _check_duplicate_by_hash(file_path)
+                            if is_dup:
+                                file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+                                duplicate_stats['count'] += 1
+                                duplicate_stats['size_mb'] += file_size_mb
+                                print(f"  [ARCHIVE DUP] {img_file} ({file_size_mb:.2f} MB) - skipped")
+                                os.remove(file_path)  # Delete immediately
+                                continue
+                            
                             sku = organizer.extract_sku_from_path(img_file)
                             if sku:
                                 if sku not in style_groups:
@@ -264,6 +315,16 @@ def upload_bulk_detail():
                         
                         for img_file in image_files:
                             file_path = os.path.join(root, img_file)
+                            
+                            # Check duplicate IMMEDIATELY after extraction
+                            is_dup, dup_info = _check_duplicate_by_hash(file_path)
+                            if is_dup:
+                                file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+                                duplicate_stats['count'] += 1
+                                duplicate_stats['size_mb'] += file_size_mb
+                                print(f"  [ARCHIVE DUP] {img_file} ({file_size_mb:.2f} MB) - skipped")
+                                os.remove(file_path)  # Delete immediately
+                                continue
                             
                             # Normalize paths to forward slashes
                             rel_path = os.path.relpath(file_path, temp_dir).replace('\\', '/')
@@ -297,54 +358,6 @@ def upload_bulk_detail():
         print(f"\n=== After deduplication ===")
         for sku in style_groups:
             print(f"{sku}: {len(style_groups[sku])} images")
-        
-        # Save all files and analyze on-the-fly
-        for file in files:
-            relative_path = request.form.get(f'path_{file.filename}', '')
-            
-            if relative_path:
-                target_path = os.path.join(temp_dir, relative_path)
-            else:
-                target_path = os.path.join(temp_dir, secure_filename(file.filename))
-            
-            os.makedirs(os.path.dirname(target_path), exist_ok=True)
-            file.save(target_path)
-            
-            # Extract archives immediately
-            if target_path.lower().endswith('.zip'):
-                extract_dir = os.path.dirname(target_path)
-                with zipfile.ZipFile(target_path, 'r') as zip_ref:
-                    zip_ref.extractall(extract_dir)
-                os.remove(target_path)
-            elif target_path.lower().endswith('.rar'):
-                try:
-                    import rarfile
-                    extract_dir = os.path.dirname(target_path)
-                    with rarfile.RarFile(target_path, 'r') as rar_ref:
-                        rar_ref.extractall(extract_dir)
-                    os.remove(target_path)
-                except ImportError:
-                    shutil.rmtree(temp_dir, ignore_errors=True)
-                    return jsonify({'success': False, 'message': 'RAR support not installed'})
-            
-            # For images, group immediately (no second pass needed)
-            elif Path(target_path).suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}:
-                parent_dir = os.path.dirname(target_path)
-                
-                # Determine SKU from path
-                if parent_dir == temp_dir:
-                    sku = organizer.extract_sku_from_path(file.filename)
-                else:
-                    folder_name = os.path.basename(parent_dir)
-                    sku = organizer.extract_sku_from_path(folder_name) or folder_name.upper()
-                
-                if sku:
-                    if sku not in style_groups:
-                        style_groups[sku] = []
-                    style_groups[sku].append({
-                        'filename': os.path.basename(target_path),
-                        'path': os.path.relpath(target_path, temp_dir)
-                    })
         
         # If archives were extracted, need to rescan directory
         if has_archives:
@@ -382,20 +395,34 @@ def upload_bulk_detail():
             shutil.rmtree(temp_dir, ignore_errors=True)
             return jsonify({'success': False, 'message': 'No valid images found in folder structure'})
         
+        # Log final statistics
+        total_new_images = sum(len(files) for files in style_groups.values())
+        print(f"\n{'=' * 60}")
+        print(f"UPLOAD PROCESSING COMPLETE")
+        print(f"New images: {total_new_images}")
+        print(f"Duplicates removed: {duplicate_stats['count']} ({duplicate_stats['size_mb']:.2f} MB saved)")
+        print(f"{'=' * 60}\n")
+        
         # Store session info
         session[f'bulk_detail_session_{session_id}'] = {
             'temp_dir': temp_dir,
             'style_count': len(style_groups),
-            'image_count': sum(len(files) for files in style_groups.values()),
-            'had_archives': has_archives
+            'image_count': total_new_images,
+            'had_archives': has_archives,
+            'duplicates_count': duplicate_stats['count']
         }
+        
+        message = f'Found {len(style_groups)} styles with {total_new_images} new images.'
+        if duplicate_stats['count'] > 0:
+            message += f' Skipped {duplicate_stats["count"]} duplicates ({duplicate_stats["size_mb"]:.1f} MB saved).'
         
         return jsonify({
             'success': True,
             'session_id': session_id,
             'styles': style_groups,
+            'duplicates': {},  # Duplicates already removed, no details to show
             'had_archives': has_archives,
-            'message': f'Found {len(style_groups)} styles with {sum(len(f) for f in style_groups.values())} images total.'
+            'message': message
         })
         
     except Exception as e:
@@ -534,6 +561,14 @@ def process_bulk_catalog():
             except Exception as e:
                 print(f"Auto-record failed: {e}")
         
+        # Trigger background sync to update index files and ensure everything is in sync
+        if saved_paths:
+            try:
+                _trigger_background_sync(rebuild_index=False)
+                print(f"Background sync triggered after catalog upload")
+            except Exception as e:
+                print(f"Background sync trigger failed: {e}")
+        
         # Cleanup
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -629,6 +664,14 @@ def process_bulk_detail():
                         
             except Exception as e:
                 errors.append(f"Error processing style {sku}: {str(e)}")
+        
+        # Trigger background sync to update index files and ensure everything is in sync
+        if processed_files:
+            try:
+                _trigger_background_sync(rebuild_index=False)
+                print(f"Background sync triggered after detail upload")
+            except Exception as e:
+                print(f"Background sync trigger failed: {e}")
         
         # Cleanup
         try:
@@ -726,6 +769,48 @@ def _get_image_info_and_hash(file_path: str):
     info = svc.get_image_info(file_path)
     sha256 = svc.calculate_file_hash(file_path) if info else None
     return info, sha256
+
+def _check_duplicate_by_hash(file_path: str):
+    """
+    Check if a file already exists in database by SHA256 hash.
+    Returns: (is_duplicate, existing_info) where existing_info is dict with source, path, sku
+    """
+    try:
+        svc = DAMSyncServiceV2()
+        sha256 = svc.calculate_file_hash(file_path)
+        
+        if not sha256:
+            return False, None
+        
+        conn = get_mysql_connection()
+        if not conn:
+            return False, None
+        
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT source, path, sku, filename 
+                FROM image_assets 
+                WHERE sha256 = %s AND is_active = TRUE
+                LIMIT 1
+            """, (sha256,))
+            
+            row = cur.fetchone()
+            if row:
+                source, path, sku, filename = row
+                return True, {
+                    'source': source,
+                    'path': path,
+                    'sku': sku,
+                    'filename': filename
+                }
+            return False, None
+        finally:
+            cur.close()
+            conn.close()
+    except Exception as e:
+        print(f"Error checking duplicate: {e}")
+        return False, None
 
 def _record_catalog_uploads(file_paths, sku: str):
     conn = get_mysql_connection()
@@ -965,3 +1050,33 @@ def run_auto_filter():
 def view_logs():
     """Redirect to log viewer"""
     return redirect('/log_viewer')
+
+def _trigger_background_sync(rebuild_index=False):
+    """
+    Trigger a background DAM sync after bulk uploads.
+    This updates index files and ensures database is in sync with file system.
+    Runs in a separate thread to not block the upload response.
+    """
+    from threading import Thread
+    from py.utilities.logging_setup import log_event
+    
+    def run_sync():
+        try:
+            log_event('info', 'Background sync triggered after bulk upload')
+            
+            # Use DAMSyncServiceV2 to sync
+            sync_service = DAMSyncServiceV2()
+            
+            # If rebuild_index=True, it will rescan directories
+            # If False, it will use existing index files (faster)
+            sync_service.run_full_sync(force_rebuild_index=rebuild_index)
+            
+            log_event('info', f'Background sync completed: {sync_service.stats}')
+            
+        except Exception as e:
+            log_event('error', f'Background sync failed: {str(e)}')
+            print(f"Background sync error: {e}")
+    
+    # Start sync in background thread
+    thread = Thread(target=run_sync, daemon=True)
+    thread.start()

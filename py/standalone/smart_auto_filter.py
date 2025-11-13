@@ -14,6 +14,7 @@ import traceback
 sys.path.insert(0, os.path.abspath('.'))
 
 from py.utilities.database_utils import get_mysql_connection
+from py.utilities.logging_setup import log_event
 
 # Install a safe print wrapper to avoid Unicode/OSError issues when printing
 import builtins
@@ -306,13 +307,17 @@ class SmartAutoFilter:
         """Run smart incremental filtering"""
         print("🚀 Starting Smart Auto-Filter (Incremental Mode)")
         print("=" * 50)
+        log_event('info', 'Smart Auto-Filter started (Incremental Mode)')
         
         # Get only new/modified files
         new_files = self.get_new_or_modified_files()
         
         if not new_files:
             print("✅ No new files to process")
+            log_event('info', 'Smart Auto-Filter completed: No new files to process')
             return
+        
+        log_event('info', f'Smart Auto-Filter: Found {len(new_files)} new/modified files to process')
         
         # Process only new files
         processed_count = 0
@@ -339,6 +344,7 @@ class SmartAutoFilter:
                 f.write(f"{datetime.now().isoformat()}|SCAN_COMPLETE|\n")
         except Exception as e:
             print(f"❌ Failed to write scan complete marker: {e}", file=sys.stderr)
+            log_event('error', f'Smart Auto-Filter: Failed to write scan complete marker: {e}')
             try:
                 with open('smart_auto_filter_error.log', 'a', encoding='utf-8') as ef:
                     ef.write(f"{datetime.now().isoformat()} - Failed to write scan complete marker: {e}\n")
@@ -353,6 +359,8 @@ class SmartAutoFilter:
         print(f"🖼️  Big pictures: {big_picture_count}")
         print(f"⚡ Processing time: Minimal (incremental)")
         
+        log_event('info', f'Smart Auto-Filter completed: Processed={processed_count}, Catalog={catalog_count}, BigPicture={big_picture_count}')
+        
         # Flush stdout/stderr before exit to prevent errors
         sys.stdout.flush()
         sys.stderr.flush()
@@ -363,9 +371,11 @@ class SmartAutoFilter:
         """
         print("🚀 Starting Smart Auto-Filter (Full Scan Mode)")
         print("=" * 50)
+        log_event('info', 'Smart Auto-Filter started (Full Scan Mode)')
 
         if not os.path.exists(self.dropbox_path):
             print(f"⚠️  Dropbox path not accessible: {self.dropbox_path}")
+            log_event('error', f'Smart Auto-Filter: Dropbox path not accessible: {self.dropbox_path}')
             return
 
         processed_count = 0
@@ -397,6 +407,7 @@ class SmartAutoFilter:
                 f.write(f"{datetime.now().isoformat()}|SCAN_COMPLETE|FULL\n")
         except Exception as e:
             print(f"❌ Failed to write full scan complete marker: {e}", file=sys.stderr)
+            log_event('error', f'Smart Auto-Filter: Failed to write full scan complete marker: {e}')
             try:
                 with open('smart_auto_filter_error.log', 'a', encoding='utf-8') as ef:
                     ef.write(f"{datetime.now().isoformat()} - Failed to write full scan complete marker: {e}\n")
@@ -409,6 +420,7 @@ class SmartAutoFilter:
         print(f"📊 Total processed: {processed_count}")
         print(f"📖 Catalog images: {catalog_count}")
         print(f"🖼️  Big pictures: {big_picture_count}")
+        log_event('info', f'Smart Auto-Filter Full Scan completed: Processed={processed_count}, Catalog={catalog_count}, BigPicture={big_picture_count}')
         sys.stdout.flush()
         sys.stderr.flush()
 
@@ -424,9 +436,11 @@ if __name__ == "__main__":
         filter_service = SmartAutoFilter()
         if args.full:
             print('🔁 Running full Dropbox scan (this may take a while)')
+            log_event('info', 'Smart Auto-Filter: Starting full scan mode via command line')
             # Walk all files and process each one (does internal skip if already processed)
             filter_service.run_full_scan()
         else:
+            log_event('info', 'Smart Auto-Filter: Starting incremental mode via command line')
             filter_service.run_incremental_filter()
 
         # Ensure clean exit
@@ -434,5 +448,6 @@ if __name__ == "__main__":
         sys.stderr.flush()
     except Exception as e:
         print(f"Error in Smart Auto-Filter: {e}", file=sys.stderr)
+        log_event('error', f'Smart Auto-Filter failed with error: {e}')
         sys.stderr.flush()
         sys.exit(1)
