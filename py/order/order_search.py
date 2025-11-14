@@ -1,14 +1,17 @@
 import pyodbc
 import pandas as pd
-import os
+
+from datetime import datetime, timedelta
 from py.utilities.setting import Config
-from flask import Blueprint, request, render_template, session, current_app
+from flask import Blueprint, request, render_template, session, current_app, jsonify
 from py.utilities.setting import login_required
 
 order_lookup_bp = Blueprint('order_lookup', __name__)
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
+
+
 
 def get_latest_order_ids():
     """Get the latest order IDs from both FDC and E-Fashion databases based on order date"""
@@ -382,3 +385,60 @@ def order_lookup(order_number=None):
         latest_orders=latest_orders,
         all_descriptions_have_dash=all_descriptions_have_dash
     )
+
+@order_lookup_bp.route("/update_order_description", methods=["POST"])
+@login_required
+def update_order_description():
+    """Update the description (UT_DESC) for a specific order line"""
+    try:
+        data = request.get_json()
+        order_number = data.get('order_number')
+        line_number = data.get('line_number')
+        sku = data.get('sku')
+        new_description = data.get('description')
+        
+        if not all([order_number, line_number, new_description]):
+            return {'success': False, 'message': 'Missing required fields'}, 400
+        
+        # Determine database based on order number length
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return {'success': False, 'message': 'Invalid order number format'}, 400
+        
+        # Connect to database
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        
+        # Update the description in ORD_LOG table
+        update_query = """
+            UPDATE DBO.ORD_LOG 
+            SET UT_DESC = ?
+            WHERE ORD_NUM = ? AND COMM_LN = ?
+        """
+        
+        cursor.execute(update_query, (new_description, order_number, line_number))
+        conn.commit()
+        
+        rows_affected = cursor.rowcount
+        
+        cursor.close()
+        conn.close()
+        
+        if rows_affected > 0:
+            current_user = session.get('username', 'unknown')
+            current_app.logger.info(
+                f"***{current_user}***__@@@updated description@@@__ Order: {order_number}, Line: {line_number}, SKU: {sku}, New Description: {new_description}"
+            )
+            return {'success': True, 'message': 'Description updated successfully'}, 200
+        else:
+            return {'success': False, 'message': 'No rows were updated'}, 404
+            
+    except Exception as e:
+        current_app.logger.error(f"Error updating description: {str(e)}")
+        return {'success': False, 'message': f'Database error: {str(e)}'}, 500
+

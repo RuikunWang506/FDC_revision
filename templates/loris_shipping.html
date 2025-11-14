@@ -467,6 +467,35 @@
             border: none;
         }
 
+        /* Responsive design for smaller screens */
+        @media (max-width: 1334px) {
+            .ship-to-address-column,
+            .internal-add-column {
+                display: none;
+            }
+            
+            .compact-dimension-input {
+                max-width: 60px;
+                font-size: 12px;
+                padding: 4px 2px;
+            }
+            
+            .compact-box-grid {
+                grid-template-columns: 1fr; /* Stack vertically */
+                max-width: none; /* Allow full width */
+                gap: 2px;
+            }
+            
+            .dimension-labels {
+                grid-template-columns: 1fr; /* Stack labels vertically */
+                font-size: 10px;
+            }
+            
+            .preset-dimensions {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -578,8 +607,8 @@
                                     </th>
                                     <th class="table-header-cell">PO Number</th>
                                     <th class="table-header-cell">Batch</th>
-                                    <th class="table-header-cell">Ship To Address</th>
-                                    <th class="table-header-cell">Internal Add</th>
+                                    <th class="table-header-cell ship-to-address-column">Ship To Address</th>
+                                    <th class="table-header-cell internal-add-column">Internal Add</th>
                                     <th class="table-header-cell">Package Info</th>
                                     <th class="table-header-cell">Total Qty</th>
                                     <th class="table-header-cell">Total Cost</th>
@@ -634,8 +663,8 @@
                                     </th>
                                     <th class="table-header-cell">PO Number</th>
                                     <th class="table-header-cell">Batch</th>
-                                    <th class="table-header-cell">Ship To Address</th>
-                                    <th class="table-header-cell">Internal Add</th>
+                                    <th class="table-header-cell ship-to-address-column">Ship To Address</th>
+                                    <th class="table-header-cell internal-add-column">Internal Add</th>
                                     <th class="table-header-cell">Package Info</th>
                                     <th class="table-header-cell">Total Qty</th>
                                     <th class="table-header-cell">Total Cost</th>
@@ -1751,8 +1780,8 @@
                     </td>
                     <td class="order-cell-bold">${order.po_number || 'N/A'}</td>
                     <td class="order-cell">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
-                    <td class="address-cell">${formattedShipToAddress}</td>
-                    <td class="internal-address-cell"></td>
+                    <td class="address-cell ship-to-address-column">${formattedShipToAddress}</td>
+                    <td class="internal-address-cell internal-add-column"></td>
                     <td class="package-cell">
                         <div class="package-info-container" data-po="${order.po_number}">
                             <!-- Main Box Row -->
@@ -3297,7 +3326,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="applyToModalLabel">Apply Package Info to Other stores</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">

@@ -7,6 +7,45 @@
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 3rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h4 {
+            color: #555;
+            font-weight: 400;
+            margin-bottom: 0.75rem;
+        }
+
+        h4 a {
+            color: #764ba2;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        h4 a:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
         .tooltip-container {
             position: relative;
             display: inline-block;
@@ -15,34 +54,143 @@
         .tooltip-container .tooltip-text {
             visibility: hidden;
             width: 400px;
-            background-color: black;
+            background-color: #333;
             color: #fff;
             text-align: center;
-            border-radius: 5px;
-            padding: 10px;
+            border-radius: 8px;
+            padding: 12px;
             position: absolute;
             z-index: 1;
-            bottom: 125%; /* Position above the element */
+            bottom: 125%;
             left: 50%;
-            margin-left: -200px; /* Adjust to center the tooltip */
+            margin-left: -200px;
             opacity: 0;
             transition: opacity 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         .tooltip-container .tooltip-text::after {
             content: '';
             position: absolute;
-            top: 100%; /* Arrow at the bottom of the tooltip */
+            top: 100%;
             left: 50%;
             margin-left: -5px;
             border-width: 5px;
             border-style: solid;
-            border-color: black transparent transparent transparent;
+            border-color: #333 transparent transparent transparent;
         }
 
         .tooltip-container:hover .tooltip-text {
             visibility: visible;
             opacity: 1;
+        }
+
+        /* visible placeholder style */
+        .visible-placeholder {
+            display: inline-block;
+            color: #9ca3af;
+            font-style: italic;
+            margin-left: 15px;
+            font-size: 0.875rem;
+            vertical-align: middle;
+            background: #f3f4f6;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        /* form styling */
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #374151;
+            min-width: 120px;
+            margin-bottom: 0;
+        }
+
+        .form-group .form-control {
+            flex: 0 1 360px;
+            max-width: 60%;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-group .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 48px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .result-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .result-section img {
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            padding: 12px 32px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s ease;
+            color: white;
+            text-decoration: none;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: #991b1b;
+            font-weight: 500;
+            margin-top: 2rem;
         }
     </style>
 </head>
@@ -50,67 +198,306 @@
     {% include 'navbar.html' %}
     
     <div class="container mt-5">
-        <div class="row justify-content-center text-center">
+        <div class="row justify-content-center">
             {% if current_user != 'fdc' %}
-                <form method="POST">
-                    <h1>MACY SET MAKER</h1>
-                    <h4>You will get BOX Label, Packing Slip, and Pallet Label</h4>
-                    <h4><a href="/static/checklist.docx">Old Instruction.xlsx</a></h4>                
+                <div class="col-lg-10">
+                    <div class="main-card">
+                        <div class="text-center">
+                            <h1>MACY SET MAKER</h1>
+                            <h4>You will get BOX Label, Packing Slip, and Pallet Label</h4>
+                            <h4><a href="/static/checklist.docx">📋 Old Instruction.xlsx</a></h4>
+                        </div>
 
-                    <div class="form-group tooltip-container">
+                        <!-- Email Fetcher Section -->
+                        <div class="mt-4 mb-4" style="background: #f8f9fa; padding: 20px; border-radius: 15px; border: 2px dashed #667eea;">
+                            <h5 class="text-center mb-3" style="color: #667eea; font-weight: 600;">
+                                <i class="fas fa-envelope-open-text"></i> 📧 Macy's Routing Notifications (Last 14 Days)
+                            </h5>
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-primary" onclick="fetchMacyEmails()" id="fetchEmailBtn"
+                                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 35px; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                                    <i class="fas fa-sync-alt"></i> Load Routing Emails from Yihao
+                                </button>
+                            </div>
+                            <div id="emailListContainer" class="mt-4" style="display: none;"></div>
+                        </div>
+
+                        <!-- Available Orders Section -->
+                        {% if available_orders and available_orders|length > 0 %}
+                        <div class="mb-4" style="background: #f0fdf4; padding: 20px; border-radius: 15px; border: 2px solid #10b981;">
+                            <h5 class="text-center mb-3" style="color: #059669; font-weight: 600;">
+                                <i class="fas fa-list-alt"></i> 📋 Available Orders for Macy's (Customer 01221)
+                            </h5>
+                            <div class="text-center" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                                {% for order in available_orders %}
+                                <button type="button" class="btn" 
+                                        onclick="document.getElementById('order_number').value = '{{ order.order_number }}'; document.getElementById('po_num').value = '{{ order.po_number }}';" 
+                                        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" 
+                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.4)';" 
+                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+                                        title="Order Date: {{ order.order_date }}&#10;Cancel Date: {{ order.cancel_date }}&#10;PO: {{ order.po_number }}">
+                                    Order #{{ order.order_number }} ({{ order.source }}) - PO: {{ order.po_number }}
+                                </button>
+                                {% endfor %}
+                            </div>
+                            <p class="text-center mt-3 mb-0" style="font-size: 0.85rem; color: #6b7280;">
+                                <i class="fas fa-info-circle"></i> Click to auto-fill Order# and PO Number • Showing orders with cancel date after today
+                            </p>
+                        </div>
+                        {% endif %}
+
+                <form method="POST" class="mt-4">                
+
+                    <div class="form-group">
                         <label for="po_num">PO Number:</label>
                         <input type="text" class="form-control" id="po_num" name="po_num" value="{{ po_num }}" required>
-                        <span class="tooltip-text">this is on the order like 1835178</span>
+                        <span class="visible-placeholder" data-for="po_num">this is on the order like 1835178</span>
                     </div>
 
-                    <div class="form-group tooltip-container">
+                    <div class="form-group">
                         <label for="order_number">order#/BOL:</label>
                         <input type="text" class="form-control" id="order_number" name="order_number" value="{{ order_number }}" required>
-                        <span class="tooltip-text">4 digit for E-Fashion<br>5 digit for FDC</span>
+                        <span class="visible-placeholder" data-for="order_number">4 digit for E-Fashion<br>5 digit for FDC</span>
                     </div>
 
-                    <div class="form-group tooltip-container">
+                    <div class="form-group">
                         <label for="apt">APT:</label>
                         <input type="text" class="form-control" id="apt" name="apt" value="{{ apt }}" required>
-                        <span class="tooltip-text">Ruby Email like 53375808</span>
+                        <span class="visible-placeholder" data-for="apt">Ruby Email like 53375808</span>
                     </div>
 
-                    <div class="form-group tooltip-container">
+                    <div class="form-group">
                         <label for="carrier">Carrier:</label>
                         <input type="text" class="form-control" id="carrier" name="carrier" value="{{ carrier }}" required>
-                        <span class="tooltip-text">From Ruby Email</span>
+                        <span class="visible-placeholder" data-for="carrier">From Ruby Email</span>
                     </div>
 
-                    <div class="form-group tooltip-container">
+                    <div class="form-group">
                         <label for="project">Project:</label>
                         <input type="text" class="form-control" id="project" name="project" value="{{ project }}" required>
-                        <span class="tooltip-text">Ruby Email title Macy's, Inc. Routing Notification (Project(s) 7565620) </span>
+                        <span class="visible-placeholder" data-for="project">Ruby Email title Macy's, Inc. Routing Notification (Project(s) 7565620)</span>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">元神启动</button>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">🚀 元神启动</button>
+                    </div>
                 </form>
+                    </div>
+                </div>
             {% endif %}
         </div>
 
         {% if filename %}
-            <div class="text-center mt-5">
-                <div class="container d-flex justify-content-center align-items-top" style="height: 50vh;">
-                    <img src="static/macy_sticking_guide.jpg" alt="Sticking Guide">
-                </div>
-                <div class="d-flex flex-wrap justify-content-center mt-3">
-                    <a href="{{ url_for('download_file4', filename=filename) }}" class="btn btn-primary">
-                        Download {{ filename }}
-                    </a>   
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="result-section text-center">
+                        <div class="container d-flex justify-content-center align-items-top" style="min-height: 50vh;">
+                            <img src="static/macy_sticking_guide.jpg" alt="Sticking Guide">
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-center mt-4">
+                            <a href="{{ url_for('download_file4', filename=filename) }}" class="download-btn">
+                                📥 Download {{ filename }}
+                            </a>   
+                        </div>
+                    </div>
                 </div>
             </div>
         {% endif %}
 
         {% if error_message %}
-            <div class="text-center mt-5">
-                <p style="color: red;">{{ error_message }}</p>
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="error-message">
+                        {{ error_message }}
+                    </div>
+                </div>
             </div>
         {% endif %}
     </div>
+
+    <script>
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function fetchMacyEmails() {
+            var btn = document.getElementById('fetchEmailBtn');
+            var container = document.getElementById('emailListContainer');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Fetching emails from yihao@fdcus.com...</div>';
+            container.style.display = 'block';
+            
+            fetch('/macy/fetch_emails')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Emails';
+                    
+                    if (data.success && data.emails && data.emails.length > 0) {
+                        var html = '<div style="max-height: 500px; overflow-y: auto;">';
+                        html += '<p class="text-center" style="font-weight: 600; color: #667eea; margin-bottom: 15px;">Found ' + data.count + ' routing notification(s) - Click to auto-fill</p>';
+                        
+                        data.emails.forEach(function(email, index) {
+                            html += '<div class="email-card" onclick="fillFromEmail(' + index + ')" style="background: white; border: 2px solid #e5e7eb; border-radius: 10px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s ease;" ';
+                            html += 'onmouseover="this.style.borderColor=\'#667eea\'; this.style.transform=\'translateY(-2px)\'; this.style.boxShadow=\'0 4px 12px rgba(102, 126, 234, 0.3)\';" ';
+                            html += 'onmouseout="this.style.borderColor=\'#e5e7eb\'; this.style.transform=\'translateY(0)\'; this.style.boxShadow=\'none\';">';
+                            
+                            html += '<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">';
+                            html += '<div style="font-weight: 600; color: #333; flex: 1;">' + escapeHtml(email.subject) + '</div>';
+                            html += '<div style="color: #666; font-size: 0.85rem; white-space: nowrap; margin-left: 10px;"><i class="far fa-clock"></i> ' + email.date + '</div>';
+                            html += '</div>';
+                            
+                            if (email.po_number || email.appointment_number || email.project_number || email.carrier) {
+                                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; font-size: 0.9rem;">';
+                                
+                                if (email.po_number) {
+                                    html += '<div><span style="color: #666;">PO:</span> <strong>' + escapeHtml(email.po_number) + '</strong></div>';
+                                }
+                                if (email.appointment_number) {
+                                    html += '<div><span style="color: #666;">APT:</span> <strong>' + escapeHtml(email.appointment_number) + '</strong></div>';
+                                }
+                                if (email.project_number) {
+                                    html += '<div><span style="color: #666;">Project:</span> <strong>' + escapeHtml(email.project_number) + '</strong></div>';
+                                }
+                                if (email.carrier) {
+                                    html += '<div><span style="color: #666;">Carrier:</span> <strong>' + escapeHtml(email.carrier) + '</strong></div>';
+                                }
+                                
+                                html += '</div>';
+                            }
+                            
+                            html += '</div>';
+                            html += '<div id="email-data-' + index + '" style="display:none;">' + JSON.stringify(email) + '</div>';
+                        });
+                        
+                        html += '</div>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<div class="text-center" style="padding: 30px; color: #999;"><i class="fas fa-inbox" style="font-size: 40px; margin-bottom: 15px; display: block;"></i>No routing notifications found in the last 14 days</div>';
+                    }
+                })
+                .catch(function(error) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Load Routing Emails from Yihao';
+                    container.innerHTML = '<div class="text-center" style="padding: 20px; color: #dc3545;"><i class="fas fa-exclamation-circle"></i> Error loading emails: ' + error.message + '</div>';
+                });
+        }
+        
+        function fillFromEmail(index) {
+            var emailDataDiv = document.getElementById('email-data-' + index);
+            if (!emailDataDiv) {
+                console.error('Email data div not found for index:', index);
+                return;
+            }
+            
+            var email = JSON.parse(emailDataDiv.textContent);
+            console.log('Email data:', email);
+            
+            if (email.po_number) {
+                var poInput = document.getElementById('po_num');
+                if (poInput) {
+                    poInput.value = email.po_number;
+                    console.log('Filled PO:', email.po_number);
+                }
+            }
+            if (email.appointment_number) {
+                var aptInput = document.getElementById('apt');
+                if (aptInput) {
+                    aptInput.value = email.appointment_number;
+                    console.log('Filled APT:', email.appointment_number);
+                }
+            }
+            if (email.project_number) {
+                var projectInput = document.getElementById('project');
+                if (projectInput) {
+                    projectInput.value = email.project_number;
+                    console.log('Filled Project:', email.project_number);
+                }
+            }
+            if (email.carrier) {
+                var carrierInput = document.getElementById('carrier');
+                if (carrierInput) {
+                    carrierInput.value = email.carrier;
+                    console.log('Filled Carrier:', email.carrier);
+                }
+            }
+            
+            document.querySelectorAll('.form-control').forEach(function(input) {
+                var event = new Event('input', { bubbles: true });
+                input.dispatchEvent(event);
+            });
+            
+            var message = document.createElement('div');
+            message.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); z-index: 10000; font-weight: 600;';
+            message.innerHTML = '<i class="fas fa-check-circle"></i> Fields auto-filled! Please verify Order#/BOL';
+            document.body.appendChild(message);
+            
+            setTimeout(function() {
+                message.style.transition = 'opacity 0.3s ease';
+                message.style.opacity = '0';
+                setTimeout(function() { message.remove(); }, 300);
+            }, 3000);
+        }
+
+        function parseEmail() {
+            const emailText = document.getElementById('emailInput').value;
+            
+            if (!emailText.trim()) {
+                alert('Please paste the email first!');
+                return;
+            }
+            
+            // Extract Appointment # (APT)
+            const aptMatch = emailText.match(/Appointment\s*#\s*:\s*(\d+)/i);
+            if (aptMatch) {
+                document.getElementById('apt').value = aptMatch[1];
+            }
+            
+            // Extract Carrier
+            const carrierMatch = emailText.match(/Carrier\s*:\s*([^\n(]+)/i);
+            if (carrierMatch) {
+                document.getElementById('carrier').value = carrierMatch[1].trim();
+            }
+            
+            // Extract Project from subject line
+            const projectMatch = emailText.match(/Project\(s\)\s*(\d+)/i);
+            if (projectMatch) {
+                document.getElementById('project').value = projectMatch[1];
+            }
+            
+            // Show success message
+            alert('✅ Fields auto-filled! Please verify PO Number and Order#/BOL manually.');
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            function updatePlaceholders() {
+                document.querySelectorAll('.visible-placeholder').forEach(function (el) {
+                    var inputId = el.dataset.for;
+                    var input = document.getElementById(inputId);
+                    if (!input) return;
+                            if (input.value && input.value.trim() !== '') {
+                                el.style.display = 'none';
+                            } else {
+                                el.style.display = 'inline-block';
+                            }
+                });
+            }
+
+            // initial update
+            updatePlaceholders();
+
+            // attach listeners to update in real-time
+            document.querySelectorAll('.form-control').forEach(function (input) {
+                input.addEventListener('input', updatePlaceholders);
+                input.addEventListener('blur', updatePlaceholders);
+            });
+        });
+    </script>
 
 </body>
 </html>

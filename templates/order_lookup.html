@@ -355,6 +355,48 @@
             font-weight: bold;
         }
 
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .editable-cell:hover {
+            background-color: #e8f4f8 !important;
+            outline: 2px solid var(--primary-color);
+        }
+
+        .editable-cell:hover::after {
+            content: '✎';
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .editing {
+            background-color: #fff3cd !important;
+            outline: 2px solid #ffc107;
+        }
+
+        .description-input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .description-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 5px rgba(80, 200, 120, 0.3);
+        }
+
+
         @media (max-width: 768px) {
             .search-form-wrapper {
                 flex-direction: column;
@@ -890,6 +932,122 @@
             toggleHighlights();
         });
 
+        // Inline editing functionality
+        let currentEditingCell = null;
+
+        function makeDescriptionEditable() {
+            // Add editable class and click event to description cells
+            $('#items_table tbody tr').each(function() {
+                var descCell = $(this).find('td').eq(2); // Description is in third column (index 2)
+                descCell.addClass('editable-cell');
+                
+                descCell.off('click').on('click', function() {
+                    if (currentEditingCell && currentEditingCell[0] === this) {
+                        return; // Already editing this cell
+                    }
+                    
+                    // Save any previous editing cell
+                    if (currentEditingCell) {
+                        saveDescription(currentEditingCell);
+                    }
+                    
+                    startEditingDescription($(this));
+                });
+            });
+        }
+
+        function startEditingDescription(cell) {
+            currentEditingCell = cell;
+            var currentText = cell.text().trim();
+            
+            cell.addClass('editing');
+            var input = $('<input type="text" class="description-input">');
+            input.val(currentText);
+            
+            cell.html(input);
+            input.focus();
+            input.select();
+            
+            // Save on Enter key
+            input.on('keypress', function(e) {
+                if (e.which === 13) { // Enter key
+                    e.preventDefault();
+                    saveDescription(cell);
+                }
+            });
+            
+            // Save on blur (clicking outside)
+            input.on('blur', function() {
+                setTimeout(function() {
+                    saveDescription(cell);
+                }, 200);
+            });
+            
+            // Cancel on Escape key
+            input.on('keydown', function(e) {
+                if (e.which === 27) { // Escape key
+                    cell.text(currentText);
+                    cell.removeClass('editing');
+                    currentEditingCell = null;
+                }
+            });
+        }
+
+        function saveDescription(cell) {
+            if (!cell || !cell.hasClass('editing')) {
+                return;
+            }
+            
+            var input = cell.find('input');
+            var newText = input.val().trim();
+            var row = cell.closest('tr');
+            var lineNumber = row.find('td').eq(0).text().trim();
+            var skuCell = row.find('td').eq(1);
+            // Extract SKU from the hyperlink
+            var sku = skuCell.find('a').length > 0 ? skuCell.find('a').text().trim() : skuCell.text().trim();
+            var orderNumber = $('#order_number').val().trim();
+            
+            // Update the cell
+            cell.text(newText);
+            cell.removeClass('editing');
+            currentEditingCell = null;
+            
+            // Show saving indicator
+            cell.css('background-color', '#fff3cd');
+            cell.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+            
+            // Send to server to save
+            $.ajax({
+                url: '/update_order_description',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    order_number: orderNumber,
+                    line_number: lineNumber,
+                    sku: sku,
+                    description: newText
+                }),
+                success: function(response) {
+                    cell.text(newText);
+                    cell.css('background-color', '#d4edda');
+                    setTimeout(function() {
+                        cell.css('background-color', '');
+                    }, 2000);
+                    console.log('Description updated successfully for line ' + lineNumber);
+                },
+                error: function(xhr, status, error) {
+                    cell.css('background-color', '#f8d7da');
+                    cell.html('<i class="fas fa-exclamation-triangle"></i> Failed to save');
+                    setTimeout(function() {
+                        cell.text(newText);
+                        cell.css('background-color', '');
+                    }, 3000);
+                    console.error('Error updating description:', error);
+                    alert('Failed to update description: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'));
+                }
+            });
+        }
+
         $(document).ready(function() {
             // Add event listeners for navigation buttons
             $('#prevOrderBtn').on('click', function() {
@@ -969,6 +1127,9 @@
                         });
                     }
                 });
+                
+                // Enable inline editing for descriptions
+                makeDescriptionEditable();
             }
 
             $('#info_list_table').DataTable({

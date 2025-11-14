@@ -11,9 +11,13 @@ import tempfile
 from pathlib import Path
 import shutil
 from datetime import datetime
+import logging
 
 from py.utilities.database_utils import get_mysql_connection
 from py.utilities.dam_sync_service_v2 import DAMSyncServiceV2
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 image_upload_bp = Blueprint('image_upload', __name__)
 
@@ -104,9 +108,9 @@ def upload_bulk_catalog():
                         # DELETE duplicate file immediately to save disk space
                         try:
                             os.remove(file_path)
-                            print(f"  [DUPLICATE REMOVED] {file} - already exists in {dup_info.get('source', 'database')}")
+                            logger.info(f"  [DUPLICATE REMOVED] {file} - already exists in {dup_info.get('source', 'database')}")
                         except Exception as e:
-                            print(f"  [ERROR] Could not remove duplicate {file}: {e}")
+                            logger.error(f"  [ERROR] Could not remove duplicate {file}: {e}")
                     else:
                         image_data.append({
                             'filename': file,
@@ -140,18 +144,32 @@ def upload_bulk_catalog():
 @image_upload_bp.route('/upload_bulk_detail', methods=['POST'])
 def upload_bulk_detail():
     """Handle bulk detail images upload - folders named by style containing images"""
+    # Debug: Write directly to file to verify function is called
+    with open('C:\\FDC_FLASK_APP\\debug_upload.txt', 'a', encoding='utf-8') as f:
+        f.write(f"UPLOAD CALLED: {datetime.now()}\n")
+    
+    logger.info("=== BULK DETAIL UPLOAD ACCESSED ===")
     try:
         files = request.files.getlist('detail_files')
         
+        with open('C:\\FDC_FLASK_APP\\debug_upload.txt', 'a', encoding='utf-8') as f:
+            f.write(f"Files received: {len(files) if files else 0}\n")
+            if files:
+                for i, file in enumerate(files[:3]):  # Log first 3 files
+                    f.write(f"  File {i}: {file.filename}\n")
+        
+        logger.info(f"Received {len(files) if files else 0} files")
+        
         if not files or len(files) == 0:
+            logger.warning("No files uploaded")
             return jsonify({'success': False, 'message': 'No files uploaded'})
         
         # Log upload stats
         total_size_mb = sum(file.content_length or 0 for file in files) / (1024 * 1024)
-        print(f"\n{'=' * 60}")
-        print(f"BULK DETAIL UPLOAD STARTED")
-        print(f"Files: {len(files)}, Total size: {total_size_mb:.2f} MB")
-        print(f"{'=' * 60}\n")
+        logger.info(f"{'=' * 60}")
+        logger.info(f"BULK DETAIL UPLOAD STARTED")
+        logger.info(f"Files: {len(files)}, Total size: {total_size_mb:.2f} MB")
+        logger.info(f"{'=' * 60}")
         
         # Create session-specific temp directory
         session_id = session.get('username', 'anonymous') + '_' + datetime.now().strftime('%Y%m%d%H%M%S')
@@ -167,52 +185,50 @@ def upload_bulk_detail():
                 has_archives = True
                 break
         
-        from py.utilities.image_organizer_service import ImageOrganizerService
-        organizer = ImageOrganizerService()
         style_groups = {}  # {style_name: [file_info]}
         duplicate_stats = {'count': 0, 'size_mb': 0}  # Track duplicates
+        uncategorized_files = []  # Files that couldn't get SKU from filename
         
-        print(f"\n=== DEBUG: Processing {len(files)} files ===")
-        print(f"has_archives: {has_archives}")
+        logger.info(f"=== Processing {len(files)} files ===")
+        logger.info(f"has_archives: {has_archives}")
         
-        # Save and analyze files in single pass
+        # Helper function to extract SKU from text (before first space)
+        def extract_sku_from_text(text):
+            """Extract SKU - everything before first space, uppercase"""
+            if not text:
+                return None
+            # Get basename without extension
+            name_without_ext = os.path.splitext(text)[0]
+            # Take everything before first space
+            sku = name_without_ext.split()[0] if name_without_ext else None
+            return sku.upper() if sku else None
+        
+        # FIRST PASS: Save all files and try to extract SKU from filename
         for idx, file in enumerate(files):
-            # Use index-based path lookup to handle duplicate filenames
             relative_path = request.form.get(f'path_{idx}', '')
             
-            print(f"\nFile {idx}: filename='{file.filename}', relative_path='{relative_path}'")
+            logger.info(f"File {idx}: filename='{file.filename}', relative_path='{relative_path}'")
             
             if relative_path:
-                # Folder upload with webkitRelativePath
                 target_path = os.path.join(temp_dir, relative_path)
-                print(f"  Using relative_path -> target_path='{target_path}'")
+                logger.info(f"  Using relative_path -> target_path='{target_path}'")
             else:
-                # Direct file upload - use only the basename to avoid path issues
-                # Some browsers include path in filename, secure_filename converts / to _
                 filename_only = os.path.basename(file.filename)
                 target_path = os.path.join(temp_dir, secure_filename(filename_only))
-                print(f"  Using basename: '{filename_only}' -> target_path='{target_path}'")
+                logger.info(f"  Using basename: '{filename_only}' -> target_path='{target_path}'")
             
             os.makedirs(os.path.dirname(target_path), exist_ok=True)
             file.save(target_path)
-            
-            # Check if this single file is a duplicate IMMEDIATELY (before extraction)
-            if Path(target_path).suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}:
-                is_dup, dup_info = _check_duplicate_by_hash(target_path)
-                if is_dup:
-                    file_size_mb = os.path.getsize(target_path) / (1024 * 1024)
-                    duplicate_stats['count'] += 1
-                    duplicate_stats['size_mb'] += file_size_mb
-                    print(f"  [SKIP DUPLICATE] {os.path.basename(target_path)} ({file_size_mb:.2f} MB) - already in {dup_info.get('source', 'DB')}")
-                    os.remove(target_path)  # Delete immediately
-                    continue  # Skip further processing
+            logger.info(f"  Saved: {os.path.basename(target_path)}")
             
             # Extract archives immediately
             if target_path.lower().endswith('.zip'):
+                logger.info(f"  Extracting ZIP: {os.path.basename(target_path)}")
                 with zipfile.ZipFile(target_path, 'r') as zip_ref:
                     zip_ref.extractall(os.path.dirname(target_path))
                 os.remove(target_path)
             elif target_path.lower().endswith('.rar'):
+                logger.info(f"  Extracting RAR: {os.path.basename(target_path)}")
                 try:
                     import rarfile
                     with rarfile.RarFile(target_path, 'r') as rar_ref:
@@ -222,186 +238,195 @@ def upload_bulk_detail():
                     shutil.rmtree(temp_dir, ignore_errors=True)
                     return jsonify({'success': False, 'message': 'RAR support not installed'})
             
-            # For images saved directly (not archives), group immediately
+            # For images, check duplicate and try to extract SKU from filename
             elif Path(target_path).suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}:
-                parent_dir = os.path.dirname(target_path)
-                rel_parent = os.path.relpath(parent_dir, temp_dir) if parent_dir != temp_dir else ''
-                
-                # Determine SKU from TOP-LEVEL folder (not immediate parent)
-                if parent_dir == temp_dir:
-                    # Root level - extract from filename
-                    sku = organizer.extract_sku_from_path(file.filename)
-                else:
-                    # Get the path parts: t9998/New folder -> ['t9998', 'New folder']
-                    path_parts = rel_parent.split(os.sep) if rel_parent else []
+                # Check duplicate
+                is_dup, dup_info = _check_duplicate_by_hash(target_path)
+                if is_dup:
+                    file_size_mb = os.path.getsize(target_path) / (1024 * 1024)
+                    duplicate_stats['count'] += 1
+                    duplicate_stats['size_mb'] += file_size_mb
+                    logger.info(f"  [SKIP DUPLICATE] {os.path.basename(target_path)} ({file_size_mb:.2f} MB)")
                     
-                    if path_parts:
-                        # Use FIRST folder as style (top-level), not immediate parent
-                        top_folder = path_parts[0]
-                        sku = organizer.extract_sku_from_path(top_folder) or top_folder.upper()
+                    # Log where the duplicate exists
+                    if dup_info:
+                        logger.info(f"    Duplicate found in: {dup_info.get('source', 'unknown')} - {dup_info.get('path', 'unknown')}")
+                        with open('C:\\FDC_FLASK_APP\\debug_upload.txt', 'a', encoding='utf-8') as f:
+                            f.write(f"  DUPE: {os.path.basename(target_path)} exists in {dup_info.get('source')} at {dup_info.get('path')}\n")
+                    
+                    os.remove(target_path)
+                    continue
+                
+                # Try to extract SKU from filename
+                logger.info(f"  [NEW IMAGE] {os.path.basename(target_path)}")
+                filename_only = os.path.basename(target_path)
+                sku = extract_sku_from_text(filename_only)
+                
+                if sku:
+                    logger.info(f"    ✓ SKU from filename: {sku}")
+                    if sku not in style_groups:
+                        style_groups[sku] = []
+                    
+                    rel_path = os.path.relpath(target_path, temp_dir).replace('\\', '/')
+                    style_groups[sku].append({
+                        'filename': filename_only,
+                        'path': rel_path,
+                        'directory': os.path.dirname(rel_path) if '/' in rel_path else ''
+                    })
+                else:
+                    # Couldn't extract SKU from filename - save for second pass
+                    logger.info(f"    ⚠ No SKU in filename - will check folder name")
+                    uncategorized_files.append(target_path)
+        
+        # Log first pass results
+        logger.info(f"=== FIRST PASS COMPLETE ===")
+        logger.info(f"Style groups: {len(style_groups)}")
+        logger.info(f"Uncategorized files: {len(uncategorized_files)}")
+        logger.info(f"Duplicates removed: {duplicate_stats['count']}")
+        
+        with open('C:\\FDC_FLASK_APP\\debug_upload.txt', 'a', encoding='utf-8') as f:
+            f.write(f"After first pass - Groups: {len(style_groups)}, Uncategorized: {len(uncategorized_files)}, Dupes: {duplicate_stats['count']}\n")
+            for sku in style_groups:
+                f.write(f"  {sku}: {len(style_groups[sku])} files\n")
+        
+        # SECOND PASS: Handle archives and uncategorized files
+        if has_archives:
+            logger.info(f"=== Processing extracted archive files ===")
+            for root, dirs, files_in_dir in os.walk(temp_dir):
+                for img_file in files_in_dir:
+                    if Path(img_file).suffix.lower() not in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}:
+                        continue
+                    
+                    file_path = os.path.join(root, img_file)
+                    
+                    # Skip if already processed
+                    rel_path = os.path.relpath(file_path, temp_dir).replace('\\', '/')
+                    already_processed = any(
+                        rel_path in [f['path'] for files in style_groups.values() for f in files]
+                    )
+                    if already_processed:
+                        continue
+                    
+                    # Check duplicate
+                    is_dup, dup_info = _check_duplicate_by_hash(file_path)
+                    if is_dup:
+                        file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+                        duplicate_stats['count'] += 1
+                        duplicate_stats['size_mb'] += file_size_mb
+                        logger.info(f"  [ARCHIVE DUP] {img_file} ({file_size_mb:.2f} MB) - skipped")
+                        os.remove(file_path)
+                        continue
+                    
+                    # Try filename first
+                    sku = extract_sku_from_text(img_file)
+                    
+                    if not sku:
+                        # Try folder name (immediate parent)
+                        folder_name = os.path.basename(root)
+                        sku = extract_sku_from_text(folder_name)
+                        
+                        if not sku and root != temp_dir:
+                            # Try one level up
+                            parent_path = os.path.dirname(root)
+                            parent_folder = os.path.basename(parent_path)
+                            sku = extract_sku_from_text(parent_folder)
+                            logger.info(f"  {img_file} - SKU from parent folder '{parent_folder}': {sku}")
+                        elif sku:
+                            logger.info(f"  {img_file} - SKU from folder '{folder_name}': {sku}")
                     else:
-                        # Fallback to immediate parent
-                        folder_name = os.path.basename(parent_dir)
-                        sku = organizer.extract_sku_from_path(folder_name) or folder_name.upper()
+                        logger.info(f"  {img_file} - SKU from filename: {sku}")
+                    
+                    if sku:
+                        if sku not in style_groups:
+                            style_groups[sku] = []
+                        style_groups[sku].append({
+                            'filename': img_file,
+                            'path': rel_path,
+                            'directory': os.path.dirname(rel_path) if '/' in rel_path else ''
+                        })
+                    else:
+                        logger.warning(f"  ✗ Could not extract SKU for {img_file} - skipped")
+        
+        # Process uncategorized files from first pass (try folder names)
+        if uncategorized_files:
+            logger.info(f"=== Processing {len(uncategorized_files)} uncategorized files ===")
+            for file_path in uncategorized_files:
+                filename = os.path.basename(file_path)
+                parent_dir = os.path.dirname(file_path)
+                
+                # Try immediate parent folder
+                if parent_dir != temp_dir:
+                    folder_name = os.path.basename(parent_dir)
+                    sku = extract_sku_from_text(folder_name)
+                    
+                    if not sku:
+                        # Try one level up
+                        grandparent_dir = os.path.dirname(parent_dir)
+                        if grandparent_dir != temp_dir:
+                            grandparent_name = os.path.basename(grandparent_dir)
+                            sku = extract_sku_from_text(grandparent_name)
+                            logger.info(f"  {filename} - SKU from grandparent '{grandparent_name}': {sku}")
+                        else:
+                            logger.info(f"  {filename} - SKU from folder '{folder_name}': {sku}")
+                    else:
+                        logger.info(f"  {filename} - SKU from folder '{folder_name}': {sku}")
+                else:
+                    sku = None
+                    logger.warning(f"  {filename} - at root level, no folder to extract SKU from")
                 
                 if sku:
                     if sku not in style_groups:
                         style_groups[sku] = []
                     
-                    # Normalize paths to forward slashes
-                    rel_path = os.path.relpath(target_path, temp_dir).replace('\\', '/')
-                    rel_parent_normalized = rel_parent.replace('\\', '/') if rel_parent else ''
-                    
-                    print(f"  Adding to style_groups[{sku}]: path='{rel_path}', dir='{rel_parent_normalized}'")
-                    
+                    rel_path = os.path.relpath(file_path, temp_dir).replace('\\', '/')
                     style_groups[sku].append({
-                        'filename': os.path.basename(target_path),
+                        'filename': filename,
                         'path': rel_path,
-                        'directory': rel_parent_normalized
+                        'directory': os.path.dirname(rel_path) if '/' in rel_path else ''
                     })
-        
-        # If archives were extracted, rescan directory and check duplicates
-        if has_archives:
-            style_groups = {}  # Reset
-            for root, dirs, files_in_dir in os.walk(temp_dir):
-                image_files = [f for f in files_in_dir if Path(f).suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}]
-                
-                if image_files:
-                    rel_root = os.path.relpath(root, temp_dir) if root != temp_dir else ''
-                    
-                    if root == temp_dir:
-                        # Root level images - extract SKU from filename
-                        for img_file in image_files:
-                            file_path = os.path.join(root, img_file)
-                            
-                            # Check duplicate IMMEDIATELY after extraction
-                            is_dup, dup_info = _check_duplicate_by_hash(file_path)
-                            if is_dup:
-                                file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-                                duplicate_stats['count'] += 1
-                                duplicate_stats['size_mb'] += file_size_mb
-                                print(f"  [ARCHIVE DUP] {img_file} ({file_size_mb:.2f} MB) - skipped")
-                                os.remove(file_path)  # Delete immediately
-                                continue
-                            
-                            sku = organizer.extract_sku_from_path(img_file)
-                            if sku:
-                                if sku not in style_groups:
-                                    style_groups[sku] = []
-                                
-                                # Normalize path
-                                rel_path = os.path.relpath(file_path, temp_dir).replace('\\', '/')
-                                
-                                style_groups[sku].append({
-                                    'filename': img_file,
-                                    'path': rel_path,
-                                    'directory': ''
-                                })
-                    else:
-                        # Inside folders - use TOP-LEVEL folder as SKU
-                        path_parts = rel_root.split(os.sep) if rel_root else []
-                        
-                        if path_parts:
-                            # Use FIRST folder (top-level style folder)
-                            top_folder = path_parts[0]
-                            sku = organizer.extract_sku_from_path(top_folder) or top_folder.upper()
-                        else:
-                            # Fallback
-                            folder_name = os.path.basename(root)
-                            sku = organizer.extract_sku_from_path(folder_name) or folder_name.upper()
-                        
-                        if sku not in style_groups:
-                            style_groups[sku] = []
-                        
-                        for img_file in image_files:
-                            file_path = os.path.join(root, img_file)
-                            
-                            # Check duplicate IMMEDIATELY after extraction
-                            is_dup, dup_info = _check_duplicate_by_hash(file_path)
-                            if is_dup:
-                                file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-                                duplicate_stats['count'] += 1
-                                duplicate_stats['size_mb'] += file_size_mb
-                                print(f"  [ARCHIVE DUP] {img_file} ({file_size_mb:.2f} MB) - skipped")
-                                os.remove(file_path)  # Delete immediately
-                                continue
-                            
-                            # Normalize paths to forward slashes
-                            rel_path = os.path.relpath(file_path, temp_dir).replace('\\', '/')
-                            rel_root_normalized = rel_root.replace('\\', '/') if rel_root else ''
-                            
-                            style_groups[sku].append({
-                                'filename': img_file,
-                                'path': rel_path,
-                                'directory': rel_root_normalized
-                            })
+                else:
+                    logger.warning(f"  ✗ Could not extract SKU for {filename} - skipped")
         
         # Remove duplicates based on full path (not just filename)
-        # Normalize paths to use forward slashes for comparison
-        print(f"\n=== Before deduplication ===")
-        for sku in style_groups:
-            print(f"{sku}: {len(style_groups[sku])} images")
-        
+        logger.info(f"=== Deduplicating paths ===")
         for sku in style_groups:
             seen_paths = set()
             unique_images = []
             for img in style_groups[sku]:
-                # Normalize path for comparison (use forward slashes)
                 normalized_path = img['path'].replace('\\', '/')
                 if normalized_path not in seen_paths:
                     seen_paths.add(normalized_path)
                     unique_images.append(img)
-                else:
-                    print(f"  DUPLICATE REMOVED: {normalized_path}")
             style_groups[sku] = unique_images
         
-        print(f"\n=== After deduplication ===")
-        for sku in style_groups:
-            print(f"{sku}: {len(style_groups[sku])} images")
-        
-        # If archives were extracted, need to rescan directory
-        if has_archives:
-            style_groups = {}  # Reset
-            for root, dirs, files_in_dir in os.walk(temp_dir):
-                image_files = [f for f in files_in_dir if Path(f).suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}]
-                
-                if image_files:
-                    folder_name = os.path.basename(root)
-                    
-                    if root == temp_dir:
-                        for img_file in image_files:
-                            file_path = os.path.join(root, img_file)
-                            sku = organizer.extract_sku_from_path(img_file)
-                            if sku:
-                                if sku not in style_groups:
-                                    style_groups[sku] = []
-                                style_groups[sku].append({
-                                    'filename': img_file,
-                                    'path': os.path.relpath(file_path, temp_dir)
-                                })
-                    else:
-                        sku = organizer.extract_sku_from_path(folder_name) or folder_name.upper()
-                        if sku not in style_groups:
-                            style_groups[sku] = []
-                        
-                        for img_file in image_files:
-                            file_path = os.path.join(root, img_file)
-                            style_groups[sku].append({
-                                'filename': img_file,
-                                'path': os.path.relpath(file_path, temp_dir)
-                            })
-        
         if not style_groups:
+            logger.warning(f"=== NO VALID IMAGES FOUND ===")
+            logger.warning(f"Duplicates skipped: {duplicate_stats['count']}")
+            logger.warning(f"Uncategorized files attempted: {len(uncategorized_files)}")
+            
+            with open('C:\\FDC_FLASK_APP\\debug_upload.txt', 'a', encoding='utf-8') as f:
+                f.write(f"NO VALID IMAGES - Duplicates: {duplicate_stats['count']}, Uncategorized: {len(uncategorized_files)}\n")
+            
             shutil.rmtree(temp_dir, ignore_errors=True)
-            return jsonify({'success': False, 'message': 'No valid images found in folder structure'})
+            
+            # Provide better message based on what happened
+            if duplicate_stats['count'] > 0 and len(uncategorized_files) == 0:
+                message = f'All {duplicate_stats["count"]} files were duplicates and were skipped. No new images to process.'
+            else:
+                message = 'No valid images found in folder structure'
+            
+            return jsonify({'success': False, 'message': message})
         
         # Log final statistics
         total_new_images = sum(len(files) for files in style_groups.values())
-        print(f"\n{'=' * 60}")
-        print(f"UPLOAD PROCESSING COMPLETE")
-        print(f"New images: {total_new_images}")
-        print(f"Duplicates removed: {duplicate_stats['count']} ({duplicate_stats['size_mb']:.2f} MB saved)")
-        print(f"{'=' * 60}\n")
+        logger.info(f"{'=' * 60}")
+        logger.info(f"UPLOAD PROCESSING COMPLETE")
+        logger.info(f"Styles found: {len(style_groups)}")
+        for sku in style_groups:
+            logger.info(f"  {sku}: {len(style_groups[sku])} images")
+        logger.info(f"New images: {total_new_images}")
+        logger.info(f"Duplicates removed: {duplicate_stats['count']} ({duplicate_stats['size_mb']:.2f} MB saved)")
+        logger.info(f"{'=' * 60}")
         
         # Store session info
         session[f'bulk_detail_session_{session_id}'] = {
@@ -426,6 +451,11 @@ def upload_bulk_detail():
         })
         
     except Exception as e:
+        logger.error(f"=== BULK DETAIL UPLOAD ERROR ===")
+        logger.error(f"Error: {str(e)}")
+        logger.error(f"Type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'message': str(e)})
 
 
@@ -559,15 +589,15 @@ def process_bulk_catalog():
                 for sku, paths in sku_files.items():
                     _record_catalog_uploads(paths, sku)
             except Exception as e:
-                print(f"Auto-record failed: {e}")
+                logger.error(f"Auto-record failed: {e}")
         
         # Trigger background sync to update index files and ensure everything is in sync
         if saved_paths:
             try:
                 _trigger_background_sync(rebuild_index=False)
-                print(f"Background sync triggered after catalog upload")
+                logger.info(f"Background sync triggered after catalog upload")
             except Exception as e:
-                print(f"Background sync trigger failed: {e}")
+                logger.error(f"Background sync trigger failed: {e}")
         
         # Cleanup
         try:
@@ -660,7 +690,7 @@ def process_bulk_detail():
                     try:
                         _record_big_picture_uploads(saved_paths, sku)
                     except Exception as e:
-                        print(f"Auto-record failed for {sku}: {e}")
+                        logger.error(f"Auto-record failed for {sku}: {e}")
                         
             except Exception as e:
                 errors.append(f"Error processing style {sku}: {str(e)}")
@@ -669,9 +699,9 @@ def process_bulk_detail():
         if processed_files:
             try:
                 _trigger_background_sync(rebuild_index=False)
-                print(f"Background sync triggered after detail upload")
+                logger.info(f"Background sync triggered after detail upload")
             except Exception as e:
-                print(f"Background sync trigger failed: {e}")
+                logger.error(f"Background sync trigger failed: {e}")
         
         # Cleanup
         try:
@@ -734,7 +764,7 @@ def optimize_image(file_path):
             img.save(file_path, 'JPEG', quality=85, optimize=True)
             
     except Exception as e:
-        print(f"Error optimizing image {file_path}: {e}")
+        logger.error(f"Error optimizing image {file_path}: {e}")
 
 def process_extracted_files(temp_dir):
     """Process files extracted from ZIP"""
@@ -809,7 +839,7 @@ def _check_duplicate_by_hash(file_path: str):
             cur.close()
             conn.close()
     except Exception as e:
-        print(f"Error checking duplicate: {e}")
+        logger.error(f"Error checking duplicate: {e}")
         return False, None
 
 def _record_catalog_uploads(file_paths, sku: str):
@@ -1075,7 +1105,7 @@ def _trigger_background_sync(rebuild_index=False):
             
         except Exception as e:
             log_event('error', f'Background sync failed: {str(e)}')
-            print(f"Background sync error: {e}")
+            logger.error(f"Background sync error: {e}")
     
     # Start sync in background thread
     thread = Thread(target=run_sync, daemon=True)

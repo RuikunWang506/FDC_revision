@@ -3,12 +3,16 @@ import pyodbc
 import pandas as pd
 import os
 import re
+import imaplib
+import email
+from email.header import decode_header
+from datetime import datetime, timedelta
 from openpyxl import Workbook
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from collections import defaultdict
 from py.utilities.setting import Config
-from flask import Blueprint, request, render_template, session, send_file, current_app
+from flask import Blueprint, request, render_template, session, send_file, current_app, jsonify
 from py.utilities.setting import login_required
 import io
 
@@ -16,6 +20,148 @@ macy_bp = Blueprint('macy', __name__)
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
+
+# Email configuration
+EMAIL_USER = 'yihao@fdcus.com'
+EMAIL_PASS = 'Fdc2640$$'
+IMAP_SERVER = 'imap.fatcow.com'
+IMAP_PORT = 993
+
+def fetch_macy_routing_emails(days_back=14):
+    """Fetch recent Macy's routing notification emails from yihao@fdcus.com"""
+    try:
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
+        mail.login(EMAIL_USER, EMAIL_PASS)
+        mail.select('inbox')
+        
+        date_filter = (datetime.now() - timedelta(days=days_back)).strftime('%d-%b-%Y')
+        search_criteria = f'(SUBJECT "Macy\'s, Inc. Routing Notification" SINCE {date_filter})'
+        
+        status, messages = mail.search(None, search_criteria)
+        
+        email_list = []
+        
+        if status == 'OK' and messages[0]:
+            message_nums = messages[0].split()
+            
+            for num in message_nums[-20:]:
+                try:
+                    status, msg_data = mail.fetch(num, '(RFC822)')
+                    
+                    if status == 'OK':
+                        email_body = msg_data[0][1]
+                        email_message = email.message_from_bytes(email_body)
+                        
+                        subject = email_message['subject']
+                        if subject:
+                            decoded_parts = decode_header(subject)
+                            subject = ''.join(
+                                part.decode(encoding or 'utf-8') if isinstance(part, bytes) else part
+                                for part, encoding in decoded_parts
+                            )
+                        
+                        date_tuple = email.utils.parsedate_tz(email_message['Date'])
+                        if date_tuple:
+                            local_date = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
+                            formatted_date = local_date.strftime('%Y-%m-%d %H:%M:%S')
+                        else:
+                            formatted_date = 'Unknown'
+                        
+                        # Extract body content - try both plain text and HTML
+                        body = ''
+                        html_body = ''
+                        
+                        if email_message.is_multipart():
+                            for part in email_message.walk():
+                                content_type = part.get_content_type()
+                                if content_type == 'text/plain' and not body:
+                                    try:
+                                        body = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                                    except:
+                                        pass
+                                elif content_type == 'text/html' and not html_body:
+                                    try:
+                                        html_body = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                                    except:
+                                        pass
+                        else:
+                            try:
+                                content = email_message.get_payload(decode=True)
+                                if content:
+                                    body = content.decode('utf-8', errors='ignore')
+                                else:
+                                    body = str(email_message.get_payload())
+                            except:
+                                body = str(email_message.get_payload())
+                        
+                        # If plain text body is empty, try to extract from HTML
+                        if not body and html_body:
+                            # Simple HTML tag removal
+                            body = re.sub(r'<[^>]+>', ' ', html_body)
+                            body = re.sub(r'\s+', ' ', body).strip()
+                        
+                        
+                        po_number = ''
+                        appointment_number = ''
+                        project_number = ''
+                        carrier = ''
+                        
+                        # Search in both body and html_body
+                        search_text = body if body else html_body
+                        
+                        if search_text or subject:
+                            # Try multiple patterns for PO number - not typically in these emails
+                            po_match = re.search(r'PO\s*(?:#|Number)?:?\s*(\d+)', search_text, re.IGNORECASE)
+                            if po_match:
+                                po_number = po_match.group(1)
+                            
+                            # Try multiple patterns for Appointment number (Authorization number in Macy's emails)
+                            apt_match = re.search(r'(?:Appointment|Authorization)\s*(?:#|Number|Type)?:?\s*([A-Z0-9]+)', search_text, re.IGNORECASE)
+                            if apt_match:
+                                appointment_number = apt_match.group(1)
+                            
+                            # Extract project from subject first, then body
+                            # Pattern 1: In subject like "Project(s) 8532580"
+                            proj_match = re.search(r'Project\(?s?\)?\s*:?\s*(\d+)', subject if subject else '', re.IGNORECASE)
+                            if not proj_match and search_text:
+                                # Pattern 2: In body like "Project Number(s) 8532580"
+                                proj_match = re.search(r'Project\s*Number\(?s?\)?\s*:?\s*(\d+)', search_text, re.IGNORECASE)
+                            if proj_match:
+                                project_number = proj_match.group(1)
+                            
+                            # Extract carrier - look for carrier name before "Carrier Mode"
+                            # Pattern: "DYNAMIC EXPRESS (DYXI) Carrier Mode:"
+                            carrier_match = re.search(r'([A-Z][A-Z\s&\-\.]+(?:\([A-Z0-9]+\))?)\s*Carrier\s*Mode', search_text, re.IGNORECASE)
+                            if carrier_match:
+                                carrier = carrier_match.group(1).strip()
+                            else:
+                                # Fallback pattern: "Carrier: CARRIER NAME"
+                                carrier_match = re.search(r'Carrier\s*:?\s*([^\n\r<]+?)(?:\s*Carrier\s*Mode|\s*Phone|\n|$)', search_text, re.IGNORECASE)
+                                if carrier_match:
+                                    carrier = carrier_match.group(1).strip()
+                        
+                        
+                        email_list.append({
+                            'subject': subject,
+                            'date': formatted_date,
+                            'body': body,
+                            'po_number': po_number,
+                            'appointment_number': appointment_number,
+                            'project_number': project_number,
+                            'carrier': carrier
+                        })
+                        
+                except Exception as e:
+                    current_app.logger.error(f"Error processing email {num}: {str(e)}")
+                    continue
+        
+        mail.logout()
+        email_list.sort(key=lambda x: x['date'], reverse=True)
+        return email_list
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching Macy's routing emails: {str(e)}")
+        return []
 
 ftpl = Font(name="Arial", size="12")
 ft22 = Font(name="Arial", size="14")
@@ -749,13 +895,14 @@ def macy_maker():
     apt = request.form.get("apt", "")
     carrier = request.form.get("carrier", "")
     project = request.form.get("project", "")
+    
+    # Fetch available orders for Macy's (Customer ID 01221)
+    available_orders = get_macy_available_orders()
 
     if request.method == "POST":
-        current_app.logger.info("%s is processing Macy Order: %s", current_user, order_number)
         excel_data, error_message, total_labels, duplicate_numbers, label_ref, address, warnings = process_orders(po_num, order_number, apt, carrier, project)
         if excel_data is None and error_message is None:
             error_message = f"Order : {order_number} not found, maybe wrong?"
-            current_app.logger.warning("Order number %s not found for %s", order_number, current_user)
         elif excel_data:
             # Return the Excel file directly
             filename = f"macyset_{order_number}_new.xlsx"
@@ -766,5 +913,119 @@ def macy_maker():
                 mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
-    return render_template("macy.html", filename=filename, error_message=error_message, current_user=current_user, po_num=po_num, order_number=order_number, apt=apt, carrier=carrier, project=project)
+    return render_template("macy.html", filename=filename, error_message=error_message, current_user=current_user, 
+                          po_num=po_num, order_number=order_number, apt=apt, carrier=carrier, project=project,
+                          available_orders=available_orders)
+
+
+def get_macy_available_orders():
+    """
+    Fetch orders for Macy's (Customer ID 01221) from both FDC and E-Fashion databases
+    where cancel date is after today or null
+    """
+    from datetime import datetime
+    available_orders = []
+    
+    databases = [
+        {'name': 'omsdata_FDC', 'source': 'FDC'},
+        {'name': 'oms_EF', 'source': 'E-Fashion'}
+    ]
+    
+    # The dates in the database use a formula: DATEDIFF(DAY, '19000101', actual_date) - 81088
+    # To get today's value: DATEDIFF from '19000101' to today, then add to '20230101' offset
+    # Working backwards: we need the integer that when processed gives us today
+    # Formula: days_from_1900 - 81088 when added to 2023-01-01 gives us today
+    # So: today - 2023-01-01 + 81088 = db_value
+    today = datetime.now()
+    base_reference = datetime(2023, 1, 1)
+    days_since_reference = (today - base_reference).days
+    today_db_format = days_since_reference + 81088
+    
+    
+    for db_info in databases:
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={sql_server_config["driver"]};'
+                f'SERVER={sql_server_config["server"]};'
+                f'DATABASE={db_info["name"]};'
+                f'UID={sql_server_config["username"]};'
+                f'PWD={sql_server_config["password"]}'
+            )
+            cursor = conn.cursor()
+            
+            # First, let's see what orders exist for customer 01221
+            test_query = """
+                SELECT TOP 5 ord_num, can_dt, ord_dt, cus_id
+                FROM orders
+                WHERE cus_id = '01221'
+                ORDER BY ord_dt DESC
+            """
+            cursor.execute(test_query)
+            test_results = cursor.fetchall()
+            
+            # Query to get orders for customer 01221 with cancel date after today or null/0
+            # Dates are stored as integers in a special format
+            # Convert them using the same formula as in order_search.py
+            query = """
+                SELECT DISTINCT 
+                    o.ord_num,
+                    CASE 
+                        WHEN o.can_dt = 0 OR o.can_dt IS NULL THEN NULL
+                        ELSE RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.can_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                             RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.can_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                             CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.can_dt) - 81088, '20230101')) AS VARCHAR)
+                    END AS cancel_date_formatted,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.ord_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.ord_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.ord_dt) - 81088, '20230101')) AS VARCHAR) AS order_date_formatted,
+                    o.can_dt,
+                    o.ord_dt,
+                    o.PO_NUM
+                FROM orders o
+                WHERE o.cus_id = '01221'
+                AND (o.can_dt = 0 OR o.can_dt IS NULL OR o.can_dt > ?)
+                ORDER BY o.ord_dt DESC, o.ord_num DESC
+            """
+            
+            cursor.execute(query, (today_db_format,))
+            results = cursor.fetchall()
+            
+            
+            for row in results:
+                available_orders.append({
+                    'order_number': str(row[0]),
+                    'source': db_info['source'],
+                    'cancel_date': row[1] if row[1] else 'No cancel date',
+                    'order_date': row[2] if row[2] else 'Unknown',
+                    'po_number': str(row[5]).strip() if row[5] else 'N/A'
+                })
+            
+            cursor.close()
+            conn.close()
+            
+        except Exception as e:
+            current_app.logger.error(f"Error fetching Macy's orders from {db_info['name']}: {str(e)}")
+    
+
+    return available_orders
+
+@macy_bp.route("/macy/fetch_emails", methods=["GET"])
+@login_required
+def fetch_emails():
+    """API endpoint to fetch recent Macy's routing notification emails"""
+    try:
+        emails = fetch_macy_routing_emails()
+        return jsonify({
+            'success': True,
+            'emails': emails,
+            'count': len(emails)
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error in fetch_emails endpoint: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'emails': [],
+            'count': 0
+        }), 500
 
