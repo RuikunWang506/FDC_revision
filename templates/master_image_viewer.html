@@ -277,6 +277,22 @@
             font-style: italic;
         }
 
+        .fetch-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #00d4ff, #1cc88a);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fetch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
         /* Image Popup Modal */
         .image-modal {
             display: none !important;
@@ -810,7 +826,8 @@
             const categories = [
                 { key: 'dam_other', name: 'Catalog_Original Disk', icon: 'fas fa-server' },
                 { key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' },
-                { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' }
+                { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' },
+                { key: 'china_ftp', name: 'China FTP', icon: 'fas fa-globe' }
             ];
 
             // Build allImages array
@@ -857,7 +874,11 @@
                 `;
 
                             if (images.length === 0) {
-                                resultsHtml += '<div class="empty-category">No images found in this category</div>';
+                                if (category.key === 'china_ftp') {
+                                    resultsHtml += '<div class="empty-category"><button class="fetch-btn" onclick="fetchChinaFtp()">Fetch China FTP Images</button></div>';
+                                } else {
+                                    resultsHtml += '<div class="empty-category">No images found in this category</div>';
+                                }
                             } else {
                                 resultsHtml += '<div class="images-grid">';
                                 
@@ -1170,6 +1191,87 @@
             }
         });
 
+        async function fetchChinaFtp() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/fetch_china_ftp?sku=${encodeURIComponent(currentSku)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error fetching China FTP images: ' + data.error);
+                    return;
+                }
+
+                // Update the china_ftp images
+                const chinaFtpImages = data.china_ftp || [];
+                
+                // Add to allImages array
+                chinaFtpImages.forEach(image => {
+                    allImages.push({
+                        ...image,
+                        category: 'China FTP',
+                        categoryKey: 'china_ftp'
+                    });
+                });
+
+                // Update the category count
+                const countSpan = document.querySelector(`#content-china_ftp`).previousElementSibling.querySelector('.category-count');
+                if (countSpan) {
+                    countSpan.textContent = chinaFtpImages.length;
+                }
+
+                // Re-render the china_ftp section
+                let contentHtml = '';
+                if (chinaFtpImages.length === 0) {
+                    contentHtml = '<div class="empty-category">No images found in this category</div>';
+                } else {
+                    contentHtml = '<div class="images-grid">';
+                    chinaFtpImages.forEach((image, index) => {
+                        const globalIndex = allImages.length - chinaFtpImages.length + index;
+                        contentHtml += `
+                            <div class="image-card" onclick="openModal(${globalIndex})">
+                                <div class="image-container">
+                                    <img class="image-preview" 
+                                         src="${image.url}" 
+                                         alt="${image.filename}"
+                                         onload="console.log('Image loaded: ${image.filename}')"
+                                         onerror="this.closest('.image-card').style.display='none';">
+                                </div>
+                                <div class="image-info">
+                                    <div class="image-filename">${image.filename} 
+                                        ${image.is_canonical ? '<span style="color: #1cc88a; font-weight: bold;">[CANONICAL]</span>' : ''}
+                                        <span style="color: #8892b0; font-size: 0.8em;">(v${image.version})</span>
+                                    </div>
+                                    <div class="image-details">
+                                        Source: ${image.source}<br>
+                                        ${image.relative_path ? `Path: ${image.relative_path}<br>` : ''}
+                                        Dimensions: ${image.width || '?'} × ${image.height || '?'}<br>
+                                        Created: ${image.created_at ? new Date(image.created_at).toLocaleDateString() : 'Unknown'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    contentHtml += '</div>';
+                }
+
+                const contentDiv = document.getElementById('content-china_ftp');
+                if (contentDiv) {
+                    contentDiv.innerHTML = contentHtml;
+                }
+
+            } catch (error) {
+                alert('Failed to fetch China FTP images: ' + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
         function showError(message) {
             resultsContainer.innerHTML = `
                 <div class="error">
@@ -1180,8 +1282,6 @@
             `;
             resultsSection.style.display = 'block';
         }
-
-        // DAM system provides all the formatting we need
 
         // Auto-focus search input
         skuInput.focus();
