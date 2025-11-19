@@ -534,6 +534,9 @@
                     <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
                         <i class="fas fa-file-invoice"></i> Download Invoices 徐锦
                     </button>
+                    <button id="download-tracking-btn" class="btn btn-info btn-block w-100 mb-2">
+                        <i class="fas fa-download"></i> Download Tracking Info
+                    </button>
                     <button id="send-to-shipped-btn" class="btn btn-success btn-block w-100 mb-2">
                         <i class="fas fa-truck"></i> Send to Shipped Only
                     </button>
@@ -652,7 +655,13 @@
                             <i class="fas fa-times"></i> Clear Filters
                         </button>
                     </div>
+                    <div class="col-md-3">
+                        <button id="upload-tracking-btn" class="btn btn-primary w-100">
+                            <i class="fas fa-upload"></i> Upload Tracking
+                        </button>
+                    </div>
                 </div>
+                <input type="file" id="tracking-file-input" accept=".xlsx" style="display: none;">
                 <div id="shipped-orders-table-section" class="table-section">
                     <div class="table-responsive">
                         <table id="shipped-orders-table" class="table table-bordered table-striped orders-table">
@@ -1861,6 +1870,7 @@
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                         </select>
+                        ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : ''}
                     </td>
                     <td class="order-cell">
                         <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
@@ -1967,6 +1977,7 @@
                         <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                     </select>
+                    ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : ''}
                 </td>
                 <td class="order-cell">
                     <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
@@ -2056,6 +2067,100 @@
             shippedPoSearch.value = '';
             renderShippedOrders();
         });
+
+        // Upload Tracking button
+        const uploadTrackingBtn = document.getElementById('upload-tracking-btn');
+        const trackingFileInput = document.getElementById('tracking-file-input');
+        
+        if (uploadTrackingBtn && trackingFileInput) {
+            uploadTrackingBtn.addEventListener('click', function() {
+                trackingFileInput.click();
+            });
+            
+            trackingFileInput.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    uploadTrackingBtn.disabled = true;
+                    uploadTrackingBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                    
+                    const response = await fetch('/lori_automation/upload_tracking', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(data.message);
+                        window.loadAndRenderOrders(); // Reload orders to show updated tracking
+                    } else {
+                        alert('Error: ' + (data.error || 'Upload failed'));
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    alert('Error uploading tracking file: ' + error.message);
+                } finally {
+                    uploadTrackingBtn.disabled = false;
+                    uploadTrackingBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Tracking';
+                    trackingFileInput.value = ''; // Reset file input
+                }
+            });
+        }
+
+        // Download Tracking Info button
+        const downloadTrackingBtn = document.getElementById('download-tracking-btn');
+        if (downloadTrackingBtn) {
+            downloadTrackingBtn.addEventListener('click', async function() {
+                const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+                const selectedPos = Array.from(selectedCheckboxes).map(cb => cb.value);
+                
+                if (selectedPos.length === 0) {
+                    alert('Please select at least one order to download tracking info');
+                    return;
+                }
+                
+                try {
+                    downloadTrackingBtn.disabled = true;
+                    downloadTrackingBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                    
+                    const response = await fetch('/lori_automation/download_tracking_info', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ po_numbers: selectedPos }),
+                        credentials: 'same-origin'
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'tracking_info_' + new Date().toISOString().slice(0,10) + '.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    } else {
+                        const data = await response.json();
+                        alert('Error: ' + (data.error || 'Download failed'));
+                    }
+                } catch (error) {
+                    console.error('Download error:', error);
+                    alert('Error downloading tracking info: ' + error.message);
+                } finally {
+                    downloadTrackingBtn.disabled = false;
+                    downloadTrackingBtn.innerHTML = '<i class="fas fa-download"></i> Download Tracking Info';
+                }
+            });
+        }
 
         // Add helper functions for order management
         window.viewOrderDetails = async function(poNumber) {

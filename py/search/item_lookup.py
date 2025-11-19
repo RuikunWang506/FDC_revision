@@ -50,7 +50,7 @@ def fetch_locations(skus):
         # Fallback for SKUs not found - try stripped version
         for sku in skus:
             if sku.lower() not in location_dict:
-                stripped_sku = sku.split(' ')[0]
+                stripped_sku = sku.replace(' ', '')
                 if stripped_sku != sku:
                     cursor.execute(
                         "SELECT GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') FROM products WHERE SKU = %s",
@@ -320,13 +320,29 @@ def item_lookup(user_input=None):
 @item_lookup_bp.route('/get_item_location', methods=['GET'])
 def get_item_location():
     sku = request.args.get('sku', '').strip()
-    if not sku:
-        return jsonify({'error': 'SKU parameter is required'}), 400
+    skus = request.args.get('skus', '').strip()
     
-    try:
-        locations = fetch_locations([sku])
-        location = locations.get(sku.lower(), 'N/A')
-        return jsonify({'location': location})
-    except Exception as e:
-        current_app.logger.error(f"Error fetching location for SKU {sku}: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
+    if sku:
+        # Single SKU
+        try:
+            locations = fetch_locations([sku])
+            location = locations.get(sku.lower(), 'N/A')
+            return jsonify({'location': location})
+        except Exception as e:
+            current_app.logger.error(f"Error fetching location for SKU {sku}: {str(e)}")
+            return jsonify({'error': 'Internal server error'}), 500
+    elif skus:
+        # Multiple SKUs
+        sku_list = [s.strip() for s in skus.split(',') if s.strip()]
+        try:
+            locations = fetch_locations(sku_list)
+            # Return dict of sku: location
+            result = {}
+            for s in sku_list:
+                result[s] = locations.get(s.lower(), 'N/A')
+            return jsonify(result)
+        except Exception as e:
+            current_app.logger.error(f"Error fetching locations for SKUs {sku_list}: {str(e)}")
+            return jsonify({'error': 'Internal server error'}), 500
+    else:
+        return jsonify({'error': 'SKU or SKUs parameter is required'}), 400

@@ -1105,26 +1105,44 @@
                         { "width": "120px", "targets": 6 }   // Location
                     ],
                     "initComplete": function() {
-                        // Fetch locations for each SKU
+                        var table = $('#items_table').DataTable();
+                        // Fetch locations for all SKUs at once
+                        var skuList = [];
                         $('#items_table tbody tr').each(function() {
-                            var row = $(this);
-                            var sku = row.find('td').eq(1).text().trim(); // SKU is in second column (index 1)
-                            if (sku) {
-                                fetch('/get_item_location?sku=' + encodeURIComponent(sku))
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.location) {
-                                        row.find('td').eq(6).text(data.location); // Location is in seventh column (index 6)
-                                    } else {
-                                        row.find('td').eq(6).text('N/A');
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching location for SKU ' + sku + ':', error);
-                                    row.find('td').eq(6).text('Error');
-                                });
+                            var sku = $(this).find('td').eq(1).text().trim();
+                            if (sku && skuList.indexOf(sku) === -1) {
+                                skuList.push(sku);
                             }
                         });
+                        
+                        if (skuList.length > 0) {
+                            fetch('/get_item_location?skus=' + encodeURIComponent(skuList.join(',')))
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    console.error('Error fetching locations:', data.error);
+                                    return;
+                                }
+                                // Set locations for each row
+                                $('#items_table tbody tr').each(function(index) {
+                                    var row = $(this);
+                                    var sku = row.find('td').eq(1).text().trim();
+                                    var location = data[sku] || 'N/A';
+                                    row.find('td').eq(6).text(location);
+                                    // Update DataTables data for export
+                                    table.cell(index, 6).data(location);
+                                });
+                                table.draw(false); // Redraw without resetting paging
+                            })
+                            .catch(error => {
+                                console.error('Error fetching locations:', error);
+                                $('#items_table tbody tr').each(function(index) {
+                                    $(this).find('td').eq(6).text('Error');
+                                    table.cell(index, 6).data('Error');
+                                });
+                                table.draw(false);
+                            });
+                        }
                     }
                 });
                 

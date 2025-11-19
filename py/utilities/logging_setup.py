@@ -19,11 +19,6 @@ def log_event(level, message):
     structured logging system when configured.
     """
     try:
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        line = f"{timestamp} {level.upper()} {message}\n"
-        with open(Config.LOG_FILE, 'a', encoding='utf-8') as f:
-            f.write(line)
-
         # Also send to structured logger if available
         logger = logging.getLogger('changes_logger')
         if level.lower() == 'info':

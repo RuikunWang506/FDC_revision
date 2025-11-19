@@ -228,16 +228,16 @@
                             <!-- SKU Query Section -->
                             <div class="card">
                                 <div class="card-header bg-primary text-white">
-                                    <h5 class="mb-0">SKU 查询</h5>
+                                    <h5 class="mb-0">Styles</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="form-group">
-                                        <label for="sku-input">输入SKU列表 (用逗号或换行分隔):</label>
-                                        <textarea id="sku-input" class="form-control" rows="3" placeholder="输入SKU..."></textarea>
+                                        <label for="sku-input">输入Styles列表 (用逗号或换行分隔):</label>
+                                        <textarea id="sku-input" class="form-control" rows="3" placeholder="输入Styles..."></textarea>
                                     </div>
                                     <div class="text-center mt-3">
                                         <button id="process-sku-btn" class="btn btn-primary">
-                                            <i class="fas fa-search"></i> 查询SKU
+                                            <i class="fas fa-search"></i> 查询Styles
                                         </button>
                                     </div>
                                 </div>
@@ -590,7 +590,7 @@
     const processOtbBtn = document.getElementById('process-otb-btn');
     let uploadedOtbFiles = [];
 
-        // SKU Processing
+        // Styles Processing
     const skuInput = document.getElementById('sku-input');
     const processSKUBtn = document.getElementById('process-sku-btn');
     const skuResults = document.getElementById('sku-results');
@@ -730,13 +730,13 @@
         if (processSKUBtn) processSKUBtn.addEventListener('click', async () => {
             const skuList = skuInput.value.trim();
             if (!skuList) {
-                alert('请输入SKU列表');
+                alert('请输入Styles列表');
                 return;
             }
 
             // Show loading overlay
             document.getElementById('loading-overlay').style.display = 'flex';
-            document.getElementById('processing-status').textContent = 'Processing SKUs...';
+            document.getElementById('processing-status').textContent = 'Processing Styles...';
 
             try {
                 const response = await fetch("{{ url_for('lori_automation.process_skus') }}", {
@@ -748,27 +748,32 @@
                 });
 
                 const data = await response.json();
+
+                console.log('Received data:', data);
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Server error');
+                }
                 
                 // Create table HTML
                 let tableHtml = `
                     <table class="table table-striped table-bordered">
                         <thead class="thead-dark">
                             <tr>
-                                <th>SKU</th>
+                                <th>Styles</th>
                                 <th>你给过的价</th>
                                 <th>你卖过的价</th>
                             </tr>
                         </thead>
                         <tbody>
                 `;
-                
                 // Add rows for each SKU
                 data.table_data.forEach(item => {
                     tableHtml += `
                         <tr>
-                            <td>${item.sku}</td>
-                            <td>${item.list_price}</td>
-                            <td>${item.sold_price}</td>
+                            <td>${item.sku.toUpperCase()}</td>
+                            <td>${item.list_price.map(price => `<span class="badge badge-warning">${price}</span>`).join(' ')}</td>
+                            <td>${item.sold_price.length > 0 ? item.sold_price.map(price => `<span class="badge badge-warning">${price}</span>`).join(' ') : 'No recent sales'}</td>
                         </tr>
                     `;
                 });
@@ -781,9 +786,21 @@
                 // Display results
                 skuOutput.innerHTML = tableHtml;
                 skuResults.style.display = 'block';
+                
+                console.log('Table HTML set:', tableHtml);
+                
+                // Expand the OTB section to show results
+                const otbCollapseBtn = document.querySelector('[data-bs-target="#otbSection"]');
+                if (otbCollapseBtn) {
+                    otbCollapseBtn.setAttribute('aria-expanded', 'true');
+                }
+                const otbSection = document.getElementById('otbSection');
+                if (otbSection) {
+                    otbSection.classList.add('show');
+                }
             } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred while processing SKUs.');
+                alert('An error occurred while processing Styles.');
             } finally {
                 // Hide loading overlay
                 document.getElementById('loading-overlay').style.display = 'none';

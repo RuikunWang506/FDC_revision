@@ -8,7 +8,7 @@ import requests
 import pandas as pd
 from datetime import datetime
 from PyPDF2 import PdfReader, PdfMerger
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_mysql_connection
 from decimal import Decimal
@@ -221,22 +221,23 @@ def fetch_email_attachments():
                 if part.get_content_disposition() == 'attachment':
                     filename = part.get_filename()
                     if filename and filename.lower().endswith('.pdf'):
-                        # Always append new files, never replace
                         file_path = os.path.join(batch_dir, filename)
-                        base, ext = os.path.splitext(filename)
-                        unique_path = file_path
-                        counter = 1
-                        # If file exists, create a unique filename by appending a counter
-                        while os.path.exists(unique_path):
-                            unique_path = os.path.join(batch_dir, f"{base}_{counter}{ext}")
-                            counter += 1
-                        try:
-                            with open(unique_path, 'wb') as f:
-                                f.write(part.get_payload(decode=True))
-                            print(f"[fetch_email_attachments] Downloaded: {os.path.basename(unique_path)}")
+                        if os.path.exists(file_path):
+                            print(f"[fetch_email_attachments] Skipped (already exists): {filename}")
                             downloaded_files.append({
-                                'filename': os.path.basename(unique_path),
-                                'filepath': unique_path,
+                                'filename': filename,
+                                'filepath': file_path,
+                                'batch_date': batch_date,
+                                'status': 'skipped_existing'
+                            })
+                            continue
+                        try:
+                            with open(file_path, 'wb') as f:
+                                f.write(part.get_payload(decode=True))
+                            print(f"[fetch_email_attachments] Downloaded: {filename}")
+                            downloaded_files.append({
+                                'filename': filename,
+                                'filepath': file_path,
                                 'batch_date': batch_date,
                                 'status': 'downloaded'
                             })
@@ -246,6 +247,18 @@ def fetch_email_attachments():
         
         mail.close()
         mail.logout()
+        
+        # Clean up duplicate files with _2, _3, etc.
+        import re
+        for root, dirs, files in os.walk(download_path):
+            for file in files:
+                if re.match(r'.*_\d+\.pdf$', file):
+                    file_path = os.path.join(root, file)
+                    try:
+                        os.remove(file_path)
+                        print(f"[fetch_email_attachments] Cleaned up duplicate: {file}")
+                    except Exception as e:
+                        print(f"Error removing {file}: {str(e)}")
         
         # Create batch summary
         batch_dates = list(set([f['batch_date'] for f in downloaded_files]))
@@ -663,7 +676,7 @@ def get_db_connection():
 def get_sql_server_connection():
     """Establishes a connection to the SQL Server database."""
     try:
-        connection_string = f"DRIVER={sql_server_config['driver']};SERVER={sql_server_config['server']};DATABASE={sql_server_config['database']};UID={sql_server_config['username']};PWD={sql_server_config['password']}"
+        connection_string = f"DRIVER={sql_server_config['driver']};SERVER={sql_server_config['server']};DATABASE=omsdata_FDC;UID={sql_server_config['username']};PWD={sql_server_config['password']}"
         connection = pyodbc.connect(connection_string)
         return connection
     except pyodbc.Error as e:
@@ -672,54 +685,69 @@ def get_sql_server_connection():
 
 def get_sku_price(sku):
     """Query the MySQL database for the list price of a specific SKU."""
-    connection = get_db_connection()
-    if connection is None:
-        return None
-    
     try:
+        connection = get_db_connection()
+        if connection is None:
+            return None
+        
         cursor = connection.cursor(dictionary=True)
         query = "SELECT SKU, listprice FROM onlinedb.loris WHERE SKU = %s"
         cursor.execute(query, (sku,))
         result = cursor.fetchone()
         return result
-    except Error as e:
-        print(f"Error querying MySQL database: {e}")
+    except Exception as e:
+        print(f"Error in get_sku_price: {e}")
         return None
     finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
+        try:
+            if connection and connection.is_connected():
+                cursor.close()
+                connection.close()
+        except:
+            pass
 
 def get_sku_sold_price(sku):
-    """Query the SQL Server database for the sold price of a specific SKU using fuzzy matching."""
-    connection = get_sql_server_connection()
-    if connection is None:
-        return None
-    
+    """Query the SQL Server database for all unique sold prices of a specific SKU using fuzzy matching."""
     try:
+        connection = get_sql_server_connection()
+        if connection is None:
+            print("SQL Server connection failed")
+            return None
+        
         cursor = connection.cursor()
         # Use LIKE operator for fuzzy matching
         query = """
-            SELECT TOP 1 ol.prod_cd, ol.unit_prs
-            FROM ord_log ol
-            JOIN customer c ON ol.cus_id = c.cus_id
-            WHERE ol.prod_cd LIKE ? AND ol.cus_id = '00868'
-            ORDER BY ol.olg_dt DESC
+            SELECT DISTINCT unit_prs
+            FROM ord_log
+            WHERE prod_cd LIKE ? AND cus_id = '00868' AND unit_prs IS NOT NULL
+            ORDER BY unit_prs
         """
         # Add wildcard for fuzzy matching
-        search_pattern = f"%{sku}%"
+        search_pattern = f"%{sku.upper()}%"
+        print(f"Executing query: {query.strip()} with pattern: {search_pattern}")
         cursor.execute(query, (search_pattern,))
-        row = cursor.fetchone()
-        if row:
-            return {"prod_cd": row[0], "unit_prs": row[1]}
+        rows = cursor.fetchall()
+        print(f"Found {len(rows)} rows: {rows}")
+        if rows:
+            prices = []
+            for row in rows:
+                p = row[0]
+                if isinstance(p, str) and ',' in p:
+                    prices.extend([x.strip() for x in p.split(',') if x.strip()])
+                else:
+                    prices.append(p)
+            return {"prices": prices}
         return None
-    except pyodbc.Error as e:
-        print(f"Error querying SQL Server database: {e}")
+    except Exception as e:
+        print(f"Error in get_sku_sold_price: {e}")
         return None
     finally:
-        if connection:
-            cursor.close()
-            connection.close()
+        try:
+            if connection:
+                cursor.close()
+                connection.close()
+        except:
+            pass
 
 def extract_clean_address(text_content):
     ship_to_match = re.search(r"SHIP TO\s*:\s*\d*\s*(.*?)(?:TOTAL UNITS:|Ship to Arrive:)", text_content, re.DOTALL)
@@ -875,41 +903,59 @@ def process_skus():
     if 'username' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    data = request.get_json()
-    sku_list = data.get('skus', '')
-    
-    if not sku_list:
-        return jsonify({'error': 'No SKUs provided'}), 400
-    
-    # Replace newlines with commas and then split by comma
-    sku_list = sku_list.replace('\n', ',')
-    skus = [sku.strip() for sku in sku_list.split(',')]
-    
-    # Prepare data for table format
-    table_data = []
-    
-    # Process each SKU
-    for sku in skus:
-        if not sku:  # Skip empty SKUs
-            continue
+    try:
+        data = request.get_json()
+        sku_list = data.get('skus', '')
         
-        # Query the MySQL database for the list price
-        price_info = get_sku_price(sku)
-        list_price = f"${price_info['listprice']}" if price_info and 'listprice' in price_info else "Not found"
+        if not sku_list:
+            return jsonify({'error': 'No SKUs provided'}), 400
         
-        # Query the SQL Server database for the sold price
-        sold_price_info = get_sku_sold_price(sku)
-        sold_price = f"${sold_price_info['unit_prs']:.2f}" if sold_price_info and 'unit_prs' in sold_price_info else "No recent sales"
+        # Replace newlines with commas and then split by comma
+        sku_list = sku_list.replace('\n', ',')
+        skus = [sku.strip() for sku in sku_list.split(',')]
         
-        # Add to table data
-        table_data.append({
-            "sku": sku,
-            "list_price": list_price,
-            "sold_price": sold_price
-        })
-    
-    # Return the data in a format that can be rendered as a table
-    return jsonify({'table_data': table_data})
+        # Prepare data for table format
+        table_data = []
+        
+        # Process each SKU
+        for sku in skus:
+            if not sku:  # Skip empty SKUs
+                continue
+            
+            # Query the MySQL database for the list price
+            price_info = get_sku_price(sku)
+            if price_info and 'listprice' in price_info and price_info['listprice'] is not None:
+                try:
+                    lp = float(price_info['listprice'])
+                    list_price = [f"${lp:.1f}"]
+                except ValueError:
+                    # Handle comma-separated prices
+                    if ',' in price_info['listprice']:
+                        list_price = [f"${float(x.strip()):.1f}" for x in price_info['listprice'].split(',') if x.strip()]
+                    else:
+                        list_price = [price_info['listprice']]
+            else:
+                list_price = ["Not found"]
+            
+            # Query the SQL Server database for the sold price
+            sold_price_info = get_sku_sold_price(sku)
+            if sold_price_info and 'prices' in sold_price_info and sold_price_info['prices']:
+                sold_price = [f"${float(p):.1f}" for p in sold_price_info['prices']]
+            else:
+                sold_price = []
+            
+            # Add to table data
+            table_data.append({
+                "sku": sku,
+                "list_price": list_price,
+                "sold_price": sold_price
+            })
+        
+        # Return the data in a format that can be rendered as a table
+        return jsonify({'table_data': table_data})
+    except Exception as e:
+        print(f"Error in process_skus: {str(e)}")
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 
 
@@ -1289,7 +1335,7 @@ def lori_automation():
                 query = """
                     SELECT o.po_number, o.batch_date, o.email_date, o.order_date, 
                            o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty, 
-                           o.total_cost, o.status, o.created_at, o.updated_at,
+                           o.total_cost, o.status, o.tracking, o.created_at, o.updated_at,
                            COUNT(oi.id) as item_count,
                            CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info
                     FROM lori_orders o
@@ -1423,7 +1469,7 @@ def get_orders():
         query = """
             SELECT o.po_number, o.batch_date, o.email_date, o.order_date, 
                    o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty, 
-                   o.total_cost, o.status, o.created_at, o.updated_at,
+                   o.total_cost, o.status, o.tracking, o.created_at, o.updated_at,
                    COUNT(oi.id) as item_count,
                    CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info
             FROM lori_orders o
@@ -1613,6 +1659,182 @@ def delete_order():
     finally:
         if connection.is_connected():
             connection.close()
+
+@lori_automation_bp.route("/upload_tracking", methods=["POST"])
+def upload_tracking():
+    """Upload tracking numbers from Excel file and update database"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if not file.filename.endswith('.xlsx'):
+        return jsonify({'error': 'Please upload an Excel (.xlsx) file'}), 400
+    
+    try:
+        # Read Excel file
+        wb = load_workbook(file)
+        ws = wb.active
+        
+        # Get headers from first row
+        headers = [cell.value for cell in ws[1]]
+        
+        # Find column indices
+        reference_idx = headers.index('reference') if 'reference' in headers else None
+        tracking_idx = headers.index('masterTrackingNumber') if 'masterTrackingNumber' in headers else None
+        
+        if reference_idx is None or tracking_idx is None:
+            return jsonify({'error': 'Excel file must contain "reference" and "masterTrackingNumber" columns'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        updated_count = 0
+        skipped_count = 0
+        errors = []
+        
+        # Process each row (skip header)
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                reference = row[reference_idx]
+                tracking_number = row[tracking_idx]
+                
+                if not reference or not tracking_number:
+                    continue
+                
+                # Extract PO number from reference (format: 0588-005282)
+                po_number = str(reference).strip()
+                tracking_number = str(tracking_number).strip()
+                
+                # Update database
+                cursor.execute("""
+                    UPDATE lori_orders 
+                    SET tracking = %s 
+                    WHERE po_number = %s
+                """, (tracking_number, po_number))
+                
+                if cursor.rowcount > 0:
+                    updated_count += 1
+                else:
+                    skipped_count += 1
+                    errors.append(f"PO {po_number} not found in database")
+                
+            except Exception as e:
+                errors.append(f"Row {row_idx}: {str(e)}")
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        message = f'Successfully updated {updated_count} orders with tracking numbers'
+        if skipped_count > 0:
+            message += f', skipped {skipped_count} orders'
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'updated_count': updated_count,
+            'skipped_count': skipped_count,
+            'errors': errors[:10]  # Return first 10 errors
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Error processing file: {str(e)}'}), 500
+
+@lori_automation_bp.route("/download_tracking_info", methods=["POST"])
+def download_tracking_info():
+    """Download tracking information for selected orders with tracking numbers"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        po_numbers = data.get('po_numbers', [])
+        
+        if not po_numbers:
+            return jsonify({'error': 'No orders selected'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get selected orders that have tracking numbers
+        placeholders = ', '.join(['%s'] * len(po_numbers))
+        query = f"""
+            SELECT po_number, tracking 
+            FROM lori_orders 
+            WHERE po_number IN ({placeholders})
+            AND tracking IS NOT NULL AND tracking != ''
+            ORDER BY po_number
+        """
+        cursor.execute(query, po_numbers)
+        orders = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        if not orders:
+            return jsonify({'error': 'No tracking information found for selected orders'}), 404
+        
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Tracking Info"
+        
+        # Add headers
+        ws['A1'] = 'Store Number'
+        ws['B1'] = 'PO Number'
+        ws['C1'] = 'Tracking Number'
+        
+        # Style headers
+        from openpyxl.styles import Font, Alignment
+        header_font = Font(bold=True)
+        for col in ['A', 'B', 'C']:
+            ws[f'{col}1'].font = header_font
+            ws[f'{col}1'].alignment = Alignment(horizontal='center')
+        
+        # Add data
+        row = 2
+        for order in orders:
+            po_number = order['po_number']
+            tracking = order['tracking']
+            
+            # Extract store number (first 4 digits of PO)
+            store_number = po_number[:4] if po_number else ''
+            
+            ws[f'A{row}'] = store_number
+            ws[f'B{row}'] = po_number
+            ws[f'C{row}'] = tracking
+            row += 1
+        
+        # Adjust column widths
+        ws.column_dimensions['A'].width = 15
+        ws.column_dimensions['B'].width = 20
+        ws.column_dimensions['C'].width = 20
+        
+        # Save to BytesIO
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # Generate filename with current date
+        filename = f'tracking_info_{datetime.now().strftime("%Y%m%d")}.xlsx'
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        return jsonify({'error': f'Error generating file: {str(e)}'}), 500
 
 @lori_automation_bp.route("/fetch_and_process_emails", methods=["POST"])
 def fetch_and_process_emails():
@@ -2362,6 +2584,15 @@ def fedex_upload_to_draft():
             # Generate tracking number placeholder
             import time
             tracking_number = f"FX{int(time.time())}{po_number[-4:]}"
+            
+            # Define pkg_info and box_dimensions for CSV
+            pkg_info = {
+                'fedex_service_type': service_type,
+                'fedex_packaging_type': packaging_type,
+                'total_weight': sum(float(box.get('weight', 0)) for box in boxes),
+                'special_instructions': special_instructions
+            }
+            box_dimensions = boxes
             
             # Create temporary output directory
             import tempfile

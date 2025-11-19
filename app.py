@@ -64,8 +64,8 @@ def zip_filter(a, b):
 app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
-    # Only log restart in the main process, not in the reloader subprocess
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    # Only log restart in the reloader subprocess
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         app.logger.info(
             "--------------------------------------------------------------------"
             "system restarted"

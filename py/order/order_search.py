@@ -2,9 +2,8 @@ import pyodbc
 import pandas as pd
 
 from datetime import datetime, timedelta
-from py.utilities.setting import Config
 from flask import Blueprint, request, render_template, session, current_app, jsonify
-from py.utilities.setting import login_required
+from py.utilities.setting import Config, login_required
 
 order_lookup_bp = Blueprint('order_lookup', __name__)
 
@@ -260,32 +259,9 @@ def generate_order(order_number):
             'email': str(df.iloc[0]['email']).strip() if pd.notna(df.iloc[0]['email']) and str(df.iloc[0]['email']).strip() else 'N/A'
         }
 
-        # Extract unique locations from ntfile table
-        location_query = """
-            SELECT CASE 
-                WHEN NOTES IS NOT NULL THEN SUBSTRING(NOTES, CHARINDEX('\r\n', NOTES) + 2, LEN(NOTES))
-                ELSE ''
-            END AS Location
-            FROM dbo.ntfile 
-            WHERE nt_num = ?
-        """
-        
-        cursor.execute(location_query, (order_number,))
-        location_results = cursor.fetchall()
-        
-        unique_locations = []
-        for row in location_results:
-            loc = row[0].strip() if row[0] else ''
-            if loc and loc not in unique_locations:
-                unique_locations.append(loc)
-        
-        header_info['locations'] = unique_locations
-
         # Close the cursor and connection
         cursor.close()
-        conn.close()
-
-        # Create items DataFrame with item-specific columns including Location
+        conn.close()        # Create items DataFrame with item-specific columns including Location
         items_df = df[['line', 'SKU', 'Descrip', 'Qty', 'price', 'per_box']].copy()
         
         # Adjust price to list price by adding discount per unit
