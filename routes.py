@@ -133,9 +133,8 @@ def register_routes(app):
 
 
     @app.route('/log')
+    @login_required
     def display():
-        if 'username' not in session:
-            return redirect(url_for("auth.login"))
         current_user = session['username']
         search_term = request.args.get('search', '').strip()
 
@@ -194,21 +193,17 @@ def register_routes(app):
             return jsonify(error=str(e)), 500
 
     @app.route('/log/search', methods=['POST'])
+    @login_required
     def search_logs():
-        if 'username' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-        
         search_term = request.form.get('search_term', '').strip()
         if not search_term:
             return redirect(url_for('display'))
-        
         return redirect(url_for('display', search=search_term, page=1))
 
         
     @app.route('/log/stream', methods=['GET'])
+    @login_required
     def stream_log():
-       # if 'username' not in session:
-       #     return redirect(url_for("auth.login"))
         def generate():
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
                 file.seek(0, 2)  # Move to the end of the file
@@ -280,9 +275,8 @@ def register_routes(app):
         return formatted
 
     @app.route('/get_favorites')
+    @login_required
     def get_favorites():
-        if 'username' not in session:
-            return jsonify([])
         user = session['username']
         try:
             conn = get_mysql_connection()
@@ -300,9 +294,8 @@ def register_routes(app):
                 conn.close()
 
     @app.route('/save_favorites', methods=['POST'])
+    @login_required
     def save_favorites():
-        if 'username' not in session:
-            return jsonify({'success': False})
         user = session['username']
         data = request.get_json()
         favorites = data.get('favorites', [])

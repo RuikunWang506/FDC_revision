@@ -1,3 +1,4 @@
+from py.utilities.setting import login_required
 from flask import Blueprint, render_template, request, jsonify, current_app, send_file,send_from_directory,redirect, url_for, flash, session
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, PatternFill, Border, Side
@@ -125,6 +126,7 @@ def normalize_style(style):
 
 @v6_listcreator_bp.route('/v6_listcreator', methods=['GET', 'POST'])
 @v6_listcreator_bp.route("/v6_listcreator/<string:user_input>", methods=["GET"])
+@login_required
 def index(user_input=None):
     if 'username' not in session:
         session['next'] = request.url
@@ -270,6 +272,7 @@ def process_list_input(list_input, current_user):
     return render_template('V6_Listcreator.html', current_user=current_user, error_message=error_message)
 
 @v6_listcreator_bp.route('/update_descriptions', methods=['POST'])
+@login_required
 def update_descriptions():
     descriptions = {}
     original_input = session.get('original_input', '')

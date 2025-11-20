@@ -8,7 +8,8 @@
   <style>
     /* Scope all styles to dashboard only - avoid navbar conflicts */
     .dashboard-wrapper {
-      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
+      background: url('https://marketplace.canva.com/EAFJbICKdWA/1/0/1600w/canva-autumn-hues-illustrated-pattern-desktop-wallpaper-GLs7iM8Vclo.jpg') no-repeat center center fixed;
+      background-size: cover;
       font-family: 'Inter', 'Segoe UI', sans-serif;
       color: #e8f4fd;
       min-height: 100vh;
@@ -169,7 +170,7 @@
     }
     
     .dashboard-wrapper .tool-card {
-      background: rgba(18, 25, 38, 0.6);
+      background: #1219265d;
       backdrop-filter: blur(15px);
       border: 1px solid rgba(0, 240, 255, 0.15);
       border-radius: 18px;
@@ -219,25 +220,28 @@
     .dashboard-wrapper .tool-card i {
       font-size: 1.6rem;
       margin-right: 0.8rem;
-      background: linear-gradient(135deg, #00d4ff, #1cc88a);
+      background: linear-gradient(135deg, #ffffff, #e0f7ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      filter: drop-shadow(0 1px 2px rgb(0, 0, 0));
     }
     
     .dashboard-wrapper .tool-card h3 {
-      color: #e8f4fd;
+      color: #ffffff;
       margin: 0;
       font-size: 1.1rem;
       font-weight: 600;
       line-height: 1.2;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
     
     .dashboard-wrapper .tool-card p {
-      color: #8892b0;
+      color: #d4dce8;
       font-size: 0.85rem;
       margin: 0;
       line-height: 1.3;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
     
     .dashboard-wrapper .tool-card .card-footer {
@@ -297,12 +301,12 @@
       border-right: 2px solid rgba(0, 212, 255, 0.5);
       border-top: 2px solid rgba(0, 212, 255, 0.6);
       border-bottom: 2px solid rgba(0, 212, 255, 0.6);
-      background: linear-gradient(135deg, rgba(0, 212, 255, 0.35), rgba(0, 140, 200, 0.20));
+      background: linear-gradient(135deg, #0096c8 0%, #006496 100%);
       box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.15), 0 4px 15px rgba(0, 212, 255, 0.2);
     }
     
     .dashboard-wrapper .tool-card[data-category="core"]:hover {
-      background: linear-gradient(135deg, rgba(0, 212, 255, 0.45), rgba(0, 140, 200, 0.30));
+      background: linear-gradient(135deg, #00b4e6 0%, #0078b4 100%);
       border-right-color: rgba(0, 212, 255, 0.8);
       border-top-color: #00d4ff;
       border-bottom-color: #00d4ff;
@@ -314,12 +318,12 @@
       border-right: 2px solid rgba(28, 200, 138, 0.5);
       border-top: 2px solid rgba(28, 200, 138, 0.6);
       border-bottom: 2px solid rgba(28, 200, 138, 0.6);
-      background: linear-gradient(135deg, rgba(28, 200, 138, 0.35), rgba(20, 150, 100, 0.20));
+      background: linear-gradient(135deg, #14966e 0%, #0f6e4b 100%);
       box-shadow: inset 0 0 20px rgba(28, 200, 138, 0.15), 0 4px 15px rgba(28, 200, 138, 0.2);
     }
     
     .dashboard-wrapper .tool-card[data-category="toolkit"]:hover {
-      background: linear-gradient(135deg, rgba(28, 200, 138, 0.45), rgba(20, 150, 100, 0.30));
+      background: linear-gradient(135deg, #19b482 0%, #12825a 100%);
       border-right-color: rgba(28, 200, 138, 0.8);
       border-top-color: #1cc88a;
       border-bottom-color: #1cc88a;
@@ -331,12 +335,12 @@
       border-right: 2px solid rgba(54, 185, 204, 0.5);
       border-top: 2px solid rgba(54, 185, 204, 0.6);
       border-bottom: 2px solid rgba(54, 185, 204, 0.6);
-      background: linear-gradient(135deg, rgba(54, 185, 204, 0.35), rgba(40, 140, 160, 0.20));
+      background: linear-gradient(135deg, #288ca0 0%, #1e6478 100%);
       box-shadow: inset 0 0 20px rgba(54, 185, 204, 0.15), 0 4px 15px rgba(54, 185, 204, 0.2);
     }
     
     .dashboard-wrapper .tool-card[data-category="additional"]:hover {
-      background: linear-gradient(135deg, rgba(54, 185, 204, 0.45), rgba(40, 140, 160, 0.30));
+      background: linear-gradient(135deg, #2da0b4 0%, #23738c 100%);
       border-right-color: rgba(54, 185, 204, 0.8);
       border-top-color: #36b9cc;
       border-bottom-color: #36b9cc;
@@ -348,13 +352,13 @@
       border-right: 2px solid rgba(136, 146, 176, 0.5);
       border-top: 2px solid rgba(136, 146, 176, 0.6);
       border-bottom: 2px solid rgba(136, 146, 176, 0.6);
-      background: linear-gradient(135deg, rgba(136, 146, 176, 0.35), rgba(100, 110, 140, 0.20));
+      background: linear-gradient(135deg, #466e8c 0%, #32405a 100%);
       box-shadow: inset 0 0 20px rgba(136, 146, 176, 0.15), 0 4px 15px rgba(136, 146, 176, 0.2);
-      opacity: 0.9;
+      opacity: 1;
     }
     
     .dashboard-wrapper .tool-card[data-category="legacy"]:hover {
-      background: linear-gradient(135deg, rgba(136, 146, 176, 0.45), rgba(100, 110, 140, 0.30));
+      background: linear-gradient(135deg, #54789c 0%, #40506a 100%);
       border-right-color: rgba(136, 146, 176, 0.8);
       border-top-color: #8892b0;
       border-bottom-color: #8892b0;
@@ -394,7 +398,11 @@
   <div class="dashboard-wrapper">
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
-    <div class="main-title">FDC Home / 主页</div>
+    <div class="main-title" style="background:none; margin-bottom:1.5rem;">
+      <div style="width:100%; max-width:480px; margin:0 auto; aspect-ratio:3.5/1; overflow:hidden; display:block;">
+        <img src="https://png.pngtree.com/png-vector/20230130/ourmid/pngtree-happy-thanksgiving-day-vector-transparent-art-png-image_6575689.png" alt="Happy Thanksgiving Banner" style="width:100%; height:100%; object-fit:cover; object-position:center 55%; display:block; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.18));">
+      </div>
+    </div>
 
     
     <div class="dashboard-container">
@@ -422,7 +430,7 @@
             <p>everything</p>
             <p>所有功能</p>
           </div>
-          <span class="count">18</span>
+          <span class="count" id="allToolsCount"></span>
         </div>
         
         <div class="nav-item" onclick="filterCategory('core')">
@@ -431,7 +439,7 @@
             <h4>Core Search</h4>
             <p>核心搜索功能</p>
           </div>
-          <span class="count">4</span>
+          <span class="count" id="coreCount"></span>
         </div>
         
         <div class="nav-item" onclick="filterCategory('toolkit')">
@@ -440,7 +448,7 @@
             <h4>Toolkits</h4>
             <p>工具包</p>
           </div>
-          <span class="count">4</span>
+          <span class="count" id="toolkitCount"></span>
         </div>
         
         <div class="nav-item" onclick="filterCategory('additional')">
@@ -449,7 +457,7 @@
             <h4>Additional Tools</h4>
             <p>附加工具</p>
           </div>
-          <span class="count">9</span>
+          <span class="count" id="additionalCount"></span>
         </div>
         
         <div class="nav-item" onclick="filterCategory('legacy')">
@@ -458,7 +466,7 @@
             <h4>Legacy Services</h4>
             <p>旧服务</p>
           </div>
-          <span class="count">2</span>
+          <span class="count" id="legacyCount"></span>
         </div>
       </div>
       
@@ -553,19 +561,6 @@
           </div>
         </a>
         
-        <a href="/container" class="tool-card" data-category="toolkit" data-tool="container">
-          <div class="card-header">
-            <i class="fas fa-book"></i>
-            <h3>Container Import</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'container')"></i>
-          </div>
-          <p>Process container import files and integrate with OMS workflows</p>
-          <div class="card-footer">
-            <span class="category">Toolkit</span>
-            <span class="badge">Dennis 专用</span>
-
-          </div>
-        </a>
         
         <!-- Additional Tools -->
         <a href="/dam" class="tool-card" data-category="additional" data-tool="dam">
@@ -785,7 +780,11 @@
           star.classList.add('far');
         }
       });
-      document.getElementById('favoritesCount').textContent = userFavorites.length;
+      // Only count favorites that are actually present in the DOM
+      const visibleFavorites = Array.from(document.querySelectorAll('.tool-card'))
+        .filter(card => userFavorites.includes(card.getAttribute('data-tool')))
+        .length;
+      document.getElementById('favoritesCount').textContent = visibleFavorites;
     }
     
     function filterCategory(category) {
@@ -881,6 +880,15 @@
     }
     
     // Initialize with smooth card entrance animation
+    function updateCategoryCounts() {
+      const cards = document.querySelectorAll('.tool-card');
+      document.getElementById('allToolsCount').textContent = cards.length;
+      document.getElementById('coreCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'core').length;
+      document.getElementById('toolkitCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'toolkit').length;
+      document.getElementById('additionalCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'additional').length;
+      document.getElementById('legacyCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'legacy').length;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       loadFavorites();
       setTimeout(() => {
@@ -900,7 +908,6 @@
           if (show) {
             card.style.opacity = '0';
             card.style.transform = 'translateY(30px)';
-            
             setTimeout(() => {
               card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
               card.style.opacity = '1';
@@ -910,8 +917,50 @@
             card.style.display = 'none';
           }
         });
+        updateCategoryCounts();
       }, 100);
     });
+
+    // Also update counts after filtering
+    function filterCategory(category) {
+      currentFilter = category;
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.target.closest('.nav-item').classList.add('active');
+      const cards = document.querySelectorAll('.tool-card');
+      const grid = document.getElementById('toolGrid');
+      cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+      });
+      setTimeout(() => {
+        cards.forEach((card, index) => {
+          const cardCategory = card.getAttribute('data-category');
+          const tool = card.getAttribute('data-tool');
+          let show = false;
+          if (category === 'all') {
+            show = true;
+          } else if (category === 'favorites') {
+            show = userFavorites.includes(tool);
+          } else {
+            show = cardCategory === category;
+          }
+          if (show) {
+            card.style.display = 'flex';
+            card.style.order = (category === 'all' && userFavorites.includes(tool)) ? '0' : '1';
+            setTimeout(() => {
+              card.style.opacity = '1';
+              card.style.transform = 'translateY(0)';
+            }, index * 25);
+          } else {
+            card.style.display = 'none';
+          }
+        });
+        updateCategoryCounts();
+      }, 100);
+      addFilterFeedback(category);
+    }
     
     // Add search functionality
     function searchTools(query) {

@@ -3,7 +3,15 @@ DAM Sync Routes - Flask Blueprint for DAM synchronization
 Provides API endpoints to trigger and monitor DAM sync operations
 """
 
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
+from functools import wraps
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            return redirect(url_for("auth.login"))
+        return f(*args, **kwargs)
+    return decorated_function
 from threading import Thread
 import os
 import sys
@@ -201,11 +209,16 @@ def _reconcile_false_errors():
         pass
 
 @dam_sync_bp.route('/')
+@login_required
 def dam_sync_home():
     """DAM sync control panel"""
-    return render_template('dam_sync.html', status=sync_status)
+    if 'username' not in session:
+        return redirect(url_for("auth.login"))
+    current_user = session['username']
+    return render_template('dam_sync.html', status=sync_status, current_user=current_user)
 
 @dam_sync_bp.route('/status')
+@login_required
 def get_sync_status():
     """Get current sync status"""
     # Reconcile transient false-positive subprocess errors before returning
@@ -213,6 +226,7 @@ def get_sync_status():
     return jsonify(sync_status)
 
 @dam_sync_bp.route('/start', methods=['POST'])
+@login_required
 def start_sync():
     """Start manual DAM sync"""
     if sync_status['is_running']:
@@ -237,6 +251,7 @@ def start_sync():
     })
 
 @dam_sync_bp.route('/generate-index', methods=['POST'])
+@login_required
 def generate_index():
     """Generate index files only (no sync)"""
     try:
@@ -280,6 +295,7 @@ def generate_index():
         }), 500
 
 @dam_sync_bp.route('/scheduled-check', methods=['POST'])
+@login_required
 def check_scheduled_sync():
     """Check if scheduled sync should run and execute if needed"""
     if sync_status['is_running']:
@@ -316,6 +332,7 @@ def check_scheduled_sync():
         }), 500
 
 @dam_sync_bp.route('/fetch', methods=['POST'])
+@login_required
 def fetch_from_dropbox():
     """Run only the Dropbox fetch (Smart Auto-Filter) in background"""
     if sync_status['is_running']:
@@ -397,6 +414,7 @@ def fetch_from_dropbox():
     
 
 @dam_sync_bp.route('/fetch-full', methods=['POST'])
+@login_required
 def fetch_from_dropbox_full():
     """Run Smart Auto-Filter in full-scan mode (process all files) in background"""
     if sync_status['is_running']:
@@ -472,6 +490,7 @@ def fetch_from_dropbox_full():
     return jsonify({'success': True, 'message': 'Dropbox full fetch started'})
 
 @dam_sync_bp.route('/cleanup', methods=['POST'])
+@login_required
 def cleanup_broken_links():
     """Scan DAM image records and mark missing files as inactive."""
     log_event('info', 'Starting DAM cleanup process')

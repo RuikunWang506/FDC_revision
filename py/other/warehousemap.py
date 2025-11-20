@@ -1,3 +1,4 @@
+from py.utilities.setting import login_required
 from flask import request, render_template, Blueprint, flash, redirect, url_for,jsonify,session
 import os,re
 import pandas as pd
@@ -125,6 +126,7 @@ def load_items_from_session():
     return items
 
 @warehousemap_bp.route("/warehousemap", methods=["GET", "POST"])
+@login_required
 def warehouse():
     items = load_items_from_session()  # Load existing items by default
     # Re-fetch all locations from database on every page load
@@ -354,11 +356,13 @@ def warehouse():
     # Convert items to JSON for the template
     items_json = json.dumps(items)
     
-    return render_template("warehouse_map.html", items=items, items_json=items_json)
+    current_user = session['username']
+    return render_template("warehouse_map.html", items=items, items_json=items_json, current_user=current_user)
 
 
 
 @warehousemap_bp.route('/delete_item', methods=['POST'])
+@login_required
 def delete_item():
     style = request.form.get('style')
     loc = request.form.get('loc')
@@ -384,12 +388,14 @@ def delete_item():
     return jsonify({'success': True})
 
 @warehousemap_bp.route("/warehousemap/clear", methods=["POST"])
+@login_required
 def clear_warehouse_data():
     """Clear the current warehouse data"""
     session.pop('warehouse_items', None)
     flash('Data cleared successfully')
     return redirect(url_for('whmap.warehouse'))
 @warehousemap_bp.route("/warehousemap/update_qty", methods=["POST"])
+@login_required
 def update_qty():
     """Update the quantity for a specific style at a specific location"""
     try:
