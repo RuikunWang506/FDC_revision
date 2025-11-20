@@ -278,3 +278,44 @@ def register_routes(app):
             formatted.append((log_class, stripped_line))
         
         return formatted
+
+    @app.route('/get_favorites')
+    def get_favorites():
+        if 'username' not in session:
+            return jsonify([])
+        user = session['username']
+        try:
+            conn = get_mysql_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT favorites FROM users WHERE username = %s", (user,))
+            row = cursor.fetchone()
+            favorites = json.loads(row[0]) if row and row[0] else []
+            return jsonify(favorites)
+        except Exception as e:
+            return jsonify([])
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+
+    @app.route('/save_favorites', methods=['POST'])
+    def save_favorites():
+        if 'username' not in session:
+            return jsonify({'success': False})
+        user = session['username']
+        data = request.get_json()
+        favorites = data.get('favorites', [])
+        try:
+            conn = get_mysql_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET favorites = %s WHERE username = %s", (json.dumps(favorites), user))
+            conn.commit()
+            return jsonify({'success': True})
+        except Exception as e:
+            return jsonify({'success': False})
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()

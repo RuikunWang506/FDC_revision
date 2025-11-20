@@ -570,7 +570,7 @@ def register_label_maker_routes(app):
 
         try:
             # Regenerate the Excel file
-            app.logger.info("%s downloading label Excel for order: %s", current_user, order_number)
+            app.logger.info("***%s***__@@@downloading labels@@@__ %s",current_user, order_number)
             excel_data, error_message, _, _, _, _, _ = process_orders(order_number)
 
             if error_message or excel_data is None:

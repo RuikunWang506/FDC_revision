@@ -172,6 +172,8 @@ def parse_pdf_to_database(pdf_content, batch_date, email_date=None):
 
 def fetch_email_attachments():
     """Fetch PDF attachments from emails and download them to directory"""
+    start_time = datetime.now()
+    print(f"[fetch_email_attachments] Started at {start_time}")
     try:
         # Calculate date 1 month ago
         from dateutil.relativedelta import relativedelta
@@ -185,80 +187,271 @@ def fetch_email_attachments():
         mail.select('inbox')
         # Search for emails from specific sender in the last 1 month
         search_criteria = f'(FROM "{email_config["sender_filter"]}" SINCE {search_date})'
-        result, data = mail.search(None, search_criteria)
+        # Use UID search to get stable IDs we can cache
+        result, data = mail.uid('search', None, search_criteria)
         if result != 'OK':
             return {'error': 'Failed to search emails'}
         
         downloaded_files = []
-        email_ids = data[0].split() if result == 'OK' else []
+        all_uids = data[0].split() if result == 'OK' else []
+        all_uids = [uid.decode('utf-8') for uid in all_uids]
         
         # Ensure download directory exists
         download_path = email_config['download_path']
         os.makedirs(download_path, exist_ok=True)
-        
-        # Process each email and download PDF attachments
-        for email_id in email_ids:
-            result, data = mail.fetch(email_id, '(RFC822)')
-            if result != 'OK':
-                continue
-            email_message = email.message_from_bytes(data[0][1])
-            
-            # Get email date
-            email_date_str = email_message.get('Date', '')
-            try:
-                from email.utils import parsedate_to_datetime
-                email_date = parsedate_to_datetime(email_date_str)
-                batch_date = email_date.strftime('%Y-%m-%d')  # Format: 2025-09-24
-            except:
-                batch_date = datetime.now().strftime('%Y-%m-%d')
-            
-            # Create batch directory
-            batch_dir = os.path.join(download_path, batch_date)
-            os.makedirs(batch_dir, exist_ok=True)
-            
-            # Process PDF attachments
-            for part in email_message.walk():
-                if part.get_content_disposition() == 'attachment':
-                    filename = part.get_filename()
-                    if filename and filename.lower().endswith('.pdf'):
-                        file_path = os.path.join(batch_dir, filename)
-                        if os.path.exists(file_path):
-                            print(f"[fetch_email_attachments] Skipped (already exists): {filename}")
-                            downloaded_files.append({
-                                'filename': filename,
-                                'filepath': file_path,
-                                'batch_date': batch_date,
-                                'status': 'skipped_existing'
-                            })
-                            continue
-                        try:
-                            with open(file_path, 'wb') as f:
-                                f.write(part.get_payload(decode=True))
-                            print(f"[fetch_email_attachments] Downloaded: {filename}")
-                            downloaded_files.append({
-                                'filename': filename,
-                                'filepath': file_path,
-                                'batch_date': batch_date,
-                                'status': 'downloaded'
-                            })
-                        except Exception as e:
-                            print(f"Error downloading {filename}: {str(e)}")
-                            continue
-        
-        mail.close()
-        mail.logout()
-        
-        # Clean up duplicate files with _2, _3, etc.
-        import re
+
+        # Pre-scan existing files to avoid repeated disk I/O and clean up duplicates
+        print("[fetch_email_attachments] Pre-scanning local files...")
+        existing_files_cache = set()
         for root, dirs, files in os.walk(download_path):
+            folder_name = os.path.basename(root)
             for file in files:
+                # Clean up duplicates immediately
                 if re.match(r'.*_\d+\.pdf$', file):
-                    file_path = os.path.join(root, file)
                     try:
-                        os.remove(file_path)
+                        os.remove(os.path.join(root, file))
                         print(f"[fetch_email_attachments] Cleaned up duplicate: {file}")
                     except Exception as e:
                         print(f"Error removing {file}: {str(e)}")
+                    continue
+                
+                if file.lower().endswith('.pdf'):
+                    existing_files_cache.add((folder_name, file))
+        print(f"[fetch_email_attachments] Indexed {len(existing_files_cache)} existing files.")
+
+        # Load metadata cache to skip server requests for known emails
+        cache_file = os.path.join(download_path, 'email_metadata_cache.json')
+        metadata_cache = {}
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, 'r') as f:
+                    metadata_cache = json.load(f)
+            except:
+                pass
+        
+        # Filter UIDs - only fetch what we don't have or what is missing files
+        email_ids = []
+        skipped_uids_count = 0
+        
+        for uid in all_uids:
+            if uid in metadata_cache:
+                entry = metadata_cache[uid]
+                batch_date = entry.get('batch_date')
+                filenames = entry.get('filenames', [])
+                
+                # Check if all files for this email exist locally
+                all_files_exist = True
+                if filenames:
+                    for fname in filenames:
+                        if (batch_date, fname) not in existing_files_cache:
+                            all_files_exist = False
+                            break
+                
+                if all_files_exist:
+                    skipped_uids_count += 1
+                    # Add to report
+                    for fname in filenames:
+                        downloaded_files.append({
+                            'filename': fname,
+                            'filepath': os.path.join(download_path, batch_date, fname),
+                            'batch_date': batch_date,
+                            'status': 'skipped_existing'
+                        })
+                    continue
+            
+            email_ids.append(uid)
+
+        print(f"[fetch_email_attachments] Total emails: {len(all_uids)}. Cached & Valid: {skipped_uids_count}. Need to process: {len(email_ids)}")
+        
+        # Process each email and download PDF attachments
+        # Batch processing to improve speed
+        batch_size = 50
+        total_emails = len(email_ids)
+        if total_emails > 0:
+            print(f"[fetch_email_attachments] Processing {total_emails} emails in batches of {batch_size}...")
+        
+        from email.header import decode_header
+        import email.utils
+
+        for i in range(0, total_emails, batch_size):
+            batch_ids = email_ids[i:i+batch_size]
+            batch_ids_str = b','.join([uid.encode('utf-8') for uid in batch_ids]).decode('utf-8')
+            
+            skipped_emails = set()
+            
+            try:
+                # Fetch Date and Structure for the whole batch using UID
+                res, batch_data = mail.uid('fetch', batch_ids_str, '(UID BODY.PEEK[HEADER.FIELDS (DATE)] BODYSTRUCTURE)')
+                if res == 'OK':
+                    # Reconstruct full responses for each email ID
+                    email_content_map = {}
+                    last_uid = None
+                    
+                    for part in batch_data:
+                        if isinstance(part, tuple):
+                            resp_head = part[0].decode('utf-8', errors='ignore')
+                            resp_body = part[1].decode('utf-8', errors='ignore')
+                            
+                            # Extract UID from response "UID 1234"
+                            uid_match = re.search(r'UID\s+(\d+)', resp_head)
+                            if uid_match:
+                                last_uid = uid_match.group(1)
+                                email_content_map[last_uid] = resp_head + " " + resp_body
+                        elif isinstance(part, bytes):
+                            if last_uid:
+                                email_content_map[last_uid] += part.decode('utf-8', errors='ignore')
+
+                    # Process each reconstructed email response
+                    for current_id, full_response in email_content_map.items():
+                        # Extract Date
+                        date_str = None
+                        if 'Date:' in full_response:
+                            date_match = re.search(r'Date:\s*(.+?)(?:\r\n|\n)', full_response, re.IGNORECASE)
+                            if date_match:
+                                date_str = date_match.group(1)
+                        
+                        batch_date = None
+                        if date_str:
+                            try:
+                                msg_date = email.utils.parsedate_to_datetime(date_str)
+                                batch_date = msg_date.strftime('%Y-%m-%d')
+                            except:
+                                pass
+                        
+                        if not batch_date:
+                            batch_date = datetime.now().strftime('%Y-%m-%d')
+                            
+                        batch_dir = os.path.join(download_path, batch_date)
+                        
+                        # Extract PDF filenames
+                        potential_matches = re.findall(r'(?:NAME|FILENAME)\s+"([^"]+)"', full_response, re.IGNORECASE)
+                        
+                        pdf_matches = []
+                        if potential_matches:
+                            for fname in potential_matches:
+                                decoded_fname = fname
+                                if '=?' in fname:
+                                    try:
+                                        decoded_parts = decode_header(fname)
+                                        decoded_fname = ''.join([
+                                            (part[0].decode(part[1] or 'utf-8') if isinstance(part[0], bytes) else part[0])
+                                            for part in decoded_parts
+                                        ])
+                                    except:
+                                        pass
+                                
+                                if decoded_fname.lower().endswith('.pdf'):
+                                    pdf_matches.append(decoded_fname)
+                        
+                        # Update Metadata Cache
+                        metadata_cache[current_id] = {
+                            'batch_date': batch_date,
+                            'filenames': pdf_matches
+                        }
+
+                        if pdf_matches:
+                            all_exist = True
+                            skipped_files_temp = []
+                            for decoded_fname in pdf_matches:
+                                # Check cache instead of disk
+                                if (batch_date, decoded_fname) not in existing_files_cache:
+                                    all_exist = False
+                                    break
+                                
+                                file_path = os.path.join(batch_dir, decoded_fname)
+                                skipped_files_temp.append({
+                                    'filename': decoded_fname,
+                                    'filepath': file_path,
+                                    'batch_date': batch_date,
+                                    'status': 'skipped_existing'
+                                })
+                            
+                            if all_exist and skipped_files_temp:
+                                skipped_emails.add(current_id)
+                                for f in skipped_files_temp:
+                                    print(f"[fetch_email_attachments] Skipped (already exists): {f['filename']}")
+                                downloaded_files.extend(skipped_files_temp)
+            except Exception as e:
+                print(f"Batch optimization check failed: {e}")
+            
+            # Process emails in batch
+            for email_id in batch_ids:
+                if email_id in skipped_emails:
+                    continue
+                
+                # Full download fallback
+                try:
+                    result, data = mail.uid('fetch', email_id, '(RFC822)')
+                    if result != 'OK':
+                        continue
+                    email_message = email.message_from_bytes(data[0][1])
+                    
+                    email_date_str = email_message.get('Date', '')
+                    try:
+                        email_date = email.utils.parsedate_to_datetime(email_date_str)
+                        batch_date = email_date.strftime('%Y-%m-%d')
+                    except:
+                        batch_date = datetime.now().strftime('%Y-%m-%d')
+                    
+                    batch_dir = os.path.join(download_path, batch_date)
+                    os.makedirs(batch_dir, exist_ok=True)
+                    
+                    # Update cache for this email if not already set (fallback)
+                    if email_id not in metadata_cache:
+                         metadata_cache[email_id] = {'batch_date': batch_date, 'filenames': []}
+
+                    found_pdfs = []
+                    for part in email_message.walk():
+                        if part.get_content_disposition() == 'attachment':
+                            filename = part.get_filename()
+                            if filename and filename.lower().endswith('.pdf'):
+                                found_pdfs.append(filename)
+                                # Check cache first
+                                if (batch_date, filename) in existing_files_cache:
+                                    file_path = os.path.join(batch_dir, filename)
+                                    print(f"[fetch_email_attachments] Skipped (already exists): {filename}")
+                                    downloaded_files.append({
+                                        'filename': filename,
+                                        'filepath': file_path,
+                                        'batch_date': batch_date,
+                                        'status': 'skipped_existing'
+                                    })
+                                    continue
+                                
+                                file_path = os.path.join(batch_dir, filename)
+                                try:
+                                    with open(file_path, 'wb') as f:
+                                        f.write(part.get_payload(decode=True))
+                                    print(f"[fetch_email_attachments] Downloaded: {filename}")
+                                    # Update cache
+                                    existing_files_cache.add((batch_date, filename))
+                                    downloaded_files.append({
+                                        'filename': filename,
+                                        'filepath': file_path,
+                                        'batch_date': batch_date,
+                                        'status': 'downloaded'
+                                    })
+                                except Exception as e:
+                                    print(f"Error downloading {filename}: {str(e)}")
+                                    continue
+                    
+                    # Update filenames in metadata cache
+                    metadata_cache[email_id]['filenames'] = found_pdfs
+
+                except Exception as e:
+                    print(f"Error processing email {email_id}: {e}")
+        
+        # Save updated metadata cache
+        try:
+            with open(cache_file, 'w') as f:
+                json.dump(metadata_cache, f)
+        except Exception as e:
+            print(f"Failed to save metadata cache: {e}")
+
+        mail.close()
+        mail.logout()
+        
+        # Cleanup loop removed (moved to start)
         
         # Create batch summary
         batch_dates = list(set([f['batch_date'] for f in downloaded_files]))
@@ -284,6 +477,10 @@ def fetch_email_attachments():
         print(f"[fetch_email_attachments] Files skipped (already exist): {skipped_count}")
         print(f"[fetch_email_attachments] Batch dates: {batch_dates}")
         
+        end_time = datetime.now()
+        duration = end_time - start_time
+        print(f"[fetch_email_attachments] Completed in {duration}")
+
         # Extract skipped files for detailed reporting
         skipped_files = [{'filename': f['filename'], 'reason': 'File already exists'} for f in downloaded_files if f.get('status') == 'skipped_existing']
         
@@ -346,6 +543,22 @@ def process_email_pdfs(selected_batch_date=None):
         if not pdf_files:
             return {'error': 'No PDF files found in download directory'}
         
+        # Optimization: Fetch all existing PO numbers from database
+        print("[process_email_pdfs] Fetching existing PO numbers from database...")
+        existing_pos = set()
+        try:
+            conn = get_mysql_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT po_number FROM lori_orders")
+            rows = cursor.fetchall()
+            for row in rows:
+                existing_pos.add(row[0])
+            cursor.close()
+            conn.close()
+            print(f"[process_email_pdfs] Found {len(existing_pos)} existing orders in database.")
+        except Exception as e:
+            print(f"[process_email_pdfs] Warning: Failed to fetch existing POs: {e}")
+
         processed_orders = []
         skipped_orders = 0
         skipped_files = []
@@ -354,6 +567,19 @@ def process_email_pdfs(selected_batch_date=None):
         # Process each PDF file and store in database
         for pdf_file in pdf_files:
             try:
+                # Optimization: Check filename for PO number before parsing
+                filename = pdf_file['filename']
+                po_match = re.search(r'PO_([\d-]+)\.pdf$', filename, re.IGNORECASE)
+                if po_match:
+                    po_from_filename = po_match.group(1)
+                    if po_from_filename in existing_pos:
+                        skipped_orders += 1
+                        skipped_files.append({
+                            'filename': filename,
+                            'reason': f'Order {po_from_filename} already exists (checked filename)'
+                        })
+                        continue
+
                 with open(pdf_file['filepath'], 'rb') as f:
                     pdf_content = io.BytesIO(f.read())
                     

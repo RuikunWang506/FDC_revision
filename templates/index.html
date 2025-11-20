@@ -213,6 +213,7 @@
       align-items: center;
       margin-bottom: 0.5rem;
       padding-top: 0;
+      position: relative;
     }
     
     .dashboard-wrapper .tool-card i {
@@ -247,6 +248,20 @@
       overflow: hidden;
     }
     
+    .favorite-star {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: #ddd;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: color 0.2s;
+    }
+    
+    .favorite-star.favorited {
+      color: #ffd700;
+    }
+    
     .dashboard-wrapper .tool-card .category {
       background: rgba(0, 212, 255, 0.1);
       color: #00d4ff;
@@ -274,10 +289,7 @@
       text-overflow: ellipsis;
     }
     
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
+
     
     /* Category Colors with Different Backgrounds */
     .dashboard-wrapper .tool-card[data-category="core"] {
@@ -372,11 +384,6 @@
       }
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
 
   </style>
 </head>
@@ -387,10 +394,8 @@
   <div class="dashboard-wrapper">
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
-    <div class="main-title">FDC Command Center</div>
-    <div class="dashboard-content" style="text-align: center; font-size: 2rem; font-weight: 700; color: #b61515; margin: 1rem 0 2rem 0; padding: 1.5rem; background: linear-gradient(45deg, #ff6b6b6b, #ffd93d); border-radius: 20px; border: 2px solid #ff6b6b; box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4); animation: pulse 2s infinite;">
-        🎉 1 Year Anniversary of FDCEF Webkit! 10-15-2024 🎉<br>
-    </div>
+    <div class="main-title">FDC Home / 主页</div>
+
     
     <div class="dashboard-container">
       <!-- Smart Navigation Panel -->
@@ -400,17 +405,28 @@
           <p>Navigate by category</p>
         </div>
         
-        <div class="nav-item active" onclick="filterCategory('all')">
+        <div class="nav-item active" onclick="filterCategory('favorites')">
+          <i class="fas fa-star"></i>
+          <div class="nav-text">
+            <h4>Favorites</h4>
+            <p>我的收藏</p>
+            <P>点亮星星收藏</P>
+          </div>
+          <span class="count" id="favoritesCount">0</span>
+        </div>
+        
+        <div class="nav-item" onclick="filterCategory('all')">
           <i class="fas fa-th-large"></i>
           <div class="nav-text">
             <h4>All Tools</h4>
-            <p>Show everything</p>
+            <p>everything</p>
+            <p>所有功能</p>
           </div>
           <span class="count">18</span>
         </div>
         
         <div class="nav-item" onclick="filterCategory('core')">
-          <i class="fas fa-star"></i>
+          <i class="fas fa-search"></i>
           <div class="nav-text">
             <h4>Core Search</h4>
             <p>核心搜索功能</p>
@@ -451,10 +467,11 @@
         
         <!-- Core Functions -->
         
-        <a href="{{ url_for('item_lookup.item_lookup') }}" class="tool-card" data-category="core">
+        <a href="{{ url_for('item_lookup.item_lookup') }}" class="tool-card" data-category="core" data-tool="item_lookup">
           <div class="card-header">
             <i class="fas fa-search"></i>
             <h3>SKU/STYLE Lookup</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'item_lookup')"></i>
           </div>
           <p>Advanced product and style search with intelligent filtering and real-time results</p>
           <div class="card-footer">
@@ -462,10 +479,11 @@
           </div>
         </a>
         
-        <a href="{{ url_for('order_lookup.order_lookup') }}" class="tool-card" data-category="core">
+        <a href="{{ url_for('order_lookup.order_lookup') }}" class="tool-card" data-category="core" data-tool="order_lookup">
           <div class="card-header">
             <i class="fas fa-file-invoice"></i>
             <h3>Sales Orders</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_lookup')"></i>
           </div>
           <p>Find, manage and print sales orders with advanced search capabilities</p>
           <div class="card-footer">
@@ -474,10 +492,11 @@
           </div>
         </a>
         
-        <a href="/product_image" class="tool-card" data-category="core">
+        <a href="/product_image" class="tool-card" data-category="core" data-tool="product_image">
           <div class="card-header">
             <i class="fas fa-image"></i>
             <h3>Product Images</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'product_image')"></i>
           </div>
           <p>Download high-resolution product images and manage visual assets</p>
           <div class="card-footer">
@@ -485,10 +504,11 @@
           </div>
         </a>
         
-        <a href="/customer" class="tool-card" data-category="core">
+        <a href="/customer" class="tool-card" data-category="core" data-tool="customer">
           <div class="card-header">
             <i class="fas fa-users"></i>
             <h3>Customer Analytics</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'customer')"></i>
           </div>
           <p>View detailed customer purchase history and behavior insights</p>
           <div class="card-footer">
@@ -497,10 +517,11 @@
         </a>
         
         <!-- Toolkits -->
-        <a href="/v6_listcreator" class="tool-card" data-category="toolkit">
+        <a href="/v6_listcreator" class="tool-card" data-category="toolkit" data-tool="v6_listcreator">
           <div class="card-header">
             <i class="fas fa-list-ol"></i>
             <h3>List Creator V6.2</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'v6_listcreator')"></i>
           </div>
           <p>Create sophisticated product lists with advanced filtering and export options</p>
           <div class="card-footer">
@@ -508,10 +529,11 @@
           </div>
         </a>
         
-        <a href="/order_processor" class="tool-card" data-category="toolkit">
+        <a href="/order_processor" class="tool-card" data-category="toolkit" data-tool="order_processor">
           <div class="card-header">
             <i class="fas fa-edit"></i>
             <h3>Order Processor</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_processor')"></i>
           </div>
           <p>Edit invoice prices, quantities and bulk import to OMS system</p>
           <div class="card-footer">
@@ -519,10 +541,11 @@
           </div>
         </a>
         
-        <a href="/lori_automation/loris_fedex" class="tool-card" data-category="toolkit">
+        <a href="/lori_automation/loris_fedex" class="tool-card" data-category="toolkit" data-tool="loris_fedex">
           <div class="card-header">
             <i class="fas fa-robot"></i>
             <h3>Loris Automation</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'loris_fedex')"></i>
           </div>
           <p>Automated workflow management and intelligent process optimization</p>
           <div class="card-footer">
@@ -530,10 +553,11 @@
           </div>
         </a>
         
-        <a href="/container" class="tool-card" data-category="toolkit">
+        <a href="/container" class="tool-card" data-category="toolkit" data-tool="container">
           <div class="card-header">
             <i class="fas fa-book"></i>
             <h3>Container Import</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'container')"></i>
           </div>
           <p>Process container import files and integrate with OMS workflows</p>
           <div class="card-footer">
@@ -544,10 +568,11 @@
         </a>
         
         <!-- Additional Tools -->
-        <a href="/dam" class="tool-card" data-category="additional">
+        <a href="/dam" class="tool-card" data-category="additional" data-tool="dam">
           <div class="card-header">
             <i class="fas fa-folder-open"></i>
             <h3>DAM System</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'dam')"></i>
           </div>
           <p>Digital Asset Management - organize, search and manage product images and files</p>
           <div class="card-footer">
@@ -555,20 +580,22 @@
             <span class="badge">NEW</span>
           </div>
         </a>
-        <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="additional">
+        <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="additional" data-tool="location_massive_update">
           <div class="card-header">
             <i class="fas fa-warehouse"></i>
             <h3>Massive Location Update</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_massive_update')"></i>
           </div>
           <p>Bulk update locations for styles and all colors with smart suggestions.</p>
           <div class="card-footer">
             <span class="category">Core</span>
           </div>
         </a>
-        <a href="/oosc" class="tool-card" data-category="additional">
+        <a href="/oosc" class="tool-card" data-category="additional" data-tool="oosc">
           <div class="card-header">
             <i class="fas fa-exclamation-triangle"></i>
             <h3>Out of Stock Check</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'oosc')"></i>
           </div>
           <p>Monitor negative inventory, view stock status, and wipe locations for oversold items</p>
           <div class="card-footer">
@@ -576,10 +603,11 @@
             <span class="badge">NEW</span>
           </div>
         </a>
-        <a href="/image_upload" class="tool-card" data-category="additional">
+        <a href="/image_upload" class="tool-card" data-category="additional" data-tool="image_upload">
           <div class="card-header">
             <i class="fas fa-cloud-upload-alt"></i>
             <h3>Smart Image Upload</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'image_upload')"></i>
           </div>
           <p>Bulk upload and AI-powered organization of product images</p>
           <div class="card-footer">
@@ -588,10 +616,11 @@
           </div>
         </a>
         
-        <a href="/boat" class="tool-card" data-category="additional">
+        <a href="/boat" class="tool-card" data-category="additional" data-tool="boat">
           <div class="card-header">
             <i class="fas fa-ship"></i>
             <h3>Shipping Intelligence</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'boat')"></i>
           </div>
           <p>Real-time boat status tracking and shipping schedule optimization</p>
           <div class="card-footer">
@@ -599,10 +628,11 @@
           </div>
         </a>
         
-        <a href="/audit" class="tool-card" data-category="additional">
+        <a href="/audit" class="tool-card" data-category="additional" data-tool="audit">
           <div class="card-header">
             <i class="fas fa-clipboard-check"></i>
             <h3>Master Audit</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'audit')"></i>
           </div>
           <p>Comprehensive system auditing and compliance tracking tools</p>
           <div class="card-footer">
@@ -610,10 +640,11 @@
           </div>
         </a>
         
-        <a href="/manage_users" class="tool-card" data-category="additional">
+        <a href="/manage_users" class="tool-card" data-category="additional" data-tool="manage_users">
           <div class="card-header">
             <i class="fas fa-users-cog"></i>
             <h3>User Management</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'manage_users')"></i>
           </div>
           <p>Manage user accounts, permissions and access control settings</p>
           <div class="card-footer">
@@ -621,10 +652,11 @@
           </div>
         </a>
         
-        <a href="/warehousemap" class="tool-card" data-category="additional">
+        <a href="/warehousemap" class="tool-card" data-category="additional" data-tool="warehousemap">
           <div class="card-header">
             <i class="fas fa-map"></i>
             <h3>Warehouse Map</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'warehousemap')"></i>
           </div>
           <p>Interactive warehouse layout and location mapping system</p>
           <div class="card-footer">
@@ -632,10 +664,11 @@
           </div>
         </a>
         
-        <a href="/master_image_viewer" class="tool-card" data-category="additional">
+        <a href="/master_image_viewer" class="tool-card" data-category="additional" data-tool="master_image_viewer">
           <div class="card-header">
             <i class="fas fa-images"></i>
             <h3>Master Image Viewer</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'master_image_viewer')"></i>
           </div>
           <p>Search and view all images for any SKU across all sources with zoom</p>
           <div class="card-footer">
@@ -644,10 +677,11 @@
           </div>
         </a>
         
-        <a href="/bag_style_viewer" class="tool-card" data-category="additional">
+        <a href="/bag_style_viewer" class="tool-card" data-category="additional" data-tool="bag_style_viewer">
           <div class="card-header">
             <i class="fas fa-shopping-bag"></i>
             <h3>Bag Style Viewer</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'bag_style_viewer')"></i>
           </div>
           <p>Browse bag styles by description, search SKU, and manage product descriptions</p>
           <div class="card-footer">
@@ -657,10 +691,11 @@
         </a>
         
         <!-- Legacy Services -->
-        <a href="/mobile" class="tool-card" data-category="legacy">
+        <a href="/mobile" class="tool-card" data-category="legacy" data-tool="mobile">
           <div class="card-header">
             <i class="fas fa-mobile-alt"></i>
             <h3>Mobile View</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'mobile')"></i>
           </div>
           <p>Legacy mobile-friendly product lookup interface</p>
           <div class="card-footer">
@@ -668,10 +703,11 @@
           </div>
         </a>
         
-        <a href="/location_service" class="tool-card" data-category="legacy">
+        <a href="/location_service" class="tool-card" data-category="legacy" data-tool="location_service">
           <div class="card-header">
             <i class="fas fa-map-marker-alt"></i>
             <h3>Location Service</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_service')"></i>
           </div>
           <p>Find item locations in warehouse using legacy mapping system</p>
           <div class="card-footer">
@@ -686,7 +722,71 @@
   {% include 'footer.html' %}
 
   <script>
-    let currentFilter = 'all';
+    let currentFilter = 'favorites';
+    let userFavorites = [];
+    
+    function loadFavorites() {
+      fetch('/get_favorites')
+        .then(response => response.json())
+        .then(favorites => {
+          userFavorites = favorites;
+          updateFavorites();
+        })
+        .catch(() => {
+          // Fallback to localStorage if server fails
+          const fav = localStorage.getItem('userFavorites');
+          if (fav) userFavorites = JSON.parse(fav);
+          updateFavorites();
+        });
+    }
+    
+    function saveFavorites() {
+      fetch('/save_favorites', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({favorites: userFavorites})
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (!data.success) {
+            // Fallback to localStorage
+            localStorage.setItem('userFavorites', JSON.stringify(userFavorites));
+          }
+        })
+        .catch(() => {
+          // Fallback to localStorage
+          localStorage.setItem('userFavorites', JSON.stringify(userFavorites));
+        });
+    }
+    
+    function toggleFavorite(event, tool) {
+      event.preventDefault();
+      event.stopPropagation();
+      const index = userFavorites.indexOf(tool);
+      if (index > -1) {
+        userFavorites.splice(index, 1);
+      } else {
+        userFavorites.push(tool);
+      }
+      saveFavorites();
+      updateFavorites();
+    }
+    
+    function updateFavorites() {
+      document.querySelectorAll('.favorite-star').forEach(star => {
+        const tool = star.parentElement.parentElement.getAttribute('data-tool');
+        if (userFavorites.includes(tool)) {
+          star.classList.add('favorited');
+          star.classList.remove('far');
+          star.classList.add('fas');
+        } else {
+          star.classList.remove('favorited');
+          star.classList.remove('fas');
+          star.classList.add('far');
+        }
+      });
+      document.getElementById('favoritesCount').textContent = userFavorites.length;
+    }
     
     function filterCategory(category) {
       currentFilter = category;
@@ -710,9 +810,20 @@
       setTimeout(() => {
         cards.forEach((card, index) => {
           const cardCategory = card.getAttribute('data-category');
+          const tool = card.getAttribute('data-tool');
           
-          if (category === 'all' || cardCategory === category) {
+          let show = false;
+          if (category === 'all') {
+            show = true;
+          } else if (category === 'favorites') {
+            show = userFavorites.includes(tool);
+          } else {
+            show = cardCategory === category;
+          }
+          
+          if (show) {
             card.style.display = 'flex';
+            card.style.order = (category === 'all' && userFavorites.includes(tool)) ? '0' : '1';
             setTimeout(() => {
               card.style.opacity = '1';
               card.style.transform = 'translateY(0)';
@@ -733,7 +844,8 @@
         'core': 'Core Functions',
         'toolkit': 'Toolkits', 
         'additional': 'Additional Tools',
-        'legacy': 'Legacy Services'
+        'legacy': 'Legacy Services',
+        'favorites': 'Favorites'
       };
       
       // Create feedback element
@@ -770,17 +882,35 @@
     
     // Initialize with smooth card entrance animation
     document.addEventListener('DOMContentLoaded', function() {
-      const cards = document.querySelectorAll('.tool-card');
-      cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        
-        setTimeout(() => {
-          card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-          card.style.opacity = '1';
-          card.style.transform = 'translateY(0)';
-        }, index * 50 + 200);
-      });
+      loadFavorites();
+      setTimeout(() => {
+        const cards = document.querySelectorAll('.tool-card');
+        cards.forEach((card, index) => {
+          const tool = card.getAttribute('data-tool');
+          const cardCategory = card.getAttribute('data-category');
+          let show = false;
+          if (currentFilter === 'all') {
+            show = true;
+          } else if (currentFilter === 'favorites') {
+            show = userFavorites.includes(tool);
+          } else {
+            show = cardCategory === currentFilter;
+          }
+          card.style.order = (currentFilter === 'all' && userFavorites.includes(tool)) ? '0' : '1';
+          if (show) {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+              card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+              card.style.opacity = '1';
+              card.style.transform = 'translateY(0)';
+            }, index * 50 + 200);
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }, 100);
     });
     
     // Add search functionality
