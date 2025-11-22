@@ -175,6 +175,7 @@
         <input type="text" id="search-input" name="search_term" placeholder="Search logs..." value="{{ search_term }}">
         <button type="submit" id="search-button">Search</button>
         <a href="{{ url_for('display') }}" id="clear-search">Clear</a>
+        <button type="button" id="delete-system-restarted-server" style="background-color:#d32f2f; color:white; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; font-size:16px;">Delete from Log File</button>
     </form>
     
     <!-- Search Results Info -->
@@ -218,6 +219,7 @@
     </div>
 
     <script>
+                       
         const logContainer = document.getElementById("log-container");
         const searchInput = document.getElementById("search-input");
         

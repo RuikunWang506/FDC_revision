@@ -49,10 +49,18 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
         sync_status['logs'] = []  # Clear previous logs
         sync_status['current_progress'] = None
         
+        # Log DAM sync access with username
+        try:
+            from flask import current_app, session
+            username = session.get('username', 'Unknown')
+            current_app.logger.info(f"***{username}***___@@@Accessed@@@__DAM Sync Service (manual sync started)")
+        except Exception:
+            pass
+
         # Save original print function
         import builtins
         original_print = builtins.print
-        
+
         # Create a custom print function that captures output
         def capture_print(*args, **kwargs):
             message = ' '.join(str(arg) for arg in args)
@@ -62,10 +70,10 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
                 sync_status['logs'] = sync_status['logs'][-MAX_LOG_LINES:]
             # Use original print to avoid recursion
             original_print(message)
-        
+
         # Monkey-patch the print function in the sync service
         builtins.print = capture_print
-        
+
         try:
             # Helper to stream subprocess output line-by-line
             def stream_process(cmd, log_fn):
@@ -240,11 +248,16 @@ def start_sync():
     include_fetch = data.get('include_fetch', False)
     include_cleanup = data.get('include_cleanup', False)
     
+    # Log DAM sync access with username
+    from flask import current_app, session
+    username = session.get('username', 'Unknown')
+    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service")
+
     # Start sync in background thread
     thread = Thread(target=run_sync_background, args=(force_rebuild_index, include_fetch, include_cleanup))
     thread.daemon = True
     thread.start()
-    
+
     return jsonify({
         'success': True,
         'message': 'Sync started in background'
@@ -254,6 +267,9 @@ def start_sync():
 @login_required
 def generate_index():
     """Generate index files only (no sync)"""
+    from flask import current_app, session
+    username = session.get('username', 'Unknown')
+    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (generate index)")
     try:
         data = request.get_json() or {}
         source = data.get('source', 'both')  # 'catalog', 'big_picture', or 'both'
@@ -304,6 +320,9 @@ def check_scheduled_sync():
             'message': 'Sync is already running'
         }), 400
     
+    from flask import current_app, session
+    username = session.get('username', 'Unknown')
+    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (scheduled check)")
     try:
         sync_service = DAMSyncServiceV2()
         
@@ -341,6 +360,9 @@ def fetch_from_dropbox():
             'message': 'Another operation is already running'
         }), 400
 
+    from flask import current_app, session
+    username = session.get('username', 'Unknown')
+    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (fetch)")
     def _run_fetch_only():
         global sync_status
         sync_status['is_running'] = True
@@ -366,27 +388,19 @@ def fetch_from_dropbox():
                     for line in iter(stream.readline, ''):
                         if line:
                             _log(prefix + line.rstrip())
-                finally:
-                    try:
-                        stream.close()
-                    except Exception:
-                        pass
-            t_out = threading.Thread(target=reader, args=(proc.stdout, ""), daemon=True)
-            t_err = threading.Thread(target=reader, args=(proc.stderr, "[stderr] "), daemon=True)
-            t_out.start(); t_err.start()
-            rc = proc.wait()
-            t_out.join(timeout=1)
-            t_err.join(timeout=1)
-            if rc != 0:
-                # Inspect recent output for an incremental completion marker; if present, treat as success
-                recent = '\n'.join(sync_status.get('logs', [])[-200:])
-                incremental_markers = ['Processing Complete', '✅ Processing Complete!', 'SCAN_COMPLETE|', 'Full scan complete', '✅ Full scan complete']
-                if any(marker in recent for marker in incremental_markers):
-                    # Treat as success but persist a warning
-                    try:
-                        log_event('warning', f"Smart Auto-Filter exited with code {rc} but reported incremental completion. Recent output:\n{recent}")
-                    except Exception:
-                        pass
+                except Exception:
+                    pass
+
+                    # Start sync in background thread
+                    thread = Thread(target=run_sync_background)
+                    thread.daemon = True
+                    thread.start()
+
+                    return jsonify({'success': True, 'message': 'DAM sync started'})
+                except Exception as e:
+                    sync_status['is_running'] = False
+                    sync_status['error'] = str(e)
+                    return jsonify({'success': False, 'error': str(e)}), 500
                 else:
                     sync_status['error'] = f"Smart Auto-Filter exited with code {rc}"
                     # Persist the failure and recent output to the persistent app log for post-mortem
@@ -423,6 +437,9 @@ def fetch_from_dropbox_full():
             'message': 'Another operation is already running'
         }), 400
 
+    from flask import current_app, session
+    username = session.get('username', 'Unknown')
+    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (fetch full)")
     def _run_full_fetch():
         global sync_status
         sync_status['is_running'] = True
@@ -493,6 +510,9 @@ def fetch_from_dropbox_full():
 @login_required
 def cleanup_broken_links():
     """Scan DAM image records and mark missing files as inactive."""
+    from flask import current_app, session
+    username = session.get('username', 'Unknown')
+    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (cleanup)")
     log_event('info', 'Starting DAM cleanup process')
     
     import py.utilities.models

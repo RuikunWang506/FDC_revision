@@ -557,9 +557,11 @@ class DAMSyncServiceV2:
         print("STARTING FULL DAM SYNCHRONIZATION (V2)")
         print("="*60)
         try:
-            log_event('info', f"Starting full DAM sync (force_rebuild_index={force_rebuild_index})")
+            from flask import current_app, session
+            username = session.get('username', 'Unknown')
+            current_app.logger.info(f"***{username}***___@@@Accessed@@@__DAM Sync Service (full sync started, force_rebuild_index={force_rebuild_index})")
         except Exception:
-            pass
+            pass 
         print(f"Batch Size: {self.batch_size}")
         print(f"Progress Interval: {self.progress_interval}")
         print(f"Force Rebuild Index: {force_rebuild_index}")

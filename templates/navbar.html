@@ -1,4 +1,5 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
@@ -38,7 +39,13 @@
             {% endif %}
         </ul>
 
-        <ul class="navbar-nav ml-auto">
+        <ul class="navbar-nav ml-auto align-items-center">
+            <!-- QR code icon button -->
+            <li class="nav-item d-flex align-items-center">
+                <button id="navbar-qr-btn" class="btn btn-link p-0 mr-2" title="Scan to visit this page" style="color: #fff;">
+                    <i class="fas fa-qrcode fa-lg"></i>
+                </button>
+            </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-none d-lg-flex align-items-center" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <div class="user-avatar">
@@ -67,6 +74,24 @@
     </div>
 </nav>
 
+<!-- QR Code Modal -->
+<div class="modal fade" id="navbarQrModal" tabindex="-1" role="dialog" aria-labelledby="navbarQrModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content bg-dark text-center">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white" id="navbarQrModalLabel">Scan to visit</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <canvas id="navbar-qr-canvas" style="margin:0 auto; display:block;"></canvas>
+        <div class="mt-2 text-white small" id="navbar-qr-url"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
 body.has-navbar { padding-top: 70px; }
 
@@ -94,15 +119,40 @@ body.has-navbar { padding-top: 70px; }
     font-weight: bold;
     text-transform: uppercase;
 }
+#navbar-qr-btn {
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+#navbar-qr-btn:focus {
+    outline: none;
+}
 </style>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script>
 $(function() {
     $('.dropdown-toggle').dropdown();
+    // QR code button click handler
+    $('#navbar-qr-btn').on('click', function() {
+        var url = window.location.href;
+        $('#navbar-qr-url').text(url);
+        // Generate QR code
+        if (window.QRious) {
+            var qr = new QRious({
+                element: document.getElementById('navbar-qr-canvas'),
+                value: url,
+                size: 180,
+                background: 'white',
+                foreground: '#222'
+            });
+        }
+        $('#navbarQrModal').modal('show');
+    });
 });
-
 // Ensure pages reserve space for the fixed-top navbar
-document.addEventListener('DOMContentLoaded', function() {
+ document.addEventListener('DOMContentLoaded', function() {
     try {
         if (document.body && !document.body.classList.contains('has-navbar')) {
             document.body.classList.add('has-navbar');

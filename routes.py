@@ -58,6 +58,22 @@ from py.utilities.monitor import send_discord_notification
 
 def register_routes(app):
 
+    @app.route('/delete_system_restarted', methods=['POST'])
+    @login_required
+    def delete_system_restarted():
+        log_path = os.path.join(app.root_path, 'log.txt') if not os.path.isabs(Config.LOG_FILE) else Config.LOG_FILE
+        try:
+            # Read all lines except those containing 'system restarted'
+            with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                lines = f.readlines()
+            filtered = [line for line in lines if 'system restarted' not in line.lower()]
+            # Write back filtered lines
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.writelines(filtered)
+            return jsonify({'success': True})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
+
     register_product_image_routes(app)
     register_dam_routes(app)
     register_label_maker_routes(app)
@@ -99,7 +115,6 @@ def register_routes(app):
     def robots_txt():
         client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         proto = request.environ.get("SERVER_PROTOCOL", "HTTP/1.1")
-        log_event("INFO", f'{client_ip} "GET /robots.txt {proto}"')
         # app.static_folder points at your 'static' directory
         return send_from_directory(app.static_folder, "robots.txt")
     

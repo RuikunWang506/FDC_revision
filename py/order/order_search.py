@@ -313,21 +313,33 @@ def order_lookup(order_number=None):
     # Get latest order IDs from both databases
     latest_orders = get_latest_order_ids()
 
+
+    error_message = None
+    po_number = None
     if request.method == "POST":
-        # Handle the order lookup submission
-        order_number = request.form.get("order_number", "").strip()
-        
+        # If searching by PO
+        po_number = request.form.get("search_by_po", "").strip()
+        if po_number:
+            # Try to find order number by PO in both databases
+            order_number = find_order_number_by_po(po_number)
+            if not order_number:
+                error_message = f"No order found for PO: {po_number}"
+                return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False, error_message=error_message, po_number=po_number)
+            # else, continue as if searching by order number
+        else:
+            order_number = request.form.get("order_number", "").strip()
+
         if not order_number:
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False, po_number=po_number)
 
         session['order_number'] = order_number
 
         if current_user == 'fdc':
             current_app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False, po_number=po_number)
 
         header_info, items_html, all_descriptions_have_dash = generate_order(order_number)
-        
+
         if items_html:
             current_app.logger.info("***%s***__@@@search order@@@__ %s",current_user, order_number)
         else:
@@ -359,8 +371,28 @@ def order_lookup(order_number=None):
         order_number=order_number,
         current_user=current_user,
         latest_orders=latest_orders,
-        all_descriptions_have_dash=all_descriptions_have_dash
+        all_descriptions_have_dash=all_descriptions_have_dash,
+        error_message=error_message,
+        po_number=po_number
     )
+
+def find_order_number_by_po(po_number):
+    # Try both databases for a matching PO
+    try:
+        for db_name, length in [('omsdata_FDC', 5), ('oms_EF', 4)]:
+            conn = pyodbc.connect(
+                f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={db_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+            )
+            cursor = conn.cursor()
+            cursor.execute("SELECT TOP 1 ord_num FROM orders WHERE PO_NUM = ? ORDER BY ORD_DT DESC", (po_number,))
+            row = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            if row and row[0]:
+                return str(row[0]).zfill(length)
+    except Exception as e:
+        current_app.logger.error(f"Error finding order by PO: {po_number}: {e}")
+    return None
 
 @order_lookup_bp.route("/update_order_description", methods=["POST"])
 @login_required

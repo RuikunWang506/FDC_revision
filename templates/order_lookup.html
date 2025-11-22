@@ -456,23 +456,31 @@
                         {% endif %}
                     </div>
 
-                    <!-- Order Input with Navigation -->
-                    <div class="order-input-group">
-                        <button class="nav-btn" type="button" id="prevOrderBtn" title="Previous Order">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <input type="text" name="order_number" id="order_number" required pattern="\d{4,5}" 
-                               title="Please enter a 4 or 5-digit number" value="{{ order_number or ''}}" 
-                               placeholder="Order #">
-                        <button class="nav-btn" type="button" id="nextOrderBtn" title="Next Order">
-                            <i class="fas fa-chevron-right"></i>
+                    <!-- Top row: Order Input with Navigation and Search Order Button -->
+                    <div style="display: flex; align-items: center; gap: 15px; width: 100%; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
+                        <div class="order-input-group">
+                            <button class="nav-btn" type="button" id="prevOrderBtn" title="Previous Order">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <input type="text" name="order_number" id="order_number" required pattern="\d{4,5}" 
+                                   title="Please enter a 4 or 5-digit number" value="{{ order_number or ''}}" 
+                                   placeholder="Order #">
+                            <button class="nav-btn" type="button" id="nextOrderBtn" title="Next Order">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="submit-btn" style="margin-left:10px;">
+                            <i class="fas fa-search mr-2"></i>Search Order
                         </button>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" class="submit-btn">
-                        <i class="fas fa-search mr-2"></i>Search Order
-                    </button>
+                    <!-- Bottom row: PO search input and button -->
+                    <div style="display: flex; align-items: center; gap: 15px; width: 100%; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
+                        <div style="color: #ff00d4; font-size: 18px;">Jennifer 特供, 用PO搜order</div><div class="order-input-group">
+                            <input type="text" name="po_number" id="po_number" placeholder="po# " style="width:150px;" value="{{ po_number or '' }}">
+                        </div>
+                        <button type="button" class="submit-btn" id="searchPOBtn" style="margin-left:10px;">Search PO</button>
+                    </div>
 
                     <!-- Generate Label Button -->
                     {% if items_html and all_descriptions_have_dash %}
@@ -866,6 +874,27 @@
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
    
     <script type="text/javascript">
+                // PO search button logic
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.getElementById('searchPOBtn').addEventListener('click', function() {
+                        var po = document.getElementById('po_number').value.trim();
+                        if (!po) {
+                            alert('Please enter a PO number!');
+                            return;
+                        }
+                        // Submit PO to backend via POST
+                        var form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/order_lookup';
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'search_by_po';
+                        input.value = po;
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    });
+                });
         let showOnlyHighlights = true;
 
         function toggleHighlights() {

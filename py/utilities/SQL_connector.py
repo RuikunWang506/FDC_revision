@@ -515,11 +515,6 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
             cursor.execute(query)
             rows = cursor.fetchall()
             
-            # Log a sample of the results
-            if rows:
-                user_prefix = f"{user}__" if user else ""
-                app.logger.info(f"{user_prefix}Sample order from {db_display}: Order {rows[0][0]}, Date: {rows[0][1]}")
-            
             # Add database source column
             rows_with_db = [(db_display,) + tuple(row) for row in rows]
             all_orders.extend(rows_with_db)
@@ -694,8 +689,25 @@ def get_sku_inventory_from_both_databases(sku_list, user=None):
     if not sku_list:
         return all_inventory
     
-    user_prefix = f"{user}__" if user else ""
-    app.logger.info(f"{user_prefix}Getting inventory for {len(sku_list)} SKUs: {sku_list[:5]}...")  # Log first 5 SKUs
+    # Log the method requested from audit.html
+    import flask
+    search_type = flask.request.form.get('search_type', 'orders') if flask.has_request_context() else 'orders'
+    database_filter = flask.request.form.get('database_filter', 'both') if flask.has_request_context() else 'both'
+    num_orders = flask.request.form.get('num_orders') if flask.has_request_context() else None
+    days_back = flask.request.form.get('days_back') if flask.has_request_context() else None
+    since_date = flask.request.form.get('since_date') if flask.has_request_context() else None
+    username = user if user else "anonymous"
+    # Build user input summary
+    user_input_summary = ""
+    if search_type == "days" and days_back:
+        user_input_summary = f"{database_filter} database ***{days_back}*** days "
+    elif search_type == "since" and since_date:
+        user_input_summary = f"{database_filter} database since ***{since_date}***  "
+    elif search_type == "orders" and num_orders:
+        user_input_summary = f"orders {database_filter} database last ***{num_orders}*** "
+    else:
+        user_input_summary = f"{database_filter} database***{search_type}*** "
+    app.logger.info(f"***{username.upper()}***__@@@Requested Audit Info for@@@:__ {user_input_summary}")
     
     # Process SKUs in batches to avoid parameter limit (SQL Server limit is ~2100 parameters)
     batch_size = 1000  # Conservative batch size for inventory queries
@@ -766,10 +778,7 @@ def get_sku_order_quantities(orders_data, sku_list, user=None):
     # Extract order numbers by database
     fdc_orders = [order[1] for order in orders_data if order[0] == 'FDC']
     efas_orders = [order[1] for order in orders_data if order[0] == 'E_FAS']
-    
-    user_prefix = f"{user}__" if user else ""
-    app.logger.info(f"{user_prefix}Getting order quantities for {len(fdc_orders)} FDC orders and {len(efas_orders)} E-FAS orders, {len(sku_list)} SKUs")
-    
+        
     # Process SKUs in batches to avoid parameter limit (SQL Server limit is ~2100 parameters)
     batch_size = 500  # Safe batch size
     
