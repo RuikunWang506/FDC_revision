@@ -434,6 +434,31 @@
         <div class="search-card">
             <form method="POST" action="/order_lookup" id="orderForm">
                 <div class="search-form-wrapper">
+                                        <button type="button" id="clearInputsBtn" class="btn btn-danger" style="font-size: 1.3em; font-weight: bold; padding: 12px 32px; border-radius: 50px; background: linear-gradient(135deg, #ff0000, #ff6b6b); color: white; box-shadow: var(--shadow-lg);">
+                                            <i class="fas fa-times-circle mr-2"></i>Clear Inputs / 重置页面 / 下一单
+                                        </button>
+                        <script>
+                        document.getElementById('clearInputsBtn').onclick = function() {
+                            document.getElementById('order_number').value = '';
+                            document.getElementById('po_number').value = '';
+                            // Hide info sections if present
+                            var infoSections = [
+                                '.row.mb-4', // order info cards
+                                '.table-wrapper', // order items table
+                                '.alert-custom', // instruction alert
+                                '.alert-info', // error alert
+                                '.download-section', // label download
+                                '.success-badge', // label success
+                                '.info-card' // label details
+                            ];
+                            infoSections.forEach(function(selector) {
+                                var els = document.querySelectorAll(selector);
+                                els.forEach(function(el) {
+                                    el.style.display = 'none';
+                                });
+                            });
+                        };
+                        </script>
                     <!-- Macy Special Button -->
                     {% if header_info and header_info.customer_id|string == '01221' %}
                     <a href="{{ url_for('macy.macy_maker') }}" class="macy-special-btn">
