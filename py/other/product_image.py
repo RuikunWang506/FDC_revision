@@ -86,25 +86,19 @@ def register_product_image_routes(app):
             # Handle password submission and image search
             password = request.form.get('password', '')
             search_str = request.form.get('search_str', '').strip()
-            
+
             # Check password first
             if password != 'ucandoit':
                 return jsonify({'error': 'Incorrect password'}), 401
-            
+
             # If password is correct and there's a search, process it
-            if search_str:  # Only search if search string is provided
+            if search_str:
                 current_app.logger.info(f" ***{current_user}***___@@@TK DAM search @@@__ {search_str}")
-                
                 try:
-                    # Use DAM system to search for assets - only big_picture source for TK images
                     matching_assets = search_assets_by_sku_pattern(search_str, source_filter='big_picture')
-                    
                     for asset in matching_assets:
                         try:
-                            # Create DAM asset info object for easy access to URLs
                             asset_info = DAMAssetInfo(asset)
-                            
-                            # Get image from asset path for processing
                             if os.path.exists(asset.path):
                                 with Image.open(asset.path) as img:
                                     buffer = io.BytesIO()
@@ -114,28 +108,26 @@ def register_product_image_routes(app):
                                     modified_date = asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown'
                                     file_size = format_file_size(os.path.getsize(asset.path) // 1024)
                                     ratio = f"1:{round(img.height / img.width, 1)}"
-                                    
-                                    # Use DAM asset info instead of file path
+                                    # Add asset.id for download selection
                                     image_data.append((
-                                        asset.filename, 
-                                        base64_image, 
-                                        modified_date, 
-                                        file_size, 
-                                        ratio, 
-                                        asset_info.url  # Use DAM URL instead of file path
+                                        asset.filename,
+                                        base64_image,
+                                        modified_date,
+                                        file_size,
+                                        ratio,
+                                        asset_info.url,
+                                        asset.id
                                     ))
                             else:
                                 current_app.logger.warning(f"Asset file not found: {asset.path}")
-                                
                         except Exception as e:
                             current_app.logger.error(f"Error processing asset {asset.filename}: {str(e)}")
-                            
                 except Exception as e:
                     current_app.logger.error(f"Error searching DAM assets: {str(e)}")
                     return jsonify({'error': f'Error searching images: {str(e)}'}), 500
 
             return render_template('tk_main.html', image_data=image_data, quote=quote, current_user=current_user)
-        
+
         # GET request - show the main page (password popup will be handled by JavaScript)
         return render_template('tk_main.html', image_data=image_data, quote=quote, current_user=current_user)
 
@@ -268,63 +260,58 @@ def register_product_image_routes(app):
     def download_images():
         user_input = request.form.get('user_input', '')
         image_type = request.form.get('image_type', 'resized')
-        selected_images = request.form.get('selected_images', '')
+        selected_images = request.form.getlist('selected_images')
         image_size = request.form.get('image_size')
 
         memory_file = io.BytesIO()
         assets_to_download = []
         
+
         try:
+            current_app.logger.info(f"download_images: selected_images={selected_images}, user_input={user_input}, image_type={image_type}, image_size={image_size}")
+            import py.utilities.models
+            db = py.utilities.models.SessionLocal()
             if selected_images:
-                # Handle selected images - expect filenames
-                selected_filenames = [f.strip() for f in selected_images.split(',') if f.strip()]
-                
-                import py.utilities.models
-                db = py.utilities.models.SessionLocal()
-                try:
-                    for filename in selected_filenames:
-                        asset = db.query(py.utilities.models.ImageAsset).filter_by(
-                            filename=filename,
-                            is_active=True
-                        ).first()
-                        if asset:
-                            assets_to_download.append(asset)
-                finally:
-                    db.close()
-            else:
-                # Handle search terms
+                # selected_images now contains asset IDs
+                asset_ids = [int(aid) for aid in selected_images if aid.isdigit()]
+                assets_to_download = db.query(py.utilities.models.ImageAsset).filter(
+                    py.utilities.models.ImageAsset.id.in_(asset_ids),
+                    py.utilities.models.ImageAsset.is_active == True
+                ).all()
+                db.close()
+            elif user_input:
                 search_terms = [term.split()[0].strip() for term in user_input.split(",")]
+                assets_to_download = []
                 for term in search_terms:
+                    current_app.logger.info(f"Trying to find assets for search term: {term}")
                     if term:
                         assets = search_assets_by_sku_pattern(term, source_filter='big_picture')
-                        assets_to_download.extend(assets)
-            
-            # Remove duplicates
+                        for asset in assets:
+                            if os.path.exists(asset.path):
+                                assets_to_download.append(asset)
+                            else:
+                                current_app.logger.warning(f"Search asset file not found: {asset.path}")
+
             unique_assets = {}
             for asset in assets_to_download:
                 unique_assets[asset.id] = asset
             assets_to_download = list(unique_assets.values())
-            
+
+            current_app.logger.info(f"Preparing ZIP with {len(assets_to_download)} assets.")
             with zipfile.ZipFile(memory_file, 'w') as zf:
                 for asset in assets_to_download:
-                    if not os.path.exists(asset.path):
-                        current_app.logger.warning(f"Asset file not found: {asset.path}")
-                        continue
-                        
                     try:
+                        current_app.logger.info(f"Writing asset to ZIP: {asset.filename}, path={asset.path}")
                         if image_size and image_size != 'full':
-                            # Resize image
-                            try:
-                                with open(asset.path, 'rb') as img_file:
-                                    resized_img = resize_image(img_file, int(image_size))
-                                    if resized_img:
-                                        zf.writestr(asset.filename, resized_img.getvalue())
-                                    else:
-                                        zf.write(asset.path, arcname=asset.filename)
-                            except (ValueError, TypeError):
-                                zf.write(asset.path, arcname=asset.filename)
+                            with open(asset.path, 'rb') as img_file:
+                                resized_img = resize_image(img_file, int(image_size))
+                                if resized_img:
+                                    zf.writestr(asset.filename, resized_img.getvalue())
+                                    current_app.logger.info(f"Resized and wrote: {asset.filename}")
+                                else:
+                                    zf.write(asset.path, arcname=asset.filename)
+                                    current_app.logger.info(f"Wrote original (resize failed): {asset.filename}")
                         elif image_type == 'resized':
-                            # Apply quality compression
                             with Image.open(asset.path) as img:
                                 buffer = io.BytesIO()
                                 if img.mode != 'RGB':
@@ -332,9 +319,10 @@ def register_product_image_routes(app):
                                 img.save(buffer, format='JPEG', quality=20)
                                 buffer.seek(0)
                                 zf.writestr(asset.filename, buffer.getvalue())
+                                current_app.logger.info(f"Compressed and wrote: {asset.filename}")
                         else:
-                            # Use original file
                             zf.write(asset.path, arcname=asset.filename)
+                            current_app.logger.info(f"Wrote original: {asset.filename}")
                     except Exception as e:
                         current_app.logger.error(f"Error processing asset {asset.filename}: {str(e)}")
                         continue

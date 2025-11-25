@@ -313,30 +313,32 @@
         </div>
         
         <form method="post" id="imageForm">
+            <input type="hidden" name="user_input" id="user_input_hidden">
+            <input type="hidden" name="image_type" id="image_type_hidden">
             <div class="sticky-buttons">
                 <!-- First Row: Download Options -->
                 <div class="row justify-content-center mb-1">
                     <!-- Download All Images as ZIP -->
                     <div class="col-lg-3 col-md-6 mb-1">
-                        <a href="{{ url_for('download_big_images', search_str=request.form.get('search_str'), download_type='all', image_type='normal') }}" class="btn btn-custom">
+                        <button type="submit" onclick="setDownloadParams('{{ request.form.get('search_str') }}', 'normal')" formaction="{{ url_for('download_images') }}" class="btn btn-custom">
                             全选打包下载
-                        </a>
+                        </button>
                     </div>
                     <!-- Download Selected Images as ZIP -->
                     <div class="col-lg-3 col-md-6 mb-1">
-                        <button type="submit" formaction="{{ url_for('download_big_images', download_type='selected', image_type='normal') }}" class="btn btn-custom">
+                        <button type="submit" onclick="setDownloadParams('', 'normal')" formaction="{{ url_for('download_images') }}" class="btn btn-custom">
                             下载选中
                         </button>
                     </div>
                     <!-- Download All Images as ZIP (1:1 Ratio) -->
                     <div class="col-lg-3 col-md-6 mb-1">
-                        <a href="{{ url_for('download_big_images', search_str=request.form.get('search_str'), download_type='all', image_type='1_1') }}" class="btn btn-custom">
+                        <button type="submit" onclick="setDownloadParams('{{ request.form.get('search_str') }}', '1_1')" formaction="{{ url_for('download_images') }}" class="btn btn-custom">
                             下载所有 (1:1 比例，压缩至2MB)
-                        </a>
+                        </button>
                     </div>
                     <!-- Download Selected Images as ZIP (1:1 Ratio) -->
                     <div class="col-lg-3 col-md-6 mb-1">
-                        <button type="submit" formaction="{{ url_for('download_big_images', download_type='selected', image_type='1_1') }}" class="btn btn-custom">
+                        <button type="submit" onclick="setDownloadParams('', '1_1')" formaction="{{ url_for('download_images') }}" class="btn btn-custom">
                             下载选中 (1:1 比例，压缩至2MB)
                         </button>
                     </div>
@@ -360,10 +362,10 @@
             </div>
 
             <div id="image-container" class="row mt-4">
-            {% for filename, image, modified_date, file_size, ratio, file_path in image_data %}
+            {% for filename, image, modified_date, file_size, ratio, file_path, asset_id in image_data %}
             <div class="col-md-3 image-card" data-filename="{{ filename }}" data-filesize="{{ file_size }}">
                 <div class="card">
-                    <input type="checkbox" name="selected_images" value="{{ file_path }}" class="select-checkbox">
+                    <input type="checkbox" name="selected_images" value="{{ asset_id }}" class="select-checkbox">
                     <a href="{{ url_for('serve_file3', encoded_path=quote(file_path)) }}" target="_blank">
                         <img src="data:image/jpeg;base64,{{ image }}" class="card-img-top img-clickable" alt="{{ filename }}">
                     </a>
@@ -530,6 +532,12 @@
                 // Re-attach sorted elements to the container
                 $('#image-container').html($imageCards);
             });
+            
+            // Function to set download parameters
+            function setDownloadParams(userInput, imageType) {
+                document.getElementById('user_input_hidden').value = userInput;
+                document.getElementById('image_type_hidden').value = imageType;
+            }
             
             // Function to convert file size strings to KB
             function convertToKB(sizeValue, sizeText) {
