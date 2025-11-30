@@ -57,7 +57,7 @@ def configure_logging(app):
 
     # Create file and console handlers
     if not logger.handlers:
-        file_handler = logging.FileHandler(log_file)
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
         console_handler = logging.StreamHandler()
 
         file_handler.setLevel(log_level)
@@ -94,7 +94,7 @@ def configure_logging(app):
 
     # Use the main log file for changes logging
     changes_log_file = Config.LOG_FILE
-    changes_file_handler = logging.FileHandler(changes_log_file)
+    changes_file_handler = logging.FileHandler(changes_log_file, encoding='utf-8')
     changes_file_handler.setLevel(logging.INFO)
 
     # Create a formatter

@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+        <script>
+            window.showDropbox = {{ (current_user is not none)|tojson }};
+        </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Image Viewer - FDC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <style>
+                .image-card.selected {
+                    border: 2px solid #ff3b3b !important;
+                    box-shadow: 0 0 20px rgba(255,59,59,0.3);
+                }
         * {
             margin: 0;
             padding: 0;
@@ -663,11 +670,13 @@
     </style>
 </head>
 <body>
-    {% include 'navbar.html' %}
+    {% if current_user %}
+        {% include 'navbar.html' %}
+    {% endif %}
 
     <div class="container">
         <div class="header">
-            <h1 class="main-title">Master Image Viewer</h1>
+            <h1 class="main-title">Master Image Viewer V2 添加多选功能</h1>
             <p style="color: #8892b0; font-size: 1.1rem;">Search and view all images for any SKU across all sources</p>
         </div>
 
@@ -692,8 +701,25 @@
             <p style="margin-top: 1rem;">Searching all image sources...</p>
         </div>
 
+
+            <!-- TK Password Modal -->
+            {% if not current_user and not session.tk_user %}
+            <div id="tkPasswordModal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;">
+                <form method="POST" action="/tk_password" style="background:#222;padding:2rem 2.5rem;border-radius:18px;box-shadow:0 8px 32px rgba(0,212,255,0.18);display:flex;flex-direction:column;align-items:center;min-width:320px;">
+                    <h2 style="color:#00d4ff;margin-bottom:1.5rem;">Enter TK Password</h2>
+                    <input type="password" name="password" placeholder="Password" style="padding:0.8rem 1.2rem;border-radius:10px;border:1px solid #00d4ff;font-size:1.1rem;margin-bottom:1.2rem;width:100%;" autofocus required />
+                    <button type="submit" style="padding:0.8rem 2rem;background:linear-gradient(135deg,#00d4ff,#1cc88a);border:none;border-radius:10px;color:white;font-weight:600;font-size:1.1rem;cursor:pointer;">Submit</button>
+                </form>
+            </div>
+            {% endif %}
+
         <div class="results-section" id="resultsSection">
             <div class="results-header" id="resultsHeader"></div>
+            <div style="text-align:right;margin-bottom:1rem;">
+                <button id="downloadSelectedBtn" class="search-btn" style="display:none;">
+                    <i class="fas fa-download"></i> Download Selected 下载选中
+                </button>
+            </div>
             <div id="resultsContainer"></div>
         </div>
     </div>
@@ -745,6 +771,7 @@
         let allImages = [];
         let currentImageIndex = 0;
         let currentSku = '';
+        let selectedImages = new Set();
 
         const searchForm = document.getElementById('searchForm');
         const skuInput = document.getElementById('skuInput');
@@ -822,12 +849,13 @@
             
             // Prepare all images array for modal navigation
             allImages = [];
+            selectedImages.clear();
             
             const categories = [
-                { key: 'dam_other', name: 'Catalog_Original Disk', icon: 'fas fa-server' },
-                { key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' },
-                { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' },
-                { key: 'china_ftp', name: 'China FTP', icon: 'fas fa-globe' }
+                { key: 'dam_other', name: 'Catalog 产品目录图', icon: 'fas fa-server' },
+                ...(window.showDropbox ? [{ key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' }] : []),
+                { key: 'dam_big_picture', name: 'Detailed Image 细节大图', icon: 'fas fa-images' },
+                { key: 'china_ftp', name: 'China FTP 暂不支持多选下载', icon: 'fas fa-globe' }
             ];
 
             // Build allImages array
@@ -881,20 +909,20 @@
                                 }
                             } else {
                                 resultsHtml += '<div class="images-grid">';
-                                
                                 images.forEach((image, index) => {
-                                    console.log(`Rendering image ${index}: ${image.filename}, URL: ${image.url}`);
-                                    
                                     resultsHtml += `
-                                        <div class="image-card" onclick="openModal(${globalImageIndex})">
-                                            <div class="image-container">
+                                        <div class="image-card" data-image-index="${globalImageIndex}">
+                                            <div style="position:absolute;top:10px;left:10px;z-index:2;">
+                                                <input type="checkbox" class="image-select-checkbox" data-image-index="${globalImageIndex}" style="transform:scale(1.3);" />
+                                            </div>
+                                            <div class="image-container" onclick="openModal(${globalImageIndex})">
                                                 <img class="image-preview" 
                                                      src="${image.url}" 
                                                      alt="${image.filename}"
                                                      onload="console.log('Image loaded: ${image.filename}')"
                                                      onerror="this.closest('.image-card').style.display='none';">
                                             </div>
-                                            <div class="image-info">
+                                            <div class="image-info" data-image-index="${globalImageIndex}">
                                                 <div class="image-filename">${image.filename} 
                                                     ${image.is_canonical ? '<span style="color: #1cc88a; font-weight: bold;">[CANONICAL]</span>' : ''}
                                                     <span style="color: #8892b0; font-size: 0.8em;">(v${image.version})</span>
@@ -908,10 +936,84 @@
                                             </div>
                                         </div>
                                     `;
+                                            // ...existing code...
                                     globalImageIndex++;
                                 });
-                                
                                 resultsHtml += '</div>';
+                                    // ...existing code...
+        // Attach global event listeners ONCE to prevent duplicate backend calls
+        if (!window._imageViewerListenersAttached) {
+            // Make clicking .image-info toggle selection
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('image-info') || e.target.closest('.image-info')) {
+                    const infoDiv = e.target.classList.contains('image-info') ? e.target : e.target.closest('.image-info');
+                    const idx = parseInt(infoDiv.getAttribute('data-image-index'));
+                    const checkbox = document.querySelector('.image-select-checkbox[data-image-index="' + idx + '"]');
+                    if (checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+            // Multi-select logic
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('image-select-checkbox')) {
+                    const idx = parseInt(e.target.getAttribute('data-image-index'));
+                    const card = document.querySelector('.image-card[data-image-index="' + idx + '"]');
+                    if (e.target.checked) {
+                        selectedImages.add(idx);
+                        if (card) card.classList.add('selected');
+                    } else {
+                        selectedImages.delete(idx);
+                        if (card) card.classList.remove('selected');
+                    }
+                    document.getElementById('downloadSelectedBtn').style.display = selectedImages.size > 0 ? 'inline-block' : 'none';
+                }
+            });
+            // Download selected images listener using event delegation
+            resultsSection.addEventListener('click', async function(e) {
+                if (e.target.closest('#downloadSelectedBtn')) {
+                    const btn = e.target.closest('#downloadSelectedBtn');
+                    if (typeof selectedImages === 'undefined' || selectedImages.size === 0) return;
+                    // Send asset id, source, and original_url for each selected image
+                    const imagesToDownload = Array.from(selectedImages).map(idx => {
+                        const img = allImages[idx];
+                        return {
+                            id: img.id,
+                            source: img.source,
+                            original_url: img.original_url,
+                            file_path: img.file_path || null,
+                            filename: img.filename
+                        };
+                    });
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+                    try {
+                        const resp = await fetch('/download_zip', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ images: imagesToDownload })
+                        });
+                        if (!resp.ok) throw new Error('Failed to download ZIP');
+                        const blob = await resp.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'FDC_images.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                        alert('Error downloading ZIP: ' + err.message);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-download"></i> Download Selected';
+                    }
+                }
+            });
+            window._imageViewerListenersAttached = true;
+        }
                             }
                         resultsHtml += '</div>'; // Close category-content
                         resultsHtml += '</div>'; // Close category-section

@@ -1,4 +1,104 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, session
+location_massive_audit_bp = Blueprint('location_massive_audit', __name__, template_folder='../../templates')
+import pandas as pd
+from datetime import datetime
+from flask import send_file, jsonify
+# --- Sync Over to OMS Route ---
+@location_massive_audit_bp.route('/sync-to-oms', methods=['POST'])
+def sync_to_oms():
+    from py.utilities.database_utils import get_mysql_connection, get_sql_server_connection_fdc, get_sql_server_connection_oms_ef
+    db_config = Config.DB_CONFIG
+    sql_server_config = Config.SQL_SERVER_CONFIG
+    try:
+        mysql_connection = get_mysql_connection()
+        mysql_cursor = mysql_connection.cursor(dictionary=True)
+        mysql_cursor.execute("""
+            SELECT sku, GROUP_CONCAT(location ORDER BY location SEPARATOR ', ') as location
+            FROM products
+            GROUP BY sku
+        """)
+        products = mysql_cursor.fetchall()
+        if not products:
+            return jsonify({'message': 'No products to sync.'})
+        fdc_conn = get_sql_server_connection_fdc()
+        fdc_cursor = fdc_conn.cursor()
+        oms_ef_conn = get_sql_server_connection_oms_ef()
+        oms_ef_cursor = oms_ef_conn.cursor()
+        update_data = []
+        MAX_LOCATION_LENGTH = 20
+        for product in products:
+            sku = (product['sku'] if product['sku'] else '').strip()
+            location = (product['location'] if product['location'] else '').strip()
+            location = location.replace(' MID', ' M').replace(' TOP', ' T').replace(' BOT', ' B')
+            if location:
+                location = location.replace('L', '').replace('-', '').replace(', ', ',')
+            if len(location) > MAX_LOCATION_LENGTH:
+                location = location[:MAX_LOCATION_LENGTH]
+            update_data.append((location, sku))
+        batch_size = 500
+        # FDC update
+        fdc_updated = 0
+        for i in range(0, len(update_data), batch_size):
+            batch = update_data[i:i+batch_size]
+            try:
+                fdc_cursor.executemany("UPDATE inv_data SET inv_loc = ? WHERE prod_cd = ?", batch)
+                fdc_updated += len(batch)
+            except Exception as e:
+                current_app.logger.error(f"FDC batch {i//batch_size + 1} FAILED: {str(e)}")
+                continue
+        # OMS_EF update
+        oms_updated = 0
+        for i in range(0, len(update_data), batch_size):
+            batch = update_data[i:i+batch_size]
+            try:
+                oms_ef_cursor.executemany("UPDATE inv_data SET inv_loc = ? WHERE prod_cd = ?", batch)
+                oms_updated += len(batch)
+            except Exception as e:
+                current_app.logger.error(f"OMS_EF batch {i//batch_size + 1} FAILED: {str(e)}")
+                continue
+        fdc_conn.commit()
+        oms_ef_conn.commit()
+        mysql_cursor.close()
+        mysql_connection.close()
+        fdc_cursor.close()
+        fdc_conn.close()
+        oms_ef_cursor.close()
+        oms_ef_conn.close()
+        updated_count = fdc_updated + oms_updated
+        return jsonify({'message': f'Sync completed. Updated {updated_count} records.'})
+    except Exception as e:
+        current_app.logger.error(f"An error occurred during sync: {str(e)}")
+        return jsonify({'message': f'An error occurred: {str(e)}'}), 500
+# --- Download Products as Excel Route ---
+@location_massive_audit_bp.route('/download_products_excel', methods=['POST'])
+def download_products_excel():
+    try:
+        connection = get_mysql_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM products")
+        products = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        if not products:
+            return "No products available to export.", 404
+        df = pd.DataFrame(products)
+        if 'Update_Date' in df.columns:
+            df['Update_Date'] = df['Update_Date'].apply(lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if x else '')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'products_backup_{timestamp}.xlsx'
+        from io import BytesIO
+        bio = BytesIO()
+        df.to_excel(bio, index=False)
+        bio.seek(0)
+        return send_file(
+            bio,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        return f'An error occurred during export: {e}', 500
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, session
 from py.utilities.database_utils import get_mysql_connection
 from py.utilities.setting import Config
 import pyodbc

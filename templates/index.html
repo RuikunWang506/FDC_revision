@@ -347,23 +347,6 @@
       box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.25), 0 8px 25px rgba(54, 185, 204, 0.3);
     }
     
-    .dashboard-wrapper .tool-card[data-category="legacy"] {
-      border-left: 6px solid #8892b0;
-      border-right: 2px solid rgba(136, 146, 176, 0.5);
-      border-top: 2px solid rgba(136, 146, 176, 0.6);
-      border-bottom: 2px solid rgba(136, 146, 176, 0.6);
-      background: linear-gradient(135deg, #466e8c 0%, #32405a 100%);
-      box-shadow: inset 0 0 20px rgba(136, 146, 176, 0.15), 0 4px 15px rgba(136, 146, 176, 0.2);
-      opacity: 1;
-    }
-    
-    .dashboard-wrapper .tool-card[data-category="legacy"]:hover {
-      background: linear-gradient(135deg, #54789c 0%, #40506a 100%);
-      border-right-color: rgba(136, 146, 176, 0.8);
-      border-top-color: #8892b0;
-      border-bottom-color: #8892b0;
-      box-shadow: inset 0 0 30px rgba(136, 146, 176, 0.25), 0 8px 25px rgba(136, 146, 176, 0.3);
-    }
     
     /* Responsive Design */
     @media (max-width: 1200px) {
@@ -460,14 +443,6 @@
           <span class="count" id="additionalCount"></span>
         </div>
         
-        <div class="nav-item" onclick="filterCategory('legacy')">
-          <i class="fas fa-archive"></i>
-          <div class="nav-text">
-            <h4>Legacy Services</h4>
-            <p>旧服务</p>
-          </div>
-          <span class="count" id="legacyCount"></span>
-        </div>
       </div>
       
       <!-- Main Dashboard Grid -->
@@ -500,17 +475,6 @@
           </div>
         </a>
         
-        <a href="/product_image" class="tool-card" data-category="core" data-tool="product_image">
-          <div class="card-header">
-            <i class="fas fa-image"></i>
-            <h3>Product Images</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'product_image')"></i>
-          </div>
-          <p>Download high-resolution product images and manage visual assets</p>
-          <div class="card-footer">
-            <span class="category">Core</span>
-          </div>
-        </a>
         
         <a href="/customer" class="tool-card" data-category="core" data-tool="customer">
           <div class="card-header">
@@ -685,30 +649,7 @@
           </div>
         </a>
         
-        <!-- Legacy Services -->
-        <a href="/mobile" class="tool-card" data-category="legacy" data-tool="mobile">
-          <div class="card-header">
-            <i class="fas fa-mobile-alt"></i>
-            <h3>Mobile View</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'mobile')"></i>
-          </div>
-          <p>Legacy mobile-friendly product lookup interface</p>
-          <div class="card-footer">
-            <span class="category">Legacy</span>
-          </div>
-        </a>
         
-        <a href="/location_service" class="tool-card" data-category="legacy" data-tool="location_service">
-          <div class="card-header">
-            <i class="fas fa-map-marker-alt"></i>
-            <h3>Location Service</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_service')"></i>
-          </div>
-          <p>Find item locations in warehouse using legacy mapping system</p>
-          <div class="card-footer">
-            <span class="category">Legacy</span>
-          </div>
-        </a>
         
       </div>
     </div>
@@ -843,7 +784,6 @@
         'core': 'Core Functions',
         'toolkit': 'Toolkits', 
         'additional': 'Additional Tools',
-        'legacy': 'Legacy Services',
         'favorites': 'Favorites'
       };
       
@@ -886,7 +826,6 @@
       document.getElementById('coreCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'core').length;
       document.getElementById('toolkitCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'toolkit').length;
       document.getElementById('additionalCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'additional').length;
-      document.getElementById('legacyCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'legacy').length;
     }
 
     document.addEventListener('DOMContentLoaded', function() {

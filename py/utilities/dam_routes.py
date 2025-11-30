@@ -93,10 +93,13 @@ def register_dam_routes(app):
             db.close()
 
     @app.route("/image/<int:asset_id>/<int:width>")
-    @login_required
     def serve_dam_image(asset_id, width):
         """Serve a resized image."""
-        current_user = session['username']
+        # Allow access for internal user or TK user
+        current_user = session.get('username')
+        tk_user = session.get('tk_user', False)
+        if not current_user and not tk_user:
+            return jsonify({'error': 'Unauthorized'}), 403
 
         try:
             db = py.utilities.models.SessionLocal()

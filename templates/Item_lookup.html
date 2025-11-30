@@ -781,11 +781,7 @@ body.sidebar-closed #sidebarToggleBtn {
                 </div>
             {% endfor %}
         </div>
-        <form method="POST" action="{{ url_for('download_images') }}" style="display: inline;">
-            <input type="hidden" name="user_input" value="{{ user_input }}">
-            <button type="submit" name="image_type" value="resized" class="btn btn-info mx-2">Download Resized Image (small)</button>
-            <button type="submit" name="image_type" value="original" class="btn btn-warning mx-2">Download Original Image (Large)</button>
-        </form>
+
     </div>
     {% endif %}
     

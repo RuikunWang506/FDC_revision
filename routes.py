@@ -16,11 +16,9 @@ from google.oauth2 import service_account
 # Application-specific imports
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_mysql_connection
-from py.other.product_image import register_product_image_routes
 from py.utilities.dam_routes import register_dam_routes
 from py.Toolkits.Label_Maker import register_label_maker_routes
 from py.Toolkits.view_all_routes import register_view_all_routes
-from py.search.location_service import location_service_bp
 from py.search.Location_massive_audit import location_massive_audit_bp
 from py.search.container import container_bp
 from py.search.item_lookup import item_lookup_bp
@@ -74,11 +72,9 @@ def register_routes(app):
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)})
 
-    register_product_image_routes(app)
     register_dam_routes(app)
     register_label_maker_routes(app)
     register_view_all_routes(app)
-    app.register_blueprint(location_service_bp)
     app.register_blueprint(container_bp)
     app.register_blueprint(item_lookup_bp)
     app.register_blueprint(outofstock_check_bp)
