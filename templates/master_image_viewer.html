@@ -676,7 +676,7 @@
 
     <div class="container">
         <div class="header">
-            <h1 class="main-title">Master Image Viewer V2 添加多选功能</h1>
+            <h1 class="main-title">Master Image Viewer</h1>
             <p style="color: #8892b0; font-size: 1.1rem;">Search and view all images for any SKU across all sources</p>
         </div>
 
@@ -717,7 +717,7 @@
             <div class="results-header" id="resultsHeader"></div>
             <div style="text-align:right;margin-bottom:1rem;">
                 <button id="downloadSelectedBtn" class="search-btn" style="display:none;">
-                    <i class="fas fa-download"></i> Download Selected 下载选中
+                    <i class="fas fa-download"></i> Download Selected
                 </button>
             </div>
             <div id="resultsContainer"></div>
@@ -852,10 +852,10 @@
             selectedImages.clear();
             
             const categories = [
-                { key: 'dam_other', name: 'Catalog 产品目录图', icon: 'fas fa-server' },
+                { key: 'dam_other', name: 'Catalog_Original Disk', icon: 'fas fa-server' },
                 ...(window.showDropbox ? [{ key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' }] : []),
-                { key: 'dam_big_picture', name: 'Detailed Image 细节大图', icon: 'fas fa-images' },
-                { key: 'china_ftp', name: 'China FTP 暂不支持多选下载', icon: 'fas fa-globe' }
+                { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' },
+                { key: 'china_ftp', name: 'China FTP', icon: 'fas fa-globe' }
             ];
 
             // Build allImages array
@@ -999,7 +999,12 @@
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = 'FDC_images.zip';
+                        // Use SKU-based filename when available, fallback to images.zip
+                        try {
+                            a.download = (currentSku && currentSku.trim()) ? `${currentSku}.zip` : 'images.zip';
+                        } catch (e) {
+                            a.download = 'images.zip';
+                        }
                         document.body.appendChild(a);
                         a.click();
                         a.remove();

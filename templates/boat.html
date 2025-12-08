@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boat Service V2.0</title>
+    <title>Boat Service</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <!-- Full jQuery version with AJAX support -->
@@ -214,7 +214,7 @@
 </head>
 <body>
     {% include 'navbar.html' %}
-    <h1 class="text-center">Boat Service V2.1</h1>
+    <h1 class="text-center">Boat Service V2.2</h1>
     <div class="container mt-5">
         <div class="alert alert-info text-center" role="alert">
             <i class="bi bi-cloud-download"></i> Data is fetched live from <a href="https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/edit?gid=0#gid=0" target="_blank" class="alert-link">This 📙Google Sheets</a>
@@ -338,19 +338,27 @@
                   var internalRcd = $(this).find('td:nth-child(6)').text().trim(); // internal RCD column
                   var memo1 = $(this).find('td:nth-child(7)').text().trim();     // MEMO column
 
-                  // Apply status classes based on new logic
-                  if (autoEta !== '') {
-                      // If Auto ETA has value, it's ocean
-                      $(this).addClass('status-ocean');
+                  // Prefer server-side Status when available (prevents overwriting landed rows)
+                  var statusCellText = $(this).find('td:nth-child(8)').text().trim(); // Status column
+
+                  // Normalize status text for easier checks
+                  var normalizedStatus = statusCellText.replace(/\s+/g, '');
+
+                  if (normalizedStatus.indexOf('✔️827✔️'.replace(/\s+/g, '')) !== -1 || /827/.test(normalizedStatus)) {
+                      // If server marked it landed, preserve landed styling
+                      $(this).addClass('status-landed');
                   } else if (autoArrv !== '' && internalRcd === '') {
                       // If Auto Arrv has value and internal RCD is empty, it's at port
                       $(this).addClass('status-port');
+                  } else if (autoEta !== '') {
+                      // If Auto ETA has value (and not landed/port), it's ocean
+                      $(this).addClass('status-ocean');
                   } else {
-                      // Otherwise, it's landed
+                      // Default to landed-style when no clear indicators
                       $(this).addClass('status-landed');
                   }
 
-                  // Add memo styling if memo exists
+                  // Add memo styling if memo exists (keep memo as additive but do not remove landed indicator)
                   if (memo1 !== '') {
                       $(this).addClass('status-memo');
                   }

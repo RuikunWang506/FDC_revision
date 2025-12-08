@@ -203,57 +203,101 @@ def update_last_updated_for_all_containers(container_list, fetch_timestamp):
         return False
 
 def update_tracking_data_in_sheets(container_tracking_dict):
-    """Update tracking data in Google Sheets columns P-S for containers with shipment data"""
+    """Update tracking data in Google Sheets for containers with shipment data.
+    The function will try to locate header columns by name (case-insensitive)
+    and write the fields into the matching columns. If headers cannot be
+    found, it falls back to the legacy columns P-T.
+    """
     try:
         client = get_sheets_client()
         if not client:
             return False
-            
+
         sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
-        
+
         # Get all data at once (single read)
         all_data = sheet.get_all_values()
-        
-        # Find rows to update (Container # is in Column A)
+
+        if not all_data:
+            return False
+
+        # Build header lookup from the first row (case-insensitive)
+        header_row = all_data[0]
+        header_map = {str(h).strip().lower(): idx for idx, h in enumerate(header_row) if h is not None}
+
+        # Helper: convert 1-based column index to A1 letter (1 -> A)
+        def idx_to_col(col_idx_1based):
+            letters = ''
+            while col_idx_1based > 0:
+                col_idx_1based, rem = divmod(col_idx_1based - 1, 26)
+                letters = chr(65 + rem) + letters
+            return letters
+
+        # Helper: find header index by several candidate names, fallback to default 0-based index
+        def find_idx(candidates, fallback_0based):
+            for c in candidates:
+                if c in header_map:
+                    return header_map[c]
+            return fallback_0based
+
+        # Preferred header keys (lowercase)
+        shipping_line_idx = find_idx(['shipping line', 'shipping_line', 'shippingline', 'shipping line name'], 15)  # default P (0-based 15)
+        eta_idx = find_idx(['auto eta', 'eta', 'dennis eta'], 16)  # default Q
+        ata_idx = find_idx(['ata', 'pod_ata_at'], 17)  # default R
+        voyage_idx = find_idx(['voyage', 'voyage number'], 18)  # default S
+        last_updated_idx = find_idx(['last updated', 'last_updated', 'written time'], 19)  # default T
+
         updates = []
+
+        # Iterate all rows and match container (Column A)
         for row_idx, row in enumerate(all_data):
-            if len(row) >= 1:  # Make sure row has at least column A
-                container = row[0]  # Column A (index 0) = Container #
-                if container in container_tracking_dict:
-                    # Row index in sheet (1-based, +1 because enumerate is 0-based)
-                    sheet_row = row_idx + 1
-                    tracking_data = container_tracking_dict[container]
-                    
-                    # Replace "Orient Overseas Container Line" with "OOCL" for shipping line
-                    shipping_line = tracking_data.get('shipping_line', '')
-                    if shipping_line == 'Orient Overseas Container Line':
-                        shipping_line = 'OOCL'
-                    
-                    # Update columns P, Q, S, T with tracking data
-                    updates.append({
-                        'range': f'P{sheet_row}',  # Column P = Shipping Line
-                        'values': [[shipping_line]]
-                    })
-                    updates.append({
-                        'range': f'Q{sheet_row}',  # Column Q = ETA
-                        'values': [[tracking_data.get('real_eta', '')]]
-                    })
-                    updates.append({
-                        'range': f'S{sheet_row}',  # Column S = Voyage
-                        'values': [[tracking_data.get('voyage', '')]]
-                    })
-                    updates.append({
-                        'range': f'T{sheet_row}',  # Column T = Last Updated
-                        'values': [[tracking_data.get('last_updated', '')]]
-                    })
-        
+            if not row or len(row) < 1:
+                continue
+            container = str(row[0]).strip()
+            if not container:
+                continue
+
+            if container in container_tracking_dict:
+                sheet_row = row_idx + 1
+                tracking_data = container_tracking_dict.get(container, {})
+
+                shipping_line = tracking_data.get('shipping_line', '')
+                if shipping_line == 'Orient Overseas Container Line':
+                    shipping_line = 'OOCL'
+
+                # Prepare updates mapping to discovered columns (convert to 1-based for idx_to_col)
+                updates.append({
+                    'range': f"{idx_to_col(shipping_line_idx+1)}{sheet_row}",
+                    'values': [[shipping_line]]
+                })
+
+                updates.append({
+                    'range': f"{idx_to_col(eta_idx+1)}{sheet_row}",
+                    'values': [[tracking_data.get('real_eta', '')]]
+                })
+
+                updates.append({
+                    'range': f"{idx_to_col(ata_idx+1)}{sheet_row}",
+                    'values': [[tracking_data.get('ata', '')]]
+                })
+
+                updates.append({
+                    'range': f"{idx_to_col(voyage_idx+1)}{sheet_row}",
+                    'values': [[tracking_data.get('voyage', '')]]
+                })
+
+                updates.append({
+                    'range': f"{idx_to_col(last_updated_idx+1)}{sheet_row}",
+                    'values': [[tracking_data.get('last_updated', '')]]
+                })
+
         # Batch update all cells at once
         if updates:
             sheet.batch_update(updates)
             return True
-        
+
         return False
-        
+
     except Exception as e:
         current_app.logger.error(f"Error updating tracking data in Google Sheets: {e}")
         return False
@@ -1257,17 +1301,24 @@ def boat_data():
                     # Combine vessel name and voyage number for voyage field
                     voyage = f"{vessel_name} {voyage_number}".strip() if vessel_name or voyage_number else ''
                     
+                    # Get ATA from Terminal49
+                    ata_time = get_los_angeles_time(attrs.get('pod_ata_at', ''))
+                    if ata_time and ' ' in ata_time:
+                        ata_time = ata_time.split(' ')[0]
+                    
                     df_cleaned.at[index, 'shipping_line'] = shipping_line
                     df_cleaned.at[index, 'pod_eta'] = attrs.get('pod_eta_at', '')
                     df_cleaned.at[index, 'voyage'] = voyage
                     # Add new columns with Los Angeles time
                     df_cleaned.at[index, 'Auto ETA'] = real_eta
+                    df_cleaned.at[index, 'pod_ata_at'] = ata_time  # Update ATA for current fetch
                     df_cleaned.at[index, 'ship_name'] = vessel_name
                     
                     # Collect tracking data for Google Sheets update
                     containers_with_tracking_data[container_num] = {
                         'shipping_line': shipping_line,
                         'real_eta': real_eta,
+                        'ata': ata_time,
                         'voyage': voyage,
                         'last_updated': fetch_timestamp
                     }
@@ -1289,22 +1340,41 @@ def boat_data():
         if containers_with_tracking_data:
             update_tracking_data_in_sheets(containers_with_tracking_data)
         
-        # Update Status column based on new logic: Auto ETA/Auto Arrv/internal RCD
+        # Update Status column based on new logic: Prioritize ATA over ETA
+        # IMPORTANT: Do not overwrite containers already marked as landed ('✔️827✔️')
         for index, row in df_cleaned.iterrows():
+            current_status = str(row.get('Status', '')).strip()
+            # Preserve landed status - do not overwrite
+            if current_status == '✔️827✔️':
+                continue
+
             auto_eta = str(row.get('Auto ETA', '')).strip()
-            auto_arrv = str(row.get('pod_ata_at', '')).strip()
-            internal_rcd = str(row.get('RCD', '')).strip()
-            
-            if auto_eta:
-                # If Auto ETA has value, it's ocean
-                df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
-            elif auto_arrv and not internal_rcd:
-                # If Auto Arrv has value and internal RCD is empty, it's at port
+            auto_arrv = str(row.get('pod_ata_at', '')).strip()  # ATA from sheet
+            internal_rcd = str(row.get('RCD', '')).strip()      # RCD from sheet
+
+            if auto_arrv and not internal_rcd:
+                # ATA present and no RCD → at port
                 df_cleaned.at[index, 'Status'] = '⚓port⚓'
+            elif auto_eta and not internal_rcd:
+                # No ATA, but ETA present and no RCD → ocean
+                df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
             else:
-                # Otherwise, keep the existing status (landed or upload)
+                # Keep existing status (upload, landed, etc.)
                 pass
         
+        # Ensure process / styles / po flags only show for upload status
+        for index, row in df_cleaned.iterrows():
+            status = str(row.get('Status', '')).strip()
+            if status != '🔄upload🔄':
+                df_cleaned.at[index, 'can_process'] = False
+                df_cleaned.at[index, 'has_styles_csv'] = False
+                df_cleaned.at[index, 'has_po_csv'] = False
+            else:
+                # keep previously-determined booleans (based on file existence)
+                df_cleaned.at[index, 'can_process'] = bool(row.get('can_process', False))
+                df_cleaned.at[index, 'has_styles_csv'] = bool(row.get('has_styles_csv', False))
+                df_cleaned.at[index, 'has_po_csv'] = bool(row.get('has_po_csv', False))
+
         # Fetch email counts for port containers
         port_containers = df_cleaned[df_cleaned['Status'] == '⚓port⚓']
         

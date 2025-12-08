@@ -307,7 +307,6 @@ def china_ftp_image():
         return jsonify({'error': 'Path required'}), 400
     
     try:
-        current_app.logger.info(f"China FTP image: Attempting to fetch {remote_path}")
         # SFTP connection using paramiko
         transport = paramiko.Transport(('219.135.198.131', 22))
         transport.connect(username='fdc', password='Bst@93109310')
@@ -320,7 +319,6 @@ def china_ftp_image():
         sftp.close()
         transport.close()
         
-        current_app.logger.info(f"China FTP image: Successfully fetched {remote_path}")
         # If size != '0', resize using PIL (add import: from PIL import Image)
         # For now, serve original
         
