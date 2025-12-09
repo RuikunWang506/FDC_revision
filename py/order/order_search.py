@@ -3,6 +3,10 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 from flask import Blueprint, request, render_template, session, current_app, jsonify
+import re
+
+# Import helper to fetch locations for SKUs so we can populate Location server-side
+from py.search.item_lookup import fetch_locations
 from py.utilities.setting import Config, login_required
 
 order_lookup_bp = Blueprint('order_lookup', __name__)
@@ -263,13 +267,60 @@ def generate_order(order_number):
         cursor.close()
         conn.close()        # Create items DataFrame with item-specific columns including Location
         items_df = df[['line', 'SKU', 'Descrip', 'Qty', 'price', 'per_box']].copy()
+
+        # Clean SKU values: remove trailing/leading whitespace and non-breaking spaces
+        try:
+            items_df['SKU'] = items_df['SKU'].astype(str).str.replace('\u00A0', ' ').str.strip()
+        except Exception:
+            # fallback simple strip
+            items_df['SKU'] = items_df['SKU'].astype(str).str.strip()
         
         # Adjust price to list price by adding discount per unit
         discount_amount = df.iloc[0]['discount_amount'] if pd.notna(df.iloc[0]['discount_amount']) else 0
         items_df['price'] = items_df['price'] + (discount_amount / items_df['Qty'])
         
-        # Add Location column (will be populated via AJAX)
-        items_df['Location'] = 'N/A'
+        # Use the same lookup pattern as in Item Lookup: pass lowercased SKUs to fetch_locations
+        # Try several SKU variants to maximize matching with products.SKU values in MySQL
+        try:
+            skus_original = items_df['SKU'].astype(str).tolist()
+            skus_lower = [s.lower() for s in skus_original]
+            skus_stripped = [s.replace(' ', '') for s in skus_lower]
+            skus_upper = [s.upper() for s in skus_original]
+
+            locations = {}
+            # Try variants in order: lower, original, stripped, upper
+            variants = [skus_lower, skus_original, skus_stripped, skus_upper]
+            for variant in variants:
+                try:
+                    if not variant:
+                        continue
+                    found = fetch_locations(variant)
+                    # merge keys (fetch_locations lowercases keys internally)
+                    for k, v in found.items():
+                        if k not in locations or not locations[k]:
+                            locations[k] = v
+                except Exception as _e:
+                    current_app.logger.debug(f"fetch_locations variant failed: {_e}")
+                    continue
+        except Exception as e:
+            current_app.logger.error(f"Error preparing SKU variants for location lookup for order {order_number}: {e}")
+            locations = {}
+
+        # Log what we found for easier debugging
+        try:
+            current_app.logger.info(f"Location lookup for order {order_number}: found {len(locations)} keys")
+            if locations:
+                sample = dict(list(locations.items())[:20])
+                current_app.logger.info(f"Location sample: {sample}")
+        except Exception:
+            pass
+
+        # Map locations back to rows using lowercased SKU key (fallback to stripped/alnum handled in fetch_locations)
+        try:
+            items_df['Location'] = items_df['SKU'].astype(str).str.lower().map(locations).fillna('N/A')
+        except Exception as e:
+            current_app.logger.error(f"Error mapping locations into items_df for order {order_number}: {e}")
+            items_df['Location'] = 'N/A'
         
         # Format Qty and per_box as integers (removing decimals)
         items_df['Qty'] = items_df['Qty'].fillna(0).astype(int)
@@ -393,6 +444,40 @@ def find_order_number_by_po(po_number):
     except Exception as e:
         current_app.logger.error(f"Error finding order by PO: {po_number}: {e}")
     return None
+
+
+@order_lookup_bp.route('/debug_order_locations/<string:order_number>', methods=['GET'])
+@login_required
+def debug_order_locations(order_number):
+    """Debug route: return locations mapping for SKUs in the given order number."""
+    try:
+        # Determine database based on order number length
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return jsonify({'error': 'Invalid order number format'}), 400
+
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT PROD_CD FROM DBO.ORD_LOG WHERE ORD_NUM = ?", (order_number,))
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        sku_list = [r[0] for r in rows if r and r[0]]
+        # If no SKUs found, return empty
+        if not sku_list:
+            return jsonify({'skus': [], 'locations': {}})
+
+        locations = fetch_locations([str(s) for s in sku_list])
+        return jsonify({'skus': sku_list, 'locations': locations})
+    except Exception as e:
+        current_app.logger.error(f"Error in debug_order_locations for {order_number}: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @order_lookup_bp.route("/update_order_description", methods=["POST"])
 @login_required

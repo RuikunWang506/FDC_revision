@@ -32,33 +32,57 @@ def fetch_locations(skus):
             return location_dict
         
         cursor = connection.cursor()
-        placeholders = ', '.join(['%s'] * len(skus))
+        # Use case-insensitive matching: compare LOWER(SKU) to provided lowercased, stripped SKU list
+        # strip whitespace (including trailing spaces) from input SKUs before querying
+        def _clean_input(s):
+            try:
+                return s.replace('\u00A0', ' ').strip().lower()
+            except Exception:
+                return str(s).strip().lower()
+
+        lowered = [_clean_input(s) for s in skus]
+        placeholders = ', '.join(['%s'] * len(lowered))
         # With one row per SKU-Location, we aggregate locations with GROUP_CONCAT
         query = f"""
             SELECT SKU, GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') as locations
             FROM products 
-            WHERE SKU IN ({placeholders}) AND Location IS NOT NULL AND Location != ''
+            WHERE LOWER(SKU) IN ({placeholders}) AND Location IS NOT NULL AND Location != ''
             GROUP BY SKU
         """
         
-        cursor.execute(query, skus)
+        cursor.execute(query, lowered)
         results = cursor.fetchall()
         
         for sku, locations in results:
-            location_dict[sku.lower()] = locations
+            # store under lowercase, stripped key for consistent lookup
+            try:
+                k = sku.replace('\u00A0', ' ').strip().lower()
+            except Exception:
+                k = str(sku).strip().lower()
+            location_dict[k] = locations
         
         # Fallback for SKUs not found - try stripped version
         for sku in skus:
-            if sku.lower() not in location_dict:
-                stripped_sku = sku.replace(' ', '')
-                if stripped_sku != sku:
+            try:
+                key = sku.replace('\u00A0', ' ').strip().lower()
+            except Exception:
+                key = str(sku).strip().lower()
+
+            if key not in location_dict:
+                # stripped variant removes all spaces
+                try:
+                    stripped_sku = sku.replace('\u00A0', ' ').replace(' ', '').strip().lower()
+                except Exception:
+                    stripped_sku = str(sku).replace(' ', '').strip().lower()
+
+                if stripped_sku != key:
                     cursor.execute(
-                        "SELECT GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') FROM products WHERE SKU = %s",
+                        "SELECT GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') FROM products WHERE LOWER(SKU) = %s",
                         (stripped_sku,)
                     )
                     result = cursor.fetchone()
                     if result and result[0]:
-                        location_dict[sku.lower()] = result[0]
+                        location_dict[key] = result[0]
     
     except Exception as e:
         current_app.logger.error(f"Error fetching locations: {e}")
@@ -326,7 +350,8 @@ def get_item_location():
         # Single SKU
         try:
             locations = fetch_locations([sku])
-            location = locations.get(sku.lower(), 'N/A')
+            # try exact lowercase, then stripped fallback
+            location = locations.get(sku.lower()) or locations.get(sku.lower().replace(' ', '')) or 'N/A'
             return jsonify({'location': location})
         except Exception as e:
             current_app.logger.error(f"Error fetching location for SKU {sku}: {str(e)}")
@@ -336,10 +361,26 @@ def get_item_location():
         sku_list = [s.strip() for s in skus.split(',') if s.strip()]
         try:
             locations = fetch_locations(sku_list)
-            # Return dict of sku: location
+            # Return dict of sku: location and include multiple normalized keys
+            # to help clients match variants (case, spaces, punctuation)
+            import re
+            def alnum(s):
+                return re.sub(r'[^0-9a-z]', '', s.lower())
+
             result = {}
             for s in sku_list:
-                result[s] = locations.get(s.lower(), 'N/A')
+                key = s
+                lookup = s.lower()
+                lookup_stripped = lookup.replace(' ', '')
+                lookup_alnum = alnum(s)
+                loc = locations.get(lookup) or locations.get(lookup_stripped) or locations.get(lookup_alnum) or 'N/A'
+
+                # Populate multiple variants so clients can match robustly
+                result[key] = loc
+                result[lookup] = loc
+                result[lookup_stripped] = loc
+                result[lookup_alnum] = loc
+
             return jsonify(result)
         except Exception as e:
             current_app.logger.error(f"Error fetching locations for SKUs {sku_list}: {str(e)}")
