@@ -432,88 +432,207 @@
         {% if current_user != 'fdc' %}
         <!-- Search Card -->
         <div class="search-card">
+            <style>
+                .search-header {
+                    text-align: center;
+                    margin-bottom: 25px;
+                    padding-bottom: 15px;
+                    border-bottom: 3px solid linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+                }
+                .search-header h2 {
+                    color: var(--dark-bg);
+                    font-weight: 700;
+                    margin-bottom: 5px;
+                    font-size: 24px;
+                }
+                .search-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 25px;
+                    margin-bottom: 20px;
+                }
+                .search-input-section {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .search-input-section label {
+                    font-weight: 700;
+                    color: var(--dark-bg);
+                    font-size: 14px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .input-with-nav {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+                .input-with-nav .order-input-group {
+                    flex: 1;
+                    margin: 0;
+                }
+                .input-with-nav .order-input-group input {
+                    width: 100%;
+                }
+                .input-with-nav .submit-btn {
+                    margin: 0;
+                    padding: 12px 25px;
+                }
+                .quick-access {
+                    background: linear-gradient(135deg, rgba(74, 144, 226, 0.1), rgba(80, 200, 120, 0.1));
+                    padding: 20px;
+                    border-radius: 12px;
+                    margin-bottom: 20px;
+                    border-left: 4px solid var(--primary-color);
+                }
+                .quick-access-label {
+                    font-weight: 700;
+                    color: var(--dark-bg);
+                    margin-bottom: 12px;
+                    display: block;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                }
+                .quick-badges {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+                .action-buttons {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 15px;
+                    margin-top: 20px;
+                }
+                .action-buttons button {
+                    padding: 14px 20px !important;
+                    font-size: 15px !important;
+                    font-weight: 700 !important;
+                }
+                .generate-label-btn {
+                    grid-column: 1 / -1 !important;
+                    background: linear-gradient(135deg, #ffd700, #ffed4e) !important;
+                    color: #333 !important;
+                    border: none !important;
+                }
+                @media (max-width: 768px) {
+                    .search-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .action-buttons {
+                        grid-template-columns: 1fr;
+                    }
+                    .quick-badges {
+                        flex-direction: column;
+                    }
+                    .info-badge {
+                        width: 100%;
+                        display: block;
+                        text-align: center;
+                    }
+                }
+            </style>
+
             <form method="POST" action="/order_lookup" id="orderForm">
-                <div class="search-form-wrapper">
-                                        <button type="button" id="clearInputsBtn" class="btn btn-danger" style="font-size: 1.3em; font-weight: bold; padding: 12px 32px; border-radius: 50px; background: linear-gradient(135deg, #ff0000, #ff6b6b); color: white; box-shadow: var(--shadow-lg);">
-                                            <i class="fas fa-times-circle mr-2"></i>Clear Inputs / 重置页面 / 下一单
-                                        </button>
-                        <script>
-                        document.getElementById('clearInputsBtn').onclick = function() {
-                            document.getElementById('order_number').value = '';
-                            document.getElementById('po_number').value = '';
-                            // Hide info sections if present
-                            var infoSections = [
-                                '.row.mb-4', // order info cards
-                                '.table-wrapper', // order items table
-                                '.alert-custom', // instruction alert
-                                '.alert-info', // error alert
-                                '.download-section', // label download
-                                '.success-badge', // label success
-                                '.info-card' // label details
-                            ];
-                            infoSections.forEach(function(selector) {
-                                var els = document.querySelectorAll(selector);
-                                els.forEach(function(el) {
-                                    el.style.display = 'none';
-                                });
-                            });
-                        };
-                        </script>
-                    <!-- Macy Special Button -->
+                <!-- Header -->
+
+                <!-- Quick Access Row - Before Main Search -->
+                <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <span style="font-weight: 700; color: var(--dark-bg); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-bolt mr-2" style="color: var(--primary-color);"></i>Quick Access:
+                    </span>
+                    {% if latest_orders and latest_orders.ef %}
+                    <span class="info-badge" onclick="document.getElementById('order_number').value = '{{ latest_orders.ef }}';" style="cursor: pointer; white-space: nowrap;">
+                        <i class="fas fa-zap mr-1"></i>EF: {{ latest_orders.ef }}
+                    </span>
+                    {% endif %}
+                    {% if latest_orders and latest_orders.fdc %}
+                    <span class="info-badge" onclick="document.getElementById('order_number').value = '{{ latest_orders.fdc }}';" style="cursor: pointer; white-space: nowrap;">
+                        <i class="fas fa-zap mr-1"></i>FDC: {{ latest_orders.fdc }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Main Search Grid -->
+                <div class="search-grid">
+                    <!-- Order Search -->
+                    <div class="search-input-section">
+                        <label><i class="fas fa-hashtag mr-2" style="color: var(--primary-color);"></i>Order Number</label>
+                        <div class="input-with-nav">
+                            <div class="order-input-group" style="flex: 1;">
+                                <button class="nav-btn" type="button" id="prevOrderBtn" title="Previous Order">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <input type="text" name="order_number" id="order_number" required pattern="\d{4,5}" 
+                                       title="Please enter a 4 or 5-digit number" value="{{ order_number or ''}}" 
+                                       placeholder="e.g., 12345">
+                                <button class="nav-btn" type="button" id="nextOrderBtn" title="Next Order">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <button type="submit" class="submit-btn">
+                                <i class="fas fa-search mr-2"></i>Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PO Search -->
+                    <div class="search-input-section">
+                        <label><i class="fas fa-box mr-2" style="color: var(--secondary-color);"></i>PO Number</label>
+                        <div class="input-with-nav">
+                            <div class="order-input-group" style="flex: 1;">
+                                <input type="text" name="po_number" id="po_number" placeholder="e.g., PO123456" value="{{ po_number or '' }}" style="width: 100%;">
+                            </div>
+                            <button type="button" class="submit-btn" id="searchPOBtn">
+                                <i class="fas fa-search mr-2"></i>Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
                     {% if header_info and header_info.customer_id|string == '01221' %}
-                    <a href="{{ url_for('macy.macy_maker') }}" class="macy-special-btn">
+                    <a href="{{ url_for('macy.macy_maker') }}" class="macy-special-btn" style="display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-star mr-2"></i>Macy Special
                     </a>
                     {% endif %}
+                    
+                    {% if items_html or labels_generated %}
+                    <button type="button" id="clearInputsBtn" class="btn btn-danger" style="background: linear-gradient(135deg, #ff0000, #ff6b6b); color: white; border: none; border-radius: 50px; grid-column: 1 / -1 !important;">
+                        <i class="fas fa-redo-alt mr-2"></i>Reset / Clear / 重置
+                    </button>
+                    {% endif %}
 
-                    <!-- Latest Orders Info -->
-                    <div class="d-flex align-items-center flex-wrap justify-content-center" style="gap: 10px;">
-                        <span style="font-weight: 600; color: #555;">Latest Orders:</span>
-                        {% if latest_orders and latest_orders.ef %}
-                        <span class="info-badge" onclick="document.getElementById('order_number').value = '{{ latest_orders.ef }}';" style="cursor: pointer;">
-                            <i class="fas fa-tag mr-1"></i>E-fashion: {{ latest_orders.ef }}
-                        </span>
-                        {% endif %}
-                        {% if latest_orders and latest_orders.fdc %}
-                        <span class="info-badge" onclick="document.getElementById('order_number').value = '{{ latest_orders.fdc }}';" style="cursor: pointer;">
-                            <i class="fas fa-tag mr-1"></i>FDC: {{ latest_orders.fdc }}
-                        </span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Top row: Order Input with Navigation and Search Order Button -->
-                    <div style="display: flex; align-items: center; gap: 15px; width: 100%; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
-                        <div class="order-input-group">
-                            <button class="nav-btn" type="button" id="prevOrderBtn" title="Previous Order">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <input type="text" name="order_number" id="order_number" required pattern="\d{4,5}" 
-                                   title="Please enter a 4 or 5-digit number" value="{{ order_number or ''}}" 
-                                   placeholder="Order #">
-                            <button class="nav-btn" type="button" id="nextOrderBtn" title="Next Order">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
-                        <button type="submit" class="submit-btn" style="margin-left:10px;">
-                            <i class="fas fa-search mr-2"></i>Search Order
-                        </button>
-                    </div>
-
-                    <!-- Bottom row: PO search input and button -->
-                    <div style="display: flex; align-items: center; gap: 15px; width: 100%; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
-                        <div style="color: #ff00d4; font-size: 18px;">Jennifer 特供, 用PO搜order</div><div class="order-input-group">
-                            <input type="text" name="po_number" id="po_number" placeholder="po# " style="width:150px;" value="{{ po_number or '' }}">
-                        </div>
-                        <button type="button" class="submit-btn" id="searchPOBtn" style="margin-left:10px;">Search PO</button>
-                    </div>
-
-                    <!-- Generate Label Button -->
                     {% if items_html and all_descriptions_have_dash %}
-                    <button type="button" class="label-btn" onclick="generateLabel()">
-                        <i class="fas fa-barcode mr-2"></i>Generate Label/打label这里
+                    <button type="button" class="label-btn generate-label-btn" onclick="generateLabel()">
+                        <i class="fas fa-barcode mr-2"></i>Generate Label / 打标签
                     </button>
                     {% endif %}
                 </div>
+
+                <script>
+                document.getElementById('clearInputsBtn').onclick = function() {
+                    document.getElementById('order_number').value = '';
+                    document.getElementById('po_number').value = '';
+                    var infoSections = [
+                        '.row.mb-4',
+                        '.table-wrapper',
+                        '.alert-custom',
+                        '.alert-info',
+                        '.download-section',
+                        '.success-badge',
+                        '.info-card'
+                    ];
+                    infoSections.forEach(function(selector) {
+                        var els = document.querySelectorAll(selector);
+                        els.forEach(function(el) {
+                            el.style.display = 'none';
+                        });
+                    });
+                };
+                </script>
             </form>
         </div>
 
@@ -755,6 +874,40 @@
                     {{ items_html | safe }}
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Order Notes Editor -->
+        <div class="info-card mt-4">
+            <div class="info-card-header">
+                <i class="fas fa-sticky-note mr-2"></i>Order Notes
+            </div>
+            <div class="p-3">
+                <!-- Debug info -->
+                {% if header_info.notes %}
+                <div class="alert alert-success" style="font-size: 12px; padding: 8px; margin-bottom: 10px;">
+                    <i class="fas fa-check-circle"></i> Notes loaded: {{ header_info.notes|length }} characters
+                </div>
+                {% else %}
+                <div class="alert alert-warning" style="font-size: 12px; padding: 8px; margin-bottom: 10px;">
+                    <i class="fas fa-info-circle"></i> No notes found for this order
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="order_notes" class="font-weight-bold mb-2">
+                        <i class="fas fa-edit mr-1"></i>Edit Notes for Order {{ header_info.order_number }}
+                    </label>
+                    <textarea id="order_notes" class="form-control" rows="5" placeholder="Enter order notes here..." style="font-family: 'Courier New', monospace; white-space: pre-wrap;">{{ header_info.notes if header_info.notes else '' }}</textarea>
+                </div>
+                <div class="text-right mt-3">
+                    <button id="saveOrderNotesBtn" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>Save Notes
+                    </button>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    <i class="fas fa-info-circle"></i> Notes stored in system and used by label maker.
+                </small>
             </div>
         </div>
     </div>
@@ -1218,6 +1371,41 @@
                         $(row).show();
                     }
                 }
+            });
+
+            // Save Order Notes
+            $('#saveOrderNotesBtn').on('click', function(e) {
+                e.preventDefault();
+                var orderNumber = $('#order_number').val() || '{{ header_info.order_number if header_info }}';
+                var notes = $('#order_notes').val();
+                
+                // Convert line breaks to Windows format (\r\n) for SQL Server
+                // This ensures proper display in database and when retrieving
+                notes = notes.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+                
+                var $btn = $(this);
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...');
+
+                $.ajax({
+                    url: '/update_order_notes',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        order_number: orderNumber,
+                        notes: notes
+                    }),
+                    success: function(response) {
+                        $btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fas fa-check mr-2"></i>Saved');
+                        setTimeout(function(){
+                            $btn.removeClass('btn-success').addClass('btn-primary').html('<i class="fas fa-save mr-2"></i>Save Notes');
+                            $btn.prop('disabled', false);
+                        }, 1500);
+                    },
+                    error: function(xhr) {
+                        alert('Failed to save notes: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'));
+                        $btn.prop('disabled', false).html('<i class="fas fa-save mr-2"></i>Save Notes');
+                    }
+                });
             });
         });
     </script>

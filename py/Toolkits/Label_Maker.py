@@ -8,6 +8,7 @@ from collections import defaultdict
 from py.utilities.setting import Config
 from flask import request, session, send_file, flash, redirect, url_for, render_template
 from py.utilities.setting import login_required
+from py.order.order_search import get_latest_order_ids
 import io
 
 # Database configurations from settings
@@ -83,7 +84,7 @@ def get_data_from_sql(order_number):
                     DBO.ORD_LOG AS ord
                 JOIN 
                     dbo.orders AS orders ON ord.ord_num = orders.ord_num
-                JOIN
+                LEFT JOIN
                     dbo.ntfile AS ntfile ON orders.ord_num = ntfile.nt_num
                 WHERE  
                     ord.ord_num = {order_number}
@@ -610,6 +611,9 @@ def register_label_maker_routes(app):
             app.logger.info("***%s***__@@@made labels@@@__ %s",current_user, order_number)
             excel_data, error_message, number_of_labels, duplicate_numbers, info_list, addresslist, warnings = process_orders(order_number)
 
+            # Fetch latest orders for Quick Access section
+            latest_orders = get_latest_order_ids()
+
             if error_message:
                 return render_template(
                     'order_lookup.html',
@@ -620,7 +624,8 @@ def register_label_maker_routes(app):
                     info_list=None,
                     error_message=error_message,
                     order_number=order_number,
-                    current_user=current_user
+                    current_user=current_user,
+                    latest_orders=latest_orders
                 )
 
             # Store only the order_number in session for download (not the large excel data)
@@ -638,10 +643,15 @@ def register_label_maker_routes(app):
                 order_number=order_number,
                 warnings=warnings,
                 current_user=current_user,
-                labels_generated=True  # Flag to show the results section
+                labels_generated=True,  # Flag to show the results section
+                latest_orders=latest_orders
             )
         except Exception as e:
             app.logger.error("An error occurred: %s", str(e))
+            try:
+                latest_orders = get_latest_order_ids()
+            except Exception:
+                latest_orders = {'fdc': None, 'ef': None}
             return render_template(
                 'order_lookup.html',
                 excel_html=None,
@@ -651,7 +661,8 @@ def register_label_maker_routes(app):
                 info_list=None,
                 error_message=f"An error occurred: {str(e)}",
                 order_number=order_number,
-                current_user=current_user
+                current_user=current_user,
+                latest_orders=latest_orders
             )
 
 

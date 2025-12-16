@@ -124,6 +124,11 @@ def register_routes(app):
             "service": "FDC Flask App"
         })
     
+    @app.route("/tk")
+    def tk_redirect():
+        """Redirect /tk to /master_image_viewer"""
+        return redirect(url_for('master_image_viewer.master_image_viewer'))
+    
     
     @app.route("/notify", methods=["POST"])
     @login_required

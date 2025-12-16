@@ -263,6 +263,37 @@ def generate_order(order_number):
             'email': str(df.iloc[0]['email']).strip() if pd.notna(df.iloc[0]['email']) and str(df.iloc[0]['email']).strip() else 'N/A'
         }
 
+        # Attempt to fetch order notes from dbo.ntfile
+        try:
+            conn_notes = pyodbc.connect(
+                f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+            )
+            cur2 = conn_notes.cursor()
+            # Some orders have multiple ntfile rows; pick the first non-empty note, favoring the longest
+            cur2.execute(
+                """
+                SELECT TOP 1 NOTES
+                FROM dbo.ntfile
+                WHERE NT_NUM = ?
+                  AND NOTES IS NOT NULL
+                  AND LTRIM(RTRIM(NOTES)) <> ''
+                ORDER BY LEN(NOTES) DESC
+                """,
+                (order_number,)
+            )
+            note_row = cur2.fetchone()
+            header_info['notes'] = str(note_row[0]).strip() if note_row and note_row[0] else ''
+            try:
+                preview = header_info['notes'][:200] if header_info['notes'] else ''
+                current_app.logger.info(f"Fetched notes for order {order_number}: {preview}")
+            except Exception:
+                pass
+            cur2.close()
+            conn_notes.close()
+        except Exception as e:
+            current_app.logger.error(f"Error fetching order notes for {order_number}: {e}")
+            header_info['notes'] = ''
+
         # Close the cursor and connection
         cursor.close()
         conn.close()        # Create items DataFrame with item-specific columns including Location
@@ -308,10 +339,8 @@ def generate_order(order_number):
 
         # Log what we found for easier debugging
         try:
-            current_app.logger.info(f"Location lookup for order {order_number}: found {len(locations)} keys")
             if locations:
                 sample = dict(list(locations.items())[:20])
-                current_app.logger.info(f"Location sample: {sample}")
         except Exception:
             pass
 
@@ -533,5 +562,96 @@ def update_order_description():
             
     except Exception as e:
         current_app.logger.error(f"Error updating description: {str(e)}")
+        return {'success': False, 'message': f'Database error: {str(e)}'}, 500
+
+
+@order_lookup_bp.route('/debug_order_notes/<string:order_number>', methods=['GET'])
+@login_required
+def debug_order_notes(order_number):
+    """Debug route to inspect dbo.ntfile NOTES for a given order number."""
+    try:
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return jsonify({'error': 'Invalid order number format'}), 400
+
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT NT_NUM, NOTES FROM dbo.ntfile WHERE NT_NUM = ?", (order_number,))
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        notes_list = []
+        for r in rows:
+            nt = str(r[0]) if r and len(r) > 0 else ''
+            n = str(r[1]).strip() if r and len(r) > 1 and r[1] is not None else ''
+            notes_list.append({'nt_num': nt, 'notes': n})
+
+        return jsonify({
+            'database': database_name,
+            'order_number': order_number,
+            'count': len(notes_list),
+            'results': notes_list
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error in debug_order_notes for {order_number}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@order_lookup_bp.route("/update_order_notes", methods=["POST"])
+@login_required
+def update_order_notes():
+    """Update the order-level NOTES field in dbo.ntfile for the given order."""
+    try:
+        data = request.get_json()
+        order_number = data.get('order_number')
+        notes = data.get('notes', '')
+
+        if not order_number:
+            return {'success': False, 'message': 'Missing order number'}, 400
+
+        # Determine database based on order number length
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return {'success': False, 'message': 'Invalid order number format'}, 400
+
+        # Log the notes being saved for debugging
+        try:
+            current_app.logger.info(f"Saving notes for order {order_number}: {repr(notes[:100])} (length: {len(notes)})")
+        except:
+            pass
+
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+
+        # Ensure newlines are properly formatted for SQL Server storage
+        # JavaScript sends \n, which is correct for SQL Server NOTES field
+        # Update all rows for this NT_NUM to keep notes consistent if multiple rows exist
+        update_query = "UPDATE dbo.ntfile SET NOTES = ? WHERE NT_NUM = ?"
+        cursor.execute(update_query, (notes, order_number))
+        conn.commit()
+        rows_affected = cursor.rowcount
+
+        cursor.close()
+        conn.close()
+
+        if rows_affected >= 0:
+            current_user = session.get('username', 'unknown')
+            current_app.logger.info(f"***{current_user}***__@@@updated notes@@@__ Order: {order_number}, rows affected: {rows_affected}")
+            return {'success': True, 'message': 'Order notes updated successfully'}, 200
+        else:
+            return {'success': False, 'message': 'No rows were updated'}, 404
+    except Exception as e:
+        current_app.logger.error(f"Error updating order notes: {str(e)}")
         return {'success': False, 'message': f'Database error: {str(e)}'}, 500
 
