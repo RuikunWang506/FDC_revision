@@ -24,6 +24,7 @@ from py.search.container import container_bp
 from py.search.item_lookup import item_lookup_bp
 from py.search.outofstock_check import outofstock_check_bp
 from py.other.mobile_lite import mobile_lite_bp
+from py.utilities.pallet_detail import pallet_detail_bp
 import py.Toolkits.Label_Maker, py.order.order_search, py.utilities.SQL_connector
 from py.order.macy_special import process_orders
 from datetime import timedelta
@@ -51,7 +52,7 @@ from py.dam.dam_sync_routes import dam_sync_bp
 from py.other.bag_style_viewer import bag_style_viewer_bp
 from py.Toolkits.boat import boat_service_bp
 from py.utilities.monitor import send_discord_notification
-
+from py.search.location_service import location_service_bp
 
 
 def register_routes(app):
@@ -95,7 +96,8 @@ def register_routes(app):
     app.register_blueprint(bag_style_viewer_bp)
     app.register_blueprint(location_massive_audit_bp)
     app.register_blueprint(boat_service_bp)
-
+    app.register_blueprint(location_service_bp)
+    app.register_blueprint(pallet_detail_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 

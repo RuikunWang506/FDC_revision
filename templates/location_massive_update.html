@@ -278,13 +278,37 @@
             background: #138496 !important;
             border-color: #117a8b !important;
         }
+        
+        /* Pallet Details button in navbar */
+        #pallet-btn-navbar {
+            position: fixed;
+            top: 8px;
+            right: 340px;
+            z-index: 1050;
+            background: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        #pallet-btn-navbar:hover {
+            background: #218838 !important;
+            border-color: #1e7e34 !important;
+            color: white !important;
+            text-decoration: none;
+        }
 
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
     
-    <!-- View Map Button in Navbar -->
+    <!-- Action Buttons in Navbar -->
+    <a href="/palletdetail/L1-A BOT" class="btn btn-success" id="pallet-btn-navbar">📦 Pallet Details</a>
     <button type="button" class="btn btn-info" id="map-btn-navbar">🗺️ View Map</button>
     
     <div id="notification" class="alert alert-success" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999; text-align:center; font-size:1.5em; font-weight:bold; margin:0;"></div>

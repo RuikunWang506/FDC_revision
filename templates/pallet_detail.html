@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pallet Detail - {{ location_suffix }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 1400px;
+            margin-top: 30px;
+        }
+        .header-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .location-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .location-selector {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .location-selector select {
+            flex: 1;
+            max-width: 400px;
+        }
+        .grid-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .grid-header {
+            display: grid;
+            grid-template-columns: 50px 3fr 2fr 4fr 100px;
+            gap: 10px;
+            padding: 15px;
+            background-color: #34495e;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .grid-row {
+            display: grid;
+            grid-template-columns: 50px 3fr 2fr 4fr 100px;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+        }
+        .grid-row:hover {
+            background-color: #f8f9fa;
+        }
+        .grid-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .grid-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        .row-number {
+            text-align: center;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-delete {
+            background-color: #e74c3c;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+        .btn-add-row {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-add-row:hover {
+            background-color: #229954;
+        }
+        .btn-save {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .btn-save:hover {
+            background-color: #2980b9;
+        }
+        .alert {
+            border-radius: 5px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        .stats-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            text-align: center;
+        }
+        .stat-card h3 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        .stat-card p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        /* Autocomplete styling */
+        .autocomplete-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+        .autocomplete-input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .autocomplete-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        .dropdown-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .dropdown-icon:hover {
+            color: #3498db;
+        }
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .autocomplete-suggestion {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .autocomplete-suggestion:hover, .autocomplete-suggestion.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .autocomplete-suggestion:last-child {
+            border-bottom: none;
+        }
+        
+        /* QR Code Modal */
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .qr-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .qr-modal-content h3 {
+            margin-bottom: 20px;
+        }
+        .qr-modal-content canvas {
+            margin: 20px auto;
+            display: block;
+        }
+        .qr-close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 10px;
+                padding: 10px;
+            }
+            
+            .header-section {
+                padding: 15px;
+            }
+            
+            .location-selector {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .location-selector input,
+            .location-selector button {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
+            .grid-section {
+                padding: 10px;
+                overflow-x: auto;
+            }
+            
+            .grid-header {
+                grid-template-columns: 40px 2fr 1fr 60px;
+                gap: 5px;
+                padding: 10px 5px;
+                font-size: 12px;
+            }
+            
+            /* Hide Memo column only in portrait orientation */
+            @media (orientation: portrait) {
+                .grid-header div:nth-child(4),
+                .grid-row div:nth-child(4) {
+                    display: none; /* Hide Memo column on mobile portrait */
+                }
+            }
+            /* Show Memo column in landscape orientation */
+            @media (orientation: landscape) {
+                .grid-header div:nth-child(4),
+                .grid-row div:nth-child(4) {
+                    display: block;
+                }
+            }
+            
+            .grid-row {
+                grid-template-columns: 40px 2fr 1fr 60px;
+                gap: 5px;
+                padding: 8px 5px;
+            }
+            
+            .grid-input {
+                padding: 6px;
+                font-size: 14px;
+            }
+            
+            .btn-delete {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .action-buttons button {
+                width: 100%;
+            }
+            
+            .stats-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .stat-card h3 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header Section -->
+        <div class="header-section">
+            {% if location_suffix %}
+            <div style="margin-bottom: 15px;">
+                <h4 style="margin: 0; color: #2c3e50;">
+                    <i class="fas fa-box-open"></i> {{ location_suffix }}
+                    {% if last_modified %}
+                    <small style="color: #7f8c8d; font-size: 0.8em; margin-left: 15px;">
+                        <i class="far fa-clock"></i> Last Modified: {{ last_modified.strftime('%Y-%m-%d %I:%M %p') }}
+                    </small>
+                    {% endif %}
+                </h4>
+            </div>
+            {% endif %}
+            
+            <div class="location-selector">
+                <label for="palletInput" style="font-weight: bold; white-space: nowrap;">Pallet Name:</label>
+                <input type="text" 
+                       id="palletInput" 
+                       class="form-control" 
+                       value="{{ location_suffix }}" 
+                       placeholder="Enter pallet identifier..."
+                       style="max-width: 300px; display: inline-block;">
+                <button class="btn btn-primary" onclick="goToPallet()">
+                    <i class="fas fa-arrow-right"></i> Go
+                </button>
+                <button class="btn btn-success" onclick="createNewPallet()">
+                    <i class="fas fa-plus"></i> New Pallet
+                </button>
+            </div>
+        </div>
+
+        <!-- Existing Pallets Sidebar -->
+        {% if all_pallets and all_pallets|length > 0 %}
+        <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <h6 style="margin-bottom: 10px;"><i class="fas fa-list"></i> Existing Pallets ({{ all_pallets|length }}):</h6>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                {% for pallet in all_pallets %}
+                <a href="/palletdetail/{{ pallet }}" 
+                   class="btn btn-sm {% if pallet == location_suffix %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+                   style="text-decoration: none;">
+                    {{ pallet }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <h3 id="itemCount">{{ pallet_items|length }}</h3>
+                <p>Total Items</p>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3 id="totalQuantity">0</h3>
+                <p>Total Quantity</p>
+            </div>
+        </div>
+
+        <!-- Grid Section -->
+        <div class="grid-section">
+            <div class="grid-header">
+                <div>#</div>
+                <div>Item Description</div>
+                <div>Quantity</div>
+                <div>Memo</div>
+                <div>Action</div>
+            </div>
+
+            <div id="gridContainer">
+                {% if pallet_items %}
+                    {% for item in pallet_items %}
+                        <div class="grid-row" data-id="{{ item.id }}">
+                            <div class="row-number">{{ loop.index }}</div>
+                            <div><input type="text" class="grid-input item-text" value="{{ item.item_text }}" placeholder="Enter item description"></div>
+                            <div><input type="number" class="grid-input item-quantity" value="{{ item.item_quantity }}" placeholder="0" min="0"></div>
+                            <div><input type="text" class="grid-input item-memo" value="{{ item.item_memo }}" placeholder="Enter memo"></div>
+                            <div>
+                                <button class="btn-delete" onclick="deleteRow(this)">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                        <p>No items yet. Click "Add Row" to start adding items.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-add-row" onclick="addRow()">
+                    <i class="fas fa-plus"></i> Add Row
+                </button>
+                <button class="btn-save" onclick="saveAll()">
+                    <i class="fas fa-save"></i> Save All Changes
+                </button>
+                {% if location_suffix %}
+                <button class="btn btn-danger" onclick="deletePallet()" style="padding: 12px 30px; font-weight: bold;">
+                    <i class="fas fa-trash"></i> Delete Pallet
+                </button>
+                <button class="btn btn-secondary" onclick="printQR()" style="padding: 12px 30px; font-weight: bold;">
+                    <i class="fas fa-print"></i> Print QR
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="qr-modal">
+        <span class="qr-close" onclick="closeQRCode()">&times;</span>
+        <div class="qr-modal-content">
+            <h3><i class="fas fa-qrcode"></i> QR Code for this Location</h3>
+            <canvas id="qrCanvas"></canvas>
+            <p style="color: #7f8c8d; font-size: 12px; word-break: break-all;">{{ short_url }}</p>
+            <button class="btn btn-primary" onclick="closeQRCode()">Close</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Make short URL globally accessible for navbar QR code
+        {% if short_url %}
+        window.palletShortUrl = "{{ short_url }}";
+        {% endif %}
+        
+        let rowCounter = {{ pallet_items|length }};
+
+        function updateStats() {
+            const rows = document.querySelectorAll('.grid-row');
+            let totalQuantity = 0;
+            
+            rows.forEach(row => {
+                const quantityInput = row.querySelector('.item-quantity');
+                if (quantityInput) {
+                    totalQuantity += parseInt(quantityInput.value) || 0;
+                }
+            });
+
+            document.getElementById('itemCount').textContent = rows.length;
+            document.getElementById('totalQuantity').textContent = totalQuantity;
+        }
+
+        function addRow() {
+            rowCounter++;
+            const container = document.getElementById('gridContainer');
+            
+            // Remove empty state if it exists
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const newRow = document.createElement('div');
+            newRow.className = 'grid-row';
+            newRow.innerHTML = `
+                <div class="row-number">${rowCounter}</div>
+                <div><input type="text" class="grid-input item-text" placeholder="Enter item description"></div>
+                <div><input type="number" class="grid-input item-quantity" placeholder="0" min="0" value="0"></div>
+                <div><input type="text" class="grid-input item-memo" placeholder="Enter memo"></div>
+                <div>
+                    <button class="btn-delete" onclick="deleteRow(this)">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(newRow);
+            updateRowNumbers();
+            updateStats();
+            
+            // Focus on the new row's first input
+            newRow.querySelector('.item-text').focus();
+        }
+
+        function deleteRow(button) {
+            if (confirm('Are you sure you want to delete this row?')) {
+                const row = button.closest('.grid-row');
+                row.remove();
+                updateRowNumbers();
+                updateStats();
+
+                // Show empty state if no rows left
+                const container = document.getElementById('gridContainer');
+                if (container.querySelectorAll('.grid-row').length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                            <p>No items yet. Click "Add Row" to start adding items.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('.grid-row');
+            rows.forEach((row, index) => {
+                row.querySelector('.row-number').textContent = index + 1;
+            });
+            rowCounter = rows.length;
+        }
+
+        function goToLocation() {
+            const input = document.getElementById('locationInput');
+            const location = input.value.trim();
+            if (location) {
+                window.location.href = `/palletdetail/${encodeURIComponent(location)}`;
+            }
+        }
+
+        async function saveAll() {
+            const currentLocation = "{{ location_suffix }}";
+            const rows = document.querySelectorAll('.grid-row');
+            const items = [];
+
+            rows.forEach(row => {
+                const text = row.querySelector('.item-text').value;
+                const quantity = parseInt(row.querySelector('.item-quantity').value) || 0;
+                const memo = row.querySelector('.item-memo').value;
+
+                items.push({
+                    text: text,
+                    quantity: quantity,
+                    memo: memo
+                });
+            });
+
+            try {
+                const response = await fetch('/palletdetail/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        location: currentLocation,
+                        items: items
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error saving data: ' + error);
+                console.error('Error:', error);
+            }
+        }
+
+        // Add event listener to update stats when quantities change
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('item-quantity')) {
+                updateStats();
+            }
+        });
+
+        // Initialize stats on page load
+        updateStats();
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+S to save
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveAll();
+            }
+            // Ctrl+Enter to add row
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                addRow();
+            }
+        });
+
+        // Navigation functions
+        function goToPallet() {
+            const palletName = document.getElementById('palletInput').value.trim();
+            if (palletName) {
+                window.location.href = `/palletdetail/${encodeURIComponent(palletName)}`;
+            } else {
+                alert('Please enter a pallet name');
+            }
+        }
+
+        function createNewPallet() {
+            const palletName = prompt('Enter new pallet identifier:');
+            if (palletName && palletName.trim()) {
+                window.location.href = `/palletdetail/${encodeURIComponent(palletName.trim())}`;
+            }
+        }
+
+        async function deletePallet() {
+            const currentPallet = "{{ location_suffix }}";
+            if (!currentPallet) {
+                alert('No pallet selected');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete pallet "${currentPallet}" and all its items?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/palletdetail/delete_pallet/${encodeURIComponent(currentPallet)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    window.location.href = '/palletdetail/';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Failed to delete pallet');
+            }
+        }
+
+        // Enter key handler for pallet input
+        document.getElementById('palletInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                goToPallet();
+            }
+        });
+
+        // QR Code functionality
+        function showQRCode() {
+            const shortUrl = "{{ request.host_url.rstrip('/') }}{{ short_url }}";
+            const modal = document.getElementById('qrModal');
+            
+            if (window.QRious) {
+                const qr = new QRious({
+                    element: document.getElementById('qrCanvas'),
+                    value: shortUrl,
+                    size: 250,
+                    background: 'white',
+                    foreground: '#222'
+                });
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeQRCode() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('qrModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeQRCode();
+            }
+        });
+
+        // Print QR Code to PDF
+        function printQR() {
+            const palletName = "{{ location_suffix }}";
+            const shortUrl = "{{ request.host_url.rstrip('/') }}{{ short_url }}";
+            
+            if (!palletName) {
+                alert('No pallet selected');
+                return;
+            }
+
+            if (!window.jspdf) {
+                alert('PDF library not loaded. Please refresh the page.');
+                return;
+            }
+
+            // Create a temporary canvas for the QR code
+            const tempCanvas = document.createElement('canvas');
+            
+            // Generate QR code
+            const qr = new QRious({
+                element: tempCanvas,
+                value: shortUrl,
+                size: 1000, // High resolution for PDF
+                background: 'white',
+                foreground: 'black'
+            });
+
+            // Wait a moment for QR code to be fully rendered
+            setTimeout(() => {
+                // Get the data URL of the QR code
+                const qrDataUrl = tempCanvas.toDataURL('image/png');
+
+                // Create PDF using jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'in',
+                    format: 'letter'
+                });
+
+                // US Letter size: 8.5 x 11 inches
+                const pageWidth = 8.5;
+                const pageHeight = 11;
+                const margin = 0.2;
+                
+                // Calculate usable area
+                const usableWidth = pageWidth - (2 * margin); // 8.1 inches
+                const usableHeight = pageHeight - (2 * margin); // 10.6 inches
+                
+                // Reserve space for text at bottom
+                const fontSize = 96; // points
+                const textHeightInches = (fontSize / 72) * 1.2; // Convert pt to inches with spacing
+                const textSpacing = 0.2; // Space between QR and text
+                
+                // Calculate available space for QR code
+                const availableForQR = usableHeight - textHeightInches - textSpacing;
+                
+                // QR code size (use smaller of width or available height to keep it square)
+                const qrSize = Math.min(usableWidth, availableForQR);
+                
+                // Position QR code (centered horizontally, at top margin)
+                const qrX = (pageWidth - qrSize) / 2;
+                const qrY = margin;
+                
+                // Add QR code to PDF
+                doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+                
+                // Free area below QR
+                const boxX = margin;
+                const boxW = usableWidth;
+
+                const boxY = qrY + qrSize + 0.05;          // small gap under QR
+                const boxH = (pageHeight - margin) - boxY; // until bottom margin
+
+                function fitSingleLineText(doc, text, boxX, boxY, boxW, boxH, maxPt = 220, minPt = 24) {
+                doc.setFont('helvetica', 'bold');
+
+                // Start from max and scale down by width/height constraints
+                doc.setFontSize(maxPt);
+
+                const lineH = (maxPt / 72) * 1.05; // inches (jsPDF unit is 'in')
+                const wAtMax = doc.getTextWidth(text); // inches
+
+                let sW = boxW / wAtMax;
+                let sH = boxH / lineH;
+
+                let pt = Math.floor(maxPt * Math.min(sW, sH));
+                pt = Math.max(minPt, Math.min(maxPt, pt));
+
+                doc.setFontSize(pt);
+
+                // vertically center in the free box (jsPDF text uses baseline)
+                const textY = boxY + (boxH / 2) + (pt / 72) * 0.35;
+                doc.text(text, boxX + boxW / 2, textY, { align: 'center' });
+                }
+
+                fitSingleLineText(doc, palletName, boxX, boxY, boxW, boxH, 220, 24);
+                // Create blob and open in new window
+                const pdfBlob = doc.output('blob');
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                window.open(blobUrl, '_blank');
+            }, 100);
+        }
+    </script>
+</body>
+</html>

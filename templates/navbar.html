@@ -21,6 +21,12 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link" href="/palletdetail/L1-A BOT">
+                    📦 Pallet
+                </a>
+            </li>
+
             {% if current_user in ['yeti'] %}
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('auth.manage_users') }}">
@@ -80,7 +86,7 @@
     <div class="modal-content bg-dark text-center">
       <div class="modal-header border-0">
         <h5 class="modal-title text-white" id="navbarQrModalLabel">Scan to visit</h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close text-white" onclick="$('#navbarQrModal').modal('hide');" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -137,6 +143,13 @@ $(function() {
     // QR code button click handler
     $('#navbar-qr-btn').on('click', function() {
         var url = window.location.href;
+        
+        // If on a palletdetail page, try to get the short URL
+        if (url.includes('/palletdetail/') && typeof window.palletShortUrl !== 'undefined') {
+            var baseUrl = url.split('/palletdetail/')[0];
+            url = baseUrl + window.palletShortUrl;
+        }
+        
         $('#navbar-qr-url').text(url);
         // Generate QR code
         if (window.QRious) {
