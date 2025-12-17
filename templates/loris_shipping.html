@@ -517,35 +517,63 @@
                     <ul id="selected-orders-ul" class="list-unstyled"></ul>
                 </div>
                 <div class="mt-3">
-                    <div class="d-grid gap-2">
-                        <button id="process-excel-btn" class="btn btn-success btn-block w-100 mb-2">
-                            <i class="fas fa-file-excel"></i> Fedex Excel *DENNIS*
-                        </button>
-                        <button id="process-duplex-btn" class="btn btn-primary btn-block w-100 mb-2">
-                            <i class="fas fa-file-pdf"></i> Two-sides PDF 老头
-                        </button>
+                    <!-- Section 1: Prep -->
+                    <div class="mb-4">
+                        <h5>Prep</h5>
+                        <div class="d-grid gap-2">
+                            <button id="process-duplex-btn" class="btn btn-primary btn-block w-100 mb-2">
+                                <i class="fas fa-file-pdf"></i> Two-sides PDF 老头
+                            </button>
+                            <button id="combine-pdf-btn" class="btn btn-info btn-block w-100 mb-2">
+                                <i class="fas fa-file-pdf"></i> Combine PDF Files 原始pdf
+                            </button>
+                            <button id="custom-picklist-btn" class="btn btn-secondary btn-block w-100 mb-2">
+                                <i class="fas fa-list-alt"></i> Custom Picklist 老头
+                            </button>
+                        </div>
                     </div>
-                    <button id="combine-pdf-btn" class="btn btn-info btn-block w-100 mb-2">
-                        <i class="fas fa-file-pdf"></i> Combine PDF Files 原始pdf
-                    </button>
-                    <button id="custom-picklist-btn" class="btn btn-secondary btn-block w-100 mb-2">
-                        <i class="fas fa-list-alt"></i> Custom Picklist 老头
-                    </button>
-                    <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
-                        <i class="fas fa-file-invoice"></i> Download Invoices 徐锦
-                    </button>
-                    <button id="download-tracking-btn" class="btn btn-info btn-block w-100 mb-2">
-                        <i class="fas fa-download"></i> Download Tracking Info
-                    </button>
-                    <button id="send-to-shipped-btn" class="btn btn-success btn-block w-100 mb-2">
-                        <i class="fas fa-truck"></i> Send to Shipped Only
-                    </button>
-                    <button id="send-back-pending-btn" class="btn btn-warning btn-block w-100 mb-2">
-                        <i class="fas fa-undo"></i> Send Back Pending
-                    </button>
-                    <div class="input-group mb-2">
-                        <input type="date" id="bulk-batch-date-input" class="form-control" placeholder="New Batch Date (YYYY-MM-DD)">
-                        <button id="bulk-batch-date-btn" class="btn btn-info">Bulk Modify Batch Date</button>
+
+                    <!-- Section 2: Shipping -->
+                    <div class="mb-4">
+                        <h5>Shipping</h5>
+                        <div class="d-grid gap-2">
+                            <button id="process-excel-btn" class="btn btn-success btn-block w-100 mb-2">
+                                <i class="fas fa-file-excel"></i> Fedex Excel *DENNIS*
+                            </button>
+                            <button id="upload-tracking-btn" class="btn btn-info btn-block w-100 mb-2">
+                                <i class="fas fa-upload"></i> Upload Tracking Info
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Admin -->
+                    <div class="mb-4">
+                        <h5>Admin</h5>
+                        <div class="d-grid gap-2">
+                            <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
+                                <i class="fas fa-file-invoice"></i> Download Invoices 徐锦
+                            </button>
+                            <button id="download-tracking-btn" class="btn btn-info btn-block w-100 mb-2">
+                                <i class="fas fa-download"></i> Download Tracking Info
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Tools -->
+                    <div class="mb-4">
+                        <h5>Tools</h5>
+                        <div class="d-grid gap-2">
+                            <button id="send-to-shipped-btn" class="btn btn-success btn-block w-100 mb-2">
+                                <i class="fas fa-truck"></i> Send to Shipped Only
+                            </button>
+                            <button id="send-back-pending-btn" class="btn btn-warning btn-block w-100 mb-2">
+                                <i class="fas fa-undo"></i> Send Back Pending
+                            </button>
+                            <div class="input-group mb-2">
+                                <input type="date" id="bulk-batch-date-input" class="form-control" placeholder="New Batch Date (YYYY-MM-DD)">
+                                <button id="bulk-batch-date-btn" class="btn btn-info">Bulk Modify Batch Date</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1897,7 +1925,7 @@
                 container.appendChild(row);
                 
                 // Add direct event handler for delete button
-                const deleteBtn = row.querySelector('.delete-pkg-btn');
+                const deleteBtn = row.querySelector('.delete-order-btn');
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', function(e) {
                         try {
@@ -2894,9 +2922,7 @@
                 const response = await fetch('/lori_automation/process_selected_orders', {
                     method: 'POST',
                     credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         po_numbers: selectedPOs
                     })
@@ -2921,7 +2947,6 @@
                 a.download = `FedEx_Labels_${new Date().toISOString().split('T')[0]}.xlsx`;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
 
                 // Also generate and open the duplex printing PDF
@@ -2941,7 +2966,6 @@
                 console.error('Error processing orders:', error);
                 alert('Error processing orders: ' + error.message);
             } finally {
-                // Restore button state
                 processBtn.disabled = false;
                 processBtn.innerHTML = originalText;
             }
@@ -2991,7 +3015,6 @@
                 a.download = `combined_orders_${new Date().toISOString().split('T')[0]}.pdf`;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
                 
                 alert(`Successfully combined PDFs for ${selectedPOs.length} orders!\n\nCombined PDF downloaded successfully.`);
@@ -3065,7 +3088,6 @@
                 a.download = `custom_picklist_${new Date().toISOString().split('T')[0]}.pdf`;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
                 
                 alert('Custom Picklist Summary created successfully!\n\nSUMMARY INCLUDES:\n• Orders grouped by identical SKU combinations\n• Batch information organized for efficient picking\n• Store numbers and quantities per batch\n• SKU items with colors and quantities\n\nPDF SUMMARY DOWNLOADED: Picklist summary ready for warehouse planning.\n\nTip: Use "Generate Fedex File & Ship Order" for full processing with duplex printing PDFs.');
@@ -3109,7 +3131,7 @@
                 hideSidebar();
                 await loadAndRenderOrders();
             } catch (err) {
-                console.error('Error:', err);
+                console.error(err);
                 alert('Error sending to shipped: ' + err.message);
             } finally {
                 btn.disabled = false;
@@ -3144,7 +3166,7 @@
                 hideSidebar();
                 await loadAndRenderOrders();
             } catch (err) {
-                console.error('Error:', err);
+                console.error(err);
                 alert('Error sending back to pending: ' + err.message);
             } finally {
                 btn.disabled = false;
@@ -3182,7 +3204,7 @@
                 hideSidebar();
                 await loadAndRenderOrders();
             } catch (err) {
-                console.error('Error:', err);
+                console.error(err);
                 alert('Error updating batch dates: ' + err.message);
             } finally {
                 btn.disabled = false;
@@ -3574,8 +3596,7 @@
                 modalEl.dataset.pendingPos = JSON.stringify(pending);
             })();
 
-            // Show modal
-            const modal = new bootstrap.Modal(modalEl);
+            // Show modal            const modal = new bootstrap.Modal(modalEl);
             modal.show();
         };
 
