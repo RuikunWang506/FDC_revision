@@ -256,7 +256,7 @@ def process_orders(order_number):
     ]
     po_number = str(df.iloc[0]['PO_NUM'])
     notes = str(df.iloc[0]['NOTES'])
-    text_after_boxes_match = re.search(r'BOXES\s+(.*)', notes)
+    text_after_boxes_match = re.search(r'BOXES\s+(.*)', notes, re.IGNORECASE)
     text_after_boxes = text_after_boxes_match.group(1) if text_after_boxes_match else "N/A"
 
     # Reference chart to track label assignments

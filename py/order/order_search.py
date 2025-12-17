@@ -285,7 +285,6 @@ def generate_order(order_number):
             header_info['notes'] = str(note_row[0]).strip() if note_row and note_row[0] else ''
             try:
                 preview = header_info['notes'][:200] if header_info['notes'] else ''
-                current_app.logger.info(f"Fetched notes for order {order_number}: {preview}")
             except Exception:
                 pass
             cur2.close()
@@ -565,6 +564,120 @@ def update_order_description():
         return {'success': False, 'message': f'Database error: {str(e)}'}, 500
 
 
+@order_lookup_bp.route("/update_order_qty", methods=["POST"])
+@login_required
+def update_order_qty():
+    """Update the quantity (ORDER_QTY) for a specific order line"""
+    try:
+        data = request.get_json()
+        order_number = data.get('order_number')
+        line_number = data.get('line_number')
+        sku = data.get('sku')
+        new_qty = data.get('qty')
+        
+        if not all([order_number, line_number, new_qty]):
+            return {'success': False, 'message': 'Missing required fields'}, 400
+        
+        # Determine database based on order number length
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return {'success': False, 'message': 'Invalid order number format'}, 400
+        
+        # Connect to database
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        
+        # Update the quantity in ORD_LOG table
+        update_query = """
+            UPDATE DBO.ORD_LOG 
+            SET ORDER_QTY = ?
+            WHERE ORD_NUM = ? AND COMM_LN = ?
+        """
+        
+        cursor.execute(update_query, (new_qty, order_number, line_number))
+        conn.commit()
+        
+        rows_affected = cursor.rowcount
+        
+        cursor.close()
+        conn.close()
+        
+        if rows_affected > 0:
+            current_user = session.get('username', 'unknown')
+            current_app.logger.info(
+                f"***{current_user}***__@@@updated qty@@@__ Order: {order_number}, Line: {line_number}, SKU: {sku}, New Qty: {new_qty}"
+            )
+            return {'success': True, 'message': 'Quantity updated successfully'}, 200
+        else:
+            return {'success': False, 'message': 'No rows were updated'}, 404
+            
+    except Exception as e:
+        current_app.logger.error(f"Error updating quantity: {str(e)}")
+        return {'success': False, 'message': f'Database error: {str(e)}'}, 500
+
+
+@order_lookup_bp.route("/update_order_price", methods=["POST"])
+@login_required
+def update_order_price():
+    """Update the price (UNIT_PRS) for a specific order line"""
+    try:
+        data = request.get_json()
+        order_number = data.get('order_number')
+        line_number = data.get('line_number')
+        sku = data.get('sku')
+        new_price = data.get('price')
+        
+        if not all([order_number, line_number, new_price]):
+            return {'success': False, 'message': 'Missing required fields'}, 400
+        
+        # Determine database based on order number length
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return {'success': False, 'message': 'Invalid order number format'}, 400
+        
+        # Connect to database
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        
+        # Update the price in ORD_LOG table
+        update_query = """
+            UPDATE DBO.ORD_LOG 
+            SET UNIT_PRS = ?
+            WHERE ORD_NUM = ? AND COMM_LN = ?
+        """
+        
+        cursor.execute(update_query, (new_price, order_number, line_number))
+        conn.commit()
+        
+        rows_affected = cursor.rowcount
+        
+        cursor.close()
+        conn.close()
+        
+        if rows_affected > 0:
+            current_user = session.get('username', 'unknown')
+            current_app.logger.info(
+                f"***{current_user}***__@@@updated price@@@__ Order: {order_number}, Line: {line_number}, SKU: {sku}, New Price: {new_price}"
+            )
+            return {'success': True, 'message': 'Price updated successfully'}, 200
+        else:
+            return {'success': False, 'message': 'No rows were updated'}, 404
+            
+    except Exception as e:
+        current_app.logger.error(f"Error updating price: {str(e)}")
+        return {'success': False, 'message': f'Database error: {str(e)}'}, 500
+
+
 @order_lookup_bp.route('/debug_order_notes/<string:order_number>', methods=['GET'])
 @login_required
 def debug_order_notes(order_number):
@@ -634,18 +747,26 @@ def update_order_notes():
         )
         cursor = conn.cursor()
 
-        # Ensure newlines are properly formatted for SQL Server storage
-        # JavaScript sends \n, which is correct for SQL Server NOTES field
-        # Update all rows for this NT_NUM to keep notes consistent if multiple rows exist
-        update_query = "UPDATE dbo.ntfile SET NOTES = ? WHERE NT_NUM = ?"
-        cursor.execute(update_query, (notes, order_number))
+        # First check if a record exists for this order in ntfile
+        cursor.execute("SELECT COUNT(*) FROM dbo.ntfile WHERE NT_NUM = ?", (order_number,))
+        record_exists = cursor.fetchone()[0] > 0
+
+        if record_exists:
+            # Update existing record
+            update_query = "UPDATE dbo.ntfile SET NOTES = ? WHERE NT_NUM = ?"
+            cursor.execute(update_query, (notes, order_number))
+        else:
+            # Insert new record if it doesn't exist (NT_CD defaults to 0)
+            insert_query = "INSERT INTO dbo.ntfile (NT_NUM, NT_CD, NOTES) VALUES (?, 0, ?)"
+            cursor.execute(insert_query, (order_number, notes))
+        
         conn.commit()
         rows_affected = cursor.rowcount
 
         cursor.close()
         conn.close()
 
-        if rows_affected >= 0:
+        if rows_affected > 0:
             current_user = session.get('username', 'unknown')
             current_app.logger.info(f"***{current_user}***__@@@updated notes@@@__ Order: {order_number}, rows affected: {rows_affected}")
             return {'success': True, 'message': 'Order notes updated successfully'}, 200

@@ -530,6 +530,12 @@
                             <button id="custom-picklist-btn" class="btn btn-secondary btn-block w-100 mb-2">
                                 <i class="fas fa-list-alt"></i> Custom Picklist 老头
                             </button>
+                            <button id="download-30-stickers-btn" class="btn btn-primary btn-block w-100 mb-2">
+                                <i class="fas fa-tags"></i> Download 30 Stickers
+                            </button>
+                            <button id="download-exact-stickers-btn" class="btn btn-secondary btn-block w-100 mb-2">
+                                <i class="fas fa-tags"></i> Download Exact Quantity
+                            </button>
                         </div>
                     </div>
 
@@ -3212,6 +3218,205 @@
             }
         }
 
+        // Helper function to collect and aggregate order items
+        async function collectOrderItems() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedPOs.length === 0) {
+                throw new Error('Please select at least one order to generate stickers.');
+            }
+            
+            // Collect all order items from selected orders
+            const allItems = [];
+            
+            for (const poNumber of selectedPOs) {
+                const response = await fetch(`/lori_automation/get_order_items/${poNumber}`, {
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(`Error fetching items for PO ${poNumber}: ${data.error}`);
+                }
+                
+                if (data.items && data.items.length > 0) {
+                    allItems.push(...data.items);
+                }
+            }
+            
+            if (allItems.length === 0) {
+                throw new Error('No items found in selected orders.');
+            }
+            
+            console.log('All items collected:', allItems);
+            
+            // If single PO, return items as-is
+            // If multiple POs, create pivot table (group by vendor_item and sum quantities)
+            let processedData;
+            
+            if (selectedPOs.length === 1) {
+                // Single PO: use items directly
+                processedData = allItems.map((item, index) => {
+                    const sku = item.vendor_item ? item.vendor_item.toString().trim() : '';
+                    const barcode = item.upc ? item.upc.toString().trim() : '';
+                    const quantity = item.quantity ? parseFloat(item.quantity) : 0;
+                    
+                    if (!sku || !barcode || quantity <= 0) {
+                        console.warn(`Skipping item ${index}:`, { sku, barcode, quantity, item });
+                        return null;
+                    }
+                    
+                    return {
+                        sku: sku,
+                        barcode: barcode,
+                        quantity: Math.round(quantity)
+                    };
+                }).filter(item => item !== null);
+            } else {
+                // Multiple POs: create pivot table
+                const itemMap = new Map();
+                
+                allItems.forEach((item, index) => {
+                    const sku = item.vendor_item ? item.vendor_item.toString().trim() : '';
+                    const upc = item.upc ? item.upc.toString().trim() : '';
+                    const qty = item.quantity ? parseFloat(item.quantity) : 0;
+                    
+                    if (!sku || !upc || qty <= 0) {
+                        console.warn(`Skipping item ${index}:`, { sku, upc, qty, item });
+                        return;
+                    }
+                    
+                    // Create a key combining SKU and UPC
+                    const key = `${sku}|${upc}`;
+                    
+                    if (itemMap.has(key)) {
+                        itemMap.get(key).quantity += Math.round(qty);
+                    } else {
+                        itemMap.set(key, {
+                            sku: sku,
+                            barcode: upc,
+                            quantity: Math.round(qty)
+                        });
+                    }
+                });
+                
+                processedData = Array.from(itemMap.values());
+            }
+            
+            console.log('Processed data:', processedData);
+            
+            if (processedData.length === 0) {
+                throw new Error('No valid items found after processing.');
+            }
+            
+            return processedData;
+        }
+        
+        // Download 30 stickers version
+        async function download30Stickers() {
+            const btn = document.getElementById('download-30-stickers-btn');
+            const originalText = btn.innerHTML;
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                
+                const processedData = await collectOrderItems();
+                
+                // Prepare input_data in the format expected by the API
+                const inputData = processedData.map(item => 
+                    `${item.sku}\t${item.barcode}\t${item.quantity}`
+                ).join('\n');
+                
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('input_data', inputData);
+                
+                // Submit to new API endpoint
+                const response = await fetch('/lori_automation/generate_stickers_api', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.filename_30stickers) {
+                    const downloadUrl = `/lori_automation/download_loris_labels/${result.filename_30stickers}`;
+                    
+                    // Open PDF in new tab
+                    window.open(downloadUrl, '_blank');
+                    showToast('30 Stickers PDF generated successfully!', 'success');
+                } else {
+                    throw new Error('Could not generate PDF');
+                }
+                
+            } catch (error) {
+                console.error('Error generating 30 stickers:', error);
+                alert('Error generating 30 stickers: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        
+        // Download exact quantity version
+        async function downloadExactStickers() {
+            const btn = document.getElementById('download-exact-stickers-btn');
+            const originalText = btn.innerHTML;
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                
+                const processedData = await collectOrderItems();
+                
+                // Prepare input_data in the format expected by the API
+                const inputData = processedData.map(item => 
+                    `${item.sku}\t${item.barcode}\t${item.quantity}`
+                ).join('\n');
+                
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('input_data', inputData);
+                
+                // Submit to new API endpoint
+                const response = await fetch('/lori_automation/generate_stickers_api', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.filename_exact) {
+                    const downloadUrl = `/lori_automation/download_loris_labels/${result.filename_exact}`;
+                    
+                    // Open PDF in new tab
+                    window.open(downloadUrl, '_blank');
+                    showToast('Exact Quantity PDF generated successfully!', 'success');
+                } else {
+                    throw new Error('Could not generate PDF');
+                }
+                
+            } catch (error) {
+                console.error('Error generating exact stickers:', error);
+                alert('Error generating exact stickers: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
         // Download invoices function
         async function downloadInvoices() {
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
@@ -3444,6 +3649,10 @@
     console.log('Event listener attached to send-back-pending-btn');
     document.getElementById('bulk-batch-date-btn')?.addEventListener('click', bulkModifyBatchDate);
     console.log('Event listener attached to bulk-batch-date-btn');
+    document.getElementById('download-30-stickers-btn')?.addEventListener('click', download30Stickers);
+    console.log('Event listener attached to download-30-stickers-btn');
+    document.getElementById('download-exact-stickers-btn')?.addEventListener('click', downloadExactStickers);
+    console.log('Event listener attached to download-exact-stickers-btn');
 
     </script>
 

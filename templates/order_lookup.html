@@ -896,7 +896,7 @@
                 
                 <div class="form-group">
                     <label for="order_notes" class="font-weight-bold mb-2">
-                        <i class="fas fa-edit mr-1"></i>Edit Notes for Order {{ header_info.order_number }}
+                        <i class="fas fa-edit mr-1"></i>Edit Notes for Order {{ header_info.order_number }}<br> xxx Boxes <br> L-x 
                     </label>
                     <textarea id="order_notes" class="form-control" rows="5" placeholder="Enter order notes here..." style="font-family: 'Courier New', monospace; white-space: pre-wrap;">{{ header_info.notes if header_info.notes else '' }}</textarea>
                 </div>
@@ -1142,57 +1142,74 @@
         // Inline editing functionality
         let currentEditingCell = null;
 
-        function makeDescriptionEditable() {
-            // Add editable class and click event to description cells
+
+        function makeCellsEditable() {
+            // Add editable class and click event to description, qty, and price cells
             $('#items_table tbody tr').each(function() {
-                var descCell = $(this).find('td').eq(2); // Description is in third column (index 2)
+                var descCell = $(this).find('td').eq(2); // Description
+                var qtyCell = $(this).find('td').eq(3);  // Qty
+                var priceCell = $(this).find('td').eq(4); // Price
+
                 descCell.addClass('editable-cell');
-                
+                qtyCell.addClass('editable-cell');
+                priceCell.addClass('editable-cell');
+
                 descCell.off('click').on('click', function() {
-                    if (currentEditingCell && currentEditingCell[0] === this) {
-                        return; // Already editing this cell
-                    }
-                    
-                    // Save any previous editing cell
-                    if (currentEditingCell) {
-                        saveDescription(currentEditingCell);
-                    }
-                    
-                    startEditingDescription($(this));
+                    if (currentEditingCell && currentEditingCell[0] === this) return;
+                    if (currentEditingCell) saveEditableCell(currentEditingCell, currentEditingCell.data('editType'));
+                    $(this).data('editType', 'description');
+                    startEditingCell($(this), 'description');
+                });
+                qtyCell.off('click').on('click', function() {
+                    if (currentEditingCell && currentEditingCell[0] === this) return;
+                    if (currentEditingCell) saveEditableCell(currentEditingCell, currentEditingCell.data('editType'));
+                    $(this).data('editType', 'qty');
+                    startEditingCell($(this), 'qty');
+                });
+                priceCell.off('click').on('click', function() {
+                    if (currentEditingCell && currentEditingCell[0] === this) return;
+                    if (currentEditingCell) saveEditableCell(currentEditingCell, currentEditingCell.data('editType'));
+                    $(this).data('editType', 'price');
+                    startEditingCell($(this), 'price');
                 });
             });
         }
 
-        function startEditingDescription(cell) {
+        function startEditingCell(cell, type) {
             currentEditingCell = cell;
             var currentText = cell.text().trim();
-            
             cell.addClass('editing');
-            var input = $('<input type="text" class="description-input">');
+            var inputType = (type === 'qty' || type === 'price') ? 'number' : 'text';
+            var input = $('<input type="' + inputType + '" class="description-input">');
             input.val(currentText);
-            
+            if (type === 'qty') {
+                input.attr('min', '0');
+                input.attr('step', '1');
+            }
+            if (type === 'price') {
+                input.attr('min', '0');
+                input.attr('step', '0.01');
+            }
             cell.html(input);
             input.focus();
             input.select();
-            
+
             // Save on Enter key
             input.on('keypress', function(e) {
-                if (e.which === 13) { // Enter key
+                if (e.which === 13) {
                     e.preventDefault();
-                    saveDescription(cell);
+                    saveEditableCell(cell, type);
                 }
             });
-            
-            // Save on blur (clicking outside)
+            // Save on blur
             input.on('blur', function() {
                 setTimeout(function() {
-                    saveDescription(cell);
+                    saveEditableCell(cell, type);
                 }, 200);
             });
-            
             // Cancel on Escape key
             input.on('keydown', function(e) {
-                if (e.which === 27) { // Escape key
+                if (e.which === 27) {
                     cell.text(currentText);
                     cell.removeClass('editing');
                     currentEditingCell = null;
@@ -1200,47 +1217,53 @@
             });
         }
 
-        function saveDescription(cell) {
-            if (!cell || !cell.hasClass('editing')) {
-                return;
-            }
-            
+        function saveEditableCell(cell, type) {
+            if (!cell || !cell.hasClass('editing')) return;
             var input = cell.find('input');
             var newText = input.val().trim();
             var row = cell.closest('tr');
             var lineNumber = row.find('td').eq(0).text().trim();
             var skuCell = row.find('td').eq(1);
-            // Extract SKU from the hyperlink
             var sku = skuCell.find('a').length > 0 ? skuCell.find('a').text().trim() : skuCell.text().trim();
             var orderNumber = $('#order_number').val().trim();
-            
-            // Update the cell
+
+            // Update the cell visually
             cell.text(newText);
             cell.removeClass('editing');
             currentEditingCell = null;
-            
+
             // Show saving indicator
             cell.css('background-color', '#fff3cd');
             cell.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
-            
+
             // Send to server to save
+            let url = '';
+            let data = {
+                order_number: orderNumber,
+                line_number: lineNumber,
+                sku: sku
+            };
+            if (type === 'description') {
+                url = '/update_order_description';
+                data.description = newText;
+            } else if (type === 'qty') {
+                url = '/update_order_qty';
+                data.qty = newText;
+            } else if (type === 'price') {
+                url = '/update_order_price';
+                data.price = newText;
+            }
             $.ajax({
-                url: '/update_order_description',
+                url: url,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({
-                    order_number: orderNumber,
-                    line_number: lineNumber,
-                    sku: sku,
-                    description: newText
-                }),
+                data: JSON.stringify(data),
                 success: function(response) {
                     cell.text(newText);
                     cell.css('background-color', '#d4edda');
                     setTimeout(function() {
                         cell.css('background-color', '');
                     }, 2000);
-                    console.log('Description updated successfully for line ' + lineNumber);
                 },
                 error: function(xhr, status, error) {
                     cell.css('background-color', '#f8d7da');
@@ -1249,8 +1272,7 @@
                         cell.text(newText);
                         cell.css('background-color', '');
                     }, 3000);
-                    console.error('Error updating description:', error);
-                    alert('Failed to update description: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'));
+                    alert('Failed to update ' + type + ': ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'));
                 }
             });
         }
@@ -1327,8 +1349,8 @@
                     }
                 });
                 
-                // Enable inline editing for descriptions
-                makeDescriptionEditable();
+                // Enable inline editing for description, qty, and price
+                makeCellsEditable();
             }
 
             $('#info_list_table').DataTable({
