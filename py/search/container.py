@@ -54,11 +54,9 @@ def upload_container_file():
                         'success': True
                     })
 
-                    current_app.logger.info(f"Successfully processed container file: {file.filename}")
 
                 except Exception as e:
                     error_msg = f"Error processing file {file.filename}: {str(e)}"
-                    current_app.logger.error(error_msg)
                     processing_errors.append(error_msg)
                     continue
             
@@ -72,12 +70,164 @@ def upload_container_file():
     return render_template('container.html', current_user=current_user)
 
 def process_container_file(file, container_number):
-    df_f24213 = pd.read_excel(file, sheet_name='System File', header=2)
-    df_f24213.columns = df_f24213.columns.str.replace('\n', ' ').str.strip()
-    df_f24213 = df_f24213.dropna(subset=['OMS', 'RMB'])
-    df_f24213['WT/PCS (LBS)'] = df_f24213['WT/PCS (LBS)'].round(2)
-    df_f24213 = df_f24213.map(lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x)
-
+    System_file_tab = pd.read_excel(file, sheet_name='System File', header=2)
+    System_file_tab.columns = System_file_tab.columns.str.replace('\n', ' ').str.strip()
+    System_file_tab = System_file_tab.dropna(subset=['OMS', 'RMB'])
+    System_file_tab['WT/PCS (LBS)'] = System_file_tab['WT/PCS (LBS)'].round(2)
+    System_file_tab = System_file_tab.map(lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x)
+    
+    # Try different sheet names for packing list
+    packing_sheet = None
+    PackingList = None
+    
+    # First, get available sheets
+    excel_file = pd.ExcelFile(file)
+    
+    for sheet_name in ['Packing List', 'Placking List', 0]:
+        if packing_sheet:
+            break
+        try:
+            # Try different header row positions (0-7) to find actual column headers
+            for header_row in [6, 5, 7, 4, 3, 2, 1, 0]:
+                try:
+                    temp_df = pd.read_excel(file, sheet_name=sheet_name, header=header_row)
+                    
+                    # Check if this looks like valid headers
+                    col_str = ' '.join([str(c).upper() for c in temp_df.columns])
+                    
+                    # More flexible validation: look for any key column names
+                    has_style = 'STYLE' in col_str
+                    has_qty = 'QTY' in col_str
+                    has_ctn = 'CTN' in col_str
+                    has_measurement = 'MEASUREMENT' in col_str or 'DIMENSION' in col_str
+                    
+                    # Must have at least 2-3 of these indicators
+                    if (has_style and (has_qty or has_ctn or has_measurement)) or \
+                       (has_ctn and has_measurement) or \
+                       (sum([has_style, has_qty, has_ctn, has_measurement]) >= 3):
+                        
+                        # Additional validation: check if we have numeric data in expected rows
+                        if len(temp_df) > 0:
+                            PackingList = temp_df
+                            packing_sheet = sheet_name
+                            break
+                except Exception as e:
+                    continue
+            
+            if PackingList is not None:
+                break
+                
+        except Exception as e:
+            continue
+    
+    if PackingList is None:
+        raise ValueError("Could not parse packing list sheet - valid headers not found")
+    
+    # Extract case dimensions from MEASUREMENT column (format: "L*W*H")
+    case_length_list = []
+    case_width_list = []
+    case_height_list = []
+    
+    # Find the carton measurement column (second MEASUREMENT column or by name pattern)
+    measurement_cols = [col for col in PackingList.columns if 'MEASUREMENT' in str(col).upper() or 'DIMENSION' in str(col).upper()]
+    carton_measurement_col = None
+    style_color_col = None
+    qty_ctn_col = None
+    total_col = None
+    
+    # Find relevant columns - be flexible with naming
+    for col in PackingList.columns:
+        col_str = str(col).upper()
+        if 'STYLE' in col_str and style_color_col is None:
+            style_color_col = col
+        elif 'QTY' in col_str and 'CTN' in col_str and qty_ctn_col is None:
+            qty_ctn_col = col
+        elif col_str == 'TOTAL' and total_col is None:
+            total_col = col
+    
+    # Use second MEASUREMENT column if available (carton measurement), otherwise first
+    # Pandas adds .1, .2 etc. to duplicate column names
+    if len(measurement_cols) >= 2:
+        carton_measurement_col = measurement_cols[1]
+    elif len(measurement_cols) == 1:
+        carton_measurement_col = measurement_cols[0]
+    
+    # Create a mapping of Style+Color from PackingList to dimensions
+    # Strategy: Use rows where QTY/CTN > 1 and prefer rows with highest TOTAL value
+    packing_dict = {}
+    
+    if carton_measurement_col is not None and style_color_col is not None:
+        for idx, row in PackingList.iterrows():
+            try:
+                measurement = row[carton_measurement_col]
+                style_color = str(row[style_color_col]).strip() if pd.notna(row[style_color_col]) else ''
+                
+                # Extract style and color from combined format (e.g., "N2532  BK")
+                # Handle cases where style and color are separate or combined
+                parts = style_color.rsplit(' ', 1) if style_color else []
+                style = parts[0].strip() if len(parts) > 0 else ''
+                color = parts[1].strip() if len(parts) > 1 else ''
+                
+                if style and color and pd.notna(measurement):
+                    key = f"{style} {color}"
+                    measurement_str = str(measurement).strip()
+                    
+                    # Only process rows where QTY/CTN > 1 (not single-pack entries) or if TOTAL is not provided
+                    qty_ctn = 0
+                    total = 0
+                    
+                    if qty_ctn_col and qty_ctn_col in row.index:
+                        try:
+                            qty_ctn = float(row[qty_ctn_col]) if pd.notna(row[qty_ctn_col]) else 0
+                        except (ValueError, TypeError):
+                            qty_ctn = 0
+                    
+                    if total_col and total_col in row.index:
+                        try:
+                            total = float(row[total_col]) if pd.notna(row[total_col]) else 0
+                        except (ValueError, TypeError):
+                            total = 0
+                    
+                    # Accept if QTY/CTN > 1 or if we don't have QTY/CTN column
+                    if (qty_ctn > 1 or qty_ctn_col is None) and '*' in measurement_str:
+                        dim_parts = measurement_str.split('*')
+                        if len(dim_parts) >= 3:
+                            try:
+                                length = float(dim_parts[0].strip())
+                                width = float(dim_parts[1].strip())
+                                height = float(dim_parts[2].strip())
+                                
+                                # Store this dimension, preferring rows with higher TOTAL value
+                                if key not in packing_dict or total > packing_dict[key].get('total', 0):
+                                    packing_dict[key] = {
+                                        'length': length,
+                                        'width': width,
+                                        'height': height,
+                                        'total': total,
+                                        'qty_ctn': qty_ctn
+                                    }
+                            except ValueError as e:
+                                pass
+            except Exception as e:
+                continue
+    
+    # Now align with System_file_tab using the mapping
+    for idx, row in System_file_tab.iterrows():
+        style = str(row['STYLE NO']).strip() if pd.notna(row['STYLE NO']) else ''
+        color = str(row['COLOR']).strip() if pd.notna(row['COLOR']) else ''
+        key = f"{style} {color}"
+        
+        if key in packing_dict:
+            case_length_list.append(packing_dict[key]['length'])
+            case_width_list.append(packing_dict[key]['width'])
+            case_height_list.append(packing_dict[key]['height'])
+        else:
+            case_length_list.append('')
+            case_width_list.append('')
+            case_height_list.append('')
+    
+    
+    
     step3_columns = [
         'Item#', 'WHS#', 'Descrip', 'Unit', 'OrdSize', 'MinStk', 'Price Type', 'Price1', 'Price2', 'Price3', 
         'Price4', 'Price5', 'QtyPrice1', 'QtyPrice2', 'QtyPrice3', 'QtyPrice4', 'QtyPrice5', 'QtyPrice6', 
@@ -97,27 +247,31 @@ def process_container_file(file, container_number):
     
     # Prepare the data for step3 as a dictionary for faster DataFrame creation
     step3_data = {
-        'Item#': df_f24213['STYLE NO'] + ' ' + df_f24213['COLOR'],  # New Item#
+        'Item#': System_file_tab['STYLE NO'] + ' ' + System_file_tab['COLOR'],  # New Item#
         'WHS#': "01",
         'Descrip': container_number,
-        'Alt.Item#': df_f24213['STYLE NO'],  # Style No
-        'Color': df_f24213['COLOR'],
-        'Quantity': df_f24213['QUANTITY'],
+        'Alt.Item#': System_file_tab['STYLE NO'],  # Style No
+        'Color': System_file_tab['COLOR'],
+        'Quantity': System_file_tab['QUANTITY'],
         'Class#' : "L1",
-        'Unit/Case': df_f24213['PCS /CTN'],
+        'Unit/Case': System_file_tab['PCS /CTN'],
         'Box/Case': "01",
-        'Sales Cost':df_f24213['OMS'],
-        'Case Wt': df_f24213['WT/CTN (LBS)'],
-        'Unit Wt': df_f24213['WT/PCS (LBS)'],
-        'Unit Length': df_f24213['SIZE   (L)IN'],
-        'Unit Width': df_f24213['SIZE   (W)IN'],
-        'Unit Height': df_f24213['SIZE   (H)IN'],
-        'Price1': df_f24213['Price1'],
-        'Sale Price': df_f24213['Sale Price'],
-        'Base Cost':df_f24213['OMS'],
-        'Avg.Cost':df_f24213['OMS'],
-        'PO#': df_f24213['PO#']
+        'Sales Cost':System_file_tab['OMS'],
+        'Case Wt': System_file_tab['WT/CTN (LBS)'],
+        'Unit Wt': System_file_tab['WT/PCS (LBS)'],
+        'Case Length': case_length_list,
+        'Case Height': case_height_list,
+        'Case Width': case_width_list,
+        'Unit Length': System_file_tab['SIZE   (L)IN'],
+        'Unit Width': System_file_tab['SIZE   (W)IN'],
+        'Unit Height': System_file_tab['SIZE   (H)IN'],
+        'Price1': System_file_tab['Price1'],
+        'Sale Price': System_file_tab['Sale Price'],
+        'Base Cost':System_file_tab['OMS'],
+        'Avg.Cost':System_file_tab['OMS'],
+        'PO#': System_file_tab['PO#']
     }
+
 
     # Create DataFrame with step3 columns and fill missing ones with empty values
     df_step3 = pd.DataFrame(step3_data)
@@ -135,10 +289,10 @@ def process_container_file(file, container_number):
     step4_columns = ['P/O#', 'Item#', 'W#', 'P/O Qty', 'Price', 'Receive Qty', 'Receive Price', 'UPC']
     step4_data = {
         'P/O#': container_number,
-        'Item#': df_f24213['STYLE NO'] + ' ' + df_f24213['COLOR'],
+        'Item#': System_file_tab['STYLE NO'] + ' ' + System_file_tab['COLOR'],
         'W#': "01",
-        'P/O Qty': df_f24213['QUANTITY'],
-        'Price': df_f24213['OMS'],
+        'P/O Qty': System_file_tab['QUANTITY'],
+        'Price': System_file_tab['OMS'],
     }
 
     df_step4 = pd.DataFrame(step4_data)

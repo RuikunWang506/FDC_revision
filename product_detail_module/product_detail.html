@@ -468,6 +468,16 @@
         /* Hide search section at top when product_data exists */
         .show-search { display: block; }
         .hide-search { display: none; }
+
+        .sku-detail-badge {
+            font-size: 0.95em;
+            padding: 0.2em 0.7em;
+            border-radius: 0.5em;
+            background: #e0e7ff;
+            color: #3730a3;
+            display: inline-block;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -587,24 +597,86 @@
                     
                         
                         <h3>Style Info</h3>
-                        <div class="style-info-line"><strong>Style:</strong> {{ style_group.parent_info.style }}</div>
-                        <div class="style-info-line"><strong>Description:</strong> {{ style_group.description or 'N/A' }}</div>
-                        <div class="style-info-line"><strong>Location:</strong> {{ style_group.location or 'N/A' }}</div>
-                        <div class="style-info-line"><strong>Box Wt:</strong> {% if style_group.parent_info.box_wt %}{{ "%.1f" | format(style_group.parent_info.box_wt) }} lb{% else %}N/A{% endif %}</div>
-                        <div class="style-info-line"><strong>Piece Wt:</strong> {% if style_group.parent_info.pc_wt %}{{ "%.2f" | format(style_group.parent_info.pc_wt) }} lb{% else %}N/A{% endif %}</div>
-                        <div class="style-info-line"><strong>Dimensions:</strong> {% if style_group.parent_info.len %}{{ "%.1f" | format(style_group.parent_info.len) }}×{{ "%.1f" | format(style_group.parent_info.wid) }}×{{ "%.1f" | format(style_group.parent_info.hei) }}"{% else %}N/A{% endif %}</div>
-                        <div class="style-info-line"><strong>Case Qty:</strong> {{ style_group.parent_info.case_qty or 'N/A' }}</div>
-                        <div class="style-info-line"><strong>MSRP:</strong> {% if style_group.parent_info.msrp %}${{ "%.2f" | format(style_group.parent_info.msrp) }}{% else %}N/A{% endif %}</div>
-                        <div class="style-info-line"><strong>Cost:</strong> {% if style_group.parent_info.cost %}${{ "%.2f" | format(style_group.parent_info.cost) }}{% else %}N/A{% endif %}</div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 13px;">
+                            <!-- BASIC Section -->
+                            <div style="margin-bottom: 12px;">
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">BASIC</div>
+                                <div style="display: flex; gap: 15px;">
+                                    <!-- Left Column -->
+                                    <div style="flex: 1;">
+                                        <div style="margin-bottom: 6px;">Style: <span class="sku-detail-badge">{{ style_group.parent_info.style }}</span></div>
+                                        <div>Description: <span class="sku-detail-badge" style="cursor: pointer; text-decoration: underline;" onclick="openDescriptionEdit('{{ style_group.parent_info.style }}', '{{ style_group.description or 'N/A' }}', event)">{{ style_group.description or 'N/A' }}</span></div>
+                                    </div>
+                                    <!-- Right Column -->
+                                    <div style="flex: 1;">
+                                        <div style="margin-bottom: 6px;">MSRP: <span class="sku-detail-badge">{% if style_group.parent_info.msrp %}${{ "%.2f" | format(style_group.parent_info.msrp) }}{% else %}N/A{% endif %}</span></div>
+                                        <div>Cost: <span class="sku-detail-badge">{% if style_group.parent_info.cost %}${{ "%.2f" | format(style_group.parent_info.cost) }}{% else %}N/A{% endif %}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Masterbox Section -->
+                            <div style="margin-bottom: 12px;">
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">Masterbox</div>
+                                <div style="margin-bottom: 6px;">Case Qty: <span class="sku-detail-badge">{{ style_group.parent_info.case_qty or 'N/A' }}</span></div>
+                                <div style="margin-bottom: 6px;">Box Wt: <span class="sku-detail-badge">{% if style_group.parent_info.box_wt %}{{ "%.1f" | format(style_group.parent_info.box_wt) }} lb{% else %}N/A{% endif %}</span></div>
+                                <div>Dimensions: <span class="sku-detail-badge">{% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}</span></div>
+                            </div>
+
+                            <!-- Bag_Size Section -->
+                            <div style="margin-bottom: 12px;">
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">Bag_Size</div>
+                                <div style="margin-bottom: 6px;">Dimensions: <span class="sku-detail-badge">{% if style_group.parent_info.len %}{{ "%.1f" | format(style_group.parent_info.len) }}×{{ "%.1f" | format(style_group.parent_info.wid) }}×{{ "%.1f" | format(style_group.parent_info.hei) }}"{% else %}N/A{% endif %}</span></div>
+                                <div>Piece Wt: <span class="sku-detail-badge">{% if style_group.parent_info.pc_wt %}{{ "%.2f" | format(style_group.parent_info.pc_wt) }} lb{% else %}N/A{% endif %}</span></div>
+                            </div>
+
+                            <!-- Location Section -->
+                            <div>
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">INFO</div>
+                                <div style="margin-bottom: 6px;">Location: 
+                                    {% if style_group.location %}
+                                        {% for loc in style_group.location.split(',') %}
+                                        <span class="sku-detail-badge">{{ loc.strip() }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="sku-detail-badge">N/A</span>
+                                    {% endif %}
+                                </div>
+                                <div>OMS_Description: 
+                                    {% if style_group.oms_description %}
+                                        {% if style_group.oms_description is string %}
+                                            <span class="sku-detail-badge">{{ style_group.oms_description }}</span>
+                                        {% else %}
+                                            {% for desc in style_group.oms_description %}
+                                                <span class="sku-detail-badge">{{ desc }}</span>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="sku-detail-badge">N/A</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- RIGHT MODULE: Data Table -->
                     <div class="right-module">
+                        {% set has_multiple_descriptions = (style_group.oms_description is not string and style_group.oms_description|length > 1) %}
                         <div class="table-responsive">
                             <table class="dataTable">
                                 <thead>
                                     <tr>
-                                        <th>SKU</th><th>Color</th><th>Stock</th><th>Avail</th><th>Sold</th><th>Incom</th><th>Hist-PO</th><th>Hist-sold</th><th>Hist-fix</th><th>Checker</th>
+                                        <th>SKU</th>
+                                        {% if has_multiple_descriptions %}<th>Description</th>{% endif %}
+                                        <th>Color</th>
+                                        <th style="background-color: #fffacd;">Available</th>
+                                        <th>In Warehouse</th>
+                                        <th>Sold/reserved</th>
+                                        <th>Ocean</th>
+                                        <th>Hist-Received</th>
+                                        <th>Hist-sold</th>
+                                        <th>Hist-fix</th>
+                                        <th>Checker</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -612,9 +684,10 @@
                                     <!-- FDC Row -->
                                     {% if color.fdc %}
                                     <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="FDC" style="display: none;" class="fdc-row">
-                                        <td style="font-weight: 600;">{{ color.sku | trim }}</td>
+                                        <td style="font-weight: 600;"><a href="https://www.fdcef.com/product_detail?search={{ color.sku | trim }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ color.sku | trim }}</a></td>
+                                        {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
-                                        <td class="num-col">{{ color.fdc.stock if color.fdc else 0 }}</td>
+                                        <td class="num-col" style="background-color: #fffacd;">{{ color.fdc.stock if color.fdc else 0 }}</td>
                                         <td class="num-col" style="color: {% if (color.fdc.available if color.fdc else 0) > 0 %}green{% elif (color.fdc.available if color.fdc else 0) < 0 %}red{% endif %}">{{ color.fdc.available if color.fdc else 0 }}</td>
                                         <td class="num-col">{{ color.fdc.sold if color.fdc else 0 }}</td>
                                         <td class="num-col">{{ color.fdc.incoming if color.fdc else 0 }}</td>
@@ -634,9 +707,10 @@
                                     <!-- E_FAS Row -->
                                     {% if color.efas %}
                                     <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="E_FAS" style="display: none;" class="efas-row">
-                                        <td style="font-weight: 600;">{{ color.sku | trim }}</td>
+                                        <td style="font-weight: 600;"><a href="https://www.fdcef.com/product_detail?search={{ color.sku | trim }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ color.sku | trim }}</a></td>
+                                        {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
-                                        <td class="num-col">{{ color.efas.stock if color.efas else 0 }}</td>
+                                        <td class="num-col" style="background-color: #fffacd;">{{ color.efas.stock if color.efas else 0 }}</td>
                                         <td class="num-col" style="color: {% if (color.efas.available if color.efas else 0) > 0 %}green{% elif (color.efas.available if color.efas else 0) < 0 %}red{% endif %}">{{ color.efas.available if color.efas else 0 }}</td>
                                         <td class="num-col">{{ color.efas.sold if color.efas else 0 }}</td>
                                         <td class="num-col">{{ color.efas.incoming if color.efas else 0 }}</td>
@@ -655,9 +729,10 @@
                                     
                                     <!-- Combined Row (Both) -->
                                     <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="Both" class="combined-row">
-                                        <td style="font-weight: 600;">{{ color.sku | trim }}</td>
+                                        <td style="font-weight: 600;"><a href="https://www.fdcef.com/product_detail?search={{ color.sku | trim }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ color.sku | trim }}</a></td>
+                                        {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
-                                        <td class="num-col">{{ (color.fdc.stock if color.fdc else 0) + (color.efas.stock if color.efas else 0) }}</td>
+                                        <td class="num-col" style="background-color: #fffacd;">{{ (color.fdc.stock if color.fdc else 0) + (color.efas.stock if color.efas else 0) }}</td>
                                         <td class="num-col" style="color: {% set a = (color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0) %}{% if a > 0 %}green{% elif a < 0 %}red{% endif %}">{{ a }}</td>
                                         <td class="num-col">{{ (color.fdc.sold if color.fdc else 0) + (color.efas.sold if color.efas else 0) }}</td>
                                         <td class="num-col">{{ (color.fdc.incoming if color.fdc else 0) + (color.efas.incoming if color.efas else 0) }}</td>
@@ -672,7 +747,9 @@
                                     {% endfor %}
                                     <!-- FDC Summary Row -->
                                     <tr class="summary-row" data-database="FDC" style="display: none;">
-                                        <td colspan="2">TOTAL</td>
+                                        <td>TOTAL</td>
+                                        {% if has_multiple_descriptions %}<td></td>{% endif %}
+                                        <td></td>
                                         <td class="num-col">{% set fdc_stock = style_group.colors | map(attribute='fdc') | selectattr('stock') | map(attribute='stock') | sum %}{{ fdc_stock | int }}</td>
                                         <td class="num-col">{% set fdc_avail = style_group.colors | map(attribute='fdc') | selectattr('available') | map(attribute='available') | sum %}{{ fdc_avail | int }}</td>
                                         <td class="num-col">{% set fdc_sold = style_group.colors | map(attribute='fdc') | selectattr('sold') | map(attribute='sold') | sum %}{{ fdc_sold | int }}</td>
@@ -688,7 +765,9 @@
                                     
                                     <!-- E-FAS Summary Row -->
                                     <tr class="summary-row" data-database="E_FAS" style="display: none;">
-                                        <td colspan="2">TOTAL</td>
+                                        <td>TOTAL</td>
+                                        {% if has_multiple_descriptions %}<td></td>{% endif %}
+                                        <td></td>
                                         <td class="num-col">{% set efas_stock = style_group.colors | map(attribute='efas') | selectattr('stock') | map(attribute='stock') | sum %}{{ efas_stock | int }}</td>
                                         <td class="num-col">{% set efas_avail = style_group.colors | map(attribute='efas') | selectattr('available') | map(attribute='available') | sum %}{{ efas_avail | int }}</td>
                                         <td class="num-col">{% set efas_sold = style_group.colors | map(attribute='efas') | selectattr('sold') | map(attribute='sold') | sum %}{{ efas_sold | int }}</td>
@@ -704,7 +783,9 @@
                                     
                                     <!-- Combined Summary Row -->
                                     <tr class="summary-row" data-database="Both">
-                                        <td colspan="2">TOTAL</td>
+                                        <td>TOTAL</td>
+                                        {% if has_multiple_descriptions %}<td></td>{% endif %}
+                                        <td></td>
                                         <td class="num-col">{{ style_group.totals.combined.stock }}</td>
                                         <td class="num-col">{{ style_group.totals.combined.available }}</td>
                                         <td class="num-col">{{ style_group.totals.combined.sold }}</td>
@@ -770,7 +851,7 @@
                                 <thead>
                                     <tr>
                                         <th>Database</th>
-                                        <th>Product Code</th>
+                                        <th>SKU</th>
                                         <th>Order Number</th>
                                         <th>Order Date</th>
                                         <th>Customer ID</th>
@@ -785,7 +866,7 @@
                                     {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
                                     <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}" data-order-num="{{ row.order_number }}" data-customer-id="{{ row.customer_id }}" data-unit-price="{{ row.unit_price }}" data-order-qty="{{ row.order_quantity }}">
                                         <td>{{ row.database }}</td>
-                                        <td>{{ row.product_code }}</td>
+                                        <td><a href="https://www.fdcef.com/product_detail?search={{ row.product_code }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ row.product_code }}</a></td>
                                         <td><a href="/order_lookup/{{ row.order_number }}" target="_blank">{{ row.order_number }}</a></td>
                                         <td>{{ row.order_date }}</td>
                                         <td><a class="customer-link" onclick="openCustomerSearch('{{ row.customer_id }}')">{{ row.customer_id }}</a></td>
@@ -833,7 +914,7 @@
                             {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
                             <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}">
                                 <td>{{ row.database }}</td>
-                                <td>{{ row.sku }}</td>
+                                <td><a href="https://www.fdcef.com/product_detail?search={{ row.sku }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ row.sku }}</a></td>
                                 <td>{{ row.log_number }}</td>
                                 <td>{{ row.date }}</td>
                                 <td>{{ row.adjusted_by }}</td>
@@ -898,6 +979,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script>
         function enlargeImage(img) {
@@ -1288,6 +1370,116 @@
             }, 100);
         });
 
+    </script>
+
+    <!-- Edit Description Modal -->
+    <div class="modal fade" id="editDescriptionModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Modify Description</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div><strong>Style:</strong> <span id="editDescStyle"></span></div>
+            <label class="mt-3">Select Description</label>
+            <select id="editDescSelect" class="form-control">
+                <option value="">-- Loading descriptions --</option>
+            </select>
+            <div id="loadingMsg" class="mt-2 text-muted">Loading available descriptions...</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="saveDescriptionEdit()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    let currentEditStyle = null;
+    
+    function openDescriptionEdit(style, currentDesc, event) {
+        event.preventDefault();
+        event.stopPropagation();
+        currentEditStyle = style;
+        document.getElementById('editDescStyle').innerText = style;
+        
+        // Fetch available descriptions from the backend
+        fetch('/get_descriptions')
+            .then(response => response.json())
+            .then(data => {
+                const selectEl = document.getElementById('editDescSelect');
+                const loadingMsg = document.getElementById('loadingMsg');
+                
+                selectEl.innerHTML = '';
+                loadingMsg.style.display = 'none';
+                
+                if (data.descriptions && data.descriptions.length > 0) {
+                    data.descriptions.forEach(desc => {
+                        const option = document.createElement('option');
+                        option.value = desc;
+                        option.textContent = desc;
+                        if (desc === currentDesc || (currentDesc !== 'N/A' && desc === currentDesc)) {
+                            option.selected = true;
+                        }
+                        selectEl.appendChild(option);
+                    });
+                } else {
+                    selectEl.innerHTML = '<option value="">No descriptions available</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading descriptions:', error);
+                document.getElementById('loadingMsg').innerHTML = '<span class="text-danger">Error loading descriptions</span>';
+            });
+        
+        $('#editDescriptionModal').modal('show');
+    }
+    
+    function saveDescriptionEdit() {
+        const selectedDesc = document.getElementById('editDescSelect').value;
+        
+        if (!selectedDesc) {
+            alert('Please select a description');
+            return;
+        }
+        
+        if (!currentEditStyle) {
+            alert('Style not found');
+            return;
+        }
+        
+        // Send update to backend
+        fetch('/update_description', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                style: currentEditStyle,
+                description: selectedDesc
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Dismiss modal and reload page
+                $('#editDescriptionModal').modal('hide');
+                setTimeout(() => {
+                    location.reload();
+                }, 300);
+            } else {
+                alert('Update failed: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving description:', error);
+            alert('Error saving description');
+        });
+    }
     </script>
         </div>
         </div>

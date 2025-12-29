@@ -133,11 +133,111 @@ def fetch_description(style):
     except Exception as e:
         current_app.logger.error(f"Error fetching description: {e}")
         return None
-    finally:
-        if 'cursor' in locals() and cursor:
-            cursor.close()
-        if connection and connection.is_connected():
-            connection.close()
+
+
+def fetch_oms_description(style, conn_fdc=None, conn_oms_ef=None):
+    """Fetches ALL OMS descriptions for a style from SQL Server databases (FDC and E_FAS).
+    Returns a list of unique descriptions."""
+    if not style:
+        return None
+    
+    try:
+        # Clean the style for comparison
+        style_clean = style.strip().upper() if isinstance(style, str) else str(style).strip().upper()
+        descriptions = set()
+        
+        # Try to get from FDC first
+        if conn_fdc:
+            try:
+                cursor = conn_fdc.cursor()
+                query = """
+                    SELECT DISTINCT i.DESCRIP
+                    FROM dbo.inv AS i
+                    WHERE UPPER(i.ALT_CD) = ? OR UPPER(i.PROD_CD) LIKE ?
+                """
+                cursor.execute(query, (style_clean, f"{style_clean}%"))
+                rows = cursor.fetchall()
+                for row in rows:
+                    if row and row[0]:
+                        descriptions.add(row[0])
+            except Exception as e:
+                pass
+        
+        # Try to get from E_FAS
+        if conn_oms_ef:
+            try:
+                cursor = conn_oms_ef.cursor()
+                query = """
+                    SELECT DISTINCT i.DESCRIP
+                    FROM dbo.inv AS i
+                    WHERE UPPER(i.ALT_CD) = ? OR UPPER(i.PROD_CD) LIKE ?
+                """
+                cursor.execute(query, (style_clean, f"{style_clean}%"))
+                rows = cursor.fetchall()
+                for row in rows:
+                    if row and row[0]:
+                        descriptions.add(row[0])
+            except Exception as e:
+                pass
+        
+        return list(descriptions) if descriptions else None
+    
+    except Exception as e:
+        current_app.logger.error(f"Error fetching OMS descriptions: {e}")
+        return None
+
+
+
+def fetch_oms_description_by_sku(sku, conn_fdc=None, conn_oms_ef=None):
+    """Fetches OMS description for a specific SKU from SQL Server databases.
+    Returns a list of unique descriptions for that SKU."""
+    if not sku:
+        return None
+    
+    try:
+        # Clean the SKU - handle non-breaking spaces and other whitespace characters
+        sku_clean = sku.replace('\u00A0', ' ').strip().upper() if isinstance(sku, str) else str(sku).replace('\u00A0', ' ').strip().upper()
+        descriptions = set()
+        
+        # Try to get from FDC first
+        if conn_fdc:
+            try:
+                cursor = conn_fdc.cursor()
+                query = """
+                    SELECT DISTINCT i.DESCRIP
+                    FROM dbo.inv AS i
+                    WHERE i.PROD_CD = ? OR UPPER(LTRIM(RTRIM(i.PROD_CD))) = ?
+                """
+                cursor.execute(query, (sku_clean, sku_clean))
+                rows = cursor.fetchall()
+                for row in rows:
+                    if row and row[0]:
+                        descriptions.add(row[0])
+            except Exception as e:
+                pass
+        
+        # Try to get from E_FAS
+        if conn_oms_ef:
+            try:
+                cursor = conn_oms_ef.cursor()
+                query = """
+                    SELECT DISTINCT i.DESCRIP
+                    FROM dbo.inv AS i
+                    WHERE i.PROD_CD = ? OR UPPER(LTRIM(RTRIM(i.PROD_CD))) = ?
+                """
+                cursor.execute(query, (sku_clean, sku_clean))
+                rows = cursor.fetchall()
+                for row in rows:
+                    if row and row[0]:
+                        descriptions.add(row[0])
+            except Exception as e:
+                pass
+        
+        return list(descriptions) if descriptions else None
+    
+    except Exception as e:
+        current_app.logger.error(f"Error fetching OMS description for SKU: {e}")
+        return None
 
 
 
@@ -194,6 +294,9 @@ def search_product_data(search_input):
                     idt.ut_len AS len,
                     idt.ut_wi AS wid,
                     idt.UT_hi AS hei,
+                    idt.CASE_LEN AS master_len,
+                    idt.CASE_WI AS master_wid,
+                    idt.CASE_HI AS master_hei,
                     CASE 
                         WHEN LT_SL_DT = 0 THEN 'NEVER'
                         ELSE RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', LT_SL_DT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
@@ -239,8 +342,11 @@ def search_product_data(search_input):
                     'len': row[13],
                     'wid': row[14],
                     'hei': row[15],
-                    'last_activity': row[16],
-                    'create_dt': row[17]
+                    'master_len': row[16],
+                    'master_wid': row[17],
+                    'master_hei': row[18],
+                    'last_activity': row[19],
+                    'create_dt': row[20]
                 })
             
             cursor.close()
@@ -277,6 +383,9 @@ def group_by_style(results):
                     'wid': item['wid'],
                     'hei': item['hei'],
                     'case_qty': item['case_qty'],
+                    'master_len': item['master_len'],
+                    'master_wid': item['master_wid'],
+                    'master_hei': item['master_hei'],
                     'msrp': item['msrp'],
                     'cost': item['cost'],
                     'dimensions': f"{item['len']}x{item['wid']}x{item['hei']}"
@@ -473,7 +582,6 @@ def fetch_item_history(style_or_sku):
             try:
                 cursor.execute(query, (search_param,))
                 rows = cursor.fetchall()
-                current_app.logger.info(f"Item history query for {style_or_sku} in {db_name}: {len(rows)} rows")
                 
                 for row in rows:
                     history_data.append({
@@ -486,7 +594,7 @@ def fetch_item_history(style_or_sku):
                         'unit_price': float(row[5])
                     })
             except Exception as e:
-                current_app.logger.error(f"Error fetching item history from {db_name}: {e}")
+                pass
             finally:
                 cursor.close()
         
@@ -496,7 +604,6 @@ def fetch_item_history(style_or_sku):
         # Sort by order date descending
         if history_data:
             history_data.sort(key=lambda x: x['order_date'], reverse=True)
-        current_app.logger.info(f"Total item history records found: {len(history_data)}")
         return history_data
         
     except Exception as e:
@@ -542,7 +649,6 @@ def fetch_adjustment_history(style_or_sku):
                 adjustment_params.append(f"{part}%")
         
         combined_condition_adjustment = " OR ".join(adjustment_conditions) if adjustment_conditions else "1=1"
-        current_app.logger.info(f"Adjustment search - Conditions: {adjustment_conditions}, Params: {adjustment_params}")
         
         # Query matching SQL_connector exactly
         adjustment_query = f"""
@@ -565,7 +671,6 @@ def fetch_adjustment_history(style_or_sku):
                 cursor = conn.cursor()
                 cursor.execute(adjustment_query, adjustment_params)
                 rows = cursor.fetchall()
-                current_app.logger.info(f"Adjustment history query for {style_or_sku} in {db_name}: {len(rows)} rows")
                 
                 for row in rows:
                     adjustment_data.append({
@@ -578,7 +683,7 @@ def fetch_adjustment_history(style_or_sku):
                     })
                 cursor.close()
             except Exception as e:
-                current_app.logger.error(f"Error fetching adjustment history from {db_name}: {e}")
+                pass
         
         conn_fdc.close()
         conn_oms_ef.close()
@@ -586,7 +691,6 @@ def fetch_adjustment_history(style_or_sku):
         # Sort by date descending
         if adjustment_data:
             adjustment_data.sort(key=lambda x: x['date'], reverse=True)
-        current_app.logger.info(f"Total adjustment history records found: {len(adjustment_data)}")
         return adjustment_data
         
     except Exception as e:
@@ -639,7 +743,6 @@ def fetch_purchase_history(style_or_sku):
             try:
                 cursor.execute(query, (search_param,))
                 rows = cursor.fetchall()
-                current_app.logger.info(f"Purchase history query for {style_or_sku} in {db_name}: {len(rows)} rows")
                 
                 for row in rows:
                     purchase_data.append({
@@ -650,7 +753,7 @@ def fetch_purchase_history(style_or_sku):
                         'purchase_quantity': int(row[3])
                     })
             except Exception as e:
-                current_app.logger.error(f"Error fetching purchase history from {db_name}: {e}")
+                pass
             finally:
                 cursor.close()
         
@@ -660,7 +763,6 @@ def fetch_purchase_history(style_or_sku):
         # Sort by PO date descending
         if purchase_data:
             purchase_data.sort(key=lambda x: x['po_date'], reverse=True)
-        current_app.logger.info(f"Total purchase history records found: {len(purchase_data)}")
         return purchase_data
         
     except Exception as e:
@@ -702,6 +804,7 @@ def search_product_data_with_history(search_input):
         # Fetch description for style
         style = style_group['parent_info']['style']
         style_group['description'] = fetch_description(style) or 'N/A'
+        style_group['oms_description'] = fetch_oms_description(style, conn_fdc, conn_oms_ef) or 'N/A'
         
         for color in style_group['colors']:
             sku = color['sku']
@@ -709,6 +812,9 @@ def search_product_data_with_history(search_input):
             # Fetch history from both databases
             history_fdc = fetch_sku_history(sku, conn_fdc) if conn_fdc else {'history_po': 0, 'history_sold': 0, 'history_fix': 0}
             history_efas = fetch_sku_history(sku, conn_oms_ef) if conn_oms_ef else {'history_po': 0, 'history_sold': 0, 'history_fix': 0}
+            
+            # Fetch SKU-specific OMS description
+            color['oms_description'] = fetch_oms_description_by_sku(sku, conn_fdc, conn_oms_ef) or 'N/A'
             
             # Store history data
             color['history_fdc'] = history_fdc
@@ -834,6 +940,71 @@ def product_detail(search_input=None):
         adjustment_data=adjustment_data,
         purchase_data=purchase_data
     )
+
+
+@product_detail_bp.route("/get_descriptions", methods=["GET"])
+def get_descriptions():
+    """Get all available descriptions from the database"""
+    try:
+        connection = get_mysql_connection()
+        if not connection:
+            return jsonify({"success": False, "error": "Database connection failed"})
+        
+        cursor = connection.cursor()
+        cursor.execute("SELECT DISTINCT description FROM onlinedb.description ORDER BY description")
+        rows = cursor.fetchall()
+        descriptions = [row[0] for row in rows]
+        cursor.close()
+        connection.close()
+        
+        return jsonify({"success": True, "descriptions": descriptions})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching descriptions: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@product_detail_bp.route("/update_description", methods=["POST"])
+def update_description():
+    """Update description for a style"""
+    try:
+        data = request.get_json()
+        style = data.get('style', '').strip()
+        description = data.get('description', '').strip()
+        
+        if not style or not description:
+            return jsonify({"success": False, "error": "Style and description are required"})
+        
+        connection = get_mysql_connection()
+        if not connection:
+            return jsonify({"success": False, "error": "Database connection failed"})
+        
+        cursor = connection.cursor()
+        
+        # Check if description exists for this style
+        cursor.execute("SELECT COUNT(*) FROM onlinedb.description WHERE style = %s", (style.upper(),))
+        count = cursor.fetchone()[0]
+        
+        if count > 0:
+            # Update existing
+            cursor.execute(
+                "UPDATE onlinedb.description SET description = %s WHERE style = %s",
+                (description, style.upper())
+            )
+        else:
+            # Insert new
+            cursor.execute(
+                "INSERT INTO onlinedb.description (style, description) VALUES (%s, %s)",
+                (style.upper(), description)
+            )
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({"success": True, "message": "Description updated successfully"})
+    except Exception as e:
+        current_app.logger.error(f"Error updating description: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
 
 @product_detail_bp.route("/api/product/search", methods=["POST"])
