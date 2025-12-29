@@ -48,6 +48,32 @@
             text-align: center; /* Horizontally center */
             vertical-align: middle; /* Vertically center */
         }
+        
+        /* Dennis ETA cell styling */
+        .dennis-eta-cell {
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: text;
+            transition: all 0.2s ease;
+            min-height: 20px;
+        }
+        
+        .dennis-eta-cell:hover {
+            background-color: rgba(255, 229, 153, 0.4);
+            box-shadow: inset 0 0 3px rgba(255, 193, 7, 0.5);
+        }
+        
+        .dennis-eta-cell:focus {
+            outline: none;
+            background-color: rgba(255, 235, 59, 0.5);
+            box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.8);
+            border-radius: 4px;
+        }
+        
+        .dennis-eta-cell.saving {
+            opacity: 0.6;
+            pointer-events: none;
+        }
 
         table.editable th {
             text-align: center; /* Center table headers */
@@ -60,20 +86,39 @@
 
         /* Styling for rows based on status */
         .status-ocean {
-            background-color: rgba(172, 212, 255, 0.3) !important; /* Light blue for ocean status */
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.3) 0%, rgba(100, 149, 237, 0.2) 100%) !important;
+            border-left: 4px solid #4169E1 !important;
         }
 
         .status-landed {
-            background-color: rgba(144, 238, 144, 0.3) !important; /* Light green for landed status */
+            background: linear-gradient(135deg, rgba(152, 251, 152, 0.3) 0%, rgba(144, 238, 144, 0.2) 100%) !important;
+            border-left: 4px solid #28a745 !important;
         }
 
         .status-port {
-            background-color: rgba(255, 239, 190, 0.3) !important; /* Light yellow for port status */
+            background: linear-gradient(135deg, rgba(255, 255, 153, 0.3) 0%, rgba(255, 239, 190, 0.2) 100%) !important;
+            border-left: 4px solid #FFA500 !important;
         }
 
         .status-memo {
-            background-color: rgba(255, 182, 193, 0.3) !important; /* Light pink for memo status */
-            color: white; /* White text for better contrast */
+            background: linear-gradient(135deg, rgba(255, 192, 203, 0.4) 0%, rgba(255, 182, 193, 0.3) 100%) !important;
+            border-left: 4px solid #DC143C !important;
+        }
+        
+        tr.status-ocean:hover {
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.5) 0%, rgba(100, 149, 237, 0.4) 100%) !important;
+        }
+        
+        tr.status-landed:hover {
+            background: linear-gradient(135deg, rgba(152, 251, 152, 0.5) 0%, rgba(144, 238, 144, 0.4) 100%) !important;
+        }
+        
+        tr.status-port:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 153, 0.5) 0%, rgba(255, 239, 190, 0.4) 100%) !important;
+        }
+        
+        tr.status-memo:hover {
+            background: linear-gradient(135deg, rgba(255, 192, 203, 0.6) 0%, rgba(255, 182, 193, 0.5) 100%) !important;
         }
 
         /* Tracking popup styles */
@@ -214,7 +259,7 @@
 </head>
 <body>
     {% include 'navbar.html' %}
-    <h1 class="text-center">Boat Service V2.2</h1>
+    <h1 class="text-center">Boat Service V2.2 rollback to V1.1</h1>
     <div class="container mt-5">
         <div class="alert alert-info text-center" role="alert">
             <i class="bi bi-cloud-download"></i> Data is fetched live from <a href="https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/edit?gid=0#gid=0" target="_blank" class="alert-link">This 📙Google Sheets</a>
@@ -225,7 +270,7 @@
         <div class="mt-4">
             <div class="row mt-4">
                 <div class="col-md-12 text-center">
-                    <h3>Last Updated: <span id="lastUpdated">{{ last_modified_date }}</span> <button id="showStepsBtn" class="btn btn-sm btn-info ml-3">📋 Steps</button> <a href="/container" class="btn btn-info" style="padding: 5px 10px; font-size: 12px; margin-left: 10px; border-radius: 5px;"><img src="/static/icons/container.png" alt="containers" style="width: 16px; height: 16px; margin-right: 5px;">Manual Process Container</a></h3>
+                    <h3>Last Updated: <span id="lastUpdated">{{ last_modified_date }}</span> <a href="/container" class="btn btn-info" style="padding: 5px 10px; font-size: 12px; margin-left: 10px; border-radius: 5px;"><img src="/static/icons/container.png" alt="containers" style="width: 16px; height: 16px; margin-right: 5px;">Manual Process Container</a></h3>
                 </div>
             </div>
             
@@ -234,17 +279,20 @@
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                     <span class="sr-only">Loading...</span>
                 </div>
-                    <p class="mt-3"><strong>Step 1: Scan Dropbox for available container files</strong></p>
-                    <p class="mt-3"><strong>Step 2: Check Google Sheets for existing containers and add new ones</strong></p>
-                    <p class="mt-3"><strong>Step 3: Fetch updated container data from Google Sheets</strong></p>
-                    <p class="mt-3"><strong>Step 4: Clean and format data for display</strong></p>
-                    <p class="mt-3"><strong>Step 5: Query OMS database to determine container status (ocean/landed/upload)</strong></p>
-                    <p class="mt-3"><strong>Step 6: Update Google Sheets with received dates for landed containers</strong></p>
-                    <p class="mt-3"><strong>Step 7: Set file processing flags and button visibility</strong></p>
-                    <p class="mt-3"><strong>Step 8: Fetch tracking data from Terminal49 API and create tracking requests</strong></p>
-                    <p class="mt-3"><strong>Step 9: Update Google Sheets with tracking information (ETA, shipping line, voyage)</strong></p>
-                    <p class="mt-3"><strong>Step 10: Fetch email counts for port containers</strong></p>
-                    <p class="mt-3"><strong>Step 11: Update Last Updated timestamps and finalize display</strong></p>
+                <div class="mt-4" style="max-width: 600px; margin: 20px auto; text-align: left; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                    <h5 style="text-align: center; margin-bottom: 15px;">🔄 Loading Data...</h5>
+                    <p class="mt-2"><strong>Step 1:</strong> Scan Dropbox for available container files</p>
+                    <p class="mt-2"><strong>Step 2:</strong> Check Google Sheets for existing containers and add new ones</p>
+                    <p class="mt-2"><strong>Step 3:</strong> Fetch updated container data from Google Sheets</p>
+                    <p class="mt-2"><strong>Step 4:</strong> Clean and format data for display</p>
+                    <p class="mt-2"><strong>Step 5:</strong> Query OMS database to determine container status (ocean/landed/upload)</p>
+                    <p class="mt-2"><strong>Step 6:</strong> Update Google Sheets with received dates for landed containers</p>
+                    <p class="mt-2"><strong>Step 7:</strong> Set file processing flags and button visibility</p>
+                    <p class="mt-2"><strong>Step 8:</strong> Fetch tracking data from Terminal49 API and create tracking requests</p>
+                    <p class="mt-2"><strong>Step 9:</strong> Update Google Sheets with tracking information (ETA, shipping line, voyage)</p>
+                    <p class="mt-2"><strong>Step 10:</strong> Fetch email counts for port containers</p>
+                    <p class="mt-2"><strong>Step 11:</strong> Update Last Updated timestamps and finalize display</p>
+                </div>
             </div>
             
             <!-- Table container -->
@@ -253,13 +301,10 @@
                     <tr>
                         <th>FDC container</th>
                         <th>BOL NUM</th>
-                        <th>internal ETA</th>
-                        <th>Auto ETA</th>
-                        <th>Auto Arrv</th>
+                        <th>Dennis ETA</th>
                         <th>internal RCD</th>
                         <th>MEMO</th>
                         <th>Status</th>
-                        <th>Ship Name</th>
                         <th>Files</th>
                     </tr>
                 </thead>
@@ -267,39 +312,22 @@
                     <!-- Data will be loaded here -->
                 </tbody>
             </table>
-        </div>
-    </div>
-
-    <!-- Steps Modal -->
-    <div class="modal fade" id="stepsModal" tabindex="-1" role="dialog" aria-labelledby="stepsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="stepsModalLabel">Boat Service Processing Steps</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center">
-                        <h4 class="mb-4">🔄 Data Processing Workflow</h4>
-                        <div class="text-left">
-                            <p class="mt-3"><strong>Step 1: Scan Dropbox for available container files</strong></p>
-                            <p class="mt-3"><strong>Step 2: Check Google Sheets for existing containers and add new ones</strong></p>
-                            <p class="mt-3"><strong>Step 3: Fetch updated container data from Google Sheets</strong></p>
-                            <p class="mt-3"><strong>Step 4: Clean and format data for display</strong></p>
-                            <p class="mt-3"><strong>Step 5: Query OMS database to determine container status (ocean/landed/upload)</strong></p>
-                            <p class="mt-3"><strong>Step 6: Update Google Sheets with received dates for landed containers</strong></p>
-                            <p class="mt-3"><strong>Step 7: Set file processing flags and button visibility</strong></p>
-                            <p class="mt-3"><strong>Step 8: Fetch tracking data from Terminal49 API and create tracking requests</strong></p>
-                            <p class="mt-3"><strong>Step 9: Update Google Sheets with tracking information (ETA, shipping line, voyage)</strong></p>
-                            <p class="mt-3"><strong>Step 10: Fetch email counts for port containers</strong></p>
-                            <p class="mt-3"><strong>Step 11: Update Last Updated timestamps and finalize display</strong></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            
+            <!-- Processing Steps Info -->
+            <div class="mt-5" style="background: #f0f7ff; padding: 25px; border-radius: 8px; border-left: 4px solid #0066cc;">
+                <h5 style="color: #0066cc; margin-bottom: 15px;">📋 Data Processing Workflow</h5>
+                <div style="columns: 2; column-gap: 30px;">
+                    <p><strong>Step 1:</strong> Scan Dropbox for available container files</p>
+                    <p><strong>Step 2:</strong> Check Google Sheets for existing containers and add new ones</p>
+                    <p><strong>Step 3:</strong> Fetch updated container data from Google Sheets</p>
+                    <p><strong>Step 4:</strong> Clean and format data for display</p>
+                    <p><strong>Step 5:</strong> Query OMS database to determine container status (ocean/landed/upload)</p>
+                    <p><strong>Step 6:</strong> Update Google Sheets with received dates for landed containers</p>
+                    <p><strong>Step 7:</strong> Set file processing flags and button visibility</p>
+                    <p><strong>Step 8:</strong> Fetch tracking data from Terminal49 API and create tracking requests</p>
+                    <p><strong>Step 9:</strong> Update Google Sheets with tracking information (ETA, shipping line, voyage)</p>
+                    <p><strong>Step 10:</strong> Fetch email counts for port containers</p>
+                    <p><strong>Step 11:</strong> Update Last Updated timestamps and finalize display</p>
                 </div>
             </div>
         </div>
@@ -333,35 +361,49 @@
 
           function applyRowStyling() {
               $('#boat_table tbody tr').each(function() {
-                  var autoEta = $(this).find('td:nth-child(4)').text().trim();    // Auto ETA column
-                  var autoArrv = $(this).find('td:nth-child(5)').text().trim();  // Auto Arrv column
-                  var internalRcd = $(this).find('td:nth-child(6)').text().trim(); // internal RCD column
-                  var memo1 = $(this).find('td:nth-child(7)').text().trim();     // MEMO column
-
-                  // Prefer server-side Status when available (prevents overwriting landed rows)
-                  var statusCellText = $(this).find('td:nth-child(8)').text().trim(); // Status column
-
-                  // Normalize status text for easier checks
-                  var normalizedStatus = statusCellText.replace(/\s+/g, '');
-
-                  if (normalizedStatus.indexOf('✔️827✔️'.replace(/\s+/g, '')) !== -1 || /827/.test(normalizedStatus)) {
-                      // If server marked it landed, preserve landed styling
-                      $(this).addClass('status-landed');
-                  } else if (autoArrv !== '' && internalRcd === '') {
-                      // If Auto Arrv has value and internal RCD is empty, it's at port
-                      $(this).addClass('status-port');
-                  } else if (autoEta !== '') {
-                      // If Auto ETA has value (and not landed/port), it's ocean
-                      $(this).addClass('status-ocean');
-                  } else {
-                      // Default to landed-style when no clear indicators
-                      $(this).addClass('status-landed');
+                  // Remove any existing status classes
+                  $(this).removeClass('status-ocean status-landed status-port status-memo');
+                  
+                  // Get all cells in this row
+                  var cells = $(this).find('td');
+                  
+                  // Map cells to columns based on actual table structure
+                  var container = cells.eq(0).text().trim();        // Container
+                  var bolNum = cells.eq(1).text().trim();           // BOL NUM
+                  var dennisEta = cells.eq(2).text().trim();        // Dennis ETA
+                  var rcd = cells.eq(3).text().trim();              // RCD (Actual RCD)
+                  var memo = cells.eq(4).text().trim();             // MEMO
+                  
+                  // Determine status based on data
+                  var hasEta = dennisEta !== '';
+                  var hasRcd = rcd !== '';
+                  var hasMemo = memo !== '';
+                  
+                  // Priority-based status assignment
+                  var statusClass = 'status-ocean'; // Default to ocean for new containers
+                  
+                  // If has RCD and no memo, it's landed
+                  if (hasRcd && !hasMemo) {
+                      statusClass = 'status-landed';
                   }
-
-                  // Add memo styling if memo exists (keep memo as additive but do not remove landed indicator)
-                  if (memo1 !== '') {
-                      $(this).addClass('status-memo');
+                  // If has memo, mark as memo (attention needed)
+                  else if (hasMemo) {
+                      statusClass = 'status-memo';
                   }
+                  // If has ETA but no RCD, it's in ocean
+                  else if (hasEta && !hasRcd) {
+                      statusClass = 'status-ocean';
+                  }
+                  // If no RCD, no ETA, no memo - it's still ocean (new container)
+                  else if (!hasRcd && !hasEta && !hasMemo) {
+                      statusClass = 'status-ocean';
+                  }
+                  // If no RCD but has memo about port
+                  else if (!hasRcd && !hasEta && memo.toLowerCase().includes('port')) {
+                      statusClass = 'status-port';
+                  }
+                  
+                  $(this).addClass(statusClass);
               });
           }
 
@@ -395,12 +437,6 @@
                               var dennisEtaHtml = '<div class="dennis-eta-cell" contenteditable="true" data-container="' + row.container + '">' + (row['Dennis ETA'] || '') + '</div>';
                               tr.append($('<td></td>').html(dennisEtaHtml));
                               
-                              // Auto ETA (Actual ETA)
-                              tr.append($('<td></td>').text(row['Auto ETA'] || ''));
-                              
-                              // pod_ata_at (Actual Arrv)
-                              tr.append($('<td></td>').text(row.pod_ata_at || ''));
-                              
                               // RCD (Actual RCD)
                               tr.append($('<td></td>').text(row.RCD || ''));
                               
@@ -419,9 +455,6 @@
                               }
                               tr.append($('<td></td>').html(statusHtml));
                               
-                              // Ship Name
-                              tr.append($('<td></td>').text(row.ship_name || ''));
-                              
                               // Files - Process button or download buttons + tracking button
                               var filesHtml = '';
                               if (row.has_styles_csv && row.has_po_csv) {
@@ -429,16 +462,16 @@
                                   filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
                                   filesHtml += '<a href="/boat/download/' + row.container + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
                                   filesHtml += '<a href="/boat/download/' + row.container + '/po" class="btn btn-sm btn-success mr-1" download>PO CSV</a>';
-                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '">📍Track</button>';
+                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
                               } else if (row.can_process || row.Status === '🔄upload🔄') {
                                   // Can be processed or in upload status - show original + process button + tracking
                                   filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
                                   filesHtml += '<button class="btn btn-sm btn-warning process-btn mr-1" data-container="' + row.container + '">Process</button>';
-                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '">📍Track</button>';
+                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
                               } else {
                                   // No Dropbox file or already in database - show only Original button + tracking
                                   filesHtml = '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
-                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '">📍Track</button>';
+                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
                               }
                               tr.append($('<td></td>').html(filesHtml));
                               
@@ -502,18 +535,14 @@
               // Handle tracking button clicks (delegated event)
               $(document).on('click', '.tracking-btn', function() {
                   var fdc_container = $(this).data('container');
-                  showTrackingPopup(fdc_container);
+                  var bol_num = $(this).data('bol');
+                  showTrackingPopup(fdc_container, bol_num);
               });
               
               // Handle email button clicks (delegated event)
               $(document).on('click', '.email-btn', function() {
                   var bol_num = $(this).data('bol');
                   showEmailPopup(bol_num);
-              });
-              
-              // Handle steps button click
-              $('#showStepsBtn').on('click', function() {
-                  $('#stepsModal').modal('show');
               });
               
               // Handle Dennis ETA cell editing
@@ -549,11 +578,26 @@
                   success: function(response) {
                       if (response.success) {
                           $(cellElement).removeClass('saving');
-                          // Show success briefly
-                          $(cellElement).css('background-color', '#d4edda');
-                          setTimeout(function() {
-                              $(cellElement).css('background-color', '');
-                          }, 1000);
+                          // Show success with animated pulse effect
+                          $(cellElement).css({
+                              'background-color': '#d4edda',
+                              'box-shadow': '0 0 0 0 rgba(40, 167, 69, 0.7)'
+                          });
+                          
+                          // Pulse animation
+                          var pulseSize = 5;
+                          var pulses = 0;
+                          var pulseInterval = setInterval(function() {
+                              pulses++;
+                              $(cellElement).css('box-shadow', '0 0 0 ' + (pulseSize * pulses) + 'px rgba(40, 167, 69, ' + (0.7 - pulses * 0.14) + ')');
+                              if (pulses >= 5) {
+                                  clearInterval(pulseInterval);
+                                  $(cellElement).css({
+                                      'background-color': '',
+                                      'box-shadow': ''
+                                  });
+                              }
+                          }, 150);
                       } else {
                           alert('Error updating Dennis ETA: ' + response.error);
                           $(cellElement).removeClass('saving');
@@ -570,24 +614,35 @@
               });
           }
           
-          function showTrackingPopup(fdc_container) {
+          function showTrackingPopup(fdc_container, bol_num) {
+              // Create terminal49 link
+              var terminal49Link = 'https://app.terminal49.com/shipments?q=' + encodeURIComponent(bol_num);
+              
               // Create modal HTML
               var modalHtml = '<div class="modal fade" id="trackingModal" tabindex="-1" role="dialog">' +
                   '<div class="modal-dialog modal-lg" role="document">' +
                       '<div class="modal-content">' +
                           '<div class="modal-header">' +
-                              '<h5 class="modal-title">Container Tracking: ' + fdc_container + '</h5>' +
+                              '<h5 class="modal-title">Tracking: ' + fdc_container + '</h5>' +
                               '<button type="button" class="close" data-dismiss="modal">' +
                                   '<span>&times;</span>' +
                               '</button>' +
                           '</div>' +
                           '<div class="modal-body">' +
-                              '<div class="text-center">' +
-                                  '<div class="spinner-border" role="status">' +
-                                      '<span class="sr-only">Loading...9 seconds </span>' +
-                                  '</div>' +
-                                  '<p>Loading tracking information...</p>' +
+                              '<div class="form-group">' +
+                                  '<label><strong>BOL Number:</strong></label>' +
+                                  '<p>' + bol_num + '</p>' +
                               '</div>' +
+                              '<div class="form-group">' +
+                                  '<label><strong>Terminal49 Tracking:</strong></label>' +
+                                  '<p><a href="' + terminal49Link + '" target="_blank" class="btn btn-primary">Open Terminal49 📱</a></p>' +
+                              '</div>' +
+                          '</div>' +
+                          '<div class="modal-footer" style="flex-direction: column; align-items: flex-start;">' +
+                              '<div style="width: 100%; text-align: left; font-size: 13px; color: #666; border-top: 1px solid #ddd; padding-top: 15px;">' +
+                                  '<p style="margin: 0 0 5px 0;"><strong>need to register</strong></p>' +
+                              '</div>' +
+                              '<button type="button" class="btn btn-secondary mt-3" data-dismiss="modal">Close</button>' +
                           '</div>' +
                       '</div>' +
                   '</div>' +
@@ -601,18 +656,6 @@
               
               // Show modal
               $('#trackingModal').modal('show');
-              
-              // Load tracking data
-              $.ajax({
-                  url: '/boat/tracking/' + fdc_container,
-                  method: 'GET',
-                  success: function(response) {
-                      $('.modal-body').html(response);
-                  },
-                  error: function(xhr, status, error) {
-                      $('.modal-body').html('<div class="alert alert-danger">Failed to load tracking information: ' + error + '</div>');
-                  }
-              });
           }
           
           function showEmailPopup(bol_num) {

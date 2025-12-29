@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f5f5f5; color: #333; font-size: 14px; }
+        .container-main { max-width: 1400px; margin: 12px auto; padding: 0 8px; }
+
+        /* Search Section */
+        .search-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 5px; margin-bottom: 15px; }
+        .search-section h1 { color: white; margin-bottom: 8px; font-size: 20px; text-align: center; }
+        .search-section p { color: rgba(255,255,255,0.85); margin: 0 0 8px 0; font-size: 13px; text-align: center; }
+
+        .search-form { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+        .search-form input { min-width: 250px; padding: 8px 12px; border: none; border-radius: 3px; font-size: 14px; }
+        .search-form button { padding: 8px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+        /* Info Box */
+        .info-box { background: white; border-left: 2px solid #667eea; padding: 8px 12px; margin: 8px 0; border-radius: 3px; font-size: 13px; }
+
+        /* Error/Empty State */
+        .error-message { background: #ffebee; color: #c62828; padding: 8px; border-radius: 3px; margin: 8px 0; border-left: 2px solid #f44336; font-size: 13px; }
+        .empty-state { background: white; padding: 20px; text-align: center; border-radius: 4px; }
+        .empty-state i { font-size: 32px; color: #bdbdbd; margin-bottom: 8px; }
+        .empty-state h3 { font-size: 14px; color: #666; }
+
+        /* Product Wrapper - Collapsible */
+        .product-wrapper { margin: 12px 0; background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        .product-header {
+            background: #667eea;
+            color: white;
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: background 0.3s ease;
+        }
+        
+        .product-header:hover { background: #5568d3; }
+        
+        .product-header .chevron-icon {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            margin-right: 8px;
+        }
+        
+        .product-header.collapsed .chevron-icon { transform: rotate(-90deg); }
+        
+        /* Color Filter Buttons */
+        .color-filter-buttons { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+        
+        .color-filter-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .color-filter-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.8);
+        }
+        
+        .color-filter-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .header-colors { display: flex; flex-wrap: wrap; gap: 5px; }
+        
+        .color-chip-header {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 4px;
+            padding: 3px 6px;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .color-chip-header .color-code {
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            line-height: 1.2;
+        }
+        
+        .product-content {
+            max-height: 5000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 12px;
+        }
+        
+        .product-content.collapsed { max-height: 0; padding: 0; }
+        
+        /* Product Modules - Two Column Layout */
+        .modules-container { display: grid; grid-template-columns: 22% 1fr; gap: 15px; }
+        
+        .left-module { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .right-module { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        
+        .left-module h3 { font-size: 14px; font-weight: bold; margin: 10px 0 8px 0; color: #333; }
+        .left-module h4 { font-size: 13px; font-weight: bold; color: #667eea; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
+        
+        .left-module .color-chip {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 55px;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+        
+        .left-module .color-chip:hover {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        
+        .color-code { font-size: 11px; font-weight: bold; line-height: 1.2; }
+        .color-sku { font-size: 10px; color: #666; line-height: 1.2; }
+        .left-module .color-chip:hover .color-sku { color: white; }
+        
+        .style-info-line { font-size: 12px; margin: 4px 0; color: #555; }
+        
+        .table-responsive { margin: 0; overflow-x: auto; }
+        
+        table.dataTable { font-size: 12px; margin-bottom: 0; width: 100%; }
+        table.dataTable thead th { background: rgb(127, 221, 250); color: rgb(87, 137, 230); padding: 6px 3px; text-align: center; border: 1px solid #ddd; font-weight: 600; }
+        table.dataTable tbody tr { height: 26px; }
+        table.dataTable tbody td { padding: 4px 3px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+        table.dataTable tbody tr:nth-child(even) { background-color: #fafafa; }
+        table.dataTable tbody tr:hover { background-color: #f0f0f0; }
+        table.dataTable tbody tr.summary-row { background-color: #667eea; color: white; font-weight: bold; }
+        table.dataTable tbody tr.summary-row td { padding: 5px 3px; border: none; text-align: center; }
+
+        .num-col { text-align: center; }
+
+
+        /* Image Container */
+        .img-container { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); background: #f9f9f9; aspect-ratio: 4/3; }
+        .img-container img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; transition: transform 0.3s ease; cursor: pointer; }
+        .img-container:hover img { transform: scale(1.05); }
+
+        /* History Sections - Collapsible */
+        .history-section { background: white; border-radius: 4px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+        
+        .history-header { 
+            background: #667eea; 
+            color: white;
+            padding: 12px 15px; 
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        
+        .history-header:hover { 
+            background: #5568d3;
+        }
+        
+        .history-header i { 
+            transition: transform 0.3s ease;
+            margin-right: 8px;
+        }
+        
+        .history-header.collapsed i { 
+            transform: rotate(-90deg);
+        }
+        
+        .history-content { 
+            padding: 10px;
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .history-content.collapsed { 
+            max-height: 0;
+            padding: 0 10px;
+        }
+        
+        .history-section .info-line { font-size: 13px; color: #666; margin-bottom: 8px; }
+        .history-section .info-line strong { color: #333; }
+        
+        /* History Section Two-Column Layout */
+        .history-modules-container { display: grid; grid-template-columns: 22% 1fr; gap: 15px; margin-top: 12px; }
+        
+        .history-left-module { background: #f9f9f9; padding: 12px; border-radius: 4px; }
+        .history-right-module { background: white; }
+        
+        .history-left-module h4 { font-size: 12px; font-weight: bold; color: #667eea; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
+        .history-left-module .info-item { font-size: 12px; margin-bottom: 10px; }
+        .history-left-module .info-label { font-weight: bold; color: #333; margin-bottom: 3px; }
+        .history-left-module .info-value { color: #666; }
+        
+        .unique-prices-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+        .price-badge { background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        
+        .customer-link { color: #667eea; text-decoration: none; cursor: pointer; font-weight: 500; }
+        .customer-link:hover { text-decoration: underline; }
+
+        /* History Tables */
+        .history-section .table-responsive { display: flex; justify-content: center; }
+        .history-section table.dataTable { width: auto !important; font-size: 12px; margin: 0 auto; display: table; }
+        .history-section table.dataTable thead th { background: white; color: black; padding: 6px 3px; text-align: center; border: 1px solid #ddd; font-weight: 600; }
+
+        .history-section table.dataTable tbody tr { height: 24px; }
+        .history-section table.dataTable tbody td { padding: 3px 3px; text-align: center; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+        .history-section table.dataTable tbody tr:nth-child(odd) { background-color: #f9f9f9; }
+        .history-section table.dataTable tbody tr:nth-child(even) { background-color: #bde0cf80; }
+        .history-section table.dataTable tbody tr:hover { background-color: #e0e0e0; }
+        .history-section table.dataTable tbody td.num-col { text-align: right; padding-right: 4px; }
+
+        /* DataTables Controls */
+        .history-section .dataTables_wrapper .dataTables_filter,
+        .history-section .dataTables_wrapper .dataTables_length,
+        .history-section .dataTables_wrapper .dataTables_info,
+        .history-section .dataTables_wrapper .dataTables_paginate {
+            text-align: center;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .history-section .dataTables_filter input,
+        .history-section .dataTables_length select {
+            font-size: 12px;
+            padding: 3px 5px;
+        }
+
+        .history-section div.dt-buttons {
+            display: flex !important;
+            justify-content: center !important;
+            margin: 8px auto !important;
+            float: none !important;
+            position: static !important;
+        }
+
+        /* Sidebar Styling */
+        .product-sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            height: calc(100vh - 70px);
+            width: 280px;
+            background-color: #ffffff;
+            color: #000000;
+            padding-top: 20px;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 1020;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .product-sidebar.closed {
+            transform: translateX(-280px);
+        }
+
+        .sidebar-header {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .sidebar-color-section {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-color-header {
+            font-size: 13px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-color-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .sidebar-color-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .sidebar-color-btn:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .sidebar-color-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .sidebar-database-section {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-database-header {
+            font-size: 13px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-database-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sidebar-database-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .sidebar-database-btn:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .sidebar-database-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .main-content {
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+            padding-top: 10px;
+        }
+
+        .main-content.no-sidebar {
+            margin-left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        body.sidebar-closed .main-content {
+            margin-left: 0;
+        }
+
+        .search-section {
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        .search-section h1 {
+            font-size: 16px;
+            color: #667eea;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .search-section p {
+            color: #666;
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .search-form input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .search-form button {
+            padding: 8px 12px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .search-form button:hover {
+            background-color: #5568d3;
+        }
+
+        @media (max-width: 1000px) { 
+            .product-sidebar { width: 260px; }
+            .main-content { margin-left: 260px; }
+            .product-details { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) { 
+            .product-sidebar { width: 260px; }
+            .main-content { margin-left: 0; }
+            .product-details { grid-template-columns: 1fr; }
+            #sidebarToggleBtn { display: flex; }
+        }
+
+        /* Hide search section at top when product_data exists */
+        .show-search { display: block; }
+        .hide-search { display: none; }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <!-- Sidebar - Only show if product_data exists -->
+    {% if product_data %}
+    <aside class="product-sidebar" id="productSidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-search"></i> Product Detail
+        </div>
+        <!-- Search Section in Sidebar -->
+        <div class="search-section">
+            <h1><i class="fas fa-search"></i> Search</h1>
+            <p>By SKU or Style</p>
+            <form method="POST" class="search-form">
+                <input type="text" name="search_input" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        <!-- Color Filter Section in Sidebar -->
+        <div class="sidebar-color-section">
+            <div class="sidebar-color-header"><i class="fas fa-palette"></i> Filter by Color</div>
+            <div class="sidebar-color-filters" id="sidebarColorFilters">
+                {% set all_colors = [] %}
+                {% for style_group in product_data %}
+                    {% for color in style_group.colors %}
+                        {% if (color.color or '?') | trim not in all_colors %}
+                            {% set _ = all_colors.append((color.color or '?') | trim) %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+                {% for color in all_colors | sort %}
+                <button class="sidebar-color-btn" data-color="{{ color }}" onclick="applyFilters()">
+                    {{ color }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Database Filter Section in Sidebar -->
+        <div class="sidebar-database-section">
+            <div class="sidebar-database-header"><i class="fas fa-database"></i> Filter by Database</div>
+            <div class="sidebar-database-filters" id="sidebarDatabaseFilters">
+                <button class="sidebar-database-btn" data-database="FDC" onclick="selectDatabase(this)">
+                    <i class="fas fa-circle" style="color: #4CAF50; font-size: 8px; margin-right: 6px;"></i> FDC
+                </button>
+                <button class="sidebar-database-btn" data-database="E_FAS" onclick="selectDatabase(this)">
+                    <i class="fas fa-circle" style="color: #2196F3; font-size: 8px; margin-right: 6px;"></i> E-fashion
+                </button>
+                <button class="sidebar-database-btn active" data-database="Both" onclick="selectDatabase(this)">
+                    <i class="fas fa-circle" style="color: #FF9800; font-size: 8px; margin-right: 6px;"></i> Both
+                </button>
+            </div>
+        </div>
+        
+        
+    </aside>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="main-content{% if not product_data %} no-sidebar{% endif %}">
+        <div class="container-main">
+            <!-- Search Section - Show when NO product_data -->
+            {% if not product_data %}
+            <div class="search-section" style="max-width: 500px; margin: 60px auto 0; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h1><i class="fas fa-search"></i> Product Detail</h1>
+                <p style="margin-bottom: 15px;">Search by single SKU or Style (e.g., M1141 or M1141 BK)</p>
+                <form method="POST" class="search-form">
+                    <input type="text" name="search_input" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if error_message %}
+            <div class="error-message">{{ error_message }}</div>
+            {% endif %}
+
+            {% if not product_data and search_input %}
+            <div class="empty-state"><i class="fas fa-search"></i><h3>No Results Found</h3></div>
+            {% elif not product_data %}
+            <div class="empty-state"><i class="fas fa-box"></i><h3>Enter a search to get started</h3></div>
+            {% endif %}
+
+            <!-- Product Data Display -->
+            {% if product_data %}
+        
+        <!-- Products Display -->
+        {% for style_group in product_data %}
+        <div class="product-wrapper">
+            <!-- Collapsible Header -->
+            <div class="product-header" onclick="toggleProductSection(this)">
+                <div style="display: flex; align-items: center; flex: 1; gap: 12px;">
+                    <i class="fas fa-chevron-down chevron-icon"></i>
+                    <span style="font-size: 16px; font-weight: bold;">General Info , Your search was {{ style_group.style }}</span>
+                </div>
+                
+                <span style="font-size: 12px; color: rgba(255,255,255,0.85);">{{ style_group.colors | length }} colors</span>
+            </div>
+
+            <!-- Collapsible Content -->
+            <div class="product-content">
+                <div class="modules-container">
+                    <!-- LEFT MODULE: Style Information -->
+                    <div class="left-module">
+                        <!-- Catalog Images -->
+                        {% if style_group.images %}
+                        <div style="margin-bottom: 8px;">
+                            {% for image in style_group.images %}
+                            <div class="img-container" onclick="enlargeImage(this.querySelector('img'))">
+                                <img src="{{ image.url }}" alt="{{ image.filename }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    
+                        
+                        <h3>Style Info</h3>
+                        <div class="style-info-line"><strong>Style:</strong> {{ style_group.parent_info.style }}</div>
+                        <div class="style-info-line"><strong>Description:</strong> {{ style_group.description or 'N/A' }}</div>
+                        <div class="style-info-line"><strong>Location:</strong> {{ style_group.location or 'N/A' }}</div>
+                        <div class="style-info-line"><strong>Box Wt:</strong> {% if style_group.parent_info.box_wt %}{{ "%.1f" | format(style_group.parent_info.box_wt) }} lb{% else %}N/A{% endif %}</div>
+                        <div class="style-info-line"><strong>Piece Wt:</strong> {% if style_group.parent_info.pc_wt %}{{ "%.2f" | format(style_group.parent_info.pc_wt) }} lb{% else %}N/A{% endif %}</div>
+                        <div class="style-info-line"><strong>Dimensions:</strong> {% if style_group.parent_info.len %}{{ "%.1f" | format(style_group.parent_info.len) }}×{{ "%.1f" | format(style_group.parent_info.wid) }}×{{ "%.1f" | format(style_group.parent_info.hei) }}"{% else %}N/A{% endif %}</div>
+                        <div class="style-info-line"><strong>Case Qty:</strong> {{ style_group.parent_info.case_qty or 'N/A' }}</div>
+                        <div class="style-info-line"><strong>MSRP:</strong> {% if style_group.parent_info.msrp %}${{ "%.2f" | format(style_group.parent_info.msrp) }}{% else %}N/A{% endif %}</div>
+                        <div class="style-info-line"><strong>Cost:</strong> {% if style_group.parent_info.cost %}${{ "%.2f" | format(style_group.parent_info.cost) }}{% else %}N/A{% endif %}</div>
+                    </div>
+
+                    <!-- RIGHT MODULE: Data Table -->
+                    <div class="right-module">
+                        <div class="table-responsive">
+                            <table class="dataTable">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th><th>Color</th><th>Stock</th><th>Avail</th><th>Sold</th><th>Incom</th><th>Hist-PO</th><th>Hist-sold</th><th>Hist-fix</th><th>Checker</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for color in style_group.colors %}
+                                    <!-- FDC Row -->
+                                    {% if color.fdc %}
+                                    <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="FDC" style="display: none;" class="fdc-row">
+                                        <td style="font-weight: 600;">{{ color.sku | trim }}</td>
+                                        <td>{{ (color.color or '-') | trim }}</td>
+                                        <td class="num-col">{{ color.fdc.stock if color.fdc else 0 }}</td>
+                                        <td class="num-col" style="color: {% if (color.fdc.available if color.fdc else 0) > 0 %}green{% elif (color.fdc.available if color.fdc else 0) < 0 %}red{% endif %}">{{ color.fdc.available if color.fdc else 0 }}</td>
+                                        <td class="num-col">{{ color.fdc.sold if color.fdc else 0 }}</td>
+                                        <td class="num-col">{{ color.fdc.incoming if color.fdc else 0 }}</td>
+                                        {% set fdc_po = color.history_fdc.history_po if color.history_fdc else 0 %}
+                                        {% set fdc_sold = color.history_fdc.history_sold if color.history_fdc else 0 %}
+                                        {% set fdc_fix = color.history_fdc.history_fix if color.history_fdc else 0 %}
+                                        <td class="num-col">{{ fdc_po | int }}</td>
+                                        <td class="num-col">{{ fdc_sold | int }}</td>
+                                        <td class="num-col">{{ fdc_fix | int }}</td>
+                                        {% set checker_value = fdc_po - fdc_sold - (color.fdc.available if color.fdc else 0) + fdc_fix %}
+                                        <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                            {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    
+                                    <!-- E_FAS Row -->
+                                    {% if color.efas %}
+                                    <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="E_FAS" style="display: none;" class="efas-row">
+                                        <td style="font-weight: 600;">{{ color.sku | trim }}</td>
+                                        <td>{{ (color.color or '-') | trim }}</td>
+                                        <td class="num-col">{{ color.efas.stock if color.efas else 0 }}</td>
+                                        <td class="num-col" style="color: {% if (color.efas.available if color.efas else 0) > 0 %}green{% elif (color.efas.available if color.efas else 0) < 0 %}red{% endif %}">{{ color.efas.available if color.efas else 0 }}</td>
+                                        <td class="num-col">{{ color.efas.sold if color.efas else 0 }}</td>
+                                        <td class="num-col">{{ color.efas.incoming if color.efas else 0 }}</td>
+                                        {% set efas_po = color.history_efas.history_po if color.history_efas else 0 %}
+                                        {% set efas_sold = color.history_efas.history_sold if color.history_efas else 0 %}
+                                        {% set efas_fix = color.history_efas.history_fix if color.history_efas else 0 %}
+                                        <td class="num-col">{{ efas_po | int }}</td>
+                                        <td class="num-col">{{ efas_sold | int }}</td>
+                                        <td class="num-col">{{ efas_fix | int }}</td>
+                                        {% set checker_value = efas_po - efas_sold - (color.efas.available if color.efas else 0) + efas_fix %}
+                                        <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                            {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    
+                                    <!-- Combined Row (Both) -->
+                                    <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="Both" class="combined-row">
+                                        <td style="font-weight: 600;">{{ color.sku | trim }}</td>
+                                        <td>{{ (color.color or '-') | trim }}</td>
+                                        <td class="num-col">{{ (color.fdc.stock if color.fdc else 0) + (color.efas.stock if color.efas else 0) }}</td>
+                                        <td class="num-col" style="color: {% set a = (color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0) %}{% if a > 0 %}green{% elif a < 0 %}red{% endif %}">{{ a }}</td>
+                                        <td class="num-col">{{ (color.fdc.sold if color.fdc else 0) + (color.efas.sold if color.efas else 0) }}</td>
+                                        <td class="num-col">{{ (color.fdc.incoming if color.fdc else 0) + (color.efas.incoming if color.efas else 0) }}</td>
+                                        <td class="num-col">{{ (color.history_combined.history_po if color.history_combined else 0) | int }}</td>
+                                        <td class="num-col">{{ (color.history_combined.history_sold if color.history_combined else 0) | int }}</td>
+                                        <td class="num-col">{{ (color.history_combined.history_fix if color.history_combined else 0) | int }}</td>
+                                        {% set checker_value = (color.history_combined.history_po if color.history_combined else 0) - (color.history_combined.history_sold if color.history_combined else 0) - ((color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0)) + (color.history_combined.history_fix if color.history_combined else 0) %}
+                                        <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                            {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    <!-- FDC Summary Row -->
+                                    <tr class="summary-row" data-database="FDC" style="display: none;">
+                                        <td colspan="2">TOTAL</td>
+                                        <td class="num-col">{% set fdc_stock = style_group.colors | map(attribute='fdc') | selectattr('stock') | map(attribute='stock') | sum %}{{ fdc_stock | int }}</td>
+                                        <td class="num-col">{% set fdc_avail = style_group.colors | map(attribute='fdc') | selectattr('available') | map(attribute='available') | sum %}{{ fdc_avail | int }}</td>
+                                        <td class="num-col">{% set fdc_sold = style_group.colors | map(attribute='fdc') | selectattr('sold') | map(attribute='sold') | sum %}{{ fdc_sold | int }}</td>
+                                        <td class="num-col">{% set fdc_incom = style_group.colors | map(attribute='fdc') | selectattr('incoming') | map(attribute='incoming') | sum %}{{ fdc_incom | int }}</td>
+                                        <td class="num-col">{% set total_hist_po = style_group.colors | map(attribute='history_fdc') | map(attribute='history_po') | sum %}{{ total_hist_po | int }}</td>
+                                        <td class="num-col">{% set total_hist_sold = style_group.colors | map(attribute='history_fdc') | map(attribute='history_sold') | sum %}{{ total_hist_sold | int }}</td>
+                                        <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_fdc') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
+                                        {% set total_checker = total_hist_po - total_hist_sold - fdc_avail + total_hist_fix %}
+                                        <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                            {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- E-FAS Summary Row -->
+                                    <tr class="summary-row" data-database="E_FAS" style="display: none;">
+                                        <td colspan="2">TOTAL</td>
+                                        <td class="num-col">{% set efas_stock = style_group.colors | map(attribute='efas') | selectattr('stock') | map(attribute='stock') | sum %}{{ efas_stock | int }}</td>
+                                        <td class="num-col">{% set efas_avail = style_group.colors | map(attribute='efas') | selectattr('available') | map(attribute='available') | sum %}{{ efas_avail | int }}</td>
+                                        <td class="num-col">{% set efas_sold = style_group.colors | map(attribute='efas') | selectattr('sold') | map(attribute='sold') | sum %}{{ efas_sold | int }}</td>
+                                        <td class="num-col">{% set efas_incom = style_group.colors | map(attribute='efas') | selectattr('incoming') | map(attribute='incoming') | sum %}{{ efas_incom | int }}</td>
+                                        <td class="num-col">{% set total_hist_po = style_group.colors | map(attribute='history_efas') | map(attribute='history_po') | sum %}{{ total_hist_po | int }}</td>
+                                        <td class="num-col">{% set total_hist_sold = style_group.colors | map(attribute='history_efas') | map(attribute='history_sold') | sum %}{{ total_hist_sold | int }}</td>
+                                        <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_efas') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
+                                        {% set total_checker = total_hist_po - total_hist_sold - efas_avail + total_hist_fix %}
+                                        <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                            {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Combined Summary Row -->
+                                    <tr class="summary-row" data-database="Both">
+                                        <td colspan="2">TOTAL</td>
+                                        <td class="num-col">{{ style_group.totals.combined.stock }}</td>
+                                        <td class="num-col">{{ style_group.totals.combined.available }}</td>
+                                        <td class="num-col">{{ style_group.totals.combined.sold }}</td>
+                                        <td class="num-col">{{ style_group.totals.combined.incoming }}</td>
+                                        <td class="num-col">{% set total_hist_po = style_group.colors | map(attribute='history_combined') | map(attribute='history_po') | sum %}{{ total_hist_po | int }}</td>
+                                        <td class="num-col">{% set total_hist_sold = style_group.colors | map(attribute='history_combined') | map(attribute='history_sold') | sum %}{{ total_hist_sold | int }}</td>
+                                        <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_combined') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
+                                        {% set total_checker = total_hist_po - total_hist_sold - style_group.totals.combined.available + total_hist_fix %}
+                                        <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                            {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% endif %}
+
+        <!-- Item History Section -->
+        {% if product_data %}
+        <div class="history-section">
+            <div class="history-header" onclick="toggleHistory(this)">
+                <div><i class="fas fa-chevron-down"></i><i class="fas fa-history"></i> Item History</div>
+                <span id="history-total-qty" style="font-size: 13px;">{% set hist_sum = history_data | map(attribute='order_quantity') | list | sum %}Total: {{ hist_sum }}</span>
+            </div>
+            <div class="history-content">
+                <div class="history-modules-container">
+                    <!-- Left Module: General Info -->
+                    <div class="history-left-module">
+                        <h4>Order Summary</h4>
+                        
+                        <!-- Unique Prices -->
+                        <div class="info-item">
+                            <div class="info-label">Unique Prices:</div>
+                            <div class="unique-prices-container" id="uniquePricesContainer">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                        
+                        <!-- Average Price -->
+                        <div class="info-item">
+                            <div class="info-label">Average Price:</div>
+                            <div class="info-value" id="averagePrice">-</div>
+                        </div>
+                        
+                        <!-- Total Price -->
+                        <div class="info-item">
+                            <div class="info-label">Total Price:</div>
+                            <div class="info-value" id="totalPrice">-</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Module: Data Table -->
+                    <div class="history-right-module">
+                        <div class="table-responsive">
+                            {% if history_data %}
+                            <table class="dataTable">
+                                <thead>
+                                    <tr>
+                                        <th>Database</th>
+                                        <th>Product Code</th>
+                                        <th>Order Number</th>
+                                        <th>Order Date</th>
+                                        <th>Customer ID</th>
+                                        <th>Order Qty</th>
+                                        <th>Unit Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in history_data %}
+                                    {% set sku_parts = row.product_code.split() %}
+                                    {% set style = sku_parts[0] if sku_parts|length > 0 else 'UNKNOWN' %}
+                                    {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
+                                    <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}" data-order-num="{{ row.order_number }}" data-customer-id="{{ row.customer_id }}" data-unit-price="{{ row.unit_price }}" data-order-qty="{{ row.order_quantity }}">
+                                        <td>{{ row.database }}</td>
+                                        <td>{{ row.product_code }}</td>
+                                        <td><a href="/order_lookup/{{ row.order_number }}" target="_blank">{{ row.order_number }}</a></td>
+                                        <td>{{ row.order_date }}</td>
+                                        <td><a class="customer-link" onclick="openCustomerSearch('{{ row.customer_id }}')">{{ row.customer_id }}</a></td>
+                                        <td class="num-col">{{ row.order_quantity }}</td>
+                                        <td class="num-col">${{ "%.2f" | format(row.unit_price) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="info-line">No item history found.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Inventory Manual Adjustment Section -->
+        {% if product_data %}
+        <div class="history-section">
+            <div class="history-header" onclick="toggleHistory(this)">
+                <div><i class="fas fa-chevron-down"></i><i class="fas fa-tools"></i> Inventory Manual Adjustment</div>
+                <span id="adjustment-total-qty" style="font-size: 13px;">{% set adj_sum = adjustment_data | map(attribute='quantity') | list | sum %}Total: {{ adj_sum }}</span>
+            </div>
+            <div class="history-content">
+                <div class="table-responsive">
+                    {% if adjustment_data %}
+                    <table class="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Database</th>
+                                <th>SKU</th>
+                                <th>Log Number</th>
+                                <th>Date</th>
+                                <th>Adjusted By</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in adjustment_data %}
+                            {% set sku_parts = row.sku.split() %}
+                            {% set style = sku_parts[0] if sku_parts|length > 0 else 'UNKNOWN' %}
+                            {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
+                            <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}">
+                                <td>{{ row.database }}</td>
+                                <td>{{ row.sku }}</td>
+                                <td>{{ row.log_number }}</td>
+                                <td>{{ row.date }}</td>
+                                <td>{{ row.adjusted_by }}</td>
+                                <td class="num-col" style="{% if row.quantity < 0 %}color: red;{% else %}color: green;{% endif %}">{{ row.quantity }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="info-line">No adjustment history found.</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Purchase History Section -->
+        {% if product_data %}
+        <div class="history-section">
+            <div class="history-header" onclick="toggleHistory(this)">
+                <div><i class="fas fa-chevron-down"></i><i class="fas fa-shopping-cart"></i> Purchase History</div>
+                <span id="purchase-total-qty" style="font-size: 13px;">{% set purch_sum = purchase_data | map(attribute='purchase_quantity') | list | sum %}Total: {{ purch_sum }}</span>
+            </div>
+            <div class="history-content">
+                <div class="table-responsive">
+                    {% if purchase_data %}
+                    <table class="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Database</th>
+                                <th>SKU</th>
+                                <th>PO Number</th>
+                                <th>PO Date</th>
+                                <th>Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in purchase_data %}
+                            {% set sku_parts = row.sku.split() %}
+                            {% set style = sku_parts[0] if sku_parts|length > 0 else 'UNKNOWN' %}
+                            {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
+                            <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}">
+                                <td>{{ row.database }}</td>
+                                <td>{{ row.sku }}</td>
+                                <td>{{ row.po_number }}</td>
+                                <td>{{ row.po_date }}</td>
+                                <td class="num-col">{{ row.purchase_quantity }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="info-line">No purchase history found.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    <div id="imagePopup" class="image-popup" onclick="closePopup(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;">
+        <span class="close-btn" style="position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer;">&times;</span>
+        <img id="popupImage" src="" alt="Enlarged Image" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script>
+        function enlargeImage(img) {
+            const popup = document.getElementById('imagePopup');
+            const popupImage = document.getElementById('popupImage');
+            popupImage.src = img.src;
+            popup.style.display = 'flex';
+        }
+
+        function closePopup(event) {
+            if (event.target.id === 'imagePopup' || event.target.classList.contains('close-btn')) {
+                document.getElementById('imagePopup').style.display = 'none';
+            }
+        }
+        
+        function applyFilters() {
+            // Get active color filters
+            const activeColorButtons = document.querySelectorAll('.sidebar-color-btn.active');
+            const activeColors = Array.from(activeColorButtons).map(b => b.getAttribute('data-color'));
+            
+            // Get active database filter (radio button - only one)
+            const activeDatabaseButton = document.querySelector('.sidebar-database-btn.active');
+            const activeDatabase = activeDatabaseButton ? activeDatabaseButton.getAttribute('data-database') : 'Both';
+            
+            // Get all data rows (inventory and history)
+            const inventoryRows = document.querySelectorAll('.data-row');
+            const summaryRows = document.querySelectorAll('.summary-row');
+            const historyRows = document.querySelectorAll('.history-data-row');
+            
+            // Apply filters to inventory rows
+            inventoryRows.forEach(row => {
+                let showRow = true;
+                
+                // Check color filter
+                if (activeColors.length > 0) {
+                    const rowColor = row.getAttribute('data-color');
+                    showRow = showRow && activeColors.includes(rowColor);
+                }
+                
+                // Check database filter for inventory rows
+                const rowDatabase = row.getAttribute('data-database');
+                if (activeDatabase === 'FDC') {
+                    showRow = showRow && rowDatabase === 'FDC';
+                } else if (activeDatabase === 'E_FAS') {
+                    showRow = showRow && rowDatabase === 'E_FAS';
+                } else {
+                    // Both is selected - show only combined rows (hide FDC/E_FAS individual rows)
+                    showRow = showRow && rowDatabase === 'Both';
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+            
+            // Recalculate summary rows with filtered data
+            summaryRows.forEach(summaryRow => {
+                const rowDatabase = summaryRow.getAttribute('data-database');
+                let showSummary = false;
+                
+                // Show summary based on database filter
+                if (activeDatabase === 'FDC') {
+                    showSummary = rowDatabase === 'FDC';
+                } else if (activeDatabase === 'E_FAS') {
+                    showSummary = rowDatabase === 'E_FAS';
+                } else {
+                    showSummary = rowDatabase === 'Both';
+                }
+                
+                summaryRow.style.display = showSummary ? '' : 'none';
+                
+                // Recalculate summary values - only sum rows that are both visible AND match the current database selection
+                if (showSummary) {
+                    const table = summaryRow.closest('table');
+                    const dataRows = Array.from(table.querySelectorAll('.data-row'));
+                    
+                    // Filter to get rows that should be summed:
+                    // 1. Must not be hidden (checked by style.display)
+                    // 2. Must match the database filter being displayed
+                    const rowsToSum = dataRows.filter(row => {
+                        const isVisible = row.style.display !== 'none';
+                        const isCorrectDB = row.getAttribute('data-database') === rowDatabase;
+                        return isVisible && isCorrectDB;
+                    });
+                    
+                    // Extract numeric values from all cells that need to be summed
+                    const totals = {
+                        stock: 0,
+                        avail: 0,
+                        sold: 0,
+                        incom: 0,
+                        hpo: 0,
+                        hsold: 0,
+                        hfix: 0
+                    };
+                    
+                    rowsToSum.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 10) {
+                            // Skip first 2 cells (SKU, Color), sum numeric columns
+                            totals.stock += parseInt(cells[2].textContent) || 0;
+                            totals.avail += parseInt(cells[3].textContent) || 0;
+                            totals.sold += parseInt(cells[4].textContent) || 0;
+                            totals.incom += parseInt(cells[5].textContent) || 0;
+                            totals.hpo += parseInt(cells[6].textContent) || 0;
+                            totals.hsold += parseInt(cells[7].textContent) || 0;
+                            totals.hfix += parseInt(cells[8].textContent) || 0;
+                        }
+                    });
+                    
+                    // Update summary row cells
+                    const summaryCells = summaryRow.querySelectorAll('td');
+                    if (summaryCells.length >= 9) {
+                        summaryCells[1].textContent = totals.stock;           // Stock
+                        summaryCells[2].textContent = totals.avail;           // Avail
+                        summaryCells[3].textContent = totals.sold;            // Sold
+                        summaryCells[4].textContent = totals.incom;           // Incom
+                        summaryCells[5].textContent = totals.hpo;             // H-PO
+                        summaryCells[6].textContent = totals.hsold;           // H-sold
+                        summaryCells[7].textContent = totals.hfix;            // H-fix
+                        
+                        // Update checker
+                        const checkerValue = totals.hpo - totals.hsold - totals.avail + totals.hfix;
+                        const checkerCell = summaryCells[8];
+                        
+                        if (checkerValue === 0) {
+                            checkerCell.textContent = 'check';
+                            checkerCell.style.backgroundColor = '#90EE90';
+                            checkerCell.style.color = '#000';
+                            checkerCell.style.fontWeight = 'bold';
+                        } else {
+                            checkerCell.textContent = `off by ${checkerValue}`;
+                            checkerCell.style.backgroundColor = '#FFB6C1';
+                            checkerCell.style.color = '#000';
+                            checkerCell.style.fontWeight = 'normal';
+                        }
+                    }
+                }
+            });
+            
+            // Apply filters to history rows (only color filter, not database filter)
+            historyRows.forEach(row => {
+                let showRow = true;
+                
+                // Check color filter
+                if (activeColors.length > 0) {
+                    const rowColor = row.getAttribute('data-color');
+                    showRow = showRow && activeColors.includes(rowColor);
+                }
+                
+                // For history rows, also check database filter
+                const rowDatabase = row.getAttribute('data-database');
+                if (activeDatabase === 'FDC') {
+                    showRow = showRow && rowDatabase === 'FDC';
+                } else if (activeDatabase === 'E_FAS') {
+                    showRow = showRow && rowDatabase === 'E_FAS';
+                }
+                // If 'Both' is selected, show all history rows
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+            
+            // Update product headers with visible color count
+            document.querySelectorAll('.product-wrapper').forEach(wrapper => {
+                const table = wrapper.querySelector('table');
+                if (table) {
+                    // Count visible rows for this table (only count 'Both' or matching database rows)
+                    const visibleRows = Array.from(table.querySelectorAll('.data-row')).filter(row => {
+                        const isVisible = row.style.display !== 'none';
+                        const rowDB = row.getAttribute('data-database');
+                        
+                        // Count row if it's visible and matches what we're showing based on database filter
+                        if (activeDatabase === 'FDC') {
+                            return isVisible && rowDB === 'FDC';
+                        } else if (activeDatabase === 'E_FAS') {
+                            return isVisible && rowDB === 'E_FAS';
+                        } else {
+                            return isVisible && rowDB === 'Both';
+                        }
+                    });
+                    
+                    // Count unique colors from visible rows
+                    const visibleColors = new Set(visibleRows.map(row => row.getAttribute('data-color')));
+                    const colorCount = visibleColors.size;
+                    
+                    // Update the color count in the header
+                    const header = wrapper.querySelector('.product-header');
+                    const colorSpan = header.querySelector('span:last-child');
+                    if (colorSpan) {
+                        colorSpan.textContent = `${colorCount} color${colorCount !== 1 ? 's' : ''}`;
+                    }
+                }
+            });
+            
+            // Update history section totals based on visible rows
+            const itemHistoryRows = Array.from(document.querySelectorAll('.history-data-row')).filter(row => row.style.display !== 'none');
+            
+            // Calculate Item History total (Order Qty column)
+            let itemHistorySum = 0;
+            itemHistoryRows.forEach(row => {
+                const table = row.closest('table');
+                if (table) {
+                    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
+                    // Check if this is the Item History table by looking for 'Order Qty' header
+                    if (headers.includes('Order Qty')) {
+                        const orderQtyIndex = headers.indexOf('Order Qty');
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length > orderQtyIndex) {
+                            itemHistorySum += parseInt(cells[orderQtyIndex].textContent) || 0;
+                        }
+                    }
+                }
+            });
+            const historyTotalQty = document.getElementById('history-total-qty');
+            if (historyTotalQty) {
+                historyTotalQty.textContent = `Total: ${itemHistorySum}`;
+            }
+            
+            // Calculate Adjustment total (Quantity column)
+            let adjustmentSum = 0;
+            itemHistoryRows.forEach(row => {
+                const table = row.closest('table');
+                if (table) {
+                    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
+                    // Check if this is the Adjustment table by looking for 'Adjusted By' header
+                    if (headers.includes('Adjusted By')) {
+                        const quantityIndex = headers.indexOf('Quantity');
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length > quantityIndex && quantityIndex >= 0) {
+                            adjustmentSum += parseInt(cells[quantityIndex].textContent) || 0;
+                        }
+                    }
+                }
+            });
+            const adjustmentTotalQty = document.getElementById('adjustment-total-qty');
+            if (adjustmentTotalQty) {
+                adjustmentTotalQty.textContent = `Total: ${adjustmentSum}`;
+            }
+            
+            // Calculate Purchase total (Qty column)
+            let purchaseSum = 0;
+            itemHistoryRows.forEach(row => {
+                const table = row.closest('table');
+                if (table) {
+                    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
+                    // Check if this is the Purchase table by looking for 'PO Number' header
+                    if (headers.includes('PO Number')) {
+                        const qtyIndex = headers.indexOf('Qty');
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length > qtyIndex && qtyIndex >= 0) {
+                            purchaseSum += parseInt(cells[qtyIndex].textContent) || 0;
+                        }
+                    }
+                }
+            });
+            const purchaseTotalQty = document.getElementById('purchase-total-qty');
+            if (purchaseTotalQty) {
+                purchaseTotalQty.textContent = `Total: ${purchaseSum}`;
+            }
+        }
+        
+        // Function to select database (radio button behavior)
+        function selectDatabase(btn) {
+            // Remove active class from all database buttons
+            document.querySelectorAll('.sidebar-database-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            btn.classList.add('active');
+            
+            // Apply filters
+            applyFilters();
+        }
+        
+        // Initialize filter button click handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Color filter buttons
+            document.querySelectorAll('.sidebar-color-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.classList.toggle('active');
+                    applyFilters();
+                });
+            });
+        });
+        
+        function toggleProductSection(headerElement) {
+            const wrapper = headerElement.parentElement;
+            const content = wrapper.querySelector('.product-content');
+            
+            // Toggle the content visibility
+            content.classList.toggle('collapsed');
+            
+            // Rotate the chevron icon
+            headerElement.classList.toggle('collapsed');
+        }
+        
+        function toggleHistory(headerElement) {
+            const section = headerElement.parentElement;
+            const content = section.querySelector('.history-content');
+            const icon = headerElement.querySelector('i.fa-chevron-down');
+            
+            // Toggle the content visibility
+            content.classList.toggle('collapsed');
+            
+            // Rotate the chevron icon
+            headerElement.classList.toggle('collapsed');
+            
+            // If opening Item History section, populate the left module
+            if (!content.classList.contains('collapsed') && section.querySelector('.history-left-module')) {
+                populateHistoryLeftModule();
+            }
+        }
+        
+        function populateHistoryLeftModule() {
+            // Collect data from all visible history rows
+            const rows = document.querySelectorAll('tr.history-data-row');
+            
+            if (rows.length === 0) {
+                console.log('No history rows found');
+                return;
+            }
+            
+            // Collect unique prices and totals
+            const uniquePrices = new Set();
+            let totalPrice = 0;
+            let totalQty = 0;
+            
+            rows.forEach(row => {
+                // Check if row is visible (not hidden by filters)
+                const isVisible = row.style.display !== 'none';
+                
+                const unitPrice = parseFloat(row.getAttribute('data-unit-price')) || 0;
+                const orderQty = parseInt(row.getAttribute('data-order-qty')) || 0;
+                
+                if (isVisible || rows.length > 0) {  // Include all for initial load
+                    uniquePrices.add(unitPrice);
+                    totalPrice += unitPrice * orderQty;
+                    totalQty += orderQty;
+                }
+            });
+            
+            // Calculate average price
+            const avgPrice = totalQty > 0 ? (totalPrice / totalQty).toFixed(2) : 0;
+            
+            console.log('Summary:', {uniquePrices: Array.from(uniquePrices), avgPrice, totalPrice, totalQty});
+            
+            // Populate unique prices
+            const pricesContainer = document.getElementById('uniquePricesContainer');
+            if (pricesContainer) {
+                pricesContainer.innerHTML = '';
+                Array.from(uniquePrices)
+                    .filter(p => p > 0)  // Only show positive prices
+                    .sort((a, b) => a - b)
+                    .forEach(price => {
+                        const badge = document.createElement('div');
+                        badge.className = 'price-badge';
+                        badge.textContent = '$' + price.toFixed(2);
+                        pricesContainer.appendChild(badge);
+                    });
+            }
+            
+            // Update totals
+            const avgPriceEl = document.getElementById('averagePrice');
+            if (avgPriceEl) {
+                avgPriceEl.textContent = '$' + avgPrice;
+            }
+            
+            const totalPriceEl = document.getElementById('totalPrice');
+            if (totalPriceEl) {
+                totalPriceEl.textContent = '$' + totalPrice.toFixed(2);
+            }
+        }
+        
+        function openCustomerSearch(customerId = null) {
+            // Open the customer page with customer ID in search
+            if (customerId) {
+                window.open(`/customer?search_id=${customerId}`, '_blank');
+            } else {
+                window.open(`/customer`, '_blank');
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Populate history left module on page load
+            setTimeout(() => {
+                populateHistoryLeftModule();
+            }, 100);
+        });
+
+    </script>
+        </div>
+        </div>
+</body>
+</html>

@@ -14,7 +14,8 @@ sql_server_config = Config.SQL_SERVER_CONFIG
 @login_required
 def customer_home():
     current_user = session['username']
-    return render_template('customer.html',current_user=current_user)
+    search_id = request.args.get('search_id', '')  # Get search_id from query parameter
+    return render_template('customer.html', current_user=current_user, search_id=search_id)
 
 
 @customer_bp.route('/check_customer', methods=['POST'])

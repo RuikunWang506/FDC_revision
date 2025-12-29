@@ -22,6 +22,7 @@ from py.Toolkits.view_all_routes import register_view_all_routes
 from py.search.Location_massive_audit import location_massive_audit_bp
 from py.search.container import container_bp
 from py.search.item_lookup import item_lookup_bp
+from product_detail_module import product_detail_bp
 from py.search.outofstock_check import outofstock_check_bp
 from py.other.mobile_lite import mobile_lite_bp
 from py.utilities.pallet_detail import pallet_detail_bp
@@ -78,6 +79,7 @@ def register_routes(app):
     register_view_all_routes(app)
     app.register_blueprint(container_bp)
     app.register_blueprint(item_lookup_bp)
+    app.register_blueprint(product_detail_bp)
     app.register_blueprint(outofstock_check_bp)
     app.register_blueprint(mobile_lite_bp)
     app.register_blueprint(v6_listcreator_bp)

@@ -1884,6 +1884,155 @@ def get_order_items(po_number):
             cursor.close()
             connection.close()
 
+@lori_automation_bp.route("/download_pivot_table", methods=["POST"])
+def download_pivot_table():
+    """Generate and download pivot table Excel file for selected orders"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        po_numbers = data.get('po_numbers', [])
+        if not po_numbers:
+            return jsonify({'error': 'No PO numbers provided'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Fetch all items for selected orders
+            placeholders = ','.join(['%s'] * len(po_numbers))
+            query = f"""
+                SELECT vendor_item, quantity, unit_price, upc
+                FROM lori_order_items 
+                WHERE po_number IN ({placeholders})
+                ORDER BY vendor_item
+            """
+            cursor.execute(query, po_numbers)
+            items = cursor.fetchall()
+            
+            cursor.close()
+            connection.close()
+            
+            if not items:
+                return jsonify({'error': 'No items found for selected orders'}), 400
+            
+            # Create pivot table data structure
+            pivot_data = {}
+            total_quantity = 0
+            
+            # Group by vendor_item (SKU)
+            for item in items:
+                sku = item['vendor_item'] or 'N/A'
+                
+                if sku not in pivot_data:
+                    pivot_data[sku] = {
+                        'sku': sku,
+                        'quantity': 0,
+                        'unit_price': item['unit_price'] or 0,
+                        'upc': item['upc'] or ''
+                    }
+                
+                # Sum quantities
+                pivot_data[sku]['quantity'] += int(item['quantity']) or 0
+                total_quantity += int(item['quantity']) or 0
+                
+                # Keep most recent unit price and UPC
+                if item['unit_price']:
+                    pivot_data[sku]['unit_price'] = item['unit_price']
+                if item['upc']:
+                    pivot_data[sku]['upc'] = item['upc']
+            
+            # Create Excel workbook
+            wb = Workbook()
+            ws = wb.active
+            ws.title = 'Pivot Table'
+            
+            # Add headers
+            ws['A1'] = 'Vendor Item SKU'
+            ws['B1'] = 'Sum of Quantity'
+            ws['C1'] = 'Unit Price'
+            ws['D1'] = 'UPC'
+            
+            # Style headers
+            from openpyxl.styles import Font, PatternFill, Alignment
+            header_font = Font(bold=True, size=12)
+            header_fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+            header_alignment = Alignment(horizontal='center', vertical='center')
+            
+            for col in ['A', 'B', 'C', 'D']:
+                cell = ws[f'{col}1']
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+            
+            # Add data rows
+            row = 2
+            for sku_data in sorted(pivot_data.values(), key=lambda x: x['sku']):
+                ws[f'A{row}'] = sku_data['sku']
+                ws[f'B{row}'] = sku_data['quantity']
+                ws[f'C{row}'] = float(sku_data['unit_price']) if sku_data['unit_price'] else 0
+                ws[f'D{row}'] = sku_data['upc']
+                
+                # Format currency for unit price
+                ws[f'C{row}'].number_format = '$#,##0.00'
+                
+                row += 1
+            
+            # Add total row
+            total_row = row
+            ws[f'A{total_row}'] = 'TOTAL'
+            ws[f'B{total_row}'] = total_quantity
+            
+            # Style total row
+            total_font = Font(bold=True, size=11)
+            total_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+            total_alignment = Alignment(horizontal='right', vertical='center')
+            
+            for col in ['A', 'B', 'C', 'D']:
+                cell = ws[f'{col}{total_row}']
+                cell.font = total_font
+                cell.fill = total_fill
+                cell.alignment = total_alignment
+            
+            # Set column widths
+            ws.column_dimensions['A'].width = 25
+            ws.column_dimensions['B'].width = 18
+            ws.column_dimensions['C'].width = 15
+            ws.column_dimensions['D'].width = 20
+            
+            # Save to memory
+            output = io.BytesIO()
+            wb.save(output)
+            output.seek(0)
+            
+            # Generate filename
+            filename = f'Orders_Pivot_Table_{datetime.now().strftime("%Y-%m-%d")}.xlsx'
+            
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=filename
+            )
+            
+        except Exception as e:
+            if 'cursor' in locals():
+                cursor.close()
+            if connection and connection.is_connected():
+                connection.close()
+            raise e
+            
+    except Exception as e:
+        current_app.logger.error(f"Error generating pivot table: {str(e)}")
+        return jsonify({'error': f'Failed to generate pivot table: {str(e)}'}), 500
+
 @lori_automation_bp.route("/update_order_status", methods=["POST"])
 def update_order_status():
     """Update order status"""

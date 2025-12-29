@@ -101,5 +101,5 @@ if __name__ == "__main__":
         port=5555,
         debug=True,
         request_handler=CustomRequestHandler,
-        use_reloader=False
+        use_reloader=True
     )

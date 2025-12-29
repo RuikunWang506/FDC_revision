@@ -517,6 +517,11 @@
                     <ul id="selected-orders-ul" class="list-unstyled"></ul>
                 </div>
                 <div class="mt-3">
+                    <div class="mb-4">
+                        <button id="download-pivot-table-btn" class="btn btn-primary btn-block w-100 mb-2">
+                                <i class="fas fa-file-excel"></i> Pivot Table Export
+                            </button>
+                    </div>
                     <!-- Section 1: Prep -->
                     <div class="mb-4">
                         <h5>Prep</h5>
@@ -3631,9 +3636,67 @@
             }
         }
 
+        // Download Pivot Table function
+        async function downloadPivotTable() {
+            console.log('downloadPivotTable called');
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            if (checkboxes.length === 0) { 
+                alert('Please select at least one order'); 
+                return; 
+            }
+            
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.getAttribute('data-po'));
+            const btn = document.getElementById('download-pivot-table-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            try {
+                const response = await fetch('/lori_automation/download_pivot_table', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ po_numbers: selectedPOs })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                // Get the blob and create download link
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Orders_Pivot_Table_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                
+                // Clear selection
+                checkboxes.forEach(cb => cb.checked = false);
+                hideSidebar();
+                updateSelectedOrdersList();
+                
+                showToast('Pivot table downloaded successfully', 'success');
+                
+            } catch (err) {
+                console.error('Error generating pivot table:', err);
+                alert('Error generating pivot table: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
         // Add event listeners for the new buttons
         document.getElementById('process-excel-btn')?.addEventListener('click', processSelectedExcel);
         document.getElementById('process-duplex-btn')?.addEventListener('click', processSelectedDuplex);
+        document.getElementById('download-pivot-table-btn')?.addEventListener('click', downloadPivotTable);
         
         // Add event listener for combine PDF button
         document.getElementById('combine-pdf-btn')?.addEventListener('click', combinePDFFiles);

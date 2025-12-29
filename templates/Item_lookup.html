@@ -16,495 +16,88 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <style>
         /* ==== General ==== */
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
-    transition: margin-left 0.3s ease;
-}
-
-.container-fluid {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-}
-
-.row {
-    margin: 0 !important;
-}
-
-.col {
-    padding: 0 !important;
-}
-
-/* ==== Tables ==== */
-table.dataTable {
-    width: 99% !important;
-    margin: 0 auto !important;
-    border-collapse: collapse;
-    white-space: nowrap;
-}
-
-th, td {
-    border: none;
-    padding: 2px;
-    text-align: center;
-}
-
-table.dataTable thead th, 
-table.dataTable thead td {
-    border-bottom: 0px solid #4CAF50;
-    padding: 0 !important;
-    text-align: center;
-    vertical-align: middle;
-}
-
-table.dataTable td {
-    white-space: normal !important;
-    word-wrap: break-word !important;
-}
-
-table.dataTable tbody tr:nth-child(odd) {
-    background-color: #f9f9f9;
-}
-
-table.dataTable tbody tr:nth-child(even) {
-    background-color: #bde0cf80;
-}
-
-table.dataTable tbody tr:hover {
-    background-color: #e0e0e0;
-}
-
-/* ==== DataTables Controls ==== */
-.dataTables_wrapper .dataTables_filter,
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_paginate {
-    text-align: center;
-    margin: 0;
-}
-
-div.dt-buttons {
-    display: flex !important;
-    justify-content: center !important;
-    margin: 20px auto !important;
-    float: none !important;
-    position: static !important;
-}
-
-.dt-button {
-    background-color: #4CAF50 !important;
-    color: #fff !important;
-    border: none !important;
-    padding: 10px 20px !important;
-    border-radius: 5px !important;
-    transition: background-color 0.3s ease !important;
-}
-
-.dt-button:hover {
-    background-color: #45a049 !important;
-}
-
-.btn-custom-color {
-    background-color: #FFA500 !important;
-    color: white !important;
-}
-
-.btn-custom-color:hover {
-    background-color: #FF8C00 !important;
-}
-
-/* ==== Search Box ==== */
-.search-input {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-    text-align: center;
-    background-color: #fff;
-    padding: 15px;
-    border-radius: 10px;
-    border: 2px solid #4CAF50;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-top: 20px;
-    transition: box-shadow 0.3s ease;
-}
-
-.search-input:focus {
-    outline: none;
-    box-shadow: 0 4px 10px rgba(76,175,80,0.3);
-}
-
-/* ==== Editable Cell ==== */
-.editable {
-    display: block;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    padding: 2px;
-}
-
-.editing input {
-    width: 70%;
-    padding: 2px;
-}
-
-.edit-buttons {
-    display: inline-block;
-    margin-left: 5px;
-}
-
-.editing .edit-buttons {
-    display: inline;
-}
-
-.editing .editable {
-    border: 1px solid #ccc;
-    background-color: #fff;
-}
-
-/* ==== Image Container ==== */
-.img-container {
-    position: relative;
-    display: block;
-    margin-bottom: 15px;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.img-container img {
-    width: 100%;
-    height: auto;
-    transition: transform 0.3s ease;
-}
-
-.img-container:hover img {
-    transform: scale(1.05);
-}
-
-.image-popup {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.image-popup img {
-    max-width: 90%;
-    max-height: 90%;
-    object-fit: contain;
-}
-
-.close-btn {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close-btn:hover {
-    color: #bbb;
-}
-
-.save-btn, .cancel-btn {
-    padding: 0 5px;
-    cursor: pointer;
-}
-
-/* ==== Inventory Summary ==== */
-
-
- /* Add these styles for the quantity sum alignment */
-    .quantity-sum {
-        text-align: right !important;
-        margin: 5px 0 10px auto !important; /* Right align */
-        font-weight: bold;
-        font-size: 1.2em;
-        color: #4CAF50;
-        background-color: #f0f8f0;
-        padding: 8px 15px !important;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        width: auto !important; /* Allow natural width */
-        display: inline-block !important;
-        float: right !important;
-        clear: both !important;
-    }
-    
-    .sum-value {
-        font-size: 1.5em;
-        font-weight: 700;
-        color: #388e3c;
-        margin-left: 8px;
-    }
-    
-    /* Ensure proper spacing after the filter */
-    .dataTables_filter {
-        margin-bottom: 10px !important;
-    }
-    
-    /* Ensure the table wrapper has proper clearfix */
-    .dataTables_wrapper::after {
-        content: "";
-        display: table;
-        clear: both;
-    }
-    
-    /* Ensure consistent table styling */
-    table.dataTable {
-        margin-top: 15px !important;
-        clear: both !important;
-    }
-    
-    /* Ensure the pagination is properly aligned */
-    .dataTables_paginate {
-        margin-top: 10px !important;
-    }
-/* ==== Sidebar Styling ==== */
-.chatgpt-sidebar {
-    position: fixed;
-    top: 70px;
-    left: 0;
-    height: calc(100vh - 70px);
-    width: 260px;
-    background-color: #ffffff;
-    color: #000000;
-    padding-top: 20px;
-    transform: translateX(0);
-    transition: transform 0.3s ease;
-    z-index: 1020;
-    overflow-y: auto;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-}
-
-.chatgpt-sidebar.closed {
-    transform: translateX(-260px);
-}
-
-.chatgpt-sidebar .sidebar-header {
-    padding: 15px 20px;
-    font-size: 18px;
-    font-weight: bold;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 15px;
-}
-
-.chatgpt-sidebar .nav-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.chatgpt-sidebar .nav-list a {
-    display: block;
-    padding: 10px 20px;
-    color: rgba(0, 0, 0, 0.8);
-    text-decoration: none;
-    transition: background-color 0.2s;
-}
-
-.chatgpt-sidebar .nav-list a:hover,
-.chatgpt-sidebar .nav-list a.active {
-    background-color: rgba(76,175,80,0.2);
-    color: #000;
-}
-
-.main-content {
-    margin-left: 260px;
-    transition: margin-left 0.3s ease;
-    padding-top: 10px;
-}
-
-body.sidebar-closed .main-content {
-    margin-left: 0;
-}
-
-/* ==== Toggle Button ==== */
-#sidebarToggleBtn {
-    position: fixed;
-    top: 80px;
-    left: 10px;
-    z-index: 1050; /* Higher than sidebar */
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    transition: all 0.3s;
-}
-
-body.sidebar-closed #sidebarToggleBtn {
-    left: 10px;
-}
-
-#sidebarToggleBtn:hover {
-    background-color: #388e3c;
-}
-
-/* ==== Tooltip Styling ==== */
-.tooltip-inner {
-    background-color: black !important;
-    color: white !important;
-    max-width: 300px !important;
-    min-width: 300px !important;
-    max-height: 300px !important;
-    min-height: 50px !important;
-    font-size: 16px !important;
-    padding: 10px !important;
-    overflow: auto;
-}
-
-.bs-tooltip-top .arrow::before,
-.bs-tooltip-auto[data-popper-placement^="top"] .arrow::before {
-    border-top-color: black !important;
-}
-
-.bs-tooltip-right .arrow::before,
-.bs-tooltip-auto[data-popper-placement^="right"] .arrow::before {
-    border-right-color: black !important;
-}
-
-.bs-tooltip-bottom .arrow::before,
-.bs-tooltip-auto[data-popper-placement^="bottom"] .arrow::before {
-    border-bottom-color: black !important;
-}
-
-.bs-tooltip-left .arrow::before,
-.bs-tooltip-auto[data-popper-placement^="left"] .arrow::before {
-    border-left-color: black !important;
-}
-
-/* ==== Scroll Container ==== */
-.table-responsive {
-    border: 2px dashed #4CAF50 !important;
-    border-radius: 10px !important;
-    padding: 20px !important;
-    margin: 0 auto !important;
-    background-color: #ffffff !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    box-sizing: border-box !important;
-}
-
-.top-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
-    height: 20px;
-}
-
-.top-scroll-inner {
-    height: 1px;
-}
-
-#excel_table {
-    width: 99% !important;
-    margin-right: 0 !important;
-}
-
-/* ==== Mobile Search ==== */
-.mobile-search-container {
-    display: none;
-    position: fixed;
-    top: 70px; /* Position right below navbar */
-    left: 0;
-    right: 0;
-    background-color: #f8f9fa;
-    padding: 10px 10px 10px 60px; /* Add left padding to avoid overlap with toggle button */
-    z-index: 1010; /* Below toggle button but above content */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border-bottom: 1px solid #ddd;
-}
-    .page-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1040; /* Below the toggle button but above content */
-    background-color: transparent; /* Transparent but clickable */
-}
-
-/* Update the toggle button styling for mobile */
-@media (max-width: 991px) {
-    /* Base toggle button styling */
-    #sidebarToggleBtn {
-    position: fixed;
-    top: 80px; /* Position below navbar */
-    left: 10px;
-    z-index: 1060; /* Higher than sidebar and mobile search */
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    transition: all 0.3s;
-}
-    .mobile-search-container {
-        display: block;
-    }
-    /* When sidebar is open, move button to the right and change appearance */
-    body.sidebar-open #sidebarToggleBtn {
-        left: 220px; /* Position near the right edge of sidebar */
-        background-color: #ff5252; /* Red color to indicate close action */
-        content: "×"; /* Change to X symbol */
-    }
-    
-    /* Ensure the sidebar has proper z-index */
-    .chatgpt-sidebar {
-        z-index: 1050;
-    }
-    
-    /* Ensure the sidebar is properly transformed on mobile */
-    .chatgpt-sidebar {
-        transform: translateX(-260px); /* Start hidden */
-    }
-    
-    .chatgpt-sidebar.open {
-        transform: translateX(0); /* Show when open */
-    }
-
-    
-    /* Adjust main content padding to account for mobile search */
-    .main-content {
-        padding-top: 130px !important; /* Adjust based on navbar + mobile search height */
-        margin-left: 0 !important;
-        transition: margin-left 0.3s ease;
-    }
-    .chatgpt-sidebar.open ~ .main-content {
-        margin-left: 260px !important;
-    }
-
-    body.sidebar-open .main-content {
-        margin-left: 260px !important;
-    }
-}
-
-
+        body { font-family: 'Roboto', sans-serif; background-color: #f8f9fa; color: #333; transition: margin-left 0.3s ease; }
+        .container-fluid { padding-left: 0 !important; padding-right: 0 !important; }
+        .row { margin: 0 !important; }
+        .col { padding: 0 !important; }
+        /* ==== Tables ==== */
+        table.dataTable { width: 99% !important; margin: 0 auto !important; border-collapse: collapse; white-space: nowrap; }
+        th, td { border: none; padding: 2px; text-align: center; }
+        table.dataTable thead th, table.dataTable thead td { border-bottom: 0px solid #4CAF50; padding: 0 !important; text-align: center; vertical-align: middle; }
+        table.dataTable td { white-space: normal !important; word-wrap: break-word !important; }
+        table.dataTable tbody tr:nth-child(odd) { background-color: #f9f9f9; }
+        table.dataTable tbody tr:nth-child(even) { background-color: #bde0cf80; }
+        table.dataTable tbody tr:hover { background-color: #e0e0e0; }
+        /* ==== DataTables Controls ==== */
+        .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate { text-align: center; margin: 0; }
+        div.dt-buttons { display: flex !important; justify-content: center !important; margin: 20px auto !important; float: none !important; position: static !important; }
+        .dt-button { background-color: #4CAF50 !important; color: #fff !important; border: none !important; padding: 10px 20px !important; border-radius: 5px !important; transition: background-color 0.3s ease !important; }
+        .dt-button:hover { background-color: #45a049 !important; }
+        .btn-custom-color { background-color: #FFA500 !important; color: white !important; }
+        .btn-custom-color:hover { background-color: #FF8C00 !important; }
+        /* ==== Search Box ==== */
+        .search-input { font-size: 18px; font-weight: bold; color: #333; text-align: center; background-color: #fff; padding: 15px; border-radius: 10px; border: 2px solid #4CAF50; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 20px; transition: box-shadow 0.3s ease; }
+        .search-input:focus { outline: none; box-shadow: 0 4px 10px rgba(76,175,80,0.3); }
+        /* ==== Editable Cell ==== */
+        .editable { display: block; width: 100%; height: 100%; cursor: pointer; padding: 2px; }
+        .editing input { width: 70%; padding: 2px; }
+        .edit-buttons { display: inline-block; margin-left: 5px; }
+        .editing .edit-buttons { display: inline; }
+        .editing .editable { border: 1px solid #ccc; background-color: #fff; }
+        /* ==== Image Container ==== */
+        .img-container { position: relative; display: block; margin-bottom: 15px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .img-container img { width: 100%; height: auto; transition: transform 0.3s ease; }
+        .img-container:hover img { transform: scale(1.05); }
+        .image-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000; }
+        .image-popup img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .close-btn { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: #bbb; }
+        .save-btn, .cancel-btn { padding: 0 5px; cursor: pointer; }
+        /* ==== Inventory Summary ==== */
+        .quantity-sum { text-align: right !important; margin: 5px 0 10px auto !important; font-weight: bold; font-size: 1.2em; color: #4CAF50; background-color: #f0f8f0; padding: 8px 15px !important; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); width: auto !important; display: inline-block !important; float: right !important; clear: both !important; }
+        .sum-value { font-size: 1.5em; font-weight: 700; color: #388e3c; margin-left: 8px; }
+        .dataTables_filter { margin-bottom: 10px !important; }
+        .dataTables_wrapper::after { content: ""; display: table; clear: both; }
+        table.dataTable { margin-top: 15px !important; clear: both !important; }
+        .dataTables_paginate { margin-top: 10px !important; }
+        /* ==== Sidebar Styling ==== */
+        .sidebar { position: fixed; top: 70px; left: 0; height: calc(100vh - 70px); width: 260px; background-color: #ffffff; color: #000000; padding-top: 20px; transform: translateX(0); transition: transform 0.3s ease; z-index: 1020; overflow-y: auto; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        .sidebar.closed { transform: translateX(-260px); }
+        .sidebar .sidebar-header { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
+        .sidebar .nav-list { list-style: none; padding: 0; margin: 0; }
+        .sidebar .nav-list a { display: block; padding: 10px 20px; color: rgba(0, 0, 0, 0.8); text-decoration: none; transition: background-color 0.2s; }
+        .sidebar .nav-list a:hover, .sidebar .nav-list a.active { background-color: rgba(76,175,80,0.2); color: #000; }
+        .main-content { margin-left: 260px; transition: margin-left 0.3s ease; padding-top: 10px; }
+        body.sidebar-closed .main-content { margin-left: 0; }
+        /* ==== Toggle Button ==== */
+        #sidebarToggleBtn { position: fixed; top: 80px; left: 10px; z-index: 1050; background-color: #4CAF50; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s; }
+        body.sidebar-closed #sidebarToggleBtn { left: 10px; }
+        #sidebarToggleBtn:hover { background-color: #388e3c; }
+        /* ==== Tooltip Styling ==== */
+        .tooltip-inner { background-color: black !important; color: white !important; max-width: 300px !important; min-width: 300px !important; max-height: 300px !important; min-height: 50px !important; font-size: 16px !important; padding: 10px !important; overflow: auto; }
+        .bs-tooltip-top .arrow::before, .bs-tooltip-auto[data-popper-placement^="top"] .arrow::before { border-top-color: black !important; }
+        .bs-tooltip-right .arrow::before, .bs-tooltip-auto[data-popper-placement^="right"] .arrow::before { border-right-color: black !important; }
+        .bs-tooltip-bottom .arrow::before, .bs-tooltip-auto[data-popper-placement^="bottom"] .arrow::before { border-bottom-color: black !important; }
+        .bs-tooltip-left .arrow::before, .bs-tooltip-auto[data-popper-placement^="left"] .arrow::before { border-left-color: black !important; }
+        /* ==== Scroll Container ==== */
+        .table-responsive { border: 2px dashed #4CAF50 !important; border-radius: 10px !important; padding: 20px !important; margin: 0 auto !important; background-color: #ffffff !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; overflow-x: auto !important; overflow-y: hidden !important; box-sizing: border-box !important; }
+        .top-scroll { overflow-x: auto; overflow-y: hidden; height: 20px; }
+        .top-scroll-inner { height: 1px; }
+        #excel_table { width: 99% !important; margin-right: 0 !important; }
+        /* ==== Mobile Search ==== */
+        .mobile-search-container { display: none; position: fixed; top: 70px; left: 0; right: 0; background-color: #f8f9fa; padding: 10px 10px 10px 60px; z-index: 1010; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-bottom: 1px solid #ddd; }
+        .page-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1040; background-color: transparent; }
+        @media (max-width: 991px) {
+            #sidebarToggleBtn { position: fixed; top: 80px; left: 10px; z-index: 1060; background-color: #4CAF50; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: all 0.3s; }
+            .mobile-search-container { display: block; }
+            body.sidebar-open #sidebarToggleBtn { left: 220px; background-color: #ff5252; }
+            .sidebar { z-index: 1050; }
+            .sidebar { transform: translateX(-260px); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { padding-top: 130px !important; margin-left: 0 !important; transition: margin-left 0.3s ease; }
+            .sidebar.open ~ .main-content { margin-left: 260px !important; }
+            body.sidebar-open .main-content { margin-left: 260px !important; }
+        }
     </style>
 
 </head>
@@ -516,7 +109,7 @@ body.sidebar-closed #sidebarToggleBtn {
 <div id="pageOverlay" class="page-overlay"></div>
 
 <!-- ChatGPT-style Sidebar -->
-<aside class="chatgpt-sidebar" id="chatgptSidebar">
+<aside class="sidebar" id="chatgptSidebar">
     <div class="sidebar-header">
         Item Lookup Menu
     </div>
@@ -558,6 +151,8 @@ body.sidebar-closed #sidebarToggleBtn {
 
                 </div>
             </div>
+
+
             
             {% if user_input %}
             <div class="search-input mt-4">
@@ -622,6 +217,7 @@ body.sidebar-closed #sidebarToggleBtn {
                 <p class="mb-2 text-center">You can put multiple SKUs like n1223 gy, N1551</p>
                 <p class="mb-2 text-center">Style only = all colors, with color = one color</p>
                 <p class="mb-4 text-center">fuzzy search , try %T330 , %f24238%, %-set%</p>
+                
                 {% endif %}
 
                 <div class="form-group">
@@ -633,7 +229,18 @@ body.sidebar-closed #sidebarToggleBtn {
 
                     </div>
                 </div>
-                
+
+                {% if not image_urls %}
+                    <h4 class="mb-3 text-center">Try my new product detail page?</h4>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="product_detail_search_main" placeholder="Enter SKU or Style">
+                            <button class="btn btn-info" type="button" onclick="redirectToProductDetailMain()">View Detail</button>
+                        </div>
+                    </div>
+                {% endif %}
+
+
                 {% if user_input %}
                 <div class="search-input mt-4">
                     Your search input was: <br>{{ user_input }}
@@ -1774,6 +1381,54 @@ $('#excel_table, #history_table, #purchase_table, #adjustment_table').on('draw.d
 
     </script>
     
+    <!-- Product Detail Search Function -->
+    <script>
+    function redirectToProductDetail() {
+        const searchInput = document.getElementById('product_detail_search');
+        const searchValue = searchInput.value.trim();
+        
+        if (!searchValue) {
+            alert('Please enter a SKU or Style to search');
+            return;
+        }
+        
+        // Redirect to product detail page with the search query
+        window.location.href = '/product_detail?search=' + encodeURIComponent(searchValue);
+    }
+    
+    // Allow Enter key to trigger search
+    document.getElementById('product_detail_search').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            redirectToProductDetail();
+        }
+    });
+    
+    // Product Detail Search for Main Content
+    function redirectToProductDetailMain() {
+        const searchInput = document.getElementById('product_detail_search_main');
+        if (!searchInput) return;
+        
+        const searchValue = searchInput.value.trim();
+        
+        if (!searchValue) {
+            alert('Please enter a SKU or Style to search');
+            return;
+        }
+        
+        // Redirect to product detail page with the search query
+        window.location.href = '/product_detail?search=' + encodeURIComponent(searchValue);
+    }
+    
+    // Allow Enter key to trigger search in main content
+    const mainSearchInput = document.getElementById('product_detail_search_main');
+    if (mainSearchInput) {
+        mainSearchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                redirectToProductDetailMain();
+            }
+        });
+    }
+    </script>
 
 </body>
 </html>

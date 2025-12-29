@@ -405,15 +405,25 @@
             this.textContent = (visible ? '▶' : '▼') + ' Customers Without Valid Orders';
         });
 
-        // Auto-fill and search if URL hash is present
+        // Auto-fill and search if URL hash is present or search_id parameter is provided
         $(document).ready(function() {
-            const hash = window.location.hash;
-            if (hash && hash.length > 1) {
-                // Remove the # and get the customer ID
-                const customerId = hash.substring(1);
-                // Fill the input field
-                $('#customerNameInput').val(customerId);
-                // Automatically trigger the search
+            let searchValue = '';
+            
+            // First, check if search_id is provided as a query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            searchValue = urlParams.get('search_id');
+            
+            // If not, check for hash
+            if (!searchValue) {
+                const hash = window.location.hash;
+                if (hash && hash.length > 1) {
+                    searchValue = hash.substring(1);
+                }
+            }
+            
+            // If we have a search value, fill and search
+            if (searchValue) {
+                $('#customerNameInput').val(searchValue);
                 checkCustomerId();
             }
         });
