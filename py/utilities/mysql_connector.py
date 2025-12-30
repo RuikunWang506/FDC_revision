@@ -44,18 +44,28 @@ def update_location_in_db(sku, style, location):
     if connection is None:
         return {'success': False, 'message': 'Failed to connect to the database.'}
 
+    check_cursor = None
+    update_cursor = None
     try:
-        cursor = connection.cursor(dictionary=True)
-
-        # Check if the product exists
-        product = check_product_exists(cursor, sku, style)
+        # Create a separate cursor for checking and fetch the result
+        check_cursor = connection.cursor(dictionary=True)
+        check_cursor.execute("SELECT * FROM products WHERE SKU = %s AND Style = %s", (sku, style))
+        product = check_cursor.fetchone()
+        check_cursor.fetchall()  # Consume any remaining results
+        check_cursor.close()
+        check_cursor = None
+        
+        # Create a new cursor for updating
+        update_cursor = connection.cursor()
 
         if product:
             old_location = product.get('Location', 'N/A')  # Default to 'N/A' if Location is None
-            update_product_location(cursor, location, sku, style)
+            update_cursor.execute("UPDATE products SET Location = %s, Update_Date = NOW() WHERE SKU = %s AND Style = %s", 
+                                 (location, sku, style))
             connection.commit()
         else:
-            insert_new_product(cursor, sku, style, location)
+            update_cursor.execute("INSERT INTO products (SKU, Style, Location, Update_Date) VALUES (%s, %s, %s, NOW())", 
+                                 (sku, style, location))
             connection.commit()
 
         return {'success': True, 'message': 'Location updated successfully.'}
@@ -65,9 +75,11 @@ def update_location_in_db(sku, style, location):
         return {'success': False, 'message': 'An error occurred while updating the location.'}
 
     finally:
-        if 'cursor' in locals() and cursor:
-            cursor.close()
-        if connection and connection.is_connected():
+        if check_cursor:
+            check_cursor.close()
+        if update_cursor:
+            update_cursor.close()
+        if connection:
             connection.close()
 
 @mysql_connector_bp.route('/update_location', methods=['POST'])

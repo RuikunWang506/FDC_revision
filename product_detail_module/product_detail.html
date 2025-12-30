@@ -476,8 +476,33 @@
             background: #e0e7ff;
             color: #3730a3;
             display: inline-block;
-            white-space: nowrap;
         }
+        
+        .sku-detail-badge.editable {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            color: #856404;
+            border: 1.5px solid #ffc107;
+            cursor: pointer !important;
+            padding: 0.35em 0.85em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .sku-detail-badge.editable::after {
+            content: ' ✎';
+            font-size: 0.85em;
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+        
+        .sku-detail-badge.editable:hover {
+            background: linear-gradient(135deg, #ffd699 0%, #ffcc80 100%);
+            border-color: #ff9800;
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+            transform: translateY(-1px);
+        }
+           
     </style>
 </head>
 <body>
@@ -605,7 +630,7 @@
                                     <!-- Left Column -->
                                     <div style="flex: 1;">
                                         <div style="margin-bottom: 6px;">Style: <span class="sku-detail-badge">{{ style_group.parent_info.style }}</span></div>
-                                        <div>Description: <span class="sku-detail-badge" style="cursor: pointer; text-decoration: underline;" onclick="openDescriptionEdit('{{ style_group.parent_info.style }}', '{{ style_group.description or 'N/A' }}', event)">{{ style_group.description or 'N/A' }}</span></div>
+                                        <div>Design: <span class="sku-detail-badge editable" onclick="openDescriptionEdit('{{ style_group.parent_info.style }}', '{{ style_group.description or 'N/A' }}', event)">{{ style_group.description or 'N/A' }}</span></div>
                                     </div>
                                     <!-- Right Column -->
                                     <div style="flex: 1;">
@@ -634,26 +659,30 @@
                             <div>
                                 <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">INFO</div>
                                 <div style="margin-bottom: 6px;">Location: 
+                                    <span class="sku-detail-badge editable" onclick="openLocationPopup('{{ style_group.colors[0].sku if style_group.colors else '' }}', '{{ style_group.parent_info.style }}', '{{ style_group.location or 'N/A' }}', event)">
                                     {% if style_group.location %}
                                         {% for loc in style_group.location.split(',') %}
-                                        <span class="sku-detail-badge">{{ loc.strip() }}</span>
+                                        {{ loc.strip() }}{% if not loop.last %}, {% endif %}
                                         {% endfor %}
                                     {% else %}
-                                        <span class="sku-detail-badge">N/A</span>
+                                        N/A
                                     {% endif %}
+                                    </span>
                                 </div>
                                 <div>OMS_Description: 
+                                    <span class="sku-detail-badge" onclick="openInfoPopup('{{ style_group.parent_info.style }}', '{{ style_group.oms_description or 'N/A' }}', event)">
                                     {% if style_group.oms_description %}
                                         {% if style_group.oms_description is string %}
-                                            <span class="sku-detail-badge">{{ style_group.oms_description }}</span>
+                                            {{ style_group.oms_description }}
                                         {% else %}
                                             {% for desc in style_group.oms_description %}
-                                                <span class="sku-detail-badge">{{ desc }}</span>
+                                            {{ desc }}{% if not loop.last %}, {% endif %}
                                             {% endfor %}
                                         {% endif %}
                                     {% else %}
-                                        <span class="sku-detail-badge">N/A</span>
+                                        N/A
                                     {% endif %}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -809,14 +838,14 @@
         
         {% endif %}
 
-        <!-- Item History Section -->
+        <!-- Item History Section (LAZY-LOADED) -->
         {% if product_data %}
-        <div class="history-section">
+        <div class="history-section" id="itemHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-history"></i> Item History</div>
-                <span id="history-total-qty" style="font-size: 13px;">{% set hist_sum = history_data | map(attribute='order_quantity') | list | sum %}Total: {{ hist_sum }}</span>
+                <span id="history-total-qty" style="font-size: 13px;">Loading...</span>
             </div>
-            <div class="history-content">
+            <div class="history-content" style="display: none;">
                 <div class="history-modules-container">
                     <!-- Left Module: General Info -->
                     <div class="history-left-module">
@@ -845,40 +874,8 @@
                     
                     <!-- Right Module: Data Table -->
                     <div class="history-right-module">
-                        <div class="table-responsive">
-                            {% if history_data %}
-                            <table class="dataTable">
-                                <thead>
-                                    <tr>
-                                        <th>Database</th>
-                                        <th>SKU</th>
-                                        <th>Order Number</th>
-                                        <th>Order Date</th>
-                                        <th>Customer ID</th>
-                                        <th>Order Qty</th>
-                                        <th>Unit Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in history_data %}
-                                    {% set sku_parts = row.product_code.split() %}
-                                    {% set style = sku_parts[0] if sku_parts|length > 0 else 'UNKNOWN' %}
-                                    {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
-                                    <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}" data-order-num="{{ row.order_number }}" data-customer-id="{{ row.customer_id }}" data-unit-price="{{ row.unit_price }}" data-order-qty="{{ row.order_quantity }}">
-                                        <td>{{ row.database }}</td>
-                                        <td><a href="https://www.fdcef.com/product_detail?search={{ row.product_code }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ row.product_code }}</a></td>
-                                        <td><a href="/order_lookup/{{ row.order_number }}" target="_blank">{{ row.order_number }}</a></td>
-                                        <td>{{ row.order_date }}</td>
-                                        <td><a class="customer-link" onclick="openCustomerSearch('{{ row.customer_id }}')">{{ row.customer_id }}</a></td>
-                                        <td class="num-col">{{ row.order_quantity }}</td>
-                                        <td class="num-col">${{ "%.2f" | format(row.unit_price) }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% else %}
-                            <div class="info-line">No item history found.</div>
-                            {% endif %}
+                        <div id="historyTableContainer" style="min-height: 100px;">
+                            <div style="text-align: center; padding: 20px; color: #666;">Loading history data...</div>
                         </div>
                     </div>
                 </div>
@@ -886,88 +883,31 @@
         </div>
         {% endif %}
 
-        <!-- Inventory Manual Adjustment Section -->
+        <!-- Inventory Manual Adjustment Section (LAZY-LOADED) -->
         {% if product_data %}
-        <div class="history-section">
+        <div class="history-section" id="adjustmentHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-tools"></i> Inventory Manual Adjustment</div>
-                <span id="adjustment-total-qty" style="font-size: 13px;">{% set adj_sum = adjustment_data | map(attribute='quantity') | list | sum %}Total: {{ adj_sum }}</span>
+                <span id="adjustment-total-qty" style="font-size: 13px;">Loading...</span>
             </div>
-            <div class="history-content">
-                <div class="table-responsive">
-                    {% if adjustment_data %}
-                    <table class="dataTable">
-                        <thead>
-                            <tr>
-                                <th>Database</th>
-                                <th>SKU</th>
-                                <th>Log Number</th>
-                                <th>Date</th>
-                                <th>Adjusted By</th>
-                                <th>Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in adjustment_data %}
-                            {% set sku_parts = row.sku.split() %}
-                            {% set style = sku_parts[0] if sku_parts|length > 0 else 'UNKNOWN' %}
-                            {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
-                            <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}">
-                                <td>{{ row.database }}</td>
-                                <td><a href="https://www.fdcef.com/product_detail?search={{ row.sku }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ row.sku }}</a></td>
-                                <td>{{ row.log_number }}</td>
-                                <td>{{ row.date }}</td>
-                                <td>{{ row.adjusted_by }}</td>
-                                <td class="num-col" style="{% if row.quantity < 0 %}color: red;{% else %}color: green;{% endif %}">{{ row.quantity }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="info-line">No adjustment history found.</div>
-                {% endif %}
+            <div class="history-content" style="display: none;">
+                <div id="adjustmentTableContainer" style="min-height: 100px;">
+                    <div style="text-align: center; padding: 20px; color: #666;">Loading adjustment data...</div>
+                </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Purchase History Section -->
+        <!-- Purchase History Section (LAZY-LOADED) -->
         {% if product_data %}
-        <div class="history-section">
+        <div class="history-section" id="purchaseHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-shopping-cart"></i> Purchase History</div>
-                <span id="purchase-total-qty" style="font-size: 13px;">{% set purch_sum = purchase_data | map(attribute='purchase_quantity') | list | sum %}Total: {{ purch_sum }}</span>
+                <span id="purchase-total-qty" style="font-size: 13px;">Loading...</span>
             </div>
-            <div class="history-content">
-                <div class="table-responsive">
-                    {% if purchase_data %}
-                    <table class="dataTable">
-                        <thead>
-                            <tr>
-                                <th>Database</th>
-                                <th>SKU</th>
-                                <th>PO Number</th>
-                                <th>PO Date</th>
-                                <th>Qty</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in purchase_data %}
-                            {% set sku_parts = row.sku.split() %}
-                            {% set style = sku_parts[0] if sku_parts|length > 0 else 'UNKNOWN' %}
-                            {% set color_code = sku_parts[-1] if sku_parts|length > 1 else '?' %}
-                            <tr class="history-data-row" data-style="{{ style | trim }}" data-color="{{ color_code | trim }}" data-database="{{ row.database }}">
-                                <td>{{ row.database }}</td>
-                                <td>{{ row.sku }}</td>
-                                <td>{{ row.po_number }}</td>
-                                <td>{{ row.po_date }}</td>
-                                <td class="num-col">{{ row.purchase_quantity }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="info-line">No purchase history found.</div>
-                    {% endif %}
+            <div class="history-content" style="display: none;">
+                <div id="purchaseTableContainer" style="min-height: 100px;">
+                    <div style="text-align: center; padding: 20px; color: #666;">Loading purchase data...</div>
                 </div>
             </div>
         </div>
@@ -1173,70 +1113,69 @@
             });
             
             // Update history section totals based on visible rows
-            const itemHistoryRows = Array.from(document.querySelectorAll('.history-data-row')).filter(row => row.style.display !== 'none');
             
-            // Calculate Item History total (Order Qty column)
-            let itemHistorySum = 0;
-            itemHistoryRows.forEach(row => {
-                const table = row.closest('table');
-                if (table) {
-                    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
-                    // Check if this is the Item History table by looking for 'Order Qty' header
-                    if (headers.includes('Order Qty')) {
-                        const orderQtyIndex = headers.indexOf('Order Qty');
-                        const cells = row.querySelectorAll('td');
-                        if (cells.length > orderQtyIndex) {
-                            itemHistorySum += parseInt(cells[orderQtyIndex].textContent) || 0;
-                        }
+            // Update Item History total - sum visible rows in historyTableContainer
+            const historyContainer = document.getElementById('historyTableContainer');
+            if (historyContainer) {
+                const historyRows = Array.from(historyContainer.querySelectorAll('.history-data-row')).filter(row => row.style.display !== 'none');
+                let itemHistorySum = 0;
+                historyRows.forEach(row => {
+                    // Qty is in the 6th column (index 5)
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length > 5) {
+                        itemHistorySum += parseInt(cells[5].textContent) || 0;
                     }
+                });
+                const historyTotalQty = document.getElementById('history-total-qty');
+                if (historyTotalQty) {
+                    historyTotalQty.textContent = `Total: ${itemHistorySum}`;
                 }
-            });
-            const historyTotalQty = document.getElementById('history-total-qty');
-            if (historyTotalQty) {
-                historyTotalQty.textContent = `Total: ${itemHistorySum}`;
             }
             
-            // Calculate Adjustment total (Quantity column)
-            let adjustmentSum = 0;
-            itemHistoryRows.forEach(row => {
-                const table = row.closest('table');
-                if (table) {
-                    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
-                    // Check if this is the Adjustment table by looking for 'Adjusted By' header
-                    if (headers.includes('Adjusted By')) {
-                        const quantityIndex = headers.indexOf('Quantity');
-                        const cells = row.querySelectorAll('td');
-                        if (cells.length > quantityIndex && quantityIndex >= 0) {
-                            adjustmentSum += parseInt(cells[quantityIndex].textContent) || 0;
-                        }
+            // Update Adjustment total - sum visible rows in adjustmentTableContainer
+            const adjustmentContainer = document.getElementById('adjustmentTableContainer');
+            if (adjustmentContainer) {
+                const adjustmentRows = Array.from(adjustmentContainer.querySelectorAll('.history-data-row')).filter(row => row.style.display !== 'none');
+                let adjustmentSum = 0;
+                adjustmentRows.forEach(row => {
+                    // Qty is in the 6th column (index 5)
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length > 5) {
+                        adjustmentSum += parseInt(cells[5].textContent) || 0;
                     }
+                });
+                const adjustmentTotalQty = document.getElementById('adjustment-total-qty');
+                if (adjustmentTotalQty) {
+                    adjustmentTotalQty.textContent = `Total: ${adjustmentSum}`;
                 }
-            });
-            const adjustmentTotalQty = document.getElementById('adjustment-total-qty');
-            if (adjustmentTotalQty) {
-                adjustmentTotalQty.textContent = `Total: ${adjustmentSum}`;
             }
             
-            // Calculate Purchase total (Qty column)
-            let purchaseSum = 0;
-            itemHistoryRows.forEach(row => {
-                const table = row.closest('table');
-                if (table) {
-                    const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
-                    // Check if this is the Purchase table by looking for 'PO Number' header
-                    if (headers.includes('PO Number')) {
-                        const qtyIndex = headers.indexOf('Qty');
-                        const cells = row.querySelectorAll('td');
-                        if (cells.length > qtyIndex && qtyIndex >= 0) {
-                            purchaseSum += parseInt(cells[qtyIndex].textContent) || 0;
-                        }
+            // Update Purchase total - sum visible rows in purchaseTableContainer
+            const purchaseContainer = document.getElementById('purchaseTableContainer');
+            if (purchaseContainer) {
+                const purchaseRows = Array.from(purchaseContainer.querySelectorAll('.history-data-row')).filter(row => row.style.display !== 'none');
+                let purchaseSum = 0;
+                purchaseRows.forEach(row => {
+                    // Qty is in the 5th column (index 4) for purchase
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length > 4) {
+                        purchaseSum += parseInt(cells[4].textContent) || 0;
                     }
+                });
+                const purchaseTotalQty = document.getElementById('purchase-total-qty');
+                if (purchaseTotalQty) {
+                    purchaseTotalQty.textContent = `Total: ${purchaseSum}`;
                 }
-            });
-            const purchaseTotalQty = document.getElementById('purchase-total-qty');
-            if (purchaseTotalQty) {
-                purchaseTotalQty.textContent = `Total: ${purchaseSum}`;
             }
+        }
+        
+        // OPTIMIZATION 5: Debounce filter function for better performance
+        let filterTimeout;
+        function debouncedApplyFilters() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => {
+                applyFilters();
+            }, 100);  // Wait 100ms after last filter change before applying
         }
         
         // Function to select database (radio button behavior)
@@ -1249,8 +1188,8 @@
             // Add active class to clicked button
             btn.classList.add('active');
             
-            // Apply filters
-            applyFilters();
+            // Apply filters with debounce
+            debouncedApplyFilters();
         }
         
         // Initialize filter button click handlers
@@ -1260,7 +1199,7 @@
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     this.classList.toggle('active');
-                    applyFilters();
+                    debouncedApplyFilters();  // Use debounced version
                 });
             });
         });
@@ -1282,97 +1221,331 @@
             const icon = headerElement.querySelector('i.fa-chevron-down');
             
             // Toggle the content visibility
-            content.classList.toggle('collapsed');
+            content.style.display = content.style.display === 'none' ? '' : 'none';
             
             // Rotate the chevron icon
             headerElement.classList.toggle('collapsed');
             
-            // If opening Item History section, populate the left module
-            if (!content.classList.contains('collapsed') && section.querySelector('.history-left-module')) {
-                populateHistoryLeftModule();
+            // Lazy-load history data when opening the section
+            if (content.style.display !== 'none') {
+                const sectionId = section.id;
+                
+                // Get style from data attribute (passed from backend)
+                let style = section.getAttribute('data-search') || '';
+                
+                // Fallback: try to extract from first product header
+                if (!style) {
+                    style = document.querySelector('.product-header')?.textContent.match(/Style[:\s]*([A-Z0-9]+)/)?.[1] || '';
+                }
+                
+                // Fallback: use search input value
+                if (!style) {
+                    const searchInput = document.querySelector('input[name="search_input"]');
+                    if (searchInput) style = searchInput.value;
+                }
+                
+                console.log('toggleHistory - section:', sectionId, 'style:', style);
+                
+                if (sectionId === 'itemHistorySection') {
+                    lazyLoadHistoryData(style);
+                } else if (sectionId === 'adjustmentHistorySection') {
+                    lazyLoadAdjustmentData(style);
+                } else if (sectionId === 'purchaseHistorySection') {
+                    lazyLoadPurchaseData(style);
+                }
             }
         }
         
-        function populateHistoryLeftModule() {
-            // Collect data from all visible history rows
-            const rows = document.querySelectorAll('tr.history-data-row');
+        // OPTIMIZATION 3: Lazy-load history data via AJAX
+        let historyLoadedCache = {};
+        function lazyLoadHistoryData(style) {
+            if (historyLoadedCache[`history_${style}`]) return; // Already loaded
             
-            if (rows.length === 0) {
-                console.log('No history rows found');
+            const container = document.getElementById('historyTableContainer');
+            if (!container) {
+                console.error('historyTableContainer not found');
                 return;
             }
             
-            // Collect unique prices and totals
-            const uniquePrices = new Set();
-            let totalPrice = 0;
-            let totalQty = 0;
+            console.log('Loading history for style:', style);
+            fetch(`/api/history/${encodeURIComponent(style)}`)
+                .then(r => {
+                    console.log('History fetch response status:', r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('History data:', data);
+                    if (data.success && data.data && data.data.length > 0) {
+                        let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Order #</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Date</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Customer</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Unit Price</th>';
+                        html += '</tr></thead><tbody>';
+                        
+                        let totalQty = 0;
+                        let uniquePrices = new Set();
+                        let totalPrice = 0;
+                        
+                        // Sort data by date (most recent first)
+                        const sortedData = [...data.data].sort((a, b) => {
+                            const dateA = new Date(a.order_date);
+                            const dateB = new Date(b.order_date);
+                            return dateB - dateA; // Descending order (newest first)
+                        });
+                        
+                        sortedData.forEach(row => {
+                            html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
+                                <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
+                                <td style="padding:6px; border:1px solid #ddd;"><a href="/product_detail?search=${row.product_code}" style="color:#667eea;">${row.product_code}</a></td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.order_number}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.order_date}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.customer_id || '-'}</td>
+                                <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.order_quantity}</td>
+                                <td style="padding:6px; border:1px solid #ddd; text-align:right;">$${row.unit_price?.toFixed(2) || '0.00'}</td>
+                            </tr>`;
+                            totalQty += row.order_quantity;
+                            uniquePrices.add(row.unit_price);
+                            totalPrice += (row.unit_price * row.order_quantity);
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        container.innerHTML = html;
+                        document.getElementById('history-total-qty').textContent = `Total: ${totalQty}`;
+                        
+                        // Update left module with summary data
+                        populateHistorySummary(uniquePrices, totalQty, totalPrice);
+                        
+                        // Apply current filters to the newly loaded history rows
+                        applyFilters();
+                        
+                        historyLoadedCache[`history_${style}`] = true;
+                    } else {
+                        container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No history data found.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading history:', err);
+                    container.innerHTML = '<div style="padding:20px; color:red;">Error loading data: ' + err.message + '</div>';
+                });
+        }
+        
+        function lazyLoadAdjustmentData(style) {
+            if (historyLoadedCache[`adjustment_${style}`]) return;
             
-            rows.forEach(row => {
-                // Check if row is visible (not hidden by filters)
-                const isVisible = row.style.display !== 'none';
-                
-                const unitPrice = parseFloat(row.getAttribute('data-unit-price')) || 0;
-                const orderQty = parseInt(row.getAttribute('data-order-qty')) || 0;
-                
-                if (isVisible || rows.length > 0) {  // Include all for initial load
-                    uniquePrices.add(unitPrice);
-                    totalPrice += unitPrice * orderQty;
-                    totalQty += orderQty;
-                }
-            });
+            const container = document.getElementById('adjustmentTableContainer');
+            if (!container) return;
             
-            // Calculate average price
-            const avgPrice = totalQty > 0 ? (totalPrice / totalQty).toFixed(2) : 0;
+            console.log('Loading adjustments for style:', style);
+            fetch(`/api/adjustments/${encodeURIComponent(style)}`)
+                .then(r => {
+                    console.log('Adjustment fetch response status:', r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('Adjustment data:', data);
+                    if (data.success && data.data && data.data.length > 0) {
+                        let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Log #</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Date</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Adjusted By</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+                        html += '</tr></thead><tbody>';
+                        
+                        let totalAdj = 0;
+                        
+                        // Sort data by date (most recent first)
+                        const sortedAdjData = [...data.data].sort((a, b) => {
+                            const dateA = new Date(a.date);
+                            const dateB = new Date(b.date);
+                            return dateB - dateA; // Descending order (newest first)
+                        });
+                        
+                        sortedAdjData.forEach(row => {
+                            html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
+                                <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
+                                <td style="padding:6px; border:1px solid #ddd;"><a href="/product_detail?search=${row.sku}" style="color:#667eea;">${row.sku}</a></td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.log_number}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.date}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.adjusted_by}</td>
+                                <td style="padding:6px; border:1px solid #ddd; text-align:right; color:${row.quantity < 0 ? 'red' : 'green'};">${row.quantity}</td>
+                            </tr>`;
+                            totalAdj += row.quantity;
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        container.innerHTML = html;
+                        document.getElementById('adjustment-total-qty').textContent = `Total: ${totalAdj}`;
+                        
+                        // Apply current filters to the newly loaded adjustment rows
+                        applyFilters();
+                        
+                        historyLoadedCache[`adjustment_${style}`] = true;
+                    } else {
+                        container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No adjustment data found.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading adjustments:', err);
+                    container.innerHTML = '<div style="padding:20px; color:red;">Error loading data: ' + err.message + '</div>';
+                });
+        }
+        
+        function lazyLoadPurchaseData(style) {
+            if (historyLoadedCache[`purchase_${style}`]) return;
             
-            console.log('Summary:', {uniquePrices: Array.from(uniquePrices), avgPrice, totalPrice, totalQty});
+            const container = document.getElementById('purchaseTableContainer');
+            if (!container) return;
             
-            // Populate unique prices
+            console.log('Loading purchases for style:', style);
+            fetch(`/api/purchases/${encodeURIComponent(style)}`)
+                .then(r => {
+                    console.log('Purchase fetch response status:', r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('Purchase data:', data);
+                    if (data.success && data.data && data.data.length > 0) {
+                        let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">PO #</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">PO Date</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+                        html += '</tr></thead><tbody>';
+                        
+                        let totalPurch = 0;
+                        
+                        // Sort data by date (most recent first)
+                        const sortedPurchData = [...data.data].sort((a, b) => {
+                            const dateA = new Date(a.po_date);
+                            const dateB = new Date(b.po_date);
+                            return dateB - dateA; // Descending order (newest first)
+                        });
+                        
+                        sortedPurchData.forEach(row => {
+                            html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
+                                <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.sku}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.po_number}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.po_date}</td>
+                                <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.purchase_quantity}</td>
+                            </tr>`;
+                            totalPurch += row.purchase_quantity;
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        container.innerHTML = html;
+                        document.getElementById('purchase-total-qty').textContent = `Total: ${totalPurch}`;
+                        
+                        // Apply current filters to the newly loaded purchase rows
+                        applyFilters();
+                        
+                        historyLoadedCache[`purchase_${style}`] = true;
+                    } else {
+                        container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No purchase data found.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading purchases:', err);
+                    container.innerHTML = '<div style="padding:20px; color:red;">Error loading data: ' + err.message + '</div>';
+                });
+        }
+        
+        // Function to populate the left module summary for history
+        function populateHistorySummary(uniquePrices, totalQty, totalPrice) {
+            // Update unique prices
             const pricesContainer = document.getElementById('uniquePricesContainer');
             if (pricesContainer) {
                 pricesContainer.innerHTML = '';
                 Array.from(uniquePrices)
-                    .filter(p => p > 0)  // Only show positive prices
+                    .filter(p => p > 0)
                     .sort((a, b) => a - b)
                     .forEach(price => {
                         const badge = document.createElement('div');
                         badge.className = 'price-badge';
+                        badge.style.cssText = 'display:inline-block; background:#667eea; color:white; padding:4px 8px; margin:2px; border-radius:3px; font-size:11px;';
                         badge.textContent = '$' + price.toFixed(2);
                         pricesContainer.appendChild(badge);
                     });
             }
             
-            // Update totals
+            // Update average price
+            const avgPrice = totalQty > 0 ? (totalPrice / totalQty).toFixed(2) : 0;
             const avgPriceEl = document.getElementById('averagePrice');
             if (avgPriceEl) {
                 avgPriceEl.textContent = '$' + avgPrice;
             }
             
+            // Update total price
             const totalPriceEl = document.getElementById('totalPrice');
             if (totalPriceEl) {
                 totalPriceEl.textContent = '$' + totalPrice.toFixed(2);
             }
         }
         
-        function openCustomerSearch(customerId = null) {
-            // Open the customer page with customer ID in search
-            if (customerId) {
-                window.open(`/customer?search_id=${customerId}`, '_blank');
-            } else {
-                window.open(`/customer`, '_blank');
-            }
-        }
-        
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Populate history left module on page load
-            setTimeout(() => {
-                populateHistoryLeftModule();
-            }, 100);
-        });
 
     </script>
 
     <!-- Edit Description Modal -->
+    <!-- Location Popup Modal -->
+    <div class="modal fade" id="locationModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Location</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div><strong>Style:</strong> <span id="locationStyle"></span></div>
+            <div class="mt-3">
+              <label><strong>Locations:</strong></label>
+              <div id="locationInputs" style="padding: 10px; background: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; min-height: 80px;">
+                <!-- Location inputs will be added here dynamically -->
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addLocationInput()">
+                <i class="fas fa-plus"></i> Add Location
+              </button>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveLocationEdit()">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Popup Modal -->
+    <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">OMS Description Details</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div><strong>Style:</strong> <span id="infoStyle"></span></div>
+            <div class="mt-3" style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 4px; border: 1px solid #ddd;">
+                <div id="infoContent" style="word-break: break-word; white-space: normal;"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="editDescriptionModal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -1400,6 +1573,135 @@
 
     <script>
     let currentEditStyle = null;
+    let currentEditLocationSku = null;
+    let currentEditLocationStyle = null;
+    let locationInputCount = 0;
+    
+    function openLocationPopup(sku, style, location, event) {
+        event.preventDefault();
+        event.stopPropagation();
+        currentEditLocationSku = sku;
+        currentEditLocationStyle = style;
+        document.getElementById('locationStyle').innerText = style;
+        locationInputCount = 0;
+        
+        // Clear previous inputs
+        const inputsContainer = document.getElementById('locationInputs');
+        inputsContainer.innerHTML = '';
+        
+        // Parse existing locations and create input fields
+        if (location && location !== 'N/A') {
+            const locations = location.split(',').map(loc => loc.trim());
+            locations.forEach(loc => {
+                addLocationInput(loc);
+            });
+        } else {
+            addLocationInput('');
+        }
+        
+        $('#locationModal').modal('show');
+    }
+    
+    function addLocationInput(value = '') {
+        const inputsContainer = document.getElementById('locationInputs');
+        locationInputCount++;
+        const inputId = 'locInput_' + locationInputCount;
+        
+        const inputGroup = document.createElement('div');
+        inputGroup.style.display = 'flex';
+        inputGroup.style.gap = '6px';
+        inputGroup.style.marginBottom = '8px';
+        inputGroup.style.alignItems = 'center';
+        inputGroup.id = 'inputGroup_' + locationInputCount;
+        
+        inputGroup.innerHTML = `
+            <input type="text" class="form-control" id="${inputId}" placeholder="e.g., L12-C, A5" value="${value}" style="flex: 1;">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLocationInput(${locationInputCount})">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        
+        inputsContainer.appendChild(inputGroup);
+        
+        // Focus on the new input
+        document.getElementById(inputId).focus();
+    }
+    
+    function removeLocationInput(id) {
+        const group = document.getElementById('inputGroup_' + id);
+        if (group) {
+            group.remove();
+        }
+    }
+    
+    function saveLocationEdit() {
+        const locations = [];
+        const inputs = document.querySelectorAll('#locationInputs input[type="text"]');
+        
+        inputs.forEach(input => {
+            const value = input.value.trim();
+            if (value) {
+                locations.push(value);
+            }
+        });
+        
+        if (locations.length === 0) {
+            alert('Please enter at least one location');
+            return;
+        }
+        
+        // Send update to backend using the mysql_connector endpoint
+        fetch('/update_location', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sku: currentEditLocationSku,
+                style: currentEditLocationStyle,
+                location: locations.join(',')
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                $('#locationModal').modal('hide');
+                setTimeout(() => {
+                    location.reload();
+                }, 300);
+            } else {
+                alert('Update failed: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving location:', error);
+            alert('Error saving location');
+        });
+    }
+    
+    function openInfoPopup(style, info, event) {
+        event.preventDefault();
+        event.stopPropagation();
+        document.getElementById('infoStyle').innerText = style;
+        
+        // Parse info content - handle array or string
+        let infoHTML = '';
+        if (info && info !== 'N/A' && info !== '') {
+            // If it contains commas, treat as list
+            const infoItems = info.split(',').map(item => item.trim()).filter(item => item);
+            if (infoItems.length > 1) {
+                infoHTML = '<div style="line-height: 1.8;">' + 
+                           infoItems.map(item => '<div style="padding: 6px; background: white; margin-bottom: 6px; border-left: 3px solid #667eea; padding-left: 10px;">' + item + '</div>').join('') + 
+                           '</div>';
+            } else {
+                infoHTML = '<div style="padding: 10px; background: white; border-left: 3px solid #667eea; padding-left: 10px;">' + info + '</div>';
+            }
+        } else {
+            infoHTML = '<div class="text-muted">No information available</div>';
+        }
+        document.getElementById('infoContent').innerHTML = infoHTML;
+        $('#infoModal').modal('show');
+    }
     
     function openDescriptionEdit(style, currentDesc, event) {
         event.preventDefault();

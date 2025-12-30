@@ -899,6 +899,7 @@ def product_detail(search_input=None):
     
     # Search if input provided
     if search_input:
+        # Fetch product data WITHOUT history (optimization: lazy load on demand)
         product_data = search_product_data_with_history(search_input)
         if not product_data:
             error_message = "No products found matching your search."
@@ -907,28 +908,12 @@ def product_detail(search_input=None):
             for style_group in product_data:
                 first_sku = style_group['colors'][0]['sku'] if style_group['colors'] else None
                 style_group['images'] = fetch_style_images(style_group['style'], first_sku)
-            
-            # Collect all SKUs from the search results
-            all_skus = []
-            for style_group in product_data:
-                for color in style_group['colors']:
-                    all_skus.append(color['sku'])
-            
-            # Fetch history data for each SKU found
-            if all_skus:
-                for sku in all_skus:
-                    history_data.extend(fetch_item_history(sku))
-                    adjustment_data.extend(fetch_adjustment_history(sku))
-                    purchase_data.extend(fetch_purchase_history(sku))
                 
-                # Remove duplicates and sort
-                history_data = list({(h['product_code'], h['order_number'], h['order_date']): h for h in history_data}.values())
-                adjustment_data = list({(a['sku'], a['log_number'], a['date']): a for a in adjustment_data}.values())
-                purchase_data = list({(p['sku'], p['po_number'], p['po_date']): p for p in purchase_data}.values())
-                
-                history_data.sort(key=lambda x: x['order_date'], reverse=True)
-                adjustment_data.sort(key=lambda x: x['date'], reverse=True)
-                purchase_data.sort(key=lambda x: x['po_date'], reverse=True)
+                # Pre-aggregate color count for pagination
+                style_group['total_colors'] = len(style_group['colors'])
+            
+            # DO NOT fetch all history upfront - it will be lazy-loaded via AJAX
+            # This reduces initial page load time significantly
     
     return render_template(
         "product_detail.html",
@@ -1026,5 +1011,38 @@ def api_product_search():
             
     except Exception as e:
         current_app.logger.error(f"API search error: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@product_detail_bp.route("/api/history/<string:style>", methods=["GET"])
+def get_history_data(style):
+    """Lazy-load history data for a style"""
+    try:
+        history_data = fetch_item_history(style)
+        return jsonify({"success": True, "data": history_data})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching history for {style}: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@product_detail_bp.route("/api/adjustments/<string:style>", methods=["GET"])
+def get_adjustment_data(style):
+    """Lazy-load adjustment data for a style"""
+    try:
+        adjustment_data = fetch_adjustment_history(style)
+        return jsonify({"success": True, "data": adjustment_data})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching adjustments for {style}: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@product_detail_bp.route("/api/purchases/<string:style>", methods=["GET"])
+def get_purchase_data(style):
+    """Lazy-load purchase data for a style"""
+    try:
+        purchase_data = fetch_purchase_history(style)
+        return jsonify({"success": True, "data": purchase_data})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching purchases for {style}: {e}")
         return jsonify({"success": False, "error": str(e)})
 
