@@ -9,6 +9,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 import traceback
+import hashlib
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath('.'))
@@ -64,6 +65,157 @@ class SmartAutoFilter:
         # Tracking files for incremental processing
         self.processed_files_log = "processed_files.log"
         self.last_scan_timestamp = self.get_last_scan_timestamp()
+        
+        # Database connection
+        self.db_conn = None
+    
+    def get_db_connection(self):
+        """Get or create database connection"""
+        if self.db_conn is None:
+            self.db_conn = get_mysql_connection()
+        return self.db_conn
+    
+    def close_db_connection(self):
+        """Close database connection"""
+        if self.db_conn:
+            try:
+                self.db_conn.close()
+            except:
+                pass
+            self.db_conn = None
+    
+    def calculate_file_hash(self, file_path):
+        """Calculate SHA-256 hash of file"""
+        hash_sha256 = hashlib.sha256()
+        try:
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_sha256.update(chunk)
+            return hash_sha256.hexdigest()
+        except Exception as e:
+            print(f"❌ Error hashing {file_path}: {e}")
+            return None
+    
+    def get_image_info(self, file_path):
+        """Extract image metadata"""
+        try:
+            from PIL import Image
+            with Image.open(file_path) as img:
+                return {
+                    'width': img.width,
+                    'height': img.height,
+                    'size_bytes': os.path.getsize(file_path)
+                }
+        except Exception as e:
+            print(f"⚠️  Could not read image metadata for {file_path}: {e}")
+            return None
+    
+    def sync_to_database(self, file_path, sku, classification, dest_path):
+        """Insert/update image record in database after successful copy"""
+        try:
+            conn = self.get_db_connection()
+            cursor = conn.cursor()
+            
+            filename = Path(file_path).name
+            sha256_hash = self.calculate_file_hash(str(dest_path))
+            image_info = self.get_image_info(str(dest_path))
+            
+            if not sha256_hash or not image_info:
+                print(f"⚠️  Skipping DB sync for {filename}: missing hash or metadata")
+                return False
+            
+            # Determine version number
+            version = 1
+            if '_v' in filename:
+                import re
+                match = re.search(r'_v(\d+)', filename)
+                if match:
+                    version = int(match.group(1))
+            
+            # Determine source based on classification (original source, not dropbox)
+            if classification == 'catalog':
+                source = 'catalog_original'
+            elif classification == 'big_picture':
+                source = 'big_picture_original'
+            else:
+                source = 'dropbox'  # Fallback for unknown classifications
+            
+            # Check if file already exists by filename (regardless of source)
+            cursor.execute(
+                "SELECT id, sha256, source FROM image_assets WHERE filename = %s",
+                (filename,)
+            )
+            existing = cursor.fetchone()
+            
+            if existing:
+                existing_id, existing_hash, existing_source = existing
+                
+                # If hash is the same, just update source if needed and return
+                if existing_hash == sha256_hash:
+                    if existing_source != source:
+                        # Update source to correct designation
+                        cursor.execute(
+                            "UPDATE image_assets SET source = %s, updated_at = %s WHERE id = %s",
+                            (source, datetime.now(), existing_id)
+                        )
+                        conn.commit()
+                        print(f"  ✏️  Updated source for {filename}: {existing_source} → {source}")
+                    else:
+                        print(f"  ℹ️  {filename} already in DB with correct source ({source}), skipping")
+                    return True
+                
+                # If hash changed, update the record
+                cursor.execute("""
+                    UPDATE image_assets SET 
+                        sku = %s, path = %s, sha256 = %s,
+                        width = %s, height = %s, file_size = %s,
+                        source = %s, is_active = TRUE, updated_at = %s
+                    WHERE id = %s
+                """, (
+                    sku, str(dest_path), sha256_hash,
+                    image_info['width'], image_info['height'], image_info['size_bytes'],
+                    source, datetime.now(), existing_id
+                ))
+                conn.commit()
+                print(f"  ✏️  Updated DB record for {filename} (hash changed, source: {source})")
+                return True
+            
+            # Check if same content (by hash) already exists with the correct source
+            cursor.execute(
+                "SELECT id, source FROM image_assets WHERE sha256 = %s AND source = %s",
+                (sha256_hash, source)
+            )
+            duplicate = cursor.fetchone()
+            
+            if duplicate:
+                print(f"  ℹ️  Content already in DB with {source} source, skipping")
+                return True
+            
+            # Insert new record
+            is_canonical = (Path(filename).stem.upper() == sku.upper())
+            cursor.execute("""
+                INSERT INTO image_assets 
+                (sku, version, filename, path, source, width, height, file_size, sha256, 
+                 is_active, is_canonical, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                sku, version, filename, str(dest_path), source,
+                image_info['width'], image_info['height'], image_info['size_bytes'],
+                sha256_hash, True, is_canonical,
+                datetime.now(), datetime.now()
+            ))
+            conn.commit()
+            print(f"  ✅ Added to DB: {sku} - {filename}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ DB sync error for {filename}: {e}")
+            try:
+                conn.rollback()
+            except:
+                pass
+            return False
+        
         
     def get_last_scan_timestamp(self):
         """Get timestamp of last scan to only process new/modified files"""
@@ -214,7 +366,7 @@ class SmartAutoFilter:
             return False
     
     def process_catalog_fast(self, source_path, sku):
-        """Fast catalog processing with version management"""
+        """Fast catalog processing with version management and database sync"""
         import shutil
         
         try:
@@ -227,6 +379,8 @@ class SmartAutoFilter:
             if not main_path.exists():
                 shutil.copy2(source_path, str(main_path))
                 print(f"✅ New catalog: {sku}.jpg")
+                # Sync to database
+                self.sync_to_database(source_path, sku, 'catalog', main_path)
                 return True
             
             # If main exists, save as version
@@ -234,6 +388,8 @@ class SmartAutoFilter:
             version_path = Path(self.catalog_dest) / f"{sku}_v{version_num}.jpg"
             shutil.copy2(source_path, str(version_path))
             print(f"✅ Catalog version: {sku}_v{version_num}.jpg")
+            # Sync to database
+            self.sync_to_database(source_path, sku, 'catalog', version_path)
             return True
             
         except Exception as e:
@@ -241,7 +397,7 @@ class SmartAutoFilter:
             return False
     
     def process_big_picture_fast(self, source_path, sku):
-        """Fast big picture processing"""
+        """Fast big picture processing with database sync"""
         import shutil
         
         try:
@@ -262,6 +418,8 @@ class SmartAutoFilter:
             
             shutil.copy2(source_path, str(dest_path))
             print(f"✅ Big picture: {sku}/{dest_path.name}")
+            # Sync to database
+            self.sync_to_database(source_path, sku, 'big_picture', dest_path)
             return True
             
         except Exception as e:
@@ -451,3 +609,9 @@ if __name__ == "__main__":
         log_event('error', f'Smart Auto-Filter failed with error: {e}')
         sys.stderr.flush()
         sys.exit(1)
+    finally:
+        # Close database connection
+        try:
+            filter_service.close_db_connection()
+        except:
+            pass

@@ -502,6 +502,38 @@
             box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
             transform: translateY(-1px);
         }
+
+        /* Editable Container for Location Badges */
+        .editable-container {
+            border: 2px dashed #ddd !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
+            display: inline-block;
+            background: #fff3cd !important;
+            position: relative;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
            
     </style>
 </head>
@@ -593,7 +625,7 @@
         
         <!-- Products Display -->
         {% for style_group in product_data %}
-        <div class="product-wrapper">
+        <div class="product-wrapper" data-container="{{ style_group.parent_info.container }}">
             <!-- Collapsible Header -->
             <div class="product-header" onclick="toggleProductSection(this)">
                 <div style="display: flex; align-items: center; flex: 1; gap: 12px;">
@@ -658,17 +690,20 @@
                             <!-- Location Section -->
                             <div>
                                 <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">INFO</div>
-                                <div style="margin-bottom: 6px;">Location: 
-                                    <span class="sku-detail-badge editable" onclick="openLocationPopup('{{ style_group.colors[0].sku if style_group.colors else '' }}', '{{ style_group.parent_info.style }}', '{{ style_group.location or 'N/A' }}', event)">
+                                <div style="margin-bottom: 6px;">
+                                    <span class="editable-container" onclick="openLocationPopup('{{ style_group.parent_info.style }}', event)" style="cursor: pointer; padding: 4px 8px; border: 2px dashed #ddd; border-radius: 4px; display: inline-block; background: #fff3cd;">Location: ✎</span>
+                                    <span onclick="openLocationPopup('{{ style_group.parent_info.style }}', event)" style="cursor: pointer;">
                                     {% if style_group.location %}
-                                        {% for loc in style_group.location.split(',') %}
-                                        {{ loc.strip() }}{% if not loop.last %}, {% endif %}
+                                        {% set locations = style_group.location.split(',') %}
+                                        {% for loc in locations %}
+                                        <span class="sku-detail-badge" style="display: inline-block; margin-right: 4px; margin-bottom: 4px; margin-left: 4px;">{{ loc.strip() }}</span>
                                         {% endfor %}
                                     {% else %}
-                                        N/A
+                                        <span class="sku-detail-badge" style="margin-left: 4px;">N/A</span>
                                     {% endif %}
                                     </span>
                                 </div>
+                                <div style="margin-bottom: 6px;">Created Date: <span class="sku-detail-badge">{{ style_group.parent_info.create_dt or 'N/A' }}</span></div>
                                 <div>OMS_Description: 
                                     <span class="sku-detail-badge" onclick="openInfoPopup('{{ style_group.parent_info.style }}', '{{ style_group.oms_description or 'N/A' }}', event)">
                                     {% if style_group.oms_description %}
@@ -706,6 +741,7 @@
                                         <th>Hist-sold</th>
                                         <th>Hist-fix</th>
                                         <th>Checker</th>
+                                        <th>Last Activity</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -730,6 +766,7 @@
                                         <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
                                         </td>
+                                        <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
                                     </tr>
                                     {% endif %}
                                     
@@ -753,6 +790,7 @@
                                         <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
                                         </td>
+                                        <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
                                     </tr>
                                     {% endif %}
                                     
@@ -772,6 +810,7 @@
                                         <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
                                         </td>
+                                        <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
                                     </tr>
                                     {% endfor %}
                                     <!-- FDC Summary Row -->
@@ -790,6 +829,7 @@
                                         <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
                                         </td>
+                                        <td></td>
                                     </tr>
                                     
                                     <!-- E-FAS Summary Row -->
@@ -808,6 +848,7 @@
                                         <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
                                         </td>
+                                        <td></td>
                                     </tr>
                                     
                                     <!-- Combined Summary Row -->
@@ -826,6 +867,7 @@
                                         <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
                                         </td>
+                                        <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -843,7 +885,7 @@
         <div class="history-section" id="itemHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-history"></i> Item History</div>
-                <span id="history-total-qty" style="font-size: 13px;">Loading...</span>
+                <span id="history-total-qty" style="font-size: 13px;">Click to Load</span>
             </div>
             <div class="history-content" style="display: none;">
                 <div class="history-modules-container">
@@ -888,7 +930,7 @@
         <div class="history-section" id="adjustmentHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-tools"></i> Inventory Manual Adjustment</div>
-                <span id="adjustment-total-qty" style="font-size: 13px;">Loading...</span>
+                <span id="adjustment-total-qty" style="font-size: 13px;">Click to Load</span>
             </div>
             <div class="history-content" style="display: none;">
                 <div id="adjustmentTableContainer" style="min-height: 100px;">
@@ -903,11 +945,26 @@
         <div class="history-section" id="purchaseHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-shopping-cart"></i> Purchase History</div>
-                <span id="purchase-total-qty" style="font-size: 13px;">Loading...</span>
+                <span id="purchase-total-qty" style="font-size: 13px;">Click to Load</span>
             </div>
             <div class="history-content" style="display: none;">
                 <div id="purchaseTableContainer" style="min-height: 100px;">
                     <div style="text-align: center; padding: 20px; color: #666;">Loading purchase data...</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ocean Section (LAZY-LOADED) -->
+        {% if product_data %}
+        <div class="history-section" id="oceanSection" data-search="{{ search_input }}">
+            <div class="history-header" onclick="toggleHistory(this)">
+                <div><i class="fas fa-chevron-down"></i><i class="fas fa-ship"></i> Ocean</div>
+                <span id="ocean-total-qty" style="font-size: 13px;">Click to Load</span>
+            </div>
+            <div class="history-content" style="display: none;">
+                <div id="oceanTableContainer" style="min-height: 100px;">
+                    <div style="text-align: center; padding: 20px; color: #666;">Loading ocean data...</div>
                 </div>
             </div>
         </div>
@@ -936,9 +993,12 @@
         }
         
         function applyFilters() {
-            // Get active color filters
+            // Get active color filters - normalize to lowercase and trim
             const activeColorButtons = document.querySelectorAll('.sidebar-color-btn.active');
-            const activeColors = Array.from(activeColorButtons).map(b => b.getAttribute('data-color'));
+            const activeColors = Array.from(activeColorButtons).map(b => {
+                const color = b.getAttribute('data-color');
+                return color ? color.trim().toLowerCase() : '';
+            }).filter(c => c !== '');
             
             // Get active database filter (radio button - only one)
             const activeDatabaseButton = document.querySelector('.sidebar-database-btn.active');
@@ -953,9 +1013,9 @@
             inventoryRows.forEach(row => {
                 let showRow = true;
                 
-                // Check color filter
+                // Check color filter - normalize row color for comparison
                 if (activeColors.length > 0) {
-                    const rowColor = row.getAttribute('data-color');
+                    const rowColor = (row.getAttribute('data-color') || '').trim().toLowerCase();
                     showRow = showRow && activeColors.includes(rowColor);
                 }
                 
@@ -1017,31 +1077,40 @@
                     rowsToSum.forEach(row => {
                         const cells = row.querySelectorAll('td');
                         if (cells.length >= 10) {
-                            // Skip first 2 cells (SKU, Color), sum numeric columns
-                            totals.stock += parseInt(cells[2].textContent) || 0;
-                            totals.avail += parseInt(cells[3].textContent) || 0;
-                            totals.sold += parseInt(cells[4].textContent) || 0;
-                            totals.incom += parseInt(cells[5].textContent) || 0;
-                            totals.hpo += parseInt(cells[6].textContent) || 0;
-                            totals.hsold += parseInt(cells[7].textContent) || 0;
-                            totals.hfix += parseInt(cells[8].textContent) || 0;
+                            // Dynamically detect offset based on cell count
+                            // With Description column: 12 cells total (SKU, Desc, Color, Stock, Avail, Sold, Incom, HPO, Hsold, Hfix, Checker, padding)
+                            // Without Description column: 11 cells total (SKU, Color, Stock, Avail, Sold, Incom, HPO, Hsold, Hfix, Checker, padding)
+                            const hasDescriptionColumn = cells.length >= 12;
+                            const startIndex = hasDescriptionColumn ? 3 : 2;
+                            
+                            totals.stock += parseInt(cells[startIndex].textContent) || 0;
+                            totals.avail += parseInt(cells[startIndex + 1].textContent) || 0;
+                            totals.sold += parseInt(cells[startIndex + 2].textContent) || 0;
+                            totals.incom += parseInt(cells[startIndex + 3].textContent) || 0;
+                            totals.hpo += parseInt(cells[startIndex + 4].textContent) || 0;
+                            totals.hsold += parseInt(cells[startIndex + 5].textContent) || 0;
+                            totals.hfix += parseInt(cells[startIndex + 6].textContent) || 0;
                         }
                     });
                     
                     // Update summary row cells
                     const summaryCells = summaryRow.querySelectorAll('td');
                     if (summaryCells.length >= 9) {
-                        summaryCells[1].textContent = totals.stock;           // Stock
-                        summaryCells[2].textContent = totals.avail;           // Avail
-                        summaryCells[3].textContent = totals.sold;            // Sold
-                        summaryCells[4].textContent = totals.incom;           // Incom
-                        summaryCells[5].textContent = totals.hpo;             // H-PO
-                        summaryCells[6].textContent = totals.hsold;           // H-sold
-                        summaryCells[7].textContent = totals.hfix;            // H-fix
+                        // Dynamically detect offset for summary row as well
+                        const hasDescriptionColumn = summaryCells.length >= 12;
+                        const startIndex = hasDescriptionColumn ? 3 : 2;
+                        
+                        summaryCells[startIndex].textContent = totals.stock;           // Stock
+                        summaryCells[startIndex + 1].textContent = totals.avail;           // Avail
+                        summaryCells[startIndex + 2].textContent = totals.sold;            // Sold
+                        summaryCells[startIndex + 3].textContent = totals.incom;           // Incom
+                        summaryCells[startIndex + 4].textContent = totals.hpo;             // H-PO
+                        summaryCells[startIndex + 5].textContent = totals.hsold;           // H-sold
+                        summaryCells[startIndex + 6].textContent = totals.hfix;            // H-fix
                         
                         // Update checker
                         const checkerValue = totals.hpo - totals.hsold - totals.avail + totals.hfix;
-                        const checkerCell = summaryCells[8];
+                        const checkerCell = summaryCells[startIndex + 7];
                         
                         if (checkerValue === 0) {
                             checkerCell.textContent = 'check';
@@ -1062,10 +1131,19 @@
             historyRows.forEach(row => {
                 let showRow = true;
                 
-                // Check color filter
+                // Check color filter - extract color from SKU column (2nd column)
                 if (activeColors.length > 0) {
-                    const rowColor = row.getAttribute('data-color');
-                    showRow = showRow && activeColors.includes(rowColor);
+                    const cells = row.querySelectorAll('td');
+                    // SKU is in the 2nd column (index 1), e.g., "T3305 BK"
+                    let rowColor = '';
+                    if (cells.length > 1) {
+                        const sku = cells[1].textContent.trim();
+                        const parts = sku.split(' ');
+                        if (parts.length > 1) {
+                            rowColor = parts[parts.length - 1].trim().toLowerCase();
+                        }
+                    }
+                    showRow = showRow && (rowColor === '' || activeColors.includes(rowColor));
                 }
                 
                 // For history rows, also check database filter
@@ -1119,17 +1197,30 @@
             if (historyContainer) {
                 const historyRows = Array.from(historyContainer.querySelectorAll('.history-data-row')).filter(row => row.style.display !== 'none');
                 let itemHistorySum = 0;
+                let uniquePrices = new Set();
+                let totalPrice = 0;
+                
                 historyRows.forEach(row => {
-                    // Qty is in the 6th column (index 5)
+                    // Qty is in the 6th column (index 5), Unit Price is in the 7th column (index 6)
                     const cells = row.querySelectorAll('td');
                     if (cells.length > 5) {
-                        itemHistorySum += parseInt(cells[5].textContent) || 0;
+                        const qty = parseInt(cells[5].textContent) || 0;
+                        const priceText = cells[6]?.textContent || '0';
+                        const price = parseFloat(priceText.replace('$', '')) || 0;
+                        
+                        itemHistorySum += qty;
+                        uniquePrices.add(price);
+                        totalPrice += (price * qty);
                     }
                 });
+                
                 const historyTotalQty = document.getElementById('history-total-qty');
                 if (historyTotalQty) {
                     historyTotalQty.textContent = `Total: ${itemHistorySum}`;
                 }
+                
+                // Update summary on left module
+                populateHistorySummary(uniquePrices, itemHistorySum, totalPrice);
             }
             
             // Update Adjustment total - sum visible rows in adjustmentTableContainer
@@ -1252,6 +1343,8 @@
                     lazyLoadAdjustmentData(style);
                 } else if (sectionId === 'purchaseHistorySection') {
                     lazyLoadPurchaseData(style);
+                } else if (sectionId === 'oceanSection') {
+                    lazyLoadOceanData(style);
                 }
             }
         }
@@ -1457,6 +1550,101 @@
                 });
         }
         
+        function lazyLoadOceanData(style) {
+            if (historyLoadedCache[`ocean_${style}`]) return;
+            
+            const container = document.getElementById('oceanTableContainer');
+            if (!container) return;
+            
+            console.log('Loading ocean data for style:', style);
+            
+            // Build ocean data from current product data
+            let oceanRows = [];
+            
+            // Get all product data on the page
+            document.querySelectorAll('.product-wrapper').forEach(wrapper => {
+                const headerText = wrapper.querySelector('.product-header')?.textContent || '';
+                const wrapperStyle = headerText.match(/Your search was ([A-Z0-9]+)/)?.[1] || '';
+                const containerNumber = wrapper.getAttribute('data-container') || 'N/A';
+                
+                // Get all data rows and check their actual database
+                const skuMap = {}; // Track by SKU to determine true database
+                wrapper.querySelectorAll('.data-row').forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 7) {
+                        // Extract from the row (Ocean column should be at index 6)
+                        const skuCell = cells[0].textContent.trim();
+                        const oceanQty = parseInt(cells[6].textContent) || 0;
+                        const database = row.getAttribute('data-database') || 'Unknown';
+                        const color = row.getAttribute('data-color') || '?';
+                        
+                        // Skip "Both" rows - only track FDC and E_FAS to determine true source
+                        if (oceanQty > 0 && database !== 'Both') {
+                            if (!skuMap[skuCell]) {
+                                skuMap[skuCell] = {
+                                    sku: skuCell,
+                                    container: containerNumber,
+                                    quantity: oceanQty,
+                                    color: color,
+                                    databases: new Set()
+                                };
+                            }
+                            skuMap[skuCell].databases.add(database);
+                        }
+                    }
+                });
+                
+                // Convert map to array and determine true database source
+                oceanRows = Object.values(skuMap).map(item => ({
+                    database: item.databases.size > 1 ? 'Both' : Array.from(item.databases)[0],
+                    sku: item.sku,
+                    container: item.container,
+                    quantity: item.quantity,
+                    color: item.color
+                }));
+            });
+            
+            if (oceanRows.length > 0) {
+                let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
+                html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
+                html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
+                html += '<th style="padding:8px; border:1px solid #ddd;">Container #</th>';
+                html += '<th style="padding:8px; border:1px solid #ddd;">Quantity</th>';
+                html += '</tr></thead><tbody>';
+                
+                let totalOcean = 0;
+                
+                oceanRows.forEach(row => {
+                    html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
+                        <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
+                        <td style="padding:6px; border:1px solid #ddd;">${row.sku}</td>
+                        <td style="padding:6px; border:1px solid #ddd;">${row.container}</td>
+                        <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.quantity}</td>
+                    </tr>`;
+                    totalOcean += row.quantity;
+                });
+                
+                // Add summary row
+                html += `<tr style="border:1px solid #ddd; background:#f5f5f5; font-weight:bold;">
+                    <td style="padding:6px; border:1px solid #ddd;"></td>
+                    <td style="padding:6px; border:1px solid #ddd;"></td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:right;">Total:</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:right;">${totalOcean}</td>
+                </tr>`;
+                
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+                document.getElementById('ocean-total-qty').textContent = `Total: ${totalOcean}`;
+                
+                // Apply current filters to the newly loaded ocean rows
+                applyFilters();
+                
+                historyLoadedCache[`ocean_${style}`] = true;
+            } else {
+                container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No ocean shipments found.</div>';
+            }
+        }
+        
         // Function to populate the left module summary for history
         function populateHistorySummary(uniquePrices, totalQty, totalPrice) {
             // Update unique prices
@@ -1493,31 +1681,71 @@
     </script>
 
     <!-- Edit Description Modal -->
-    <!-- Location Popup Modal -->
+    <!-- Location Management Modal -->
     <div class="modal fade" id="locationModal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Edit Location</h5>
+            <h5 class="modal-title">Manage Locations for Style: <span id="locationStyle" style="color: #667eea; font-weight: bold;"></span></h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">×</span>
             </button>
           </div>
           <div class="modal-body">
-            <div><strong>Style:</strong> <span id="locationStyle"></span></div>
-            <div class="mt-3">
-              <label><strong>Locations:</strong></label>
-              <div id="locationInputs" style="padding: 10px; background: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; min-height: 80px;">
-                <!-- Location inputs will be added here dynamically -->
+            <!-- Bulk Operations Panel -->
+            <div style="background: #f0f7ff; padding: 12px; border-radius: 4px; border-left: 4px solid #667eea; margin-bottom: 16px;">
+              <strong style="color: #667eea;">📋 Bulk Operations</strong>
+              <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-sm btn-outline-info" onclick="openBulkEditLocations()">
+                  ✏️ Bulk Modify All Locations
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkRemoveAllLocations()">
+                  🗑️ Remove All Locations
+                </button>
               </div>
-              <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addLocationInput()">
-                <i class="fas fa-plus"></i> Add Location
-              </button>
+            </div>
+
+            <!-- SKU Location Table -->
+            <div style="margin-bottom: 16px;">
+              <strong>Individual Location Updates:</strong>
+              <div style="max-height: 400px; overflow-y: auto; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <table class="table table-sm table-hover" style="margin-bottom: 0; font-size: 14px;">
+                  <thead style="position: sticky; top: 0; background: #f9f9f9;">
+                    <tr>
+                      <th style="width: 20%; padding: 8px;">SKU</th>
+                      <th style="width: 20%; padding: 8px;">Style</th>
+                      <th style="width: 55%; padding: 8px;">Current Location(s)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="skuLocationTableBody">
+                    <!-- SKU rows will be added here dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Bulk Edit Panel (Hidden by default) -->
+            <div id="bulkEditPanel" style="display: none; background: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ff9800; margin-bottom: 16px;">
+              <strong>Apply to all SKUs:</strong>
+              <div style="margin-top: 10px;">
+                <!-- Location Tags Container -->
+                <div id="bulkLocTagContainer" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 30px; padding: 6px; background: white; border-radius: 3px; border: 1px solid #ddd; align-content: flex-start;">
+                </div>
+                <!-- Input Section -->
+                <div id="bulkLocInputSection" style="display: flex; gap: 6px; margin-bottom: 10px;">
+                  <input type="text" class="form-control" id="bulkLocationInput" placeholder="e.g., L12-C" style="flex: 1;">
+                  <button type="button" class="btn btn-sm btn-success" title="Add location"><i class="fas fa-check"></i></button>
+                  <button type="button" class="btn btn-sm btn-secondary" title="Cancel"><i class="fas fa-times"></i></button>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn btn-sm btn-warning" onclick="applyBulkLocationChange()">Apply Changes</button>
+                  <button type="button" class="btn btn-sm btn-secondary" onclick="closeBulkEditPanel()">Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" onclick="saveLocationEdit()">Submit</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
@@ -1573,109 +1801,408 @@
 
     <script>
     let currentEditStyle = null;
-    let currentEditLocationSku = null;
     let currentEditLocationStyle = null;
+    let skuLocationMap = {}; // Map of SKU -> locations
     let locationInputCount = 0;
     
-    function openLocationPopup(sku, style, location, event) {
+    function openLocationPopup(style, event) {
         event.preventDefault();
         event.stopPropagation();
-        currentEditLocationSku = sku;
         currentEditLocationStyle = style;
         document.getElementById('locationStyle').innerText = style;
-        locationInputCount = 0;
+        document.getElementById('bulkEditPanel').style.display = 'none';
         
-        // Clear previous inputs
-        const inputsContainer = document.getElementById('locationInputs');
-        inputsContainer.innerHTML = '';
-        
-        // Parse existing locations and create input fields
-        if (location && location !== 'N/A') {
-            const locations = location.split(',').map(loc => loc.trim());
-            locations.forEach(loc => {
-                addLocationInput(loc);
+        // Fetch all locations for all SKUs of this style
+        fetch(`/api/locations/${encodeURIComponent(style)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    skuLocationMap = data.data; // Store SKU -> locations mapping
+                    
+                    // Populate table with SKU locations
+                    const tableBody = document.getElementById('skuLocationTableBody');
+                    tableBody.innerHTML = '';
+                    
+                    Object.entries(skuLocationMap).forEach(([sku, locations]) => {
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td style="padding: 8px; vertical-align: middle;">${sku.toUpperCase()}</td>
+                            <td style="padding: 8px; vertical-align: middle;">${style}</td>
+                            <td style="padding: 8px; vertical-align: middle;">
+                                <div id="locCell_${sku}" class="location-cell" 
+                                     style="cursor: pointer; padding: 6px; border-radius: 4px; border: 2px dashed #ddd; min-height: 30px; display: flex; flex-wrap: wrap; align-items: center; transition: all 0.2s ease;"
+                                     onclick="editLocationInline('${sku}', event)"
+                                     onmouseover="this.style.background='#f0f0f0'; this.style.borderColor='#999';"
+                                     onmouseout="this.style.background='transparent'; this.style.borderColor='#ddd';">
+                                    <span id="locDisplay_${sku}" style="display: contents;">
+                                        ${locations ? locations.split(',').map(l => l.trim()).filter(l => l).map(loc => 
+                                            `<span class="sku-detail-badge" style="display: inline-block; margin-right: 4px; margin-bottom: 4px;">${loc}</span>`
+                                        ).join('') : '<span class="text-muted">No locations</span>'}
+                                    </span>
+                                </div>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // If no SKUs found, show message
+                    if (Object.keys(skuLocationMap).length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted" style="padding: 20px;">No SKUs found for this style</td></tr>';
+                    }
+                } else {
+                    alert('Error loading locations: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching locations:', err);
+                alert('Error loading locations');
             });
-        } else {
-            addLocationInput('');
-        }
         
         $('#locationModal').modal('show');
     }
     
-    function addLocationInput(value = '') {
-        const inputsContainer = document.getElementById('locationInputs');
-        locationInputCount++;
-        const inputId = 'locInput_' + locationInputCount;
+    // Store editing state globally
+    let locationEditState = {};
+    
+    function editLocationInline(sku, event) {
+        event.stopPropagation();
+        const cellDiv = document.getElementById(`locCell_${sku}`);
+        const currentLocations = skuLocationMap[sku] || '';
+        const items = currentLocations ? currentLocations.split(',').map(l => l.trim()).filter(l => l) : [];
         
-        const inputGroup = document.createElement('div');
-        inputGroup.style.display = 'flex';
-        inputGroup.style.gap = '6px';
-        inputGroup.style.marginBottom = '8px';
-        inputGroup.style.alignItems = 'center';
-        inputGroup.id = 'inputGroup_' + locationInputCount;
+        // Store original for reference
+        locationEditState[sku] = {
+            items: [...items],
+            original: currentLocations
+        };
         
-        inputGroup.innerHTML = `
-            <input type="text" class="form-control" id="${inputId}" placeholder="e.g., L12-C, A5" value="${value}" style="flex: 1;">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeLocationInput(${locationInputCount})">
-                <i class="fas fa-trash"></i>
-            </button>
+        // Create tag input interface
+        let tagsHTML = items.map((item, idx) => 
+            `<span class="location-tag" data-index="${idx}" style="display: inline-block; background: #667eea; color: white; padding: 4px 8px; border-radius: 3px; margin-right: 4px; margin-bottom: 4px; font-size: 12px;">
+                ${item}
+                <span class="delete-tag-btn" style="cursor: pointer; margin-left: 4px; font-weight: bold;">×</span>
+            </span>`
+        ).join('');
+        
+        cellDiv.innerHTML = `
+            <div id="locTagContainer_${sku}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: 100%; min-height: 40px; padding: 4px;">
+                ${tagsHTML}
+                <div id="locInputSection_${sku}" style="display: flex; align-items: center; gap: 4px;">
+                    <input type="text" id="locNewInput_${sku}" class="form-control" placeholder="Add location..." style="min-width: 100px; height: 30px; font-size: 12px;">
+                    <button type="button" class="btn btn-sm btn-success" style="padding: 4px 8px;" title="Add">
+                        <i class="fa fa-check"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" style="padding: 4px 8px;" title="Cancel input">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
         `;
         
-        inputsContainer.appendChild(inputGroup);
+        const container = document.getElementById(`locTagContainer_${sku}`);
+        const inputSection = document.getElementById(`locInputSection_${sku}`);
+        const input = document.getElementById(`locNewInput_${sku}`);
+        const buttons = inputSection.querySelectorAll('button');
+        const confirmBtn = buttons[0];
+        const cancelBtn = buttons[1];
         
-        // Focus on the new input
-        document.getElementById(inputId).focus();
-    }
-    
-    function removeLocationInput(id) {
-        const group = document.getElementById('inputGroup_' + id);
-        if (group) {
-            group.remove();
-        }
-    }
-    
-    function saveLocationEdit() {
-        const locations = [];
-        const inputs = document.querySelectorAll('#locationInputs input[type="text"]');
+        // Show input section initially
+        inputSection.style.display = 'flex';
         
-        inputs.forEach(input => {
+        // Add location on Enter or check click
+        const addNewLocation = () => {
             const value = input.value.trim();
             if (value) {
-                locations.push(value);
+                locationEditState[sku].items.push(value);
+                saveLocationChange(sku);
+                editLocationInline(sku, event);
+            }
+        };
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addNewLocation();
+            } else if (e.key === 'Backspace' && input.value === '' && locationEditState[sku].items.length > 0) {
+                e.preventDefault();
+                locationEditState[sku].items.pop();
+                saveLocationChange(sku);
+                editLocationInline(sku, event);
             }
         });
         
-        if (locations.length === 0) {
-            alert('Please enter at least one location');
-            return;
-        }
+        confirmBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            addNewLocation();
+        });
         
-        // Send update to backend using the mysql_connector endpoint
+        cancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            input.value = '';
+            input.focus();
+        });
+        
+        // Delete tag on × click
+        container.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-tag-btn')) {
+                const tag = e.target.closest('.location-tag');
+                const idx = parseInt(tag.dataset.index);
+                locationEditState[sku].items.splice(idx, 1);
+                saveLocationChange(sku);
+                editLocationInline(sku, event);
+            }
+        });
+        
+        // Hide input section on blur and rebuild display
+        input.addEventListener('blur', () => {
+            if (input.value === '') {
+                setTimeout(() => {
+                    if (document.activeElement !== confirmBtn && document.activeElement !== cancelBtn) {
+                        updateLocationDisplay(sku);
+                    }
+                }, 100);
+            }
+        });
+        
+        // Focus on input
+        input.focus();
+    }
+    
+    function updateLocationDisplay(sku) {
+        if (!locationEditState[sku]) return;
+        
+        const cellDiv = document.getElementById(`locCell_${sku}`);
+        const items = locationEditState[sku].items;
+        const locBadges = items.map(loc => 
+            `<span class="sku-detail-badge" style="display: inline-block; margin-right: 4px; margin-bottom: 4px;">${loc}</span>`
+        ).join('');
+        
+        cellDiv.innerHTML = `<span id="locDisplay_${sku}" style="display: contents;">${locBadges || '<span class="text-muted">No locations</span>'}</span>`;
+        
+        // Clean up state
+        delete locationEditState[sku];
+    }
+    
+    function saveLocationChange(sku) {
+        if (!locationEditState[sku]) return;
+        
+        const items = locationEditState[sku].items;
+        const newLocations = items.join(', ');
+        skuLocationMap[sku] = newLocations;
+        
+        // Auto-submit to backend
         fetch('/update_location', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                sku: currentEditLocationSku,
+                sku: sku,
                 style: currentEditLocationStyle,
-                location: locations.join(',')
+                location: newLocations
             })
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             if (data.success) {
+                showNotification('Location updated successfully', 'success');
+            } else {
+                showNotification('Error: ' + (data.message || data.error), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error saving location:', err);
+            showNotification('Error saving location', 'error');
+        });
+    }
+    
+    function showNotification(message, type) {
+        const notif = document.createElement('div');
+        notif.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            background: ${type === 'success' ? '#28a745' : '#dc3545'};
+            color: white;
+            z-index: 9999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        `;
+        notif.textContent = message;
+        document.body.appendChild(notif);
+        
+        setTimeout(() => {
+            notif.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notif.remove(), 300);
+        }, 3000);
+    }
+    
+    // Bulk location editing state
+    let bulkLocationItems = [];
+    
+    function openBulkEditLocations() {
+        bulkLocationItems = [];
+        document.getElementById('bulkEditPanel').style.display = 'block';
+        updateBulkLocationDisplay();
+        
+        // Setup event listeners for input and buttons
+        const input = document.getElementById('bulkLocationInput');
+        const buttons = document.getElementById('bulkLocInputSection').querySelectorAll('button');
+        const confirmBtn = buttons[0];
+        const cancelBtn = buttons[1];
+        
+        // Remove old listeners by cloning and replacing
+        confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+        cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+        
+        const newConfirmBtn = document.getElementById('bulkLocInputSection').querySelectorAll('button')[0];
+        const newCancelBtn = document.getElementById('bulkLocInputSection').querySelectorAll('button')[1];
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addBulkLocation();
+            }
+        });
+        
+        newConfirmBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            addBulkLocation();
+        });
+        
+        newCancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            input.value = '';
+            input.focus();
+        });
+        
+        input.focus();
+    }
+    
+    function closeBulkEditPanel() {
+        document.getElementById('bulkEditPanel').style.display = 'none';
+        document.getElementById('bulkLocationInput').value = '';
+        bulkLocationItems = [];
+    }
+    
+    function updateBulkLocationDisplay() {
+        const container = document.getElementById('bulkLocTagContainer');
+        const tagsHTML = bulkLocationItems.map((item, idx) => 
+            `<span class="sku-detail-badge" style="display: inline-flex; align-items: center; gap: 6px;">
+                ${item}
+                <i class="fas fa-times" style="cursor: pointer; font-size: 11px;" onclick="removeBulkLocation(${idx})"></i>
+            </span>`
+        ).join('');
+        container.innerHTML = tagsHTML || '<span style="color: #999; font-size: 12px;">Add locations below...</span>';
+    }
+    
+    function removeBulkLocation(idx) {
+        bulkLocationItems.splice(idx, 1);
+        updateBulkLocationDisplay();
+    }
+    
+    function addBulkLocation() {
+        const input = document.getElementById('bulkLocationInput');
+        const value = input.value.trim();
+        if (!value) return;
+        if (bulkLocationItems.includes(value)) {
+            alert('This location is already added');
+            return;
+        }
+        bulkLocationItems.push(value);
+        input.value = '';
+        updateBulkLocationDisplay();
+        input.focus();
+    }
+    
+    function applyBulkLocationChange() {
+        if (bulkLocationItems.length === 0) {
+            alert('Please add at least one location');
+            return;
+        }
+        
+        const newLocations = bulkLocationItems.join(', ');
+        
+        // Apply to all SKUs in skuLocationMap
+        Object.keys(skuLocationMap).forEach(sku => {
+            skuLocationMap[sku] = newLocations;
+            // Update display
+            const uniqueLocs = bulkLocationItems;
+            const locBadges = uniqueLocs.map(loc => 
+                `<span class="sku-detail-badge" style="display: inline-block; margin-right: 4px; margin-bottom: 4px;">${loc}</span>`
+            ).join('');
+            document.getElementById(`locDisplay_${sku}`).innerHTML = locBadges;
+        });
+        
+        // Save to database
+        saveLocationEdit();
+        
+        closeBulkEditPanel();
+    }
+    
+    function bulkRemoveAllLocations() {
+        if (!confirm('Are you sure you want to remove ALL locations for this style?\n\nStyle: ' + currentEditLocationStyle)) {
+            return;
+        }
+        
+        // Clear all locations
+        Object.keys(skuLocationMap).forEach(sku => {
+            skuLocationMap[sku] = '';
+            document.getElementById(`locDisplay_${sku}`).innerHTML = '<span class="text-muted">No locations</span>';
+        });
+        
+        // Save to database
+        saveLocationEdit();
+    }
+    
+    function saveLocationEdit() {
+        const updates = [];
+        
+        Object.entries(skuLocationMap).forEach(([sku, locations]) => {
+            updates.push({
+                sku: sku,
+                locations: locations.trim()
+            });
+        });
+        
+        if (updates.length === 0) {
+            alert('No SKUs to update');
+            return;
+        }
+        
+        // Send batch update to backend
+        Promise.all(updates.map(update => {
+            return fetch('/update_location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sku: update.sku,
+                    style: currentEditLocationStyle,
+                    location: update.locations
+                })
+            }).then(r => r.json());
+        }))
+        .then(results => {
+            // Check if all updates succeeded
+            const allSuccess = results.every(r => r.success);
+            if (allSuccess) {
                 $('#locationModal').modal('hide');
                 setTimeout(() => {
                     location.reload();
                 }, 300);
             } else {
-                alert('Update failed: ' + (data.message || 'Unknown error'));
+                const errors = results.filter(r => !r.success).map(r => r.message).join(', ');
+                alert('Some updates failed: ' + errors);
             }
         })
         .catch(error => {
-            console.error('Error saving location:', error);
-            alert('Error saving location');
+            console.error('Error saving locations:', error);
+            alert('Error saving locations');
         });
     }
     

@@ -603,14 +603,9 @@ function toggleSidebar() {
                             }
                         },
                         {
-                            text: '<input type="text" id="locationInput" placeholder="New Location" style="margin-right:5px;">',
-                            className: 'no-click',
-                            action: function () { return false; }
-                        },
-                        {
-                            text: 'UPDATE LOCATION',
-                            className: 'btn-success',
-                            action: function () { updateLocation(); }
+                            text: 'BULK UPDATE LOCATION',
+                            className: 'btn-warning',
+                            action: function () { openBulkLocationPopup(); }
                         }
                     ],
                     
@@ -1049,113 +1044,450 @@ function toggleSidebar() {
             }
         }
     </script>
+    <!-- Bulk Location Update Modal -->
+    <div class="modal fade" id="bulkLocationModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Bulk Update Location</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info">
+              This will update the location for all selected SKUs.
+            </div>
+            
+            <div class="form-group">
+              <label><strong>New Location(s):</strong></label>
+              <div id="bulkModalLocationInputs" style="max-height: 300px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #ddd; margin-bottom: 10px;">
+                <!-- Location input rows will be added here -->
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-success" onclick="addBulkLocationInput()">
+                + Add Location
+              </button>
+            </div>
+            
+            <div id="bulkSkuPreview" style="max-height: 250px; overflow-y: auto; background: #f0f8ff; padding: 10px; border-radius: 4px; border: 1px solid #cce5ff; margin-top: 15px;">
+              <strong>SKUs to update:</strong>
+              <div id="bulkSkuList" style="margin-top: 10px;"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="removeBulkLocations()" style="margin-right: auto;">
+              🗑️ Remove All Locations
+            </button>
+            <button type="button" class="btn btn-primary" onclick="saveBulkLocation()">Update All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Edit Modal -->
+    <div class="modal fade" id="itemLookupLocationModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Location</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div><strong>SKU:</strong> <span id="modalLocationSku"></span></div>
+            <div><strong>Style:</strong> <span id="modalLocationStyle"></span></div>
+            <div class="mt-3">
+              <label><strong>Locations:</strong></label>
+              <small class="form-text text-muted d-block mb-2">Enter each location exactly as shown in the system (e.g., "L14-F BOT", "L12-C", not split by spaces).</small>
+              <div id="modalLocationInputs" style="padding: 10px; background: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; min-height: 80px;">
+                <!-- Location inputs will be added here dynamically -->
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addItemLocationInput()">
+              + Add Location
+            </button>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" onclick="deleteItemLocation()" style="margin-right: auto;">Delete Location</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveItemLookupLocation()">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
         const updateLocationUrl = {{ url_for('mysql_connector.update_location') | tojson }};
-        function updateLocation() {
-            const location = document.getElementById('locationInput').value.trim();
-            const rows = document.querySelectorAll('#excel_table tbody tr');
+        let currentEditItemSku = null;
+        let currentEditItemStyle = null;
+        let itemLocationInputCount = 0;
+        
+        // Bulk modal variables
+        let bulkLocationInputCount = 0;
+        
+        function addBulkLocationInput(value = '') {
+            const inputsContainer = document.getElementById('bulkModalLocationInputs');
+            bulkLocationInputCount++;
+            const inputId = 'bulkLocInput_' + bulkLocationInputCount;
             
-            if (!location || rows.length === 0) {
-                alert('Please enter a location and ensure the table is loaded.');
+            const inputGroup = document.createElement('div');
+            inputGroup.style.display = 'flex';
+            inputGroup.style.gap = '6px';
+            inputGroup.style.marginBottom = '8px';
+            inputGroup.style.alignItems = 'center';
+            inputGroup.id = 'bulkInputGroup_' + bulkLocationInputCount;
+            
+            inputGroup.innerHTML = `
+                <input type="text" class="form-control" id="${inputId}" placeholder="e.g., L12-C or L14-F BOT" value="${value}" style="flex: 1;">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBulkLocationInput(${bulkLocationInputCount})">
+                    Remove
+                </button>
+            `;
+            
+            inputsContainer.appendChild(inputGroup);
+            document.getElementById(inputId).focus();
+        }
+        
+        function removeBulkLocationInput(id) {
+            const group = document.getElementById('bulkInputGroup_' + id);
+            if (group) {
+                group.remove();
+            }
+        }
+        
+        function openItemLocationPopup(sku, style, currentLocation, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            currentEditItemSku = sku;
+            currentEditItemStyle = style;
+            itemLocationInputCount = 0;
+            
+            document.getElementById('modalLocationSku').innerText = sku;
+            document.getElementById('modalLocationStyle').innerText = style;
+            
+            // Clear previous inputs
+            const inputsContainer = document.getElementById('modalLocationInputs');
+            inputsContainer.innerHTML = '';
+            
+            // Parse existing locations and create input fields
+            if (currentLocation && currentLocation !== 'N/A' && currentLocation !== '*') {
+                const locations = currentLocation.split(',').map(loc => loc.trim());
+                locations.forEach(loc => {
+                    addItemLocationInput(loc);
+                });
+            } else {
+                addItemLocationInput('');
+            }
+            
+            $('#itemLookupLocationModal').modal('show');
+        }
+        
+        function addItemLocationInput(value = '') {
+            const inputsContainer = document.getElementById('modalLocationInputs');
+            itemLocationInputCount++;
+            const inputId = 'itemLocInput_' + itemLocationInputCount;
+            
+            const inputGroup = document.createElement('div');
+            inputGroup.style.display = 'flex';
+            inputGroup.style.gap = '6px';
+            inputGroup.style.marginBottom = '8px';
+            inputGroup.style.alignItems = 'center';
+            inputGroup.id = 'inputGroup_' + itemLocationInputCount;
+            
+            inputGroup.innerHTML = `
+                <input type="text" class="form-control" id="${inputId}" placeholder="e.g., L12-C, A5" value="${value}" style="flex: 1;">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItemLocationInput(${itemLocationInputCount})">
+                    Remove
+                </button>
+            `;
+            
+            inputsContainer.appendChild(inputGroup);
+            document.getElementById(inputId).focus();
+        }
+        
+        function removeItemLocationInput(id) {
+            const group = document.getElementById('inputGroup_' + id);
+            if (group) {
+                group.remove();
+            }
+        }
+        
+        function deleteItemLocation() {
+            if (!currentEditItemSku) {
+                alert('No SKU selected');
                 return;
             }
-
-            let updateCount = 0;
-            const totalRows = rows.length;
-
-            rows.forEach(row => {
-                const sku = row.querySelector('td:nth-child(3)').textContent.trim();
-                const style = row.querySelector('td:nth-child(5)').textContent.trim();
-
-                if (sku && style) {
-                    fetch(updateLocationUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ sku, style, location }),
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            updateCount++;
-                            row.querySelector('td:nth-child(4)').querySelector('.editable').textContent = location;
-                            
-                            if (updateCount === totalRows) {
-                                window.location.reload();
-                            }
-                        }
-                    })
-                    .catch(error => console.error('Error updating location:', error));
+            
+            if (!confirm(`Are you sure you want to delete the location for SKU: ${currentEditItemSku}?`)) {
+                return;
+            }
+            
+            // Send delete request to backend with empty location
+            fetch(updateLocationUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sku: currentEditItemSku,
+                    style: currentEditItemStyle,
+                    location: '',
+                    delete: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Location deleted successfully');
+                    $('#itemLookupLocationModal').modal('hide');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                } else {
+                    alert('Delete failed: ' + (data.message || 'Unknown error'));
                 }
+            })
+            .catch(error => {
+                console.error('Error deleting location:', error);
+                alert('Error deleting location');
+            });
+        }
+        
+        function openBulkLocationPopup() {
+            // Get all SKUs from the visible table
+            var table = $('#excel_table').DataTable();
+            var skus = [];
+            
+            table.rows({ search: 'applied' }).data().each(function(row, index) {
+                // Row is an array where SKU is at column index 2
+                if (row[2] && row[2].trim()) {
+                    var sku = row[2].trim();
+                    // Remove HTML tags if present
+                    sku = sku.replace(/<[^>]*>/g, '').split('\n')[0].trim();
+                    if (sku && skus.indexOf(sku) === -1) {
+                        skus.push(sku);
+                    }
+                }
+            });
+            
+            if (skus.length === 0) {
+                alert('No SKUs found in the current results');
+                return;
+            }
+            
+            // Clear previous values
+            document.getElementById('bulkModalLocationInputs').innerHTML = '';
+            bulkLocationInputCount = 0;
+            document.getElementById('bulkSkuList').innerHTML = '';
+            
+            // Add one initial input row
+            addBulkLocationInput();
+            
+            // Display the SKUs to be updated
+            var skuListHtml = '<ul style="margin: 0; padding-left: 20px;">';
+            skus.forEach(function(sku) {
+                skuListHtml += '<li>' + sku + '</li>';
+            });
+            skuListHtml += '</ul>';
+            skuListHtml += '<div style="margin-top: 10px; font-size: 12px; color: #666;">Total SKUs: ' + skus.length + '</div>';
+            
+            document.getElementById('bulkSkuList').innerHTML = skuListHtml;
+            
+            // Store SKUs in a data attribute
+            $('#bulkLocationModal').data('skus', skus);
+            
+            // Show the modal
+            $('#bulkLocationModal').modal('show');
+        }
+        
+        function saveBulkLocation() {
+            var skus = $('#bulkLocationModal').data('skus');
+            
+            // Collect all locations from input fields
+            var locationInputs = document.querySelectorAll('#bulkModalLocationInputs input[type="text"]');
+            var locations = [];
+            
+            locationInputs.forEach(function(input) {
+                var location = input.value.trim();
+                if (location) {
+                    locations.push(location);
+                }
+            });
+            
+            if (locations.length === 0) {
+                alert('Please enter at least one location');
+                return;
+            }
+            
+            if (!skus || skus.length === 0) {
+                alert('No SKUs to update');
+                return;
+            }
+            
+            if (!confirm('Update ' + locations.length + ' location(s) for ' + skus.length + ' SKUs?')) {
+                return;
+            }
+            
+            // Send bulk update to backend
+            fetch('/update_location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    skus: skus,
+                    locations: locations,
+                    bulk: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Updated ' + (data.updated_count || skus.length) + ' SKUs successfully');
+                    $('#bulkLocationModal').modal('hide');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                } else {
+                    alert('Bulk update failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving bulk location:', error);
+                alert('Error saving bulk location');
+            });
+        }
+
+        function removeBulkLocations() {
+            var skus = $('#bulkLocationModal').data('skus');
+            
+            if (!skus || skus.length === 0) {
+                alert('No SKUs selected');
+                return;
+            }
+            
+            if (!confirm('⚠️ WARNING: This will DELETE all location data for ' + skus.length + ' SKUs!\n\nAre you sure?')) {
+                return;
+            }
+            
+            // Double confirmation
+            if (!confirm('This action cannot be undone. Delete all location records for these ' + skus.length + ' SKUs?')) {
+                return;
+            }
+            
+            // Send bulk delete request to backend
+            fetch('/delete_bulk_locations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    skus: skus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Deleted locations for ' + (data.deleted_count || skus.length) + ' SKUs');
+                    $('#bulkLocationModal').modal('hide');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                } else {
+                    alert('Delete failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting bulk locations:', error);
+                alert('Error deleting bulk locations');
+            });
+        }
+
+        function saveItemLookupLocation() {
+            const locations = [];
+            const inputs = document.querySelectorAll('#modalLocationInputs input[type="text"]');
+            
+            inputs.forEach(input => {
+                const value = input.value.trim();
+                if (value) {
+                    locations.push(value);
+                }
+            });
+            
+            if (locations.length === 0) {
+                alert('Please enter at least one location');
+                return;
+            }
+            
+            // Send update to backend
+            fetch(updateLocationUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sku: currentEditItemSku,
+                    style: currentEditItemStyle,
+                    location: locations.join(',')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    $('#itemLookupLocationModal').modal('hide');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                } else {
+                    alert('Update failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving location:', error);
+                alert('Error saving location');
             });
         }
     </script>
     <script type="text/javascript">
         $(document).ready(function() {
-            $('#excel_table').on('click', 'td:nth-child(4)', function() {
-                var $cell = $(this);
-                var $span = $cell.find('.editable');
+            // Handle location cell clicks - click on the editable span to open the modal
+            $(document).on('click', '#excel_table .editable', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                if (!$span.hasClass('editing')) {
-                    var currentText = $span.text().trim();
-                    if (currentText === '*') currentText = '';
-                    
-                    $span.addClass('editing').html(
-                        '<input type="text" value="' + currentText + '"/> ' +
-                        '<span class="edit-buttons">' +
-                        '<button class="save-btn">✔</button> ' +
-                        '<button class="cancel-btn">✖</button>' +
-                        '</span>'
-                    );
-                    $span.find('input').focus();
+                var $cell = $(this).closest('td');
+                var $row = $cell.closest('tr');
+                
+                // Get all cells from the row
+                var cells = $row.find('td');
+                
+                // Table column order: # | DB | SKU | Style | Descrip | Stock | Sold | Avail | ... | Location (added dynamically)
+                // Cell indices (0-based): 0 | 1  | 2   | 3     | 4      | 5     | 6    | 7    | ... | Location
+                
+                // Extract SKU (column index 2) and Style (column index 3)
+                var sku = cells.length > 2 ? cells.eq(2).text().trim() : '';
+                var style = cells.length > 3 ? cells.eq(3).text().trim() : '';
+                var currentLocation = $(this).text().trim() || '';
+                
+                // Remove any leading links from values (SKU might be wrapped in a link)
+                sku = sku.split('\n')[0].trim();
+                style = style.split('\n')[0].trim();
+                
+                if (sku) {
+                    openItemLocationPopup(sku, style, currentLocation, e);
+                } else {
+                    console.error('Could not find SKU. Row cells:', cells.length, cells);
+                    alert('Could not find SKU information.');
                 }
-            });
-    
-            $('#excel_table').on('click', '.save-btn', function(e) {
-                e.stopPropagation();
-                var $editableSpan = $(this).closest('.editable');
-                var newValue = $editableSpan.find('input').val().trim();
-    
-                // Hide all hover messages on Save click
-                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
-    
-                var sku = $editableSpan.closest('tr').find('td:nth-child(3)').text().trim() || '';
-                var style = $editableSpan.closest('tr').find('td:nth-child(5)').text().trim() || '';
-    
-                if (!sku || !style) {
-                    alert('SKU or Style is missing.');
-                    return;
-                }
-    
-                $.ajax({
-                    url: updateLocationUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ sku: sku, style: style, location: newValue }),
-                    success: function(response) {
-                        if (response.success) {
-                            $editableSpan.removeClass('editing').text(newValue || '');
-                            alert('Location updated successfully.');
-                        } else {
-                            alert('Error updating location: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('An error occurred while updating the location.');
-                    }
-                });
-            });
-    
-            $('#excel_table').on('click', '.cancel-btn', function(e) {
-                e.stopPropagation();
-                var $editableSpan = $(this).closest('.editable');
-                var originalText = $editableSpan.find('input').val() || '';
-    
-                // Hide all hover messages on Cancel click
-                $('.hover-msg').stop(true, true).fadeOut(200).css('opacity', '0');
-    
-                $editableSpan.removeClass('editing').text(originalText);
             });
         });
+
+
     </script>
     <script>
         // Check if we have results displayed and clear the input field

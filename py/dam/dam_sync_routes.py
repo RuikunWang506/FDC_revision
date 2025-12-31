@@ -83,6 +83,8 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
+                    encoding='utf-8',
+                    errors='replace',
                     bufsize=1,
                     cwd=os.getcwd()
                 )
@@ -91,6 +93,9 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
                         for line in iter(stream.readline, ''):
                             if line:
                                 log_fn((prefix + line.rstrip()))
+                    except UnicodeDecodeError:
+                        # Handle any remaining encoding issues
+                        pass
                     finally:
                         try:
                             stream.close()

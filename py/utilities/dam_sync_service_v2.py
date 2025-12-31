@@ -570,10 +570,10 @@ class DAMSyncServiceV2:
         
         self.stats['start_time'] = time.time()
         
-        # Sync catalog images
+        # Sync catalog images (highest priority)
         self.sync_catalog_images_batch(force_rebuild_index)
         
-        # Sync big picture images
+        # Sync big picture images (medium priority)
         self.sync_big_picture_images_batch(force_rebuild_index)
         
         # Update canonical flags

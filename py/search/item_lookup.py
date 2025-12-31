@@ -44,7 +44,7 @@ def fetch_locations(skus):
         placeholders = ', '.join(['%s'] * len(lowered))
         # With one row per SKU-Location, we aggregate locations with GROUP_CONCAT
         query = f"""
-            SELECT SKU, GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') as locations
+            SELECT SKU, GROUP_CONCAT(DISTINCT Location ORDER BY Location SEPARATOR ', ') as locations
             FROM products 
             WHERE LOWER(SKU) IN ({placeholders}) AND Location IS NOT NULL AND Location != ''
             GROUP BY SKU
@@ -77,7 +77,7 @@ def fetch_locations(skus):
 
                 if stripped_sku != key:
                     cursor.execute(
-                        "SELECT GROUP_CONCAT(Location ORDER BY Location SEPARATOR ', ') FROM products WHERE LOWER(SKU) = %s",
+                        "SELECT GROUP_CONCAT(DISTINCT Location ORDER BY Location SEPARATOR ', ') FROM products WHERE LOWER(SKU) = %s",
                         (stripped_sku,)
                     )
                     result = cursor.fetchone()
@@ -217,7 +217,7 @@ def item_lookup(user_input=None):
     # Determine if we should filter to canonical only (when multiple SKUs with comma)
     has_comma = ',' in user_input
     
-    # First, try to get assets from DAM database - only catalog_original source
+    # First, try to get assets from DAM database - catalog_original and dropbox sources
     dam_assets = []
     try:
         db = py.utilities.models.SessionLocal()
@@ -226,7 +226,7 @@ def item_lookup(user_input=None):
             query = db.query(ImageAsset).filter(
                 ImageAsset.sku.ilike(f'{term}%'),
                 ImageAsset.is_active == True,
-                ImageAsset.source == 'catalog_original'
+                ImageAsset.source.in_(['catalog_original', 'dropbox'])
             )
             
             # Only filter to canonical images if input has comma
@@ -278,10 +278,10 @@ def item_lookup(user_input=None):
         sorted_image_urls, file_info = zip(*combined) if combined else ([], [])
         
     else:
-        # Use DAM system to search for assets - only catalog_original source for item lookup
+        # Use DAM system to search for assets - catalog_original and dropbox sources
         matching_assets = []
         for term in search_terms:
-            assets = search_assets_by_sku_pattern(term, source_filter='catalog_original')
+            assets = search_assets_by_sku_pattern(term, source_filter=['catalog_original', 'dropbox'])
             matching_assets.extend(assets)
             
         # Remove duplicates by asset ID

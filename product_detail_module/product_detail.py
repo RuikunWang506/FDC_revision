@@ -388,7 +388,9 @@ def group_by_style(results):
                     'master_hei': item['master_hei'],
                     'msrp': item['msrp'],
                     'cost': item['cost'],
-                    'dimensions': f"{item['len']}x{item['wid']}x{item['hei']}"
+                    'dimensions': f"{item['len']}x{item['wid']}x{item['hei']}",
+                    'last_activity': item['last_activity'],
+                    'create_dt': item['create_dt']
                 },
                 'color_variants': {}
             }
@@ -542,7 +544,7 @@ def fetch_sku_history(sku, db_conn):
 def fetch_item_history(style_or_sku):
     """
     Fetches order history for a style or SKU from both databases.
-    Returns list of dicts with: database, product_code, order_number, order_date, customer_id, order_quantity, unit_price
+    Returns list of dicts with: database, product_code, order_number, order_date, customer_id, order_quantity, unit_price, color
     """
     # Clean up the input - remove extra spaces
     style_or_sku = style_or_sku.strip() if style_or_sku else ""
@@ -562,7 +564,7 @@ def fetch_item_history(style_or_sku):
         for conn, db_name in [(conn_fdc, 'FDC'), (conn_oms_ef, 'E_FAS')]:
             cursor = conn.cursor()
             
-            # Query to get order history - uses LIKE for wildcard search
+            # Query to get order history with color info from inv table
             query = """
                 SELECT TOP 100
                     ol.prod_cd,
@@ -572,9 +574,11 @@ def fetch_item_history(style_or_sku):
                     CAST(YEAR(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS order_dt,
                     c.cus_nm AS cus_id,
                     ol.order_qty,
-                    ISNULL(ol.unit_prs, 0.00) as unit_price
+                    ISNULL(ol.unit_prs, 0.00) as unit_price,
+                    ISNULL(i.UNIT_COLOR, '') as color
                 FROM ord_log ol
                 LEFT JOIN customer c ON ol.cus_id = c.cus_id
+                LEFT JOIN dbo.inv i ON ol.prod_cd = i.PROD_CD
                 WHERE ol.prod_cd LIKE ?
                 ORDER BY ol.olg_dt DESC
             """
@@ -584,6 +588,19 @@ def fetch_item_history(style_or_sku):
                 rows = cursor.fetchall()
                 
                 for row in rows:
+                    color = str(row[6]).strip().lower() if row[6] else ''
+                    
+                    # Fallback: extract color from product code if not found in inv table
+                    if not color or color == 'none':
+                        product_code = str(row[0]).strip()
+                        # Product code format is like "T3305 BK", extract the part after space
+                        parts = product_code.split()
+                        if len(parts) > 1:
+                            color = parts[-1].lower().strip()  # Get last part (color code) and strip
+                    
+                    # Final normalization: remove any special characters and extra spaces
+                    color = color.strip().lower()
+                    
                     history_data.append({
                         'database': db_name,
                         'product_code': row[0],
@@ -591,7 +608,8 @@ def fetch_item_history(style_or_sku):
                         'order_date': str(row[2]) if row[2] else '',
                         'customer_id': row[3],
                         'order_quantity': int(row[4]),
-                        'unit_price': float(row[5])
+                        'unit_price': float(row[5]),
+                        'color': color
                     })
             except Exception as e:
                 pass
@@ -1044,5 +1062,46 @@ def get_purchase_data(style):
         return jsonify({"success": True, "data": purchase_data})
     except Exception as e:
         current_app.logger.error(f"Error fetching purchases for {style}: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@product_detail_bp.route('/api/locations/<string:style>', methods=['GET'])
+@login_required
+def get_locations_for_style(style):
+    """Get all locations for all SKUs of a given style"""
+    try:
+        # Get SKUs from FDC database using the product search logic
+        conn_fdc, conn_oms_ef = get_db_connections()
+        if not conn_fdc:
+            return jsonify({"success": False, "error": "Database connection failed"})
+        
+        cursor = conn_fdc.cursor()
+        
+        # Query FDC database for SKUs matching this style (ALT_CD)
+        query = """
+            SELECT DISTINCT i.PROD_CD AS SKU
+            FROM dbo.inv AS i
+            WHERE i.ALT_CD = ?
+            ORDER BY i.PROD_CD
+        """
+        cursor.execute(query, style.upper())
+        skus = [row[0] for row in cursor.fetchall()]
+        cursor.close()
+        
+        if not skus:
+            conn_fdc.close()
+            if conn_oms_ef:
+                conn_oms_ef.close()
+            return jsonify({"success": True, "data": {}})
+        
+        # Fetch locations for all SKUs from MySQL
+        location_dict = fetch_locations(skus)
+        conn_fdc.close()
+        if conn_oms_ef:
+            conn_oms_ef.close()
+        
+        return jsonify({"success": True, "data": location_dict})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching locations for style {style}: {e}")
         return jsonify({"success": False, "error": str(e)})
 
