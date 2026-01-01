@@ -554,6 +554,11 @@
                 <input type="text" name="search_input" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
                 <button type="submit">Search</button>
             </form>
+            <!-- Container Search Checkbox -->
+            <label style="display: flex; align-items: center; font-size: 12px; color: #555; cursor: pointer; margin-top: 12px; justify-content: center;">
+                <input type="checkbox" id="containerSearchCheckbox" style="margin-right: 8px; cursor: pointer;">
+                <span>Search by Container</span>
+            </label>
         </div>
         <!-- Color Filter Section in Sidebar -->
         <div class="sidebar-color-section">
@@ -600,13 +605,20 @@
         <div class="container-main">
             <!-- Search Section - Show when NO product_data -->
             {% if not product_data %}
-            <div class="search-section" style="max-width: 500px; margin: 60px auto 0; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div class="search-section" style="max-width: 600px; margin: 60px auto 0; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 <h1><i class="fas fa-search"></i> Product Detail</h1>
                 <p style="margin-bottom: 15px;">Search by single SKU or Style (e.g., M1141 or M1141 BK)</p>
                 <form method="POST" class="search-form">
-                    <input type="text" name="search_input" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
-                    <button type="submit">Search</button>
+                    <input type="text" name="search_input" id="productSearchInput" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
+                    <button type="submit" id="productSearchBtn">Search</button>
                 </form>
+                <div style="margin-top: 15px; border-top: 1px solid #e0e0e0; padding-top: 15px;">
+                    <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px;">
+                        <input type="checkbox" id="containerModeCheckbox" name="container_mode" style="margin-right: 8px; cursor: pointer;">
+                        <span style="font-weight: 500; color: #333;">🔍 Search by Container #</span>
+                    </label>
+                    <p style="font-size: 12px; color: #666; margin: 0;">When enabled, search by container number instead (e.g., F26117)</p>
+                </div>
             </div>
             {% endif %}
 
@@ -1295,6 +1307,52 @@
             });
         });
         
+        // Container search toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('containerModeCheckbox');
+            const searchInput = document.getElementById('productSearchInput');
+            const searchBtn = document.getElementById('productSearchBtn');
+            
+            if (checkbox && searchInput && searchBtn) {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        searchInput.placeholder = 'e.g., F26117';
+                        searchBtn.textContent = 'Search Container';
+                        searchBtn.style.backgroundColor = '#ff9800';
+                    } else {
+                        searchInput.placeholder = 'e.g., M1141';
+                        searchBtn.textContent = 'Search';
+                        searchBtn.style.backgroundColor = '#4CAF50';
+                    }
+                });
+                
+                // Override form submission for container search
+                searchBtn.closest('form').addEventListener('submit', function(e) {
+                    if (checkbox.checked) {
+                        e.preventDefault();
+                        const containerInput = searchInput.value.trim();
+                        if (!containerInput) {
+                            alert('Please enter a container number');
+                            return;
+                        }
+                        // Submit to container_search endpoint
+                        const form = document.createElement('form');
+                        form.method = 'GET';
+                        form.action = '/container_search';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'container_id';
+                        input.value = containerInput;
+                        
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
+        });
+        
         function toggleProductSection(headerElement) {
             const wrapper = headerElement.parentElement;
             const content = wrapper.querySelector('.product-content');
@@ -1391,12 +1449,18 @@
                         });
                         
                         sortedData.forEach(row => {
+                            const orderLink = row.order_number 
+                                ? `<a href="/order_lookup/${row.order_number}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.order_number}</a>` 
+                                : '-';
+                            const customerLink = row.customer_id 
+                                ? `<a href="/customer?search_id=${row.customer_id}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.customer_id}</a>` 
+                                : '-';
                             html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
                                 <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
                                 <td style="padding:6px; border:1px solid #ddd;"><a href="/product_detail?search=${row.product_code}" style="color:#667eea;">${row.product_code}</a></td>
-                                <td style="padding:6px; border:1px solid #ddd;">${row.order_number}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${orderLink}</td>
                                 <td style="padding:6px; border:1px solid #ddd;">${row.order_date}</td>
-                                <td style="padding:6px; border:1px solid #ddd;">${row.customer_id || '-'}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${customerLink}</td>
                                 <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.order_quantity}</td>
                                 <td style="padding:6px; border:1px solid #ddd; text-align:right;">$${row.unit_price?.toFixed(2) || '0.00'}</td>
                             </tr>`;
@@ -1522,10 +1586,11 @@
                         });
                         
                         sortedPurchData.forEach(row => {
+                            const poLink = `<a href="/container_search?container_id=${encodeURIComponent(row.po_number)}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.po_number}</a>`;
                             html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
                                 <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
                                 <td style="padding:6px; border:1px solid #ddd;">${row.sku}</td>
-                                <td style="padding:6px; border:1px solid #ddd;">${row.po_number}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${poLink}</td>
                                 <td style="padding:6px; border:1px solid #ddd;">${row.po_date}</td>
                                 <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.purchase_quantity}</td>
                             </tr>`;
@@ -1557,92 +1622,59 @@
             if (!container) return;
             
             console.log('Loading ocean data for style:', style);
-            
-            // Build ocean data from current product data
-            let oceanRows = [];
-            
-            // Get all product data on the page
-            document.querySelectorAll('.product-wrapper').forEach(wrapper => {
-                const headerText = wrapper.querySelector('.product-header')?.textContent || '';
-                const wrapperStyle = headerText.match(/Your search was ([A-Z0-9]+)/)?.[1] || '';
-                const containerNumber = wrapper.getAttribute('data-container') || 'N/A';
-                
-                // Get all data rows and check their actual database
-                const skuMap = {}; // Track by SKU to determine true database
-                wrapper.querySelectorAll('.data-row').forEach(row => {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 7) {
-                        // Extract from the row (Ocean column should be at index 6)
-                        const skuCell = cells[0].textContent.trim();
-                        const oceanQty = parseInt(cells[6].textContent) || 0;
-                        const database = row.getAttribute('data-database') || 'Unknown';
-                        const color = row.getAttribute('data-color') || '?';
+            fetch(`/api/ocean/${encodeURIComponent(style)}`)
+                .then(r => {
+                    console.log('Ocean fetch response status:', r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('Ocean data:', data);
+                    if (data.success && data.data && data.data.length > 0) {
+                        let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">PO #</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">PO Date</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">Quantity</th>';
+                        html += '</tr></thead><tbody>';
                         
-                        // Skip "Both" rows - only track FDC and E_FAS to determine true source
-                        if (oceanQty > 0 && database !== 'Both') {
-                            if (!skuMap[skuCell]) {
-                                skuMap[skuCell] = {
-                                    sku: skuCell,
-                                    container: containerNumber,
-                                    quantity: oceanQty,
-                                    color: color,
-                                    databases: new Set()
-                                };
-                            }
-                            skuMap[skuCell].databases.add(database);
-                        }
+                        let totalOcean = 0;
+                        
+                        // Sort data by date (most recent first)
+                        const sortedOceanData = [...data.data].sort((a, b) => {
+                            const dateA = new Date(a.po_date);
+                            const dateB = new Date(b.po_date);
+                            return dateB - dateA; // Descending order (newest first)
+                        });
+                        
+                        sortedOceanData.forEach(row => {
+                            const poLink = `<a href="/container_search?container_id=${encodeURIComponent(row.po_number)}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.po_number}</a>`;
+                            html += `<tr class="history-data-row" style="border:1px solid #ddd;">
+                                <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.sku}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${poLink}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${row.po_date}</td>
+                                <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.quantity}</td>
+                            </tr>`;
+                            totalOcean += row.quantity;
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        container.innerHTML = html;
+                        document.getElementById('ocean-total-qty').textContent = `Total: ${totalOcean}`;
+                        
+                        // Apply current filters to the newly loaded ocean rows
+                        applyFilters();
+                        
+                        historyLoadedCache[`ocean_${style}`] = true;
+                    } else {
+                        container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No ocean shipments found.</div>';
                     }
+                })
+                .catch(err => {
+                    console.error('Error loading ocean:', err);
+                    container.innerHTML = '<div style="padding:20px; color:red;">Error loading data: ' + err.message + '</div>';
                 });
-                
-                // Convert map to array and determine true database source
-                oceanRows = Object.values(skuMap).map(item => ({
-                    database: item.databases.size > 1 ? 'Both' : Array.from(item.databases)[0],
-                    sku: item.sku,
-                    container: item.container,
-                    quantity: item.quantity,
-                    color: item.color
-                }));
-            });
-            
-            if (oceanRows.length > 0) {
-                let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
-                html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
-                html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
-                html += '<th style="padding:8px; border:1px solid #ddd;">Container #</th>';
-                html += '<th style="padding:8px; border:1px solid #ddd;">Quantity</th>';
-                html += '</tr></thead><tbody>';
-                
-                let totalOcean = 0;
-                
-                oceanRows.forEach(row => {
-                    html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
-                        <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
-                        <td style="padding:6px; border:1px solid #ddd;">${row.sku}</td>
-                        <td style="padding:6px; border:1px solid #ddd;">${row.container}</td>
-                        <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.quantity}</td>
-                    </tr>`;
-                    totalOcean += row.quantity;
-                });
-                
-                // Add summary row
-                html += `<tr style="border:1px solid #ddd; background:#f5f5f5; font-weight:bold;">
-                    <td style="padding:6px; border:1px solid #ddd;"></td>
-                    <td style="padding:6px; border:1px solid #ddd;"></td>
-                    <td style="padding:6px; border:1px solid #ddd; text-align:right;">Total:</td>
-                    <td style="padding:6px; border:1px solid #ddd; text-align:right;">${totalOcean}</td>
-                </tr>`;
-                
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
-                document.getElementById('ocean-total-qty').textContent = `Total: ${totalOcean}`;
-                
-                // Apply current filters to the newly loaded ocean rows
-                applyFilters();
-                
-                historyLoadedCache[`ocean_${style}`] = true;
-            } else {
-                container.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No ocean shipments found.</div>';
-            }
         }
         
         // Function to populate the left module summary for history

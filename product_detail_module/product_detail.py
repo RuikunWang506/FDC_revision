@@ -792,6 +792,87 @@ def fetch_purchase_history(style_or_sku):
         return []
 
 
+def fetch_ocean_data(style_or_sku):
+    """
+    Fetches ocean/in-transit items for a style or SKU from both databases.
+    Returns list of dicts with: database, sku, po_number, po_date, quantity
+    Ocean items are those where hdl_chg = 0 (not yet received)
+    Excludes any PO that has ANY received items (hdl_chg > 0)
+    """
+    # Clean up the input - remove extra spaces
+    style_or_sku = style_or_sku.strip() if style_or_sku else ""
+    if not style_or_sku:
+        return []
+    
+    conn_fdc, conn_oms_ef = get_db_connections()
+    if not conn_fdc or not conn_oms_ef:
+        return []
+    
+    ocean_data = []
+    
+    try:
+        # Build search parameter with wildcard
+        search_param = f"{style_or_sku}%"
+        
+        for conn, db_name in [(conn_fdc, 'FDC'), (conn_oms_ef, 'E_FAS')]:
+            cursor = conn.cursor()
+            
+            # Query to get ocean data - items not yet received (hdl_chg = 0)
+            # BUT only from POs that have NO received items at all
+            # This excludes mixed POs that have both received and unrecieved items
+            query = """
+                SELECT TOP 100
+                    pl.prod_cd,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS formatted_date,
+                    pl.pur_num,
+                    CASE WHEN pl.hdl_chg > 0 THEN pl.hdl_chg ELSE pl.log_qty END as qty
+                FROM plog pl
+                WHERE pl.prod_cd LIKE ?
+                AND pl.hdl_chg = 0
+                AND pl.log_qty > 0
+                AND pl.pur_num NOT IN (
+                    SELECT DISTINCT pur_num FROM plog WHERE prod_cd LIKE ? AND hdl_chg > 0
+                )
+                ORDER BY pl.log_date DESC
+            """
+            
+            try:
+                cursor.execute(query, (search_param, search_param))
+                rows = cursor.fetchall()
+                
+                for row in rows:
+                    ocean_data.append({
+                        'database': db_name,
+                        'sku': row[0],
+                        'po_date': str(row[1]) if row[1] else '',
+                        'po_number': row[2],
+                        'quantity': int(row[3])
+                    })
+            except Exception as e:
+                pass
+            finally:
+                cursor.close()
+        
+        conn_fdc.close()
+        conn_oms_ef.close()
+        
+        # Sort by PO date descending
+        if ocean_data:
+            ocean_data.sort(key=lambda x: x['po_date'], reverse=True)
+        return ocean_data
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching ocean data for {style_or_sku}: {e}")
+        if conn_fdc:
+            conn_fdc.close()
+        if conn_oms_ef:
+            conn_oms_ef.close()
+        return []
+
+
+
 def search_product_data_with_history(search_input):
     """
     Search for products by SKU or Style with history data.
@@ -1065,6 +1146,17 @@ def get_purchase_data(style):
         return jsonify({"success": False, "error": str(e)})
 
 
+@product_detail_bp.route("/api/ocean/<string:style>", methods=["GET"])
+def get_ocean_data(style):
+    """Lazy-load ocean/in-transit data for a style"""
+    try:
+        ocean_data = fetch_ocean_data(style)
+        return jsonify({"success": True, "data": ocean_data})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching ocean data for {style}: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
 @product_detail_bp.route('/api/locations/<string:style>', methods=['GET'])
 @login_required
 def get_locations_for_style(style):
@@ -1105,3 +1197,133 @@ def get_locations_for_style(style):
         current_app.logger.error(f"Error fetching locations for style {style}: {e}")
         return jsonify({"success": False, "error": str(e)})
 
+
+@product_detail_bp.route('/api/container/bol/<container_id>', methods=['GET'])
+@login_required
+def get_container_bol(container_id):
+    """Fetch BOL number from Google Sheets for a container"""
+    try:
+        import pandas as pd
+        
+        # Google Sheets export URL - same as used in boat service
+        GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/export?format=csv"
+        
+        # Fetch data from Google Sheets
+        df = pd.read_csv(GOOGLE_SHEETS_URL)
+        
+        # Find the container in the sheet
+        container_id = container_id.strip().upper()
+        match = df[df['FDC container'].astype(str).str.upper() == container_id]
+        
+        if not match.empty:
+            bol_num = match.iloc[0].get('BOL NUM', '')
+            return jsonify({'success': True, 'bol_num': str(bol_num) if bol_num and pd.notna(bol_num) else ''})
+        else:
+            return jsonify({'success': True, 'bol_num': ''})
+    
+    except Exception as e:
+        current_app.logger.error(f"Error fetching BOL for {container_id}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@product_detail_bp.route('/container_search', methods=['GET', 'POST'])
+@login_required
+def container_search():
+    """Search products by container PO number - simplified using plog table"""
+    current_user = session.get('username', 'Unknown')
+    container_id = request.args.get('container_id', '') or request.form.get('container_id', '')
+    container_id = container_id.strip().upper()
+    
+    container_data = []
+    po_date = None
+    total_msrp = 0
+    latest_containers = []
+    is_arrived = False  # Track if container has been received
+    
+    try:
+        conn_fdc, conn_oms_ef = get_db_connections()
+        
+        # Get latest 5 containers
+        if conn_fdc:
+            cursor = conn_fdc.cursor()
+            cursor.execute("""
+                SELECT DISTINCT TOP 5 PUR_NUM, LOG_DATE
+                FROM plog
+                WHERE PUR_NUM IS NOT NULL AND PUR_NUM != ''
+                AND PUR_NUM NOT LIKE 'L%'
+                ORDER BY LOG_DATE DESC
+            """)
+            latest_containers = [row[0] for row in cursor.fetchall()]
+            cursor.close()
+        
+        if container_id:
+            for conn, db_name in [(conn_fdc, 'FDC'), (conn_oms_ef, 'E_FAS')]:
+                if not conn:
+                    continue
+                    
+                cursor = conn.cursor()
+                
+                # Query plog table for all SKUs with this PO number
+                query = """
+                    SELECT 
+                        pl.prod_cd as sku,
+                        LEFT(pl.prod_cd, CHARINDEX(' ', pl.prod_cd + ' ') - 1) as style,
+                        pl.pur_num as po_num,
+                        RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                        RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                        CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS po_date,
+                        CASE WHEN pl.hdl_chg > 0 THEN pl.hdl_chg ELSE pl.log_qty END as qty,
+                        ISNULL(i.RETAIL_PRS, 0) as price,
+                        pl.hdl_chg
+                    FROM plog pl
+                    LEFT JOIN dbo.inv i ON pl.prod_cd = i.PROD_CD
+                    WHERE pl.pur_num = ?
+                    AND (pl.hdl_chg > 0 OR pl.log_qty > 0)
+                    ORDER BY pl.prod_cd
+                """
+                
+                cursor.execute(query, [container_id])
+                columns = [column[0] for column in cursor.description]
+                rows = cursor.fetchall()
+                
+                for row in rows:
+                    row_dict = dict(zip(columns, row))
+                    row_dict['database'] = db_name
+                    container_data.append(row_dict)
+                    
+                    # Check if container has arrived (hdl_chg > 0 indicates received)
+                    if row_dict.get('hdl_chg', 0) > 0:
+                        is_arrived = True
+                    
+                    # Calculate total MSRP
+                    qty = float(row_dict.get('qty', 0) or 0)
+                    price = float(row_dict.get('price', 0) or 0)
+                    total_msrp += qty * price
+                    
+                    # Get PO date from first record
+                    if row_dict.get('po_date') and not po_date:
+                        po_date = row_dict['po_date']
+                
+                cursor.close()
+        
+        if conn_fdc:
+            conn_fdc.close()
+        if conn_oms_ef:
+            conn_oms_ef.close()
+        
+        current_app.logger.info(f"Container search for {container_id} by {current_user}: Found {len(container_data)} items, Status: {'arrived' if is_arrived else 'ocean'}, Total MSRP: ${total_msrp:.2f}")
+        
+    except Exception as e:
+        current_app.logger.error(f"Error searching container {container_id}: {str(e)}", exc_info=True)
+        container_data = []
+    
+    return render_template(
+        "container_detail.html",
+        container_id=container_id,
+        container_data=container_data,
+        po_date=po_date,
+        total_msrp=total_msrp,
+        latest_containers=latest_containers,
+        is_arrived=is_arrived,
+        current_user=current_user
+    )
