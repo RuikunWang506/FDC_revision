@@ -213,8 +213,6 @@ def search_images():
     tk_user = session.get('tk_user', False)
     if tk_user:
         log_event('info', f"***TK_USER***__@@@searched image for SKU@@@__ {sku}")
-    else:
-        log_event('info', f"***{(user or 'Unknown').upper()}***__@@@searched image for SKU@@@__ {sku}")
     
     try:
         results = find_images_by_sku(sku)

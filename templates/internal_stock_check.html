@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Stock Check</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: #333;
+            font-size: 14px;
+            min-height: 100vh;
+        }
+        
+        .container-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Main Content */
+        .page-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-header h1 {
+            color: #4ecdc4;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .page-header p {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 13px;
+        }
+        
+        .controls-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+        
+        .btn-info {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Table Container */
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        table.dataTable {
+            font-size: 13px;
+            width: 100%;
+        }
+        
+        table.dataTable thead th {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: black;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+        
+        table.dataTable tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        table.dataTable tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        table.dataTable tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .quantity-cell {
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .quantity-low {
+            color: #ff6b6b;
+        }
+        
+        .quantity-medium {
+            color: #ffa94d;
+        }
+        
+        .quantity-high {
+            color: #51cf66;
+        }
+        
+        /* Image Preview Tooltip */
+        .image-preview-tooltip {
+            position: fixed;
+            background: white;
+            border: 2px solid #4ecdc4;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            display: none;
+            max-width: 600px;
+            max-height: 600px;
+            overflow: hidden;
+        }
+        
+        .image-preview-tooltip img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .style-link {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        /* Status Messages */
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            max-width: 600px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #4ecdc4;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .container-main {
+                padding: 10px;
+            }
+            
+            .controls-section {
+                flex-direction: column;
+            }
+            
+            table.dataTable {
+                font-size: 12px;
+            }
+            
+            table.dataTable thead th,
+            table.dataTable tbody td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  
+  <!-- Main Page Content -->
+  <div class="container-main">
+        <!-- Header -->
+        <div class="page-header">
+            <h1><i class="fas fa-box"></i> Internal Stock Check</h1>
+            <p>Monitor and manage internal inventory</p>
+        </div>
+        
+        <!-- Alerts -->
+        <div id="alertContainer"></div>
+        
+        <!-- Controls -->
+        <div class="controls-section">
+            <button class="btn btn-secondary" id="exportBtn" onclick="exportToCSV()" disabled>
+                <i class="fas fa-download"></i> Export to CSV
+            </button>
+            <button class="btn btn-info" id="manualBtn" onclick="showManualStylesModal()">
+                <i class="fas fa-edit"></i> Edit Manual Styles
+            </button>
+        </div>
+        
+        <!-- Stats Section -->
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+            <strong>📊 Data Statistics:</strong> 
+            <span id="statsInfo" style="color: #666; margin-left: 10px;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+        </div>
+        
+        <!-- Table -->
+        <div class="table-container">
+            <table class="dataTable" id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>Style</th>
+                        <th>SKU</th>
+                        <th>Available</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading inventory data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Image Preview Tooltip -->
+        <div class="image-preview-tooltip" id="imagePreview">
+            <img id="previewImage" src="" alt="Style preview">
+        </div>
+        
+        <!-- Manual Styles Modal -->
+        <div class="modal fade" id="manualStylesModal" tabindex="-1" role="dialog" aria-labelledby="manualStylesTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="manualStylesTitle">Manual Styles Editor</h5>
+                        <button type="button" class="close" onclick="closeManualStylesModal()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="color: #666; margin-bottom: 15px;"><em>Edit styles below (one per line). Styles already in internal inventory will be excluded automatically.</em></p>
+                        <textarea id="manualStylesTextarea" style="width: 100%; height: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 14px;"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeManualStylesModal()">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveManualStyles()">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    
+    <script>
+        let dataTable = null;
+        let isDataTableInitialized = false;
+        let availabilityCache = {};
+        let isAvailabilityLoading = false;
+        let imagePreviewCache = {};
+        
+        function showImagePreview(event, style) {
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImage');
+            
+            if (imagePreviewCache[style]) {
+                previewImg.src = imagePreviewCache[style];
+                const x = event.clientX + 10;
+                const y = event.clientY + 10;
+                preview.style.left = x + 'px';
+                preview.style.top = y + 'px';
+                preview.style.display = 'block';
+                return;
+            }
+            
+            fetch(`/api/search_images?sku=${style}`)
+                .then(response => response.json())
+                .then(data => {
+                    let imageUrl = null;
+                    
+                    if (data.dam_catalog && data.dam_catalog.length > 0) {
+                        const canonicalImage = data.dam_catalog.find(img => img.is_canonical === true);
+                        imageUrl = canonicalImage ? canonicalImage.url : data.dam_catalog[0].url;
+                    } else if (data.dam_big_picture && data.dam_big_picture.length > 0) {
+                        imageUrl = data.dam_big_picture[0].url;
+                    } else if (data.dam_dropbox && data.dam_dropbox.length > 0) {
+                        imageUrl = data.dam_dropbox[0].url;
+                    } else if (data.dam_other && data.dam_other.length > 0) {
+                        imageUrl = data.dam_other[0].url;
+                    }
+                    
+                    if (imageUrl) {
+                        imagePreviewCache[style] = imageUrl;
+                        previewImg.src = imageUrl;
+                        previewImg.onerror = function() {
+                            preview.style.display = 'none';
+                        };
+                        
+                        const x = event.clientX + 10;
+                        const y = event.clientY + 10;
+                        preview.style.left = x + 'px';
+                        preview.style.top = y + 'px';
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Image search error:', error);
+                    preview.style.display = 'none';
+                });
+        }
+        
+        function hideImagePreview() {
+            const preview = document.getElementById('imagePreview');
+            preview.style.display = 'none';
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const preview = document.getElementById('imagePreview');
+            if (preview) {
+                preview.addEventListener('mouseover', function(e) {
+                    e.stopPropagation();
+                    preview.style.display = 'block';
+                });
+                preview.addEventListener('mouseout', function(e) {
+                    e.stopPropagation();
+                    preview.style.display = 'none';
+                });
+            }
+        });
+        
+        document.addEventListener('mousemove', function(event) {
+            const preview = document.getElementById('imagePreview');
+            if (preview && preview.style.display === 'block') {
+                const x = event.clientX + 10;
+                const y = event.clientY + 10;
+                preview.style.left = x + 'px';
+                preview.style.top = y + 'px';
+            }
+        });
+        
+        function initDataTable() {
+            try {
+                const table = document.getElementById('inventoryTable');
+                if (!table) return;
+                
+                if ($.fn.DataTable.isDataTable('#inventoryTable')) {
+                    $('#inventoryTable').DataTable().destroy();
+                }
+                
+                dataTable = $('#inventoryTable').DataTable({
+                    "pageLength": 25,
+                    "ordering": true,
+                    "searching": true,
+                    "paging": true,
+                    "info": true,
+                    "autoWidth": false,
+                    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    "columnDefs": [
+                        { 
+                            "width": "20%", 
+                            "targets": 0,
+                            "render": function(data, type, row) {
+                                if (type === 'display') {
+                                    return `<a href="https://www.fdcef.com/master_image_viewer/${data}" target="_blank" class="style-link" onmouseover="showImagePreview(event, '${data}')" onmouseout="hideImagePreview()"><strong>${data}</strong></a>`;
+                                }
+                                return data;
+                            }
+                        },
+                        { "width": "20%", "targets": 1 },
+                        { 
+                            "width": "20%", 
+                            "targets": 2,
+                            "render": function(data, type, row) {
+                                if (type === 'display') {
+                                    const value = parseInt(data) || 0;
+                                    const className = getQuantityClass(value);
+                                    const formatted = formatQuantity(value);
+                                    return `<strong class="quantity-cell ${className}">${formatted}</strong>`;
+                                }
+                                return data;
+                            }
+                        },
+                        { "width": "40%", "targets": 3 }
+                    ]
+                });
+                isDataTableInitialized = true;
+            } catch (error) {
+                console.error('Error initializing DataTable:', error);
+            }
+        }
+        
+        function applyAvailabilityToTable() {
+            if (!availabilityCache || Object.keys(availabilityCache).length === 0) {
+                return;
+            }
+            
+            if (!dataTable) {
+                return;
+            }
+            
+            dataTable.rows().every(function() {
+                const rowData = this.data();
+                if (!rowData) return;
+                
+                const sku = rowData[1];
+                const available = availabilityCache[sku];
+                
+                if (available !== undefined) {
+                    rowData[2] = available && available.total ? available.total : 0;
+                    this.data(rowData);
+                }
+            });
+            
+            if (dataTable) {
+                dataTable.draw(false);
+            }
+        }
+        
+        function enableExportButton() {
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = false;
+                exportBtn.style.opacity = '1';
+            }
+        }
+        
+        function disableExportButton() {
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = true;
+                exportBtn.style.opacity = '0.6';
+            }
+        }
+        
+        function exportToCSV() {
+            const exportBtn = document.getElementById('exportBtn');
+            exportBtn.disabled = true;
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fas fa-hourglass-start"></i> Processing...';
+            
+            fetch('{{ url_for("internal_stock_check.export_csv_complete") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+                const filename = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `internal_inventory_${new Date().toISOString().split('T')[0]}.csv`;
+                return response.blob().then(blob => ({ blob, filename }));
+            })
+            .then(({ blob, filename }) => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                showAlert('✓ CSV exported successfully. Check your downloads folder.', 'success');
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+                showAlert('✗ Export failed: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = originalText;
+            });
+        }
+        
+        let discrepancyFilterActive = false;
+        let discrepancyFilterRegistered = false;
+        
+        function registerDiscrepancyFilter() {
+            if (discrepancyFilterRegistered) {
+                return;
+            }
+            
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (!discrepancyFilterActive) {
+                    return true;
+                }
+                
+                const internalQtyText = (data[2] || '0').trim();
+                const availableText = (data[3] || '0').trim();
+                
+                const internalQty = (internalQtyText === 'N/A') ? -1 : parseInt(internalQtyText) || 0;
+                const availableQty = (availableText === 'N/A') ? -1 : parseInt(availableText) || 0;
+                
+                return internalQty !== availableQty;
+            });
+            
+            discrepancyFilterRegistered = true;
+        }
+        
+        function toggleDiscrepancyFilter() {
+            const filterBtn = document.getElementById('filterBtn');
+            
+            try {
+                if (!dataTable || !isDataTableInitialized) {
+                    showAlert('✗ Table data not ready', 'danger');
+                    return;
+                }
+                
+                discrepancyFilterActive = !discrepancyFilterActive;
+                
+                if (discrepancyFilterActive) {
+                    filterBtn.classList.add('active');
+                    filterBtn.style.backgroundColor = '#ff6b6b';
+                    dataTable.draw();
+                    const visibleRows = dataTable.rows({search: 'applied'}).count();
+                    showAlert(`✓ Showing only discrepancies (${visibleRows} rows)`, 'success');
+                } else {
+                    filterBtn.classList.remove('active');
+                    filterBtn.style.backgroundColor = '';
+                    dataTable.draw();
+                    showAlert('✓ Showing all rows', 'success');
+                }
+            } catch (error) {
+                showAlert(`✗ Filter error: ${error.message}`, 'danger');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        function getQuantityClass(quantity) {
+            if (quantity === null) return '';
+            if (quantity === 0) return 'quantity-low';
+            if (quantity < 10) return 'quantity-medium';
+            return 'quantity-high';
+        }
+        
+        function formatQuantity(quantity) {
+            if (quantity === null) return 'N/A';
+            return quantity.toString();
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+        
+        async function loadInventory() {
+            try {
+                isAvailabilityLoading = true;
+                const tableBody = document.getElementById('tableBody');
+                
+                enableExportButton();
+                
+                const basicResponse = await fetch('{{ url_for("internal_stock_check.get_inventory_basic") }}');
+                const basicData = await basicResponse.json();
+                
+                if (!basicData.success) {
+                    showAlert(`✗ ${basicData.error}`, 'danger');
+                    return;
+                }
+                
+                if (basicData.data.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-inbox" style="font-size: 48px; color: #ddd; margin-bottom: 15px; display: block;"></i>
+                                <p style="color: #999;">No inventory data available.</p>
+                            </td>
+                        </tr>
+                    `;
+                    if (isDataTableInitialized) {
+                        dataTable.destroy();
+                        isDataTableInitialized = false;
+                    }
+                    return;
+                }
+                
+                tableBody.innerHTML = '';
+                const itemsMap = {};
+                const internalStyles = new Set();
+                const manualStyles = new Set();
+                
+                basicData.data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.id = `row-${item.sku}`;
+                    row.className = item.is_manual ? 'manual-style-row' : '';
+                    itemsMap[item.sku] = item;
+                    
+                    const baseStyle = item.product_name ? item.product_name.split()[0] : item.product_name;
+                    if (item.is_manual) {
+                        manualStyles.add(baseStyle);
+                    } else {
+                        internalStyles.add(baseStyle);
+                    }
+                    
+                    let priceStr = 'N/A';
+                    if (item.price !== null && item.price !== undefined && item.price !== '') {
+                        const priceNum = parseFloat(item.price);
+                        if (!isNaN(priceNum)) {
+                            priceStr = '$' + priceNum.toFixed(2);
+                        }
+                    }
+                    
+                    let internalQtyStr = 'N/A';
+                    if (item.internal_quantity !== null && item.internal_quantity !== undefined) {
+                        internalQtyStr = item.internal_quantity;
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${item.product_name || '-'}</td>
+                        <td>${item.sku}</td>
+                        <td class="quantity-cell"><i class="fas fa-spinner fa-spin" style="color: #999;"></i></td>
+                        <td>${formatDate(item.date)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                const statsInfo = document.getElementById('statsInfo');
+                const internalCount = internalStyles.size;
+                const manualCount = manualStyles.size;
+                const totalCount = basicData.data.length;
+                statsInfo.innerHTML = `Internal Styles: <strong>${internalCount}</strong> | Manual Styles: <strong>${manualCount}</strong> | Total SKUs: <strong>${totalCount}</strong>`;
+                
+                initDataTable();
+                
+                const skus = basicData.data.map(item => item.sku);
+                
+                document.querySelectorAll('#inventoryTable tbody tr').forEach(row => {
+                    row.cells[2].innerHTML = '<i class="fas fa-spinner fa-spin" style="color: #999;"></i>';
+                });
+                
+                const availabilityResponse = await fetch('{{ url_for("internal_stock_check.get_availability") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ skus: skus })
+                });
+                
+                const availabilityData = await availabilityResponse.json();
+                
+                if (availabilityData.success) {
+                    availabilityCache = availabilityData.data;
+                    applyAvailabilityToTable();
+                    
+                    const filterBtn = document.getElementById('filterBtn');
+                    if (filterBtn) {
+                        filterBtn.style.display = '';
+                    }
+                    
+                    isAvailabilityLoading = false;
+                    enableExportButton();
+                } else {
+                    console.error('Availability fetch error:', availabilityData.error);
+                    isAvailabilityLoading = false;
+                }
+            } catch (error) {
+                showAlert(`✗ Error loading inventory: ${error.message}`, 'danger');
+                console.error('Load inventory error:', error);
+                isAvailabilityLoading = false;
+            }
+        }
+        
+        async function showManualStylesModal() {
+            try {
+                const response = await fetch('{{ url_for("internal_stock_check.get_manual_styles") }}');
+                const data = await response.json();
+                
+                if (data.success && data.styles && data.styles.length > 0) {
+                    const stylesText = Array.isArray(data.styles) 
+                        ? data.styles.join('\n')
+                        : '';
+                    document.getElementById('manualStylesTextarea').value = stylesText;
+                } else {
+                    document.getElementById('manualStylesTextarea').value = '';
+                    if (data.success) {
+                        showAlert('No manual styles available', 'info');
+                    }
+                }
+                
+                $('#manualStylesModal').modal('show');
+            } catch (error) {
+                showAlert(`✗ Error loading manual styles: ${error.message}`, 'danger');
+                console.error('Error:', error);
+            }
+        }
+        
+        function closeManualStylesModal() {
+            $('#manualStylesModal').modal('hide');
+        }
+        
+        async function saveManualStyles() {
+            try {
+                const textareaValue = document.getElementById('manualStylesTextarea').value;
+                const skus = textareaValue.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+                
+                const response = await fetch('{{ url_for("internal_stock_check.save_manual_styles") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ styles: skus })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert(`✓ ${result.message}`, 'success');
+                    closeManualStylesModal();
+                } else {
+                    showAlert(`✗ ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                showAlert(`✗ Error saving styles: ${error.message}`, 'danger');
+                console.error('Error:', error);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInventory();
+        });
+    </script>
+</body>
+</html>

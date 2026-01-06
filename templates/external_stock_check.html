@@ -392,7 +392,9 @@
     </style>
 </head>
 <body>
-    {% if show_password %}
+  {% include 'navbar.html' %}
+  
+  {% if show_password %}
     <!-- Password Modal -->
     <div class="password-modal" id="passwordModal">
         <div class="password-card">
