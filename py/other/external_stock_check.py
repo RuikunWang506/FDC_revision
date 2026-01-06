@@ -152,9 +152,11 @@ def get_inventory_from_tiktok():
             'page_size': '100'  # V2 requires page_size in query params
         }
         
-        # Request body for POST - empty filter to get all products
+        # Request body for POST - filter for LIVE products only
         body = {
-            'filter': {}
+            'filter': {
+                'status': 'LIVE'  # Only fetch live products to reduce API calls
+            }
         }
         body_str = json.dumps(body, separators=(',', ':'))
         
@@ -176,117 +178,231 @@ def get_inventory_from_tiktok():
             'x-tts-access-token': api_key  # V2 uses x-tts-access-token header
         }
         
-        current_app.logger.info(f"Fetching TikTok products from {path}")
-        current_app.logger.debug(f"API URL: {products_url[:100]}...")
+        current_app.logger.info(f"Fetching TikTok products from {path} (LIVE status filter)")
+        current_app.logger.debug(f"Request body: {body_str}")
         
-        response = requests.post(
-            products_url,
-            headers=headers,
-            data=body_str,
-            timeout=30
-        )
-        
-        current_app.logger.debug(f"Response status: {response.status_code}")
-        current_app.logger.debug(f"Response: {response.text[:500]}")
-        
-        if response.status_code != 200:
-            current_app.logger.error(f"TikTok API error: {response.status_code} - {response.text}")
-            return []
-        
-        data = response.json()
-        
-        # V2 API response format
-        if data.get('code') != 0:
-            current_app.logger.error(f"TikTok API response error: {data.get('message', 'Unknown error')}")
-            return []
+        # Build headers
+        headers = {
+            'Content-Type': 'application/json',
+            'x-tts-access-token': api_key  # V2 uses x-tts-access-token header
+        }
         
         inventory_items = []
-        product_data = data.get('data', {})
+        next_page_token = None
+        page_count = 0
         
-        # Parse products and extract SKU, name, inventory info
-        for product in product_data.get('products', []):
-            product_id = product.get('product_id', '')
+        # Pagination with next_page_token
+        while True:
+            page_count += 1
+            current_app.logger.info(f"Fetching page {page_count}...")
             
-            # Get SKU from product or product variants
-            skus_to_process = []
+            # Update query params for this request
+            query_params = {
+                'app_key': app_key,
+                'timestamp': str(int(time.time())),
+                'shop_cipher': shop_cipher,
+                'page_size': '100'
+            }
             
-            # Check for SKU directly on product
-            if product.get('sku'):
-                skus_to_process.append({
-                    'sku': product.get('sku'),
-                    'quantity': product.get('quantity', 0)
-                })
+            # Add next_page_token if we have one
+            if next_page_token:
+                query_params['page_token'] = next_page_token
             
-            # Check for variants/skus
-            variants = product.get('variants', []) or product.get('skus', [])
-            for variant in variants:
-                sku = variant.get('sku') or variant.get('seller_sku', '')
-                if sku:
-                    # Get quantity from inventory array
-                    inventory_array = variant.get('inventory', [])
-                    quantity = 0
-                    if inventory_array:
-                        quantity = inventory_array[0].get('quantity', 0)
-                    
-                    # Get price from variant
-                    price = None
-                    currency = None
-                    price_info = variant.get('price', {})
-                    if isinstance(price_info, dict):
-                        price = float(price_info.get('tax_exclusive_price', 0) or 0)
-                        currency = price_info.get('currency', 'USD')
-                    
+            # Generate signature with current body
+            signature = generate_tiktok_signature(path, query_params, body_str, api_secret)
+            if not signature:
+                return []
+            
+            query_params['sign'] = signature
+            
+            # Build full URL
+            query_string = '&'.join([f"{k}={v}" for k, v in sorted(query_params.items())])
+            products_url = f"{Config.TIKTOK_SHOP_API_URL}{path}?{query_string}"
+            
+            response = requests.post(
+                products_url,
+                headers=headers,
+                data=body_str,
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                current_app.logger.error(f"TikTok API error: {response.status_code} - {response.text}")
+                break
+            
+            data = response.json()
+            
+            # V2 API response format
+            if data.get('code') != 0:
+                current_app.logger.error(f"TikTok API response error: {data.get('message', 'Unknown error')}")
+                break
+            
+            product_data = data.get('data', {})
+            products = product_data.get('products', [])
+            
+            if not products:
+                current_app.logger.info(f"No more products (empty response on page {page_count})")
+                break
+            
+            current_app.logger.info(f"Page {page_count}: Processing {len(products)} products")
+            
+            # Parse products and extract SKU, name, inventory info
+            for product in products:
+                # Filter: only process products with ACTIVATE status
+                if product.get('status') != 'ACTIVATE':
+                    current_app.logger.debug(f"Skipping product (status not ACTIVATE): {product.get('status')}")
+                    continue
+                
+                product_id = product.get('product_id', '')
+                
+                # Get SKU from product or product variants
+                skus_to_process = []
+                
+                # Check for SKU directly on product
+                if product.get('sku'):
                     skus_to_process.append({
-                        'sku': sku,
-                        'quantity': quantity,
-                        'price': price,
-                        'currency': currency
+                        'sku': product.get('sku'),
+                        'quantity': product.get('quantity', 0)
                     })
-            
-            # If no SKUs found, use product_id as fallback
-            if not skus_to_process:
-                skus_to_process.append({
-                    'sku': product_id,
-                    'quantity': product.get('quantity', 0)
-                })
-            
-            # Add each SKU as inventory item
-            for sku_info in skus_to_process:
-                sku = sku_info['sku']
-                if sku:
-                    sku_str = str(sku).strip()
-                    
-                    # Filter: only save SKUs that start with a letter
-                    if not sku_str or not sku_str[0].isalpha():
-                        current_app.logger.debug(f"Skipping SKU (doesn't start with letter): {sku_str}")
-                        continue
-                    
-                    # Filter: exclude SKUs starting with DS-, ava, S#-, s#- patterns
-                    sku_upper = sku_str.upper()
-                    if sku_upper.startswith('DS-'):
-                        current_app.logger.debug(f"Skipping SKU (starts with DS-): {sku_str}")
-                        continue
-                    if sku_upper.startswith('AVA'):
-                        current_app.logger.debug(f"Skipping SKU (starts with AVA): {sku_str}")
-                        continue
-                    # Check for S#- pattern (S followed by digit, then dash)
-                    if len(sku_str) >= 3 and sku_upper[0] == 'S' and sku_upper[1].isdigit() and sku_upper[2] == '-':
-                        current_app.logger.debug(f"Skipping SKU (matches S#- pattern): {sku_str}")
-                        continue
-                    
-                    # Extract product name from SKU (everything before first space)
-                    sku_name = sku_str.split()[0] if ' ' in sku_str else sku_str
-                    
-                    inventory_items.append({
-                        'sku': sku_str.upper(),
-                        'style': sku_name.upper(),  # Product name = SKU before space
-                        'buyer': 'TikTok Shop',
-                        'quantity': sku_info.get('quantity', 0),
-                        'price': sku_info.get('price'),
-                        'currency': sku_info.get('currency', 'USD')
+                
+                # Check for variants/skus
+                variants = product.get('variants', []) or product.get('skus', [])
+                for variant in variants:
+                    sku = variant.get('sku') or variant.get('seller_sku', '')
+                    if sku:
+                        # Get quantity from inventory array
+                        inventory_array = variant.get('inventory', [])
+                        quantity = 0
+                        if inventory_array:
+                            quantity = inventory_array[0].get('quantity', 0)
+                        
+                        # Get price from variant
+                        price = None
+                        currency = None
+                        price_info = variant.get('price', {})
+                        if isinstance(price_info, dict):
+                            price = float(price_info.get('tax_exclusive_price', 0) or 0)
+                            currency = price_info.get('currency', 'USD')
+                        
+                        skus_to_process.append({
+                            'sku': sku,
+                            'quantity': quantity,
+                            'price': price,
+                            'currency': currency
+                        })
+                
+                # If no SKUs found, use product_id as fallback
+                if not skus_to_process:
+                    skus_to_process.append({
+                        'sku': product_id,
+                        'quantity': product.get('quantity', 0)
                     })
+                
+                # Add each SKU as inventory item
+                for sku_info in skus_to_process:
+                    sku = sku_info['sku']
+                    if sku:
+                        sku_str = str(sku).strip()
+                        
+                        # Filter: only save SKUs that start with a letter
+                        if not sku_str or not sku_str[0].isalpha():
+                            current_app.logger.debug(f"Skipping SKU (doesn't start with letter): {sku_str}")
+                            continue
+                        
+                        # Filter: exclude SKUs starting with DS-, ava, S#-, s#- patterns
+                        sku_upper = sku_str.upper()
+                        if sku_upper.startswith('DS-'):
+                            current_app.logger.debug(f"Skipping SKU (starts with DS-): {sku_str}")
+                            continue
+                        if sku_upper.startswith('AVA'):
+                            current_app.logger.debug(f"Skipping SKU (starts with AVA): {sku_str}")
+                            continue
+                        # Check for S#- pattern (S followed by digit, then dash)
+                        if len(sku_str) >= 3 and sku_upper[0] == 'S' and sku_upper[1].isdigit() and sku_upper[2] == '-':
+                            current_app.logger.debug(f"Skipping SKU (matches S#- pattern): {sku_str}")
+                            continue
+                        
+                        # Extract product name from SKU (everything before first space)
+                        sku_name = sku_str.split()[0] if ' ' in sku_str else sku_str
+                        
+                        inventory_items.append({
+                            'sku': sku_str.upper(),
+                            'style': sku_name.upper(),  # Product name = SKU before space
+                            'buyer': 'TikTok Shop',
+                            'quantity': sku_info.get('quantity', 0),
+                            'price': sku_info.get('price'),
+                            'currency': sku_info.get('currency', 'USD')
+                        })
+            
+            # Get next page token
+            next_page_token = product_data.get('next_page_token')
+            if not next_page_token:
+                current_app.logger.info(f"Pagination complete. Fetched {len(inventory_items)} total items across {page_count} pages")
+                break
         
-        current_app.logger.info(f"Fetched {len(inventory_items)} items from TikTok Shop")
+        current_app.logger.info(f"Fetched {len(inventory_items)} items from TikTok Shop (LIVE status)")
+        
+        # Special handling: Also fetch T3305 by product ID if not already in results
+        t3305_found = any(item['sku'].upper().startswith('T3305') for item in inventory_items)
+        if not t3305_found:
+            current_app.logger.info("T3305 not found in search results, fetching by product ID...")
+            try:
+                product_id = '1729404716648272513'
+                path = f'/product/202309/products/{product_id}'
+                
+                query_params = {
+                    'app_key': app_key,
+                    'timestamp': str(int(time.time())),
+                    'shop_cipher': shop_cipher
+                }
+                
+                body = {}
+                body_str = ''
+                
+                signature = generate_tiktok_signature(path, query_params, body_str, api_secret)
+                if signature:
+                    query_params['sign'] = signature
+                    query_string = '&'.join([f"{k}={v}" for k, v in sorted(query_params.items())])
+                    product_url = f"{Config.TIKTOK_SHOP_API_URL}{path}?{query_string}"
+                    
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'x-tts-access-token': api_key
+                    }
+                    
+                    response = requests.get(product_url, headers=headers, timeout=10)
+                    data = response.json()
+                    
+                    if data.get('code') == 0:
+                        product = data.get('data', {})
+                        if product and product.get('status') == 'ACTIVATE':
+                            current_app.logger.info(f"Successfully fetched T3305 by product ID")
+                            
+                            # Process SKUs from this product
+                            for sku_variant in product.get('skus', []):
+                                sku = sku_variant.get('seller_sku', '')
+                                if sku:
+                                    sku_str = str(sku).strip().upper()
+                                    inventory_array = sku_variant.get('inventory', [])
+                                    quantity = 0
+                                    if inventory_array:
+                                        quantity = inventory_array[0].get('quantity', 0)
+                                    
+                                    sku_name = sku_str.split()[0] if ' ' in sku_str else sku_str
+                                    
+                                    inventory_items.append({
+                                        'sku': sku_str,
+                                        'style': sku_name,
+                                        'buyer': 'TikTok Shop',
+                                        'quantity': quantity,
+                                        'price': None,
+                                        'currency': 'USD'
+                                    })
+                            
+                            current_app.logger.info(f"Added {len(product.get('skus', []))} T3305 variants")
+            except Exception as e:
+                current_app.logger.warning(f"Failed to fetch T3305 by product ID: {e}")
+        
         return inventory_items
         
     except requests.exceptions.Timeout:
@@ -308,7 +424,7 @@ def get_inventory_from_tiktok():
         return []
 
 
-def fetch_available_quantity(sku):
+def fetch_available_quantity(sku, is_manual=False):
     """Fetch available quantity from both FDC and E-Fashion databases.
     Uses the inv and inv_data tables like product_detail.py does.
     """
@@ -367,11 +483,14 @@ def fetch_available_quantity(sku):
             conn_oms_ef.close()
 
 
-def fetch_available_quantities(skus):
+def fetch_available_quantities(skus, manual_skus=None):
     """Fetch available quantities for multiple SKUs.
     Uses individual queries per SKU for reliability.
     Returns dict with SKU as key and availability data as value.
     """
+    if manual_skus is None:
+        manual_skus = set()
+    
     conn_fdc, conn_oms_ef = get_db_connections()
     
     if conn_fdc is None or conn_oms_ef is None or not skus:
@@ -386,8 +505,7 @@ def fetch_available_quantities(skus):
     try:
         cursor_fdc = conn_fdc.cursor()
         
-        # Query FDC for all SKUs at once using UNION
-        # This is much faster than individual queries
+        # Query all SKUs (exact match)
         if skus:
             union_query_parts = []
             for sku in skus:
@@ -416,7 +534,7 @@ def fetch_available_quantities(skus):
     try:
         cursor_oms_ef = conn_oms_ef.cursor()
         
-        # Query E-Fashion for all SKUs at once using UNION
+        # Query all SKUs (exact match)
         if skus:
             union_query_parts = []
             for sku in skus:
@@ -588,7 +706,7 @@ def get_inventory():
 # API: Get basic inventory data (fast - MySQL only, no availability lookup)
 @external_stock_check_bp.route('/api/external_stock_check/get_inventory_basic', methods=['GET'])
 def get_inventory_basic():
-    """Get basic inventory data from MySQL only (fast load, no availability lookup)."""
+    """Get basic inventory data from MySQL plus manual styles (fast load, no availability lookup)."""
     try:
         connection = get_mysql_connection()
         if connection is None:
@@ -597,7 +715,7 @@ def get_inventory_basic():
         connection.database = 'externalcheck'
         cursor = connection.cursor(dictionary=True)
         
-        # Get all inventory items
+        # Get all inventory items from TikTok
         cursor.execute("""
             SELECT sku, product_name, quantity, date, price
             FROM tiktok_inventory
@@ -608,14 +726,83 @@ def get_inventory_basic():
         
         # Build results with basic data only
         results = []
+        tk_skus = set()
+        tk_base_styles = set()  # Track base styles (style without color) from TikTok
+        
         for item in items:
+            tk_skus.add(item['sku'])
+            # Extract base style (first word, before space) for duplicate detection
+            base_style = item['product_name'].split()[0] if ' ' in item['product_name'] else item['product_name']
+            tk_base_styles.add(base_style)
             results.append({
                 'sku': item['sku'],
                 'product_name': item['product_name'],
                 'tiktok_quantity': item['quantity'],
                 'date': item['date'].isoformat() if item['date'] else None,
-                'price': item['price']
+                'price': item['price'],
+                'is_manual': False
             })
+        
+        # Load manual styles from JSON
+        import os
+        manual_styles_path = os.path.join(current_app.root_path, 'data', 'manual_styles.json')
+        
+        if os.path.exists(manual_styles_path):
+            with open(manual_styles_path, 'r', encoding='utf-8') as f:
+                manual_data = json.load(f)
+            
+            # Add manual styles that are NOT in TikTok inventory
+            manual_styles = manual_data.get('styles', [])
+            for base_sku in manual_styles:
+                # Skip if this base style already exists in TikTok
+                if base_sku not in tk_base_styles:
+                    # Query database for all SKUs matching this pattern
+                    conn_fdc, conn_oms_ef = get_db_connections()
+                    if conn_fdc and conn_oms_ef:
+                        try:
+                            cursor_fdc = conn_fdc.cursor()
+                            cursor_fdc.execute(f"""
+                                SELECT DISTINCT RTRIM(i.PROD_CD) as prod_cd
+                                FROM dbo.inv AS i
+                                WHERE i.PROD_CD LIKE '{base_sku}%' OR i.ALT_CD LIKE '{base_sku}%'
+                                ORDER BY RTRIM(i.PROD_CD)
+                            """)
+                            matched_skus = {row[0] for row in cursor_fdc.fetchall()}
+                            cursor_fdc.close()
+                            
+                            if conn_fdc:
+                                conn_fdc.close()
+                            if conn_oms_ef:
+                                conn_oms_ef.close()
+                        except Exception as e:
+                            current_app.logger.debug(f"Error fetching matched SKUs for {base_sku}: {e}")
+                            matched_skus = set()
+                    else:
+                        matched_skus = set()
+                    
+                    # If we found matched SKUs, add them; otherwise add the base style
+                    if matched_skus:
+                        for sku in sorted(matched_skus):
+                            # Extract base style (everything before first space)
+                            base_style = sku.split()[0] if ' ' in sku else sku
+                            results.append({
+                                'sku': sku,
+                                'product_name': base_style,  # Style column shows base style only
+                                'tiktok_quantity': None,
+                                'date': datetime.now().isoformat(),
+                                'price': None,
+                                'is_manual': True
+                            })
+                    else:
+                        # Fallback: add base style if no matches found
+                        results.append({
+                            'sku': base_sku,
+                            'product_name': base_sku,
+                            'tiktok_quantity': None,
+                            'date': datetime.now().isoformat(),
+                            'price': None,
+                            'is_manual': True
+                        })
         
         cursor.close()
         connection.close()
@@ -692,11 +879,12 @@ def get_sku_availability(sku):
 @external_stock_check_bp.route('/api/external_stock_check/export_csv', methods=['POST'])
 def export_csv_complete():
     """
-    Export all inventory data with availability as CSV.
+    Export all inventory data (TikTok + manual) with availability as CSV.
     Fetches fresh data from both MySQL and SQL Server databases.
     """
     from flask import send_file
     import io
+    import os
     
     try:
         # Get all inventory from MySQL
@@ -709,28 +897,85 @@ def export_csv_complete():
         cursor.execute("SELECT sku, product_name, quantity as tiktok_qty, price, last_updated FROM tiktok_inventory ORDER BY sku")
         inventory_data = cursor.fetchall()
         cursor.close()
+        
+        # Load manual styles from JSON
+        manual_styles_data = []
+        manual_styles_path = os.path.join(current_app.root_path, 'data', 'manual_styles.json')
+        
+        if os.path.exists(manual_styles_path):
+            with open(manual_styles_path, 'r', encoding='utf-8') as f:
+                manual_data = json.load(f)
+            
+            manual_styles = manual_data.get('styles', [])
+            for base_sku in manual_styles:
+                # Query database for all SKUs matching this pattern
+                conn_fdc, conn_oms_ef = get_db_connections()
+                if conn_fdc and conn_oms_ef:
+                    try:
+                        cursor_fdc = conn_fdc.cursor()
+                        cursor_fdc.execute(f"""
+                            SELECT DISTINCT RTRIM(i.PROD_CD) as prod_cd
+                            FROM dbo.inv AS i
+                            WHERE i.PROD_CD LIKE '{base_sku}%' OR i.ALT_CD LIKE '{base_sku}%'
+                            ORDER BY RTRIM(i.PROD_CD)
+                        """)
+                        matched_skus = {row[0] for row in cursor_fdc.fetchall()}
+                        cursor_fdc.close()
+                        
+                        if conn_fdc:
+                            conn_fdc.close()
+                        if conn_oms_ef:
+                            conn_oms_ef.close()
+                    except Exception as e:
+                        current_app.logger.debug(f"Error fetching matched SKUs for {base_sku}: {e}")
+                        matched_skus = set()
+                else:
+                    matched_skus = set()
+                
+                # Add matched SKUs to manual styles data
+                if matched_skus:
+                    for sku in sorted(matched_skus):
+                        base_style = sku.split()[0] if ' ' in sku else sku
+                        manual_styles_data.append({
+                            'sku': sku,
+                            'product_name': base_style,
+                            'tiktok_qty': None,
+                            'price': None
+                        })
+        
         mysql_conn.close()
         
-        if not inventory_data:
+        if not inventory_data and not manual_styles_data:
             return jsonify({'error': 'No inventory data found'}), 404
         
-        # Extract all SKUs
-        skus = [item['sku'] for item in inventory_data]
+        # Extract all SKUs (both TikTok and manual)
+        all_skus = [item['sku'] for item in inventory_data] + [item['sku'] for item in manual_styles_data]
         
         # Fetch availability for all SKUs
-        availability_data = fetch_available_quantities(skus)
+        availability_data = fetch_available_quantities(all_skus)
         
         # Build CSV data
-        csv_rows = [['Style', 'SKU', 'TikTok Qty', 'Available', 'Price']]
+        csv_rows = [['Style', 'SKU', 'Source', 'TikTok Qty', 'Available', 'Price']]
         
+        # Add TikTok inventory rows
         for item in inventory_data:
             sku = item['sku']
-            style = item['product_name'].split()[0] if item['product_name'] else ''  # Extract style from product name
+            style = item['product_name'].split()[0] if item['product_name'] else ''
             tiktok_qty = item['tiktok_qty'] or 0
             available = availability_data.get(sku, {}).get('total', 0)
-            price = f"${item['price']:.2f}" if item['price'] else ''
+            price = f"${item['price']:.2f}" if item['price'] else 'N/A'
+            source = 'TikTok'
             
-            csv_rows.append([style, sku, tiktok_qty, available, price])
+            csv_rows.append([style, sku, source, tiktok_qty, available, price])
+        
+        # Add manual styles rows
+        for item in manual_styles_data:
+            sku = item['sku']
+            style = item['product_name']
+            available = availability_data.get(sku, {}).get('total', 0)
+            source = 'Manual'
+            
+            csv_rows.append([style, sku, source, 'N/A', available, 'N/A'])
         
         # Write to StringIO
         output = io.StringIO()
@@ -746,13 +991,92 @@ def export_csv_complete():
             mem,
             mimetype='text/csv',
             as_attachment=True,
-            download_name=f'tiktok_inventory_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            download_name=f'inventory_complete_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
         )
     
     except Exception as e:
         current_app.logger.error(f"CSV export error: {e}")
         import traceback
         traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+# API: Get manual styles from JSON file
+@external_stock_check_bp.route('/api/external_stock_check/get_manual_styles', methods=['GET'])
+def get_manual_styles():
+    """Get manual styles from JSON file."""
+    try:
+        if not session.get('external_user'):
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # Load manual styles from JSON
+        import os
+        manual_styles_path = os.path.join(current_app.root_path, 'data', 'manual_styles.json')
+        
+        if not os.path.exists(manual_styles_path):
+            return jsonify({'success': True, 'styles': []})
+        
+        with open(manual_styles_path, 'r', encoding='utf-8') as f:
+            manual_data = json.load(f)
+        
+        styles_list = manual_data.get('styles', [])
+        
+        return jsonify({
+            'success': True,
+            'styles': styles_list
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error fetching manual styles: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# API: Save manual styles to JSON file
+@external_stock_check_bp.route('/api/external_stock_check/save_manual_styles', methods=['POST'])
+def save_manual_styles():
+    """Save edited manual styles to JSON file."""
+    try:
+        if not session.get('external_user'):
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        data = request.json
+        styles = data.get('styles', [])
+        
+        # Load current data to preserve any other fields
+        import os
+        manual_styles_path = os.path.join(current_app.root_path, 'data', 'manual_styles.json')
+        
+        # Get all SKUs from TikTok inventory to filter
+        mysql_conn = get_mysql_connection()
+        if mysql_conn:
+            mysql_conn.database = 'externalcheck'
+            cursor = mysql_conn.cursor()
+            cursor.execute("SELECT sku FROM tiktok_inventory")
+            tk_skus = {row[0] for row in cursor.fetchall()}
+            cursor.close()
+            mysql_conn.close()
+        else:
+            tk_skus = set()
+        
+        # Filter out styles that are in TikTok inventory
+        filtered_styles = [sku for sku in styles if sku not in tk_skus]
+        
+        # Save to file
+        output_data = {
+            'styles': filtered_styles
+        }
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(manual_styles_path), exist_ok=True)
+        
+        with open(manual_styles_path, 'w', encoding='utf-8') as f:
+            json.dump(output_data, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Saved {len(filtered_styles)} styles (excluded {len(styles) - len(filtered_styles)} that are in TikTok inventory)'
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error saving manual styles: {e}")
         return jsonify({'error': str(e)}), 500
 
 

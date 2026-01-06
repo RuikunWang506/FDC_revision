@@ -82,7 +82,7 @@ def find_images_by_sku(sku):
             source = asset.source.lower() if asset.source else 'unknown'
             if source == 'dropbox':
                 grouped_images['dam_dropbox'].append(asset_info)
-            elif source == 'catalog':
+            elif source == 'catalog' or source == 'catalog_original':
                 grouped_images['dam_catalog'].append(asset_info)
             elif source == 'big_picture':
                 grouped_images['dam_big_picture'].append(asset_info)

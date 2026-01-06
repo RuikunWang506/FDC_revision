@@ -202,11 +202,12 @@
             background: rgba(18, 25, 38, 0.6);
             border: 1px solid rgba(0, 240, 255, 0.15);
             border-radius: 15px;
-            overflow: hidden;
+            overflow: visible;
             transition: all 0.3s ease;
             cursor: pointer;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .image-card:hover {
@@ -350,9 +351,9 @@
             align-items: center;
             justify-content: center;
             position: relative;
-            min-width: 0; /* Allow shrinking */
-            max-width: calc(100vw - 380px) !important; /* Account for sidebar width */
-            padding: 0 80px 0 80px; /* Add padding for navigation arrows */
+            min-width: 0;
+            max-width: calc(100vw - 380px) !important;
+            padding: 0 80px 0 80px;
             height: 100vh !important;
             overflow: hidden;
         }
@@ -585,54 +586,64 @@
             }
 
             .modal-content {
-                flex-direction: column;
+                flex-direction: column !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: none !important;
             }
             
             .modal-sidebar {
-                width: 100%;
-                min-width: 100%;
-                height: 300px;
-                max-height: 300px;
-                border-left: none;
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 auto !important;
+                height: 35vh !important;
+                max-height: 35vh !important;
+                border-left: none !important;
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
                 padding: 1rem;
                 overflow-y: auto;
+                order: 2;
             }
             
             .modal-main {
-                height: calc(100vh - 300px);
-                flex: 1;
-                padding: 0 60px; /* Reduce padding on mobile */
-                width: 100vw; /* Full width on mobile */
+                height: 65vh !important;
+                max-height: 65vh !important;
+                flex: 0 0 auto !important;
+                padding: 40px 20px !important;
+                width: 100vw !important;
+                max-width: 100vw !important;
+                order: 1;
+                overflow: hidden;
             }
 
             .modal-image-container {
-                max-width: calc(100vw - 120px); /* Full width minus mobile padding */
-                max-height: calc(100vh - 300px - 4rem); /* Account for sidebar height */
-                width: 100%;
-                height: 100%;
+                max-width: calc(100vw - 40px) !important;
+                max-height: 65vh !important;
+                width: 100% !important;
+                height: 100% !important;
             }
 
             .modal-image {
-                max-width: 100%;
-                max-height: 100%;
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
             }
 
             .modal-nav {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
             }
 
             .modal-prev {
-                left: 1rem;
+                left: 5px !important;
             }
 
             .modal-next {
-                right: 1rem; /* Reset to normal on mobile */
+                right: 5px !important;
             }
 
             .modal-actions {
@@ -642,29 +653,26 @@
 
             .modal-action-btn {
                 padding: 0.5rem 1rem;
-                font-size: 0.9rem;
-            }
-
-            .modal-nav {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-            }
-
-            .modal-prev {
-                left: 1rem;
-            }
-
-            .modal-next {
-                right: 1rem;
+                font-size: 0.85rem;
+                flex: 1;
             }
 
             .modal-close {
-                top: 1rem;
-                right: 1rem;
+                top: 10px;
+                right: 10px;
                 width: 40px;
                 height: 40px;
                 font-size: 1.2rem;
+            }
+
+            .modal-info {
+                bottom: 10px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                font-size: 0.85rem;
             }
         }
     </style>
@@ -852,9 +860,10 @@
             selectedImages.clear();
             
             const categories = [
-                { key: 'dam_other', name: 'Catalog_Original Disk', icon: 'fas fa-server' },
-                ...(window.showDropbox ? [{ key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' }] : []),
+                { key: 'dam_catalog', name: 'Catalog_Original Disk', icon: 'fas fa-server' },
+                { key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' },
                 { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' },
+                { key: 'dam_other', name: 'Other Images', icon: 'fas fa-image' },
                 { key: 'china_ftp', name: 'China FTP', icon: 'fas fa-globe' }
             ];
 

@@ -260,14 +260,58 @@
             color: #51cf66;
         }
         
+        /* Image Preview Tooltip */
+        .image-preview-tooltip {
+            position: fixed;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            display: none;
+            max-width: 600px;
+            max-height: 600px;
+            overflow: hidden;
+        }
+        
+        .image-preview-tooltip img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .style-link {
+            cursor: pointer;
+            position: relative;
+        }
+        
         /* Status Messages */
         .alert {
             padding: 15px;
             border-radius: 6px;
-            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            max-width: 600px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .alert-success {
@@ -389,6 +433,15 @@
             <button class="btn btn-secondary" id="filterBtn" onclick="toggleDiscrepancyFilter()" style="display: none;">
                 <i class="fas fa-filter"></i> 只显示对应不上的库存
             </button>
+            <button class="btn btn-info" id="manualBtn" onclick="showManualStylesModal()">
+                <i class="fas fa-edit"></i> 手动编辑不在tk款
+            </button>
+        </div>
+        
+        <!-- Stats Section -->
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+            <strong>📊 数据统计:</strong> 
+            <span id="statsInfo" style="color: #666; margin-left: 10px;"><i class="fas fa-spinner fa-spin"></i> 加载中...</span>
         </div>
         
         <!-- Table -->
@@ -401,6 +454,7 @@
                         <th>TK实时数据</th>
                         <th>实时可卖库存</th>
                         <th>TK价格</th>
+                        <th>读取时间</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -412,6 +466,37 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+        
+        <!-- Image Preview Tooltip -->
+        <div class="image-preview-tooltip" id="imagePreview">
+            <img id="previewImage" src="" alt="Style preview">
+        </div>
+        
+        <!-- Manual Styles Modal -->
+        <div class="modal fade" id="manualStylesModal" tabindex="-1" role="dialog" aria-labelledby="manualStylesTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="manualStylesTitle">Manual Styles Editor</h5>
+                        <button type="button" class="close" onclick="closeManualStylesModal()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="color: #666; margin-bottom: 15px;"><em>Edit styles below (one per line). Styles already in TikTok inventory will be excluded automatically.</em></p>
+                        <textarea id="manualStylesTextarea" style="width: 100%; height: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 14px;"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeManualStylesModal()">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveManualStyles()">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -425,6 +510,135 @@
         let isDataTableInitialized = false;
         let availabilityCache = {};  // Cache availability data globally
         let isAvailabilityLoading = false;  // Track if availability is being fetched
+        let imagePreviewCache = {};  // Cache preview image URLs by style
+        
+        // Image preview functions
+        function showImagePreview(event, style) {
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImage');
+            
+            // Check if image is already in cache
+            if (imagePreviewCache[style]) {
+                console.log(`Using cached preview for ${style}`);
+                previewImg.src = imagePreviewCache[style];
+                
+                // Position the preview near the mouse
+                const x = event.clientX + 10;
+                const y = event.clientY + 10;
+                
+                preview.style.left = x + 'px';
+                preview.style.top = y + 'px';
+                preview.style.display = 'block';
+                return;
+            }
+            
+            // Fetch image asset ID from API
+            fetch(`/api/search_images?sku=${style}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(`API response for ${style}:`, data);
+                    
+                    // Prefer canonical images from catalog
+                    let imageUrl = null;
+                    let selectedImage = null;
+                    
+                    // First priority: canonical catalog image
+                    if (data.dam_catalog && data.dam_catalog.length > 0) {
+                        console.log(`Catalog images for ${style}:`, data.dam_catalog);
+                        const canonicalImage = data.dam_catalog.find(img => img.is_canonical === true);
+                        if (canonicalImage) {
+                            console.log(`Found canonical catalog image:`, canonicalImage);
+                            imageUrl = canonicalImage.url;
+                            selectedImage = canonicalImage;
+                        } else {
+                            console.log(`No canonical catalog image, using first catalog image`);
+                            // Fallback to first catalog image if no canonical
+                            imageUrl = data.dam_catalog[0].url;
+                            selectedImage = data.dam_catalog[0];
+                        }
+                    }
+                    
+                    // If no catalog image, try other sources
+                    if (!imageUrl) {
+                        console.log(`No catalog image found, trying other sources`);
+                        if (data.dam_big_picture && data.dam_big_picture.length > 0) {
+                            console.log(`Using big_picture image`);
+                            imageUrl = data.dam_big_picture[0].url;
+                            selectedImage = data.dam_big_picture[0];
+                        } else if (data.dam_dropbox && data.dam_dropbox.length > 0) {
+                            console.log(`Using dropbox image`);
+                            imageUrl = data.dam_dropbox[0].url;
+                            selectedImage = data.dam_dropbox[0];
+                        } else if (data.dam_other && data.dam_other.length > 0) {
+                            console.log(`Using other source image`);
+                            imageUrl = data.dam_other[0].url;
+                            selectedImage = data.dam_other[0];
+                        }
+                    }
+                    
+                    if (imageUrl) {
+                        console.log(`Loading preview image: ${imageUrl} (source: ${selectedImage?.source})`);
+                        
+                        // Cache the image URL for future use
+                        imagePreviewCache[style] = imageUrl;
+                        
+                        previewImg.src = imageUrl;
+                        previewImg.onerror = function() {
+                            preview.style.display = 'none';
+                        };
+                        
+                        // Position the preview near the mouse
+                        const x = event.clientX + 10;
+                        const y = event.clientY + 10;
+                        
+                        preview.style.left = x + 'px';
+                        preview.style.top = y + 'px';
+                        preview.style.display = 'block';
+                    } else {
+                        console.log(`No image URL found for ${style}`);
+                        preview.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Image search error:', error);
+                    preview.style.display = 'none';
+                });
+        }
+        
+        function hideImagePreview() {
+            const preview = document.getElementById('imagePreview');
+            preview.style.display = 'none';
+        }
+        
+        // Add hover handlers to preview tooltip to keep it visible when hovering over it
+        document.addEventListener('DOMContentLoaded', function() {
+            const preview = document.getElementById('imagePreview');
+            if (preview) {
+                preview.addEventListener('mouseover', function(e) {
+                    e.stopPropagation();
+                    // Keep tooltip visible when hovering over it
+                    preview.style.display = 'block';
+                });
+                
+                preview.addEventListener('mouseout', function(e) {
+                    e.stopPropagation();
+                    // Hide tooltip when mouse leaves it
+                    preview.style.display = 'none';
+                });
+            }
+        });
+        
+        // Update preview position on mouse move
+        document.addEventListener('mousemove', function(event) {
+            const preview = document.getElementById('imagePreview');
+            if (preview && preview.style.display === 'block') {
+                const x = event.clientX + 10;
+                const y = event.clientY + 10;
+                
+                preview.style.left = x + 'px';
+                preview.style.top = y + 'px';
+            }
+        });
         
         // Initialize or reinitialize DataTable
         function initDataTable() {
@@ -446,21 +660,42 @@
                     "paging": true,
                     "info": true,
                     "autoWidth": false,
+                    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                     "columnDefs": [
-                        { "width": "15%", "targets": 0 },
+                        { 
+                            "width": "15%", 
+                            "targets": 0,
+                            "render": function(data, type, row) {
+                                if (type === 'display') {
+                                    return `<a href="https://www.fdcef.com/master_image_viewer/${data}" target="_blank" class="style-link" onmouseover="showImagePreview(event, '${data}')" onmouseout="hideImagePreview()"><strong>${data}</strong></a>`;
+                                }
+                                return data;
+                            }
+                        },
                         { "width": "15%", "targets": 1 },
                         { "width": "12%", "targets": 2 },
-                        { "width": "12%", "targets": 3 },
+                        { 
+
+                            "width": "12%", 
+                            "targets": 3,
+                            "render": function(data, type, row) {
+                                if (type === 'display') {
+                                    const value = parseInt(data) || 0;
+                                    const className = getQuantityClass(value);
+                                    const formatted = formatQuantity(value);
+                                    return `<strong class="quantity-cell ${className}">${formatted}</strong>`;
+                                }
+                                return data;
+                            }
+                        },
                         { "width": "12%", "targets": 4 },
                         { "width": "34%", "targets": 5 }
                     ]
                 });
                 isDataTableInitialized = true;
                 
-                // Listen for DataTable draw events (pagination, search, sort)
-                $('#inventoryTable').on('draw.dt', function() {
-                    applyAvailabilityToTable();
-                });
+                // Register discrepancy filter function (only once)
+                registerDiscrepancyFilter();
             } catch (error) {
                 console.error('Error initializing DataTable:', error);
             }
@@ -469,47 +704,38 @@
         function applyAvailabilityToTable() {
             // Only apply if we have cached data
             if (!availabilityCache || Object.keys(availabilityCache).length === 0) {
-                console.warn('No availability cache data');
                 return;
             }
             
-            console.log(`Applying availability to table. Cache has ${Object.keys(availabilityCache).length} SKUs`);
+            // Use DataTable API to properly update row data
+            if (!dataTable) {
+                return;
+            }
             
-            // Apply cached availability to ALL visible rows
-            const rows = document.querySelectorAll('#inventoryTable tbody tr');
             let appliedCount = 0;
             let notFoundCount = 0;
             
-            rows.forEach((row, index) => {
-                const skuCell = row.cells[1];
-                if (skuCell) {
-                    const sku = skuCell.textContent.trim();
-                    
-                    // Check if we have availability data for this SKU
-                    if (availabilityCache[sku]) {
-                        const avail = availabilityCache[sku];
-                        const availCell = row.cells[3];
-                        if (availCell) {
-                            availCell.className = `quantity-cell ${getQuantityClass(avail.total)}`;
-                            availCell.innerHTML = `<strong>${formatQuantity(avail.total)}</strong>`;
-                            appliedCount++;
-                        }
-                    } else {
-                        // Only log first few misses to avoid spam
-                        if (notFoundCount < 3) {
-                            console.warn(`SKU not found in cache: "${sku}"`);
-                            notFoundCount++;
-                        }
-                    }
+            // Update each row's data in DataTable
+            dataTable.rows().every(function() {
+                const rowData = this.data();
+                if (!rowData) return;
+                
+                const sku = rowData[1]; // SKU is in column 1
+                const available = availabilityCache[sku];
+                
+                if (available !== undefined) {
+                    // Update column 3 (Available Qty) with the actual value
+                    rowData[3] = available && available.total ? available.total : 0;
+                    this.data(rowData);
+                    appliedCount++;
+                } else {
+                    notFoundCount++;
                 }
             });
             
-            console.log(`Applied availability to ${appliedCount} rows, ${notFoundCount} not found`);
-            
-            // Show filter button now that availability is loaded
-            const filterBtn = document.getElementById('filterBtn');
-            if (filterBtn) {
-                filterBtn.style.display = '';
+            // Redraw table once after all updates to reflect data changes
+            if (dataTable) {
+                dataTable.draw(false);
             }
         }
         
@@ -581,61 +807,70 @@
         // State for discrepancy filter
         let isDiscrepancyFilterActive = false;
         
-        function toggleDiscrepancyFilter() {
-            const filterBtn = document.getElementById('filterBtn');
-            const tableBody = document.getElementById('tableBody');
-            
-            if (!dataTable || !isDataTableInitialized) {
-                showAlert('✗ Table data not ready', 'danger');
+        let discrepancyFilterActive = false;
+        let discrepancyFilterRegistered = false;
+        
+        function registerDiscrepancyFilter() {
+            // Only register once
+            if (discrepancyFilterRegistered) {
                 return;
             }
             
-            isDiscrepancyFilterActive = !isDiscrepancyFilterActive;
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (!discrepancyFilterActive) {
+                    return true;  // Show all rows when filter is inactive
+                }
+                
+                // When filter is active, only show rows with discrepancies
+                const tkQtyText = (data[2] || '0').trim();
+                const availableText = (data[3] || '0').trim();
+                
+                // Parse as integers, handling 'N/A' cases
+                const tkQty = (tkQtyText === 'N/A') ? -1 : parseInt(tkQtyText) || 0;
+                const availableQty = (availableText === 'N/A') ? -1 : parseInt(availableText) || 0;
+                
+                // Return true to show row (if quantities don't match)
+                return tkQty !== availableQty;
+            });
             
-            if (isDiscrepancyFilterActive) {
-                // Show only rows with discrepancies (TK Qty ≠ Available)
-                filterBtn.classList.add('active');
-                filterBtn.style.backgroundColor = '#ff6b6b';
-                filterBtn.style.borderColor = '#ff6b6b';
-                
-                // Get all rows and filter
-                const allRows = dataTable.rows().nodes();
-                let hiddenCount = 0;
-                let totalRows = 0;
-                
-                // Use for loop instead of forEach (NodeList compatibility)
-                for (let i = 0; i < allRows.length; i++) {
-                    const row = allRows[i];
-                    totalRows++;
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 4) {
-                        const tkQty = parseInt((cells[2]?.innerText || '0').trim()) || 0;
-                        const availableQty = parseInt((cells[3]?.innerText || '0').trim()) || 0;
-                        
-                        // Hide row if values match
-                        if (tkQty === availableQty) {
-                            row.style.display = 'none';
-                            hiddenCount++;
-                        } else {
-                            row.style.display = '';
-                        }
-                    }
+            discrepancyFilterRegistered = true;
+        }
+        
+        function toggleDiscrepancyFilter() {
+            const filterBtn = document.getElementById('filterBtn');
+            
+            try {
+                if (!dataTable || !isDataTableInitialized) {
+                    showAlert('✗ Table data not ready', 'danger');
+                    return;
                 }
                 
-                showAlert(`✓ Showing only discrepancies (${totalRows - hiddenCount} rows with differences)`, 'success');
-            } else {
-                // Show all rows
-                filterBtn.classList.remove('active');
-                filterBtn.style.backgroundColor = '';
-                filterBtn.style.borderColor = '';
+                discrepancyFilterActive = !discrepancyFilterActive;
                 
-                const allRows = dataTable.rows().nodes();
-                // Use for loop instead of forEach (NodeList compatibility)
-                for (let i = 0; i < allRows.length; i++) {
-                    allRows[i].style.display = '';
+                if (discrepancyFilterActive) {
+                    // Show only rows with discrepancies
+                    filterBtn.classList.add('active');
+                    filterBtn.style.backgroundColor = '#ff6b6b';
+                    filterBtn.style.borderColor = '#ff6b6b';
+                    
+                    // Redraw table with filter
+                    dataTable.draw();
+                    
+                    const visibleRows = dataTable.rows({search: 'applied'}).count();
+                    showAlert(`✓ Showing only discrepancies (${visibleRows} rows with differences)`, 'success');
+                } else {
+                    // Show all rows
+                    filterBtn.classList.remove('active');
+                    filterBtn.style.backgroundColor = '';
+                    filterBtn.style.borderColor = '';
+                    
+                    // Redraw table without filter
+                    dataTable.draw();
+                    
+                    showAlert('✓ Showing all rows', 'success');
                 }
-                
-                showAlert('✓ Showing all rows', 'success');
+            } catch (error) {
+                showAlert(`✗ Filter error: ${error.message}`, 'danger');
             }
         }
         
@@ -742,10 +977,23 @@
                 tableBody.innerHTML = '';
                 const itemsMap = {};
                 
+                // Calculate stats
+                const tkStyles = new Set();
+                const manualStyles = new Set();
+                
                 basicData.data.forEach(item => {
                     const row = document.createElement('tr');
                     row.id = `row-${item.sku}`;
+                    row.className = item.is_manual ? 'manual-style-row' : '';
                     itemsMap[item.sku] = item;
+                    
+                    // Collect unique styles for stats (extract base style without color)
+                    const baseStyle = item.product_name ? item.product_name.split()[0] : item.product_name;
+                    if (item.is_manual) {
+                        manualStyles.add(baseStyle);
+                    } else {
+                        tkStyles.add(baseStyle);
+                    }
                     
                     // Format price safely
                     let priceStr = 'N/A';
@@ -756,11 +1004,17 @@
                         }
                     }
                     
+                    // Format TK quantity
+                    let tkQtyStr = 'N/A';
+                    if (item.tiktok_quantity !== null && item.tiktok_quantity !== undefined) {
+                        tkQtyStr = item.tiktok_quantity;
+                    }
+                    
                     // Populate with basic data, placeholders for availability
                     row.innerHTML = `
-                        <td><strong>${item.product_name || '-'}</strong></td>
+                        <td>${item.product_name || '-'}</td>
                         <td>${item.sku}</td>
-                        <td>${item.tiktok_quantity || 0}</td>
+                        <td>${tkQtyStr}</td>
                         <td class="quantity-cell"><i class="fas fa-spinner fa-spin" style="color: #999;"></i></td>
                         <td>${priceStr}</td>
                         <td>${formatDate(item.date)}</td>
@@ -768,11 +1022,24 @@
                     tableBody.appendChild(row);
                 });
                 
+                // Update stats display
+                const statsInfo = document.getElementById('statsInfo');
+                const tkCount = tkStyles.size;
+                const manualCount = manualStyles.size;
+                const totalCount = basicData.data.length;
+                statsInfo.innerHTML = `TikTok 款式: <strong>${tkCount}</strong> | 手动款式: <strong>${manualCount}</strong> | 总SKU: <strong>${totalCount}</strong>`;
+                
                 // Initialize DataTable with basic data
                 initDataTable();
                 
                 // Step 2: Fetch availability data asynchronously
                 const skus = basicData.data.map(item => item.sku);
+                
+                // Show loading spinner in available qty column
+                document.querySelectorAll('#inventoryTable tbody tr').forEach(row => {
+                    row.cells[3].innerHTML = '<i class="fas fa-spinner fa-spin" style="color: #999;"></i>';
+                });
+                
                 const availabilityResponse = await fetch('{{ url_for("external_stock_check.get_availability") }}', {
                     method: 'POST',
                     headers: {
@@ -786,10 +1053,15 @@
                 if (availabilityData.success) {
                     // Cache the availability data globally
                     availabilityCache = availabilityData.data;
-                    console.log(`Availability cache populated with ${Object.keys(availabilityCache).length} SKUs`);
                     
                     // Apply to all table rows
                     applyAvailabilityToTable();
+                    
+                    // Show filter button now that ALL availability is loaded
+                    const filterBtn = document.getElementById('filterBtn');
+                    if (filterBtn) {
+                        filterBtn.style.display = '';
+                    }
                     
                     // Enable export button now that availability is loaded
                     isAvailabilityLoading = false;
@@ -802,6 +1074,71 @@
                 showAlert(`✗ Error loading inventory: ${error.message}`, 'danger');
                 console.error('Load inventory error:', error);
                 isAvailabilityLoading = false;
+            }
+        }
+        
+        // Manual Styles Modal Functions
+        async function showManualStylesModal() {
+            try {
+                // Fetch manual styles from backend
+                const response = await fetch('{{ url_for("external_stock_check.get_manual_styles") }}');
+                const data = await response.json();
+                
+                if (data.success && data.styles && data.styles.length > 0) {
+                    // Convert styles array to text format (one per line)
+                    // Styles are now just strings, not objects
+                    const stylesText = Array.isArray(data.styles) 
+                        ? data.styles.join('\n')
+                        : '';
+                    document.getElementById('manualStylesTextarea').value = stylesText;
+                } else {
+                    document.getElementById('manualStylesTextarea').value = '';
+                    if (data.success) {
+                        showAlert('No manual styles available', 'info');
+                    }
+                }
+                
+                // Show modal
+                $('#manualStylesModal').modal('show');
+            } catch (error) {
+                showAlert(`✗ Error loading manual styles: ${error.message}`, 'danger');
+                console.error('Error:', error);
+            }
+        }
+        
+        function closeManualStylesModal() {
+            $('#manualStylesModal').modal('hide');
+        }
+        
+        async function saveManualStyles() {
+            try {
+                const textareaValue = document.getElementById('manualStylesTextarea').value;
+                
+                // Parse textarea content (one SKU per line)
+                const skus = textareaValue.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+                
+                // Save to backend (N/A values will be assigned dynamically)
+                const response = await fetch('{{ url_for("external_stock_check.save_manual_styles") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ styles: skus })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert(`✓ ${result.message}`, 'success');
+                    closeManualStylesModal();
+                } else {
+                    showAlert(`✗ ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                showAlert(`✗ Error saving styles: ${error.message}`, 'danger');
+                console.error('Error:', error);
             }
         }
         
