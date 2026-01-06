@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External Stock Check</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            font-size: 14px;
+            min-height: 100vh;
+        }
+        
+        .container-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Password Modal */
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .password-modal.hidden {
+            display: none;
+        }
+        
+        .password-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .password-card h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 24px;
+            text-align: center;
+        }
+        
+        .password-card p {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .password-input-group {
+            margin-bottom: 20px;
+        }
+        
+        .password-input-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .password-input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .password-input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+        
+        .password-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .password-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .password-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Main Content */
+        .page-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-header h1 {
+            color: #667eea;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .page-header p {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 13px;
+        }
+        
+        .controls-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+        
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #ee5a52;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Table Container */
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        table.dataTable {
+            font-size: 13px;
+            width: 100%;
+        }
+        
+        table.dataTable thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: black;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+        
+        table.dataTable tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        table.dataTable tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        table.dataTable tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .quantity-cell {
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .quantity-low {
+            color: #ff6b6b;
+        }
+        
+        .quantity-medium {
+            color: #ffa94d;
+        }
+        
+        .quantity-high {
+            color: #51cf66;
+        }
+        
+        /* Status Messages */
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+        }
+        
+        .logout-btn {
+            margin-left: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .container-main {
+                padding: 10px;
+            }
+            
+            .controls-section {
+                flex-direction: column;
+            }
+            
+            .logout-btn {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            table.dataTable {
+                font-size: 12px;
+            }
+            
+            table.dataTable thead th,
+            table.dataTable tbody td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% if show_password %}
+    <!-- Password Modal -->
+    <div class="password-modal" id="passwordModal">
+        <div class="password-card">
+            <h2><i class="fas fa-lock"></i> Access Required</h2>
+            <p>Enter password to access external stock check</p>
+            
+            <form id="passwordForm" method="POST" action="{{ url_for('external_stock_check.external_password') }}">
+                <div class="password-input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter password" required autofocus>
+                </div>
+                <button type="submit" class="password-btn">
+                    <i class="fas fa-arrow-right"></i> Access
+                </button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <!-- Main Page Content -->
+    <div class="container-main">
+        <!-- Header -->
+        <div class="page-header">
+            <h1><i class="fas fa-box"></i> External Stock Check</h1>
+            <p>Monitor and manage external inventory from TikTok store</p>
+        </div>
+        
+        <!-- Alerts -->
+        <div id="alertContainer"></div>
+        
+        <!-- Controls -->
+        <div class="controls-section">
+            <button class="btn btn-primary" id="fetchBtn" onclick="fetchTikTokInventory()">
+                <i class="fas fa-sync-alt"></i> 实时拉取tk库存并替换本地库存
+            </button>
+            <button class="btn btn-secondary" id="exportBtn" onclick="exportToCSV()" disabled>
+                <i class="fas fa-download"></i> 导出excel （大概一分钟）
+            </button>
+            <button class="btn btn-secondary" id="filterBtn" onclick="toggleDiscrepancyFilter()" style="display: none;">
+                <i class="fas fa-filter"></i> 只显示对应不上的库存
+            </button>
+        </div>
+        
+        <!-- Table -->
+        <div class="table-container">
+            <table class="dataTable" id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>Style</th>
+                        <th>SKU</th>
+                        <th>TK实时数据</th>
+                        <th>实时可卖库存</th>
+                        <th>TK价格</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading inventory data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    
+    <script>
+        let dataTable = null;
+        let isDataTableInitialized = false;
+        let availabilityCache = {};  // Cache availability data globally
+        let isAvailabilityLoading = false;  // Track if availability is being fetched
+        
+        // Initialize or reinitialize DataTable
+        function initDataTable() {
+            try {
+                const table = document.getElementById('inventoryTable');
+                if (!table) return;
+                
+                // Check if DataTable already exists
+                if ($.fn.DataTable.isDataTable('#inventoryTable')) {
+                    // Destroy existing instance
+                    $('#inventoryTable').DataTable().destroy();
+                }
+                
+                // Create new instance
+                dataTable = $('#inventoryTable').DataTable({
+                    "pageLength": 25,
+                    "ordering": true,
+                    "searching": true,
+                    "paging": true,
+                    "info": true,
+                    "autoWidth": false,
+                    "columnDefs": [
+                        { "width": "15%", "targets": 0 },
+                        { "width": "15%", "targets": 1 },
+                        { "width": "12%", "targets": 2 },
+                        { "width": "12%", "targets": 3 },
+                        { "width": "12%", "targets": 4 },
+                        { "width": "34%", "targets": 5 }
+                    ]
+                });
+                isDataTableInitialized = true;
+                
+                // Listen for DataTable draw events (pagination, search, sort)
+                $('#inventoryTable').on('draw.dt', function() {
+                    applyAvailabilityToTable();
+                });
+            } catch (error) {
+                console.error('Error initializing DataTable:', error);
+            }
+        }
+        
+        function applyAvailabilityToTable() {
+            // Only apply if we have cached data
+            if (!availabilityCache || Object.keys(availabilityCache).length === 0) {
+                console.warn('No availability cache data');
+                return;
+            }
+            
+            console.log(`Applying availability to table. Cache has ${Object.keys(availabilityCache).length} SKUs`);
+            
+            // Apply cached availability to ALL visible rows
+            const rows = document.querySelectorAll('#inventoryTable tbody tr');
+            let appliedCount = 0;
+            let notFoundCount = 0;
+            
+            rows.forEach((row, index) => {
+                const skuCell = row.cells[1];
+                if (skuCell) {
+                    const sku = skuCell.textContent.trim();
+                    
+                    // Check if we have availability data for this SKU
+                    if (availabilityCache[sku]) {
+                        const avail = availabilityCache[sku];
+                        const availCell = row.cells[3];
+                        if (availCell) {
+                            availCell.className = `quantity-cell ${getQuantityClass(avail.total)}`;
+                            availCell.innerHTML = `<strong>${formatQuantity(avail.total)}</strong>`;
+                            appliedCount++;
+                        }
+                    } else {
+                        // Only log first few misses to avoid spam
+                        if (notFoundCount < 3) {
+                            console.warn(`SKU not found in cache: "${sku}"`);
+                            notFoundCount++;
+                        }
+                    }
+                }
+            });
+            
+            console.log(`Applied availability to ${appliedCount} rows, ${notFoundCount} not found`);
+            
+            // Show filter button now that availability is loaded
+            const filterBtn = document.getElementById('filterBtn');
+            if (filterBtn) {
+                filterBtn.style.display = '';
+            }
+        }
+        
+        function enableExportButton() {
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = false;
+                exportBtn.style.opacity = '1';
+                exportBtn.style.cursor = 'pointer';
+            }
+        }
+        
+        function disableExportButton() {
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = true;
+                exportBtn.style.opacity = '0.6';
+                exportBtn.style.cursor = 'not-allowed';
+            }
+        }
+        
+        function exportToCSV() {
+            const exportBtn = document.getElementById('exportBtn');
+            
+            // Disable button and show loading
+            exportBtn.disabled = true;
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fas fa-hourglass-start"></i> Processing...';
+            
+            // Call backend endpoint
+            fetch('/api/external_stock_check/export_csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+                // Get filename from header or use default
+                const filename = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `tiktok_inventory_${new Date().toISOString().split('T')[0]}.csv`;
+                return response.blob().then(blob => ({ blob, filename }));
+            })
+            .then(({ blob, filename }) => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showAlert('✓ CSV exported successfully. Check your downloads folder.', 'success');
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+                showAlert('✗ Export failed: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                // Re-enable button
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = originalText;
+            });
+        }
+        
+        // State for discrepancy filter
+        let isDiscrepancyFilterActive = false;
+        
+        function toggleDiscrepancyFilter() {
+            const filterBtn = document.getElementById('filterBtn');
+            const tableBody = document.getElementById('tableBody');
+            
+            if (!dataTable || !isDataTableInitialized) {
+                showAlert('✗ Table data not ready', 'danger');
+                return;
+            }
+            
+            isDiscrepancyFilterActive = !isDiscrepancyFilterActive;
+            
+            if (isDiscrepancyFilterActive) {
+                // Show only rows with discrepancies (TK Qty ≠ Available)
+                filterBtn.classList.add('active');
+                filterBtn.style.backgroundColor = '#ff6b6b';
+                filterBtn.style.borderColor = '#ff6b6b';
+                
+                // Get all rows and filter
+                const allRows = dataTable.rows().nodes();
+                let hiddenCount = 0;
+                let totalRows = 0;
+                
+                // Use for loop instead of forEach (NodeList compatibility)
+                for (let i = 0; i < allRows.length; i++) {
+                    const row = allRows[i];
+                    totalRows++;
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 4) {
+                        const tkQty = parseInt((cells[2]?.innerText || '0').trim()) || 0;
+                        const availableQty = parseInt((cells[3]?.innerText || '0').trim()) || 0;
+                        
+                        // Hide row if values match
+                        if (tkQty === availableQty) {
+                            row.style.display = 'none';
+                            hiddenCount++;
+                        } else {
+                            row.style.display = '';
+                        }
+                    }
+                }
+                
+                showAlert(`✓ Showing only discrepancies (${totalRows - hiddenCount} rows with differences)`, 'success');
+            } else {
+                // Show all rows
+                filterBtn.classList.remove('active');
+                filterBtn.style.backgroundColor = '';
+                filterBtn.style.borderColor = '';
+                
+                const allRows = dataTable.rows().nodes();
+                // Use for loop instead of forEach (NodeList compatibility)
+                for (let i = 0; i < allRows.length; i++) {
+                    allRows[i].style.display = '';
+                }
+                
+                showAlert('✓ Showing all rows', 'success');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        function getQuantityClass(quantity) {
+            if (quantity === null) return '';
+            if (quantity === 0) return 'quantity-low';
+            if (quantity < 10) return 'quantity-medium';
+            return 'quantity-high';
+        }
+        
+        function formatQuantity(quantity) {
+            if (quantity === null) return 'N/A';
+            return quantity.toString();
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+        
+        async function fetchTikTokInventory() {
+            const fetchBtn = document.getElementById('fetchBtn');
+            const originalText = fetchBtn.innerHTML;
+            
+            fetchBtn.disabled = true;
+            fetchBtn.innerHTML = '<span class="loading-spinner"></span> Fetching...';
+            
+            try {
+                const response = await fetch('{{ url_for("external_stock_check.fetch_tiktok_inventory") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(`✓ ${data.message}`, 'success');
+                    await loadInventory();
+                } else {
+                    showAlert(`✗ ${data.error}`, 'danger');
+                }
+            } catch (error) {
+                showAlert(`✗ Error: ${error.message}`, 'danger');
+            } finally {
+                fetchBtn.disabled = false;
+                fetchBtn.innerHTML = originalText;
+            }
+        }
+        
+        async function loadInventory() {
+            try {
+                isAvailabilityLoading = true;
+                const tableBody = document.getElementById('tableBody');
+                
+                // Enable export button immediately - backend will fetch fresh data
+                enableExportButton();
+                
+                // Step 1: Load basic data from MySQL (fast)
+                const basicResponse = await fetch('{{ url_for("external_stock_check.get_inventory_basic") }}');
+                const basicData = await basicResponse.json();
+                
+                if (!basicData.success) {
+                    showAlert(`✗ ${basicData.error}`, 'danger');
+                    return;
+                }
+                
+                if (basicData.data.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-inbox" style="font-size: 48px; color: #ddd; margin-bottom: 15px; display: block;"></i>
+                                <p style="color: #999;">No product data available. Click Replace TikTok Inventory to load products.</p>
+                            </td>
+                        </tr>
+                    `;
+                    if (isDataTableInitialized) {
+                        dataTable.destroy();
+                        isDataTableInitialized = false;
+                    }
+                    return;
+                }
+                
+                // Clear and populate table with basic data
+                tableBody.innerHTML = '';
+                const itemsMap = {};
+                
+                basicData.data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.id = `row-${item.sku}`;
+                    itemsMap[item.sku] = item;
+                    
+                    // Format price safely
+                    let priceStr = 'N/A';
+                    if (item.price !== null && item.price !== undefined && item.price !== '') {
+                        const priceNum = parseFloat(item.price);
+                        if (!isNaN(priceNum)) {
+                            priceStr = '$' + priceNum.toFixed(2);
+                        }
+                    }
+                    
+                    // Populate with basic data, placeholders for availability
+                    row.innerHTML = `
+                        <td><strong>${item.product_name || '-'}</strong></td>
+                        <td>${item.sku}</td>
+                        <td>${item.tiktok_quantity || 0}</td>
+                        <td class="quantity-cell"><i class="fas fa-spinner fa-spin" style="color: #999;"></i></td>
+                        <td>${priceStr}</td>
+                        <td>${formatDate(item.date)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Initialize DataTable with basic data
+                initDataTable();
+                
+                // Step 2: Fetch availability data asynchronously
+                const skus = basicData.data.map(item => item.sku);
+                const availabilityResponse = await fetch('{{ url_for("external_stock_check.get_availability") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ skus: skus })
+                });
+                
+                const availabilityData = await availabilityResponse.json();
+                
+                if (availabilityData.success) {
+                    // Cache the availability data globally
+                    availabilityCache = availabilityData.data;
+                    console.log(`Availability cache populated with ${Object.keys(availabilityCache).length} SKUs`);
+                    
+                    // Apply to all table rows
+                    applyAvailabilityToTable();
+                    
+                    // Enable export button now that availability is loaded
+                    isAvailabilityLoading = false;
+                    enableExportButton();
+                } else {
+                    console.error('Availability fetch error:', availabilityData.error);
+                    isAvailabilityLoading = false;
+                }
+            } catch (error) {
+                showAlert(`✗ Error loading inventory: ${error.message}`, 'danger');
+                console.error('Load inventory error:', error);
+                isAvailabilityLoading = false;
+            }
+        }
+        
+        // Load inventory on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInventory();
+        });
+    </script>
+</body>
+</html>

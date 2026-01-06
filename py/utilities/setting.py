@@ -58,6 +58,21 @@ class Config:
     
     GOOGLE_CREDENTIALS_FILE = r'C:/FDC_FLASK_APP/client_secret.json'
     
+    # TikTok Shop API Configuration (V2 - 202309)
+    TIKTOK_SHOP_API_KEY = os.getenv('TIKTOK_SHOP_API_KEY', 'TTP_k3VkrQAAAAAVoppuAGERJltMY_5k5EnTvLzFWow_TwZ_dYFG8G4ATZr2IvzJs4SmHJPG2POy2t-k7bP1LdcaKONRCZZOBwUK-qGXDA4N5GhKnpEh7IQpUz3FV0qSqmZbincx7wgRo41AczARWR71EuREIfKny4iU9IrdvJnvdQLYWcf_YyduhA')  # Access token
+    TIKTOK_SHOP_APP_KEY = os.getenv('TIKTOK_SHOP_APP_KEY', '6af41c3jd9d4j')  # App key (for signature)
+    TIKTOK_SHOP_SECRET = os.getenv('TIKTOK_SHOP_SECRET', '90ad10f5c10c75926b4974266c2c50ce3dc37867')
+    TIKTOK_SHOP_SHOP_ID = os.getenv('TIKTOK_SHOP_ID', 'TTP_X7_XBQAAAAAgezTKnUsJ_dqag5diV7dB')  # Shop cipher (shop identifier)
+    TIKTOK_SHOP_REFRESH_TOKEN = os.getenv('TIKTOK_SHOP_REFRESH_TOKEN', 'TTP_gnXpKAAAAAAt2jGFQFY3gQ9Rqa4UIGdzoCp--26F50FgtbPucWSNRy915euwFJqjIkk1STXEN48')
+    # Note: Update TIKTOK_SHOP_API_URL based on your region
+    # Regional endpoints:
+    # - US: https://open-api-us.tiktokshop.com (may not resolve in all networks)
+    # - EU: https://open-api-eu.tiktokshop.com
+    # - SEA: https://open-api-sea.tiktokshop.com
+    # - Global: https://open-api.tiktokglobalshop.com (works in most networks)
+    # - China: https://open-api.tiktokshop.cn
+    TIKTOK_SHOP_API_URL = os.getenv('TIKTOK_SHOP_API_URL', 'https://open-api.tiktokglobalshop.com')
+    
     # ShipStation API Configuration
 
     # Database URL for SQLAlchemy

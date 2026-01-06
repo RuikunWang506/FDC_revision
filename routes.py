@@ -54,6 +54,7 @@ from py.other.bag_style_viewer import bag_style_viewer_bp
 from py.Toolkits.boat import boat_service_bp
 from py.utilities.monitor import send_discord_notification
 from py.search.location_service import location_service_bp
+from py.other.external_stock_check import external_stock_check_bp
 
 
 def register_routes(app):
@@ -92,6 +93,7 @@ def register_routes(app):
     app.register_blueprint(order_lookup_bp)
     app.register_blueprint(macy_bp)
     app.register_blueprint(mysql_connector_bp)
+    app.register_blueprint(external_stock_check_bp)
     app.register_blueprint(image_upload_bp)
     app.register_blueprint(master_image_viewer_bp)
     app.register_blueprint(dam_sync_bp)
