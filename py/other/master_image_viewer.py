@@ -240,7 +240,7 @@ def fetch_china_ftp():
         china_ftp_images = []
         try:
             # SSH connection details
-            ssh_host = '219.135.198.131'
+            ssh_host = '219.135.198.130'
             ssh_user = 'fdc'
             ssh_password = 'Bst@93109310'
             
@@ -306,7 +306,7 @@ def china_ftp_image():
     
     try:
         # SFTP connection using paramiko
-        transport = paramiko.Transport(('219.135.198.131', 22))
+        transport = paramiko.Transport(('219.135.198.130', 22))
         transport.connect(username='fdc', password='Bst@93109310')
         sftp = paramiko.SFTPClient.from_transport(transport)
         

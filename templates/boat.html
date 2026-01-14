@@ -407,6 +407,10 @@
               });
           }
 
+          function downloadPackslip(fdc_container) {
+              window.location.href = '/boat/packslip/' + fdc_container;
+          }
+
           function loadBoatData() {
               $.ajax({
                   url: '/boat/data',
@@ -469,8 +473,11 @@
                                   filesHtml += '<button class="btn btn-sm btn-warning process-btn mr-1" data-container="' + row.container + '">Process</button>';
                                   filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
                               } else {
-                                  // No Dropbox file or already in database - show only Original button + tracking
+                                  // No Dropbox file or already in database - show only Original button + tracking + packslip for ocean
                                   filesHtml = '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
+                                  if (row.Status === '🚢ocean🚢') {
+                                      filesHtml += '<button class="btn btn-sm btn-success packslip-btn mr-1" data-container="' + row.container + '">Packslip</button>';
+                                  }
                                   filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
                               }
                               tr.append($('<td></td>').html(filesHtml));
@@ -543,6 +550,12 @@
               $(document).on('click', '.email-btn', function() {
                   var bol_num = $(this).data('bol');
                   showEmailPopup(bol_num);
+              });
+              
+              // Handle packslip button clicks (delegated event)
+              $(document).on('click', '.packslip-btn', function() {
+                  var fdc_container = $(this).data('container');
+                  downloadPackslip(fdc_container);
               });
               
               // Handle Dennis ETA cell editing

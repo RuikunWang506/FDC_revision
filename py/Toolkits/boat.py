@@ -26,7 +26,7 @@ boat_service_bp = Blueprint('boat_service', __name__, template_folder='../templa
 GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/export?format=csv&gid=0"
 GOOGLE_SHEET_ID = "14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE"
 CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'credentials', 'service-account.json')
-DROPBOX_CONTAINER_PATH = r"C:\Users\stream\Dropbox\Pictures-China (1)\container catalog\Container\container INFO\2025年"
+DROPBOX_CONTAINER_PATH = r"C:\Users\stream\Dropbox\Pictures-China (1)\container catalog\Container\container INFO"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'container_csvs')
 
 
@@ -326,11 +326,15 @@ def add_multiple_containers_to_sheets(container_list):
             if not container_num:
                 continue
             
+            # Ignore L-prefix containers
+            if container_num.startswith('L'):
+                continue
+            
             # Check if container already exists
             if container_num in existing_containers:
                 continue
             
-            # Special logic for specific containers: skip F versions if FT versions exist
+            # Special logic for specific F-prefix containers: skip F versions if FT versions exist
             if container_num in specific_containers:
                 # Check if FT version exists (F25131 -> FT25131)
                 if container_num.startswith('F') and len(container_num) > 1:
@@ -428,6 +432,7 @@ def scan_dropbox_containers():
                 # Extract container number from filename
                 # Handle both FT (convert to F) and F versions
                 # Priority: F version takes precedence over FT version
+                # Ignore L-prefix containers
                 
                 # First try matching FT pattern (e.g., "FT26119 Packing List..." -> "F26119")
                 match = re.match(r'^FT(\d+)', filename)
@@ -1495,3 +1500,482 @@ def get_bol_emails_count(bol_num):
     except Exception as e:
         current_app.logger.error(f"Error fetching email count for BOL {bol_num}: {e}")
         return jsonify({'error': str(e), 'count': 0}), 500
+
+@boat_service_bp.route('/boat/packslip/<container_number>', methods=['GET'])
+def boat_packslip(container_number):
+    """Generate and download packslip Excel for a container"""
+    if 'username' not in session:
+        return redirect(url_for("auth.login"))
+    
+    try:
+        # Get BOL NUM from Google Sheets
+        bol_num = ''
+        try:
+            df_sheets = pd.read_csv(GOOGLE_SHEETS_URL)
+            matching_row = df_sheets[df_sheets['FDC container'] == container_number]
+            if not matching_row.empty:
+                bol_num = str(matching_row['BOL NUM'].iloc[0]).strip() if pd.notna(matching_row['BOL NUM'].iloc[0]) else ''
+            current_app.logger.info(f"Retrieved BOL NUM '{bol_num}' for container {container_number}")
+        except Exception as e:
+            current_app.logger.warning(f"Could not fetch BOL NUM from Google Sheets: {e}")
+        
+        # Get container files from Dropbox
+        container_files = scan_dropbox_containers()
+        
+        if container_number not in container_files:
+            return jsonify({'error': f'Container {container_number} not found in Dropbox'}), 404
+        
+        file_path = container_files[container_number]
+        
+        # Try different sheet names and header positions for packing list (similar to container.py)
+        df_packing = None
+        packing_sheet = None
+        
+        try:
+            excel_file = pd.ExcelFile(file_path)
+            
+            # Explicitly read from "Placking list" sheet (case-insensitive)
+            packing_sheet = None
+            for sheet_name in excel_file.sheet_names:
+                if sheet_name.lower() == 'placking list':
+                    packing_sheet = sheet_name
+                    break
+            
+            if not packing_sheet:
+                current_app.logger.error(f"No 'Placking list' sheet found. Available sheets: {excel_file.sheet_names}")
+                return jsonify({'error': f'Could not find "Placking list" sheet in {container_number}. Available sheets: {excel_file.sheet_names}'}), 400
+            
+            # Read the placking list sheet with no header (raw data)
+            df_packing = pd.read_excel(file_path, sheet_name=packing_sheet, header=None)
+            current_app.logger.info(f"Successfully read '{packing_sheet}' sheet with shape {df_packing.shape}")
+        
+        except Exception as e:
+            current_app.logger.error(f"Error reading Excel file sheets: {e}")
+            return jsonify({'error': f'Error reading Excel file: {str(e)}'}), 400
+        
+        if df_packing is None:
+            current_app.logger.error(f"Could not read packing list from {container_number}")
+            return jsonify({'error': f'Could not read packing list from {container_number}'}), 400
+        
+        current_app.logger.info(f"Using packing sheet: {packing_sheet}, shape: {df_packing.shape}")
+        
+        # Find the header row by searching for "CTN" text
+        header_row_idx = None
+        for idx in range(min(15, len(df_packing))):
+            row_str = ' '.join([str(df_packing.iloc[idx, i]).upper() for i in range(min(5, len(df_packing.columns)))])
+            if 'CTN' in row_str:
+                header_row_idx = idx
+                current_app.logger.info(f"Found header row with 'CTN' at index {idx}")
+                break
+        
+        if header_row_idx is None:
+            current_app.logger.warning("Could not find header row with 'CTN'. Checking for data starting at row 0...")
+            header_row_idx = -1  # Data starts at row 0, no real header
+        
+        current_app.logger.info(f"Header row index: {header_row_idx}")
+        
+        # DEBUG: Dump more rows to understand structure
+        current_app.logger.info("=== Column analysis (first 10 rows) ===")
+        for row_idx in range(min(10, len(df_packing))):
+            row_data = []
+            for col_idx in range(min(8, len(df_packing.columns))):
+                val = df_packing.iloc[row_idx, col_idx]
+                row_data.append(f"C{col_idx}:'{val}'")
+            current_app.logger.info(f"Row {row_idx}: {' | '.join(row_data)}")
+        
+        # Determine actual column positions for Packing List sheet
+        # Packing list structure: CTN NO | STYLE NO | QTY/PER CTN | QTY/CTN | TOTAL | weights...
+        ctn_no_col = 0      # CTN NO (e.g., "1-16", "17", "18-33")
+        style_sku_col = 1   # STYLE NO (e.g., "EN1980 BK" - contains both style and sku)
+        case_qty_col = 2    # QTY/PER CTN (quantity per carton)
+        num_cartons_col = 3 # QTY/CTN (number of cartons)
+        total_qty_col = 4   # TOTAL (total quantity)
+        
+        # DEBUG: Log the actual data range and column contents
+        current_app.logger.info("=== COLUMN ANALYSIS ===")
+        current_app.logger.info(f"Total columns in sheet: {len(df_packing.columns)}")
+        current_app.logger.info(f"Total rows in sheet: {len(df_packing)}")
+        current_app.logger.info("=== ROW BY ROW DATA (first 15 rows) ===")
+        
+        for row_idx in range(min(15, len(df_packing))):
+            row_vals = []
+            for col_idx in range(min(12, len(df_packing.columns))):
+                val = df_packing.iloc[row_idx, col_idx]
+                row_vals.append(f"[{col_idx}]:'{val}'")
+            current_app.logger.info(f"Row {row_idx}: {' | '.join(row_vals)}")
+        
+        # Parse packing list data starting AFTER the header row (row 7, index 6)
+        packslip_data = []
+        
+        start_row = header_row_idx + 1 if header_row_idx >= 0 else 0
+        
+        for idx in range(start_row, len(df_packing)):
+            try:
+                row = df_packing.iloc[idx]
+                
+                # Extract values using hardcoded column positions
+                ctn_no = str(row.iloc[ctn_no_col]).strip() if pd.notna(row.iloc[ctn_no_col]) else ''
+                style_sku = str(row.iloc[style_sku_col]).strip() if pd.notna(row.iloc[style_sku_col]) else ''
+                total_qty_str = str(row.iloc[total_qty_col]).strip() if pd.notna(row.iloc[total_qty_col]) else '0'
+                case_qty_str = str(row.iloc[case_qty_col]).strip() if pd.notna(row.iloc[case_qty_col]) else '0'
+                num_cartons_str = str(row.iloc[num_cartons_col]).strip() if pd.notna(row.iloc[num_cartons_col]) else '0'
+                
+                if idx <= start_row + 5:
+                    current_app.logger.info(f"Row {idx}: ctn_no='{ctn_no}' | style_sku='{style_sku}' | total_qty='{total_qty_str}' | case_qty='{case_qty_str}' | num_cartons='{num_cartons_str}'")
+                
+                # Skip rows where ctn_no is "/" (placeholder data)
+                if ctn_no == '/':
+                    if idx <= start_row + 5:
+                        current_app.logger.info(f"  -> Skipping: ctn_no is '/' (placeholder)")
+                    continue
+                
+                # Skip empty rows
+                if not style_sku or not ctn_no:
+                    if idx <= start_row + 5:
+                        current_app.logger.info(f"  -> Skipping: empty style_sku or ctn_no")
+                    continue
+                
+                # Skip header-like rows
+                if any(x in style_sku.upper() for x in ['STYLE', 'ITEM', 'CONTAINER', 'CTN', 'NO']):
+                    current_app.logger.info(f"  -> Skipping: header row")
+                    continue
+                
+                # Parse style and SKU from "Style SKU" format (e.g., "EN1980 BK")
+                parts = style_sku.split()
+                if len(parts) >= 2:
+                    style = parts[0]
+                    sku = parts[1]
+                elif len(parts) == 1:
+                    style = parts[0]
+                    sku = ''
+                else:
+                    style = style_sku
+                    sku = ''
+                
+                # Skip if no style or sku
+                if not style or not sku:
+                    if idx <= start_row + 5:
+                        current_app.logger.info(f"  -> Skipping: could not parse style/sku from '{style_sku}'")
+                    continue
+                
+                # Convert to numbers
+                try:
+                    total_qty = int(float(total_qty_str)) if total_qty_str else 0
+                    case_qty = int(float(case_qty_str)) if case_qty_str else 0
+                    num_cartons = int(float(num_cartons_str)) if num_cartons_str else 0
+                except:
+                    if idx <= start_row + 5:
+                        current_app.logger.info(f"  -> Skipping: could not parse quantities")
+                    continue
+                
+                # Skip rows with no quantity or case qty of 0
+                if total_qty == 0 or case_qty == 0:
+                    if idx <= start_row + 5:
+                        current_app.logger.info(f"  -> Skipping: total_qty={total_qty}, case_qty={case_qty}")
+                    continue
+                
+                # Calculate SKU Boxes: simple box count
+                sku_boxes_count = total_qty // case_qty
+                
+                # Use the num_cartons value from the spreadsheet directly
+                current_app.logger.info(f"  -> Parsed: style='{style}', sku='{sku}', total_qty={total_qty}, case_qty={case_qty}, boxes={sku_boxes_count}, cartons={num_cartons}")
+                
+                packslip_data.append({
+                    'Style': style,
+                    'SKU': sku,
+                    'Quantity': total_qty,
+                    'Case Qty': case_qty,
+                    'SKU Boxes': sku_boxes_count,
+                    'CTN No': ctn_no,
+                    'Num Cartons': num_cartons,
+                    'Total Boxes': None  # Will be filled in based on carton data
+                })
+            except Exception as e:
+                current_app.logger.warning(f"Error parsing row {idx}: {e}")
+                continue
+        
+        # DEBUG: Log sample data
+        current_app.logger.info(f"Packslip data count: {len(packslip_data)}")
+        if packslip_data:
+            current_app.logger.info(f"Sample row 0: {packslip_data[0]}")
+            current_app.logger.info(f"Sample row 1: {packslip_data[1] if len(packslip_data) > 1 else 'N/A'}")
+        
+        if not packslip_data:
+            return jsonify({'error': f'No valid packing list data found in {container_number}'}), 400
+        
+        # Calculate Total Boxes per style = SUM of QTY/CTN column for each style
+        style_carton_totals = {}  # {style: sum_of_qty_ctn}
+        
+        for item in packslip_data:
+            style = item['Style']
+            num_cartons = item.get('Num Cartons', 0)
+            
+            if style not in style_carton_totals:
+                style_carton_totals[style] = 0
+            style_carton_totals[style] += num_cartons
+            current_app.logger.info(f"Style {style}: adding {num_cartons} cartons, total now = {style_carton_totals[style]}")
+        
+        # Fill in Total Boxes for each item using the summed carton count
+        for item in packslip_data:
+            style = item['Style']
+            item['Total Boxes'] = style_carton_totals.get(style, 0)
+            current_app.logger.info(f"Item {style} {item['SKU']}: Total Boxes = {item['Total Boxes']}")
+        
+        # Create output Excel file using openpyxl for merged cells
+        from openpyxl import Workbook
+        from openpyxl.styles import Alignment, Border, Side, Font
+        from openpyxl.worksheet.pagebreak import Break
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Packslip'
+        
+        # Set page setup for US Letter and fit to one page
+        ws.page_setup.paperSize = ws.PAPERSIZE_LETTER
+        ws.page_margins.left = 0.5
+        ws.page_margins.right = 0.5
+        ws.page_margins.top = 0.5
+        ws.page_margins.bottom = 0.5
+        ws.print_options.horizontalCentered = False
+        
+        # Fit all columns to one page width
+        ws.page_setup.fitToPage = True
+        ws.page_setup.fitToHeight = 0
+        ws.page_setup.fitToWidth = 1
+        
+        # Define border style
+        thin_border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        # Define center alignment
+        center_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        
+        # Add header section (rows 1-2)
+        # Row 1: Headers
+        cell = ws.cell(row=1, column=2, value='Internal')
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        cell.font = Font(bold=True)
+        
+        cell = ws.cell(row=1, column=3, value='BOL NUM')
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        cell.font = Font(bold=True)
+        
+        # Row 2: Values
+        cell = ws.cell(row=2, column=2, value=container_number)
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        
+        cell = ws.cell(row=2, column=3, value=bol_num if bol_num else 'N/A')
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        
+        # Row 3: Blank
+        # Row 4: Summary headers
+        cell = ws.cell(row=4, column=1, value='Style')
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        cell.font = Font(bold=True)
+        
+        cell = ws.cell(row=4, column=2, value='Total Boxes')
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        cell.font = Font(bold=True)
+        
+        cell = ws.cell(row=4, column=3, value='Total Quantity')
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        cell.font = Font(bold=True)
+        
+        # Add summary data (one row per unique style)
+        summary_row = 5
+        styles_summary = {}  # {style: {total_boxes, total_qty}}
+        
+        for item in packslip_data:
+            style = item['Style']
+            if style not in styles_summary:
+                styles_summary[style] = {'total_boxes': item['Total Boxes'], 'total_qty': 0}
+            styles_summary[style]['total_qty'] += item['Quantity']
+        
+        for style, data in styles_summary.items():
+            cell = ws.cell(row=summary_row, column=1, value=style)
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            cell = ws.cell(row=summary_row, column=2, value=data['total_boxes'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            cell = ws.cell(row=summary_row, column=3, value=data['total_qty'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            summary_row += 1
+        
+        # Add blank row before chart
+        chart_start_row = summary_row + 1
+        
+        # Set column widths for US Letter fit
+        ws.column_dimensions['A'].width = 12
+        ws.column_dimensions['B'].width = 12
+        ws.column_dimensions['C'].width = 14
+        ws.column_dimensions['D'].width = 11
+        ws.column_dimensions['E'].width = 11
+        ws.column_dimensions['F'].width = 12
+        
+        # Add headers for packing list data chart
+        # New order: Style | Total Boxes | SKU | Quantity | Case Qty | SKU Boxes
+        headers = ['Style', 'Total Boxes', 'SKU', 'Quantity', 'Case Qty', 'SKU Boxes']
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=chart_start_row, column=col_idx, value=header)
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            cell.font = Font(bold=True)
+        
+        # First pass: count rows per style
+        style_row_counts = {}
+        for item in packslip_data:
+            style = item['Style']
+            if style not in style_row_counts:
+                style_row_counts[style] = 0
+            style_row_counts[style] += 1
+        
+        # Add data and merge cells for same styles
+        row_idx = chart_start_row + 1
+        current_style = None
+        merge_start_row = None
+        # With 0.5" margins on US Letter, ~50 rows fit per page
+        # But first page has header/summary, so calculate based on absolute row numbers
+        rows_per_page = 50
+        first_page_end = rows_per_page  # First page ends at row 50 (includes header + summary + some data)
+        current_page_end_row = first_page_end
+        
+        for item in packslip_data:
+            style = item['Style']
+            
+            # Before processing any item, check if we're starting a NEW style
+            if style != current_style:
+                # If this is NOT the first style, finalize the previous style
+                if current_style is not None and merge_start_row is not None:
+                    # Merge column A (Style column)
+                    if merge_start_row < row_idx - 1:
+                        ws.merge_cells(f'A{merge_start_row}:A{row_idx - 1}')
+                        style_cell = ws.cell(row=merge_start_row, column=1)
+                        style_cell.alignment = center_alignment
+                        style_cell.border = thin_border
+                    
+                    # Merge column B (Total Boxes column)
+                    if merge_start_row < row_idx - 1:
+                        ws.merge_cells(f'B{merge_start_row}:B{row_idx - 1}')
+                        for prev_item in packslip_data:
+                            if prev_item['Style'] == current_style:
+                                total_cell = ws.cell(row=merge_start_row, column=2)
+                                total_cell.value = prev_item['Total Boxes']
+                                total_cell.alignment = center_alignment
+                                total_cell.border = thin_border
+                                break
+                    else:
+                        for prev_item in packslip_data:
+                            if prev_item['Style'] == current_style:
+                                cell = ws.cell(row=merge_start_row, column=2, value=prev_item['Total Boxes'])
+                                cell.alignment = center_alignment
+                                cell.border = thin_border
+                                break
+                    
+                    # NOW check if the new style will fit on current page
+                    new_style_rows = style_row_counts.get(style, 1)
+                    new_style_end_row = row_idx + new_style_rows - 1
+                    
+                    # If new style extends past current page end, add page break BEFORE it
+                    if new_style_end_row > current_page_end_row:
+                        ws.row_breaks.append(Break(id=row_idx - 1))
+                        current_page_end_row = row_idx - 1 + rows_per_page  # Next page has full row capacity
+                
+                # Start new style
+                current_style = style
+                merge_start_row = row_idx
+            
+            # Write row data in new order: Style | Total Boxes | SKU | Quantity | Case Qty | SKU Boxes
+            # Column A: Style
+            cell = ws.cell(row=row_idx, column=1, value=item['Style'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            # Column B: Total Boxes
+            cell = ws.cell(row=row_idx, column=2, value=item['Total Boxes'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            # Column C: SKU with Style prepended (e.g., "EN1980 BK")
+            sku_with_style = f"{item['Style']} {item['SKU']}"
+            cell = ws.cell(row=row_idx, column=3, value=sku_with_style)
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            # Column D: Quantity
+            cell = ws.cell(row=row_idx, column=4, value=item['Quantity'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            # Column E: Case Qty
+            cell = ws.cell(row=row_idx, column=5, value=item['Case Qty'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            # Column F: SKU Boxes (just write the number, no formatting)
+            cell = ws.cell(row=row_idx, column=6, value=item['SKU Boxes'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+            
+            row_idx += 1
+        
+        # Handle the last style group
+        if current_style is not None and merge_start_row is not None:
+            # Merge column A (Style column)
+            if merge_start_row < row_idx - 1:
+                ws.merge_cells(f'A{merge_start_row}:A{row_idx - 1}')
+                style_cell = ws.cell(row=merge_start_row, column=1)
+                style_cell.alignment = center_alignment
+                style_cell.border = thin_border
+            
+            # Merge column B (Total Boxes column) - now in position 2
+            if merge_start_row < row_idx - 1:
+                ws.merge_cells(f'B{merge_start_row}:B{row_idx - 1}')
+                # Get total from the first item of this style group
+                for prev_item in packslip_data:
+                    if prev_item['Style'] == current_style:
+                        total_cell = ws.cell(row=merge_start_row, column=2)
+                        total_cell.value = prev_item['Total Boxes']
+                        total_cell.alignment = center_alignment
+                        total_cell.border = thin_border
+                        break
+            else:
+                for prev_item in packslip_data:
+                    if prev_item['Style'] == current_style:
+                        cell = ws.cell(row=merge_start_row, column=2, value=prev_item['Total Boxes'])
+                        cell.alignment = center_alignment
+                        cell.border = thin_border
+                        break
+        
+        # Save to bytes
+        from io import BytesIO
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # Return as download
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'{container_number}_Packslip.xlsx'
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error generating packslip for {container_number}: {e}")
+        return jsonify({'error': str(e)}), 500

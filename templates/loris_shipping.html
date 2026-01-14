@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>洛瑞丝庄园 - Shipping Management</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/giraffe.ico') }}">
     
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -1627,6 +1628,15 @@
         });
     }
 
+    // Pagination state for each table
+    let paginationState = {
+        'pending-orders-table-body': { page: 1, itemsPerPage: 5, expandedBatches: new Set(), loadedBatches: new Set(), pageNavigated: false },
+        'shipped-orders-table-body': { page: 1, itemsPerPage: 5, expandedBatches: new Set(), loadedBatches: new Set(), pageNavigated: false }
+    };
+    
+    // All orders organized by batch for lazy loading
+    let ordersByBatchCache = {};
+
     function renderPendingOrders() {
         const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
         const pendingPoSearch = document.getElementById('pending-po-search');
@@ -1637,6 +1647,11 @@
                 (!batchDate || order.batch_date === batchDate) &&
                 (!poValue || order.po_number.toLowerCase().includes(poValue));
         });
+        // Only reset to page 1 if filters changed, not on pagination navigation
+        if (!paginationState['pending-orders-table-body'].pageNavigated) {
+            paginationState['pending-orders-table-body'].page = 1;
+        }
+        paginationState['pending-orders-table-body'].pageNavigated = false;
         renderOrdersByBatch(filtered, 'pending-orders-table-body');
     }
 
@@ -1650,6 +1665,11 @@
                 (!batchDate || order.batch_date === batchDate) &&
                 (!poValue || order.po_number.toLowerCase().includes(poValue));
         });
+        // Only reset to page 1 if filters changed, not on pagination navigation
+        if (!paginationState['shipped-orders-table-body'].pageNavigated) {
+            paginationState['shipped-orders-table-body'].page = 1;
+        }
+        paginationState['shipped-orders-table-body'].pageNavigated = false;
         renderOrdersByBatch(filtered, 'shipped-orders-table-body');
     }
 
@@ -1763,7 +1783,7 @@
         // Group orders by batch date
         const ordersByBatch = {};
         orderList.forEach(order => {
-            const batchDate = order.batch_date || '1999-01-01'; // Default to 2025-09-18 if no batch date
+            const batchDate = order.batch_date || '1999-01-01';
             if (!ordersByBatch[batchDate]) {
                 ordersByBatch[batchDate] = [];
             }
@@ -1773,21 +1793,33 @@
         // Sort batch dates (newest first)
         const sortedBatchDates = Object.keys(ordersByBatch).sort((a, b) => new Date(b) - new Date(a));
         
+        // Pagination
+        const state = paginationState[containerId];
+        const itemsPerPage = state.itemsPerPage;
+        const currentPage = state.page || 1;
+        const totalBatches = sortedBatchDates.length;
+        const totalPages = Math.ceil(totalBatches / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const batchesToShow = sortedBatchDates.slice(start, end);
+        
         let overallIndex = 0;
-        sortedBatchDates.forEach(batchDate => {
+        batchesToShow.forEach(batchDate => {
             const orders = ordersByBatch[batchDate];
             const batchId = `batch-${batchDate.replace(/[^a-zA-Z0-9]/g, '-')}-${containerId}`;
             
-            // Determine if this batch should be collapsed by default
-            // Pending orders should be uncollapsed by default, shipped orders collapsed
+            // Check if batch is already marked as expanded
+            const isExpanded = state.expandedBatches.has(batchId);
             const isShippedTable = containerId === 'shipped-orders-table-body';
-            const defaultCollapsed = isShippedTable;
+            const defaultCollapsed = isShippedTable && !isExpanded;
             const chevronClass = defaultCollapsed ? 'fas fa-chevron-right batch-toggle-icon' : 'fas fa-chevron-down batch-toggle-icon';
             
             // Create batch header row with collapse functionality
             const batchHeaderRow = document.createElement('tr');
             batchHeaderRow.className = 'table-primary';
             batchHeaderRow.style.cursor = 'pointer';
+            batchHeaderRow.id = `batch-header-${batchId}`;
+            batchHeaderRow.setAttribute('data-batch-id', batchId);
             batchHeaderRow.innerHTML = `
                 <td colspan="10" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
                     <i class="${chevronClass}" id="icon-${batchId}"></i>
@@ -1821,6 +1853,8 @@
                 const row = document.createElement('tr');
                 row.className = 'batch-order-row';
                 row.setAttribute('data-batch-id', batchId);
+                row.id = `order-row-${order.po_number}`;
+                row.setAttribute('data-po', order.po_number);
                 
                 row.innerHTML = `
                     <td class="order-cell">
@@ -1831,7 +1865,7 @@
                     <td class="address-cell ship-to-address-column">${formattedShipToAddress}</td>
                     <td class="internal-address-cell internal-add-column"></td>
                     <td class="package-cell">
-                        <div class="package-info-container" data-po="${order.po_number}">
+                        <div class="package-info-container" id="pkg-container-${order.po_number}" data-po="${order.po_number}">
                             <!-- Main Box Row -->
                             <div class="row g-1 mb-2 align-items-center main-box-row">
                                 <div class="col-1 text-center">
@@ -1955,15 +1989,13 @@
                         }
                     });
                 }
-                
-                // Load existing package info for this order
-                loadPackageInfo(order.po_number);
             });
             
             // Add a spacing row between batches (except for the last one)
-            if (batchDate !== sortedBatchDates[sortedBatchDates.length - 1]) {
+            if (batchDate !== batchesToShow[batchesToShow.length - 1].batchDate) {
                 const spacingRow = document.createElement('tr');
                 spacingRow.className = 'batch-spacing-row';
+                spacingRow.id = `batch-spacer-${batchId}`;
                 spacingRow.setAttribute('data-batch-id', batchId);
                 spacingRow.innerHTML = '<td colspan="10" class="batch-spacer"></td>';
                 
@@ -1975,7 +2007,151 @@
                 container.appendChild(spacingRow);
             }
         });
+        
+        // Add pagination footer if there are multiple pages
+        if (totalPages > 1) {
+            const paginationRow = document.createElement('tr');
+            paginationRow.className = 'pagination-row';
+            paginationRow.id = `pagination-${containerId}`;
+            
+            // Generate page buttons (only show range around current page)
+            let pageButtonsHTML = '';
+            const pageRange = 5; // Show 5 page buttons total
+            const halfRange = Math.floor(pageRange / 2);
+            let startPage = Math.max(1, currentPage - halfRange);
+            let endPage = Math.min(totalPages, startPage + pageRange - 1);
+            
+            // Adjust if we're near the end
+            if (endPage - startPage + 1 < pageRange) {
+                startPage = Math.max(1, endPage - pageRange + 1);
+            }
+            
+            // First page button
+            if (startPage > 1) {
+                pageButtonsHTML += `<li class="page-item"><button id="page-1-${containerId}" class="page-link page-btn" data-page="1" data-container="${containerId}" style="pointer-events: auto;">1</button></li>`;
+                if (startPage > 2) {
+                    pageButtonsHTML += `<li class="page-item"><span id="ellipsis-start-${containerId}" class="page-link" aria-label="More pages" role="presentation">...</span></li>`;
+                }
+            }
+            
+            // Page range buttons
+            for (let p = startPage; p <= endPage; p++) {
+                pageButtonsHTML += `<li class="page-item ${p === currentPage ? 'active' : ''}"><button id="page-${p}-${containerId}" class="page-link page-btn" data-page="${p}" data-container="${containerId}" aria-label="Page ${p}" style="pointer-events: auto;">${p}</button></li>`;
+            }
+            
+            // Last page button
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    pageButtonsHTML += `<li class="page-item"><span id="ellipsis-end-${containerId}" class="page-link" aria-label="More pages" role="presentation">...</span></li>`;
+                }
+                pageButtonsHTML += `<li class="page-item"><button id="page-${totalPages}-${containerId}" class="page-link page-btn" data-page="${totalPages}" data-container="${containerId}" aria-label="Page ${totalPages}" style="pointer-events: auto;">${totalPages}</button></li>`;
+            }
+            
+            paginationRow.innerHTML = `
+                <td colspan="10" class="text-center py-3">
+                    <nav aria-label="Batch pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item">
+                                <button id="prev-btn-${containerId}" class="page-link prev-btn" data-page="${currentPage - 1}" data-container="${containerId}" aria-label="Previous page" style="pointer-events: auto; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'}; opacity: ${currentPage === 1 ? '0.5' : '1'};">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </button>
+                            </li>
+                            ${pageButtonsHTML}
+                            <li class="page-item">
+                                <button id="next-btn-${containerId}" class="page-link next-btn" data-page="${currentPage + 1}" data-container="${containerId}" aria-label="Next page" style="pointer-events: auto; cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'}; opacity: ${currentPage === totalPages ? '0.5' : '1'};">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                        <small class="text-muted">Page ${currentPage} of ${totalPages} | Showing ${start + 1}-${Math.min(end, totalBatches)} of ${totalBatches} batches</small>
+                    </nav>
+                </td>
+            `;
+            container.appendChild(paginationRow);
+            
+            // Wait for DOM to be ready then attach listeners
+            setTimeout(() => {
+                // Attach event listeners to pagination buttons
+                const prevBtn = paginationRow.querySelector('.prev-btn');
+                const nextBtn = paginationRow.querySelector('.next-btn');
+                const pageButtons = paginationRow.querySelectorAll('.page-btn');
+                
+                console.log('Attaching pagination listeners - prevBtn:', !!prevBtn, 'nextBtn:', !!nextBtn, 'pageButtons count:', pageButtons.length);
+                
+                // Always attach listener to prev button
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', function(e) {
+                        console.log('Prev button clicked');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Only navigate if not on first page
+                        if (currentPage > 1) {
+                            const pageNum = parseInt(this.getAttribute('data-page'));
+                            const tableId = this.getAttribute('data-container');
+                            console.log('Navigating to page', pageNum, 'in table', tableId);
+                            goToBatchPage(tableId, pageNum);
+                        }
+                    });
+                }
+                
+                // Always attach listener to next button
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', function(e) {
+                        console.log('Next button clicked');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Only navigate if not on last page
+                        if (currentPage < totalPages) {
+                            const pageNum = parseInt(this.getAttribute('data-page'));
+                            const tableId = this.getAttribute('data-container');
+                            console.log('Navigating to page', pageNum, 'in table', tableId);
+                            goToBatchPage(tableId, pageNum);
+                        }
+                    });
+                }
+                
+                // Attach listeners to all page buttons
+                pageButtons.forEach((btn, index) => {
+                    btn.addEventListener('click', function(e) {
+                        console.log('Page button clicked - button index:', index);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const page = parseInt(this.getAttribute('data-page'));
+                        const tableId = this.getAttribute('data-container');
+                        console.log('Navigating to page', page, 'in table', tableId);
+                        goToBatchPage(tableId, page);
+                    });
+                });
+            }, 0);
+        }
     }
+    
+    // Pagination function
+    function goToBatchPage(containerId, page) {
+        console.log('goToBatchPage called with containerId:', containerId, 'page:', page);
+        console.log('paginationState keys:', Object.keys(paginationState));
+        
+        if (paginationState[containerId]) {
+            console.log('Updating pagination state for', containerId, 'to page', page);
+            paginationState[containerId].page = page;
+            paginationState[containerId].pageNavigated = true; // Flag that this is page navigation, not filter change
+            // Re-render based on which table it is
+            if (containerId === 'pending-orders-table-body') {
+                console.log('Rendering pending orders');
+                renderPendingOrders();
+            } else if (containerId === 'shipped-orders-table-body') {
+                console.log('Rendering shipped orders');
+                renderShippedOrders();
+            } else {
+                console.warn('Unknown containerId:', containerId);
+            }
+        } else {
+            console.error('paginationState not found for containerId:', containerId);
+        }
+    }
+    
+    // Make it globally accessible
+    window.goToBatchPage = goToBatchPage;
 
     function renderOrdersTable(orderList, tbody) {
         if (!tbody) return;
@@ -4513,9 +4689,10 @@
             });
         }
 
-        // Batch collapse/expand functionality
+        // Batch collapse/expand functionality with state tracking
         window.toggleBatch = function(batchId) {
-            const batchRows = document.querySelectorAll(`tr[data-batch-id="${batchId}"]`);
+            // Select only order rows and spacing rows, NOT the header row
+            const batchRows = document.querySelectorAll(`tr[data-batch-id="${batchId}"]:not([id^="batch-header"])`);
             const toggleIcon = document.getElementById(`icon-${batchId}`);
             
             if (!batchRows.length || !toggleIcon) return;
@@ -4531,6 +4708,36 @@
                 toggleIcon.className = 'fas fa-chevron-down batch-toggle-icon';
             } else {
                 toggleIcon.className = 'fas fa-chevron-right batch-toggle-icon';
+            }
+            
+            // Track expanded batches in state
+            const tableId = document.querySelector(`tr[data-batch-id="${batchId}"]:not([id^="batch-header"])`)?.closest('table')?.id;
+            
+            if (tableId) {
+                const tableBodyId = tableId.replace('table', 'table-body');
+                if (paginationState[tableBodyId]) {
+                    if (isCollapsed) {
+                        paginationState[tableBodyId].expandedBatches.add(batchId);
+                        
+                        // Lazy load package info when batch is expanded
+                        if (!paginationState[tableBodyId].loadedBatches.has(batchId)) {
+                            paginationState[tableBodyId].loadedBatches.add(batchId);
+                            
+                            // Load package info for all orders in this batch
+                            batchRows.forEach(row => {
+                                const container = row.querySelector('.package-info-container');
+                                if (container) {
+                                    const poNumber = container.getAttribute('data-po');
+                                    if (poNumber) {
+                                        loadPackageInfo(poNumber);
+                                    }
+                                }
+                            });
+                        }
+                    } else {
+                        paginationState[tableBodyId].expandedBatches.delete(batchId);
+                    }
+                }
             }
         };
 
