@@ -194,14 +194,35 @@ def upload_bulk_detail():
         
         # Helper function to extract SKU from text (before first space)
         def extract_sku_from_text(text):
-            """Extract SKU - everything before first space, uppercase"""
+            """Extract SKU - everything before first space, underscore, or dimension pattern, uppercase"""
             if not text:
                 return None
             # Get basename without extension
             name_without_ext = os.path.splitext(text)[0]
-            # Take everything before first space
-            sku = name_without_ext.split()[0] if name_without_ext else None
-            return sku.upper() if sku else None
+            
+            # Pattern 1: Split by space (original behavior)
+            if ' ' in name_without_ext:
+                sku = name_without_ext.split()[0]
+                return sku.upper() if sku else None
+            
+            # Pattern 2: Extract SKU before dimension patterns like _17X7.5X12.5X12 or _12x8x10
+            # Match pattern: underscore followed by digits, X/x, digits (e.g., _17X7.5X12.5X12)
+            import re
+            dimension_pattern = r'(_\d+[xX]\d+|\d+[xX]\d+[xX]\d+)'
+            match = re.search(dimension_pattern, name_without_ext)
+            if match:
+                # Get everything before the dimension pattern
+                sku = name_without_ext[:match.start()].rstrip('_')
+                return sku.upper() if sku else None
+            
+            # Pattern 3: If still no clear pattern, take everything before first underscore
+            # This handles cases like L1894_variant or T9998_color
+            if '_' in name_without_ext:
+                sku = name_without_ext.split('_')[0]
+                return sku.upper() if sku else None
+            
+            # Default: use entire name
+            return name_without_ext.upper() if name_without_ext else None
         
         # FIRST PASS: Save all files and try to extract SKU from filename
         for idx, file in enumerate(files):
@@ -686,11 +707,16 @@ def process_bulk_detail():
                         errors.append(f"Error processing {img.get('filename', 'unknown')}: {str(e)}")
                 
                 # Auto-record in DAM DB
+                logger.info(f"Processing complete for {sku}: {len(saved_paths)} files saved to disk")
                 if saved_paths:
+                    logger.info(f"Calling _record_big_picture_uploads for {sku} with {len(saved_paths)} paths")
                     try:
                         _record_big_picture_uploads(saved_paths, sku)
+                        logger.info(f"_record_big_picture_uploads completed successfully for {sku}")
                     except Exception as e:
-                        logger.error(f"Auto-record failed for {sku}: {e}")
+                        logger.error(f"Auto-record failed for {sku}: {e}", exc_info=True)
+                else:
+                    logger.warning(f"No saved_paths for {sku}, skipping database recording")
                         
             except Exception as e:
                 errors.append(f"Error processing style {sku}: {str(e)}")
@@ -921,46 +947,64 @@ def _record_catalog_uploads(file_paths, sku: str):
         conn.close()
 
 def _record_big_picture_uploads(file_paths, sku: str):
-    conn = get_mysql_connection()
-    if not conn:
-        raise RuntimeError('Cannot connect to MySQL')
-    cur = conn.cursor()
+    logger.info(f"Starting big_picture DB recording for {sku} with {len(file_paths)} files")
     try:
-        for file_path in file_paths:
-            filename = os.path.basename(file_path)
-            info, sha256 = _get_image_info_and_hash(file_path)
-            if not info or not sha256:
-                continue
-            # If hash exists with higher or equal priority, skip
-            cur.execute("SELECT id, source FROM image_assets WHERE sha256=%s", (sha256,))
-            row = cur.fetchone()
-            if row:
-                _, existing_source = row
-                # Skip if duplicate content exists in any source
-                if existing_source in ['catalog_original', 'dropbox', 'big_picture']:
+        conn = get_mysql_connection()
+        if not conn:
+            logger.error(f"Failed to connect to MySQL for {sku}")
+            raise RuntimeError('Cannot connect to MySQL')
+        cur = conn.cursor()
+        try:
+            inserted_count = 0
+            skipped_count = 0
+            for file_path in file_paths:
+                filename = os.path.basename(file_path)
+                logger.info(f"Processing file for DB: {filename}")
+                info, sha256 = _get_image_info_and_hash(file_path)
+                if not info or not sha256:
+                    logger.warning(f"Could not get image info/hash for {filename}")
+                    skipped_count += 1
                     continue
-            # If already exists by filename/source/sku, skip
-            cur.execute(
-                "SELECT id FROM image_assets WHERE filename=%s AND source=%s AND sku=%s",
-                (filename, 'big_picture', sku)
-            )
-            if cur.fetchone():
-                continue
-            # Insert new
-            cur.execute("""
-                INSERT INTO image_assets
-                (sku, version, filename, path, source, width, height, file_size, sha256,
-                 is_active, is_canonical, created_at, updated_at)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            """, (
-                sku, 1, filename, file_path, 'big_picture',
-                info['width'], info['height'], info['size_bytes'], sha256,
-                True, False, datetime.now(), datetime.now()
-            ))
-        conn.commit()
-    finally:
-        cur.close()
-        conn.close()
+                # If hash exists with higher or equal priority, skip
+                cur.execute("SELECT id, source FROM image_assets WHERE sha256=%s", (sha256,))
+                row = cur.fetchone()
+                if row:
+                    _, existing_source = row
+                    # Skip if duplicate content exists in any source
+                    if existing_source in ['catalog_original', 'dropbox', 'big_picture']:
+                        logger.info(f"Skipping {filename} - duplicate hash in {existing_source}")
+                        skipped_count += 1
+                        continue
+                # If already exists by filename/source/sku, skip
+                cur.execute(
+                    "SELECT id FROM image_assets WHERE filename=%s AND source=%s AND sku=%s",
+                    (filename, 'big_picture', sku)
+                )
+                if cur.fetchone():
+                    logger.info(f"Skipping {filename} - already exists in DB")
+                    skipped_count += 1
+                    continue
+                # Insert new
+                logger.info(f"Inserting {filename} into DB for SKU {sku}")
+                cur.execute("""
+                    INSERT INTO image_assets
+                    (sku, version, filename, path, source, width, height, file_size, sha256,
+                     is_active, is_canonical, created_at, updated_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """, (
+                    sku, 1, filename, file_path, 'big_picture',
+                    info['width'], info['height'], info['size_bytes'], sha256,
+                    True, False, datetime.now(), datetime.now()
+                ))
+                inserted_count += 1
+            conn.commit()
+            logger.info(f"DB recording complete for {sku}: {inserted_count} inserted, {skipped_count} skipped")
+        finally:
+            cur.close()
+            conn.close()
+    except Exception as e:
+        logger.error(f"Exception in _record_big_picture_uploads for {sku}: {e}", exc_info=True)
+        raise
 
 def _update_canonical_for_sku(conn, sku: str):
     cur = conn.cursor()

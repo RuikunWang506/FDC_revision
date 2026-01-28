@@ -301,6 +301,34 @@
             box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
         }
 
+        .sync-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #1cc88a, #00d4ff);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(28, 200, 138, 0.3);
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(28, 200, 138, 0.5);
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Image Popup Modal */
         .image-modal {
             display: none !important;
@@ -675,6 +703,40 @@
                 font-size: 0.85rem;
             }
         }
+
+        .sync-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #1cc88a, #36b9cc);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: all 0.3s ease;
+            z-index: 3;
+            box-shadow: 0 4px 8px rgba(28, 200, 138, 0.2);
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(28, 200, 138, 0.3);
+            background: linear-gradient(135deg, #17a673, #2c9faf);
+        }
+
+        .sync-btn:active {
+            transform: translateY(0);
+        }
+
+        .sync-btn i {
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -727,6 +789,11 @@
                 <button id="downloadSelectedBtn" class="search-btn" style="display:none;">
                     <i class="fas fa-download"></i> Download Selected
                 </button>
+                {% if current_user %}
+                <button id="deleteSelectedBtn" class="search-btn" style="display:none;background:linear-gradient(135deg,#ff3b3b,#ff6b6b);margin-left:0.5rem;">
+                    <i class="fas fa-trash-alt"></i> Delete Selected
+                </button>
+                {% endif %}
             </div>
             <div id="resultsContainer"></div>
         </div>
@@ -919,6 +986,8 @@
                             } else {
                                 resultsHtml += '<div class="images-grid">';
                                 images.forEach((image, index) => {
+                                    const showSyncBtn = category.key === 'china_ftp';
+                                    console.log(`Image ${image.filename}: category=${category.key}, showSync=${showSyncBtn}`);
                                     resultsHtml += `
                                         <div class="image-card" data-image-index="${globalImageIndex}">
                                             <div style="position:absolute;top:10px;left:10px;z-index:2;">
@@ -943,6 +1012,11 @@
                                                     Created: ${image.created_at ? new Date(image.created_at).toLocaleDateString() : 'Unknown'}
                                                 </div>
                                             </div>
+                                            ${showSyncBtn ? `
+                                                <button class="sync-btn" data-filename="${image.filename}" data-image-url="${image.url}" title="Sync to Product Images" style="position:absolute;bottom:10px;right:10px;z-index:10;background:#1cc88a;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:pointer;">
+                                                    <i class="fas fa-sync-alt"></i> Sync
+                                                </button>
+                                            ` : ''}
                                         </div>
                                     `;
                                             // ...existing code...
@@ -977,6 +1051,11 @@
                         if (card) card.classList.remove('selected');
                     }
                     document.getElementById('downloadSelectedBtn').style.display = selectedImages.size > 0 ? 'inline-block' : 'none';
+                    // Also show/hide delete button if it exists
+                    const deleteBtn = document.getElementById('deleteSelectedBtn');
+                    if (deleteBtn) {
+                        deleteBtn.style.display = selectedImages.size > 0 ? 'inline-block' : 'none';
+                    }
                 }
             });
             // Download selected images listener using event delegation
@@ -1026,6 +1105,127 @@
                     }
                 }
             });
+            // Delete selected images listener using event delegation
+            resultsSection.addEventListener('click', async function(e) {
+                if (e.target.closest('#deleteSelectedBtn')) {
+                    const btn = e.target.closest('#deleteSelectedBtn');
+                    if (typeof selectedImages === 'undefined' || selectedImages.size === 0) return;
+                    
+                    // Confirm deletion
+                    if (!confirm(`Are you sure you want to delete ${selectedImages.size} image(s) from the catalog database? This action cannot be undone.`)) {
+                        return;
+                    }
+                    
+                    // Get images to delete
+                    const imagesToDelete = Array.from(selectedImages).map(idx => {
+                        const img = allImages[idx];
+                        return {
+                            id: img.id,
+                            filename: img.filename,
+                            source: img.source
+                        };
+                    });
+                    
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                    
+                    try {
+                        const resp = await fetch('/api/delete_images', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ images: imagesToDelete })
+                        });
+                        
+                        const result = await resp.json();
+                        
+                        if (!resp.ok) {
+                            throw new Error(result.error || 'Failed to delete images');
+                        }
+                        
+                        // Show success message
+                        alert(`Successfully deleted ${result.deleted_count} image(s).\n${result.failed_images.length > 0 ? '\nFailed: ' + result.failed_images.length : ''}`);
+                        
+                        // Clear selection and reload images
+                        selectedImages.clear();
+                        btn.style.display = 'none';
+                        document.getElementById('downloadSelectedBtn').style.display = 'none';
+                        
+                        // Reload the current SKU
+                        if (currentSku) {
+                            searchImages(currentSku);
+                        }
+                        
+                    } catch (err) {
+                        alert('Error deleting images: ' + err.message);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Selected';
+                    }
+                }
+            });
+
+            // Sync button listener for China FTP images using event delegation
+            resultsSection.addEventListener('click', async function(e) {
+                if (e.target.closest('.sync-btn')) {
+                    e.stopPropagation(); // Prevent opening modal
+                    
+                    const btn = e.target.closest('.sync-btn');
+                    
+                    // Skip if already synced
+                    if (btn.disabled || btn.classList.contains('synced')) {
+                        return;
+                    }
+                    
+                    const filename = btn.getAttribute('data-filename');
+                    const imageUrl = btn.getAttribute('data-image-url');
+                    
+                    if (!filename || !currentSku) {
+                        alert('Missing information for sync operation');
+                        return;
+                    }
+                    
+                    // Confirm sync
+                    if (!confirm(`Sync ${filename} to Product Images (big_picture)?`)) {
+                        return;
+                    }
+                    
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    
+                    try {
+                        const resp = await fetch('/api/sync_china_image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                sku: currentSku,
+                                filename: filename,
+                                image_url: imageUrl
+                            })
+                        });
+                        
+                        const result = await resp.json();
+                        
+                        if (!resp.ok) {
+                            throw new Error(result.error || 'Failed to sync image');
+                        }
+                        
+                        // Mark as synced
+                        btn.classList.add('synced');
+                        btn.style.background = '#6c757d';
+                        btn.innerHTML = '<i class="fas fa-check"></i> Synced';
+                        btn.title = 'Already synced to Product Images';
+                        
+                        // Show success message
+                        alert(`Successfully synced ${filename} to Product Images!`);
+                        
+                    } catch (err) {
+                        alert('Error syncing image: ' + err.message);
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync';
+                    }
+                }
+            });
+
             window._imageViewerListenersAttached = true;
         }
                             }
@@ -1348,9 +1548,18 @@
                     contentHtml = '<div class="images-grid">';
                     chinaFtpImages.forEach((image, index) => {
                         const globalIndex = allImages.length - chinaFtpImages.length + index;
+                        const isSynced = image.already_synced || false;
+                        const syncBtnStyle = isSynced 
+                            ? 'position:absolute;bottom:10px;right:10px;z-index:10;background:#6c757d;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:not-allowed;'
+                            : 'position:absolute;bottom:10px;right:10px;z-index:10;background:#1cc88a;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:pointer;';
+                        const syncBtnClass = isSynced ? 'sync-btn synced' : 'sync-btn';
+                        const syncBtnText = isSynced ? '<i class="fas fa-check"></i> Synced' : '<i class="fas fa-sync-alt"></i> Sync';
+                        const syncBtnTitle = isSynced ? 'Already synced to Product Images' : 'Sync to Product Images';
+                        const syncBtnDisabled = isSynced ? 'disabled' : '';
+                        
                         contentHtml += `
-                            <div class="image-card" onclick="openModal(${globalIndex})">
-                                <div class="image-container">
+                            <div class="image-card">
+                                <div class="image-container" onclick="openModal(${globalIndex})">
                                     <img class="image-preview" 
                                          src="${image.url}" 
                                          alt="${image.filename}"
@@ -1369,6 +1578,9 @@
                                         Created: ${image.created_at ? new Date(image.created_at).toLocaleDateString() : 'Unknown'}
                                     </div>
                                 </div>
+                                <button class="${syncBtnClass}" data-filename="${image.filename}" data-image-url="${image.url}" title="${syncBtnTitle}" style="${syncBtnStyle}" ${syncBtnDisabled}>
+                                    ${syncBtnText}
+                                </button>
                             </div>
                         `;
                     });

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Lookup</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+    <!-- DataTables Buttons CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f39c12;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --dark-bg: #2c3e50;
+            --light-bg: #ecf0f1;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .search-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+        }
+
+        .search-input-section {
+            margin-bottom: 20px;
+        }
+
+        .search-input-section label {
+            font-weight: 600;
+            color: var(--dark-bg);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .invoice-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .invoice-input-group input {
+            flex: 1;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .invoice-input-group input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary-color), #357abd);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .info-card-header {
+            background: linear-gradient(135deg, var(--primary-color), #357abd);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .info-card-header.success {
+            background: linear-gradient(135deg, var(--success-color), #229954);
+        }
+
+        .info-card-header.warning {
+            background: linear-gradient(135deg, var(--secondary-color), #e67e22);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+        }
+
+        #items_table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #items_table thead th {
+            background: linear-gradient(135deg, var(--dark-bg), #34495e);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #items_table tbody td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        #items_table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 2px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-file-invoice-dollar"></i> Invoice Lookup
+        </h1>
+
+        <!-- Search Form -->
+        <div class="search-card">
+            <form method="POST" action="/invoice_lookup">
+                <div class="search-input-section">
+                    <label><i class="fas fa-search mr-2"></i>Invoice Number</label>
+                    <div class="invoice-input-group">
+                        <input type="text" name="invoice_number" required pattern="\d{4,5}" 
+                               title="Please enter a 4 or 5-digit invoice number" value="{{ invoice_number or ''}}" 
+                               placeholder="e.g., 33615">
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Error Message -->
+        {% if error_message %}
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle mr-2"></i>{{ error_message }}
+        </div>
+        {% endif %}
+
+        <!-- Invoice Information -->
+        {% if header_info %}
+        <div class="row mb-4">
+            <!-- Invoice Details Card -->
+            <div class="col-md-4 mb-3">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-file-invoice mr-2"></i>Invoice #{{ header_info.invoice_number }}
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-user mr-2"></i>Customer:</span>
+                        <span class="info-value">
+                            <a href="https://www.fdcef.com/customer#{{ header_info.customer_id }}" 
+                               target="_blank" 
+                               style="color: #4a90e2; text-decoration: none; font-weight: 600;">
+                                {{ header_info.customer_name }}
+                                <i class="fas fa-external-link-alt ml-1" style="font-size: 0.85em;"></i>
+                            </a>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-id-card mr-2"></i>Customer ID:</span>
+                        <span class="info-value">{{ header_info.customer_id }}</span>
+                    </div>
+                    {% if header_info.order_number and header_info.order_number != 'N/A' %}
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-file-invoice mr-2"></i>SO #:</span>
+                        <span class="info-value">
+                            <a href="{{ url_for('order_lookup.order_lookup', order_number=header_info.order_number) }}" 
+                               target="_blank" 
+                               style="color: #4a90e2; text-decoration: none; font-weight: 600;">
+                                {{ header_info.order_number }}
+                                <i class="fas fa-external-link-alt ml-1" style="font-size: 0.85em;"></i>
+                            </a>
+                        </span>
+                    </div>
+                    {% endif %}
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-calendar mr-2"></i>Invoice Date:</span>
+                        <span class="info-value">{{ header_info.invoice_date }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-calendar-check mr-2"></i>Process Date:</span>
+                        <span class="info-value">{{ header_info.process_date }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-user-tie mr-2"></i>Salesman:</span>
+                        <span class="info-value">{{ header_info.salesman }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-user-cog mr-2"></i>Processor:</span>
+                        <span class="info-value">{{ header_info.processor }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Summary Card -->
+            <div class="col-md-4 mb-3">
+                <div class="info-card">
+                    <div class="info-card-header success">
+                        <i class="fas fa-dollar-sign mr-2"></i>Financial Summary
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-file-invoice-dollar mr-2"></i>Invoice Amount:</span>
+                        <span class="info-value" style="color: var(--success-color); font-weight: 700;">{{ header_info.invoice_amount }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-money-check-alt mr-2"></i>Paid Amount:</span>
+                        <span class="info-value">{{ header_info.paid_amount }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-percentage mr-2"></i>Tax:</span>
+                        <span class="info-value">{{ header_info.invoice_tax }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-calculator mr-2"></i>Taxable Amount:</span>
+                        <span class="info-value">{{ header_info.taxable_amount }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-hand-holding-usd mr-2"></i>Handling Fee:</span>
+                        <span class="info-value">{{ header_info.handling_fee }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-tag mr-2"></i>Discount:</span>
+                        <span class="info-value">{{ header_info.discount }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-coins mr-2"></i>Invoice Cost:</span>
+                        <span class="info-value">{{ header_info.invoice_cost }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Info Card -->
+            <div class="col-md-4 mb-3">
+                <div class="info-card">
+                    <div class="info-card-header warning">
+                        <i class="fas fa-info-circle mr-2"></i>Additional Information
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-warehouse mr-2"></i>Warehouse:</span>
+                        <span class="info-value">{{ header_info.warehouse }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>Invoice Type:</span>
+                        <span class="info-value">{{ header_info.invoice_type }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-money-check mr-2"></i>Check #:</span>
+                        <span class="info-value">{{ header_info.check_number }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-handshake mr-2"></i>Terms:</span>
+                        <span class="info-value">{{ header_info.terms_description }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-clock mr-2"></i>Terms Days:</span>
+                        <span class="info-value">{{ header_info.terms_days }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-credit-card mr-2"></i>Paid By:</span>
+                        <span class="info-value">{{ header_info.paid_by }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Items Table -->
+        {% if items_html %}
+        <div class="table-wrapper">
+            <h3 class="text-center mb-4">
+                <i class="fas fa-list-ul mr-2"></i>Invoice Items
+            </h3>
+            <div class="table-responsive">
+                {{ items_html|safe }}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable for items
+            if ($('#items_table').length) {
+                $('#items_table').DataTable({
+                    "paging": true,
+                    "searching": true,
+                    "ordering": true,
+                    "pageLength": 25,
+                    "lengthMenu": [10, 25, 50, 100],
+                    dom: '<"container-fluid"<"row"<"col"l><"col"B><"col"f>>>tip',
+                    buttons: ['copy', 'excel', 'pdf']
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -95,12 +95,6 @@ def register_dam_routes(app):
     @app.route("/image/<int:asset_id>/<int:width>")
     def serve_dam_image(asset_id, width):
         """Serve a resized image."""
-        # Allow access for internal user or TK user
-        current_user = session.get('username')
-        tk_user = session.get('tk_user', False)
-        if not current_user and not tk_user:
-            return jsonify({'error': 'Unauthorized'}), 403
-
         try:
             db = py.utilities.models.SessionLocal()
             asset = db.query(py.utilities.models.ImageAsset).filter_by(
@@ -110,6 +104,15 @@ def register_dam_routes(app):
 
             if not asset:
                 return jsonify({'error': 'Asset not found'}), 404
+
+            # Check authentication - allow public access for product_image and big_picture sources
+            current_user = session.get('username')
+            tk_user = session.get('tk_user', False)
+            
+            # If source is NOT product_image or big_picture, require authentication
+            if asset.source not in ['product_image', 'big_picture']:
+                if not current_user and not tk_user:
+                    return jsonify({'error': 'Unauthorized'}), 403
 
             if not os.path.exists(asset.path):
                 return jsonify({'error': 'Image file not found'}), 404

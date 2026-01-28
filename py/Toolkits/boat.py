@@ -399,10 +399,14 @@ def add_multiple_containers_to_sheets(container_list):
             # Find the next available row (after the last row with data)
             next_row = last_row_with_data + 1
             
-            # Update each row individually with explicit ranges
-            for i, row_data in enumerate(new_rows):
-                range_str = f'A{next_row + i}:T{next_row + i}'
-                sheet.update(range_str, [row_data])
+            # Write all rows in a single batch update to avoid API quota issues
+            if len(new_rows) == 1:
+                range_str = f'A{next_row}:T{next_row}'
+                sheet.update(range_str, new_rows)
+            else:
+                # Multiple rows - use range spanning all rows
+                range_str = f'A{next_row}:T{next_row + len(new_rows) - 1}'
+                sheet.update(range_str, new_rows)
             
             return containers_to_add
             
@@ -417,11 +421,18 @@ def scan_dropbox_containers():
     container_files = {}
     
     try:
-        # Get all month folders
-        month_folders = glob.glob(os.path.join(DROPBOX_CONTAINER_PATH, '*'))
+        # Only scan 2026年 folder and its subfolders (month folders)
+        year_2026_folder = os.path.join(DROPBOX_CONTAINER_PATH, '2026年')
         
-        # Add root directory to scan list (for files like FT26119 stored at root)
-        scan_locations = [DROPBOX_CONTAINER_PATH] + [f for f in month_folders if os.path.isdir(f)]
+        # Build scan locations: root + 2026年 folder + month subfolders within 2026年
+        scan_locations = [DROPBOX_CONTAINER_PATH]
+        
+        # Add 2026年 folder if it exists
+        if os.path.isdir(year_2026_folder):
+            scan_locations.append(year_2026_folder)
+            # Scan month subfolders within 2026年 (e.g., 1月, 2月, etc.)
+            month_folders = glob.glob(os.path.join(year_2026_folder, '*'))
+            scan_locations.extend([f for f in month_folders if os.path.isdir(f)])
         
         for location in scan_locations:
             # Get all Excel files in this location
@@ -430,24 +441,27 @@ def scan_dropbox_containers():
             for file_path in excel_files:
                 filename = os.path.basename(file_path)
                 # Extract container number from filename
-                # Handle both FT (convert to F) and F versions
+                # Handle both FT and F versions - store under BOTH keys
                 # Priority: F version takes precedence over FT version
                 # Ignore L-prefix containers
                 
-                # First try matching FT pattern (e.g., "FT26119 Packing List..." -> "F26119")
+                # First try matching FT pattern (e.g., "FT26119 Packing List...")
                 match = re.match(r'^FT(\d+)', filename)
                 if match:
-                    container_number = 'F' + match.group(1)  # Replace FT with F
-                    # Only add if we don't already have an F version
-                    if container_number not in container_files:
-                        container_files[container_number] = file_path
+                    ft_number = match.group(0)  # Full FT26119
+                    f_number = 'F' + match.group(1)  # Convert to F26119
+                    # Store under both FT and F keys (only if not already present)
+                    if ft_number not in container_files:
+                        container_files[ft_number] = file_path
+                    if f_number not in container_files:
+                        container_files[f_number] = file_path
                     continue
                 
                 # Then try matching F pattern (e.g., "F26119 Packing List...")
                 match = re.match(r'^F(\d+)', filename)
                 if match:
                     container_number = match.group(0)  # Get the full F25xxx or F26xxx
-                    # F versions take priority over FT versions
+                    # F versions take priority - always overwrite
                     container_files[container_number] = file_path
         
         return container_files
@@ -912,7 +926,6 @@ def boat_service():
     if 'username' not in session:
         return redirect(url_for("auth.login"))
     current_user = session['username']
-    current_app.logger.info(f"***{current_user}***__@@@checked boat page@@@")
     
     # Render page immediately with loading state
     last_modified_date = "Loading...takes around 9 seconds"
@@ -935,10 +948,23 @@ def boat_data():
             containers_in_dropbox = set(container_files.keys())
             new_containers = containers_in_dropbox - current_containers
 
+            # Filter out FT-prefixed containers if F-prefixed version exists
+            filtered_new_containers = set()
+            for container in new_containers:
+                if container.startswith('FT'):
+                    # FT26132 -> F26132
+                    f_version = 'F' + container[2:]
+                    # Only add FT if F version doesn't exist in new_containers or current_containers
+                    if f_version not in new_containers and f_version not in current_containers:
+                        filtered_new_containers.add(container)
+                else:
+                    # Always add F-prefixed or other containers
+                    filtered_new_containers.add(container)
+
             # Batch add new containers to Google Sheets first
-            if new_containers:
+            if filtered_new_containers:
                 # Sort containers by container number (small to large) before adding
-                sorted_new_containers = sorted(list(new_containers))
+                sorted_new_containers = sorted(list(filtered_new_containers))
                 added_containers = add_multiple_containers_to_sheets(sorted_new_containers)
 
         except Exception as e:
@@ -1096,8 +1122,12 @@ def boat_data():
         conn.close()
         
         # Update Google Sheets with received dates for landed containers
+        # Only update if there are new landed containers (not already updated)
         if landed_containers_with_dates:
-            update_received_dates_in_sheets(landed_containers_with_dates)
+            # DISABLED: This causes API writes on every page load
+            # Re-enable only if you need to sync RCD dates from OMS to Google Sheets
+            # update_received_dates_in_sheets(landed_containers_with_dates)
+            pass
 
         # Drop the 'container_raw' column before rendering (keep the other metadata columns)
         df_cleaned = df_cleaned.drop('container_raw', axis=1)
@@ -1190,7 +1220,8 @@ def boat_data():
                 # email_count is already initialized to 0 for all containers
         
         # Update Last Updated column for ALL containers with the fetch timestamp
-        update_last_updated_for_all_containers(df_cleaned['container'].tolist(), fetch_timestamp)
+        # DISABLED: This causes excessive API writes on every page load
+        # update_last_updated_for_all_containers(df_cleaned['container'].tolist(), fetch_timestamp)
         
         # Log columns being sent for debugging
         
@@ -1345,7 +1376,6 @@ def update_dennis_eta():
                 # Update column E (ETA column, 0-indexed as 4)
                 sheet.update(f'E{sheet_row}', [[dennis_eta]])
                 
-                current_app.logger.info(f"Updated Dennis ETA for container {container} from '{original_value}' to '{dennis_eta}'")
                 return jsonify({
                     'success': True,
                     'original_value': original_value
@@ -1515,7 +1545,6 @@ def boat_packslip(container_number):
             matching_row = df_sheets[df_sheets['FDC container'] == container_number]
             if not matching_row.empty:
                 bol_num = str(matching_row['BOL NUM'].iloc[0]).strip() if pd.notna(matching_row['BOL NUM'].iloc[0]) else ''
-            current_app.logger.info(f"Retrieved BOL NUM '{bol_num}' for container {container_number}")
         except Exception as e:
             current_app.logger.warning(f"Could not fetch BOL NUM from Google Sheets: {e}")
         
@@ -1542,12 +1571,10 @@ def boat_packslip(container_number):
                     break
             
             if not packing_sheet:
-                current_app.logger.error(f"No 'Placking list' sheet found. Available sheets: {excel_file.sheet_names}")
                 return jsonify({'error': f'Could not find "Placking list" sheet in {container_number}. Available sheets: {excel_file.sheet_names}'}), 400
             
             # Read the placking list sheet with no header (raw data)
             df_packing = pd.read_excel(file_path, sheet_name=packing_sheet, header=None)
-            current_app.logger.info(f"Successfully read '{packing_sheet}' sheet with shape {df_packing.shape}")
         
         except Exception as e:
             current_app.logger.error(f"Error reading Excel file sheets: {e}")
@@ -1557,7 +1584,6 @@ def boat_packslip(container_number):
             current_app.logger.error(f"Could not read packing list from {container_number}")
             return jsonify({'error': f'Could not read packing list from {container_number}'}), 400
         
-        current_app.logger.info(f"Using packing sheet: {packing_sheet}, shape: {df_packing.shape}")
         
         # Find the header row by searching for "CTN" text
         header_row_idx = None
@@ -1565,23 +1591,18 @@ def boat_packslip(container_number):
             row_str = ' '.join([str(df_packing.iloc[idx, i]).upper() for i in range(min(5, len(df_packing.columns)))])
             if 'CTN' in row_str:
                 header_row_idx = idx
-                current_app.logger.info(f"Found header row with 'CTN' at index {idx}")
                 break
         
         if header_row_idx is None:
-            current_app.logger.warning("Could not find header row with 'CTN'. Checking for data starting at row 0...")
             header_row_idx = -1  # Data starts at row 0, no real header
         
-        current_app.logger.info(f"Header row index: {header_row_idx}")
         
         # DEBUG: Dump more rows to understand structure
-        current_app.logger.info("=== Column analysis (first 10 rows) ===")
         for row_idx in range(min(10, len(df_packing))):
             row_data = []
             for col_idx in range(min(8, len(df_packing.columns))):
                 val = df_packing.iloc[row_idx, col_idx]
                 row_data.append(f"C{col_idx}:'{val}'")
-            current_app.logger.info(f"Row {row_idx}: {' | '.join(row_data)}")
         
         # Determine actual column positions for Packing List sheet
         # Packing list structure: CTN NO | STYLE NO | QTY/PER CTN | QTY/CTN | TOTAL | weights...
@@ -1592,17 +1613,13 @@ def boat_packslip(container_number):
         total_qty_col = 4   # TOTAL (total quantity)
         
         # DEBUG: Log the actual data range and column contents
-        current_app.logger.info("=== COLUMN ANALYSIS ===")
-        current_app.logger.info(f"Total columns in sheet: {len(df_packing.columns)}")
-        current_app.logger.info(f"Total rows in sheet: {len(df_packing)}")
-        current_app.logger.info("=== ROW BY ROW DATA (first 15 rows) ===")
+
         
         for row_idx in range(min(15, len(df_packing))):
             row_vals = []
             for col_idx in range(min(12, len(df_packing.columns))):
                 val = df_packing.iloc[row_idx, col_idx]
                 row_vals.append(f"[{col_idx}]:'{val}'")
-            current_app.logger.info(f"Row {row_idx}: {' | '.join(row_vals)}")
         
         # Parse packing list data starting AFTER the header row (row 7, index 6)
         packslip_data = []
@@ -1620,24 +1637,16 @@ def boat_packslip(container_number):
                 case_qty_str = str(row.iloc[case_qty_col]).strip() if pd.notna(row.iloc[case_qty_col]) else '0'
                 num_cartons_str = str(row.iloc[num_cartons_col]).strip() if pd.notna(row.iloc[num_cartons_col]) else '0'
                 
-                if idx <= start_row + 5:
-                    current_app.logger.info(f"Row {idx}: ctn_no='{ctn_no}' | style_sku='{style_sku}' | total_qty='{total_qty_str}' | case_qty='{case_qty_str}' | num_cartons='{num_cartons_str}'")
-                
                 # Skip rows where ctn_no is "/" (placeholder data)
                 if ctn_no == '/':
-                    if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: ctn_no is '/' (placeholder)")
                     continue
                 
                 # Skip empty rows
                 if not style_sku or not ctn_no:
-                    if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: empty style_sku or ctn_no")
                     continue
                 
                 # Skip header-like rows
                 if any(x in style_sku.upper() for x in ['STYLE', 'ITEM', 'CONTAINER', 'CTN', 'NO']):
-                    current_app.logger.info(f"  -> Skipping: header row")
                     continue
                 
                 # Parse style and SKU from "Style SKU" format (e.g., "EN1980 BK")
@@ -1654,8 +1663,6 @@ def boat_packslip(container_number):
                 
                 # Skip if no style or sku
                 if not style or not sku:
-                    if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: could not parse style/sku from '{style_sku}'")
                     continue
                 
                 # Convert to numbers
@@ -1664,21 +1671,14 @@ def boat_packslip(container_number):
                     case_qty = int(float(case_qty_str)) if case_qty_str else 0
                     num_cartons = int(float(num_cartons_str)) if num_cartons_str else 0
                 except:
-                    if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: could not parse quantities")
                     continue
                 
                 # Skip rows with no quantity or case qty of 0
                 if total_qty == 0 or case_qty == 0:
-                    if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: total_qty={total_qty}, case_qty={case_qty}")
                     continue
                 
                 # Calculate SKU Boxes: simple box count
                 sku_boxes_count = total_qty // case_qty
-                
-                # Use the num_cartons value from the spreadsheet directly
-                current_app.logger.info(f"  -> Parsed: style='{style}', sku='{sku}', total_qty={total_qty}, case_qty={case_qty}, boxes={sku_boxes_count}, cartons={num_cartons}")
                 
                 packslip_data.append({
                     'Style': style,
@@ -1694,12 +1694,6 @@ def boat_packslip(container_number):
                 current_app.logger.warning(f"Error parsing row {idx}: {e}")
                 continue
         
-        # DEBUG: Log sample data
-        current_app.logger.info(f"Packslip data count: {len(packslip_data)}")
-        if packslip_data:
-            current_app.logger.info(f"Sample row 0: {packslip_data[0]}")
-            current_app.logger.info(f"Sample row 1: {packslip_data[1] if len(packslip_data) > 1 else 'N/A'}")
-        
         if not packslip_data:
             return jsonify({'error': f'No valid packing list data found in {container_number}'}), 400
         
@@ -1713,13 +1707,11 @@ def boat_packslip(container_number):
             if style not in style_carton_totals:
                 style_carton_totals[style] = 0
             style_carton_totals[style] += num_cartons
-            current_app.logger.info(f"Style {style}: adding {num_cartons} cartons, total now = {style_carton_totals[style]}")
         
         # Fill in Total Boxes for each item using the summed carton count
         for item in packslip_data:
             style = item['Style']
             item['Total Boxes'] = style_carton_totals.get(style, 0)
-            current_app.logger.info(f"Item {style} {item['SKU']}: Total Boxes = {item['Total Boxes']}")
         
         # Create output Excel file using openpyxl for merged cells
         from openpyxl import Workbook

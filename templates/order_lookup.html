@@ -686,6 +686,21 @@
                         </span>
                     </div>
                     <div class="info-row">
+                        <span class="info-label"><i class="fas fa-file-invoice mr-2"></i>Invoice #:</span>
+                        <span class="info-value">
+                            {% if header_info.invoice_number and header_info.invoice_number != 'not invoiced' %}
+                                <a href="{{ url_for('invoice_lookup.invoice_lookup', invoice_number=header_info.invoice_number) }}" 
+                                   target="_blank" 
+                                   style="color: #4a90e2; text-decoration: none; font-weight: 600; transition: all 0.3s;">
+                                    {{ header_info.invoice_number }}
+                                    <i class="fas fa-external-link-alt ml-1" style="font-size: 0.85em;"></i>
+                                </a>
+                            {% else %}
+                                {{ header_info.invoice_number or 'not invoiced' }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
                         <span class="info-label"><i class="fas fa-file-alt mr-2"></i>PO:</span>
                         <span class="info-value">{{ header_info.po_number or 'N/A' }}</span>
                     </div>

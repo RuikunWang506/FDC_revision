@@ -208,10 +208,13 @@ def search_images():
     if not sku:
         return jsonify({'error': 'SKU parameter is required'}), 400
     
-    # Log the search
-    user = session.get('username')
+    # Log the search - use actual username if logged in, otherwise tk_user
+    username = session.get('username')
     tk_user = session.get('tk_user', False)
-    if tk_user:
+    
+    if username:
+        log_event('info', f"***{username.upper()}***__@@@searched image for SKU@@@__ {sku}")
+    elif tk_user:
         log_event('info', f"***TK_USER***__@@@searched image for SKU@@@__ {sku}")
     
     try:
@@ -229,9 +232,14 @@ def fetch_china_ftp():
     if not sku:
         return jsonify({'error': 'SKU parameter is required'}), 400
     
-    # Log the fetch
-    user = session.get('username', 'Unknown')
-    log_event('info', f"***{user.upper()}***__@@@fetched China FTP images for SKU@@@__ {sku}")
+    # Log the fetch - use actual username if logged in, otherwise tk_user
+    username = session.get('username')
+    tk_user = session.get('tk_user', False)
+    
+    if username:
+        log_event('info', f"***{username.upper()}***__@@@fetched China FTP images for SKU@@@__ {sku}")
+    elif tk_user:
+        log_event('info', f"***TK_USER***__@@@fetched China FTP images for SKU@@@__ {sku}")
     
     sku_upper = sku.upper()
     
@@ -257,12 +265,31 @@ def fetch_china_ftp():
             if error:
                 log_event('error', f"SSH Error for SKU {sku_upper}: {error}")
             
+            # Get all existing big_picture images for this SKU to check for duplicates
+            db = py.utilities.models.SessionLocal()
+            existing_big_picture = {}
+            try:
+                existing_assets = db.query(py.utilities.models.ImageAsset).filter(
+                    py.utilities.models.ImageAsset.sku == sku_upper,
+                    py.utilities.models.ImageAsset.source == 'big_picture',
+                    py.utilities.models.ImageAsset.is_active == True
+                ).all()
+                for asset in existing_assets:
+                    existing_big_picture[asset.filename] = True
+            finally:
+                db.close()
+            
             # Parse output (skip header, split lines)
             lines = output.strip().split('\n')[2:]  # Skip "FullName" and "--------"
             for line in lines:
                 if line.strip():
                     remote_path = line.strip()
                     filename = os.path.basename(remote_path)
+                    # Convert Windows path to URL-encoded format
+                    from urllib.parse import quote
+                    encoded_path = quote(remote_path)
+                    # Check if already synced
+                    already_synced = filename in existing_big_picture
                     # Create asset_info-like dict
                     asset_info = {
                         'id': None,  # No DB ID
@@ -274,13 +301,14 @@ def fetch_china_ftp():
                         'height': None,
                         'is_canonical': False,
                         'created_at': None,
-                        'url': f'/china_ftp_image?path={remote_path}&size=800',  # Thumbnail
-                        'full_url': f'/china_ftp_image?path={remote_path}&size=2000',  # Full
-                        'original_url': f'/china_ftp_image?path={remote_path}&size=0',  # Original
+                        'url': f'/china_ftp_image?path={encoded_path}&size=800',  # Thumbnail
+                        'full_url': f'/china_ftp_image?path={encoded_path}&size=2000',  # Full
+                        'original_url': f'/china_ftp_image?path={encoded_path}&size=0',  # Original
                         'directory': os.path.dirname(remote_path),
                         'relative_path': remote_path.replace(remote_base_path, '').lstrip('\\'),
                         'file_path': remote_path,
-                        'file_size': None
+                        'file_size': None,
+                        'already_synced': already_synced
                     }
                     china_ftp_images.append(asset_info)
             
@@ -294,6 +322,82 @@ def fetch_china_ftp():
         log_event('error', f"Fetch China FTP API Error for SKU {sku}: {str(e)}")
         return jsonify({'error': f'Fetch failed: {str(e)}'}), 500
 
+@master_image_viewer_bp.route('/api/delete_images', methods=['POST'])
+def delete_images():
+    """API endpoint to batch delete images from catalog (database)"""
+    # Only allow logged in internal users (not tk_user)
+    username = session.get('username')
+    tk_user = session.get('tk_user', False)
+    
+    # Allow if user has a username AND is not using tk_user password
+    if not username:
+        return jsonify({'error': 'Unauthorized - must be logged in'}), 403
+    
+    # If user only used ucandoit password (tk_user=True, no username), deny
+    if tk_user and not username:
+        return jsonify({'error': 'Unauthorized - TK users cannot delete images'}), 403
+    
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    images = data.get('images', [])
+    if not images:
+        return jsonify({'error': 'No images provided'}), 400
+    
+    try:
+        db = py.utilities.models.SessionLocal()
+        deleted_count = 0
+        failed_images = []
+        
+        for img in images:
+            asset_id = img.get('id')
+            filename = img.get('filename', 'unknown')
+            
+            # Skip images without an ID (like china_ftp images)
+            if not asset_id:
+                failed_images.append({'filename': filename, 'reason': 'No database ID (external image)'})
+                continue
+            
+            try:
+                # Find the asset by ID
+                asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                    id=asset_id,
+                    is_active=True
+                ).first()
+                
+                if not asset:
+                    failed_images.append({'filename': filename, 'reason': 'Asset not found or already deleted'})
+                    continue
+                
+                # Soft delete: mark as inactive and set deleted_at timestamp
+                from datetime import datetime
+                asset.is_active = False
+                asset.deleted_at = datetime.utcnow()
+                
+                deleted_count += 1
+                log_event('info', f"***{username.upper()}***__@@@deleted image@@@__ {filename} (ID: {asset_id})")
+                
+            except Exception as e:
+                failed_images.append({'filename': filename, 'reason': str(e)})
+                current_app.logger.error(f"Error deleting image {filename} (ID: {asset_id}): {e}")
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'deleted_count': deleted_count,
+            'failed_images': failed_images,
+            'message': f'Successfully deleted {deleted_count} image(s)'
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        current_app.logger.error(f"Error in batch delete: {e}")
+        return jsonify({'error': f'Batch delete failed: {str(e)}'}), 500
+    finally:
+        db.close()
+
 @master_image_viewer_bp.route('/china_ftp_image')
 def china_ftp_image():
     """Serve images from remote China FTP via SFTP"""
@@ -305,6 +409,10 @@ def china_ftp_image():
         return jsonify({'error': 'Path required'}), 400
     
     try:
+        # URL decode the path
+        from urllib.parse import unquote
+        remote_path = unquote(remote_path)
+        
         # SFTP connection using paramiko
         transport = paramiko.Transport(('219.135.198.130', 22))
         transport.connect(username='fdc', password='Bst@93109310')
@@ -344,6 +452,161 @@ def china_ftp_image():
     except Exception as e:
         current_app.logger.error(f"China FTP image: Failed to fetch {remote_path}: {str(e)}")
         return jsonify({'error': f'Failed to fetch image: {str(e)}'}), 500
+
+
+@master_image_viewer_bp.route('/api/sync_china_image', methods=['POST'])
+@login_required
+def sync_china_image():
+    """Sync a China FTP image to big_picture folder and add to database"""
+    try:
+        data = request.json
+        sku = data.get('sku', '').strip().upper()
+        filename = data.get('filename', '').strip()
+        image_url = data.get('image_url', '').strip()
+        
+        if not sku or not filename:
+            return jsonify({'error': 'SKU and filename are required'}), 400
+        
+        # Extract the remote path from the image URL
+        # URL format: /china_ftp_image?path=/Individual_big_picture/...&size=0
+        import urllib.parse
+        parsed = urllib.parse.urlparse(image_url)
+        query_params = urllib.parse.parse_qs(parsed.query)
+        remote_path = query_params.get('path', [None])[0]
+        
+        if not remote_path:
+            return jsonify({'error': 'Invalid image URL'}), 400
+        
+        # URL decode the path (it comes URL-encoded)
+        remote_path = urllib.parse.unquote(remote_path)
+        
+        # Download image from China FTP
+        transport = paramiko.Transport(('219.135.198.130', 22))
+        transport.connect(username='fdc', password='Bst@93109310')
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        
+        # Download to memory
+        buffer = io.BytesIO()
+        sftp.getfo(remote_path, buffer)
+        buffer.seek(0)
+        sftp.close()
+        transport.close()
+        
+        # Save to big_picture folder
+        big_picture_base = r'D:\Individual_big_picture'
+        sku_folder = os.path.join(big_picture_base, sku)
+        os.makedirs(sku_folder, exist_ok=True)
+        
+        # Save file
+        local_path = os.path.join(sku_folder, filename)
+        with open(local_path, 'wb') as f:
+            f.write(buffer.getvalue())
+        
+        current_app.logger.info(f"Synced China FTP image {filename} to {local_path}")
+        
+        # Calculate SHA256 hash
+        import hashlib
+        sha256_hash = hashlib.sha256()
+        with open(local_path, 'rb') as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        file_hash = sha256_hash.hexdigest()
+        
+        # Get file size
+        file_size = os.path.getsize(local_path)
+        
+        # Add to database using ImageAsset model
+        from PIL import Image
+        img = Image.open(local_path)
+        width, height = img.size
+        
+        db = py.utilities.models.SessionLocal()
+        try:
+            # Check if image already exists in big_picture source
+            existing = db.query(py.utilities.models.ImageAsset).filter(
+                py.utilities.models.ImageAsset.sku == sku,
+                py.utilities.models.ImageAsset.source == 'big_picture',
+                py.utilities.models.ImageAsset.filename == filename,
+                py.utilities.models.ImageAsset.is_active == True
+            ).first()
+            
+            if existing:
+                current_app.logger.info(f"Image {filename} already exists in database for SKU {sku}")
+                return jsonify({
+                    'message': f'Image {filename} synced successfully (already in database)',
+                    'sku': sku,
+                    'filename': filename
+                }), 200
+            
+            # Get current max version for this SKU in big_picture
+            max_version = db.query(py.utilities.models.ImageAsset).filter(
+                py.utilities.models.ImageAsset.sku == sku,
+                py.utilities.models.ImageAsset.source == 'big_picture'
+            ).count()
+            
+            # Create new asset record
+            new_asset = py.utilities.models.ImageAsset(
+                sku=sku,
+                source='big_picture',
+                filename=filename,
+                path=local_path,
+                sha256=file_hash,
+                file_size=file_size,
+                width=width,
+                height=height,
+                version=max_version + 1,
+                is_active=True,
+                is_canonical=False
+            )
+            
+            db.add(new_asset)
+            db.commit()
+            
+            # Get username for logging
+            username = None
+            if hasattr(session, 'get'):
+                username = session.get('username')
+            if not username:
+                from flask_login import current_user
+                if current_user and current_user.is_authenticated:
+                    username = current_user.username
+            
+            log_event('image_sync', {
+                'sku': sku,
+                'filename': filename,
+                'source': 'china_ftp',
+                'target': 'big_picture',
+                'path': local_path,
+                'user': username or 'tk_user'
+            })
+            
+            current_app.logger.info(f"Added {filename} to database for SKU {sku} (version {max_version + 1})")
+            
+            return jsonify({
+                'message': f'Image {filename} synced successfully to Product Images',
+                'sku': sku,
+                'filename': filename,
+                'version': max_version + 1
+            }), 200
+            
+        finally:
+            db.close()
+            
+    except paramiko.AuthenticationException as e:
+        current_app.logger.error(f"Sync failed - Authentication error: {str(e)}")
+        return jsonify({'error': f'Authentication failed: {str(e)}'}), 500
+    except paramiko.SSHException as e:
+        current_app.logger.error(f"Sync failed - SSH error: {str(e)}")
+        return jsonify({'error': f'SSH connection failed: {str(e)}'}), 500
+    except FileNotFoundError as e:
+        current_app.logger.error(f"Sync failed - File not found: {str(e)}")
+        return jsonify({'error': f'File not found: {str(e)}'}), 404
+    except Exception as e:
+        current_app.logger.error(f"Sync failed: {str(e)}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': f'Sync failed: {str(e)}'}), 500
+
 
 # Image serving is now handled by the DAM system at /image/{asset_id}/{size}
  
