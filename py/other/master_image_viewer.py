@@ -5,12 +5,86 @@ from py.utilities.logging_setup import log_event
 import paramiko
 import io
 import os
+import json
+import copy
 import zipfile
+import threading
+import uuid
+import hashlib
+from datetime import datetime
+from urllib.parse import quote
 
 master_image_viewer_bp = Blueprint('master_image_viewer', __name__)
 
 # TK/external user password (simple hardcoded for demo)
 TK_PASSWORD = 'ucandoit'
+
+# Global task status tracking for background China FTP fetches
+background_tasks = {}
+background_tasks_lock = threading.Lock()
+
+BATCH_TASK_LOG_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'china_batch_logs')
+)
+os.makedirs(BATCH_TASK_LOG_DIR, exist_ok=True)
+
+
+def _utc_now_iso():
+    return datetime.utcnow().isoformat() + 'Z'
+
+
+def _safe_write_json(file_path, payload):
+    tmp_path = f"{file_path}.tmp"
+    with open(tmp_path, 'w', encoding='utf-8') as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_path, file_path)
+
+
+def _persist_batch_task_snapshot(task_id, task_data):
+    if not task_id or not isinstance(task_data, dict):
+        return
+
+    snapshot = copy.deepcopy(task_data)
+    snapshot['task_id'] = task_id
+    snapshot['saved_at'] = _utc_now_iso()
+
+    task_file = os.path.join(BATCH_TASK_LOG_DIR, f'batch_task_{task_id}.json')
+    latest_file = os.path.join(BATCH_TASK_LOG_DIR, 'latest_batch_task.json')
+
+    try:
+        _safe_write_json(task_file, snapshot)
+        _safe_write_json(latest_file, snapshot)
+    except Exception as e:
+        log_event('error', f"Failed to persist batch task snapshot {task_id}: {str(e)}")
+
+
+def _load_batch_task_snapshot(task_id):
+    if not task_id:
+        return None
+
+    task_file = os.path.join(BATCH_TASK_LOG_DIR, f'batch_task_{task_id}.json')
+    if not os.path.exists(task_file):
+        return None
+
+    try:
+        with open(task_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        log_event('error', f"Failed to load batch task snapshot {task_id}: {str(e)}")
+        return None
+
+
+def _load_latest_batch_snapshot():
+    latest_file = os.path.join(BATCH_TASK_LOG_DIR, 'latest_batch_task.json')
+    if not os.path.exists(latest_file):
+        return None
+
+    try:
+        with open(latest_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        log_event('error', f"Failed to load latest batch task snapshot: {str(e)}")
+        return None
 
 def find_images_by_sku(sku):
     """Find all images related to a SKU using the DAM system, filesystem, and remote China FTP"""
@@ -40,9 +114,12 @@ def find_images_by_sku(sku):
         
         import os
         for asset in assets:
-            # Skip if file does not exist (for assets with a local path)
+            # Skip if file does not exist (only for local paths, not remote China FTP paths)
             if hasattr(asset, 'path') and asset.path:
-                if not os.path.exists(asset.path):
+                # Don't skip remote paths (Windows UNC paths like D:\... from China FTP server)
+                # Only skip if it looks like a local path and doesn't exist
+                is_remote = asset.path.startswith('\\\\') or (len(asset.path) > 1 and asset.path[1] == ':' and asset.source == 'big_picture')
+                if not is_remote and not os.path.exists(asset.path):
                     continue
             # Extract directory information for better organization
             directory = None
@@ -61,6 +138,15 @@ def find_images_by_sku(sku):
                         break
                 if not relative_path and directory:
                     relative_path = os.path.basename(directory)
+
+            # Use China FTP streaming endpoint when big_picture path is remote/non-local.
+            use_china_ftp_endpoint = False
+            if getattr(asset, 'source', None) == 'big_picture' and getattr(asset, 'path', None):
+                path_value = asset.path
+                is_windows_like = path_value.startswith('\\\\') or (len(path_value) > 1 and path_value[1] == ':')
+                if is_windows_like and not os.path.exists(path_value):
+                    use_china_ftp_endpoint = True
+            
             asset_info = {
                 'id': asset.id,
                 'sku': asset.sku,
@@ -71,9 +157,9 @@ def find_images_by_sku(sku):
                 'height': asset.height,
                 'is_canonical': asset.is_canonical,
                 'created_at': asset.created_at.isoformat() if asset.created_at else None,
-                'url': f'/image/{asset.id}/800',
-                'full_url': f'/image/{asset.id}/2000',
-                'original_url': f'/image/{asset.id}/0',
+                'url': f'/china_ftp_image/{asset.id}/800' if use_china_ftp_endpoint else f'/image/{asset.id}/800',
+                'full_url': f'/china_ftp_image/{asset.id}/2000' if use_china_ftp_endpoint else f'/image/{asset.id}/2000',
+                'original_url': f'/china_ftp_image/{asset.id}/0' if use_china_ftp_endpoint else f'/image/{asset.id}/0',
                 'directory': directory,
                 'relative_path': relative_path,
                 'file_path': asset.path if hasattr(asset, 'path') else None,
@@ -322,87 +408,719 @@ def fetch_china_ftp():
         log_event('error', f"Fetch China FTP API Error for SKU {sku}: {str(e)}")
         return jsonify({'error': f'Fetch failed: {str(e)}'}), 500
 
-@master_image_viewer_bp.route('/api/delete_images', methods=['POST'])
-def delete_images():
-    """API endpoint to batch delete images from catalog (database)"""
-    # Only allow logged in internal users (not tk_user)
+
+def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progress_callback=None):
+    """Background task to fetch and sync China FTP images."""
+
+    def _notify_progress():
+        if not callable(progress_callback):
+            return
+        try:
+            with background_tasks_lock:
+                snapshot = dict(background_tasks.get(task_id, {}))
+            progress_callback(snapshot)
+        except Exception as cb_error:
+            log_event('error', f"Progress callback error for task {task_id}: {str(cb_error)}")
+
+    def _update_task(fields):
+        with background_tasks_lock:
+            task = background_tasks.setdefault(task_id, {})
+            task.update(fields)
+            task['updated_at'] = _utc_now_iso()
+        _notify_progress()
+
+    try:
+        _update_task({
+            'status': 'fetching',
+            'current': 0,
+            'total': 0,
+            'to_sync': 0,
+            'current_sync_index': 0,
+            'current_filename': None,
+            'synced': 0,
+            'failed': 0,
+            'already_synced': 0,
+            'error': None,
+            'started_at': _utc_now_iso(),
+            'finished_at': None
+        })
+
+        sku_upper = sku.upper()
+
+        # Fetch images from China FTP
+        china_ftp_images = []
+        try:
+            ssh_host = '219.135.198.130'
+            ssh_user = 'fdc'
+            ssh_password = 'Bst@93109310'
+
+            ssh_client = paramiko.SSHClient()
+            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh_client.connect(ssh_host, username=ssh_user, password=ssh_password)
+
+            remote_base_path = 'D:\\\\BST\\\\BST_PIC\\\\BSTpic2\\\\梁佳怡'
+            command = f"powershell -command \"Get-ChildItem -Path '{remote_base_path}' -Recurse -File -Filter '{sku_upper}*' | Select-Object FullName\""
+            stdin, stdout, stderr = ssh_client.exec_command(command)
+            output = stdout.read().decode('gbk', errors='ignore')
+
+            # Parse output
+            lines = output.strip().split('\n')[2:]
+
+            db = py.utilities.models.SessionLocal()
+            try:
+                existing_big_picture = {}
+                existing_assets = db.query(py.utilities.models.ImageAsset).filter(
+                    py.utilities.models.ImageAsset.sku == sku_upper,
+                    py.utilities.models.ImageAsset.source == 'big_picture',
+                    py.utilities.models.ImageAsset.is_active == True
+                ).all()
+                for asset in existing_assets:
+                    existing_big_picture[asset.filename] = True
+            finally:
+                db.close()
+
+            for line in lines:
+                if line.strip():
+                    remote_path = line.strip()
+                    filename = os.path.basename(remote_path)
+                    already_synced = filename in existing_big_picture
+
+                    asset_info = {
+                        'id': None,
+                        'sku': sku_upper,
+                        'version': None,
+                        'filename': filename,
+                        'source': 'china_ftp',
+                        'width': None,
+                        'height': None,
+                        'is_canonical': False,
+                        'created_at': None,
+                        'directory': os.path.dirname(remote_path),
+                        'relative_path': remote_path.replace(remote_base_path, '').lstrip('\\\\'),
+                        'file_path': remote_path,
+                        'file_size': None,
+                        'already_synced': already_synced
+                    }
+                    china_ftp_images.append(asset_info)
+
+            ssh_client.close()
+        except Exception as e:
+            log_event('error', f"China FTP fetch error for SKU {sku_upper}: {str(e)}")
+            _update_task({'status': 'error', 'error': str(e), 'finished_at': _utc_now_iso()})
+            return
+
+        # Update fetching progress
+        _update_task({'total': len(china_ftp_images), 'current': len(china_ftp_images)})
+
+        # Start syncing phase
+        images_to_sync = [img for img in china_ftp_images if not img['already_synced']]
+        already_synced_count = len(china_ftp_images) - len(images_to_sync)
+
+        _update_task({
+            'status': 'syncing',
+            'to_sync': len(images_to_sync),
+            'already_synced': already_synced_count,
+            'synced': 0,
+            'failed': 0,
+            'current_sync_index': 0,
+            'current_filename': None
+        })
+
+        # Sync images one by one
+        synced_count = 0
+        failed_count = 0
+
+        # Create local cache directory if it doesn't exist
+        cache_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'china_ftp_downloads')
+        os.makedirs(cache_dir, exist_ok=True)
+
+        for idx, image in enumerate(images_to_sync, start=1):
+            filename = image['filename']
+            _update_task({'current_sync_index': idx, 'current_filename': filename})
+
+            try:
+                # Download image from remote server and cache locally
+                remote_path = image.get('file_path')
+                local_cache_path = os.path.join(cache_dir, f"{sku_upper}_{filename}")
+
+                try:
+                    # Download from SFTP
+                    transport = paramiko.Transport(('219.135.198.130', 22))
+                    transport.connect(username='fdc', password='Bst@93109310')
+                    sftp = paramiko.SFTPClient.from_transport(transport)
+
+                    # Download file to local cache
+                    sftp.get(remote_path, local_cache_path)
+                    sftp.close()
+                    transport.close()
+
+                    # Verify file was downloaded
+                    if not os.path.exists(local_cache_path):
+                        failed_count += 1
+                        log_event('error', f"Failed to download China FTP image {filename} - file not found after download")
+                        _update_task({'synced': synced_count, 'failed': failed_count})
+                        continue
+
+                    # Now create database record with local path
+                    try:
+                        from py.utilities.models import ImageAsset
+                        db_session = py.utilities.models.SessionLocal()
+
+                        # Check again if image already exists to avoid duplicates
+                        existing = db_session.query(ImageAsset).filter(
+                            ImageAsset.sku == image['sku'],
+                            ImageAsset.filename == image['filename'],
+                            ImageAsset.source == 'big_picture'
+                        ).first()
+
+                        if not existing:
+                            # Calculate real sha256 hash from the downloaded file
+                            with open(local_cache_path, 'rb') as f:
+                                sha256_hash = hashlib.sha256(f.read()).hexdigest()
+
+                            # Create new image asset with LOCAL path
+                            new_asset = ImageAsset(
+                                sku=image['sku'],
+                                source='big_picture',
+                                filename=image['filename'],
+                                path=local_cache_path,
+                                sha256=sha256_hash,
+                                version=1,
+                                width=image.get('width'),
+                                height=image.get('height'),
+                                is_canonical=False,
+                                is_active=True
+                            )
+                            db_session.add(new_asset)
+                            db_session.commit()
+
+                        db_session.close()
+                        synced_count += 1
+                    except Exception as e:
+                        failed_count += 1
+                        log_event('error', f"Failed to sync image {filename} to database: {str(e)}")
+                        # Clean up downloaded file if sync failed
+                        if os.path.exists(local_cache_path):
+                            try:
+                                os.remove(local_cache_path)
+                            except Exception:
+                                pass
+
+                except Exception as e:
+                    failed_count += 1
+                    log_event('error', f"Failed to download China FTP image {filename}: {str(e)}")
+
+            except Exception:
+                failed_count += 1
+
+            _update_task({'synced': synced_count, 'failed': failed_count})
+
+        # Mark as completed
+        _update_task({
+            'status': 'completed',
+            'synced': synced_count,
+            'failed': failed_count,
+            'finished_at': _utc_now_iso()
+        })
+
+        # Log completion
+        if username:
+            log_event('info', f"***{username.upper()}***__@@@completed background China FTP fetch for SKU@@@__ {sku_upper} (Synced: {synced_count}, Failed: {failed_count})")
+        elif tk_user:
+            log_event('info', f"***TK_USER***__@@@completed background China FTP fetch for SKU@@@__ {sku_upper} (Synced: {synced_count}, Failed: {failed_count})")
+
+    except Exception as e:
+        _update_task({'status': 'error', 'error': str(e), 'finished_at': _utc_now_iso()})
+        log_event('error', f"Background China FTP fetch error for task {task_id}: {str(e)}")
+
+
+@master_image_viewer_bp.route('/api/fetch_china_ftp_async', methods=['POST'])
+def fetch_china_ftp_async():
+    """Start a background task to fetch and sync China FTP images"""
+    sku = request.args.get('sku', '').strip()
+    
+    if not sku:
+        return jsonify({'error': 'SKU parameter is required'}), 400
+    
     username = session.get('username')
     tk_user = session.get('tk_user', False)
     
+    # Create unique task ID
+    task_id = str(uuid.uuid4())[:8]
+    
+    # Start background thread
+    thread = threading.Thread(
+        target=background_china_ftp_fetch,
+        args=(task_id, sku, username, tk_user)
+    )
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({'task_id': task_id, 'sku': sku})
+
+
+@master_image_viewer_bp.route('/api/china_ftp_task_status')
+def china_ftp_task_status():
+    """Get the status of a background China FTP fetch task"""
+    task_id = request.args.get('task_id', '').strip()
+    
+    if not task_id:
+        return jsonify({'error': 'task_id parameter is required'}), 400
+    
+    with background_tasks_lock:
+        status = background_tasks.get(task_id)
+    
+    if not status:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    return jsonify(status)
+
+
+# Global storage for batch tasks
+batch_tasks = {}
+batch_tasks_lock = threading.Lock()
+
+
+def _persist_batch_task_by_id(task_id):
+    with batch_tasks_lock:
+        task_snapshot = copy.deepcopy(batch_tasks.get(task_id))
+    if task_snapshot:
+        _persist_batch_task_snapshot(task_id, task_snapshot)
+
+
+def _sort_task_candidates(candidates):
+    def sort_key(item):
+        task = item[1]
+        return task.get('updated_at') or task.get('started_at') or ''
+
+    return sorted(candidates, key=sort_key, reverse=True)
+
+
+def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False):
+    """Background task to fetch and sync China FTP images for multiple SKUs."""
+    try:
+        started_at = _utc_now_iso()
+        with batch_tasks_lock:
+            batch_tasks[task_id] = {
+                'status': 'running',
+                'total': len(skus),
+                'completed': 0,
+                'results': [],
+                'error': None,
+                'current_index': 0,
+                'current_sku': None,
+                'current_stage': 'starting',
+                'current_style': None,
+                'started_at': started_at,
+                'updated_at': started_at,
+                'finished_at': None,
+                'summary': {
+                    'synced': 0,
+                    'failed': 0,
+                    'already_synced': 0
+                }
+            }
+        _persist_batch_task_by_id(task_id)
+
+        for idx, sku in enumerate(skus, start=1):
+            sku_upper = str(sku).strip().upper()
+
+            with batch_tasks_lock:
+                task = batch_tasks[task_id]
+                task['current_index'] = idx
+                task['current_sku'] = sku_upper if sku_upper else None
+                task['current_stage'] = 'preparing'
+                task['current_style'] = {
+                    'sku': sku_upper,
+                    'status': 'preparing',
+                    'current': 0,
+                    'total': 0,
+                    'to_sync': 0,
+                    'synced': 0,
+                    'failed': 0,
+                    'already_synced': 0
+                }
+                task['updated_at'] = _utc_now_iso()
+            _persist_batch_task_by_id(task_id)
+
+            if not sku_upper:
+                with batch_tasks_lock:
+                    task = batch_tasks[task_id]
+                    task['results'].append({
+                        'sku': '',
+                        'count': 0,
+                        'synced': 0,
+                        'already_synced': 0,
+                        'total_found': 0,
+                        'to_sync': 0,
+                        'failed': 0,
+                        'status': 'skipped'
+                    })
+                    task['completed'] += 1
+                    task['current_stage'] = 'skipped'
+                    task['updated_at'] = _utc_now_iso()
+                _persist_batch_task_by_id(task_id)
+                continue
+
+            single_task_id = f"{task_id}_{idx}"
+
+            def _single_progress_callback(single_status):
+                with batch_tasks_lock:
+                    task = batch_tasks.get(task_id)
+                    if not task:
+                        return
+                    task['current_index'] = idx
+                    task['current_sku'] = sku_upper
+                    task['current_stage'] = single_status.get('status', 'running')
+                    task['current_style'] = {
+                        'sku': sku_upper,
+                        'status': single_status.get('status', 'running'),
+                        'current': int(single_status.get('current_sync_index', 0) or 0),
+                        'total': int(single_status.get('total', 0) or 0),
+                        'to_sync': int(single_status.get('to_sync', 0) or 0),
+                        'synced': int(single_status.get('synced', 0) or 0),
+                        'failed': int(single_status.get('failed', 0) or 0),
+                        'already_synced': int(single_status.get('already_synced', 0) or 0),
+                        'current_filename': single_status.get('current_filename')
+                    }
+                    task['updated_at'] = _utc_now_iso()
+                _persist_batch_task_by_id(task_id)
+
+            try:
+                # Reuse the existing single-SKU background fetch/sync implementation.
+                background_china_ftp_fetch(
+                    single_task_id,
+                    sku_upper,
+                    username,
+                    tk_user,
+                    progress_callback=_single_progress_callback
+                )
+                with background_tasks_lock:
+                    single_status = dict(background_tasks.get(single_task_id, {}))
+
+                single_result_status = single_status.get('status', 'completed')
+                display_status = 'completed' if single_result_status == 'completed' else 'failed'
+
+                synced = int(single_status.get('synced', 0) or 0)
+                failed = int(single_status.get('failed', 0) or 0)
+                already_synced = int(single_status.get('already_synced', 0) or 0)
+                total_found = int(single_status.get('total', 0) or 0)
+                to_sync = int(single_status.get('to_sync', 0) or 0)
+
+                with batch_tasks_lock:
+                    task = batch_tasks[task_id]
+                    task['results'].append({
+                        'sku': sku_upper,
+                        'count': synced,
+                        'synced': synced,
+                        'failed': failed,
+                        'already_synced': already_synced,
+                        'total_found': total_found,
+                        'to_sync': to_sync,
+                        'status': display_status,
+                        'raw_status': single_result_status,
+                        'finished_at': _utc_now_iso()
+                    })
+                    task['completed'] += 1
+                    task['summary']['synced'] += synced
+                    task['summary']['failed'] += failed
+                    task['summary']['already_synced'] += already_synced
+                    task['current_stage'] = display_status
+                    task['updated_at'] = _utc_now_iso()
+                _persist_batch_task_by_id(task_id)
+            except Exception as e:
+                with batch_tasks_lock:
+                    task = batch_tasks[task_id]
+                    task['results'].append({
+                        'sku': sku_upper,
+                        'count': 0,
+                        'synced': 0,
+                        'failed': 0,
+                        'status': 'failed',
+                        'error': str(e),
+                        'finished_at': _utc_now_iso()
+                    })
+                    task['completed'] += 1
+                    task['current_stage'] = 'failed'
+                    task['updated_at'] = _utc_now_iso()
+                _persist_batch_task_by_id(task_id)
+            finally:
+                with background_tasks_lock:
+                    background_tasks.pop(single_task_id, None)
+
+        with batch_tasks_lock:
+            batch_tasks[task_id]['status'] = 'completed'
+            batch_tasks[task_id]['current_stage'] = 'completed'
+            batch_tasks[task_id]['finished_at'] = _utc_now_iso()
+            batch_tasks[task_id]['updated_at'] = _utc_now_iso()
+        _persist_batch_task_by_id(task_id)
+
+        if username:
+            log_event('info', f"***{username.upper()}***__@@@completed batch China FTP fetch@@@__ task:{task_id} styles:{len(skus)}")
+        elif tk_user:
+            log_event('info', f"***TK_USER***__@@@completed batch China FTP fetch@@@__ task:{task_id} styles:{len(skus)}")
+    except Exception as e:
+        with batch_tasks_lock:
+            if task_id not in batch_tasks:
+                batch_tasks[task_id] = {
+                    'status': 'error',
+                    'total': len(skus),
+                    'completed': 0,
+                    'results': [],
+                    'error': str(e),
+                    'started_at': _utc_now_iso(),
+                    'updated_at': _utc_now_iso(),
+                    'finished_at': _utc_now_iso()
+                }
+            else:
+                batch_tasks[task_id]['status'] = 'error'
+                batch_tasks[task_id]['error'] = str(e)
+                batch_tasks[task_id]['finished_at'] = _utc_now_iso()
+                batch_tasks[task_id]['updated_at'] = _utc_now_iso()
+        _persist_batch_task_by_id(task_id)
+        log_event('error', f"Batch China FTP fetch failed for task {task_id}: {str(e)}")
+
+
+@master_image_viewer_bp.route('/api/batch_fetch_china_ftp', methods=['POST'])
+def batch_fetch_china_ftp():
+    """Start background batch fetch for multiple SKUs."""
+    data = request.get_json(silent=True) or {}
+    skus = data.get('skus', [])
+
+    if not isinstance(skus, list) or len(skus) == 0:
+        return jsonify({'error': 'No SKUs provided'}), 400
+
+    username = session.get('username')
+    tk_user = session.get('tk_user', False)
+    task_id = str(uuid.uuid4())[:8]
+
+    thread = threading.Thread(
+        target=background_batch_china_ftp_fetch,
+        args=(task_id, skus, username, tk_user)
+    )
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({'task_id': task_id, 'started_at': _utc_now_iso()})
+
+
+@master_image_viewer_bp.route('/api/batch_fetch_status')
+def batch_fetch_status():
+    """Get status of batch fetch task."""
+    task_id = request.args.get('task_id', '').strip()
+
+    if not task_id:
+        return jsonify({'error': 'task_id parameter is required'}), 400
+
+    with batch_tasks_lock:
+        status = copy.deepcopy(batch_tasks.get(task_id))
+
+    if not status:
+        status = _load_batch_task_snapshot(task_id)
+
+    if not status:
+        return jsonify({'error': 'Task not found'}), 404
+
+    status['task_id'] = task_id
+    return jsonify(status)
+
+
+@master_image_viewer_bp.route('/api/batch_fetch_latest')
+def batch_fetch_latest():
+    """Get latest running task, or the latest saved batch task snapshot."""
+    with batch_tasks_lock:
+        task_items = [(tid, copy.deepcopy(task)) for tid, task in batch_tasks.items()]
+
+    running_candidates = [
+        item for item in task_items
+        if item[1].get('status') in ('running', 'fetching', 'syncing')
+    ]
+
+    if running_candidates:
+        latest_id, latest_task = _sort_task_candidates(running_candidates)[0]
+        latest_task['task_id'] = latest_id
+        latest_task['is_running'] = True
+        return jsonify(latest_task)
+
+    if task_items:
+        latest_id, latest_task = _sort_task_candidates(task_items)[0]
+        latest_task['task_id'] = latest_id
+        latest_task['is_running'] = latest_task.get('status') in ('running', 'fetching', 'syncing')
+        return jsonify(latest_task)
+
+    latest_snapshot = _load_latest_batch_snapshot()
+    if latest_snapshot:
+        latest_snapshot['is_running'] = latest_snapshot.get('status') in ('running', 'fetching', 'syncing')
+        return jsonify(latest_snapshot)
+
+    return jsonify({'status': 'none', 'is_running': False})
+
+
+@master_image_viewer_bp.route('/api/delete_images', methods=['POST'])
+def delete_images():
+    """API endpoint to batch delete images from catalog (database)."""
+    # Only allow logged in internal users (not tk_user)
+    username = session.get('username')
+    tk_user = session.get('tk_user', False)
+
     # Allow if user has a username AND is not using tk_user password
     if not username:
         return jsonify({'error': 'Unauthorized - must be logged in'}), 403
-    
+
     # If user only used ucandoit password (tk_user=True, no username), deny
     if tk_user and not username:
         return jsonify({'error': 'Unauthorized - TK users cannot delete images'}), 403
-    
+
     data = request.get_json(force=True, silent=True)
     if not data:
         return jsonify({'error': 'No data provided'}), 400
-    
+
     images = data.get('images', [])
     if not images:
         return jsonify({'error': 'No images provided'}), 400
-    
+
+    db = None
     try:
         db = py.utilities.models.SessionLocal()
         deleted_count = 0
         failed_images = []
-        
+
         for img in images:
             asset_id = img.get('id')
             filename = img.get('filename', 'unknown')
-            
+
             # Skip images without an ID (like china_ftp images)
             if not asset_id:
                 failed_images.append({'filename': filename, 'reason': 'No database ID (external image)'})
                 continue
-            
+
             try:
                 # Find the asset by ID
                 asset = db.query(py.utilities.models.ImageAsset).filter_by(
                     id=asset_id,
                     is_active=True
                 ).first()
-                
+
                 if not asset:
                     failed_images.append({'filename': filename, 'reason': 'Asset not found or already deleted'})
                     continue
-                
+
                 # Soft delete: mark as inactive and set deleted_at timestamp
                 from datetime import datetime
                 asset.is_active = False
                 asset.deleted_at = datetime.utcnow()
-                
+
                 deleted_count += 1
                 log_event('info', f"***{username.upper()}***__@@@deleted image@@@__ {filename} (ID: {asset_id})")
-                
+
             except Exception as e:
                 failed_images.append({'filename': filename, 'reason': str(e)})
                 current_app.logger.error(f"Error deleting image {filename} (ID: {asset_id}): {e}")
-        
+
         db.commit()
-        
+
         return jsonify({
             'success': True,
             'deleted_count': deleted_count,
             'failed_images': failed_images,
             'message': f'Successfully deleted {deleted_count} image(s)'
         }), 200
-        
+
     except Exception as e:
-        db.rollback()
+        if db is not None:
+            db.rollback()
         current_app.logger.error(f"Error in batch delete: {e}")
         return jsonify({'error': f'Batch delete failed: {str(e)}'}), 500
     finally:
+        if db is not None:
+            db.close()
+
+@master_image_viewer_bp.route('/china_ftp_image/<int:asset_id>/<int:width>')
+def china_ftp_image_by_id(asset_id, width):
+    """Serve China FTP images by asset ID with optional resizing"""
+    try:
+        db = py.utilities.models.SessionLocal()
+        asset = db.query(py.utilities.models.ImageAsset).filter_by(
+            id=asset_id,
+            is_active=True
+        ).first()
+
+        if not asset:
+            return jsonify({'error': 'Asset not found'}), 404
+
+        # Check authentication - allow public access for big_picture sources
+        current_user = session.get('username')
+        tk_user = session.get('tk_user', False)
+        
+        if asset.source != 'big_picture':
+            if not current_user and not tk_user:
+                return jsonify({'error': 'Unauthorized'}), 403
+
+        remote_path = asset.path
+        if not remote_path:
+            return jsonify({'error': 'Image path not found'}), 404
+
+        try:
+            # SFTP connection using paramiko
+            transport = paramiko.Transport(('219.135.198.130', 22))
+            transport.connect(username='fdc', password='Bst@93109310')
+            sftp = paramiko.SFTPClient.from_transport(transport)
+
+            # Download to memory
+            buffer = io.BytesIO()
+            sftp.getfo(remote_path, buffer)
+            buffer.seek(0)
+            sftp.close()
+            transport.close()
+
+            # If width=0, serve original image
+            if width == 0:
+                filename = os.path.basename(remote_path).lower()
+                if filename.endswith('.png'):
+                    mimetype = 'image/png'
+                elif filename.endswith('.gif'):
+                    mimetype = 'image/gif'
+                elif filename.endswith('.bmp'):
+                    mimetype = 'image/bmp'
+                elif filename.endswith('.webp'):
+                    mimetype = 'image/webp'
+                else:
+                    mimetype = 'image/jpeg'
+                
+                return send_file(buffer, mimetype=mimetype)
+            
+            # Resize image on demand
+            try:
+                from PIL import Image
+                img = Image.open(buffer)
+                orig_width, orig_height = img.size
+                new_height = int((width / orig_width) * orig_height)  # Maintain aspect ratio
+                resized_img = img.resize((width, new_height), Image.LANCZOS)
+                resized_buffer = io.BytesIO()
+                resized_img.save(resized_buffer, format='JPEG')
+                resized_buffer.seek(0)
+                return send_file(resized_buffer, mimetype='image/jpeg')
+            except Exception as e:
+                current_app.logger.warning(f"Failed to resize China FTP image {asset_id}: {str(e)}, serving original")
+                buffer.seek(0)
+                return send_file(buffer, mimetype='image/jpeg')
+
+        except Exception as e:
+            current_app.logger.error(f"Failed to fetch China FTP image {asset_id}: {str(e)}")
+            return jsonify({'error': f'Failed to fetch image: {str(e)}'}), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Error serving China FTP image {asset_id}: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+    finally:
         db.close()
+
 
 @master_image_viewer_bp.route('/china_ftp_image')
 def china_ftp_image():
     """Serve images from remote China FTP via SFTP"""
     remote_path = request.args.get('path')
-    size = request.args.get('size', '0')  # 0 for original, or resize if needed
+    size = request.args.get('size', '0')  # Kept for URL compatibility
     
     if not remote_path:
         current_app.logger.error("China FTP image: No path provided")
@@ -412,22 +1130,19 @@ def china_ftp_image():
         # URL decode the path
         from urllib.parse import unquote
         remote_path = unquote(remote_path)
-        
+
         # SFTP connection using paramiko
         transport = paramiko.Transport(('219.135.198.130', 22))
         transport.connect(username='fdc', password='Bst@93109310')
         sftp = paramiko.SFTPClient.from_transport(transport)
-        
-        # Download to memory
+
+        # Download to memory and stream directly (no local cache/output files).
         buffer = io.BytesIO()
         sftp.getfo(remote_path, buffer)
         buffer.seek(0)
         sftp.close()
         transport.close()
-        
-        # If size != '0', resize using PIL (add import: from PIL import Image)
-        # For now, serve original
-        
+
         # Determine mimetype based on file extension
         filename = os.path.basename(remote_path).lower()
         if filename.endswith('.png'):
@@ -436,9 +1151,11 @@ def china_ftp_image():
             mimetype = 'image/gif'
         elif filename.endswith('.bmp'):
             mimetype = 'image/bmp'
+        elif filename.endswith('.webp'):
+            mimetype = 'image/webp'
         else:
-            mimetype = 'image/jpeg'  # Default to JPEG
-        
+            mimetype = 'image/jpeg'
+
         return send_file(buffer, mimetype=mimetype)
     except paramiko.AuthenticationException as e:
         current_app.logger.error(f"China FTP image: Authentication failed for {remote_path}: {str(e)}")

@@ -270,7 +270,7 @@
         <div class="mt-4">
             <div class="row mt-4">
                 <div class="col-md-12 text-center">
-                    <h3>Last Updated: <span id="lastUpdated">{{ last_modified_date }}</span> <a href="/container" class="btn btn-info" style="padding: 5px 10px; font-size: 12px; margin-left: 10px; border-radius: 5px;"><img src="/static/icons/container.png" alt="containers" style="width: 16px; height: 16px; margin-right: 5px;">Manual Process Container</a></h3>
+                    <h3>Last Updated: <span id="lastUpdated">{{ last_modified_date }}</span> <a href="/container" class="btn btn-info" style="padding: 5px 10px; font-size: 12px; margin-left: 10px; border-radius: 5px;"><img src="/static/icons/container.png" alt="containers" style="width: 16px; height: 16px; margin-right: 5px;">Manual Process Container</a> <button id="forcePackslipBtn" type="button" class="btn btn-outline-success" style="padding: 5px 10px; font-size: 12px; margin-left: 8px; border-radius: 5px;"><i class="bi bi-file-earmark-text"></i> Show Packslip</button></h3>
                 </div>
             </div>
             
@@ -335,6 +335,8 @@
 
     {% include 'footer.html' %}
       <script>
+          var forceShowPackslip = false;
+
           function formatDate(dateString) {
               // Return empty string for empty or invalid dates
               if (!dateString || dateString === 'NaT' || dateString === '') {
@@ -411,6 +413,29 @@
               window.location.href = '/boat/packslip/' + fdc_container;
           }
 
+          function applyForcePackslipButtons() {
+              $('#boatTableBody tr').each(function() {
+                  var container = $(this).attr('data-container') || '';
+                  if (!container) {
+                      return;
+                  }
+
+                  var filesCell = $(this).find('td').eq(6);
+                  if (!filesCell.length || filesCell.find('.packslip-btn').length > 0) {
+                      return;
+                  }
+
+                  var packslipBtn = $('<button class="btn btn-sm btn-success packslip-btn mr-1" data-container="' + container + '">Packslip</button>');
+                  var trackingBtn = filesCell.find('.tracking-btn').first();
+
+                  if (trackingBtn.length) {
+                      trackingBtn.before(packslipBtn);
+                  } else {
+                      filesCell.append(packslipBtn);
+                  }
+              });
+          }
+
           function loadBoatData() {
               $.ajax({
                   url: '/boat/data',
@@ -425,7 +450,7 @@
                           tbody.empty();
                           
                           response.data.forEach(function(row) {
-                              var tr = $('<tr></tr>');
+                              var tr = $('<tr></tr>').attr('data-container', row.container || '');
                               
                               // Container with link to item lookup
                               var containerHtml = '';
@@ -466,7 +491,7 @@
                                   filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
                                   filesHtml += '<a href="/boat/download/' + row.container + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
                                   filesHtml += '<a href="/boat/download/' + row.container + '/po" class="btn btn-sm btn-success mr-1" download>PO CSV</a>';
-                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
+                                  filesHtml += '<button class="btn btn-sm btn-danger redo-oms-btn" data-container="' + row.container + '">redo oms</button>';
                               } else if (row.can_process || row.Status === '🔄upload🔄') {
                                   // Can be processed or in upload status - show original + process button + tracking
                                   filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
@@ -491,6 +516,10 @@
                           
                           // Apply styling
                           applyRowStyling();
+
+                          if (forceShowPackslip) {
+                              applyForcePackslipButtons();
+                          }
                       } else {
                           $('#loadingSpinner').html('<div class="alert alert-danger">Error: ' + response.error + '</div>');
                       }
@@ -514,6 +543,7 @@
                           var downloadHtml = '<a href="/boat/download/' + fdc_container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
                           downloadHtml += '<a href="/boat/download/' + fdc_container + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
                           downloadHtml += '<a href="/boat/download/' + fdc_container + '/po" class="btn btn-sm btn-success" download>PO CSV</a>';
+                          downloadHtml += '<button class="btn btn-sm btn-danger redo-oms-btn ml-1" data-container="' + fdc_container + '">redo oms</button>';
                           $(button).parent().html(downloadHtml);
                           
                           alert('Successfully processed ' + fdc_container);
@@ -529,6 +559,28 @@
               });
           }
 
+          function redoOmsContainer(fdc_container, button) {
+              $(button).prop('disabled', true).text('Resetting...');
+
+              $.ajax({
+                  url: '/boat/redo_oms/' + fdc_container,
+                  method: 'POST',
+                  success: function(response) {
+                      if (response.success) {
+                          loadBoatData();
+                          alert('Redo OMS reset complete for ' + fdc_container + '. You can process again.');
+                      } else {
+                          alert('Error: ' + (response.error || 'Failed to reset OMS files'));
+                          $(button).prop('disabled', false).text('redo oms');
+                      }
+                  },
+                  error: function(xhr, status, error) {
+                      alert('Failed to reset OMS files: ' + error);
+                      $(button).prop('disabled', false).text('redo oms');
+                  }
+              });
+          }
+
           $(document).ready(function() {
               // Load data after page is rendered
               setTimeout(loadBoatData, 100);
@@ -537,6 +589,11 @@
               $(document).on('click', '.process-btn', function() {
                   var fdc_container = $(this).data('container');
                   processContainer(fdc_container, this);
+              });
+
+              $(document).on('click', '.redo-oms-btn', function() {
+                  var fdc_container = $(this).data('container');
+                  redoOmsContainer(fdc_container, this);
               });
               
               // Handle tracking button clicks (delegated event)
@@ -556,6 +613,17 @@
               $(document).on('click', '.packslip-btn', function() {
                   var fdc_container = $(this).data('container');
                   downloadPackslip(fdc_container);
+              });
+
+              // Force-show packslip buttons for all rows
+              $(document).on('click', '#forcePackslipBtn', function() {
+                  forceShowPackslip = true;
+                  applyForcePackslipButtons();
+                  $(this)
+                      .prop('disabled', true)
+                      .removeClass('btn-outline-success')
+                      .addClass('btn-success')
+                      .html('<i class="bi bi-check2-circle"></i> Packslip Shown');
               });
               
               // Handle Dennis ETA cell editing

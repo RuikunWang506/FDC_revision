@@ -288,6 +288,29 @@
             transform: translateX(-280px);
         }
 
+        #sidebarToggleBtn {
+            display: none;
+            position: fixed;
+            top: 78px;
+            left: 10px;
+            z-index: 1030;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            background: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        #sidebarToggleBtn.active {
+            background: #5568d3;
+        }
+
         .sidebar-header {
             padding: 15px 20px;
             font-size: 16px;
@@ -459,7 +482,11 @@
         }
 
         @media (max-width: 768px) { 
-            .product-sidebar { width: 260px; }
+            .product-sidebar {
+                width: 260px;
+                transform: translateX(-260px);
+            }
+            .product-sidebar.open { transform: translateX(0); }
             .main-content { margin-left: 0; }
             .product-details { grid-template-columns: 1fr; }
             #sidebarToggleBtn { display: flex; }
@@ -501,6 +528,17 @@
             border-color: #ff9800;
             box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
             transform: translateY(-1px);
+        }
+
+        .cost-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cost-toggle.hidden {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px dashed #9ca3af;
         }
 
         /* Editable Container for Location Badges */
@@ -598,6 +636,11 @@
         
         
     </aside>
+
+    <button id="sidebarToggleBtn" type="button" aria-label="Toggle filters sidebar" onclick="toggleMobileSidebar()">
+        <i class="fas fa-sliders-h"></i>
+        <span>Filters</span>
+    </button>
     {% endif %}
 
     <!-- Main Content -->
@@ -678,8 +721,32 @@
                                     </div>
                                     <!-- Right Column -->
                                     <div style="flex: 1;">
-                                        <div style="margin-bottom: 6px;">MSRP: <span class="sku-detail-badge">{% if style_group.parent_info.msrp %}${{ "%.2f" | format(style_group.parent_info.msrp) }}{% else %}N/A{% endif %}</span></div>
-                                        <div>Cost: <span class="sku-detail-badge">{% if style_group.parent_info.cost %}${{ "%.2f" | format(style_group.parent_info.cost) }}{% else %}N/A{% endif %}</span></div>
+                                        <div style="margin-bottom: 6px;">
+                                            MSRP:
+                                            {% if style_group.parent_info.msrp %}
+                                            <span
+                                                class="sku-detail-badge cost-toggle hidden"
+                                                data-hidden-text="Click"
+                                                data-value="${{ "%.2f" | format(style_group.parent_info.msrp) }}"
+                                                data-visible="false"
+                                                onclick="toggleCostDisplay(this)">Click</span>
+                                            {% else %}
+                                            <span class="sku-detail-badge">N/A</span>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            Cost:
+                                            {% if style_group.parent_info.cost %}
+                                            <span
+                                                class="sku-detail-badge cost-toggle hidden"
+                                                data-hidden-text="Click"
+                                                data-value="${{ "%.2f" | format(style_group.parent_info.cost) }}"
+                                                data-visible="false"
+                                                onclick="toggleCostDisplay(this)">Click</span>
+                                            {% else %}
+                                            <span class="sku-detail-badge">N/A</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -998,6 +1065,22 @@
             popup.style.display = 'flex';
         }
 
+        function toggleCostDisplay(element) {
+            const isVisible = element.getAttribute('data-visible') === 'true';
+            const value = element.getAttribute('data-value') || 'N/A';
+            const hiddenText = element.getAttribute('data-hidden-text') || 'Click to show';
+
+            if (isVisible) {
+                element.textContent = hiddenText;
+                element.setAttribute('data-visible', 'false');
+                element.classList.add('hidden');
+            } else {
+                element.textContent = value;
+                element.setAttribute('data-visible', 'true');
+                element.classList.remove('hidden');
+            }
+        }
+
         function closePopup(event) {
             if (event.target.id === 'imagePopup' || event.target.classList.contains('close-btn')) {
                 document.getElementById('imagePopup').style.display = 'none';
@@ -1304,6 +1387,62 @@
                     this.classList.toggle('active');
                     debouncedApplyFilters();  // Use debounced version
                 });
+            });
+        });
+
+        function setSidebarToggleButtonState(isOpen) {
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            if (!toggleBtn) return;
+
+            if (isOpen) {
+                toggleBtn.classList.add('active');
+                toggleBtn.innerHTML = '<i class="fas fa-times"></i><span>Close</span>';
+            } else {
+                toggleBtn.classList.remove('active');
+                toggleBtn.innerHTML = '<i class="fas fa-sliders-h"></i><span>Filters</span>';
+            }
+        }
+
+        function toggleMobileSidebar(forceOpen = null) {
+            const sidebar = document.getElementById('productSidebar');
+            if (!sidebar) return;
+
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (!isMobile) return;
+
+            const shouldOpen = forceOpen === null ? !sidebar.classList.contains('open') : forceOpen;
+            sidebar.classList.toggle('open', shouldOpen);
+            setSidebarToggleButtonState(shouldOpen);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('productSidebar');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            if (!sidebar || !toggleBtn) return;
+
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile) {
+                sidebar.classList.remove('open');
+                setSidebarToggleButtonState(false);
+            }
+
+            document.addEventListener('click', function(e) {
+                const currentlyMobile = window.matchMedia('(max-width: 768px)').matches;
+                if (!currentlyMobile) return;
+                if (!sidebar.classList.contains('open')) return;
+                if (sidebar.contains(e.target) || toggleBtn.contains(e.target)) return;
+
+                toggleMobileSidebar(false);
+            });
+
+            window.addEventListener('resize', function() {
+                const currentlyMobile = window.matchMedia('(max-width: 768px)').matches;
+                if (currentlyMobile) {
+                    sidebar.classList.remove('open');
+                    setSidebarToggleButtonState(false);
+                } else {
+                    sidebar.classList.remove('open');
+                }
             });
         });
         

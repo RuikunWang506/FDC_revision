@@ -527,15 +527,46 @@ def log_user_activity(username):
     )
 
 def get_location(ip):
+    # X-Forwarded-For may contain a CSV list; use the first client IP.
+    if not ip:
+        return {}
+    ip = ip.split(',')[0].strip()
+
     try:
-        response = requests.get(f'http://ip-api.com/json/{ip}')
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Failed to get location for IP: {ip}")
+        response = requests.get(f'https://ipinfo.io/{ip}/json', timeout=2)
+        if response.status_code != 200:
+            current_app.logger.warning(f"Location lookup failed for IP {ip}: HTTP {response.status_code}")
             return {}
-    except Exception as e:
-        print(f"Error fetching location data: {e}")
+
+        payload = response.json() or {}
+        if payload.get('bogon'):
+            current_app.logger.warning(
+                f"Location lookup rejected for IP {ip}: bogon/private address"
+            )
+            return {}
+
+        lat = 'N/A'
+        lon = 'N/A'
+        loc = payload.get('loc', '')
+        if ',' in loc:
+            parts = loc.split(',', 1)
+            lat = parts[0].strip() or 'N/A'
+            lon = parts[1].strip() or 'N/A'
+
+        # Normalize ipinfo payload shape to match existing logging keys.
+        return {
+            'status': 'success',
+            'city': payload.get('city', 'Unknown'),
+            'regionName': payload.get('region', 'Unknown'),
+            'country': payload.get('country', 'Unknown'),
+            'lat': lat,
+            'lon': lon,
+            'timezone': payload.get('timezone', 'Unknown'),
+            'isp': payload.get('org', 'Unknown'),
+            'org': payload.get('org', 'Unknown')
+        }
+    except requests.RequestException as e:
+        current_app.logger.warning(f"Location lookup timed out/failed for IP {ip}: {e}")
         return {}
 
 def send_email(to_email, subject, body):

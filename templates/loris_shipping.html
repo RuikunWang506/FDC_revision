@@ -2006,6 +2006,19 @@
                 
                 container.appendChild(spacingRow);
             }
+            
+            // Load package info for orders that are visible (not collapsed) by default
+            if (!defaultCollapsed) {
+                orders.forEach(order => {
+                    const poNumber = order.po_number;
+                    if (poNumber) {
+                        // Load package info after a small delay to ensure DOM is ready
+                        setTimeout(() => {
+                            loadPackageInfo(poNumber);
+                        }, 100);
+                    }
+                });
+            }
         });
         
         // Add pagination footer if there are multiple pages

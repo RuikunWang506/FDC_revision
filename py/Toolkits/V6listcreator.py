@@ -49,13 +49,14 @@ def list_from_dropbox(list_input, current_user):
         sku_to_image = {}
         
         for filename in os.listdir(dropbox_path):
-            if filename.endswith('.jpg'):
-                # Extract the base SKU first (1-2 letters followed by 4 digits)
-                base_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
+            if filename.lower().endswith(('.jpg', '.png')):
+                # Extract the full SKU (1-2 letters followed by 4 digits, optionally followed by -digit(s))
+                base_match = re.match(r'([A-Za-z]{1,2}\d{4}(?:-\d+)?)', filename)
                 if base_match:
                     base_sku = base_match.group(1).upper()
-                    # Check if it's a size suffix pattern
-                    size_suffix = re.search(r'[-]?[smlSML](?:\.|$)', filename[len(base_sku):])
+                    # Check if it's a size suffix pattern after the base SKU
+                    remaining = filename[len(base_sku):]
+                    size_suffix = re.search(r'[-]?[smlSML](?:\.|$)', remaining)
                     if size_suffix:
                         # Handle size suffix cases (both with and without dash)
                         dash_style = f"{base_sku}-{size_suffix.group().strip('.-')}"
@@ -178,7 +179,7 @@ def process_list_input(list_input, current_user):
             if os.path.exists(full_path):
                 base_sku_to_files = {}
                 for filename in os.listdir(full_path):
-                    if filename.endswith('.jpg'):
+                    if filename.lower().endswith(('.jpg', '.png')):
                         base_match = re.match(r'([A-Za-z]{1,2}\d{4})', filename)
                         if base_match:
                             base_sku = base_match.group(1).upper()
@@ -580,7 +581,7 @@ def get_images_from_dropbox(dropbox_path):
     image_paths = []
     try:
         for filename in os.listdir(dropbox_path):
-            if filename.endswith('.jpg'):
+            if filename.lower().endswith(('.jpg', '.png')):
                 image_paths.append(os.path.join(dropbox_path, filename))
     except Exception as e:
         current_app.logger.error(f"Error fetching images from Dropbox: {e}")
@@ -705,7 +706,7 @@ def count_dropbox_files(dropbox_path):
         relative_path = match.group(1)
         full_path = os.path.join(Config.LOCAL_DROPBOX_DIR, relative_path)
         if os.path.exists(full_path):
-            return len([f for f in os.listdir(full_path) if f.endswith('.jpg')])
+            return len([f for f in os.listdir(full_path) if f.lower().endswith(('.jpg', '.png'))])
     return 0
 
 

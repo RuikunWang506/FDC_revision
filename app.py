@@ -8,6 +8,8 @@ from py.utilities.setting import Config
 from routes import register_routes
 from py.utilities.auth import log_event
 
+
+
 class CustomRequestHandler(WSGIRequestHandler):
     def log_request(self, code='-', size='-'):
         # Skip everything from the local host
@@ -101,5 +103,5 @@ if __name__ == "__main__":
         port=5555,
         debug=True,
         request_handler=CustomRequestHandler,
-        use_reloader=True
+        use_reloader=False
     )

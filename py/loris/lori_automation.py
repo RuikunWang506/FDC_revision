@@ -4476,7 +4476,7 @@ def generate_invoice_from_data(order, items, invoice_date=None):
         ws['H6'] = target_filename.replace("_", "-")
         ws['G11'] = f"GIFT STORE {po_number[:4]}"
         ws['F9'] = cancel_date if cancel_date != 'N/A' else ''
-        ws['H8'] = delivery_date if delivery_date != 'N/A' else ''
+        ws['H8'] = invoice_date
         ws['H7'] = po_number
         ws['F12'] = ship_to_address
         

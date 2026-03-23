@@ -499,22 +499,146 @@
                     gap: 10px;
                     flex-wrap: wrap;
                 }
+                
+                /* Floating Sidebar Styles */
+                .floating-sidebar {
+                    position: fixed;
+                    right: -320px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 300px;
+                    background: rgba(255, 255, 255, 0.98);
+                    backdrop-filter: blur(10px);
+                    border-radius: 15px 0 0 15px;
+                    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+                    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    z-index: 1000;
+                    padding: 20px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                
+                .floating-sidebar.open {
+                    right: 0;
+                }
+                
+                .sidebar-toggle {
+                    position: fixed;
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 50px;
+                    height: 60px;
+                    background: linear-gradient(135deg, var(--primary-color), #357abd);
+                    border: none;
+                    border-radius: 10px 0 0 10px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 20px;
+                    box-shadow: -3px 0 15px rgba(0, 0, 0, 0.2);
+                    transition: all 0.3s;
+                    z-index: 999;
+                }
+                
+                .floating-sidebar.open + .sidebar-toggle {
+                    right: 300px;
+                }
+                
+                .sidebar-toggle:hover {
+                    background: linear-gradient(135deg, #357abd, var(--primary-color));
+                    box-shadow: -5px 0 20px rgba(74, 144, 226, 0.4);
+                }
+                
+                .sidebar-title {
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    color: var(--dark-bg);
+                    margin-bottom: 20px;
+                    padding-bottom: 10px;
+                    border-bottom: 2px solid #e0e0e0;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                
+                .sidebar-section {
+                    margin-bottom: 20px;
+                }
+                
+                .sidebar-section-title {
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    color: #666;
+                    margin-bottom: 10px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                
+                .sidebar-btn {
+                    width: 100%;
+                    padding: 12px 16px;
+                    margin-bottom: 10px;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    text-decoration: none;
+                    color: white;
+                }
+                
+                .sidebar-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+                
+                .sidebar-btn.reset-btn {
+                    background: linear-gradient(135deg, #ff0000, #ff6b6b);
+                }
+                
+                .sidebar-btn.label-btn {
+                    background: linear-gradient(135deg, #ffd700, #ffed4e);
+                    color: #333;
+                }
+                
+                .sidebar-btn.macy-btn {
+                    background: linear-gradient(135deg, #e74c3c, #c0392b);
+                }
+                
+                .quick-link {
+                    display: flex;
+                    align-items: center;
+                    padding: 10px;
+                    margin-bottom: 8px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    color: var(--dark-bg);
+                    transition: all 0.2s;
+                    font-size: 13px;
+                }
+                
+                .quick-link:hover {
+                    background: #e9ecef;
+                    transform: translateX(5px);
+                    color: var(--primary-color);
+                }
+                
+                .quick-link i {
+                    width: 20px;
+                    margin-right: 10px;
+                    color: var(--primary-color);
+                }
+                
                 .action-buttons {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 15px;
-                    margin-top: 20px;
-                }
-                .action-buttons button {
-                    padding: 14px 20px !important;
-                    font-size: 15px !important;
-                    font-weight: 700 !important;
-                }
-                .generate-label-btn {
-                    grid-column: 1 / -1 !important;
-                    background: linear-gradient(135deg, #ffd700, #ffed4e) !important;
-                    color: #333 !important;
-                    border: none !important;
+                    display: none !important;
                 }
                 @media (max-width: 768px) {
                     .search-grid {
@@ -531,6 +655,15 @@
                         display: block;
                         text-align: center;
                     }
+                    .floating-sidebar {
+                        width: 280px;
+                        right: -300px;
+                    }
+                    .sidebar-toggle {
+                        width: 45px;
+                        height: 50px;
+                        font-size: 16px;
+                    }
                 }
             </style>
 
@@ -538,6 +671,7 @@
                 <!-- Header -->
 
                 <!-- Quick Access Row - Before Main Search -->
+                {% if not header_info %}
                 <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; justify-content: center;">
                     <span style="font-weight: 700; color: var(--dark-bg); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
                         <i class="fas fa-bolt mr-2" style="color: var(--primary-color);"></i>Quick Access:
@@ -553,6 +687,7 @@
                     </span>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 <!-- Main Search Grid -->
                 <div class="search-grid">
@@ -591,24 +726,100 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    {% if header_info and header_info.customer_id|string == '01221' %}
-                    <a href="{{ url_for('macy.macy_maker') }}" class="macy-special-btn" style="display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-star mr-2"></i>Macy Special
-                    </a>
+                <!-- Floating Sidebar Toggle Button -->
+                <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">
+                    <i class="fas fa-tools"></i>
+                </button>
+
+                <!-- Floating Sidebar -->
+                <div class="floating-sidebar" id="floatingSidebar">
+                    <div class="sidebar-title">
+                        <i class="fas fa-cogs"></i>
+                        Actions
+                        <button onclick="toggleSidebar()" style="margin-left: auto; background: none; border: none; color: #999; cursor: pointer; font-size: 1.1rem; padding: 5px; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#999'">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Invoice Status Section -->
+                    {% if header_info %}
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title">Invoice Status</div>
+                        <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                            {% if header_info.invoice_number and header_info.invoice_number != 'not invoiced' %}
+                                <div style="color: #28a745; font-size: 18px; font-weight: 700;">
+                                    <i class="fas fa-check-circle mr-2"></i>Invoiced
+                                </div>
+                                <div style="color: #666; font-size: 13px; margin-top: 5px;">
+                                    Invoice #{{ header_info.invoice_number }}
+                                </div>
+                            {% else %}
+                                <div style="color: #dc3545; font-size: 18px; font-weight: 700;">
+                                    <i class="fas fa-times-circle mr-2"></i>Not Invoiced
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% endif %}
                     
-                    {% if items_html or labels_generated %}
-                    <button type="button" id="clearInputsBtn" class="btn btn-danger" style="background: linear-gradient(135deg, #ff0000, #ff6b6b); color: white; border: none; border-radius: 50px; grid-column: 1 / -1 !important;">
-                        <i class="fas fa-redo-alt mr-2"></i>Reset / Clear / 重置
-                    </button>
-                    {% endif %}
+                    <!-- Quick Access Section -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title">Quick Access</div>
+                        {% if latest_orders and latest_orders.ef %}
+                        <a href="#" class="quick-link" onclick="event.preventDefault(); document.getElementById('order_number').value = '{{ latest_orders.ef }}'; document.getElementById('orderForm').submit();">
+                            <i class="fas fa-zap"></i>
+                            Latest EF: {{ latest_orders.ef }}
+                        </a>
+                        {% endif %}
+                        {% if latest_orders and latest_orders.fdc %}
+                        <a href="#" class="quick-link" onclick="event.preventDefault(); document.getElementById('order_number').value = '{{ latest_orders.fdc }}'; document.getElementById('orderForm').submit();">
+                            <i class="fas fa-zap"></i>
+                            Latest FDC: {{ latest_orders.fdc }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Action Buttons Section -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title">Order Actions</div>
+                        
+                        {% if items_html or labels_generated %}
+                        <button type="button" id="clearInputsBtn" class="sidebar-btn reset-btn">
+                            <i class="fas fa-redo-alt"></i>
+                            <span>Reset / Clear / 重置</span>
+                        </button>
+                        {% endif %}
 
-                    {% if items_html and all_descriptions_have_dash %}
-                    <button type="button" class="label-btn generate-label-btn" onclick="generateLabel()">
-                        <i class="fas fa-barcode mr-2"></i>Generate Label / 打标签
-                    </button>
+                        {% if items_html and all_descriptions_have_dash %}
+                        <button type="button" class="sidebar-btn label-btn" onclick="generateLabel()">
+                            <i class="fas fa-barcode"></i>
+                            <span>Generate Label / 打标签</span>
+                        </button>
+                        {% endif %}
+                        
+                        {% if header_info and header_info.customer_id|string == '01221' %}
+                        <a href="{{ url_for('macy.macy_maker') }}" class="sidebar-btn macy-btn">
+                            <i class="fas fa-star"></i>
+                            <span>Macy Special</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Order Notes Section -->
+                    {% if header_info %}
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title">Order Notes</div>
+                        <div style="margin-bottom: 10px;">
+                            <textarea id="order_notes" class="form-control" rows="6" placeholder="Enter order notes here..." style="font-family: 'Courier New', monospace; white-space: pre-wrap; font-size: 12px; resize: vertical;">{{ header_info.notes if header_info.notes else '' }}</textarea>
+                        </div>
+                        <button id="saveOrderNotesBtn" class="sidebar-btn" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                            <i class="fas fa-save"></i>
+                            <span>Save Notes</span>
+                        </button>
+                        <small class="text-muted d-block mt-2" style="font-size: 11px;">
+                            <i class="fas fa-info-circle"></i> For Order {{ header_info.order_number }}
+                        </small>
+                    </div>
                     {% endif %}
                 </div>
 
@@ -892,38 +1103,9 @@
             </div>
         </div>
 
-        <!-- Order Notes Editor -->
-        <div class="info-card mt-4">
-            <div class="info-card-header">
-                <i class="fas fa-sticky-note mr-2"></i>Order Notes
-            </div>
-            <div class="p-3">
-                <!-- Debug info -->
-                {% if header_info.notes %}
-                <div class="alert alert-success" style="font-size: 12px; padding: 8px; margin-bottom: 10px;">
-                    <i class="fas fa-check-circle"></i> Notes loaded: {{ header_info.notes|length }} characters
-                </div>
-                {% else %}
-                <div class="alert alert-warning" style="font-size: 12px; padding: 8px; margin-bottom: 10px;">
-                    <i class="fas fa-info-circle"></i> No notes found for this order
-                </div>
-                {% endif %}
-                
-                <div class="form-group">
-                    <label for="order_notes" class="font-weight-bold mb-2">
-                        <i class="fas fa-edit mr-1"></i>Edit Notes for Order {{ header_info.order_number }}<br> xxx Boxes <br> L-x 
-                    </label>
-                    <textarea id="order_notes" class="form-control" rows="5" placeholder="Enter order notes here..." style="font-family: 'Courier New', monospace; white-space: pre-wrap;">{{ header_info.notes if header_info.notes else '' }}</textarea>
-                </div>
-                <div class="text-right mt-3">
-                    <button id="saveOrderNotesBtn" class="btn btn-primary">
-                        <i class="fas fa-save mr-2"></i>Save Notes
-                    </button>
-                </div>
-                <small class="text-muted d-block mt-2">
-                    <i class="fas fa-info-circle"></i> Notes stored in system and used by label maker.
-                </small>
-            </div>
+        <!-- Order Notes Editor - Moved to Sidebar -->
+        <div class="info-card mt-4" style="display: none;">
+            <!-- This section has been moved to the floating sidebar -->
         </div>
     </div>
     {% endif %}
@@ -1444,6 +1626,38 @@
                     }
                 });
             });
+        });
+        
+        // Floating Sidebar Toggle Function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('floatingSidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const isOpen = sidebar.classList.contains('open');
+            
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                toggleBtn.style.right = '0';
+                localStorage.setItem('sidebarOpen', 'false');
+            } else {
+                sidebar.classList.add('open');
+                toggleBtn.style.right = '300px';
+                localStorage.setItem('sidebarOpen', 'true');
+            }
+        }
+        
+        // Restore sidebar state from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('floatingSidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const savedState = localStorage.getItem('sidebarOpen');
+            
+            // Default to open if no saved state
+            if (savedState === null || savedState === 'true') {
+                sidebar.classList.add('open');
+                toggleBtn.style.right = '300px';
+            } else {
+                toggleBtn.style.right = '0';
+            }
         });
     </script>
     {% include 'footer.html' %}

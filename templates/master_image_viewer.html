@@ -763,12 +763,27 @@
                 <button type="submit" class="search-btn" id="searchBtn">
                     <i class="fas fa-search"></i> Search Images
                 </button>
+                   <button type="button" class="search-btn" id="batchFetchBtn" style="background: linear-gradient(135deg, #f6ad55, #f8b500); margin-left: 0.5rem;">
+                       <i class="fas fa-list"></i> Batch Fetch from China
+                   </button>
             </form>
         </div>
 
         <div class="loading" id="loadingDiv" style="display: none;">
             <i class="fas fa-spinner"></i>
             <p style="margin-top: 1rem;">Searching all image sources...</p>
+        </div>
+
+        <div id="batchJobBanner" style="display:none; margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.9rem 1rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap: 1rem;">
+                <div>
+                    <div id="batchJobBannerTitle" style="font-weight: 700; color: #1f2937;">Batch Status</div>
+                    <div id="batchJobBannerMeta" style="font-size: 0.9rem; color: #4b5563; margin-top: 0.2rem;"></div>
+                </div>
+                <button id="batchJobOpenStatusBtn" type="button" class="search-btn" style="padding: 0.5rem 0.8rem; font-size: 0.85rem;">
+                    <i class="fas fa-chart-line"></i> View Details
+                </button>
+            </div>
         </div>
 
 
@@ -842,6 +857,51 @@
         </div>
     </div>
 
+    <!-- Batch Fetch Modal -->
+    <div id="batchFetchModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <h2 style="margin-top: 0; color: #1f2937;">Batch Fetch from China FTP</h2>
+            <p style="color: #666; font-size: 0.95rem;">Paste a list of SKUs (comma-separated or each on a new line)</p>
+            <textarea id="skuListInput" style="width: 100%; height: 150px; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-family: monospace; font-size: 0.9rem; resize: vertical;" placeholder="S1549&#10;M1141&#10;P2234&#10;&#10;or: S1549, M1141, P2234"></textarea>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button id="batchFetchSubmitBtn" style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, #f6ad55, #f8b500); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Fetch List from China</button>
+                <button id="batchFetchCancelBtn" style="flex: 1; padding: 0.75rem 1rem; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Fetch Status Modal -->
+    <div id="batchStatusModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; color: #1f2937;">Batch Fetch Progress</h2>
+                <button id="batchStatusCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px;">
+                    <div style="color: #666; font-size: 0.85rem;">Elapsed Time</div>
+                    <div id="elapsedTime" style="font-size: 1.5rem; font-weight: 600; color: #1f2937;">0:00</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px;">
+                    <div style="color: #666; font-size: 0.85rem;">Progress</div>
+                    <div id="progressCount" style="font-size: 1.5rem; font-weight: 600; color: #1f2937;">0/0</div>
+                </div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <div style="height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                    <div id="progressBar" style="height: 100%; background: linear-gradient(90deg, #f6ad55, #f8b500); width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+            <div style="margin-bottom: 1rem; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
+                <div id="currentStyleLabel" style="font-weight: 700; color: #1f2937; margin-bottom: 0.35rem;">Current Style: waiting</div>
+                <div id="currentStyleDetails" style="font-size: 0.9rem; color: #4b5563;">No active style yet.</div>
+                <div id="batchLastUpdated" style="font-size: 0.8rem; color: #6b7280; margin-top: 0.35rem;"></div>
+            </div>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; height: 300px; overflow-y: auto;">
+                <div id="batchResultsList" style="padding: 1rem;"></div>
+            </div>
+        </div>
+    </div>
     <script>
         let allImages = [];
         let currentImageIndex = 0;
@@ -996,6 +1056,8 @@
                                             <div class="image-container" onclick="openModal(${globalImageIndex})">
                                                 <img class="image-preview" 
                                                      src="${image.url}" 
+                                                       loading="lazy"
+                                                       decoding="async"
                                                      alt="${image.filename}"
                                                      onload="console.log('Image loaded: ${image.filename}')"
                                                      onerror="this.closest('.image-card').style.display='none';">
@@ -1507,94 +1569,156 @@
             }
         });
 
+        let backgroundTaskId = null;
+        let backgroundTaskPollInterval = null;
+
+        function showBackgroundNotification(taskId) {
+            const notifHtml = `
+                <div id="backgroundTaskNotif" style="
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: rgba(28, 200, 138, 0.95);
+                    color: white;
+                    padding: 1.5rem;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                    z-index: 5000;
+                    min-width: 320px;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                ">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                        <i class="fas fa-cloud-download-alt fa-spin" style="font-size: 1.3rem;"></i>
+                        <div>
+                            <div style="font-weight: 600; font-size: 1rem; margin-bottom: 3px;">Fetching China FTP Images</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Backend is running in background...</div>
+                        </div>
+                    </div>
+                    <div id="taskProgress" style="margin: 10px 0; font-size: 0.85rem; opacity: 0.9;">Initializing...</div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
+                        <div id="taskProgressBar" style="height: 100%; background: linear-gradient(90deg, #1cc88a, #00d4ff); width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 8px;">
+                        You can close this page and come back later. Images will continue downloading.
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', notifHtml);
+        }
+
+        function updateTaskProgress(status) {
+            const notif = document.getElementById('backgroundTaskNotif');
+            if (!notif) return;
+
+            const progressDiv = document.getElementById('taskProgress');
+            const progressBar = document.getElementById('taskProgressBar');
+
+            if (status.status === 'fetching') {
+                progressDiv.textContent = `Fetching images from server... (${status.current || 0}/${status.total || '?'})`;
+                if (status.total) {
+                    const percent = Math.min(50, (status.current / status.total) * 50);
+                    progressBar.style.width = percent + '%';
+                }
+            } else if (status.status === 'syncing') {
+                progressDiv.textContent = `Syncing images to database... (${status.synced || 0}/${status.to_sync || '?'})`;
+                if (status.to_sync) {
+                    const percent = 50 + ((status.synced / status.to_sync) * 50);
+                    progressBar.style.width = percent + '%';
+                }
+            } else if (status.status === 'completed') {
+                progressBar.style.width = '100%';
+                const notif = document.getElementById('backgroundTaskNotif');
+                if (notif) {
+                    notif.style.background = 'rgba(44, 187, 93, 0.95)';
+                    notif.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-check-circle" style="font-size: 1.3rem;"></i>
+                            <div>
+                                <div style="font-weight: 600;">Download Complete!</div>
+                                <div style="font-size: 0.9rem;">Synced: ${status.synced}, Failed: ${status.failed}, Already synced: ${status.already_synced}</div>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => notif.remove(), 5000);
+                }
+                // Refresh images in current view if still on this page
+                if (currentSku && resultsSection.style.display !== 'none') {
+                    searchImages(currentSku);
+                }
+            } else if (status.status === 'error') {
+                const notif = document.getElementById('backgroundTaskNotif');
+                if (notif) {
+                    notif.style.background = 'rgba(220, 53, 69, 0.95)';
+                    notif.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-exclamation-circle" style="font-size: 1.3rem;"></i>
+                            <div>
+                                <div style="font-weight: 600;">Error</div>
+                                <div style="font-size: 0.9rem;">${status.error}</div>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => notif.remove(), 5000);
+                }
+            }
+        }
+
+        function pollTaskStatus(taskId) {
+            if (backgroundTaskPollInterval) {
+                clearInterval(backgroundTaskPollInterval);
+            }
+
+            backgroundTaskPollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/china_ftp_task_status?task_id=${taskId}`);
+                    if (!response.ok) return;
+                    const status = await response.json();
+                    
+                    updateTaskProgress(status);
+
+                    if (status.status === 'completed' || status.status === 'error') {
+                        clearInterval(backgroundTaskPollInterval);
+                        backgroundTaskPollInterval = null;
+                    }
+                } catch (err) {
+                    console.error('Error polling task status:', err);
+                }
+            }, 1000);  // Poll every second
+        }
+
         async function fetchChinaFtp() {
             const btn = event.target;
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting background task...';
             btn.disabled = true;
 
             try {
-                const response = await fetch(`/api/fetch_china_ftp?sku=${encodeURIComponent(currentSku)}`);
+                // Start background task on backend
+                const response = await fetch(`/api/fetch_china_ftp_async?sku=${encodeURIComponent(currentSku)}`, {
+                    method: 'POST'
+                });
                 const data = await response.json();
 
                 if (data.error) {
-                    alert('Error fetching China FTP images: ' + data.error);
+                    alert('Error starting background fetch: ' + data.error);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                     return;
                 }
 
-                // Update the china_ftp images
-                const chinaFtpImages = data.china_ftp || [];
+                backgroundTaskId = data.task_id;
                 
-                // Add to allImages array
-                chinaFtpImages.forEach(image => {
-                    allImages.push({
-                        ...image,
-                        category: 'China FTP',
-                        categoryKey: 'china_ftp'
-                    });
-                });
-
-                // Update the category count
-                const countSpan = document.querySelector(`#content-china_ftp`).previousElementSibling.querySelector('.category-count');
-                if (countSpan) {
-                    countSpan.textContent = chinaFtpImages.length;
-                }
-
-                // Re-render the china_ftp section
-                let contentHtml = '';
-                if (chinaFtpImages.length === 0) {
-                    contentHtml = '<div class="empty-category">No images found in this category</div>';
-                } else {
-                    contentHtml = '<div class="images-grid">';
-                    chinaFtpImages.forEach((image, index) => {
-                        const globalIndex = allImages.length - chinaFtpImages.length + index;
-                        const isSynced = image.already_synced || false;
-                        const syncBtnStyle = isSynced 
-                            ? 'position:absolute;bottom:10px;right:10px;z-index:10;background:#6c757d;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:not-allowed;'
-                            : 'position:absolute;bottom:10px;right:10px;z-index:10;background:#1cc88a;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:pointer;';
-                        const syncBtnClass = isSynced ? 'sync-btn synced' : 'sync-btn';
-                        const syncBtnText = isSynced ? '<i class="fas fa-check"></i> Synced' : '<i class="fas fa-sync-alt"></i> Sync';
-                        const syncBtnTitle = isSynced ? 'Already synced to Product Images' : 'Sync to Product Images';
-                        const syncBtnDisabled = isSynced ? 'disabled' : '';
-                        
-                        contentHtml += `
-                            <div class="image-card">
-                                <div class="image-container" onclick="openModal(${globalIndex})">
-                                    <img class="image-preview" 
-                                         src="${image.url}" 
-                                         alt="${image.filename}"
-                                         onload="console.log('Image loaded: ${image.filename}')"
-                                         onerror="this.closest('.image-card').style.display='none';">
-                                </div>
-                                <div class="image-info">
-                                    <div class="image-filename">${image.filename} 
-                                        ${image.is_canonical ? '<span style="color: #1cc88a; font-weight: bold;">[CANONICAL]</span>' : ''}
-                                        <span style="color: #8892b0; font-size: 0.8em;">(v${image.version})</span>
-                                    </div>
-                                    <div class="image-details">
-                                        Source: ${image.source}<br>
-                                        ${image.relative_path ? `Path: ${image.relative_path}<br>` : ''}
-                                        Dimensions: ${image.width || '?'} × ${image.height || '?'}<br>
-                                        Created: ${image.created_at ? new Date(image.created_at).toLocaleDateString() : 'Unknown'}
-                                    </div>
-                                </div>
-                                <button class="${syncBtnClass}" data-filename="${image.filename}" data-image-url="${image.url}" title="${syncBtnTitle}" style="${syncBtnStyle}" ${syncBtnDisabled}>
-                                    ${syncBtnText}
-                                </button>
-                            </div>
-                        `;
-                    });
-                    contentHtml += '</div>';
-                }
-
-                const contentDiv = document.getElementById('content-china_ftp');
-                if (contentDiv) {
-                    contentDiv.innerHTML = contentHtml;
-                }
+                // Show notification and start polling
+                showBackgroundNotification(backgroundTaskId);
+                pollTaskStatus(backgroundTaskId);
+                
+                // Reset button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
 
             } catch (error) {
-                alert('Failed to fetch China FTP images: ' + error.message);
-            } finally {
+                alert('Failed to initiate background fetch: ' + error.message);
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
@@ -1641,5 +1765,340 @@
         }
         {% endif %}
     </script>
+<script>
+let batchTaskId = null;
+let batchTaskStartTime = null;
+let batchTaskInterval = null;
+
+const batchFetchBtnEl = document.getElementById('batchFetchBtn');
+const batchFetchCancelBtnEl = document.getElementById('batchFetchCancelBtn');
+const batchFetchSubmitBtnEl = document.getElementById('batchFetchSubmitBtn');
+const batchStatusCloseBtnEl = document.getElementById('batchStatusCloseBtn');
+const batchFetchModalEl = document.getElementById('batchFetchModal');
+const batchStatusModalEl = document.getElementById('batchStatusModal');
+const batchJobBannerEl = document.getElementById('batchJobBanner');
+const batchJobBannerTitleEl = document.getElementById('batchJobBannerTitle');
+const batchJobBannerMetaEl = document.getElementById('batchJobBannerMeta');
+const batchJobOpenStatusBtnEl = document.getElementById('batchJobOpenStatusBtn');
+
+function isRunningStatus(statusValue) {
+    return statusValue === 'running' || statusValue === 'fetching' || statusValue === 'syncing';
+}
+
+function formatTimeStamp(isoValue) {
+    if (!isoValue) return 'Unknown';
+    const d = new Date(isoValue);
+    if (Number.isNaN(d.getTime())) return isoValue;
+    return d.toLocaleString();
+}
+
+function formatElapsed(seconds) {
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    const min = Math.floor(safeSeconds / 60);
+    const sec = safeSeconds % 60;
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+function parseSkuListInput(rawInput) {
+    return rawInput
+        .split(/[,\n\t]+/)
+        .map(item => item.trim().toUpperCase())
+        .filter(item => item.length > 0);
+}
+
+function updateElapsedTime(status) {
+    if (status && status.started_at) {
+        const started = new Date(status.started_at);
+        if (!Number.isNaN(started.getTime())) {
+            batchTaskStartTime = started.getTime();
+        }
+    }
+
+    if (!batchTaskStartTime) {
+        document.getElementById('elapsedTime').textContent = '0:00';
+        return;
+    }
+
+    const elapsedSeconds = Math.floor((Date.now() - batchTaskStartTime) / 1000);
+    document.getElementById('elapsedTime').textContent = formatElapsed(elapsedSeconds);
+}
+
+function getResultStyle(statusValue) {
+    if (statusValue === 'completed') {
+        return { color: '#1cc88a', icon: 'check-circle' };
+    }
+    if (statusValue === 'failed' || statusValue === 'error') {
+        return { color: '#dc3545', icon: 'exclamation-circle' };
+    }
+    if (statusValue === 'skipped') {
+        return { color: '#6b7280', icon: 'minus-circle' };
+    }
+    return { color: '#f8b500', icon: 'spinner fa-spin' };
+}
+
+function renderBatchBanner(status) {
+    if (!batchJobBannerEl || !status || status.status === 'none') {
+        if (batchJobBannerEl) {
+            batchJobBannerEl.style.display = 'none';
+        }
+        return;
+    }
+
+    const totalStyles = Number(status.total || 0);
+    const completedStyles = Number(status.completed || 0);
+    const running = isRunningStatus(status.status) || status.is_running === true;
+
+    const currentStyle = status.current_style || {};
+    const currentStyleLabel = currentStyle.sku
+        ? ` | Current: ${currentStyle.sku} (${status.current_index || 0}/${totalStyles || '?'})`
+        : '';
+
+    if (running) {
+        batchJobBannerTitleEl.textContent = `Batch Job Running (${completedStyles}/${totalStyles} styles)`;
+        batchJobBannerMetaEl.textContent = `Task ${status.task_id || ''}${currentStyleLabel}`;
+    } else {
+        batchJobBannerTitleEl.textContent = `Last Batch Job: ${completedStyles}/${totalStyles} styles completed`;
+        batchJobBannerMetaEl.textContent = `Finished: ${formatTimeStamp(status.finished_at || status.updated_at)} | Task ${status.task_id || ''}`;
+    }
+
+    batchJobBannerEl.style.display = 'block';
+}
+
+function renderCurrentStyle(status) {
+    const currentStyleLabelEl = document.getElementById('currentStyleLabel');
+    const currentStyleDetailsEl = document.getElementById('currentStyleDetails');
+    const batchLastUpdatedEl = document.getElementById('batchLastUpdated');
+
+    const totalStyles = Number(status.total || 0);
+    const currentStyleIndex = Number(status.current_index || 0);
+    const currentStyle = status.current_style || null;
+
+    if (!currentStyle || !currentStyle.sku) {
+        currentStyleLabelEl.textContent = 'Current Style: waiting';
+        currentStyleDetailsEl.textContent = 'No active style yet.';
+    } else {
+        const styleStatus = currentStyle.status || 'running';
+        const imageStep = Number(currentStyle.current || 0);
+        const imageTotal = Number(currentStyle.to_sync || currentStyle.total || 0);
+        const synced = Number(currentStyle.synced || 0);
+        const failed = Number(currentStyle.failed || 0);
+        const alreadySynced = Number(currentStyle.already_synced || 0);
+        const currentFilename = currentStyle.current_filename ? ` | File: ${currentStyle.current_filename}` : '';
+
+        currentStyleLabelEl.textContent = `Current Style ${currentStyleIndex}/${totalStyles}: ${currentStyle.sku} (${styleStatus})`;
+        currentStyleDetailsEl.textContent = `Image progress ${imageStep}/${imageTotal} | Synced ${synced} | Failed ${failed} | Already ${alreadySynced}${currentFilename}`;
+    }
+
+    const lastUpdate = status.updated_at || status.finished_at;
+    batchLastUpdatedEl.textContent = lastUpdate ? `Last update: ${formatTimeStamp(lastUpdate)}` : '';
+}
+
+function renderBatchResults(status) {
+    const results = Array.isArray(status.results) ? status.results : [];
+    const resultsContainer = document.getElementById('batchResultsList');
+
+    if (results.length === 0) {
+        resultsContainer.innerHTML = '<div style="color:#6b7280;">No style result yet. Waiting for first style...</div>';
+        return;
+    }
+
+    const html = results.map((result, index) => {
+        const style = getResultStyle(result.status);
+        const syncedValue = (result.synced !== undefined && result.synced !== null) ? result.synced : result.count;
+        const synced = Number(syncedValue || 0);
+        const failed = Number(result.failed || 0);
+        const already = Number(result.already_synced || 0);
+        const toSync = Number(result.to_sync || 0);
+        const totalFound = Number(result.total_found || 0);
+
+        return `
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid #e5e7eb;">
+                <i class="fas fa-${style.icon}" style="color:${style.color};margin-top:2px;"></i>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;color:#1f2937;">${index + 1}. ${result.sku || '(empty sku)'}</div>
+                    <div style="font-size:0.85rem;color:#4b5563;">Found ${totalFound} | To sync ${toSync} | Synced ${synced} | Failed ${failed} | Already ${already}</div>
+                    ${result.error ? `<div style="font-size:0.8rem;color:#b91c1c;">${result.error}</div>` : ''}
+                </div>
+                <div style="font-size:0.82rem;color:${style.color};font-weight:600;text-transform:capitalize;">${result.status || 'pending'}</div>
+            </div>
+        `;
+    }).join('');
+
+    resultsContainer.innerHTML = html;
+}
+
+function updateBatchProgress(status) {
+    updateElapsedTime(status);
+
+    const totalStyles = Number(status.total || 0);
+    const completedStyles = Number(status.completed || 0);
+    const progressPercent = totalStyles > 0 ? (completedStyles / totalStyles) * 100 : 0;
+
+    document.getElementById('progressBar').style.width = `${progressPercent}%`;
+    document.getElementById('progressCount').textContent = `${completedStyles}/${totalStyles}`;
+
+    renderCurrentStyle(status);
+    renderBatchResults(status);
+    renderBatchBanner(status);
+}
+
+function openBatchFetchModal() {
+    if (batchFetchModalEl) {
+        batchFetchModalEl.style.display = 'flex';
+    }
+    const skuInputEl = document.getElementById('skuListInput');
+    if (skuInputEl) {
+        skuInputEl.focus();
+    }
+}
+
+function closeBatchFetchModal() {
+    if (batchFetchModalEl) {
+        batchFetchModalEl.style.display = 'none';
+    }
+    const skuInputEl = document.getElementById('skuListInput');
+    if (skuInputEl) {
+        skuInputEl.value = '';
+    }
+}
+
+function openBatchStatusModal() {
+    if (batchStatusModalEl) {
+        batchStatusModalEl.style.display = 'flex';
+    }
+}
+
+function closeBatchStatusModal() {
+    if (batchStatusModalEl) {
+        batchStatusModalEl.style.display = 'none';
+    }
+}
+
+async function pollBatchTaskStatusOnce() {
+    if (!batchTaskId) return;
+
+    try {
+        const response = await fetch(`/api/batch_fetch_status?task_id=${batchTaskId}`);
+        if (!response.ok) {
+            return;
+        }
+
+        const status = await response.json();
+        status.task_id = status.task_id || batchTaskId;
+        updateBatchProgress(status);
+
+        if (!isRunningStatus(status.status)) {
+            if (batchTaskInterval) {
+                clearInterval(batchTaskInterval);
+                batchTaskInterval = null;
+            }
+        }
+    } catch (error) {
+        console.error('Error polling batch status:', error);
+    }
+}
+
+function startBatchPolling(taskId) {
+    if (!taskId) return;
+
+    batchTaskId = taskId;
+
+    if (batchTaskInterval) {
+        clearInterval(batchTaskInterval);
+    }
+
+    pollBatchTaskStatusOnce();
+    batchTaskInterval = setInterval(pollBatchTaskStatusOnce, 1000);
+}
+
+async function submitBatchFetch() {
+    const inputEl = document.getElementById('skuListInput');
+    const inputValue = (inputEl && inputEl.value ? inputEl.value : '').trim();
+
+    if (!inputValue) {
+        alert('Please enter at least one SKU');
+        return;
+    }
+
+    const skus = parseSkuListInput(inputValue);
+    if (skus.length === 0) {
+        alert('No valid SKUs found');
+        return;
+    }
+
+    closeBatchFetchModal();
+    openBatchStatusModal();
+
+    try {
+        const response = await fetch('/api/batch_fetch_china_ftp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skus: skus })
+        });
+
+        if (!response.ok) {
+            alert('Failed to start batch fetch');
+            closeBatchStatusModal();
+            return;
+        }
+
+        const data = await response.json();
+        batchTaskStartTime = Date.now();
+        startBatchPolling(data.task_id);
+    } catch (error) {
+        alert(`Failed to start batch fetch: ${error.message}`);
+        closeBatchStatusModal();
+    }
+}
+
+async function restoreLatestBatchStatus() {
+    try {
+        const response = await fetch('/api/batch_fetch_latest');
+        if (!response.ok) return;
+
+        const latest = await response.json();
+        if (!latest || latest.status === 'none') {
+            renderBatchBanner(null);
+            return;
+        }
+
+        if (latest.task_id) {
+            batchTaskId = latest.task_id;
+        }
+
+        updateBatchProgress(latest);
+
+        if (latest.task_id && isRunningStatus(latest.status)) {
+            startBatchPolling(latest.task_id);
+        }
+    } catch (error) {
+        console.error('Failed to restore latest batch status:', error);
+    }
+}
+
+if (batchFetchBtnEl) batchFetchBtnEl.addEventListener('click', openBatchFetchModal);
+if (batchFetchCancelBtnEl) batchFetchCancelBtnEl.addEventListener('click', closeBatchFetchModal);
+if (batchFetchSubmitBtnEl) batchFetchSubmitBtnEl.addEventListener('click', submitBatchFetch);
+if (batchStatusCloseBtnEl) batchStatusCloseBtnEl.addEventListener('click', closeBatchStatusModal);
+if (batchJobOpenStatusBtnEl) batchJobOpenStatusBtnEl.addEventListener('click', openBatchStatusModal);
+
+if (batchFetchModalEl) {
+    batchFetchModalEl.addEventListener('click', function(e) {
+        if (e.target.id === 'batchFetchModal') {
+            closeBatchFetchModal();
+        }
+    });
+}
+
+if (batchStatusModalEl) {
+    batchStatusModalEl.addEventListener('click', function(e) {
+        if (e.target.id === 'batchStatusModal') {
+            closeBatchStatusModal();
+        }
+    });
+}
+
+restoreLatestBatchStatus();
+</script>
 </body>
 </html>

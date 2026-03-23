@@ -8,7 +8,7 @@
   <style>
     /* Scope all styles to dashboard only - avoid navbar conflicts */
     .dashboard-wrapper {
-      background: url('https://images.template.net/354840/Cute-Christmas-Pattern-Background-edit-online-8.jpg') no-repeat center center fixed;
+      background: url('https://images.template.net/551110/Liquid-Swirl-3D-Paint-edit-online.webp') no-repeat center center fixed;
       background-size: cover;
       font-family: 'Inter', 'Segoe UI', sans-serif;
       color: #e8f4fd;
@@ -215,6 +215,7 @@
       margin-bottom: 0.5rem;
       padding-top: 0;
       position: relative;
+      width: 100%;
     }
     
     .dashboard-wrapper .tool-card i {
@@ -252,17 +253,21 @@
       overflow: hidden;
     }
     
-    .favorite-star {
-      position: absolute;
-      top: 10px;
-      right: 10px;
+    .dashboard-wrapper .tool-card .favorite-star {
+      position: static;
+      margin-left: auto;
+      margin-right: 0;
       color: #ddd;
       cursor: pointer;
       font-size: 1.2rem;
       transition: color 0.2s;
+      flex-shrink: 0;
+      filter: none;
+      background: none;
+      -webkit-text-fill-color: initial;
     }
     
-    .favorite-star.favorited {
+    .dashboard-wrapper .tool-card .favorite-star.favorited {
       color: #ffd700;
     }
     
@@ -381,10 +386,9 @@
   <div class="dashboard-wrapper">
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
-    <div class="main-title" style="background:none; margin-bottom:1.5rem;">
-      <div style="width:100%; max-width:680px; margin:0 auto; aspect-ratio:3/1; overflow:hidden; display:block;">
-        <img src="https://www.pngaaa.com/api-download/4247585" alt="Happy Thanksgiving Banner" style="width:100%; height:100%; object-fit:cover; object-position:center 5%; display:block; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.18));">
-      </div>
+   
+      <div class="main-title" style="background:none; margin-bottom:1.5rem;">
+
     </div>
 
     
@@ -698,17 +702,19 @@
     let userFavorites = [];
     
     function loadFavorites() {
-      fetch('/get_favorites')
+      return fetch('/get_favorites')
         .then(response => response.json())
         .then(favorites => {
           userFavorites = favorites;
           updateFavorites();
+          return favorites;
         })
         .catch(() => {
           // Fallback to localStorage if server fails
           const fav = localStorage.getItem('userFavorites');
           if (fav) userFavorites = JSON.parse(fav);
           updateFavorites();
+          return userFavorites;
         });
     }
     
@@ -863,79 +869,41 @@
       document.getElementById('toolkitCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'toolkit').length;
       document.getElementById('additionalCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'additional').length;
     }
-
+    
     document.addEventListener('DOMContentLoaded', function() {
-      loadFavorites();
-      setTimeout(() => {
-        const cards = document.querySelectorAll('.tool-card');
-        cards.forEach((card, index) => {
-          const tool = card.getAttribute('data-tool');
-          const cardCategory = card.getAttribute('data-category');
-          let show = false;
-          if (currentFilter === 'all') {
-            show = true;
-          } else if (currentFilter === 'favorites') {
-            show = userFavorites.includes(tool);
-          } else {
-            show = cardCategory === currentFilter;
-          }
-          card.style.order = (currentFilter === 'all' && userFavorites.includes(tool)) ? '0' : '1';
-          if (show) {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            setTimeout(() => {
-              card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-              card.style.opacity = '1';
-              card.style.transform = 'translateY(0)';
-            }, index * 50 + 200);
-          } else {
-            card.style.display = 'none';
-          }
-        });
-        updateCategoryCounts();
-      }, 100);
+      // Wait for favorites to load BEFORE displaying cards
+      loadFavorites().then(() => {
+        // Now that favorites are loaded, initialize the display
+        setTimeout(() => {
+          const cards = document.querySelectorAll('.tool-card');
+          cards.forEach((card, index) => {
+            const tool = card.getAttribute('data-tool');
+            const cardCategory = card.getAttribute('data-category');
+            let show = false;
+            if (currentFilter === 'all') {
+              show = true;
+            } else if (currentFilter === 'favorites') {
+              show = userFavorites.includes(tool);
+            } else {
+              show = cardCategory === currentFilter;
+            }
+            card.style.order = (currentFilter === 'all' && userFavorites.includes(tool)) ? '0' : '1';
+            if (show) {
+              card.style.opacity = '0';
+              card.style.transform = 'translateY(30px)';
+              setTimeout(() => {
+                card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+              }, index * 50 + 200);
+            } else {
+              card.style.display = 'none';
+            }
+          });
+          updateCategoryCounts();
+        }, 50);
+      });
     });
-
-    // Also update counts after filtering
-    function filterCategory(category) {
-      currentFilter = category;
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      event.target.closest('.nav-item').classList.add('active');
-      const cards = document.querySelectorAll('.tool-card');
-      const grid = document.getElementById('toolGrid');
-      cards.forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-      });
-      setTimeout(() => {
-        cards.forEach((card, index) => {
-          const cardCategory = card.getAttribute('data-category');
-          const tool = card.getAttribute('data-tool');
-          let show = false;
-          if (category === 'all') {
-            show = true;
-          } else if (category === 'favorites') {
-            show = userFavorites.includes(tool);
-          } else {
-            show = cardCategory === category;
-          }
-          if (show) {
-            card.style.display = 'flex';
-            card.style.order = (category === 'all' && userFavorites.includes(tool)) ? '0' : '1';
-            setTimeout(() => {
-              card.style.opacity = '1';
-              card.style.transform = 'translateY(0)';
-            }, index * 25);
-          } else {
-            card.style.display = 'none';
-          }
-        });
-        updateCategoryCounts();
-      }, 100);
-      addFilterFeedback(category);
-    }
     
     // Add search functionality
     function searchTools(query) {

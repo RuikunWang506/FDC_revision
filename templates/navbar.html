@@ -42,18 +42,6 @@
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('display') }}">📕 log</a>
             </li>
-            <li class="nav-item d-flex align-items-center">
-                <button id="jingle-bell-btn" class="btn btn-link nav-link" style="color: rgba(255,255,255,.5); border: none; background: none; cursor: pointer; padding-right: 8px;" title="Play Jingle Bells">
-                    <i class="fas fa-play-circle fa-lg"></i> 🔔
-                </button>
-                <div id="audio-progress-container" style="display: none; width: 150px; margin-left: 8px;">
-                    <input type="range" id="audio-progress" min="0" max="100" value="0" step="0.1" style="width: 100%; cursor: pointer;">
-                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,.7); margin-top: 2px;">
-                        <span id="current-time">0:00</span>
-                        <span id="duration-time">0:00</span>
-                    </div>
-                </div>
-            </li>
             {% endif %}
         </ul>
 
@@ -160,106 +148,12 @@ body.has-navbar { padding-top: 50px; }
 #navbar-qr-btn:focus {
     outline: none;
 }
-#jingle-bell-btn {
-    transition: color 0.3s;
-}
-#jingle-bell-btn:hover {
-    color: rgba(255,255,255,.75) !important;
-}
-#jingle-bell-btn:focus {
-    outline: none;
-    box-shadow: none;
-}
-#audio-progress {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 4px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 2px;
-    outline: none;
-}
-#audio-progress::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    background: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-}
-#audio-progress::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    background: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-}
 </style>
-
-<!-- Hidden audio element -->
-<audio id="jingle-bell-audio" preload="auto">
-    <source src="https://cdn.pixabay.com/audio/2025/11/29/audio_d1c955f418.mp3" type="audio/mpeg">
-</audio>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script>
 $(function() {
     $('.dropdown-toggle').dropdown();
-    
-    // Jingle Bells player
-    var audio = document.getElementById('jingle-bell-audio');
-    var btn = document.getElementById('jingle-bell-btn');
-    var progressBar = document.getElementById('audio-progress');
-    var progressContainer = document.getElementById('audio-progress-container');
-    var currentTimeEl = document.getElementById('current-time');
-    var durationTimeEl = document.getElementById('duration-time');
-    
-    // Format time helper
-    function formatTime(seconds) {
-        var mins = Math.floor(seconds / 60);
-        var secs = Math.floor(seconds % 60);
-        return mins + ':' + (secs < 10 ? '0' : '') + secs;
-    }
-    
-    $('#jingle-bell-btn').on('click', function() {
-        if (audio.paused) {
-            audio.play();
-            $(this).html('<i class="fas fa-pause-circle fa-lg"></i> 🔔');
-            progressContainer.style.display = 'block';
-        } else {
-            audio.pause();
-            $(this).html('<i class="fas fa-play-circle fa-lg"></i> 🔔');
-        }
-    });
-    
-    // Update progress bar as audio plays
-    audio.addEventListener('timeupdate', function() {
-        if (audio.duration) {
-            var progress = (audio.currentTime / audio.duration) * 100;
-            progressBar.value = progress;
-            currentTimeEl.textContent = formatTime(audio.currentTime);
-        }
-    });
-    
-    // Set duration when metadata is loaded
-    audio.addEventListener('loadedmetadata', function() {
-        durationTimeEl.textContent = formatTime(audio.duration);
-    });
-    
-    // Seek when user drags the progress bar
-    progressBar.addEventListener('input', function() {
-        var seekTime = (this.value / 100) * audio.duration;
-        audio.currentTime = seekTime;
-    });
-    
-    // Reset button when song ends
-    audio.addEventListener('ended', function() {
-        $('#jingle-bell-btn').html('<i class="fas fa-play-circle fa-lg"></i> 🔔');
-        progressBar.value = 0;
-        currentTimeEl.textContent = '0:00';
-        progressContainer.style.display = 'none';
-    });
     
     // QR code button click handler
     $('#navbar-qr-btn').on('click', function() {
