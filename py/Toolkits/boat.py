@@ -1937,6 +1937,29 @@ def boat_packslip(container_number):
             existing['Num Cartons'] = int(existing.get('Num Cartons', 0) or 0) + int(item.get('Num Cartons', 0) or 0)
 
         packslip_data = [consolidated_map[k] for k in consolidated_order]
+
+        # Exclude sample-only styles: Total Boxes = 0 and Total Quantity = 1.
+        style_totals_for_filter = {}
+        style_boxes_for_filter = {}
+        for item in packslip_data:
+            style = item.get('Style')
+            if not style:
+                continue
+            style_totals_for_filter[style] = style_totals_for_filter.get(style, 0) + int(item.get('Quantity', 0) or 0)
+            if style not in style_boxes_for_filter:
+                style_boxes_for_filter[style] = int(item.get('Total Boxes', 0) or 0)
+
+        excluded_sample_styles = {
+            style for style, total_qty in style_totals_for_filter.items()
+            if style_boxes_for_filter.get(style, 0) == 0 and total_qty == 1
+        }
+
+        if excluded_sample_styles:
+            current_app.logger.info(f"Excluding sample-only styles from packslip: {sorted(excluded_sample_styles)}")
+            packslip_data = [item for item in packslip_data if item.get('Style') not in excluded_sample_styles]
+
+        if not packslip_data:
+            return jsonify({'error': f'No non-sample packing list data found in {container_number}'}), 400
         
         # Create output Excel file using openpyxl for merged cells
         from openpyxl import Workbook
