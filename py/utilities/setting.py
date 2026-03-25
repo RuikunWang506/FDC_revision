@@ -138,6 +138,8 @@ def resize_image(image_file, new_width):
         orig_width, orig_height = img.size
         new_height = int((new_width / orig_width) * orig_height)  # Calculate new height to maintain aspect ratio
         resized_img = img.resize((new_width, new_height), Image.LANCZOS)  # Use LANCZOS for high-quality resizing
+        if resized_img.mode in ('RGBA', 'LA', 'P'):
+            resized_img = resized_img.convert('RGB')
         img_byte_arr = io.BytesIO()
         resized_img.save(img_byte_arr, format='JPEG')
         img_byte_arr.seek(0)
