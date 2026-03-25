@@ -20,6 +20,22 @@ EXTERNAL_PASSWORD = 'ucandoit'
 sql_server_config = Config.SQL_SERVER_CONFIG
 
 
+class TikTokAuthError(Exception):
+    pass
+
+
+class TikTokInventoryFetchError(Exception):
+    pass
+
+
+def has_external_stock_access():
+    return bool(
+        session.get('external_user')
+        or session.get('tk_user')
+        or session.get('username')
+    )
+
+
 def get_db_connections():
     """Establishes connections to both FDC and E_FAS databases."""
     try:
@@ -75,10 +91,8 @@ def init_external_check_database():
 def get_tiktok_access_token():
     """Get or refresh TikTok Shop API access token."""
     try:
-        # For production, implement OAuth token refresh
-        # For now, using API key authentication
         api_key = Config.TIKTOK_SHOP_API_KEY
-        if api_key == 'YOUR_API_KEY_HERE':
+        if not api_key or api_key == 'YOUR_API_KEY_HERE':
             current_app.logger.warning("TikTok Shop API key not configured")
             return None
         return api_key
@@ -225,17 +239,48 @@ def get_inventory_from_tiktok():
                 data=body_str,
                 timeout=30
             )
+
+            if response.status_code == 401:
+                error_payload = {}
+                try:
+                    error_payload = response.json()
+                except ValueError:
+                    error_payload = {}
+
+                error_code = error_payload.get('code')
+                error_message = error_payload.get('message', response.text)
+                request_id = error_payload.get('request_id')
+
+                current_app.logger.error(
+                    f"TikTok API auth error: {error_message}"
+                    + (f" (request_id={request_id})" if request_id else "")
+                )
+
+                if error_code == 105002:
+                    raise TikTokAuthError(
+                        "TikTok access token expired. Update TIKTOK_SHOP_API_KEY with a fresh token."
+                    )
+
+                raise TikTokAuthError("TikTok authentication failed.")
             
             if response.status_code != 200:
                 current_app.logger.error(f"TikTok API error: {response.status_code} - {response.text}")
-                break
+                raise TikTokInventoryFetchError(
+                    f"TikTok inventory request failed with status {response.status_code}."
+                )
             
             data = response.json()
             
             # V2 API response format
             if data.get('code') != 0:
+                if data.get('code') == 105002:
+                    raise TikTokAuthError(
+                        "TikTok access token expired. Update TIKTOK_SHOP_API_KEY with a fresh token."
+                    )
                 current_app.logger.error(f"TikTok API response error: {data.get('message', 'Unknown error')}")
-                break
+                raise TikTokInventoryFetchError(
+                    data.get('message', 'TikTok API returned an error while fetching inventory.')
+                )
             
             product_data = data.get('data', {})
             products = product_data.get('products', [])
@@ -405,9 +450,11 @@ def get_inventory_from_tiktok():
         
         return inventory_items
         
+    except TikTokAuthError:
+        raise
     except requests.exceptions.Timeout:
         current_app.logger.error("TikTok API request timeout")
-        return []
+        raise TikTokInventoryFetchError("TikTok API request timed out.")
     except requests.exceptions.ConnectionError as e:
         error_msg = str(e)
         if 'getaddrinfo failed' in error_msg or 'Failed to resolve' in error_msg:
@@ -416,12 +463,14 @@ def get_inventory_from_tiktok():
             current_app.logger.error(f"Set TIKTOK_SHOP_API_URL environment variable to correct regional endpoint.")
         else:
             current_app.logger.error(f"TikTok API connection error: {error_msg}")
-        return []
+        raise TikTokInventoryFetchError("Unable to connect to the TikTok API.")
     except Exception as e:
         current_app.logger.error(f"TikTok fetch error: {e}")
         import traceback
         traceback.print_exc()
-        return []
+        if isinstance(e, TikTokInventoryFetchError):
+            raise
+        raise TikTokInventoryFetchError(str(e))
 
 
 def fetch_available_quantity(sku, is_manual=False):
@@ -583,10 +632,7 @@ def external_password():
 # Main page
 @external_stock_check_bp.route('/external_stock_check', methods=['GET'])
 def external_stock_check_page():
-    # Check if user has access
-    external_user = session.get('external_user', False)
-    
-    if not external_user:
+    if not has_external_stock_access():
         return render_template('external_stock_check.html', show_password=True)
     
     # Initialize database
@@ -600,12 +646,11 @@ def external_stock_check_page():
 def fetch_tiktok_inventory():
     """Fetch inventory from TikTok and save to database."""
     try:
-        if not session.get('external_user'):
+        if not has_external_stock_access():
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # Get inventory data (placeholder)
         inventory_data = get_inventory_from_tiktok()
-        
+
         # Save to MySQL
         connection = get_mysql_connection()
         if connection is None:
@@ -646,6 +691,13 @@ def fetch_tiktok_inventory():
             'success': True,
             'message': f'Fetched and saved {insert_count} items from TikTok'
         })
+    except TikTokAuthError as e:
+        return jsonify({
+            'error': str(e),
+            'needs_reauth': True
+        }), 401
+    except TikTokInventoryFetchError as e:
+        return jsonify({'error': str(e)}), 502
     except Exception as e:
         current_app.logger.error(f"Error fetching TikTok inventory: {e}")
         return jsonify({'error': str(e)}), 500
@@ -843,7 +895,7 @@ def get_availability():
 def get_sku_stock(sku):
     """Get stock levels for a specific SKU."""
     try:
-        if not session.get('external_user'):
+        if not has_external_stock_access():
             return jsonify({'error': 'Unauthorized'}), 401
         
         stock_data = fetch_available_quantity(sku)
@@ -1006,7 +1058,7 @@ def export_csv_complete():
 def get_manual_styles():
     """Get manual styles from JSON file."""
     try:
-        if not session.get('external_user'):
+        if not has_external_stock_access():
             return jsonify({'error': 'Unauthorized'}), 401
         
         # Load manual styles from JSON
@@ -1035,7 +1087,7 @@ def get_manual_styles():
 def save_manual_styles():
     """Save edited manual styles to JSON file."""
     try:
-        if not session.get('external_user'):
+        if not has_external_stock_access():
             return jsonify({'error': 'Unauthorized'}), 401
         
         data = request.json

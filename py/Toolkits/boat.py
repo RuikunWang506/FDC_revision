@@ -48,6 +48,111 @@ def get_db_connection():
     )
     return pyodbc.connect(conn_str)
 
+def get_filtered_order_summary_by_skus(full_sku_list):
+    """Return pending/active ROSS/BURLINGTON order summary keyed by full SKU."""
+    if not full_sku_list:
+        return {}
+
+    normalized_skus = sorted({str(sku).strip().upper() for sku in full_sku_list if str(sku).strip()})
+    if not normalized_skus:
+        return {}
+
+    sku_summary_map = {}
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        placeholders = ','.join(['?' for _ in normalized_skus])
+        query = f"""
+            SELECT
+                UPPER(LTRIM(RTRIM(ol.prod_cd))) AS sku,
+                LTRIM(RTRIM(ISNULL(c.cus_nm, ''))) AS customer_name,
+                ol.ord_num AS order_id,
+                CAST(ISNULL(ol.order_qty, 0) AS INT) AS order_qty,
+                CASE
+                    WHEN o.ship_dt IS NULL OR o.ship_dt = 0 THEN ''
+                    ELSE RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.ship_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                         RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.ship_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                         CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', o.ship_dt) - 81088, '20230101')) AS VARCHAR)
+                END AS ship_date
+            FROM dbo.ord_log ol
+            JOIN dbo.customer c ON ol.cus_id = c.cus_id
+            JOIN dbo.orders o ON ol.ord_num = o.ord_num
+            WHERE UPPER(LTRIM(RTRIM(ol.prod_cd))) IN ({placeholders})
+              AND (
+                    UPPER(c.cus_nm) LIKE '%ROSS%'
+                    OR UPPER(c.cus_nm) LIKE '%BURLINGTON COAT FACTORY%'
+                    OR UPPER(c.cus_nm) LIKE '%BURLINGTON COAT FACOTORY%'
+              )
+              AND (
+                    (o.INVS_NUM IS NULL OR CAST(o.INVS_NUM AS INT) = 0)
+                    OR (o.can_dt IS NULL OR CAST(o.can_dt AS INT) = 0)
+              )
+            ORDER BY UPPER(LTRIM(RTRIM(ol.prod_cd))), ol.ord_num
+        """
+
+        cursor.execute(query, normalized_skus)
+        rows = cursor.fetchall()
+
+        for row in rows:
+            sku = str(row[0]).strip().upper() if row[0] is not None else ''
+            if not sku:
+                continue
+
+            customer_name = str(row[1]).strip() if row[1] is not None else ''
+            if customer_name.upper() in {'BURLINGTON COAT FACTORY', 'BURLINGTON COAT FACOTORY'}:
+                customer_name = 'burlington'
+            order_id = str(row[2]).strip() if row[2] is not None else ''
+            order_qty = int(row[3] or 0)
+            ship_date = str(row[4]).strip() if row[4] is not None else ''
+
+            if sku not in sku_summary_map:
+                sku_summary_map[sku] = {
+                    'qty_in_order': 0,
+                    'customer_name': [],
+                    'order_id': [],
+                    'order_qty': [],
+                    'ship_date': []
+                }
+
+            sku_summary_map[sku]['qty_in_order'] += order_qty
+            if customer_name and customer_name not in sku_summary_map[sku]['customer_name']:
+                sku_summary_map[sku]['customer_name'].append(customer_name)
+            if order_id and order_id not in sku_summary_map[sku]['order_id']:
+                sku_summary_map[sku]['order_id'].append(order_id)
+            if order_qty > 0:
+                sku_summary_map[sku]['order_qty'].append(str(order_qty))
+            if ship_date and ship_date not in sku_summary_map[sku]['ship_date']:
+                sku_summary_map[sku]['ship_date'].append(ship_date)
+
+    except Exception as e:
+        current_app.logger.warning(f"Failed to fetch Qty in Order data for packslip: {e}")
+    finally:
+        if cursor is not None:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    for sku, summary in sku_summary_map.items():
+        sku_summary_map[sku] = {
+            'qty_in_order': summary['qty_in_order'],
+            'customer_name': ', '.join(summary['customer_name']),
+            'order_id': ', '.join(summary['order_id']),
+            'order_qty': ', '.join(summary['order_qty']),
+            'ship_date': ', '.join(summary['ship_date'])
+        }
+
+    return sku_summary_map
+
 def get_los_angeles_time(dt_str):
     """Convert ISO datetime string to Los Angeles time"""
     if not dt_str:
@@ -1595,12 +1700,24 @@ def boat_packslip(container_number):
         try:
             excel_file = pd.ExcelFile(file_path)
             
-            # Explicitly read from "Placking list" sheet (case-insensitive)
+            # Prefer known packing list tabs, but keep a fallback for real-world file variations.
             packing_sheet = None
-            for sheet_name in excel_file.sheet_names:
-                if sheet_name.lower() == 'placking list':
-                    packing_sheet = sheet_name
+            preferred_sheet_names = ['placking list', 'packing list', 'system file']
+
+            for preferred_name in preferred_sheet_names:
+                for sheet_name in excel_file.sheet_names:
+                    if str(sheet_name).strip().lower() == preferred_name:
+                        packing_sheet = sheet_name
+                        break
+                if packing_sheet:
                     break
+
+            if not packing_sheet:
+                for sheet_name in excel_file.sheet_names:
+                    normalized = str(sheet_name).strip().lower()
+                    if 'pack' in normalized and 'list' in normalized:
+                        packing_sheet = sheet_name
+                        break
             
             if not packing_sheet:
                 current_app.logger.error(f"No 'Placking list' sheet found. Available sheets: {excel_file.sheet_names}")
@@ -1620,11 +1737,11 @@ def boat_packslip(container_number):
         
         current_app.logger.info(f"Using packing sheet: {packing_sheet}, shape: {df_packing.shape}")
         
-        # Find the header row by searching for "CTN" text
+        # Find the header row by scanning more columns for CTN/STYLE markers.
         header_row_idx = None
-        for idx in range(min(15, len(df_packing))):
-            row_str = ' '.join([str(df_packing.iloc[idx, i]).upper() for i in range(min(5, len(df_packing.columns)))])
-            if 'CTN' in row_str:
+        for idx in range(min(20, len(df_packing))):
+            row_str = ' '.join([str(df_packing.iloc[idx, i]).upper() for i in range(min(12, len(df_packing.columns)))])
+            if 'CTN' in row_str and ('STYLE' in row_str or 'QTY' in row_str):
                 header_row_idx = idx
                 current_app.logger.info(f"Found header row with 'CTN' at index {idx}")
                 break
@@ -1670,6 +1787,7 @@ def boat_packslip(container_number):
         
         start_row = header_row_idx + 1 if header_row_idx >= 0 else 0
         
+        last_ctn_no = ''
         for idx in range(start_row, len(df_packing)):
             try:
                 row = df_packing.iloc[idx]
@@ -1689,11 +1807,17 @@ def boat_packslip(container_number):
                     if idx <= start_row + 5:
                         current_app.logger.info(f"  -> Skipping: ctn_no is '/' (placeholder)")
                     continue
+
+                # Many packing sheets use merged CTN cells; carry forward last non-empty CTN.
+                if not ctn_no and last_ctn_no:
+                    ctn_no = last_ctn_no
+                elif ctn_no:
+                    last_ctn_no = ctn_no
                 
                 # Skip empty rows
-                if not style_sku or not ctn_no:
+                if not style_sku:
                     if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: empty style_sku or ctn_no")
+                        current_app.logger.info(f"  -> Skipping: empty style_sku")
                     continue
                 
                 # Skip header-like rows
@@ -1705,7 +1829,7 @@ def boat_packslip(container_number):
                 parts = style_sku.split()
                 if len(parts) >= 2:
                     style = parts[0]
-                    sku = parts[1]
+                    sku = ' '.join(parts[1:])
                 elif len(parts) == 1:
                     style = parts[0]
                     sku = ''
@@ -1744,6 +1868,7 @@ def boat_packslip(container_number):
                 packslip_data.append({
                     'Style': style,
                     'SKU': sku,
+                    'Full SKU': f"{style} {sku}".strip(),
                     'Quantity': total_qty,
                     'Case Qty': case_qty,
                     'SKU Boxes': sku_boxes_count,
@@ -1781,6 +1906,37 @@ def boat_packslip(container_number):
             style = item['Style']
             item['Total Boxes'] = style_carton_totals.get(style, 0)
             current_app.logger.info(f"Item {style} {item['SKU']}: Total Boxes = {item['Total Boxes']}")
+
+        # Add order summary fields from pending/active ROSS/BURLINGTON orders.
+        full_skus = [item.get('Full SKU', '') for item in packslip_data]
+        order_summary_map = get_filtered_order_summary_by_skus(full_skus)
+        for item in packslip_data:
+            full_sku = str(item.get('Full SKU', '')).strip().upper()
+            summary = order_summary_map.get(full_sku, {})
+            item['Qty in Order'] = summary.get('qty_in_order', 0)
+            item['customer name'] = summary.get('customer_name', '')
+            item['order id'] = summary.get('order_id', '')
+            item['order qty'] = summary.get('order_qty', '')
+            item['ship date'] = summary.get('ship_date', '')
+
+        # Consolidate duplicate rows with the same Style/SKU/Case Qty.
+        # This collapses repeated lines (e.g. same SKU with identical case pack)
+        # into one row by summing Quantity and SKU Boxes.
+        consolidated_map = {}
+        consolidated_order = []
+        for item in packslip_data:
+            key = (item.get('Style'), item.get('SKU'), item.get('Case Qty'))
+            if key not in consolidated_map:
+                consolidated_map[key] = dict(item)
+                consolidated_order.append(key)
+                continue
+
+            existing = consolidated_map[key]
+            existing['Quantity'] = int(existing.get('Quantity', 0) or 0) + int(item.get('Quantity', 0) or 0)
+            existing['SKU Boxes'] = int(existing.get('SKU Boxes', 0) or 0) + int(item.get('SKU Boxes', 0) or 0)
+            existing['Num Cartons'] = int(existing.get('Num Cartons', 0) or 0) + int(item.get('Num Cartons', 0) or 0)
+
+        packslip_data = [consolidated_map[k] for k in consolidated_order]
         
         # Create output Excel file using openpyxl for merged cells
         from openpyxl import Workbook
@@ -1812,7 +1968,7 @@ def boat_packslip(container_number):
             bottom=Side(style='thin')
         )
         
-        # Define center alignment
+        # Define center alignment to match the reference workbook style.
         center_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         
         # Add header section (rows 1-2)
@@ -1852,16 +2008,23 @@ def boat_packslip(container_number):
         cell.alignment = center_alignment
         cell.border = thin_border
         cell.font = Font(bold=True)
+
+        cell = ws.cell(row=4, column=4, value='in order')
+        cell.alignment = center_alignment
+        cell.border = thin_border
+        cell.font = Font(bold=True)
         
         # Add summary data (one row per unique style)
         summary_row = 5
-        styles_summary = {}  # {style: {total_boxes, total_qty}}
+        styles_summary = {}  # {style: {total_boxes, total_qty, has_in_order}}
         
         for item in packslip_data:
             style = item['Style']
             if style not in styles_summary:
-                styles_summary[style] = {'total_boxes': item['Total Boxes'], 'total_qty': 0}
+                styles_summary[style] = {'total_boxes': item['Total Boxes'], 'total_qty': 0, 'has_in_order': False}
             styles_summary[style]['total_qty'] += item['Quantity']
+            if int(item.get('Qty in Order', 0) or 0) > 0:
+                styles_summary[style]['has_in_order'] = True
         
         for style, data in styles_summary.items():
             cell = ws.cell(row=summary_row, column=1, value=style)
@@ -1875,23 +2038,31 @@ def boat_packslip(container_number):
             cell = ws.cell(row=summary_row, column=3, value=data['total_qty'])
             cell.alignment = center_alignment
             cell.border = thin_border
+
+            cell = ws.cell(row=summary_row, column=4, value='yes' if data.get('has_in_order') else '')
+            cell.alignment = center_alignment
+            cell.border = thin_border
             
             summary_row += 1
         
         # Add blank row before chart
         chart_start_row = summary_row + 1
         
-        # Set column widths for US Letter fit
+        # Exact widths copied from reference workbook (A-J).
         ws.column_dimensions['A'].width = 12
         ws.column_dimensions['B'].width = 12
         ws.column_dimensions['C'].width = 14
         ws.column_dimensions['D'].width = 11
         ws.column_dimensions['E'].width = 11
         ws.column_dimensions['F'].width = 12
+        ws.column_dimensions['G'].width = 22
+        ws.column_dimensions['H'].width = 12
+        ws.column_dimensions['I'].width = 12
+        ws.column_dimensions['J'].width = 12
         
         # Add headers for packing list data chart
-        # New order: Style | Total Boxes | SKU | Quantity | Case Qty | SKU Boxes
-        headers = ['Style', 'Total Boxes', 'SKU', 'Quantity', 'Case Qty', 'SKU Boxes']
+        # Match requested order: Style | Total Boxes | SKU | Quantity | Case Qty | SKU Boxes | customer name | order id | order qty | ship date
+        headers = ['Style', 'Total Boxes', 'SKU', 'Quantity', 'Case Qty', 'SKU Boxes', 'customer name', 'order id', 'order qty', 'ship date']
         for col_idx, header in enumerate(headers, 1):
             cell = ws.cell(row=chart_start_row, column=col_idx, value=header)
             cell.alignment = center_alignment
@@ -1961,7 +2132,7 @@ def boat_packslip(container_number):
                 current_style = style
                 merge_start_row = row_idx
             
-            # Write row data in new order: Style | Total Boxes | SKU | Quantity | Case Qty | SKU Boxes
+            # Match requested detail order: Style | Total Boxes | SKU | Quantity | Case Qty | SKU Boxes | customer name | order id | order qty | ship date
             # Column A: Style
             cell = ws.cell(row=row_idx, column=1, value=item['Style'])
             cell.alignment = center_alignment
@@ -1988,8 +2159,28 @@ def boat_packslip(container_number):
             cell.alignment = center_alignment
             cell.border = thin_border
             
-            # Column F: SKU Boxes (just write the number, no formatting)
+            # Column F: SKU Boxes
             cell = ws.cell(row=row_idx, column=6, value=item['SKU Boxes'])
+            cell.alignment = center_alignment
+            cell.border = thin_border
+
+            # Column G: customer name
+            cell = ws.cell(row=row_idx, column=7, value=item.get('customer name', ''))
+            cell.alignment = center_alignment
+            cell.border = thin_border
+
+            # Column H: order id
+            cell = ws.cell(row=row_idx, column=8, value=item.get('order id', ''))
+            cell.alignment = center_alignment
+            cell.border = thin_border
+
+            # Column I: order qty
+            cell = ws.cell(row=row_idx, column=9, value=item.get('order qty', ''))
+            cell.alignment = center_alignment
+            cell.border = thin_border
+
+            # Column J: ship date
+            cell = ws.cell(row=row_idx, column=10, value=item.get('ship date', ''))
             cell.alignment = center_alignment
             cell.border = thin_border
             

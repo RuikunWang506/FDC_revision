@@ -576,7 +576,9 @@
     </style>
 </head>
 <body>
+    {% if show_navbar is not defined or show_navbar %}
     {% include 'navbar.html' %}
+    {% endif %}
 
     <!-- Sidebar - Only show if product_data exists -->
     {% if product_data %}
@@ -592,11 +594,12 @@
                 <input type="text" name="search_input" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
                 <button type="submit">Search</button>
             </form>
-            <!-- Container Search Checkbox -->
+            {% if not is_tiktok_view %}
             <label style="display: flex; align-items: center; font-size: 12px; color: #555; cursor: pointer; margin-top: 12px; justify-content: center;">
                 <input type="checkbox" id="containerSearchCheckbox" style="margin-right: 8px; cursor: pointer;">
                 <span>Search by Container</span>
             </label>
+            {% endif %}
         </div>
         <!-- Color Filter Section in Sidebar -->
         <div class="sidebar-color-section">
@@ -655,6 +658,7 @@
                     <input type="text" name="search_input" id="productSearchInput" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
                     <button type="submit" id="productSearchBtn">Search</button>
                 </form>
+                {% if not is_tiktok_view %}
                 <div style="margin-top: 15px; border-top: 1px solid #e0e0e0; padding-top: 15px;">
                     <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px;">
                         <input type="checkbox" id="containerModeCheckbox" name="container_mode" style="margin-right: 8px; cursor: pointer;">
@@ -662,6 +666,7 @@
                     </label>
                     <p style="font-size: 12px; color: #666; margin: 0;">When enabled, search by container number instead (e.g., F26117)</p>
                 </div>
+                {% endif %}
             </div>
             {% endif %}
 
@@ -721,6 +726,7 @@
                                     </div>
                                     <!-- Right Column -->
                                     <div style="flex: 1;">
+                                        {% if not is_tiktok_view %}
                                         <div style="margin-bottom: 6px;">
                                             MSRP:
                                             {% if style_group.parent_info.msrp %}
@@ -747,6 +753,7 @@
                                             <span class="sku-detail-badge">N/A</span>
                                             {% endif %}
                                         </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -972,7 +979,7 @@
                     <div class="history-left-module">
                         <h4>Order Summary</h4>
                         
-                        <!-- Unique Prices -->
+                        {% if not is_tiktok_view %}
                         <div class="info-item">
                             <div class="info-label">Unique Prices:</div>
                             <div class="unique-prices-container" id="uniquePricesContainer">
@@ -980,17 +987,21 @@
                             </div>
                         </div>
                         
-                        <!-- Average Price -->
                         <div class="info-item">
                             <div class="info-label">Average Price:</div>
                             <div class="info-value" id="averagePrice">-</div>
                         </div>
                         
-                        <!-- Total Price -->
                         <div class="info-item">
                             <div class="info-label">Total Price:</div>
                             <div class="info-value" id="totalPrice">-</div>
                         </div>
+                        {% else %}
+                        <div class="info-item">
+                            <div class="info-label">Summary:</div>
+                            <div class="info-value">TK特供有阉割一些功能哈~</div>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <!-- Right Module: Data Table -->
@@ -1058,6 +1069,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script>
+        const isTikTokView = {{ 'true' if is_tiktok_view else 'false' }};
+
         function enlargeImage(img) {
             const popup = document.getElementById('imagePopup');
             const popupImage = document.getElementById('popupImage');
@@ -1296,16 +1309,20 @@
                 let totalPrice = 0;
                 
                 historyRows.forEach(row => {
-                    // Qty is in the 6th column (index 5), Unit Price is in the 7th column (index 6)
+                    // Qty and price column indexes depend on TikTok mode visibility.
                     const cells = row.querySelectorAll('td');
-                    if (cells.length > 5) {
-                        const qty = parseInt(cells[5].textContent) || 0;
-                        const priceText = cells[6]?.textContent || '0';
-                        const price = parseFloat(priceText.replace('$', '')) || 0;
+                    const qtyIndex = isTikTokView ? 4 : 5;
+                    const priceIndex = isTikTokView ? -1 : 6;
+                    if (cells.length > qtyIndex) {
+                        const qty = parseInt(cells[qtyIndex].textContent) || 0;
                         
                         itemHistorySum += qty;
-                        uniquePrices.add(price);
-                        totalPrice += (price * qty);
+                        if (priceIndex > -1) {
+                            const priceText = cells[priceIndex]?.textContent || '0';
+                            const price = parseFloat(priceText.replace('$', '')) || 0;
+                            uniquePrices.add(price);
+                            totalPrice += (price * qty);
+                        }
                     }
                 });
                 
@@ -1314,8 +1331,9 @@
                     historyTotalQty.textContent = `Total: ${itemHistorySum}`;
                 }
                 
-                // Update summary on left module
-                populateHistorySummary(uniquePrices, itemHistorySum, totalPrice);
+                if (!isTikTokView) {
+                    populateHistorySummary(uniquePrices, itemHistorySum, totalPrice);
+                }
             }
             
             // Update Adjustment total - sum visible rows in adjustmentTableContainer
@@ -1445,50 +1463,73 @@
                 }
             });
         });
-        
-        // Container search toggle
+
         document.addEventListener('DOMContentLoaded', function() {
-            const checkbox = document.getElementById('containerModeCheckbox');
-            const searchInput = document.getElementById('productSearchInput');
-            const searchBtn = document.getElementById('productSearchBtn');
-            
-            if (checkbox && searchInput && searchBtn) {
-                checkbox.addEventListener('change', function() {
+            if (isTikTokView) return;
+
+            const containerModeCheckbox = document.getElementById('containerModeCheckbox');
+            const productSearchInput = document.getElementById('productSearchInput');
+            const productSearchBtn = document.getElementById('productSearchBtn');
+
+            if (containerModeCheckbox && productSearchInput && productSearchBtn) {
+                containerModeCheckbox.addEventListener('change', function() {
                     if (this.checked) {
-                        searchInput.placeholder = 'e.g., F26117';
-                        searchBtn.textContent = 'Search Container';
-                        searchBtn.style.backgroundColor = '#ff9800';
+                        productSearchInput.placeholder = 'e.g., F26117';
+                        productSearchBtn.textContent = 'Search Container';
+                        productSearchBtn.style.backgroundColor = '#ff9800';
                     } else {
-                        searchInput.placeholder = 'e.g., M1141';
-                        searchBtn.textContent = 'Search';
-                        searchBtn.style.backgroundColor = '#4CAF50';
+                        productSearchInput.placeholder = 'e.g., M1141';
+                        productSearchBtn.textContent = 'Search';
+                        productSearchBtn.style.backgroundColor = '#4CAF50';
                     }
                 });
-                
-                // Override form submission for container search
-                searchBtn.closest('form').addEventListener('submit', function(e) {
-                    if (checkbox.checked) {
+
+                const form = productSearchBtn.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        if (!containerModeCheckbox.checked) return;
+
                         e.preventDefault();
-                        const containerInput = searchInput.value.trim();
+                        const containerInput = productSearchInput.value.trim();
                         if (!containerInput) {
                             alert('Please enter a container number');
                             return;
                         }
-                        // Submit to container_search endpoint
-                        const form = document.createElement('form');
-                        form.method = 'GET';
-                        form.action = '/container_search';
-                        
+
+                        const containerForm = document.createElement('form');
+                        containerForm.method = 'GET';
+                        containerForm.action = '/container_search';
+
                         const input = document.createElement('input');
                         input.type = 'hidden';
                         input.name = 'container_id';
                         input.value = containerInput;
-                        
-                        form.appendChild(input);
-                        document.body.appendChild(form);
-                        form.submit();
-                    }
-                });
+
+                        containerForm.appendChild(input);
+                        document.body.appendChild(containerForm);
+                        containerForm.submit();
+                    });
+                }
+            }
+
+            const sidebarContainerCheckbox = document.getElementById('containerSearchCheckbox');
+            if (sidebarContainerCheckbox) {
+                const sidebarSearchForm = sidebarContainerCheckbox.closest('.search-section')?.querySelector('form.search-form');
+                if (sidebarSearchForm) {
+                    sidebarSearchForm.addEventListener('submit', function(e) {
+                        if (!sidebarContainerCheckbox.checked) return;
+
+                        e.preventDefault();
+                        const inputEl = sidebarSearchForm.querySelector('input[name="search_input"]');
+                        const containerInput = (inputEl?.value || '').trim();
+                        if (!containerInput) {
+                            alert('Please enter a container number');
+                            return;
+                        }
+
+                        window.location.href = '/container_search?container_id=' + encodeURIComponent(containerInput);
+                    });
+                }
             }
         });
         
@@ -1571,9 +1612,13 @@
                         html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Order #</th>';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Date</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Customer</th>';
+                        if (!isTikTokView) {
+                            html += '<th style="padding:8px; border:1px solid #ddd;">Customer</th>';
+                        }
                         html += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Unit Price</th>';
+                        if (!isTikTokView) {
+                            html += '<th style="padding:8px; border:1px solid #ddd;">Unit Price</th>';
+                        }
                         html += '</tr></thead><tbody>';
                         
                         let totalQty = 0;
@@ -1594,26 +1639,30 @@
                             const customerLink = row.customer_id 
                                 ? `<a href="/customer?search_id=${row.customer_id}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.customer_id}</a>` 
                                 : '-';
+                            const productDetailBase = isTikTokView ? '/tiktok/tk_product_detail?search=' : '/product_detail?search=';
                             html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
                                 <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
-                                <td style="padding:6px; border:1px solid #ddd;"><a href="/product_detail?search=${row.product_code}" style="color:#667eea;">${row.product_code}</a></td>
+                                <td style="padding:6px; border:1px solid #ddd;"><a href="${productDetailBase}${encodeURIComponent(row.product_code)}" style="color:#667eea;">${row.product_code}</a></td>
                                 <td style="padding:6px; border:1px solid #ddd;">${orderLink}</td>
                                 <td style="padding:6px; border:1px solid #ddd;">${row.order_date}</td>
-                                <td style="padding:6px; border:1px solid #ddd;">${customerLink}</td>
+                                ${!isTikTokView ? `<td style="padding:6px; border:1px solid #ddd;">${customerLink}</td>` : ''}
                                 <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.order_quantity}</td>
-                                <td style="padding:6px; border:1px solid #ddd; text-align:right;">$${row.unit_price?.toFixed(2) || '0.00'}</td>
+                                ${!isTikTokView ? `<td style="padding:6px; border:1px solid #ddd; text-align:right;">$${row.unit_price?.toFixed(2) || '0.00'}</td>` : ''}
                             </tr>`;
                             totalQty += row.order_quantity;
-                            uniquePrices.add(row.unit_price);
-                            totalPrice += (row.unit_price * row.order_quantity);
+                            if (!isTikTokView) {
+                                uniquePrices.add(row.unit_price);
+                                totalPrice += (row.unit_price * row.order_quantity);
+                            }
                         });
                         
                         html += '</tbody></table></div>';
                         container.innerHTML = html;
                         document.getElementById('history-total-qty').textContent = `Total: ${totalQty}`;
                         
-                        // Update left module with summary data
-                        populateHistorySummary(uniquePrices, totalQty, totalPrice);
+                        if (!isTikTokView) {
+                            populateHistorySummary(uniquePrices, totalQty, totalPrice);
+                        }
                         
                         // Apply current filters to the newly loaded history rows
                         applyFilters();
