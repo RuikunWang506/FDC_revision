@@ -24,6 +24,7 @@ def audit():
     
     # Initialize variables - ADD sold_out_df HERE
     orders_html = "<p>No orders found.</p>"
+    customer_pivot_html = "<p>No customer summary available.</p>"
     sold_out_html = "<p>No sold out items found.</p>"
     matched_inventory_html = ""
     orders_data = []
@@ -51,18 +52,245 @@ def audit():
         
         if orders_data:
             orders_df = pd.DataFrame.from_records(orders_data, 
-                                                columns=['Database', 'Order Number', 'Order Date', 'Customer', 'Order Amount', 'Handling Fee', 'Misc Charge', 'Order Total', 'Total Items'])
+                                                columns=['Database', 'Order Number', 'Order Date', 'Customer', 'Order Amount', 'Handling Fee', 'Misc Charge', 'Order Total', 'Total Items', 'Total Quantity'])
             # Convert numeric columns
             numeric_cols = ['Order Amount', 'Handling Fee', 'Misc Charge', 'Order Total']
             for col in numeric_cols:
                 orders_df[col] = pd.to_numeric(orders_df[col], errors='coerce').fillna(0).round(2)
             
             orders_df['Total Items'] = pd.to_numeric(orders_df['Total Items'], errors='coerce').fillna(0).astype(int)
+            orders_df['Total Quantity'] = pd.to_numeric(orders_df['Total Quantity'], errors='coerce').fillna(0).astype(int)
+
+            # Build customer-level pivot summary from the same source data as the top orders table.
+            pivot_df = orders_df.copy()
+
+            def normalize_customer_name(name):
+                customer_name = str(name).strip() if pd.notna(name) else ''
+                lowered = customer_name.lower()
+                if 'sam moon' in lowered:
+                    return 'Sam Moon (All Locations)'
+                if 'fashion q' in lowered:
+                    return 'Fashion Q (All Locations)'
+                return customer_name
+
+            pivot_df['Customer'] = pivot_df['Customer'].apply(normalize_customer_name)
+            customer_pivot_df = pivot_df.groupby('Customer', dropna=False).agg({
+                'Order Amount': 'sum',
+                'Total Items': 'sum',
+                'Total Quantity': 'sum',
+                'Order Number': 'nunique'
+            }).reset_index().rename(columns={'Order Number': 'Number of Orders'})
+
+            # Build true unique styles per customer from distinct order+SKU rows.
+            customer_key_df = pivot_df[['Database', 'Order Number', 'Customer']].copy()
+            customer_key_df['Order Number'] = customer_key_df['Order Number'].astype(str)
+            customer_key_df = customer_key_df.drop_duplicates(subset=['Database', 'Order Number'])
+
+            order_sku_rows = SQL_connector.get_order_skus_for_orders(orders_data)
+            order_sku_qty_rows = SQL_connector.get_order_sku_quantities_for_orders(orders_data)
+            unique_styles_df = pd.DataFrame(columns=['Customer', 'Unique Styles'])
+            prefix_columns = ['S(ES)', 'N(EN)', 'BN', 'BT', 'GN', 'M(EM)', 'L', 'GT', 'T(ET)', 'TJ', 'Other']
+            prefix_qty_df = pd.DataFrame(columns=['Customer'] + prefix_columns)
+            prefix_revenue_df = pd.DataFrame(columns=['Customer'] + prefix_columns)
+            asp_column_map = {col: f'{col}均价' for col in prefix_columns}
+
+            if order_sku_rows:
+                sku_df = pd.DataFrame.from_records(order_sku_rows, columns=['Database', 'Order Number', 'SKU'])
+                sku_df['Order Number'] = sku_df['Order Number'].astype(str)
+                sku_df['SKU'] = sku_df['SKU'].astype(str).str.strip()
+
+                sku_with_customer_df = sku_df.merge(
+                    customer_key_df,
+                    on=['Database', 'Order Number'],
+                    how='left'
+                )
+                sku_with_customer_df = sku_with_customer_df.dropna(subset=['Customer', 'SKU'])
+
+                unique_styles_df = sku_with_customer_df.groupby('Customer').agg({
+                    'SKU': 'nunique'
+                }).reset_index().rename(columns={'SKU': 'Unique Styles'})
+
+            if order_sku_qty_rows:
+                sku_qty_df = pd.DataFrame.from_records(
+                    order_sku_qty_rows,
+                    columns=['Database', 'Order Number', 'SKU', 'Qty', 'Revenue']
+                )
+                sku_qty_df['Order Number'] = sku_qty_df['Order Number'].astype(str)
+                sku_qty_df['SKU'] = sku_qty_df['SKU'].astype(str).str.strip().str.upper()
+                sku_qty_df['Qty'] = pd.to_numeric(sku_qty_df['Qty'], errors='coerce').fillna(0)
+                sku_qty_df['Revenue'] = pd.to_numeric(sku_qty_df['Revenue'], errors='coerce').fillna(0)
+
+                sku_qty_with_customer_df = sku_qty_df.merge(
+                    customer_key_df,
+                    on=['Database', 'Order Number'],
+                    how='left'
+                )
+                sku_qty_with_customer_df = sku_qty_with_customer_df.dropna(subset=['Customer'])
+
+                def get_prefix_bucket(sku):
+                    s = str(sku).strip().upper()
+                    if s.startswith('ES') or s.startswith('S'):
+                        return 'S(ES)'
+                    if s.startswith('EN') or s.startswith('N'):
+                        return 'N(EN)'
+                    if s.startswith('BN'):
+                        return 'BN'
+                    if s.startswith('BT'):
+                        return 'BT'
+                    if s.startswith('GN'):
+                        return 'GN'
+                    if s.startswith('EM') or s.startswith('M'):
+                        return 'M(EM)'
+                    if s.startswith('L'):
+                        return 'L'
+                    if s.startswith('GT'):
+                        return 'GT'
+                    if s.startswith('TJ'):
+                        return 'TJ'
+                    if s.startswith('ET') or s.startswith('T'):
+                        return 'T(ET)'
+                    return 'Other'
+
+                sku_qty_with_customer_df['Prefix Bucket'] = sku_qty_with_customer_df['SKU'].apply(get_prefix_bucket)
+                bucketed_df = sku_qty_with_customer_df
+
+                if not bucketed_df.empty:
+                    prefix_qty_df = bucketed_df.groupby(['Customer', 'Prefix Bucket'])['Qty'].sum().unstack(fill_value=0).reset_index()
+                    prefix_revenue_df = bucketed_df.groupby(['Customer', 'Prefix Bucket'])['Revenue'].sum().unstack(fill_value=0).reset_index()
+                    for col in prefix_columns:
+                        if col not in prefix_qty_df.columns:
+                            prefix_qty_df[col] = 0
+                        if col not in prefix_revenue_df.columns:
+                            prefix_revenue_df[col] = 0
+                    prefix_qty_df = prefix_qty_df[['Customer'] + prefix_columns]
+                    prefix_revenue_df = prefix_revenue_df[['Customer'] + prefix_columns]
+
+            customer_pivot_df = customer_pivot_df.merge(unique_styles_df, on='Customer', how='left')
+            customer_pivot_df['Unique Styles'] = customer_pivot_df['Unique Styles'].fillna(0).astype(int)
+            customer_pivot_df = customer_pivot_df.merge(prefix_qty_df, on='Customer', how='left')
+            customer_pivot_df = customer_pivot_df.merge(prefix_revenue_df, on='Customer', how='left', suffixes=('', ' Revenue'))
+
+            for col in prefix_columns:
+                if col not in customer_pivot_df.columns:
+                    customer_pivot_df[col] = 0
+                customer_pivot_df[col] = pd.to_numeric(customer_pivot_df[col], errors='coerce').fillna(0).astype(int)
+
+                revenue_col = f'{col} Revenue'
+                if revenue_col not in customer_pivot_df.columns:
+                    customer_pivot_df[revenue_col] = 0
+                customer_pivot_df[revenue_col] = pd.to_numeric(customer_pivot_df[revenue_col], errors='coerce').fillna(0)
+
+                asp_col = asp_column_map[col]
+                customer_pivot_df[asp_col] = customer_pivot_df.apply(
+                    lambda row: (row[revenue_col] / row[col]) if row[col] > 0 else 0,
+                    axis=1
+                )
+
+            ordered_prefix_cols = []
+            for col in prefix_columns:
+                ordered_prefix_cols.append(col)
+                ordered_prefix_cols.append(asp_column_map[col])
+
+            prefix_qty_totals = {col: float(customer_pivot_df[col].sum()) for col in prefix_columns}
+            prefix_revenue_totals = {
+                col: float(customer_pivot_df[f'{col} Revenue'].sum()) if f'{col} Revenue' in customer_pivot_df.columns else 0.0
+                for col in prefix_columns
+            }
+
+            def format_prefix_avg(prefix_name):
+                qty_total = prefix_qty_totals.get(prefix_name, 0.0)
+                revenue_total = prefix_revenue_totals.get(prefix_name, 0.0)
+                if qty_total > 0:
+                    return f"<strong>${(revenue_total / qty_total):,.2f}</strong>"
+                return '<strong>$0.00</strong>'
+
+            customer_pivot_df = customer_pivot_df[[
+                'Customer', 'Order Amount', 'Number of Orders', 'Total Items', 'Unique Styles', 'Total Quantity',
+                *ordered_prefix_cols
+            ]]
+
+            customer_pivot_df = customer_pivot_df.sort_values('Order Amount', ascending=False)
+
+            pivot_total_row = pd.DataFrame([{
+                'Customer': '<strong>TOTALS</strong>',
+                'Order Amount': f"<strong>${customer_pivot_df['Order Amount'].sum():,.2f}</strong>",
+                'Number of Orders': f"<strong>{int(customer_pivot_df['Number of Orders'].sum()):,}</strong>",
+                'Total Items': f"<strong>{int(customer_pivot_df['Total Items'].sum()):,}</strong>",
+                'Unique Styles': f"<strong>{int(customer_pivot_df['Unique Styles'].sum()):,}</strong>",
+                'Total Quantity': f"<strong>{int(customer_pivot_df['Total Quantity'].sum()):,}</strong>",
+                'S(ES)': f"<strong>{int(customer_pivot_df['S(ES)'].sum()):,}</strong>",
+                'S(ES)均价': format_prefix_avg('S(ES)'),
+                'N(EN)': f"<strong>{int(customer_pivot_df['N(EN)'].sum()):,}</strong>",
+                'N(EN)均价': format_prefix_avg('N(EN)'),
+                'BN': f"<strong>{int(customer_pivot_df['BN'].sum()):,}</strong>",
+                'BN均价': format_prefix_avg('BN'),
+                'BT': f"<strong>{int(customer_pivot_df['BT'].sum()):,}</strong>",
+                'BT均价': format_prefix_avg('BT'),
+                'GN': f"<strong>{int(customer_pivot_df['GN'].sum()):,}</strong>",
+                'GN均价': format_prefix_avg('GN'),
+                'M(EM)': f"<strong>{int(customer_pivot_df['M(EM)'].sum()):,}</strong>",
+                'M(EM)均价': format_prefix_avg('M(EM)'),
+                'L': f"<strong>{int(customer_pivot_df['L'].sum()):,}</strong>",
+                'L均价': format_prefix_avg('L'),
+                'GT': f"<strong>{int(customer_pivot_df['GT'].sum()):,}</strong>",
+                'GT均价': format_prefix_avg('GT'),
+                'T(ET)': f"<strong>{int(customer_pivot_df['T(ET)'].sum()):,}</strong>",
+                'T(ET)均价': format_prefix_avg('T(ET)'),
+                'TJ': f"<strong>{int(customer_pivot_df['TJ'].sum()):,}</strong>",
+                'TJ均价': format_prefix_avg('TJ'),
+                'Other': f"<strong>{int(customer_pivot_df['Other'].sum()):,}</strong>",
+                'Other均价': format_prefix_avg('Other'),
+            }])
+
+            customer_pivot_df['Order Amount'] = customer_pivot_df['Order Amount'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['Number of Orders'] = customer_pivot_df['Number of Orders'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['Total Items'] = customer_pivot_df['Total Items'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['Unique Styles'] = customer_pivot_df['Unique Styles'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['Total Quantity'] = customer_pivot_df['Total Quantity'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['S(ES)'] = customer_pivot_df['S(ES)'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['N(EN)'] = customer_pivot_df['N(EN)'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['BN'] = customer_pivot_df['BN'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['BT'] = customer_pivot_df['BT'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['GN'] = customer_pivot_df['GN'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['M(EM)'] = customer_pivot_df['M(EM)'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['L'] = customer_pivot_df['L'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['GT'] = customer_pivot_df['GT'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['GT均价'] = customer_pivot_df['GT均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['T(ET)'] = customer_pivot_df['T(ET)'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['T(ET)均价'] = customer_pivot_df['T(ET)均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['TJ'] = customer_pivot_df['TJ'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['TJ均价'] = customer_pivot_df['TJ均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['Other'] = customer_pivot_df['Other'].map(lambda x: f"{int(x):,}")
+            customer_pivot_df['Other均价'] = customer_pivot_df['Other均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['S(ES)均价'] = customer_pivot_df['S(ES)均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['N(EN)均价'] = customer_pivot_df['N(EN)均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['BN均价'] = customer_pivot_df['BN均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['BT均价'] = customer_pivot_df['BT均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['GN均价'] = customer_pivot_df['GN均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['M(EM)均价'] = customer_pivot_df['M(EM)均价'].map(lambda x: f"${x:,.2f}")
+            customer_pivot_df['L均价'] = customer_pivot_df['L均价'].map(lambda x: f"${x:,.2f}")
+
+            customer_pivot_with_totals = pd.concat([customer_pivot_df, pivot_total_row], ignore_index=True)
+            customer_pivot_with_totals = customer_pivot_with_totals.rename(columns={
+                'Customer': 'customer',
+                'Order Amount': '销售额',
+                'Number of Orders': '总单数',
+                'Total Items': '款次',
+                'Unique Styles': '款数',
+                'Total Quantity': '共计（只包）'
+            })
+            customer_pivot_html = customer_pivot_with_totals.to_html(
+                index=False,
+                classes="table table-bordered table-striped table-sm",
+                table_id="customer_pivot_table",
+                escape=False
+            )
             
             # Calculate totals for summary row
             total_order_amount = orders_df['Order Amount'].sum()
             total_order_total = orders_df['Order Total'].sum()
             total_items_sum = orders_df['Total Items'].sum()
+            total_quantity_sum = orders_df['Total Quantity'].sum()
             order_count = len(orders_df)
             
             # Add hyperlinks to order numbers
@@ -80,7 +308,8 @@ def audit():
                 'Handling Fee': '',
                 'Misc Charge': '',
                 'Order Total': f'<strong>${total_order_total:,.2f}</strong>',
-                'Total Items': f'<strong>{total_items_sum:,}</strong>'
+                'Total Items': f'<strong>{total_items_sum:,}</strong>',
+                'Total Quantity': f'<strong>{total_quantity_sum:,}</strong>'
             }])
             
             # Append summary row to the dataframe
@@ -94,9 +323,11 @@ def audit():
             )
         else:
             orders_html = "<p>No orders found for the selected criteria.</p>"
+            customer_pivot_html = "<p>No customer summary available for the selected criteria.</p>"
             orders_data = []
     except Exception as e:
         orders_html = f"<p>Error loading orders: {str(e)}</p>"
+        customer_pivot_html = f"<p>Error loading customer summary: {str(e)}</p>"
         orders_data = []
     
     # Get sold out SKUs using the existing logic
@@ -334,6 +565,7 @@ def audit():
                          num_orders=num_orders,
                          days_back=days_back,
                          since_date=since_date,
+                         customer_pivot_html=customer_pivot_html,
                          matched_inventory_html=matched_inventory_html,
                          show_upload_section=not sold_out_df.empty)
     

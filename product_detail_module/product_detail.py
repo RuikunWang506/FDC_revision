@@ -998,6 +998,7 @@ def product_detail(search_input=None):
     
     # Search if input provided
     if search_input:
+        current_app.logger.info("***%s***__@@@search SKU@@@__ %s [newpage]", current_user, search_input.lower())
         # Fetch product data WITHOUT history (optimization: lazy load on demand)
         product_data = search_product_data_with_history(search_input)
         if not product_data:
@@ -1097,9 +1098,12 @@ def api_product_search():
     """API endpoint for AJAX searches"""
     try:
         search_input = request.json.get("search_input", "").strip()
+        current_user = session.get('username', 'User')
         
         if not search_input:
             return jsonify({"success": False, "error": "Search input required"})
+
+        current_app.logger.info("***%s***__@@@search SKU@@@__ %s", current_user, search_input.lower())
         
         product_data = search_product_data(search_input)
         

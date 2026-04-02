@@ -925,7 +925,7 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-shipping-fast mr-2"></i>Ship Date:</span>
-                        <span class="info-value">{{ header_info.ship_date }}</span>
+                        <span class="info-value editable-cell" id="editableShipDate" title="Click to edit ship date">{{ header_info.ship_date }}</span>
                     </div>
                     {% if header_info.cancel_date and header_info.cancel_date != '' %}
                     <div class="info-row">
@@ -1338,6 +1338,121 @@
 
         // Inline editing functionality
         let currentEditingCell = null;
+        let isEditingShipDate = false;
+
+        function convertDateDisplayToInput(displayDate) {
+            if (!displayDate) return '';
+            var trimmed = displayDate.trim();
+            var match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (!match) return '';
+            var month = match[1].padStart(2, '0');
+            var day = match[2].padStart(2, '0');
+            var year = match[3];
+            return year + '-' + month + '-' + day;
+        }
+
+        function convertDateInputToDisplay(inputDate) {
+            if (!inputDate) return '';
+            var match = inputDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!match) return inputDate;
+            return match[2] + '/' + match[3] + '/' + match[1];
+        }
+
+        function makeShipDateEditable() {
+            var shipDateEl = $('#editableShipDate');
+            if (!shipDateEl.length) return;
+
+            shipDateEl.off('click').on('click', function() {
+                if (isEditingShipDate) return;
+
+                var currentDisplay = shipDateEl.text().trim();
+                shipDateEl.data('lastGoodDate', currentDisplay || 'N/A');
+                var initialValue = convertDateDisplayToInput(currentDisplay);
+                shipDateEl.addClass('editing');
+                shipDateEl.html('<input type="date" class="description-input" id="shipDateInput">');
+
+                var input = $('#shipDateInput');
+                input.val(initialValue);
+                input.focus();
+
+                isEditingShipDate = true;
+
+                input.on('keydown', function(e) {
+                    if (e.which === 13) {
+                        e.preventDefault();
+                        saveShipDate();
+                    } else if (e.which === 27) {
+                        e.preventDefault();
+                        shipDateEl.text(currentDisplay);
+                        shipDateEl.removeClass('editing');
+                        isEditingShipDate = false;
+                    }
+                });
+
+                input.on('blur', function() {
+                    setTimeout(function() {
+                        if (isEditingShipDate) {
+                            saveShipDate();
+                        }
+                    }, 150);
+                });
+            });
+        }
+
+        function saveShipDate() {
+            var shipDateEl = $('#editableShipDate');
+            var input = $('#shipDateInput');
+            if (!shipDateEl.length || !input.length) {
+                isEditingShipDate = false;
+                return;
+            }
+
+            var inputDate = input.val();
+            var displayDate = convertDateInputToDisplay(inputDate);
+            var orderNumber = $('#order_number').val() || '{{ header_info.order_number if header_info }}';
+            var lastGoodDate = shipDateEl.data('lastGoodDate') || 'N/A';
+
+            if (!inputDate) {
+                shipDateEl.text(lastGoodDate);
+                shipDateEl.removeClass('editing');
+                isEditingShipDate = false;
+                return;
+            }
+
+            shipDateEl.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+            shipDateEl.css('background-color', '#fff3cd');
+
+            $.ajax({
+                url: '/update_order_ship_date',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    order_number: orderNumber,
+                    ship_date: displayDate
+                }),
+                success: function() {
+                    shipDateEl.text(displayDate);
+                    shipDateEl.data('lastGoodDate', displayDate);
+                    shipDateEl.css('background-color', '#d4edda');
+                    setTimeout(function() {
+                        shipDateEl.css('background-color', '');
+                    }, 2000);
+                },
+                error: function(xhr) {
+                    shipDateEl.css('background-color', '#f8d7da');
+                    shipDateEl.html('<i class="fas fa-exclamation-triangle"></i> Failed');
+                    setTimeout(function() {
+                        shipDateEl.css('background-color', '');
+                        shipDateEl.text(lastGoodDate);
+                    }, 1500);
+                    alert('Failed to update ship date: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'));
+                },
+                complete: function() {
+                    shipDateEl.removeClass('editing');
+                    isEditingShipDate = false;
+                }
+            });
+        }
 
 
         function makeCellsEditable() {
@@ -1626,6 +1741,9 @@
                     }
                 });
             });
+
+            // Enable ship date inline editing
+            makeShipDateEditable();
         });
         
         // Floating Sidebar Toggle Function

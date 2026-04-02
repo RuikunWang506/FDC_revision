@@ -1,0 +1,102 @@
+.fdc-clip-helper {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483647;
+  width: min(360px, calc(100vw - 32px));
+  padding: 12px;
+  border-radius: 12px;
+  background: linear-gradient(140deg, #0f172a, #1e293b);
+  border: 1px solid #334155;
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.35);
+  color: #e2e8f0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.fdc-clip-helper.fdc-hidden {
+  display: none;
+}
+
+.fdc-clip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.fdc-clip-title {
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.fdc-clip-close {
+  appearance: none;
+  border: none;
+  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  color: #cbd5e1;
+  background: #1f2937;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.fdc-clip-close:hover {
+  background: #334155;
+}
+
+.fdc-clip-value {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #f8fafc;
+  word-break: break-word;
+}
+
+.fdc-clip-note {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-bottom: 10px;
+}
+
+.fdc-clip-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.fdc-open-btn {
+  appearance: none;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fdc-open-btn {
+  background: #16a34a;
+  color: #f0fdf4;
+}
+
+.fdc-open-btn:hover {
+  background: #15803d;
+}
+
+.fdc-sku-btn {
+  background: #2563eb;
+  color: #eff6ff;
+}
+
+.fdc-sku-btn:hover {
+  background: #1d4ed8;
+}
+
+.fdc-open-btn:disabled {
+  background: #475569;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}

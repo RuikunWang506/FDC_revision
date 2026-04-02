@@ -684,6 +684,69 @@ def update_order_price():
         return {'success': False, 'message': f'Database error: {str(e)}'}, 500
 
 
+@order_lookup_bp.route("/update_order_ship_date", methods=["POST"])
+@login_required
+def update_order_ship_date():
+    """Update order-level ship date (SHIP_DT) in dbo.orders."""
+    try:
+        data = request.get_json()
+        order_number = data.get('order_number')
+        ship_date = data.get('ship_date', '').strip()
+
+        if not order_number or not ship_date:
+            return {'success': False, 'message': 'Missing order number or ship date'}, 400
+
+        # Validate date format as MM/DD/YYYY
+        if not re.match(r'^\d{1,2}/\d{1,2}/\d{4}$', ship_date):
+            return {'success': False, 'message': 'Ship date must be in MM/DD/YYYY format'}, 400
+
+        try:
+            datetime.strptime(ship_date, "%m/%d/%Y")
+        except ValueError:
+            return {'success': False, 'message': 'Invalid ship date'}, 400
+
+        # Determine database based on order number length
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return {'success': False, 'message': 'Invalid order number format'}, 400
+
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+
+        # SHIP_DT is stored as a numeric encoded date in this schema.
+        # Convert MM/DD/YYYY into the same numeric base used by generate_order.
+        update_query = """
+            UPDATE dbo.orders
+            SET SHIP_DT = DATEDIFF(DAY, '20230101', CONVERT(date, ?, 101)) + 81088
+            WHERE ORD_NUM = ?
+        """
+
+        cursor.execute(update_query, (ship_date, order_number))
+        conn.commit()
+        rows_affected = cursor.rowcount
+
+        cursor.close()
+        conn.close()
+
+        if rows_affected > 0:
+            current_user = session.get('username', 'unknown')
+            current_app.logger.info(
+                f"***{current_user}***__@@@updated ship date@@@__ Order: {order_number}, New Ship Date: {ship_date}"
+            )
+            return {'success': True, 'message': 'Ship date updated successfully'}, 200
+        else:
+            return {'success': False, 'message': 'No rows were updated'}, 404
+
+    except Exception as e:
+        current_app.logger.error(f"Error updating ship date: {str(e)}")
+        return {'success': False, 'message': f'Database error: {str(e)}'}, 500
+
+
 @order_lookup_bp.route('/debug_order_notes/<string:order_number>', methods=['GET'])
 @login_required
 def debug_order_notes(order_number):

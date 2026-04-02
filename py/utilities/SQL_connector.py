@@ -503,7 +503,8 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
                     o.handl_fee AS handling_fee,
                     o.misc_chg AS misc_charge,
                     (o.ord_amt + o.handl_fee + o.misc_chg) AS order_total,
-                    COUNT(ol.prod_cd) AS total_items
+                    COUNT(ol.prod_cd) AS total_items,
+                    SUM(ISNULL(ol.order_qty, 0)) AS total_quantity
                 FROM orders o
                 JOIN customer c ON o.cus_id = c.cus_id
                 LEFT JOIN ord_log ol ON o.ord_num = ol.ord_num
@@ -526,6 +527,142 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
             app.logger.info(f"General error in {db_name}: {e}")
     
     return all_orders
+
+
+def get_order_skus_for_orders(orders_data):
+    """Get distinct (database, order number, SKU) rows for the selected orders."""
+    sku_rows = []
+
+    if not orders_data:
+        return sku_rows
+
+    fdc_orders = [order[1] for order in orders_data if order[0] == 'FDC']
+    efas_orders = [order[1] for order in orders_data if order[0] == 'E_FAS']
+
+    driver = sql_server_config["driver"]
+    server = sql_server_config["server"]
+    username = sql_server_config["username"]
+    password = sql_server_config["password"]
+
+    if fdc_orders:
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={driver};SERVER={server};DATABASE={sql_server_config["database_fdc"]};UID={username};PWD={password}'
+            )
+            cursor = conn.cursor()
+
+            placeholders = ','.join(['?' for _ in fdc_orders])
+            query = f"""
+                SELECT DISTINCT ord_num, prod_cd
+                FROM ord_log
+                WHERE ord_num IN ({placeholders})
+                  AND prod_cd IS NOT NULL
+            """
+            cursor.execute(query, fdc_orders)
+            rows = cursor.fetchall()
+            sku_rows.extend([('FDC', row[0], row[1]) for row in rows])
+
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting order SKUs from FDC: {e}")
+
+    if efas_orders:
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={driver};SERVER={server};DATABASE={sql_server_config["database_oms_ef"]};UID={username};PWD={password}'
+            )
+            cursor = conn.cursor()
+
+            placeholders = ','.join(['?' for _ in efas_orders])
+            query = f"""
+                SELECT DISTINCT ord_num, prod_cd
+                FROM ord_log
+                WHERE ord_num IN ({placeholders})
+                  AND prod_cd IS NOT NULL
+            """
+            cursor.execute(query, efas_orders)
+            rows = cursor.fetchall()
+            sku_rows.extend([('E_FAS', row[0], row[1]) for row in rows])
+
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting order SKUs from E-Fashion: {e}")
+
+    return sku_rows
+
+
+def get_order_sku_quantities_for_orders(orders_data):
+    """Get summed quantity and revenue by (database, order number, SKU) for selected orders."""
+    sku_qty_rows = []
+
+    if not orders_data:
+        return sku_qty_rows
+
+    fdc_orders = [order[1] for order in orders_data if order[0] == 'FDC']
+    efas_orders = [order[1] for order in orders_data if order[0] == 'E_FAS']
+
+    driver = sql_server_config["driver"]
+    server = sql_server_config["server"]
+    username = sql_server_config["username"]
+    password = sql_server_config["password"]
+
+    if fdc_orders:
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={driver};SERVER={server};DATABASE={sql_server_config["database_fdc"]};UID={username};PWD={password}'
+            )
+            cursor = conn.cursor()
+
+            placeholders = ','.join(['?' for _ in fdc_orders])
+            query = f"""
+                SELECT
+                    ord_num,
+                    prod_cd,
+                    SUM(ISNULL(order_qty, 0)) AS total_qty,
+                    SUM(ISNULL(order_qty, 0) * ISNULL(unit_prs, 0)) AS total_revenue
+                FROM ord_log
+                WHERE ord_num IN ({placeholders})
+                  AND prod_cd IS NOT NULL
+                GROUP BY ord_num, prod_cd
+            """
+            cursor.execute(query, fdc_orders)
+            rows = cursor.fetchall()
+            sku_qty_rows.extend([('FDC', row[0], row[1], row[2], row[3]) for row in rows])
+
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting order SKU quantities from FDC: {e}")
+
+    if efas_orders:
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={driver};SERVER={server};DATABASE={sql_server_config["database_oms_ef"]};UID={username};PWD={password}'
+            )
+            cursor = conn.cursor()
+
+            placeholders = ','.join(['?' for _ in efas_orders])
+            query = f"""
+                SELECT
+                    ord_num,
+                    prod_cd,
+                    SUM(ISNULL(order_qty, 0)) AS total_qty,
+                    SUM(ISNULL(order_qty, 0) * ISNULL(unit_prs, 0)) AS total_revenue
+                FROM ord_log
+                WHERE ord_num IN ({placeholders})
+                  AND prod_cd IS NOT NULL
+                GROUP BY ord_num, prod_cd
+            """
+            cursor.execute(query, efas_orders)
+            rows = cursor.fetchall()
+            sku_qty_rows.extend([('E_FAS', row[0], row[1], row[2], row[3]) for row in rows])
+
+            conn.close()
+        except pyodbc.Error as e:
+            app.logger.error(f"Error getting order SKU quantities from E-Fashion: {e}")
+
+    return sku_qty_rows
+
+
 def get_sold_out_skus_from_orders(orders_data):
     """Get SKUs from the provided orders that are sold out (combined available quantity is 0 or negative)"""
     if not orders_data:

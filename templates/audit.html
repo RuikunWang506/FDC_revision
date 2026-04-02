@@ -265,6 +265,21 @@
                 </div>
             </div>
         </div>
+
+        <!-- Customer Pivot Summary (Middle View) -->
+        <div class="audit-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Customer Pivot Summary</h3>
+                    <small class="text-muted">Grouped by customer with Sam Moon and Fashion Q combined across all locations</small>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        {{ customer_pivot_html|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Sold Out SKUs from Selected Orders Section -->
         <div class="audit-section">
