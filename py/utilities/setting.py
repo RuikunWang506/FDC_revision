@@ -24,6 +24,7 @@ class Config:
     
     # Legacy paths - DEPRECATED: Use DAM system instead
     LOCAL_DROPBOX_DIR = r"C:\users\stream\dropbox"  # Still used by V6listcreator
+    BURLINGTON_HIGHLIGHT = r"C:\users\stream\dropbox\ruikun" 
     DROPBOX_CONTAINER_CATALOG_DIR = r"C:\users\stream\Dropbox\Pictures-China (1)\container catalog"
     FTP = r"D:\FTP"
     

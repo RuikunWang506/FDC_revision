@@ -58,6 +58,7 @@ from py.utilities.monitor import send_discord_notification
 from py.search.location_service import location_service_bp
 from py.other.external_stock_check import external_stock_check_bp
 from py.other.internal_stock_check import internal_stock_check_bp
+from py.other.burlington_highlight import burlington_highlight_bp
 
 
 def register_routes(app):
@@ -108,6 +109,7 @@ def register_routes(app):
     app.register_blueprint(boat_service_bp)
     app.register_blueprint(location_service_bp)
     app.register_blueprint(pallet_detail_bp)
+    app.register_blueprint(burlington_highlight_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 

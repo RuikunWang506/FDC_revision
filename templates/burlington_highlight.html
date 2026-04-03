@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burlington Highlight</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+        .page-wrap {
+            max-width: 1000px;
+            margin: 24px auto;
+        }
+        .result-card {
+            border: 1px solid #d9e2ec;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #ffffff;
+        }
+        .result-title {
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 4px;
+            background: #fff3b0;
+            border: 1px solid #f5d76e;
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+        .file-open-btn {
+            font-weight: 600;
+            color: #1a365d;
+            background: #fff3b0;
+            border: 1px solid #f5d76e;
+            border-radius: 6px;
+            padding: 6px 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .file-open-btn:hover {
+            text-decoration: none;
+            background: #ffe784;
+            color: #102a43;
+        }
+        .result-path {
+            word-break: break-all;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+        .result-rows {
+            margin-top: 6px;
+            color: #1f2937;
+            font-size: 0.9rem;
+        }
+        .result-rows-list {
+            margin: 4px 0 0 18px;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container page-wrap">
+        <h3 class="mb-3">Burlington-highlight</h3>
+
+        <form method="post" class="mb-4">
+            <div class="form-group">
+                <label for="query">Input</label>
+                <input id="query" name="query" type="text" class="form-control" placeholder="Type text to search in files" value="{{ query }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+
+        {% if error_message %}
+            <div class="alert alert-danger">{{ error_message }}</div>
+        {% endif %}
+
+        {% if query %}
+            <div class="mb-2"><strong>Query:</strong> {{ query }}</div>
+            <div class="mb-3"><strong>Matches:</strong> {{ results|length }}</div>
+
+            {% if results %}
+                {% for row in results %}
+                    <div class="result-card">
+                        <div class="result-title">
+                            File Name:
+                            <button type="button" class="file-open-btn" data-zpath="{{ row.display_path }}" onclick="openLocalFile(this.dataset.zpath)">
+                                {{ row.file_name }}
+                            </button>
+                        </div>
+                        <div class="result-path">File Path: {{ row.display_path }}</div>
+                        <div class="result-rows">
+                            {% if row.row_matches %}
+                                <div><strong>Rows:</strong></div>
+                                <ul class="result-rows-list">
+                                    {% for match in row.row_matches %}
+                                        <li>Sheet - {{ match.sheet }} ||  row - {{ match.row }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                Rows: N/A (non-Excel text match)
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-warning">No files found containing this input.</div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    {% include 'footer.html' %}
+    <script>
+        function openLocalFile(zPath) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(zPath)
+                    .then(() => {
+                        alert('Path copied: ' + zPath + '\n\nPress Win+R, paste, and press Enter.');
+                    })
+                    .catch(() => {
+                        prompt('Copy this path and open it in Explorer:', zPath);
+                    });
+                return;
+            }
+
+            prompt('Copy this path and open it in Explorer:', zPath);
+        }
+    </script>
+</body>
+</html>
