@@ -1429,7 +1429,7 @@ def generate_stickers_api():
             return jsonify({'error': 'No input data provided'}), 400
         
         # Log the input data for debugging
-        current_app.logger.info(f"Received input_data: {input_data[:200]}...")  # Log first 200 chars
+        current_app.logger.info(f"{session['username']} Received input_data: {input_data[:200]}...")  # Log first 200 chars
         
         # Validate input data format
         lines = input_data.strip().split('\n')
@@ -1437,13 +1437,11 @@ def generate_stickers_api():
         for i, line in enumerate(lines):
             parts = line.strip().split('\t')
             if len(parts) != 3:
-                current_app.logger.warning(f"Line {i+1} has {len(parts)} parts instead of 3: {line}")
                 continue
             
             # Validate each part
             sku, barcode, quantity = parts
             if not sku.strip():
-                current_app.logger.warning(f"Line {i+1} has empty SKU: {line}")
                 continue
             
             try:
@@ -1462,7 +1460,6 @@ def generate_stickers_api():
         
         # Reconstruct validated input_data
         validated_input_data = '\n'.join(valid_lines)
-        current_app.logger.info(f"Validated {len(valid_lines)} lines of data")
         
         # Import the main function from loris_sticker
         from py.loris.loris_sticker import main
@@ -1490,9 +1487,7 @@ def generate_stickers_api():
         
         with open(output_dir / filename_exact, 'wb') as f:
             f.write(pdf_exact_bytes)
-        
-        current_app.logger.info(f"Successfully generated stickers: {filename_30stickers}, {filename_exact}")
-        
+                
         # Return filenames as JSON
         return jsonify({
             'success': True,
