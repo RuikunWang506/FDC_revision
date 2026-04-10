@@ -5,6 +5,7 @@ import os
 import re
 import time
 import json
+import importlib
 import mysql.connector
 from mysql.connector import Error
 # External library imports
@@ -59,6 +60,7 @@ from py.search.location_service import location_service_bp
 from py.other.external_stock_check import external_stock_check_bp
 from py.other.internal_stock_check import internal_stock_check_bp
 from py.other.burlington_highlight import burlington_highlight_bp
+four_seller_bp = importlib.import_module("py.other.4_seller").four_seller_bp
 
 
 def register_routes(app):
@@ -110,6 +112,7 @@ def register_routes(app):
     app.register_blueprint(location_service_bp)
     app.register_blueprint(pallet_detail_bp)
     app.register_blueprint(burlington_highlight_bp)
+    app.register_blueprint(four_seller_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 

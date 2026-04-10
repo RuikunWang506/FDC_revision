@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4Seller Stock</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f2f7ff 0%, #e8f0ff 45%, #f7fbff 100%);
+            color: #1f2a44;
+            min-height: 100vh;
+        }
+
+        .page-wrap {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .title-row h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .card-box {
+            background: #ffffff;
+            border: 1px solid #dde6ff;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(29, 71, 171, 0.08);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            background: #f8fbff;
+            border: 1px solid #d9e6ff;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .stat .k {
+            font-size: 12px;
+            color: #5d6a85;
+            margin-bottom: 4px;
+        }
+
+        .stat .v {
+            font-size: 22px;
+            font-weight: 700;
+            color: #15306b;
+        }
+
+        .sync-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .sync-row input {
+            min-width: 360px;
+            flex: 1;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #2b3f75;
+            font-weight: 600;
+            flex-wrap: wrap;
+        }
+
+        .filter-row .meta {
+            margin-left: auto;
+            font-size: 12px;
+            color: #5d6a85;
+            font-weight: 500;
+        }
+
+        .btn-filter-active {
+            background: #15306b !important;
+            color: #fff !important;
+            border-color: #15306b !important;
+        }
+
+        .category-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .status-btn {
+            border: 1px solid #cdd9f6;
+            background: #fff;
+            color: #264072;
+            border-radius: 14px;
+            font-size: 11px;
+            line-height: 1;
+            padding: 5px 9px;
+            cursor: pointer;
+        }
+
+        .status-btn.active {
+            background: #1f8a55;
+            border-color: #1f8a55;
+            color: #fff;
+        }
+
+        .status-btn.inactive {
+            background: #b24444;
+            border-color: #b24444;
+            color: #fff;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .range-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .range-filters input {
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #edf2ff;
+            text-align: left;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f5f8ff;
+            color: #2b3f75;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        tr:hover td {
+            background: #f8fbff;
+        }
+
+        .status {
+            font-weight: 600;
+        }
+
+        .good { color: #1f8a55; }
+        .warn { color: #b16a1a; }
+
+        @media (max-width: 760px) {
+            .sync-row input {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="page-wrap">
+        <div class="title-row">
+            <h1>4Seller Stock Dashboard</h1>
+            <a class="btn btn-outline-primary" href="{{ url_for('home') }}">Back Home</a>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat">
+                <div class="k">Total SKU Rows</div>
+                <div class="v">{{ total_rows }}</div>
+            </div>
+            <div class="stat">
+                <div class="k">Last Updated</div>
+                <div class="v" style="font-size:15px;">{{ last_updated or 'Not synced yet' }}</div>
+            </div>
+        </div>
+
+        <div class="card-box">
+            <div class="sync-row">
+                {% if not has_cookie_cache %}
+                <input id="cookieInput" class="form-control" placeholder="Optional: paste full 4Seller Cookie header here. If blank, uses FOURSELLER_COOKIE env var.">
+                {% endif %}
+                <button id="syncBtn" class="btn btn-primary">Sync From 4Seller</button>
+                <button id="exportBtn" class="btn btn-outline-success">Export to 4Seller</button>
+                <span id="syncStatus" class="status"></span>
+            </div>
+        </div>
+
+        <div class="card-box table-wrap">
+            <h5 style="margin-bottom:12px;">Stock Comparison Table</h5>
+            <div class="filter-row">
+                <div class="category-buttons" id="categoryButtons">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="all">Show All</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-light" data-mode="hide_inactive">Active</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-light" data-mode="deactivated">Inactive</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="synced">Synced</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="needs_sync">Needs Sync</button>
+                </div>
+                <span class="meta">Last Synced: {{ last_updated or 'Not synced yet' }}</span>
+            </div>
+            <div class="range-filters">
+                <input id="skuSearch" class="form-control form-control-sm" placeholder="Search SKU (stock/internal)">
+                <select id="statusFilter" class="form-control form-control-sm">
+                    <option value="all">Status: All</option>
+                    <option value="active">Status: Active</option>
+                    <option value="inactive">Status: Inactive</option>
+                </select>
+                <input id="stockMin" type="number" class="form-control form-control-sm" placeholder="4Seller Stock Min">
+                <input id="stockMax" type="number" class="form-control form-control-sm" placeholder="4Seller Stock Max">
+                <input id="availMin" type="number" class="form-control form-control-sm" placeholder="Available Qty Min">
+                <input id="availMax" type="number" class="form-control form-control-sm" placeholder="Available Qty Max">
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stock SKU</th>
+                        <th>Internal SKU</th>
+                        <th>4Seller Stock (On Hand)</th>
+                        <th>Our Available Quantity</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    {% for r in rows %}
+                    <tr data-stock-sku="{{ r.stock_sku|lower }}" data-internal-sku="{{ r.internal_sku|lower }}" data-fourseller="{{ r.four_seller_stock }}" data-available="{{ r.our_available_qty }}" data-status="{{ r.status or 'active' }}">
+                        <td>{{ r.stock_sku }}</td>
+                        <td>{{ r.internal_sku }}</td>
+                        <td>{{ r.four_seller_stock }}</td>
+                        <td class="{% if r.our_available_qty < r.four_seller_stock %}warn{% else %}good{% endif %}">{{ r.our_available_qty }}</td>
+                        <td>
+                            <div class="status-chip">
+                                <button type="button" class="status-btn {% if (r.status or 'active') == 'active' %}active{% endif %}" data-status-action="active">Active</button>
+                                <button type="button" class="status-btn {% if (r.status or 'active') == 'inactive' %}inactive{% endif %}" data-status-action="inactive">Inactive</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script id="hasCookieCacheData" type="application/json">{{ has_cookie_cache|tojson }}</script>
+    <script>
+        const hasCookieCache = JSON.parse(document.getElementById('hasCookieCacheData').textContent || 'false');
+        const cookieInputEl = document.getElementById('cookieInput');
+
+        function getCookieInputValue() {
+            return cookieInputEl ? cookieInputEl.value.trim() : '';
+        }
+
+        function askFreshCookie() {
+            const entered = window.prompt('4Seller cookie expired or missing. Paste a fresh cookie now:');
+            return (entered || '').trim();
+        }
+
+        async function postWithCookieRetry(url, payload) {
+            let body = {...payload};
+            if (!hasCookieCache || getCookieInputValue()) {
+                body.cookie = getCookieInputValue();
+            }
+
+            let response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+
+            let data = await response.json();
+            if (response.ok && data.success) {
+                return {response, data};
+            }
+
+            if (data.cookie_required) {
+                const freshCookie = askFreshCookie();
+                if (!freshCookie) {
+                    throw new Error('Fresh 4Seller cookie is required.');
+                }
+
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({...payload, cookie: freshCookie})
+                });
+                data = await response.json();
+                if (response.ok && data.success) {
+                    return {response, data};
+                }
+            }
+
+            throw new Error(data.message || 'Request failed');
+        }
+
+        const categoryButtonsWrap = document.getElementById('categoryButtons');
+        const categoryButtons = Array.from(categoryButtonsWrap.querySelectorAll('button[data-mode]'));
+        const stockRows = Array.from(document.querySelectorAll('#stockTableBody tr'));
+        const skuSearch = document.getElementById('skuSearch');
+        const statusFilter = document.getElementById('statusFilter');
+        const stockMin = document.getElementById('stockMin');
+        const stockMax = document.getElementById('stockMax');
+        const availMin = document.getElementById('availMin');
+        const availMax = document.getElementById('availMax');
+        let categoryMode = 'needs_sync';
+
+        function setCategoryMode(nextMode) {
+            categoryMode = nextMode;
+            categoryButtons.forEach((btn) => {
+                btn.classList.toggle('btn-filter-active', btn.dataset.mode === categoryMode);
+            });
+        }
+
+        function parseNumberOrNull(value) {
+            if (value === null || value === undefined || String(value).trim() === '') {
+                return null;
+            }
+            const parsed = Number(value);
+            return Number.isNaN(parsed) ? null : parsed;
+        }
+
+        function applyFilters() {
+            const skuTerm = (skuSearch.value || '').trim().toLowerCase();
+            const statusValue = (statusFilter.value || 'all').toLowerCase();
+            const stockMinValue = parseNumberOrNull(stockMin.value);
+            const stockMaxValue = parseNumberOrNull(stockMax.value);
+            const availMinValue = parseNumberOrNull(availMin.value);
+            const availMaxValue = parseNumberOrNull(availMax.value);
+
+            stockRows.forEach((row) => {
+                const fourSeller = Number(row.dataset.fourseller || 0);
+                const available = Number(row.dataset.available || 0);
+                const status = (row.dataset.status || 'active').toLowerCase();
+                const stockSku = (row.dataset.stockSku || '').toLowerCase();
+                const internalSku = (row.dataset.internalSku || '').toLowerCase();
+
+                let categoryMatch = true;
+                if (categoryMode === 'hide_inactive') {
+                    categoryMatch = status !== 'inactive';
+                } else if (categoryMode === 'deactivated') {
+                    categoryMatch = status === 'inactive';
+                } else if (categoryMode === 'synced') {
+                    categoryMatch = status === 'inactive' && fourSeller === available;
+                } else if (categoryMode === 'needs_sync') {
+                    categoryMatch = status === 'active' && fourSeller !== available;
+                }
+
+                const skuMatch = !skuTerm || stockSku.includes(skuTerm) || internalSku.includes(skuTerm);
+                const statusMatch = statusValue === 'all' || status === statusValue;
+                const stockMinMatch = stockMinValue === null || fourSeller >= stockMinValue;
+                const stockMaxMatch = stockMaxValue === null || fourSeller <= stockMaxValue;
+                const availMinMatch = availMinValue === null || available >= availMinValue;
+                const availMaxMatch = availMaxValue === null || available <= availMaxValue;
+
+                const visible = categoryMatch && skuMatch && statusMatch && stockMinMatch && stockMaxMatch && availMinMatch && availMaxMatch;
+                row.style.display = visible ? '' : 'none';
+            });
+        }
+
+        categoryButtonsWrap.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) {
+                return;
+            }
+            const mode = target.getAttribute('data-mode');
+            if (!mode) {
+                return;
+            }
+            setCategoryMode(mode);
+            applyFilters();
+        });
+
+        [skuSearch, statusFilter, stockMin, stockMax, availMin, availMax].forEach((input) => {
+            input.addEventListener('input', applyFilters);
+            input.addEventListener('change', applyFilters);
+        });
+
+        // Default view requested: Needs Sync.
+        setCategoryMode('needs_sync');
+        applyFilters();
+
+        async function updateRowStatus(row, nextStatus) {
+            const stockSku = row.querySelector('td')?.textContent?.trim();
+            if (!stockSku) {
+                return;
+            }
+
+            const response = await fetch('/4seller/status', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({stock_sku: stockSku, status: nextStatus})
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Status update failed');
+            }
+
+            row.dataset.status = nextStatus;
+            const activeBtn = row.querySelector('button[data-status-action="active"]');
+            const inactiveBtn = row.querySelector('button[data-status-action="inactive"]');
+
+            activeBtn.classList.toggle('active', nextStatus === 'active');
+            inactiveBtn.classList.toggle('inactive', nextStatus === 'inactive');
+
+            applyFilters();
+        }
+
+        document.getElementById('stockTableBody').addEventListener('click', async (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) {
+                return;
+            }
+
+            const action = target.getAttribute('data-status-action');
+            if (!action) {
+                return;
+            }
+
+            const row = target.closest('tr');
+            if (!row) {
+                return;
+            }
+
+            const currentStatus = (row.dataset.status || 'active').toLowerCase();
+            if (currentStatus === action) {
+                return;
+            }
+
+            try {
+                target.disabled = true;
+                await updateRowStatus(row, action);
+            } catch (err) {
+                statusEl.className = 'status warn';
+                statusEl.textContent = err.message;
+            } finally {
+                target.disabled = false;
+            }
+        });
+
+        const syncBtn = document.getElementById('syncBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const statusEl = document.getElementById('syncStatus');
+
+        exportBtn.addEventListener('click', async () => {
+            exportBtn.disabled = true;
+            statusEl.className = 'status';
+            statusEl.textContent = 'Exporting to 4Seller...';
+
+            try {
+                const {data} = await postWithCookieRetry('/4seller/export_to_4seller', {});
+                statusEl.className = 'status good';
+                statusEl.textContent = 'Posted to 4Seller. Downloading upload file...';
+                window.location.href = '/4seller/export';
+
+                const schedule = data.schedule || {};
+                const scheduleMsg = schedule.msg || 'success';
+                setTimeout(() => {
+                    statusEl.textContent = `Posted to 4Seller. Schedule: ${scheduleMsg}`;
+                }, 1200);
+            } catch (err) {
+                statusEl.className = 'status warn';
+                statusEl.textContent = err.message;
+            } finally {
+                exportBtn.disabled = false;
+            }
+        });
+
+        syncBtn.addEventListener('click', async () => {
+            syncBtn.disabled = true;
+            statusEl.className = 'status';
+            statusEl.textContent = 'Syncing...';
+
+            try {
+                const {data} = await postWithCookieRetry('/4seller/sync', {});
+
+                statusEl.classList.add('good');
+                statusEl.textContent = data.message + ' Reloading...';
+                setTimeout(() => window.location.reload(), 1200);
+            } catch (err) {
+                statusEl.classList.add('warn');
+                statusEl.textContent = err.message;
+            } finally {
+                syncBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

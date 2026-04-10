@@ -13,6 +13,7 @@ import uuid
 import hashlib
 from datetime import datetime
 from urllib.parse import quote
+from sqlalchemy.exc import IntegrityError
 
 master_image_viewer_bp = Blueprint('master_image_viewer', __name__)
 
@@ -595,6 +596,11 @@ def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progr
                             db_session.commit()
 
                         db_session.close()
+                        synced_count += 1
+                    except IntegrityError as e:
+                        db_session.rollback()
+                        db_session.close()
+                        # Duplicate SHA256 already exists — skip silently
                         synced_count += 1
                     except Exception as e:
                         failed_count += 1

@@ -1356,6 +1356,7 @@ def process_container(container_number):
     """Process a specific container and generate CSV files"""
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
+    current_user = session.get('username', 'unknown')
     
     try:
         # Scan Dropbox for the container file
@@ -1370,6 +1371,9 @@ def process_container(container_number):
         if result['success']:
             # Update Google Sheets column O
             batch_update_column_o([container_number])
+
+            # Keep an audit log of who processed which container.
+            current_app.logger.info(f"User '{current_user}' processed container {container_number}")
             
             return jsonify({
                 'success': True,
@@ -1681,7 +1685,6 @@ def boat_packslip(container_number):
             matching_row = df_sheets[df_sheets['FDC container'] == container_number]
             if not matching_row.empty:
                 bol_num = str(matching_row['BOL NUM'].iloc[0]).strip() if pd.notna(matching_row['BOL NUM'].iloc[0]) else ''
-            current_app.logger.info(f"Retrieved BOL NUM '{bol_num}' for container {container_number}")
         except Exception as e:
             current_app.logger.warning(f"Could not fetch BOL NUM from Google Sheets: {e}")
         
@@ -1725,7 +1728,6 @@ def boat_packslip(container_number):
             
             # Read the placking list sheet with no header (raw data)
             df_packing = pd.read_excel(file_path, sheet_name=packing_sheet, header=None)
-            current_app.logger.info(f"Successfully read '{packing_sheet}' sheet with shape {df_packing.shape}")
         
         except Exception as e:
             current_app.logger.error(f"Error reading Excel file sheets: {e}")
@@ -1735,7 +1737,6 @@ def boat_packslip(container_number):
             current_app.logger.error(f"Could not read packing list from {container_number}")
             return jsonify({'error': f'Could not read packing list from {container_number}'}), 400
         
-        current_app.logger.info(f"Using packing sheet: {packing_sheet}, shape: {df_packing.shape}")
         
         # Find the header row by scanning more columns for CTN/STYLE markers.
         header_row_idx = None
@@ -1743,23 +1744,19 @@ def boat_packslip(container_number):
             row_str = ' '.join([str(df_packing.iloc[idx, i]).upper() for i in range(min(12, len(df_packing.columns)))])
             if 'CTN' in row_str and ('STYLE' in row_str or 'QTY' in row_str):
                 header_row_idx = idx
-                current_app.logger.info(f"Found header row with 'CTN' at index {idx}")
                 break
         
         if header_row_idx is None:
             current_app.logger.warning("Could not find header row with 'CTN'. Checking for data starting at row 0...")
             header_row_idx = -1  # Data starts at row 0, no real header
         
-        current_app.logger.info(f"Header row index: {header_row_idx}")
         
         # DEBUG: Dump more rows to understand structure
-        current_app.logger.info("=== Column analysis (first 10 rows) ===")
         for row_idx in range(min(10, len(df_packing))):
             row_data = []
             for col_idx in range(min(8, len(df_packing.columns))):
                 val = df_packing.iloc[row_idx, col_idx]
                 row_data.append(f"C{col_idx}:'{val}'")
-            current_app.logger.info(f"Row {row_idx}: {' | '.join(row_data)}")
         
         # Determine actual column positions for Packing List sheet
         # Packing list structure: CTN NO | STYLE NO | QTY/PER CTN | QTY/CTN | TOTAL | weights...
@@ -1770,17 +1767,12 @@ def boat_packslip(container_number):
         total_qty_col = 4   # TOTAL (total quantity)
         
         # DEBUG: Log the actual data range and column contents
-        current_app.logger.info("=== COLUMN ANALYSIS ===")
-        current_app.logger.info(f"Total columns in sheet: {len(df_packing.columns)}")
-        current_app.logger.info(f"Total rows in sheet: {len(df_packing)}")
-        current_app.logger.info("=== ROW BY ROW DATA (first 15 rows) ===")
-        
+
         for row_idx in range(min(15, len(df_packing))):
             row_vals = []
             for col_idx in range(min(12, len(df_packing.columns))):
                 val = df_packing.iloc[row_idx, col_idx]
                 row_vals.append(f"[{col_idx}]:'{val}'")
-            current_app.logger.info(f"Row {row_idx}: {' | '.join(row_vals)}")
         
         # Parse packing list data starting AFTER the header row (row 7, index 6)
         packslip_data = []
@@ -1799,13 +1791,9 @@ def boat_packslip(container_number):
                 case_qty_str = str(row.iloc[case_qty_col]).strip() if pd.notna(row.iloc[case_qty_col]) else '0'
                 num_cartons_str = str(row.iloc[num_cartons_col]).strip() if pd.notna(row.iloc[num_cartons_col]) else '0'
                 
-                if idx <= start_row + 5:
-                    current_app.logger.info(f"Row {idx}: ctn_no='{ctn_no}' | style_sku='{style_sku}' | total_qty='{total_qty_str}' | case_qty='{case_qty_str}' | num_cartons='{num_cartons_str}'")
-                
+
                 # Skip rows where ctn_no is "/" (placeholder data)
                 if ctn_no == '/':
-                    if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: ctn_no is '/' (placeholder)")
                     continue
 
                 # Many packing sheets use merged CTN cells; carry forward last non-empty CTN.
@@ -1816,8 +1804,7 @@ def boat_packslip(container_number):
                 
                 # Skip empty rows
                 if not style_sku:
-                    if idx <= start_row + 5:
-                        current_app.logger.info(f"  -> Skipping: empty style_sku")
+
                     continue
                 
                 # Skip header-like rows
@@ -1863,7 +1850,6 @@ def boat_packslip(container_number):
                 sku_boxes_count = total_qty // case_qty
                 
                 # Use the num_cartons value from the spreadsheet directly
-                current_app.logger.info(f"  -> Parsed: style='{style}', sku='{sku}', total_qty={total_qty}, case_qty={case_qty}, boxes={sku_boxes_count}, cartons={num_cartons}")
                 
                 packslip_data.append({
                     'Style': style,
@@ -1879,12 +1865,6 @@ def boat_packslip(container_number):
             except Exception as e:
                 current_app.logger.warning(f"Error parsing row {idx}: {e}")
                 continue
-        
-        # DEBUG: Log sample data
-        current_app.logger.info(f"Packslip data count: {len(packslip_data)}")
-        if packslip_data:
-            current_app.logger.info(f"Sample row 0: {packslip_data[0]}")
-            current_app.logger.info(f"Sample row 1: {packslip_data[1] if len(packslip_data) > 1 else 'N/A'}")
         
         if not packslip_data:
             return jsonify({'error': f'No valid packing list data found in {container_number}'}), 400

@@ -1094,6 +1094,7 @@
                             <th><i class="fas fa-dollar-sign mr-1"></i>Price</th>
                             <th><i class="fas fa-box mr-1"></i>Per Box</th>
                             <th><i class="fas fa-map-marker-alt mr-1"></i>Location</th>
+                            <th><i class="fas fa-warehouse mr-1"></i>Stock</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1642,8 +1643,9 @@
                         { "width": "200px", "targets": 2 }, // Description
                         { "width": "80px", "targets": 3 },  // Qty
                         { "width": "80px", "targets": 4 },  // Price
-                        { "width": "80px", "targets": 5 },   // Per Box
-                        { "width": "120px", "targets": 6 }   // Location
+                        { "width": "80px", "targets": 5 },  // Per Box
+                        { "width": "120px", "targets": 6 }, // Location
+                        { "width": "90px", "targets": 7 }   // Stock
                     ],
                     "initComplete": function() {
                         var table = $('#items_table').DataTable();

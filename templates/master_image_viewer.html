@@ -167,7 +167,7 @@
         .category-content {
             overflow: hidden;
             transition: max-height 0.3s ease, opacity 0.3s ease;
-            max-height: 5000px;
+            max-height: 999999px;
             opacity: 1;
         }
 
@@ -1328,6 +1328,10 @@
                 navbar.style.visibility = 'hidden';
             }
             
+            // Save scroll position before locking body
+            const scrollY = window.scrollY;
+            document.body.dataset.scrollY = scrollY;
+
             // Show modal with proper classes and reset all body positioning
             imageModal.style.display = 'block';
             imageModal.classList.add('show');
@@ -1338,7 +1342,7 @@
             document.body.style.height = '100%';
             document.body.style.margin = '0';
             document.body.style.padding = '0';
-            document.body.style.top = '0';
+            document.body.style.top = `-${scrollY}px`;
             document.body.style.left = '0';
         }
 
@@ -1509,6 +1513,10 @@
             document.body.style.top = '';
             document.body.style.left = '';
             document.body.style.paddingTop = '70px';
+
+            // Restore scroll position
+            const savedScrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+            window.scrollTo(0, savedScrollY);
             
             // Show navbar and restore when modal is closed
             const navbar = document.querySelector('.navbar');

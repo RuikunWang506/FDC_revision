@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify,redirect,session,render_template,url_for,current_app
 import pyodbc
 import pandas as pd
+from datetime import datetime
 from py.utilities.auth import login_required
 from py.utilities.setting import Config
 
@@ -109,6 +110,8 @@ def customer_details(customer_id):
     results = []
     unique_order_numbers = {}
     unique_product_data = {}
+    customer_display_name = ''
+    customer_profile = {}
     current_app.logger.info("***%s***__@@@search customer id@@@__ %s in database %s", current_user, customer_id, database_origin)
     # Use the selected database
     databases = [database_origin] if database_origin in ['omsdata_FDC', 'oms_EF'] else []
@@ -119,6 +122,60 @@ def customer_details(customer_id):
                 f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
             )
             cursor = conn.cursor()
+
+            # Resolve rich customer master profile for info panel.
+            profile_query = """
+                SELECT TOP 1
+                    LTRIM(RTRIM(c.CUS_ID)) AS customer_id,
+                    LTRIM(RTRIM(c.CUS_NM)) AS customer_name,
+                    LTRIM(RTRIM(c.CUS_TYPE)) AS customer_type,
+                    LTRIM(RTRIM(c.PHONE)) AS phone_1,
+                    LTRIM(RTRIM(c.PHONE_2)) AS phone_2,
+                    LTRIM(RTRIM(c.PHONE_3)) AS phone_3,
+                    LTRIM(RTRIM(c.PHONE_4)) AS fax,
+                    LTRIM(RTRIM(c.EMAIL_ADR)) AS email,
+                    LTRIM(RTRIM(c.WEB_ADR)) AS web,
+                    LTRIM(RTRIM(c.ADDRESS)) AS billing_address_1,
+                    LTRIM(RTRIM(c.ADDRESS2)) AS billing_address_2,
+                    LTRIM(RTRIM(c.CITY)) AS billing_city,
+                    LTRIM(RTRIM(c.STATE)) AS billing_state,
+                    LTRIM(RTRIM(c.ZIP)) AS billing_zip,
+                    LTRIM(RTRIM(c.COUNTRY)) AS billing_country,
+                    LTRIM(RTRIM(c.SHP_ADDRESS)) AS shipping_address_1,
+                    LTRIM(RTRIM(c.SHP_ADDRESS2)) AS shipping_address_2,
+                    LTRIM(RTRIM(c.SHP_CITY)) AS shipping_city,
+                    LTRIM(RTRIM(c.SHP_STATE)) AS shipping_state,
+                    LTRIM(RTRIM(c.SHP_ZIP)) AS shipping_zip,
+                    LTRIM(RTRIM(c.SHP_COUNTRY)) AS shipping_country,
+                    LTRIM(RTRIM(c.SHIP_DESC)) AS ship_via,
+                    LTRIM(RTRIM(c.SHIP_SPE)) AS ship_type,
+                    LTRIM(RTRIM(c.SALES_NUM)) AS sales_rep_1,
+                    LTRIM(RTRIM(c.SALES_NUM2)) AS sales_rep_2,
+                    LTRIM(RTRIM(c.SALES_NUM3)) AS sales_rep_3,
+                    LTRIM(RTRIM(c.SALES_NUM4)) AS sales_rep_4,
+                    LTRIM(RTRIM(c.DEPT_NUM)) AS department,
+                    LTRIM(RTRIM(c.TERM)) AS terms,
+                    LTRIM(RTRIM(c.TERM_DESC)) AS terms_description,
+                    CASE WHEN ISNULL(c.FAC_ACT, 1) = 1 THEN 'Active' ELSE 'Inactive' END AS status,
+                    CASE
+                        WHEN ISNULL(c.FIRST_DT, 0) = 0 THEN ''
+                        ELSE RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(c.FIRST_DT AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                             RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(c.FIRST_DT AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                             CAST(YEAR(DATEADD(DAY, CAST(c.FIRST_DT AS INT) - 81088, '20230101')) AS VARCHAR)
+                    END AS customer_since
+                FROM customer c
+                WHERE c.cus_id = ?
+            """
+            cursor.execute(profile_query, (customer_id,))
+            profile_row = cursor.fetchone()
+            if profile_row:
+                profile_columns = [col[0] for col in cursor.description]
+                customer_profile = {
+                    profile_columns[idx]: (str(profile_row[idx]).strip() if profile_row[idx] is not None else '')
+                    for idx in range(len(profile_columns))
+                }
+                customer_display_name = customer_profile.get('customer_name', '') or customer_display_name
+
             query = f"""
                 SELECT 
                 ol.ord_num,
@@ -224,14 +281,47 @@ def customer_details(customer_id):
         'date': details['date'],
         'ord_amt': details['ord_amt'],
         'handl_fee': details['handl_fee'],
+        'misc_chg': details['misc_chg'],
         'total': details['total'],
         'order_lookup_url': url_for('order_lookup.order_lookup', order_number=ord_num)  # Add URL for order lookup
     }
     for ord_num, details in unique_order_numbers.items()
 ]
+
+    def _parse_date(date_text):
+        try:
+            return datetime.strptime(str(date_text), '%m/%d/%Y')
+        except Exception:
+            return None
+
+    order_dates = [_parse_date(item.get('date')) for item in unique_order_numbers_list]
+    order_dates = [d for d in order_dates if d is not None]
+    total_orders = len(unique_order_numbers_list)
+    total_order_lines = len(results)
+    total_skus = len(unique_product_data)
+    total_qty = sum(item.get('total_qty', 0) for item in unique_product_data.values())
+    total_revenue = round(sum(float(item.get('total', 0) or 0) for item in unique_order_numbers_list), 2)
+    avg_order_value = round((total_revenue / total_orders), 2) if total_orders else 0
+
+    customer_summary = {
+        'customer_id': customer_id,
+        'customer_name': customer_display_name or customer_id,
+        'database': database_origin,
+        'total_orders': total_orders,
+        'total_order_lines': total_order_lines,
+        'total_skus': total_skus,
+        'total_qty': total_qty,
+        'total_revenue': total_revenue,
+        'avg_order_value': avg_order_value,
+        'first_order_date': min(order_dates).strftime('%m/%d/%Y') if order_dates else 'N/A',
+        'last_order_date': max(order_dates).strftime('%m/%d/%Y') if order_dates else 'N/A',
+    }
+
     return jsonify({
         "success": True,
         "data": history_html_table,
         "product_summary": product_summary_html,
-        "unique_order_numbers": unique_order_numbers_list  # Send the correct structure
+        "unique_order_numbers": unique_order_numbers_list,  # Send the correct structure
+        "customer_summary": customer_summary,
+        "customer_profile": customer_profile
     })

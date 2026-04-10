@@ -400,7 +400,7 @@
           <p>Navigate by category</p>
         </div>
         
-        <div class="nav-item active" onclick="filterCategory('favorites')">
+        <div class="nav-item" onclick="filterCategory('favorites')">
           <i class="fas fa-star"></i>
           <div class="nav-text">
             <h4>Favorites</h4>
@@ -410,7 +410,7 @@
           <span class="count" id="favoritesCount">0</span>
         </div>
         
-        <div class="nav-item" onclick="filterCategory('all')">
+        <div class="nav-item active" onclick="filterCategory('all')">
           <i class="fas fa-th-large"></i>
           <div class="nav-text">
             <h4>All Tools</h4>
@@ -501,6 +501,7 @@
           <p>View detailed customer purchase history and behavior insights</p>
           <div class="card-footer">
             <span class="category">Core</span>
+            <span class="badge">NEW CHANGE</span>
           </div>
         </a>
         
@@ -552,7 +553,6 @@
           <p>Digital Asset Management - organize, search and manage product images and files</p>
           <div class="card-footer">
             <span class="category">Additional</span>
-            <span class="badge">NEW</span>
           </div>
         </a>
         <a href="{{ url_for('external_stock_check.external_stock_check_page') }}" class="tool-card" data-category="core" data-tool="external_stock_check">
@@ -576,6 +576,19 @@
           <p>Track internal inventory and manage stock across all warehouses</p>
           <div class="card-footer">
             <span class="category">Core</span>
+          </div>
+        </a>
+
+        <a href="{{ url_for('four_seller.four_seller_page') }}" class="tool-card" data-category="core" data-tool="four_seller">
+          <div class="card-header">
+            <i class="fas fa-store"></i>
+            <h3>4Seller Stock Sync</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'four_seller')"></i>
+          </div>
+          <p>Sync 4Seller stock export and compare on-hand inventory against our available qty</p>
+          <div class="card-footer">
+            <span class="category">Core</span>
+            <span class="badge">NEW</span>
           </div>
         </a>
         
@@ -611,7 +624,6 @@
           <p>Bulk upload and AI-powered organization of product images</p>
           <div class="card-footer">
             <span class="category">Additional</span>
-            <span class="badge">NEW</span>
           </div>
         </a>
         
@@ -672,7 +684,6 @@
           <p>Search and view all images for any SKU across all sources with zoom</p>
           <div class="card-footer">
             <span class="category">Additional</span>
-            <span class="badge">NEW</span>
           </div>
         </a>
         
@@ -685,7 +696,6 @@
           <p>Browse bag styles by description, search SKU, and manage product descriptions</p>
           <div class="card-footer">
             <span class="category">Additional</span>
-            <span class="badge">NEW</span>
           </div>
         </a>
 
@@ -711,7 +721,7 @@
   {% include 'footer.html' %}
 
   <script>
-    let currentFilter = 'favorites';
+    let currentFilter = 'all';
     let userFavorites = [];
     
     function loadFavorites() {

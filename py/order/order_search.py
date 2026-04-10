@@ -62,6 +62,72 @@ def get_latest_order_ids():
     
     return latest_orders
 
+
+def fetch_in_warehouse_by_skus(skus):
+    """Fetch combined in-warehouse quantity per SKU from FDC and E_FAS databases.
+
+    In Warehouse follows the product detail metric: in_stock - order_qty.
+    Returns a mapping keyed by lowercase, stripped SKU.
+    """
+    stock_by_sku = {}
+
+    if not skus:
+        return stock_by_sku
+
+    # Normalize and de-duplicate input SKUs while preserving order.
+    cleaned_skus = []
+    seen = set()
+    for sku in skus:
+        try:
+            normalized = sku.replace('\u00A0', ' ').strip()
+        except Exception:
+            normalized = str(sku).strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            cleaned_skus.append(normalized)
+
+    if not cleaned_skus:
+        return stock_by_sku
+
+    # Compare against uppercase-trimmed SKUs to match SQL Server values robustly.
+    search_values = [s.upper() for s in cleaned_skus]
+    placeholders = ','.join(['?'] * len(search_values))
+
+    query = f"""
+        SELECT
+            LTRIM(RTRIM(i.PROD_CD)) AS sku,
+            CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT) AS in_warehouse
+        FROM dbo.inv i
+        LEFT JOIN dbo.inv_data id ON i.PROD_CD = id.prod_cd
+        WHERE UPPER(LTRIM(RTRIM(i.PROD_CD))) IN ({placeholders})
+    """
+
+    for database_name in ('omsdata_FDC', 'oms_EF'):
+        conn = None
+        cursor = None
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+            )
+            cursor = conn.cursor()
+            cursor.execute(query, search_values)
+            for row in cursor.fetchall():
+                sku_value = row[0]
+                qty_value = row[1] if row[1] is not None else 0
+                if not sku_value:
+                    continue
+                key = str(sku_value).strip().lower()
+                stock_by_sku[key] = int(stock_by_sku.get(key, 0)) + int(qty_value)
+        except Exception as e:
+            current_app.logger.error(f"Error fetching in-warehouse stock from {database_name}: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    return stock_by_sku
+
 def generate_order(order_number):
     global file_path
     try:
@@ -355,6 +421,17 @@ def generate_order(order_number):
         except Exception as e:
             current_app.logger.error(f"Error mapping locations into items_df for order {order_number}: {e}")
             items_df['Location'] = 'N/A'
+
+        # Add In Warehouse stock (same metric as product detail "In Warehouse": in_stock - order_qty).
+        try:
+            stock_map = fetch_in_warehouse_by_skus(items_df['SKU'].astype(str).tolist())
+            items_df['Stock'] = items_df['SKU'].astype(str).str.lower().map(stock_map).fillna(0).astype(int)
+        except Exception as e:
+            current_app.logger.error(f"Error mapping stock into items_df for order {order_number}: {e}")
+            items_df['Stock'] = 0
+
+        # Keep column order with Stock right after Location.
+        items_df = items_df[['line', 'SKU', 'Descrip', 'Qty', 'price', 'per_box', 'Location', 'Stock']]
         
         # Format Qty and per_box as integers (removing decimals)
         items_df['Qty'] = items_df['Qty'].fillna(0).astype(int)
