@@ -1,17 +1,34 @@
 @echo off
-REM FDC Weekly Complete Rebuild - Runs Sunday 3 AM
-REM Performs full system rebuild: rescan + rebuild + fetch + sync + cleanup
+REM Weekly DAM complete rebuild — full index + fetch + cleanup
+setlocal EnableDelayedExpansion
 
-echo [%date% %time%] Weekly Complete Rebuild Started >> C:\FDC_FLASK_APP\weekly_sync.log
+set "SCRIPT_DIR=%~dp0"
+pushd "%SCRIPT_DIR%.."
+set "ROOT=%CD%"
+popd
 
-REM Call the DAM sync endpoint with full rebuild:
-REM force_rebuild_index=True (rescan all directories)
-REM include_fetch=True (fetch from Dropbox)
-REM include_cleanup=True (remove broken links)
+set "LOG=%ROOT%\weekly_sync.log"
 
-curl -X POST http://localhost:5555/dam/start ^
+echo [%date% %time%] Weekly Rebuild Started >> "%LOG%"
+
+if "%DAM_CRON_SECRET%"=="" if exist "%SCRIPT_DIR%dam_cron_secret.local.txt" (
+    for /f "usebackq delims=" %%a in ("%SCRIPT_DIR%dam_cron_secret.local.txt") do set "DAM_CRON_SECRET=%%a"
+)
+if "!DAM_CRON_SECRET!"=="" (
+    echo [%date% %time%] ERROR: No secret. Run Setup-DamCron.ps1 >> "%LOG%"
+    exit /b 1
+)
+
+if "%DAM_SYNC_BASE_URL%"=="" if exist "%SCRIPT_DIR%dam_sync_base_url.local.txt" (
+    for /f "usebackq delims=" %%u in ("%SCRIPT_DIR%dam_sync_base_url.local.txt") do set "DAM_SYNC_BASE_URL=%%u"
+)
+if "%DAM_SYNC_BASE_URL%"=="" set "DAM_SYNC_BASE_URL=http://127.0.0.1:5555"
+
+curl -s -S -X POST "!DAM_SYNC_BASE_URL!/dam/cron/start" ^
   -H "Content-Type: application/json" ^
+  -H "X-DAM-Cron-Secret: !DAM_CRON_SECRET!" ^
   -d "{\"force_rebuild_index\": true, \"include_fetch\": true, \"include_cleanup\": true}" ^
-  >> C:\FDC_FLASK_APP\weekly_sync.log 2>&1
+  >> "%LOG%" 2>&1
 
-echo [%date% %time%] Weekly Complete Rebuild Completed >> C:\FDC_FLASK_APP\weekly_sync.log
+echo. >> "%LOG%"
+echo [%date% %time%] Weekly Rebuild finished >> "%LOG%"

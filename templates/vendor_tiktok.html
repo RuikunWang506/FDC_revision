@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Vendor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background: #f4f8ff; min-height: 100vh; }
+        .page-wrap { max-width: 720px; margin: 32px auto; padding: 0 16px 80px; }
+        .card-main {
+            background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 40px 44px; text-align: center;
+        }
+        h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 8px; }
+        .subtitle { color: #6b7280; margin-bottom: 28px; font-size: .95rem; }
+        .btn-database {
+            background: linear-gradient(135deg, #7e22ce, #9333ea); color: #fff; border: none;
+            border-radius: 10px; padding: 14px 28px; font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-database:hover { opacity: 0.92; }
+        #skuMapModal {
+            display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,.45);
+        }
+        #skuMapModal .modal-box {
+            background: #fff; border-radius: 16px; width: min(820px, 96vw);
+            max-height: 90vh; margin: 5vh auto; display: flex; flex-direction: column;
+            box-shadow: 0 8px 40px rgba(0,0,0,.22); overflow: hidden;
+        }
+        #skuMapModal .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; border-bottom: 1px solid #e5e7eb;
+        }
+        #skuMapModal .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+        #skuMapModal .modal-toolbar {
+            display: flex; gap: 10px; padding: 12px 24px; border-bottom: 1px solid #f3f4f6;
+            background: #fafafa; flex-wrap: wrap; align-items: center;
+        }
+        #skuMapModal .modal-toolbar input {
+            flex: 1; min-width: 160px; padding: 7px 12px; border: 1px solid #d1d5db;
+            border-radius: 8px; font-size: .88rem;
+        }
+        #skuMapModal .modal-body { flex: 1; overflow-y: auto; padding: 0; }
+        #skuMapModal table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+        #skuMapModal table th {
+            position: sticky; top: 0; background: #1e3a5f; color: #fff;
+            padding: 9px 12px; text-align: left; z-index: 1;
+        }
+        #skuMapModal table td { padding: 7px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+        #skuMapModal table tr:hover td { background: #f8f0ff; }
+        #skuMapModal table input[type="text"] {
+            width: 100%; padding: 4px 7px; border: 1px solid #d1d5db; border-radius: 6px;
+            font-size: .86rem; background: transparent;
+        }
+        #skuMapModal .modal-footer {
+            display: flex; gap: 10px; padding: 14px 24px; border-top: 1px solid #e5e7eb;
+            justify-content: flex-end; background: #fafafa;
+        }
+        .btn-modal-close {
+            background: #f1f5f9; color: #374151; border: 1px solid #d1d5db;
+            border-radius: 8px; padding: 9px 16px; font-weight: 600; cursor: pointer;
+        }
+        .btn-modal-save {
+            background: #7e22ce; color: #fff; border: none;
+            border-radius: 8px; padding: 9px 22px; font-weight: 600; cursor: pointer;
+        }
+        .btn-modal-add {
+            background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd;
+            border-radius: 8px; padding: 9px 16px; font-weight: 600; cursor: pointer;
+        }
+        #mapSaveStatus { font-size: .85rem; padding: 6px 12px; border-radius: 6px; display: none; }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="page-wrap">
+        <div class="card-main">
+            <h1>TikTok Vendor</h1>
+            <p class="subtitle">SKU → TikTok SKU ID map (JSON dictionary)</p>
+            <button type="button" class="btn-database" onclick="openSkuMapDb()">🗄️ Database</button>
+        </div>
+        <div class="mt-3 text-center">
+            <a href="{{ url_for('vendor_app.vendor_app_home') }}" class="btn btn-outline-secondary btn-sm">
+                &larr; Back to Vendor App
+            </a>
+        </div>
+    </div>
+
+    <div id="skuMapModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>TikTok SKU map</h3>
+                <button type="button" class="btn-modal-close" onclick="closeSkuMapDb()">✕</button>
+            </div>
+            <div class="modal-toolbar">
+                <input type="text" id="mapSearch" placeholder="Search SKU or SKU ID…" oninput="filterMapTable()" />
+                <button type="button" class="btn-modal-add" onclick="addMapRow()">＋ Add row</button>
+                <span id="mapSaveStatus"></span>
+            </div>
+            <div class="modal-body">
+                <table id="skuMapTable">
+                    <thead>
+                        <tr>
+                            <th style="width:42%">SKU</th>
+                            <th style="width:42%">SKU ID</th>
+                            <th style="width:16%">Del</th>
+                        </tr>
+                    </thead>
+                    <tbody id="skuMapBody"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-close" onclick="closeSkuMapDb()">Close</button>
+                <button type="button" class="btn-modal-save" onclick="saveSkuMap()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let _skuMapData = [];
+
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function openSkuMapDb() {
+            const resp = await fetch('/vendor/tiktok/sku_map');
+            const data = await resp.json();
+            if (data && data.error) {
+                alert(data.error);
+                return;
+            }
+            _skuMapData = Array.isArray(data) ? data : [];
+            renderMapTable(_skuMapData);
+            document.getElementById('mapSearch').value = '';
+            document.getElementById('skuMapModal').style.display = 'block';
+        }
+
+        function closeSkuMapDb() {
+            document.getElementById('skuMapModal').style.display = 'none';
+        }
+
+        document.getElementById('skuMapModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSkuMapDb();
+        });
+
+        function renderMapTable(rows) {
+            const tbody = document.getElementById('skuMapBody');
+            tbody.innerHTML = '';
+            rows.forEach((row, idx) => {
+                tbody.insertAdjacentHTML('beforeend', `<tr data-idx="${idx}">
+                    <td><input type="text" value="${escHtml(row.sku)}" class="map-sku" /></td>
+                    <td><input type="text" value="${escHtml(row.sku_id)}" class="map-sku-id" /></td>
+                    <td style="text-align:center"><button type="button" onclick="deleteMapRow(this)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:1rem;">✕</button></td>
+                </tr>`);
+            });
+        }
+
+        function filterMapTable() {
+            const q = document.getElementById('mapSearch').value.toLowerCase();
+            document.querySelectorAll('#skuMapBody tr').forEach(tr => {
+                const sku = tr.querySelector('.map-sku')?.value.toLowerCase() || '';
+                const sid = tr.querySelector('.map-sku-id')?.value.toLowerCase() || '';
+                tr.style.display = (sku.includes(q) || sid.includes(q)) ? '' : 'none';
+            });
+        }
+
+        function addMapRow() {
+            const tbody = document.getElementById('skuMapBody');
+            tbody.insertAdjacentHTML('beforeend', `<tr>
+                <td><input type="text" value="" class="map-sku" placeholder="SKU" /></td>
+                <td><input type="text" value="" class="map-sku-id" placeholder="TikTok SKU ID" /></td>
+                <td style="text-align:center"><button type="button" onclick="deleteMapRow(this)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:1rem;">✕</button></td>
+            </tr>`);
+            tbody.lastElementChild.querySelector('.map-sku').focus();
+        }
+
+        function deleteMapRow(btn) {
+            btn.closest('tr').remove();
+        }
+
+        async function saveSkuMap() {
+            const rows = [];
+            document.querySelectorAll('#skuMapBody tr').forEach(tr => {
+                const sku = tr.querySelector('.map-sku')?.value.trim();
+                const sku_id = tr.querySelector('.map-sku-id')?.value.trim();
+                if (sku) rows.push({ sku, sku_id: sku_id || '' });
+            });
+            const statusEl = document.getElementById('mapSaveStatus');
+            statusEl.style.display = 'inline-block';
+            statusEl.style.background = '#dbeafe';
+            statusEl.style.color = '#1e40af';
+            statusEl.textContent = '⏳ Saving…';
+            try {
+                const resp = await fetch('/vendor/tiktok/sku_map', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(rows)
+                });
+                const json = await resp.json();
+                if (!resp.ok) throw new Error(json.error || 'Save failed');
+                statusEl.style.background = '#d1fae5';
+                statusEl.style.color = '#065f46';
+                statusEl.textContent = `✓ Saved ${json.saved} rows`;
+                _skuMapData = rows;
+                setTimeout(() => { statusEl.style.display = 'none'; }, 2500);
+            } catch (e) {
+                statusEl.style.background = '#fee2e2';
+                statusEl.style.color = '#991b1b';
+                statusEl.textContent = '❌ ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

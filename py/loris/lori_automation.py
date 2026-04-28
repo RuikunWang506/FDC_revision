@@ -2295,6 +2295,52 @@ def download_tracking_info():
     except Exception as e:
         return jsonify({'error': f'Error generating file: {str(e)}'}), 500
 
+@lori_automation_bp.route("/add_tracking_number", methods=["POST"])
+def add_tracking_number():
+    """Add or update tracking number for a single order"""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        po_number = data.get('po_number', '').strip()
+        tracking_number = data.get('tracking_number', '').strip()
+        
+        if not po_number or not tracking_number:
+            return jsonify({'error': 'PO number and tracking number are required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor()
+        
+        # Update the tracking number for this order
+        cursor.execute("""
+            UPDATE lori_orders 
+            SET tracking = %s 
+            WHERE po_number = %s
+        """, (tracking_number, po_number))
+        
+        connection.commit()
+        
+        if cursor.rowcount > 0:
+            cursor.close()
+            connection.close()
+            return jsonify({
+                'success': True,
+                'message': f'Tracking number updated successfully for PO {po_number}',
+                'po_number': po_number,
+                'tracking_number': tracking_number
+            }), 200
+        else:
+            cursor.close()
+            connection.close()
+            return jsonify({'error': f'PO number {po_number} not found in database'}), 404
+            
+    except Exception as e:
+        return jsonify({'error': f'Error updating tracking number: {str(e)}'}), 500
+
 @lori_automation_bp.route("/fetch_and_process_emails", methods=["POST"])
 def fetch_and_process_emails():
     """Simplified endpoint: Fetch emails, download PDFs, and process into database automatically"""

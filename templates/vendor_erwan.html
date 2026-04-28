@@ -1,0 +1,606 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor - Erwan</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background: #f4f8ff; min-height: 100vh; }
+        .page-wrap { max-width: 1200px; margin: 32px auto; padding: 0 16px 80px; }
+        .card-main { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 36px 44px; }
+        h1 { font-size: 1.7rem; font-weight: 700; margin-bottom: 2px; }
+        .subtitle { color: #6b7280; margin-bottom: 28px; font-size: .95rem; }
+        .upload-zone {
+            border: 2px dashed #93c5fd; border-radius: 12px; padding: 24px 20px;
+            text-align: center; background: #eff6ff; cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+        .upload-zone:hover { background: #dbeafe; border-color: #3b82f6; }
+        .upload-zone .icon { font-size: 1.8rem; color: #3b82f6; margin-bottom: 6px; }
+        .upload-zone label { cursor: pointer; font-weight: 600; color: #1d4ed8; }
+        .upload-zone small { display: block; color: #6b7280; margin-top: 4px; font-size: .83rem; }
+        .file-chosen { font-size: .83rem; color: #374151; margin-top: 6px; }
+        .btn-row { display: flex; gap: 12px; margin-top: 22px; }
+        .btn-process {
+            flex: 1; background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            color: #fff; border: none; border-radius: 10px;
+            padding: 13px 20px; font-size: .95rem; font-weight: 600; cursor: pointer; transition: opacity .2s;
+        }
+        .btn-process:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-process:hover:not(:disabled) { opacity: .88; }
+        .btn-debug {
+            flex: 0 0 auto; background: #f1f5f9; color: #374151;
+            border: 1px solid #d1d5db; border-radius: 10px;
+            padding: 13px 18px; font-size: .88rem; font-weight: 600; cursor: pointer; transition: background .2s;
+        }
+        .btn-debug:hover { background: #e2e8f0; }
+        .btn-dbview {
+            flex: 0 0 auto; background: #fdf4ff; color: #7e22ce;
+            border: 1px solid #d8b4fe; border-radius: 10px;
+            padding: 13px 18px; font-size: .88rem; font-weight: 600; cursor: pointer; transition: background .2s;
+        }
+        .btn-dbview:hover { background: #f3e8ff; }
+        /* Modal */
+        #skuDbModal { display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.45); }
+        #skuDbModal .modal-box {
+            background:#fff; border-radius:16px; width:min(780px,95vw);
+            max-height:88vh; margin:5vh auto; display:flex; flex-direction:column;
+            box-shadow:0 8px 40px rgba(0,0,0,.22); overflow:hidden;
+        }
+        #skuDbModal .modal-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:18px 24px; border-bottom:1px solid #e5e7eb;
+        }
+        #skuDbModal .modal-header h3 { margin:0; font-size:1.1rem; font-weight:700; }
+        #skuDbModal .modal-toolbar {
+            display:flex; gap:10px; padding:12px 24px; border-bottom:1px solid #f3f4f6;
+            background:#fafafa; flex-wrap:wrap; align-items:center;
+        }
+        #skuDbModal .modal-toolbar input { flex:1; min-width:160px; padding:7px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:.88rem; }
+        #skuDbModal .modal-body { flex:1; overflow-y:auto; padding:0; }
+        #skuDbModal table { width:100%; border-collapse:collapse; font-size:.87rem; }
+        #skuDbModal table th { position:sticky; top:0; background:#1e3a5f; color:#fff; padding:9px 12px; text-align:left; z-index:1; }
+        #skuDbModal table td { padding:7px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+        #skuDbModal table tr:hover td { background:#f8f0ff; }
+        #skuDbModal table input[type="number"],
+        #skuDbModal table input[type="text"] {
+            width:100%; padding:4px 7px; border:1px solid #d1d5db; border-radius:6px;
+            font-size:.86rem; text-align:right; background:transparent;
+        }
+        #skuDbModal table input[type="text"] { text-align:left; }
+        #skuDbModal .modal-footer {
+            display:flex; gap:10px; padding:14px 24px; border-top:1px solid #e5e7eb;
+            justify-content:flex-end; background:#fafafa;
+        }
+        .btn-db-save { background:#7e22ce; color:#fff; border:none; border-radius:8px; padding:9px 22px; font-weight:600; cursor:pointer; }
+        .btn-db-save:hover { background:#6b21a8; }
+        .btn-db-add  { background:#ede9fe; color:#5b21b6; border:1px solid #c4b5fd; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer; }
+        .btn-db-add:hover { background:#ddd6fe; }
+        .btn-db-close { background:#f1f5f9; color:#374151; border:1px solid #d1d5db; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer; }
+        #dbSaveStatus { font-size:.85rem; padding:6px 12px; border-radius:6px; display:none; }
+        #status-box {
+            display: none; margin-top: 16px; padding: 12px 16px;
+            border-radius: 10px; font-weight: 500; font-size: .92rem;
+        }
+        #status-box.success { background: #d1fae5; color: #065f46; }
+        #status-box.error   { background: #fee2e2; color: #991b1b; }
+        #status-box.loading { background: #dbeafe; color: #1e40af; }
+        #results-section { display: none; margin-top: 36px; }
+        .results-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+        }
+        .results-header h2 { font-size: 1.2rem; font-weight: 700; margin: 0; }
+        .tab-badge { background: #eff6ff; color: #1d4ed8; padding: 4px 14px; border-radius: 20px; font-size: .83rem; font-weight: 600; }
+        .btn-download {
+            background: #16a34a; color: #fff; border: none; border-radius: 10px;
+            padding: 11px 28px; font-size: .95rem; font-weight: 600; cursor: pointer; transition: background .2s;
+        }
+        .btn-download:hover { background: #15803d; }
+        .db-error-banner { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 10px 16px; color: #9a3412; font-size: .85rem; margin-bottom: 16px; }
+        .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e5e7eb; }
+        table.billing-table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+        table.billing-table th { background: #1e3a5f; color: #fff; padding: 10px 12px; text-align: center; white-space: nowrap; font-weight: 600; }
+        table.billing-table td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; text-align: right; white-space: nowrap; }
+        table.billing-table td:first-child { text-align: left; font-weight: 600; }
+        table.billing-table tr:hover td { background: #f0f9ff; }
+        table.billing-table tr.total-row td { background: #f8fafc; font-weight: 700; border-top: 2px solid #e5e7eb; }
+        .badge-last-sold { font-size: .72rem; background: #dcfce7; color: #166534; padding: 1px 7px; border-radius: 10px; margin-left: 4px; }
+        .badge-msrp { font-size: .72rem; background: #fef9c3; color: #854d0e; padding: 1px 7px; border-radius: 10px; margin-left: 4px; }
+        .section-lbl { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #6b7280; margin: 28px 0 8px; }
+        .returns-table td { text-align: left !important; }
+        .pr-export-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 10px; margin: 28px 0 8px;
+        }
+        .pr-export-section-header .section-lbl { margin: 0; flex: 1; min-width: 200px; }
+        .btn-copy-pr {
+            flex-shrink: 0; background: #0f766e; color: #fff; border: none; border-radius: 8px;
+            padding: 8px 16px; font-size: .85rem; font-weight: 600; cursor: pointer;
+            transition: background .2s;
+        }
+        .btn-copy-pr:hover { background: #0d9488; }
+        .btn-copy-pr:disabled { opacity: .5; cursor: not-allowed; }
+        .pr-export-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; }
+        .btn-order-processor {
+            flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+            background: #1d4ed8; color: #fff !important; text-decoration: none; border-radius: 8px;
+            padding: 8px 16px; font-size: .85rem; font-weight: 600; border: none;
+            transition: background .2s;
+        }
+        .btn-order-processor:hover { background: #2563eb; color: #fff !important; }
+        .pr-export-table { max-width: 520px; }
+        .pr-export-table td:first-child { text-align: left !important; white-space: pre; font-family: ui-monospace, 'Cascadia Code', monospace; font-weight: 600; }
+        .summary-strip { display: flex; gap: 20px; flex-wrap: wrap; background: #f8fafc; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; }
+        .summary-item { text-align: center; }
+        .summary-item .val { font-size: 1.3rem; font-weight: 700; color: #1d4ed8; }
+        .summary-item .lbl { font-size: .75rem; color: #6b7280; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="page-wrap">
+        <div class="card-main">
+            <h1>Erwan Vendor Billing</h1>
+            <p class="subtitle">Upload a 发货/退货账单 file to preview data, then download the Channel ERWAN Excel.</p>
+
+            <form id="processForm">
+                <div class="upload-zone"
+                     ondragover="event.preventDefault()" ondrop="dropFile(event,'billing_file','billingLabel')">
+                    <div class="icon">📤</div>
+                    <label for="billing_file">Click or drag &amp; drop billing file</label>
+                    <small>发货/退货账单 .xlsx — required</small>
+                    <input type="file" id="billing_file" name="billing_file"
+                           accept=".xlsx,.xls" class="d-none" onchange="showName(this,'billingLabel')">
+                    <div class="file-chosen" id="billingLabel">No file chosen</div>
+                </div>
+                <div class="btn-row">
+                    <button type="submit" class="btn-process" id="submitBtn">⚙️ Process</button>
+                    <button type="button" class="btn-dbview" onclick="openSkuDb()">🗄️ Database</button>
+                    <button type="button" class="btn-debug" onclick="runDebug()">🔍 Debug</button>
+                </div>
+            </form>
+
+            <div id="status-box"></div>
+            <pre id="debugOutput" style="display:none;background:#f1f5f9;padding:14px;border-radius:8px;font-size:.76rem;overflow:auto;max-height:360px;margin-top:16px"></pre>
+        </div>
+
+        <div id="results-section">
+            <div class="card-main mt-4">
+                <div class="results-header">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <h2 id="resultsTitle">Processed Results</h2>
+                        <span class="tab-badge" id="tabBadge"></span>
+                    </div>
+                    <button class="btn-download" onclick="doDownload()">⬇️ Download Excel</button>
+                </div>
+
+                <div id="dbErrorBanner" class="db-error-banner" style="display:none"></div>
+                <div class="summary-strip" id="summaryStrip"></div>
+
+                <div class="section-lbl">发货明细 Shipped Items</div>
+                <div class="table-wrap">
+                    <table class="billing-table">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>数量<br>Qty</th>
+                                <th>SKU (DB)</th>
+                                <th>成本<br>Cost</th>
+                                <th>MSRP</th>
+                                <th>mark up</th>
+                                <th>你的价</th>
+                                <th>人工包装<br>Pkg</th>
+                                <th>单价</th>
+                                <th>小计</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shippedBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="returnsSection" style="display:none">
+                    <div class="section-lbl">退货数据 Returns</div>
+                    <div class="table-wrap">
+                        <table class="billing-table">
+                            <thead>
+                                <tr>
+                                    <th>款号/颜色</th><th>数量</th><th>快递单号</th>
+                                    <th>签收日期</th><th>退款</th><th>SKU</th>
+                                </tr>
+                            </thead>
+                            <tbody id="returnsBody" class="returns-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="prExportSection" style="display:none">
+                    <div class="pr-export-section-header">
+                        <div class="section-lbl">Compact export · SKU (DB) / Qty / 单价 <span style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8">(Excel cols P–R)</span></div>
+                        <div class="pr-export-actions">
+                            <button type="button" class="btn-copy-pr" id="btnCopyPrExport" onclick="copyPrExportTable()">📋 Copy table</button>
+                            <a class="btn-order-processor" href="https://www.fdcef.com/order_processor" target="_blank" rel="noopener noreferrer">Order Processor ↗</a>
+                        </div>
+                    </div>
+                    <p style="font-size:.82rem;color:#64748b;margin:0 0 10px">Same rows as 发货明细: DB SKU with trailing space (for import), quantity, unit price.</p>
+                    <div class="table-wrap pr-export-table">
+                        <table class="billing-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU (DB)</th>
+                                    <th>数量 Qty</th>
+                                    <th>单价 Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prExportBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a href="{{ url_for('vendor_app.vendor_app_home') }}" class="btn btn-outline-secondary btn-sm">
+                &larr; Back to Vendor App
+            </a>
+        </div>
+    </div>
+
+    <!-- SKU Database Modal -->
+    <div id="skuDbModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>🗄️ Erwan SKU Cost Database</h3>
+                <button class="btn-db-close" onclick="closeSkuDb()">✕</button>
+            </div>
+            <div class="modal-toolbar">
+                <input type="text" id="dbSearch" placeholder="Search SKU…" oninput="filterDbTable()" />
+                <button class="btn-db-add" onclick="addDbRow()">＋ Add Row</button>
+                <span id="dbSaveStatus"></span>
+            </div>
+            <div class="modal-body">
+                <table id="skuDbTable">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th style="width:100px">成本 Cost ($)</th>
+                            <th style="width:100px">MSRP ($)</th>
+                            <th style="width:100px">包装费 Pkg ($)</th>
+                            <th style="width:50px">Del</th>
+                        </tr>
+                    </thead>
+                    <tbody id="skuDbBody"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-db-close" onclick="closeSkuDb()">Cancel</button>
+                <button class="btn-db-save" onclick="saveSkuDb()">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingToken = null;
+        let _skuDbData   = [];   // [{sku, cost, pkg_fee}, ...]
+        let _prExportShipped = [];  // last shipped[] for compact P–R copy
+
+        function showName(input, labelId) {
+            document.getElementById(labelId).textContent = input.files.length ? input.files[0].name : 'No file chosen';
+        }
+        function dropFile(event, inputId, labelId) {
+            event.preventDefault();
+            const dt = new DataTransfer();
+            dt.items.add(event.dataTransfer.files[0]);
+            document.getElementById(inputId).files = dt.files;
+            showName(document.getElementById(inputId), labelId);
+        }
+        function showStatus(msg, type) {
+            const box = document.getElementById('status-box');
+            box.className = type;
+            box.textContent = msg;
+            box.style.display = msg ? 'block' : 'none';
+        }
+        function fmt(n, dec=2) {
+            if (n === null || n === undefined) return '—';
+            return Number(n).toLocaleString('en-US', {minimumFractionDigits: dec, maximumFractionDigits: dec});
+        }
+
+        function _prExportTsvText(rows) {
+            const lines = [];
+            for (const r of rows) {
+                const sku = String(r.sku_norm || '') + ' ';
+                const qtyStr = fmt(r.qty, 0).replace(/,/g, '');
+                const priceStr = fmt(r.dan_jia, 2).replace(/,/g, '');
+                lines.push([sku, qtyStr, priceStr].join('\t'));
+            }
+            return lines.join('\n');
+        }
+
+        /** Legacy copy: textarea must be in viewport; execCommand return value must be checked. */
+        function _copyTextLegacy(text) {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.top = '0';
+                ta.style.left = '0';
+                ta.style.width = '1px';
+                ta.style.height = '1px';
+                ta.style.padding = '0';
+                ta.style.margin = '0';
+                ta.style.border = 'none';
+                ta.style.outline = 'none';
+                ta.style.boxShadow = 'none';
+                ta.style.background = 'transparent';
+                ta.style.opacity = '0.01';
+                ta.style.zIndex = '2147483647';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                ta.setSelectionRange(0, text.length);
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return ok === true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function _copyTextToClipboard(text) {
+            if (!text || !String(text).length) return false;
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function' && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (e) {
+                    /* HTTP or permission / no user gesture — try legacy */
+                }
+            }
+            return _copyTextLegacy(text);
+        }
+
+        async function copyPrExportTable() {
+            if (!_prExportShipped.length) {
+                showStatus('No compact export rows to copy. Process a file first.', 'error');
+                return;
+            }
+            const ok = await _copyTextToClipboard(_prExportTsvText(_prExportShipped));
+            if (ok) {
+                showStatus('✓ Copied data rows only (tab-separated, no header). Paste into Excel or Sheets.', 'success');
+                setTimeout(() => { const b = document.getElementById('status-box'); if (b.className === 'success') { b.style.display = 'none'; b.textContent = ''; } }, 2800);
+            } else {
+                showStatus('❌ Could not copy to clipboard.', 'error');
+            }
+        }
+
+        document.getElementById('processForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const billingInput = document.getElementById('billing_file');
+            if (!billingInput.files.length) { showStatus('Please select a billing Excel file.', 'error'); return; }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            document.getElementById('results-section').style.display = 'none';
+            showStatus('⏳ Processing… fetching costs from database…', 'loading');
+
+            const fd = new FormData(this);
+            try {
+                const resp = await fetch('/vendor/erwan/preview', { method: 'POST', body: fd });
+                const json = await resp.json();
+                if (!resp.ok) {
+                    showStatus('❌ ' + (json.error || resp.statusText), 'error');
+                    return;
+                }
+                pendingToken = json.download_token;
+                renderResults(json);
+                showStatus('', '');
+            } catch(err) {
+                showStatus('❌ Network error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        function renderResults(data) {
+            document.getElementById('tabBadge').textContent = data.tab_name;
+            document.getElementById('resultsTitle').textContent = 'Results — ' + data.tab_name;
+
+            const errBanner = document.getElementById('dbErrorBanner');
+            if (data.db_error) {
+                errBanner.style.display = 'block';
+                errBanner.textContent = '⚠️ DB error (some costs may be 0): ' + data.db_error;
+            } else { errBanner.style.display = 'none'; }
+
+            let totQty=0, totXiaoJi=0;
+            for (const r of data.shipped) { totQty+=r.qty; totXiaoJi+=r.xiao_ji; }
+
+            document.getElementById('summaryStrip').innerHTML = `
+                <div class="summary-item"><div class="val">${data.shipped.length}</div><div class="lbl">SKUs</div></div>
+                <div class="summary-item"><div class="val">${fmt(totQty,0)}</div><div class="lbl">Total Units</div></div>
+                <div class="summary-item"><div class="val">$${fmt(totXiaoJi)}</div><div class="lbl">Total 小计</div></div>
+            `;
+
+            const tbody = document.getElementById('shippedBody');
+            tbody.innerHTML = '';
+            for (const r of data.shipped) {
+                tbody.insertAdjacentHTML('beforeend', `<tr>
+                    <td>${r.sku}</td>
+                    <td>${fmt(r.qty,0)}</td>
+                    <td style="color:#6b7280;font-size:.82rem">${r.sku_norm}</td>
+                    <td>$${fmt(r.cost)}</td>
+                    <td>$${fmt(r.msrp)}</td>
+                    <td>${(r.markup*100).toFixed(0)}%</td>
+                    <td>$${fmt(r.nide_jia)}</td>
+                    <td>$${fmt(r.pkg_fee)}</td>
+                    <td>$${fmt(r.dan_jia)}</td>
+                    <td>$${fmt(r.xiao_ji)}</td>
+                </tr>`);
+            }
+            tbody.insertAdjacentHTML('beforeend', `<tr class="total-row">
+                <td>合计 TOTAL</td><td>${fmt(totQty,0)}</td>
+                <td colspan="7">—</td>
+                <td>$${fmt(totXiaoJi)}</td>
+            </tr>`);
+
+            const retSection = document.getElementById('returnsSection');
+            const retBody    = document.getElementById('returnsBody');
+            retBody.innerHTML = '';
+            if (data.returns && data.returns.length > 0) {
+                retSection.style.display = 'block';
+                let totRetQty = 0, totRefund = 0;
+                for (const r of data.returns) {
+                    totRetQty += r.qty || 0;
+                    totRefund += r.refund || 0;
+                    retBody.insertAdjacentHTML('beforeend', `<tr>
+                        <td>${r.sku}</td>
+                        <td>${fmt(r.qty,0)}</td>
+                        <td style="font-size:.78rem;color:#6b7280">${r.tracking || '—'}</td>
+                        <td style="font-size:.82rem">${r.date || '—'}</td>
+                        <td style="color:#c00000;font-weight:600">${fmt(r.refund)}</td>
+                        <td style="color:#6b7280;font-size:.82rem">${r.source_sku || '—'}</td>
+                    </tr>`);
+                }
+                retBody.insertAdjacentHTML('beforeend', `<tr class="total-row">
+                    <td>退货合计</td><td>${fmt(totRetQty,0)}</td>
+                    <td colspan="2">—</td>
+                    <td style="color:#c00000">$${fmt(totRefund)}</td>
+                    <td>—</td>
+                </tr>`);
+            } else { retSection.style.display = 'none'; }
+
+            const prSection = document.getElementById('prExportSection');
+            const prBody = document.getElementById('prExportBody');
+            prBody.innerHTML = '';
+            _prExportShipped = (data.shipped && data.shipped.length) ? data.shipped.slice() : [];
+            if (data.shipped && data.shipped.length > 0) {
+                prSection.style.display = 'block';
+                for (const r of data.shipped) {
+                    const skuDb = String(r.sku_norm || '') + ' ';
+                    prBody.insertAdjacentHTML('beforeend', `<tr>
+                        <td>${escHtml(skuDb)}</td>
+                        <td>${fmt(r.qty, 0)}</td>
+                        <td>${fmt(r.dan_jia)}</td>
+                    </tr>`);
+                }
+            } else {
+                prSection.style.display = 'none';
+            }
+
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function doDownload() {
+            if (!pendingToken) { showStatus('Process the file first.', 'error'); return; }
+            window.location.href = '/vendor/erwan/download/' + pendingToken;
+        }
+
+        async function runDebug() {
+            const billingInput = document.getElementById('billing_file');
+            if (!billingInput.files.length) { showStatus('Select a billing file first.', 'error'); return; }
+            showStatus('⏳ Inspecting…', 'loading');
+            const fd = new FormData();
+            fd.append('billing_file', billingInput.files[0]);
+            const resp = await fetch('/vendor/erwan/debug', { method: 'POST', body: fd });
+            const json = await resp.json();
+            showStatus('', '');
+            const pre = document.getElementById('debugOutput');
+            pre.textContent = JSON.stringify(json, null, 2);
+            pre.style.display = 'block';
+        }
+
+        // ── SKU Database Modal ────────────────────────────────────────────
+        async function openSkuDb() {
+            const resp = await fetch('/vendor/erwan/sku_db');
+            _skuDbData = await resp.json();
+            renderDbTable(_skuDbData);
+            document.getElementById('dbSearch').value = '';
+            document.getElementById('skuDbModal').style.display = 'block';
+        }
+        function closeSkuDb() {
+            document.getElementById('skuDbModal').style.display = 'none';
+        }
+        document.getElementById('skuDbModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSkuDb();
+        });
+
+        function renderDbTable(data) {
+            const tbody = document.getElementById('skuDbBody');
+            tbody.innerHTML = '';
+            data.forEach((row, idx) => {
+                tbody.insertAdjacentHTML('beforeend', `<tr data-idx="${idx}">
+                    <td><input type="text" value="${escHtml(row.sku)}" class="db-sku" /></td>
+                    <td><input type="number" step="0.01" value="${row.cost}" class="db-cost" /></td>
+                    <td><input type="number" step="0.01" value="${row.msrp ?? 0}" class="db-msrp" /></td>
+                    <td><input type="number" step="0.01" value="${row.pkg_fee}" class="db-pkg" /></td>
+                    <td style="text-align:center"><button onclick="deleteDbRow(this)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:1rem;">✕</button></td>
+                </tr>`);
+            });
+        }
+
+        function filterDbTable() {
+            const q = document.getElementById('dbSearch').value.toLowerCase();
+            document.querySelectorAll('#skuDbBody tr').forEach(tr => {
+                const sku = tr.querySelector('.db-sku')?.value.toLowerCase() || '';
+                tr.style.display = sku.includes(q) ? '' : 'none';
+            });
+        }
+
+        function addDbRow() {
+            const tbody = document.getElementById('skuDbBody');
+            const idx = tbody.rows.length;
+            tbody.insertAdjacentHTML('beforeend', `<tr data-idx="${idx}">
+                <td><input type="text" value="" class="db-sku" placeholder="SKU" /></td>
+                <td><input type="number" step="0.01" value="0" class="db-cost" /></td>
+                <td><input type="number" step="0.01" value="0" class="db-msrp" /></td>
+                <td><input type="number" step="0.01" value="3" class="db-pkg" /></td>
+                <td style="text-align:center"><button onclick="deleteDbRow(this)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:1rem;">✕</button></td>
+            </tr>`);
+            const newInput = tbody.lastElementChild.querySelector('.db-sku');
+            newInput.focus();
+        }
+
+        function deleteDbRow(btn) {
+            btn.closest('tr').remove();
+        }
+
+        async function saveSkuDb() {
+            const rows = [];
+            document.querySelectorAll('#skuDbBody tr').forEach(tr => {
+                const sku     = tr.querySelector('.db-sku')?.value.trim();
+                const cost    = parseFloat(tr.querySelector('.db-cost')?.value) || 0;
+                const msrp    = parseFloat(tr.querySelector('.db-msrp')?.value) || 0;
+                const pkg_fee = parseFloat(tr.querySelector('.db-pkg')?.value) || 0;
+                if (sku) rows.push({ sku, cost, msrp, pkg_fee });
+            });
+            const statusEl = document.getElementById('dbSaveStatus');
+            statusEl.style.display = 'inline-block';
+            statusEl.style.background = '#dbeafe'; statusEl.style.color = '#1e40af';
+            statusEl.textContent = '⏳ Saving…';
+            try {
+                const resp = await fetch('/vendor/erwan/sku_db', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(rows)
+                });
+                const json = await resp.json();
+                if (!resp.ok) throw new Error(json.error || 'save failed');
+                statusEl.style.background = '#d1fae5'; statusEl.style.color = '#065f46';
+                statusEl.textContent = `✓ Saved ${json.saved} entries`;
+                _skuDbData = rows;
+                setTimeout(() => { statusEl.style.display='none'; }, 3000);
+            } catch(e) {
+                statusEl.style.background = '#fee2e2'; statusEl.style.color = '#991b1b';
+                statusEl.textContent = '❌ ' + e.message;
+            }
+        }
+
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</body>
+</html>

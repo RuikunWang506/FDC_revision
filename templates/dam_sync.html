@@ -106,6 +106,24 @@
                 <strong>Error:</strong> {{ status.error }}
             </div>
             {% endif %}
+
+            <div class="alert alert-light border mt-3 mb-0" id="scheduler-next-banner">
+                <div class="row">
+                    <div class="col-md-6 mb-2 mb-md-0">
+                        <strong><i class="fas fa-clock text-primary me-1"></i>Next hourly sync</strong>
+                        <span id="next-hourly-countdown" class="font-monospace ms-2">Loading…</span>
+                        <div class="small text-muted mt-1" id="next-hourly-detail"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-calendar-week text-primary me-1"></i>Next weekly rebuild</strong>
+                        <span id="next-weekly-countdown" class="font-monospace ms-2">Loading…</span>
+                        <div class="small text-muted mt-1" id="next-weekly-detail"></div>
+                    </div>
+                </div>
+                <div class="small text-muted mt-2 mb-0" id="scheduler-next-footnote">
+                    Times come from Windows Task Scheduler on this server (tasks must match <code>FDC DAM Hourly Sync</code> / <code>FDC DAM Weekly Rebuild</code>).
+                </div>
+            </div>
         </div>
     </div>
     
@@ -119,19 +137,18 @@
                 <div class="col-md-6 mb-3">
                     <button id="btn-sync" class="btn btn-success btn-lg btn-block" onclick="startSync(false, true, true)" style="height: 100px;">
                         <i class="fas fa-sync fa-2x d-block mb-2"></i>
-                        <strong>Auto Sync (Hourly)</strong>
+                        <strong>Auto Sync (fetch + scan)</strong>
                     </button>
                     <div class="mt-2 p-3 bg-light rounded border border-success">
-                        <div class="mb-2"><i class="fas fa-check-circle text-success me-1"></i><strong>Recommended - Set and forget!</strong></div>
+                        <div class="mb-2"><i class="fas fa-check-circle text-success me-1"></i><strong>Recommended for manual runs</strong></div>
                         <small class="text-muted">
                             <strong>What it does:</strong><br>
-                            • Fetches new/changed Dropbox files<br>
-                            • Updates database with new images<br>
-                            • Removes broken links automatically<br>
+                            • Runs <code>smart_auto_filter.py</code> (missing style images from Dropbox → server folders)<br>
+                            • Runs DAM sync into the database + optional cleanup<br>
                             <br>
-                            ⏱️ 5-15 minutes<br>
-                            <span class="badge bg-success">✅ Auto-runs: Every hour Mon-Fri 9am-5pm</span><br>
-                            <span class="badge bg-info mt-1">Click to run manually anytime</span>
+                            ⏱️ Often 5–15 minutes depending on volume<br>
+                            <span class="badge bg-warning text-dark mt-1">Server automation</span>
+                            <span class="d-block mt-2">Hourly jobs only run if Task Scheduler calls <code>auto_run/hourly_auto_sync.bat</code> <strong>and</strong> the server has <code>DAM_CRON_SECRET</code> set (see below). Posting to <code>/dam/start</code> from curl without a login <strong>does not work</strong> — use <code>POST /dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code>.</span>
                         </small>
                     </div>
                 </div>
@@ -145,7 +162,6 @@
                         <small class="text-muted">
                             <strong>What it does:</strong><br>
                             • Rescans ALL directories from scratch<br>
-                            • Rebuilds index files completely<br>
                             • Full database sync + cleanup<br>
                             <br>
                             ⏱️ 20-40 minutes<br>
@@ -173,10 +189,10 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <button class="btn btn-outline-info btn-block" onclick="generateIndex()">
-                            <i class="fas fa-list"></i> Generate Index Files Only
+                            <i class="fas fa-list"></i> Scan folders (JPEG counts)
                         </button>
                         <small class="text-muted d-block mt-1">
-                            Creates index.json files without syncing to database (testing only)
+                            Counts .jpg files under catalog and big-picture roots (no database write)
                         </small>
                     </div>
                     <div class="col-md-6 mb-3">
@@ -219,19 +235,18 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <h6><i class="fas fa-robot text-success me-2"></i>Fully Automated</h6>
+                    <h6><i class="fas fa-robot text-success me-2"></i>How unattended sync actually works</h6>
                     <div class="p-3 bg-light rounded mb-3">
-                        <p class="mb-2"><strong>The system runs automatically every hour (Mon-Fri 9am-5pm):</strong></p>
+                        <p class="mb-2"><strong>Nothing runs “by magic” in the browser.</strong> One of these must be configured on the <strong>Windows server</strong>:</p>
                         <ol class="mb-0">
-                            <li>Checks Dropbox for new/changed/deleted folders</li>
-                            <li>Copies new images to server</li>
-                            <li>Updates database with new files</li>
-                            <li>Removes broken links from deleted files</li>
+                            <li><strong>Task Scheduler</strong> runs <code>auto_run/hourly_auto_sync.bat</code>, which calls <code>POST …/dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code> matching env <code>DAM_CRON_SECRET</code> on the machine running Flask.</li>
+                            <li>Or run <code>python py/standalone/smart_auto_filter.py</code> on a schedule (copies from Dropbox per Config paths), then run DAM sync separately.</li>
                         </ol>
+                        <p class="mb-0 mt-2 small text-muted">Check server logs and <code>C:\FDC_FLASK_APP\hourly_sync.log</code> after the scheduled time. <code>GET …/dam/cron/status</code> (same secret header) returns <code>is_running</code> / <code>last_run</code> for scripts.</p>
                     </div>
-                    <div class="alert alert-success mb-0">
-                        <i class="fas fa-check-circle me-1"></i>
-                        <strong>You don't need to do anything!</strong> The green button runs automatically.
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Green button</strong> only runs when you click it (or when Task Scheduler hits the cron URL). Set <code>DAM_CRON_SECRET</code> on the server, then point the batch file at your real base URL (<code>DAM_SYNC_BASE_URL</code>).
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -252,7 +267,7 @@
                     </ul>
                     <div class="alert alert-warning mb-0">
                         <i class="fas fa-info-circle me-1"></i>
-                        Most users never need to click anything!
+                        If nothing is scheduled on the server, use the green button after large Dropbox uploads.
                     </div>
                 </div>
             </div>
@@ -264,6 +279,117 @@
 let pollInterval;
 let lastLogIndex = 0;
 let autoScroll = true;
+
+let schedulerHourlyTs = null;
+let schedulerWeeklyTs = null;
+let schedulerCountdownTimer = null;
+let schedulerRefreshTimer = null;
+
+function formatCountdown(ms) {
+    if (ms <= 0) return 'Due now';
+    let s = Math.floor(ms / 1000);
+    const d = Math.floor(s / 86400); s %= 86400;
+    const h = Math.floor(s / 3600); s %= 3600;
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    if (d > 0) return `${d}d ${h}h ${m}m ${sec}s`;
+    if (h > 0) return `${h}h ${m}m ${sec}s`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+}
+
+function applySchedulerSection(prefix, payload) {
+    const countdownEl = document.getElementById(prefix + '-countdown');
+    const detailEl = document.getElementById(prefix + '-detail');
+    if (!countdownEl || !detailEl) return;
+
+    if (!payload || payload.error) {
+        countdownEl.textContent = '—';
+        const msg = (payload && payload.error === 'not_windows')
+            ? 'Only available when the app runs on Windows with Task Scheduler.'
+            : (payload && payload.error ? String(payload.error) : 'Unavailable');
+        detailEl.textContent = msg;
+        return;
+    }
+
+    if (payload.next_ts_ms == null) {
+        countdownEl.textContent = payload.raw || 'Unknown';
+        detailEl.textContent = payload.next_run_display || '';
+        return;
+    }
+
+    detailEl.textContent = payload.next_run_display ? `Scheduled: ${payload.next_run_display}` : '';
+}
+
+function tickSchedulerCountdown() {
+    const now = Date.now();
+    const hourlyEl = document.getElementById('next-hourly-countdown');
+    const weeklyEl = document.getElementById('next-weekly-countdown');
+    if (!hourlyEl || !weeklyEl) return;
+
+    if (schedulerHourlyTs != null && !hourlyEl.dataset.error) {
+        hourlyEl.textContent = formatCountdown(schedulerHourlyTs - now);
+    }
+    if (schedulerWeeklyTs != null && !weeklyEl.dataset.error) {
+        weeklyEl.textContent = formatCountdown(schedulerWeeklyTs - now);
+    }
+}
+
+function fetchSchedulerNext() {
+    fetch('/dam/scheduler-next')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            const hourlyEl = document.getElementById('next-hourly-countdown');
+            const weeklyEl = document.getElementById('next-weekly-countdown');
+            const foot = document.getElementById('scheduler-next-footnote');
+            if (!data.success || !data.hourly || !data.weekly) {
+                schedulerHourlyTs = null;
+                schedulerWeeklyTs = null;
+                if (hourlyEl) { hourlyEl.textContent = '—'; hourlyEl.dataset.error = '1'; }
+                if (weeklyEl) { weeklyEl.textContent = '—'; weeklyEl.dataset.error = '1'; }
+                var hd = document.getElementById('next-hourly-detail');
+                var wd = document.getElementById('next-weekly-detail');
+                if (hd) hd.textContent = data.error || 'Could not load scheduler info.';
+                if (wd) wd.textContent = '';
+                return;
+            }
+
+            if (foot && data.platform && data.platform !== 'win32') {
+                foot.textContent = 'Next-run times require Windows Task Scheduler (this server is not Windows).';
+            }
+
+            function ingest(side, payload) {
+                const el = document.getElementById(side === 'hourly' ? 'next-hourly-countdown' : 'next-weekly-countdown');
+                if (!el) return;
+                delete el.dataset.error;
+                applySchedulerSection(side === 'hourly' ? 'next-hourly' : 'next-weekly', payload);
+                if (payload.error) {
+                    el.dataset.error = '1';
+                    if (side === 'hourly') schedulerHourlyTs = null;
+                    else schedulerWeeklyTs = null;
+                    return;
+                }
+                if (payload.next_ts_ms != null) {
+                    el.textContent = formatCountdown(payload.next_ts_ms - Date.now());
+                    if (side === 'hourly') schedulerHourlyTs = payload.next_ts_ms;
+                    else schedulerWeeklyTs = payload.next_ts_ms;
+                } else {
+                    if (side === 'hourly') schedulerHourlyTs = null;
+                    else schedulerWeeklyTs = null;
+                }
+            }
+
+            ingest('hourly', data.hourly);
+            ingest('weekly', data.weekly);
+            tickSchedulerCountdown();
+        })
+        .catch(function () {
+            var hourlyEl = document.getElementById('next-hourly-countdown');
+            var weeklyEl = document.getElementById('next-weekly-countdown');
+            if (hourlyEl) { hourlyEl.textContent = '—'; hourlyEl.dataset.error = '1'; }
+            if (weeklyEl) { weeklyEl.textContent = '—'; weeklyEl.dataset.error = '1'; }
+        });
+}
 
 function startSync(forceRebuild, includeFetch, includeCleanup) {
     const data = { 
@@ -338,7 +464,7 @@ function generateIndex() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            let message = 'Index files generated:\n';
+            let message = 'JPEG scan complete:\n';
             if (data.results.catalog) {
                 message += `Catalog: ${data.results.catalog.count} files\n`;
             }
@@ -351,7 +477,7 @@ function generateIndex() {
         }
     })
     .catch(error => {
-        alert('Error generating index: ' + error);
+        alert('Error scanning folders: ' + error);
     });
 }
 
@@ -478,6 +604,10 @@ document.addEventListener('DOMContentLoaded', function() {
             autoScroll = this.checked;
         });
     }
+
+    fetchSchedulerNext();
+    schedulerRefreshTimer = setInterval(fetchSchedulerNext, 60000);
+    schedulerCountdownTimer = setInterval(tickSchedulerCountdown, 1000);
 });
 
 function clearLog() {

@@ -3,13 +3,12 @@
 Enhanced DAM Integration and Sync System v2
 - Batch processing with commits every 100 records
 - Progress reporting every 100 inputs
-- Index file generation and usage for faster processing
+- Full filesystem scan each sync (paths stored in MySQL; no JSON cache files)
 - Automated scheduling support (every 3 days)
 """
 
 import os
 import sys
-import json
 from pathlib import Path
 from PIL import Image
 import hashlib
@@ -37,10 +36,6 @@ class DAMSyncServiceV2:
         self.catalog_dir = r"D:\Catalog_pictures\catalog_original"
         self.big_picture_dir = r"D:\Individual_big_picture"
         self.dropbox_dir = r"Dropbox\Pictures-China (1)\container catalog"
-        
-        # Index file paths
-        self.big_picture_index = Path(self.big_picture_dir) / "index.json"
-        self.catalog_index = Path(self.catalog_dir) / "index.json"
         
         # Batch processing settings
         self.batch_size = 100
@@ -112,18 +107,15 @@ class DAMSyncServiceV2:
         
         return base_name.upper()  # Fallback to the base name
     
-    def generate_index(self, root_dir: str, output_path: str, pattern: str = "*.jpg") -> List[str]:
-        """
-        Generate index file listing all matching files relative to root_dir
-        Returns list of relative paths
-        """
-        print(f"Generating index for {root_dir}...")
+    def collect_jpg_paths_relative(self, root_dir: str, pattern: str = "*.jpg") -> List[str]:
+        """Recursively list matching image paths relative to root_dir (no JSON cache)."""
+        print(f"Scanning {root_dir} for {pattern}...")
         root_path = Path(root_dir)
-        
+
         if not root_path.exists():
             print(f"Directory not found: {root_dir}")
             return []
-        
+
         file_list = []
         for file_path in root_path.rglob(pattern):
             if file_path.is_file():
@@ -132,35 +124,11 @@ class DAMSyncServiceV2:
                     file_list.append(str(relative_path).replace('\\', '/'))
                 except Exception as e:
                     print(f"Error processing {file_path}: {e}")
-        
-        # Sort for consistency
+
         file_list.sort()
-        
-        # Save to JSON
-        try:
-            output_file = Path(output_path)
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            
-            with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(file_list, f, indent=2, ensure_ascii=False)
-            
-            print(f"Index saved: {output_path} ({len(file_list)} files)")
-        except Exception as e:
-            print(f"Error saving index: {e}")
-        
+        print(f"Found {len(file_list)} files under {root_dir}")
         return file_list
-    
-    def load_index(self, index_path: str) -> List[str]:
-        """Load index file if it exists"""
-        try:
-            if Path(index_path).exists():
-                with open(index_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-        except Exception as e:
-            print(f"Error loading index {index_path}: {e}")
-        
-        return []
-    
+
     def print_progress(self, current: int, total: int, prefix: str = "Progress"):
         """Print progress update"""
         percent = (current / total * 100) if total > 0 else 0
@@ -181,7 +149,7 @@ class DAMSyncServiceV2:
               f"Rate: {rate:.1f} files/sec | "
               f"ETA: {eta/60:.1f} min")
     
-    def sync_catalog_images_batch(self, force_rebuild_index: bool = False):
+    def sync_catalog_images_batch(self):
         """Sync catalog_original folder with DAM database using batch processing"""
         print("\n=== Syncing Catalog Images (Batch Mode) ===")
         
@@ -189,12 +157,7 @@ class DAMSyncServiceV2:
             print(f"Catalog directory not found: {self.catalog_dir}")
             return
         
-        # Generate or load index
-        if force_rebuild_index or not self.catalog_index.exists():
-            file_list = self.generate_index(self.catalog_dir, str(self.catalog_index), "*.jpg")
-        else:
-            print(f"Loading existing index: {self.catalog_index}")
-            file_list = self.load_index(str(self.catalog_index))
+        file_list = self.collect_jpg_paths_relative(self.catalog_dir)
         
         if not file_list:
             print("No files to process")
@@ -204,7 +167,9 @@ class DAMSyncServiceV2:
         print(f"Processing {total_files} catalog images...")
         
         connection = get_mysql_connection()
-        cursor = connection.cursor()
+        # Buffered cursor: SELECT ... fetchone() must not leave unread rows or the next
+        # execute() raises "Unread result found" when duplicate sha256/filename rows exist.
+        cursor = connection.cursor(buffered=True)
         
         batch_count = 0
         
@@ -366,7 +331,7 @@ class DAMSyncServiceV2:
         
         self.print_progress(total_files, total_files, "Catalog Complete")
     
-    def sync_big_picture_images_batch(self, force_rebuild_index: bool = False):
+    def sync_big_picture_images_batch(self):
         """Sync Individual_big_picture folder with DAM database using batch processing"""
         print("\n=== Syncing Big Picture Images (Batch Mode) ===")
         
@@ -374,12 +339,7 @@ class DAMSyncServiceV2:
             print(f"Big picture directory not found: {self.big_picture_dir}")
             return
         
-        # Generate or load index
-        if force_rebuild_index or not self.big_picture_index.exists():
-            file_list = self.generate_index(self.big_picture_dir, str(self.big_picture_index), "*.jpg")
-        else:
-            print(f"Loading existing index: {self.big_picture_index}")
-            file_list = self.load_index(str(self.big_picture_index))
+        file_list = self.collect_jpg_paths_relative(self.big_picture_dir)
         
         if not file_list:
             print("No files to process")
@@ -389,7 +349,7 @@ class DAMSyncServiceV2:
         print(f"Processing {total_files} big picture images...")
         
         connection = get_mysql_connection()
-        cursor = connection.cursor()
+        cursor = connection.cursor(buffered=True)
         
         batch_count = 0
         
@@ -564,17 +524,18 @@ class DAMSyncServiceV2:
             pass 
         print(f"Batch Size: {self.batch_size}")
         print(f"Progress Interval: {self.progress_interval}")
-        print(f"Force Rebuild Index: {force_rebuild_index}")
+        if force_rebuild_index:
+            print("(Note: force_rebuild_index is legacy; every sync scans disk fully.)")
         print(f"Start Time: {datetime.now()}")
         print("="*60)
         
         self.stats['start_time'] = time.time()
         
         # Sync catalog images (highest priority)
-        self.sync_catalog_images_batch(force_rebuild_index)
+        self.sync_catalog_images_batch()
         
         # Sync big picture images (medium priority)
-        self.sync_big_picture_images_batch(force_rebuild_index)
+        self.sync_big_picture_images_batch()
         
         # Update canonical flags
         self.update_canonical_flags()
@@ -624,7 +585,7 @@ class DAMSyncServiceV2:
                 except Exception:
                     pass
 
-                self.run_full_sync(force_rebuild_index=True)
+                self.run_full_sync()
                 self.update_sync_marker()
 
                 try:
@@ -648,8 +609,6 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='DAM Sync Service V2')
-    parser.add_argument('--force-index', action='store_true', 
-                       help='Force rebuild of index files')
     parser.add_argument('--scheduled', action='store_true',
                        help='Run only if scheduled (every 3 days)')
     
@@ -660,4 +619,4 @@ if __name__ == "__main__":
     if args.scheduled:
         sync_service.run_scheduled_sync()
     else:
-        sync_service.run_full_sync(force_rebuild_index=args.force_index)
+        sync_service.run_full_sync()

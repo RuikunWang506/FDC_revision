@@ -1005,6 +1005,38 @@
 
         <!-- Include FedEx Popup Modal -->
 
+        <!-- Add Tracking Number Modal -->
+        <div class="modal fade" id="addTrackingModal" tabindex="-1" aria-labelledby="addTrackingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title" id="addTrackingModalLabel">
+                            <i class="fas fa-barcode"></i> Add Tracking Number
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="tracking-po-display" class="form-label">PO Number</label>
+                            <input type="text" class="form-control" id="tracking-po-display" readonly style="background-color: #e9ecef;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="tracking-input" class="form-label">Tracking Number *</label>
+                            <input type="text" class="form-control" id="tracking-input" placeholder="Paste your tracking number here" autofocus>
+                            <small class="text-muted">FedEx, UPS, or any other carrier tracking number</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="submit-tracking-btn">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Loading Overlay -->
         <div id="loading-overlay">
@@ -1087,6 +1119,69 @@
         }
         
         console.log('Row refreshed for PO:', poNumber);
+    }
+
+    // Tracking number functions
+    function openAddTrackingModal(poNumber) {
+        const modal = new bootstrap.Modal(document.getElementById('addTrackingModal'));
+        document.getElementById('tracking-po-display').value = poNumber;
+        document.getElementById('tracking-input').value = '';
+        document.getElementById('tracking-input').focus();
+        modal.show();
+        
+        // Store the current PO number for submission
+        window.currentTrackingPO = poNumber;
+    }
+
+    async function submitTrackingNumber() {
+        const trackingNumber = document.getElementById('tracking-input').value.trim();
+        const poNumber = window.currentTrackingPO;
+        
+        if (!trackingNumber) {
+            showToast('Please enter a tracking number', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/lori_automation/add_tracking_number', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    po_number: poNumber,
+                    tracking_number: trackingNumber
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                showToast(errorData.error || 'Failed to save tracking number', 'error');
+                return;
+            }
+            
+            const data = await response.json();
+            showToast(data.message || 'Tracking number saved successfully!', 'success');
+            
+            // Update the order in allOrders array
+            const order = allOrders.find(o => o.po_number === poNumber);
+            if (order) {
+                order.tracking = trackingNumber;
+            }
+            
+            // Refresh the order row
+            refreshOrderRow(poNumber);
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addTrackingModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } catch (error) {
+            console.error('Error submitting tracking number:', error);
+            showToast('An error occurred while saving the tracking number', 'error');
+        }
     }
 
     // Define global functions first
@@ -1943,7 +2038,7 @@
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                         </select>
-                        ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : ''}
+                        ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : `<button class="btn btn-outline-primary btn-sm mt-2 w-100 add-tracking-btn" data-po="${order.po_number}"><i class="fas fa-plus"></i> Add Tracking</button>`}
                     </td>
                     <td class="order-cell">
                         <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
@@ -2406,6 +2501,24 @@
             });
         }
 
+        // Submit Tracking Number button
+        const submitTrackingBtn = document.getElementById('submit-tracking-btn');
+        if (submitTrackingBtn) {
+            submitTrackingBtn.addEventListener('click', function() {
+                submitTrackingNumber();
+            });
+        }
+
+        // Allow Enter key to submit tracking
+        const trackingInput = document.getElementById('tracking-input');
+        if (trackingInput) {
+            trackingInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitTrackingNumber();
+                }
+            });
+        }
+
         // Add helper functions for order management
         window.viewOrderDetails = async function(poNumber) {
             try {
@@ -2706,6 +2819,12 @@
                 } else {
                     console.log('Delete button is disabled, ignoring click');
                 }
+            }
+
+            // Handle Add Tracking button clicks
+            if (e.target.closest('.add-tracking-btn')) {
+                const poNumber = e.target.closest('.add-tracking-btn').getAttribute('data-po');
+                openAddTrackingModal(poNumber);
             }
         });
 

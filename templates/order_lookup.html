@@ -376,6 +376,22 @@
             font-size: 14px;
         }
 
+        /* Order lines table: inline edit targets (delegated JS — all pages) */
+        #items_table tbody tr:not(.child) td:nth-child(3),
+        #items_table tbody tr:not(.child) td:nth-child(4),
+        #items_table tbody tr:not(.child) td:nth-child(5) {
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+
+        #items_table tbody tr:not(.child) td:nth-child(3):hover,
+        #items_table tbody tr:not(.child) td:nth-child(4):hover,
+        #items_table tbody tr:not(.child) td:nth-child(5):hover {
+            background-color: #e8f4f8 !important;
+            outline: 2px solid var(--primary-color);
+        }
+
         .editing {
             background-color: #fff3cd !important;
             outline: 2px solid #ffc107;
@@ -1456,36 +1472,40 @@
         }
 
 
-        function makeCellsEditable() {
-            // Add editable class and click event to description, qty, and price cells
-            $('#items_table tbody tr').each(function() {
-                var descCell = $(this).find('td').eq(2); // Description
-                var qtyCell = $(this).find('td').eq(3);  // Qty
-                var priceCell = $(this).find('td').eq(4); // Price
+        function bindItemsTableEditableDelegation() {
+            // DataTables only keeps the current page in the DOM; direct bindings on tbody tr
+            // miss page 2+. Delegate from #items_table so every page can edit description/qty/price.
+            var $table = $('#items_table');
+            if (!$table.length) return;
 
-                descCell.addClass('editable-cell');
-                qtyCell.addClass('editable-cell');
-                priceCell.addClass('editable-cell');
-
-                descCell.off('click').on('click', function() {
-                    if (currentEditingCell && currentEditingCell[0] === this) return;
+            var ns = '.ol_inline_edit';
+            $table.off('click' + ns, 'tbody td:nth-child(3)')
+                .on('click' + ns, 'tbody td:nth-child(3)', function(e) {
+                    var cell = $(this);
+                    if (cell.closest('tr').hasClass('child')) return;
+                    if (currentEditingCell && currentEditingCell[0] === cell[0]) return;
                     if (currentEditingCell) saveEditableCell(currentEditingCell, currentEditingCell.data('editType'));
-                    $(this).data('editType', 'description');
-                    startEditingCell($(this), 'description');
+                    cell.data('editType', 'description');
+                    startEditingCell(cell, 'description');
                 });
-                qtyCell.off('click').on('click', function() {
-                    if (currentEditingCell && currentEditingCell[0] === this) return;
+            $table.off('click' + ns, 'tbody td:nth-child(4)')
+                .on('click' + ns, 'tbody td:nth-child(4)', function(e) {
+                    var cell = $(this);
+                    if (cell.closest('tr').hasClass('child')) return;
+                    if (currentEditingCell && currentEditingCell[0] === cell[0]) return;
                     if (currentEditingCell) saveEditableCell(currentEditingCell, currentEditingCell.data('editType'));
-                    $(this).data('editType', 'qty');
-                    startEditingCell($(this), 'qty');
+                    cell.data('editType', 'qty');
+                    startEditingCell(cell, 'qty');
                 });
-                priceCell.off('click').on('click', function() {
-                    if (currentEditingCell && currentEditingCell[0] === this) return;
+            $table.off('click' + ns, 'tbody td:nth-child(5)')
+                .on('click' + ns, 'tbody td:nth-child(5)', function(e) {
+                    var cell = $(this);
+                    if (cell.closest('tr').hasClass('child')) return;
+                    if (currentEditingCell && currentEditingCell[0] === cell[0]) return;
                     if (currentEditingCell) saveEditableCell(currentEditingCell, currentEditingCell.data('editType'));
-                    $(this).data('editType', 'price');
-                    startEditingCell($(this), 'price');
+                    cell.data('editType', 'price');
+                    startEditingCell(cell, 'price');
                 });
-            });
         }
 
         function startEditingCell(cell, type) {
@@ -1663,8 +1683,8 @@
                     }
                 });
                 
-                // Enable inline editing for description, qty, and price
-                makeCellsEditable();
+                // Delegated handlers — works on every DataTables page (not only page 1)
+                bindItemsTableEditableDelegation();
             }
 
             $('#info_list_table').DataTable({

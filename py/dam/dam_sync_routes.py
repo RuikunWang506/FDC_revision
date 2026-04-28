@@ -3,7 +3,7 @@ DAM Sync Routes - Flask Blueprint for DAM synchronization
 Provides API endpoints to trigger and monitor DAM sync operations
 """
 
-from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session, current_app
 from functools import wraps
 def login_required(f):
     @wraps(f)
@@ -14,9 +14,12 @@ def login_required(f):
     return decorated_function
 from threading import Thread
 import os
+import re
+import subprocess
 import sys
 import io
 from contextlib import redirect_stdout
+from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath('.'))
@@ -26,8 +29,66 @@ from py.utilities.logging_setup import log_event
 
 dam_sync_bp = Blueprint('dam_sync', __name__, url_prefix='/dam')
 
+HOURLY_TASK_NAME = 'FDC DAM Hourly Sync'
+WEEKLY_TASK_NAME = 'FDC DAM Weekly Rebuild'
+
 # Max log lines to retain in memory (prevent unbounded growth)
 MAX_LOG_LINES = 10000
+
+
+def _parse_windows_next_run_line(raw_line):
+    raw_line = (raw_line or '').strip()
+    if not raw_line or raw_line.lower() in ('n/a', 'none'):
+        return None
+    for fmt in ('%m/%d/%Y %I:%M:%S %p', '%m/%d/%Y %H:%M:%S'):
+        try:
+            return datetime.strptime(raw_line, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _schtasks_next_run(task_name):
+    """Query schtasks for Next Run Time (Windows). Returns dict with next_ts_ms or error."""
+    if sys.platform != 'win32':
+        return {'error': 'not_windows'}
+
+    try:
+        r = subprocess.run(
+            ['schtasks', '/Query', '/TN', task_name, '/FO', 'LIST', '/V'],
+            capture_output=True,
+            timeout=25,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+        return {'error': str(e)}
+
+    if r.returncode != 0:
+        err = (r.stderr or r.stdout or '').strip()
+        return {'error': err or 'schtasks failed'}
+
+    text = r.stdout or ''
+    m = re.search(r'Next Run Time:\s*(.+)', text)
+    if not m:
+        return {'error': 'could_not_find_next_run_time'}
+
+    raw = m.group(1).strip()
+    dt = _parse_windows_next_run_line(raw)
+    if dt is None:
+        return {'raw': raw, 'next_ts_ms': None, 'next_run_display': raw}
+
+    try:
+        ts_ms = int(dt.timestamp() * 1000)
+    except (OverflowError, OSError, ValueError):
+        return {'raw': raw, 'next_ts_ms': None, 'next_run_display': raw}
+
+    return {
+        'next_ts_ms': ts_ms,
+        'next_run_display': dt.strftime('%Y-%m-%d %H:%M:%S'),
+        'raw': raw,
+    }
 
 # Global sync status
 sync_status = {
@@ -39,8 +100,12 @@ sync_status = {
     'current_progress': None  # Current progress info
 }
 
-def run_sync_background(force_rebuild_index=False, include_fetch=False, include_cleanup=False):
-    """Run sync in background thread"""
+def run_sync_background(force_rebuild_index=False, include_fetch=False, include_cleanup=False, log_source='manual'):
+    """Run sync in background thread.
+
+    log_source: 'manual' (UI /dam/start) or 'cron' (Task Scheduler /dam/cron/start).
+    Cron runs write to Config.LOG_FILE so they appear on the /log page.
+    """
     global sync_status
     
     try:
@@ -48,6 +113,16 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
         sync_status['error'] = None
         sync_status['logs'] = []  # Clear previous logs
         sync_status['current_progress'] = None
+
+        if log_source == 'cron':
+            try:
+                log_event(
+                    'info',
+                    f'🟢 INFO DAM scheduled sync START (cron) fetch={include_fetch} '
+                    f'rebuild_index={force_rebuild_index} cleanup={include_cleanup}',
+                )
+            except Exception:
+                pass
         
         # Log DAM sync access with username
         try:
@@ -175,6 +250,20 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
                 except Exception as cleanup_err:
                     capture_print(f"⚠️ Cleanup error: {cleanup_err}")
                     log_event('error', f'DAM cleanup failed during sync: {str(cleanup_err)}')
+
+            if log_source == 'cron':
+                try:
+                    st = sync_status.get('last_stats') or {}
+                    log_event(
+                        'info',
+                        '🟢 SUCCESS DAM scheduled sync DONE (cron) '
+                        f"processed={st.get('total_processed')} added={st.get('total_added')} "
+                        f"updated={st.get('total_updated')} skipped={st.get('total_skipped')} "
+                        f"errors={st.get('total_errors')} last_run={sync_status.get('last_run')}",
+                    )
+                except Exception:
+                    pass
+
         finally:
             # Restore original print
             builtins.print = original_print
@@ -182,6 +271,11 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
     except Exception as e:
         sync_status['error'] = str(e)
         sync_status['logs'].append(f"ERROR: {str(e)}")
+        if log_source == 'cron':
+            try:
+                log_event('error', f'🔴 ERROR DAM scheduled sync FAILED (cron): {e}')
+            except Exception:
+                pass
         # Use original_print if available, otherwise regular print
         try:
             original_print(f"Error in background sync: {e}")
@@ -189,6 +283,31 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
             print(f"Error in background sync: {e}")
     finally:
         sync_status['is_running'] = False
+
+
+def _dam_cron_secret():
+    """Shared secret for Task Scheduler / unattended sync.
+
+    Order: env DAM_CRON_SECRET, then repo file auto_run/dam_cron_secret.local.txt (same file curl.bat reads).
+    """
+    s = (os.environ.get('DAM_CRON_SECRET') or '').strip()
+    if s:
+        return s
+    try:
+        _repo = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        p = os.path.join(_repo, 'auto_run', 'dam_cron_secret.local.txt')
+        if os.path.isfile(p):
+            with open(p, encoding='utf-8') as f:
+                return (f.readline() or '').strip()
+    except Exception:
+        pass
+    return ''
+
+
+def _cron_authorized():
+    if not _dam_cron_secret():
+        return False
+    return request.headers.get('X-DAM-Cron-Secret') == _dam_cron_secret()
 
 
 def _reconcile_false_errors():
@@ -229,6 +348,91 @@ def dam_sync_home():
         return redirect(url_for("auth.login"))
     current_user = session['username']
     return render_template('dam_sync.html', status=sync_status, current_user=current_user)
+
+
+@dam_sync_bp.route('/scheduler-next', methods=['GET'])
+@login_required
+def scheduler_next():
+    """Next schtasks run times for hourly/weekly DAM automation (Windows Task Scheduler)."""
+    if 'username' not in session:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+    hourly = {'task': HOURLY_TASK_NAME, **_schtasks_next_run(HOURLY_TASK_NAME)}
+    weekly = {'task': WEEKLY_TASK_NAME, **_schtasks_next_run(WEEKLY_TASK_NAME)}
+    return jsonify({
+        'success': True,
+        'platform': sys.platform,
+        'hourly': hourly,
+        'weekly': weekly,
+    })
+
+
+@dam_sync_bp.route('/cron/start', methods=['POST'])
+def dam_cron_start():
+    """
+    Unattended sync for Task Scheduler / curl — NOT browser login.
+    Requires header: X-DAM-Cron-Secret: <same value as server env DAM_CRON_SECRET>.
+
+    POST JSON body matches /dam/start:
+      force_rebuild_index, include_fetch, include_cleanup (all optional booleans).
+    """
+    if not _dam_cron_secret():
+        return jsonify({
+            'success': False,
+            'error': 'Cron automation disabled: set environment variable DAM_CRON_SECRET on this server.',
+        }), 503
+    if not _cron_authorized():
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+    if sync_status['is_running']:
+        return jsonify({'success': False, 'message': 'Sync is already running'}), 400
+
+    data = request.get_json() or {}
+    force_rebuild_index = data.get('force_rebuild_index', False)
+    include_fetch = data.get('include_fetch', True)
+    include_cleanup = data.get('include_cleanup', True)
+
+    try:
+        current_app.logger.info(
+            '***cron*** scheduled DAM sync start (fetch=%s rebuild=%s cleanup=%s)',
+            include_fetch,
+            force_rebuild_index,
+            include_cleanup,
+        )
+    except Exception:
+        pass
+
+    thread = Thread(
+        target=lambda: run_sync_background(
+            force_rebuild_index,
+            include_fetch,
+            include_cleanup,
+            log_source='cron',
+        ),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify({'success': True, 'message': 'Sync started in background'})
+
+
+@dam_sync_bp.route('/cron/status', methods=['GET'])
+def dam_cron_status():
+    """Minimal status for monitoring scripts (same X-DAM-Cron-Secret header)."""
+    if not _dam_cron_secret():
+        return jsonify({'configured': False, 'error': 'DAM_CRON_SECRET not set'}), 503
+    if not _cron_authorized():
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    _reconcile_false_errors()
+    return jsonify({
+        'configured': True,
+        'is_running': sync_status.get('is_running'),
+        'last_run': sync_status.get('last_run'),
+        'error': sync_status.get('error'),
+        'log_lines': len(sync_status.get('logs') or []),
+    })
+
 
 @dam_sync_bp.route('/status')
 @login_required
@@ -271,10 +475,10 @@ def start_sync():
 @dam_sync_bp.route('/generate-index', methods=['POST'])
 @login_required
 def generate_index():
-    """Generate index files only (no sync)"""
+    """Scan catalog/big_picture folders for JPEG counts only (no JSON files; no DB sync)."""
     from flask import current_app, session
     username = session.get('username', 'Unknown')
-    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (generate index)")
+    current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (folder JPEG scan)")
     try:
         data = request.get_json() or {}
         source = data.get('source', 'both')  # 'catalog', 'big_picture', or 'both'
@@ -283,25 +487,17 @@ def generate_index():
         results = {}
         
         if source in ['catalog', 'both']:
-            files = sync_service.generate_index(
-                sync_service.catalog_dir,
-                str(sync_service.catalog_index),
-                "*.jpg"
-            )
+            files = sync_service.collect_jpg_paths_relative(sync_service.catalog_dir)
             results['catalog'] = {
                 'count': len(files),
-                'path': str(sync_service.catalog_index)
+                'root': sync_service.catalog_dir,
             }
         
         if source in ['big_picture', 'both']:
-            files = sync_service.generate_index(
-                sync_service.big_picture_dir,
-                str(sync_service.big_picture_index),
-                "*.jpg"
-            )
+            files = sync_service.collect_jpg_paths_relative(sync_service.big_picture_dir)
             results['big_picture'] = {
                 'count': len(files),
-                'path': str(sync_service.big_picture_index)
+                'root': sync_service.big_picture_dir,
             }
         
         return jsonify({

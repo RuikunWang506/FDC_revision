@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #f4f8ff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .vendor-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 48px 56px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 36px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="vendor-card mt-5">
+        <h1>Vendor App</h1>
+        <p class="subtitle">Vendor management portal</p>
+        <div class="d-flex flex-wrap gap-3 justify-content-center">
+            <a href="{{ url_for('vendor_app.vendor_erwan') }}" class="btn btn-primary btn-lg px-5">
+                Erwan Vendor Page
+            </a>
+            <a href="{{ url_for('vendor_tiktok_processor.vendor_tiktok_home') }}" class="btn btn-lg px-5" style="background:#000;color:#fff;border:none;">
+                TikTok Vendor Page
+            </a>
+        </div>
+    </div>
+</body>
+</html>

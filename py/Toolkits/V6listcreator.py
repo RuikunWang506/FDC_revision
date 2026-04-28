@@ -1,13 +1,17 @@
 from py.utilities.setting import login_required
 from flask import Blueprint, render_template, request, jsonify, current_app, send_file,send_from_directory,redirect, url_for, flash, session
+from werkzeug.utils import secure_filename
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, PatternFill, Border, Side
 from openpyxl.drawing.image import Image as OpenPyXLImage
 from openpyxl.utils import get_column_letter
 
 from io import BytesIO
+import json
 import os
 import re
+import threading
+import uuid
 import pyodbc
 import pandas as pd
 from py.utilities.setting import Config
@@ -32,6 +36,280 @@ db_config = Config.DB_CONFIG
 
 selected_images = []  # This should be populated based on your application logic
 formatted_date = datetime.datetime.now().strftime("%Y%m%d")  # Example date formatting
+
+# Full_catalog embeds 1800px images per card — often doubles CPU/time vs Export_600 alone and can exceed
+# reverse-proxy limits (e.g. Cloudflare 524). Omit automatically above these thresholds.
+WORKBOOK_FULL_CATALOG_MAX_STYLES = 35
+WORKBOOK_FULL_CATALOG_MAX_ROWS = 80
+
+# Async workbook exports: rolling file history per user (see export_workbook queue).
+WORKBOOK_EXPORT_HISTORY_MAX = 3
+_workbook_manifest_lock = threading.Lock()
+
+
+def _workbook_user_slug(username):
+    s = secure_filename((username or '').strip()) or 'user'
+    return s[:120]
+
+
+def _workbook_user_dir(app, slug):
+    base = os.path.join(app.instance_path, 'workbook_exports', slug)
+    os.makedirs(base, exist_ok=True)
+    return base
+
+
+def _workbook_manifest_path(app, slug):
+    return os.path.join(_workbook_user_dir(app, slug), 'manifest.json')
+
+
+def _workbook_load_manifest(app, slug):
+    path = _workbook_manifest_path(app, slug)
+    if not os.path.isfile(path):
+        return {'edition_counter': 0, 'jobs': []}
+    try:
+        with open(path, encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {'edition_counter': 0, 'jobs': []}
+
+
+def _workbook_save_manifest(app, slug, data):
+    path = _workbook_manifest_path(app, slug)
+    tmp = path + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=0)
+    os.replace(tmp, path)
+
+
+def _workbook_delete_disk_file(app, slug, job):
+    fn = job.get('file')
+    if not fn:
+        return
+    fp = os.path.join(_workbook_user_dir(app, slug), fn)
+    if os.path.isfile(fp):
+        try:
+            os.remove(fp)
+        except OSError:
+            pass
+
+
+def _workbook_fail_job(app, slug, job_id, message):
+    with _workbook_manifest_lock:
+        manifest = _workbook_load_manifest(app, slug)
+        for j in manifest.get('jobs', []):
+            if j.get('id') == job_id:
+                j['status'] = 'failed'
+                j['error'] = message
+                break
+        _workbook_save_manifest(app, slug, manifest)
+
+
+def _workbook_jobs_public(jobs):
+    out = []
+    for j in jobs or []:
+        out.append({
+            'id': j.get('id'),
+            'status': j.get('status'),
+            'edition': j.get('edition'),
+            'created_at': j.get('created_at'),
+            'download_name': j.get('download_name'),
+            'error': j.get('error'),
+        })
+    return out
+
+
+def _workbook_export_worker(app, slug, job_id, payload, current_user):
+    with app.app_context():
+        try:
+            download_name, bio = _build_workbook_from_request_data(payload, current_user)
+            user_dir = _workbook_user_dir(app, slug)
+            disk_name = f'{job_id}.xlsx'
+            dest = os.path.join(user_dir, disk_name)
+            with open(dest, 'wb') as f:
+                f.write(bio.getvalue())
+            with _workbook_manifest_lock:
+                manifest = _workbook_load_manifest(app, slug)
+                for j in manifest.get('jobs', []):
+                    if j.get('id') == job_id:
+                        j['status'] = 'ready'
+                        j['download_name'] = download_name
+                        j['file'] = disk_name
+                        j['error'] = None
+                        break
+                _workbook_save_manifest(app, slug, manifest)
+            current_app.logger.info(
+                'workbook export ready job_id=%s user=%s',
+                job_id,
+                current_user,
+            )
+        except ValueError as e:
+            _workbook_fail_job(app, slug, job_id, str(e))
+        except Exception:
+            current_app.logger.exception('workbook export failed job_id=%s', job_id)
+            _workbook_fail_job(app, slug, job_id, 'Internal Server Error')
+
+
+def _build_workbook_from_request_data(request_data, current_user):
+    """
+    Build the list creator workbook. Returns (download_filename, BytesIO).
+    Raises ValueError for recoverable input/data errors.
+    """
+    export_data = request_data.get('exportData') or []
+    list_input_raw = (request_data.get('list_input') or '').strip()
+    removed_columns = request_data.get('removedColumns', {})
+    want_full_catalog = request_data.get('includeFullCatalog', True)
+
+    if not export_data:
+        export_data = build_export_data_from_list_input(list_input_raw, current_user)
+
+    if not export_data:
+        raise ValueError(
+            'No inventory rows found (nothing with available or ocean qty > 0 in OMS).'
+        )
+
+    styles = []
+    for item in export_data:
+        st = (item.get('style') or '').strip()
+        if st:
+            styles.append(st)
+    combined_list = list_from_origin(','.join(styles), current_user)
+    raw_rows = []
+    for chunk in _chunk_list(combined_list, 120):
+        raw_rows.extend(merge_inventory_rows_cross_database(get_sql_data(chunk)))
+    raw_rows = merge_inventory_rows_cross_database(raw_rows)
+    if not raw_rows:
+        raise ValueError('No inventory data')
+
+    df = pd.DataFrame(raw_rows)
+    if len(df.columns) == 17:
+        df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
+                     'quantity', 'ocean', 'selling_price', 'sales_cost', 'pcsBox',
+                     'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
+                     'last_activity', 'Created_dt']
+    elif len(df.columns) == 18:
+        df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
+                     'quantity', 'ocean', 'selling_price', 'sales_cost', 'pcsBox',
+                     'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
+                     'last_activity', 'Created_dt', 'in_oms_status']
+    else:
+        current_app.logger.error(f'export_workbook unexpected columns: {len(df.columns)}')
+        raise RuntimeError('Unexpected data shape')
+
+    df['quantity'] = pd.to_numeric(df['quantity'], errors='coerce').fillna(0).astype(int)
+    df['ocean'] = pd.to_numeric(df['ocean'], errors='coerce').fillna(0).astype(int)
+    df['selling_price'] = pd.to_numeric(df['selling_price'], errors='coerce').fillna(0)
+    df['sales_cost'] = pd.to_numeric(df['sales_cost'], errors='coerce').fillna(0)
+
+    avail = df[(df['quantity'] > 0) | (df['ocean'] > 0)]
+
+    workbook = Workbook()
+    ws1 = workbook.active
+    ws1.title = "dbinfo"
+    ws1.append(["SKU", "Style", "Price", "Cost", "Stock", "Ocean"])
+    if not avail.empty:
+        dbinfo_agg = avail.groupby('SKU', as_index=False).agg(
+            SKU_no_color=('SKU_no_color', 'first'),
+            selling_price=('selling_price', 'first'),
+            sales_cost=('sales_cost', 'first'),
+            stock=('quantity', 'sum'),
+            ocean=('ocean', 'sum'),
+        )
+        for _, row in dbinfo_agg.iterrows():
+            ws1.append([
+                row['SKU'],
+                row['SKU_no_color'],
+                row['selling_price'],
+                row['sales_cost'],
+                int(row['stock']),
+                int(row['ocean']),
+            ])
+    else:
+        ws1.append(["—", "No SKUs with available or ocean qty > 0", "", "", "", ""])
+    for col_letter, w in [('A', 18), ('B', 14), ('C', 12), ('D', 12), ('E', 10), ('F', 10)]:
+        ws1.column_dimensions[col_letter].width = w
+
+    ws2 = workbook.create_sheet("style_totals")
+    ws2.append(["Style", "Total quantity"])
+    if not avail.empty:
+        agg = avail.groupby('SKU_no_color', as_index=False).agg(
+            total_qty=('quantity', 'sum'),
+            ocean_sum=('ocean', 'sum')
+        )
+        agg['combined'] = agg['total_qty'] + agg['ocean_sum']
+        for _, row in agg.iterrows():
+            ws2.append([row['SKU_no_color'], int(row['combined'])])
+    else:
+        ws2.append(["—", "No qualifying styles"])
+    ws2.column_dimensions['A'].width = 18
+    ws2.column_dimensions['B'].width = 18
+
+    eligible = set()
+    if not avail.empty:
+        for nc in avail['SKU_no_color'].dropna():
+            eligible.add(normalize_style_for_grouping(str(nc).strip()))
+
+    filtered_export = []
+    for item in export_data:
+        st = (item.get('style') or '').strip()
+        if normalize_style_for_grouping(st) not in eligible:
+            continue
+        rows = item.get('rows') or []
+        new_rows = []
+        for r in rows:
+            q = int(float(r.get('quantity') or 0))
+            o = int(float(r.get('ocean') or 0))
+            if q > 0 or o > 0:
+                new_rows.append(r)
+        if not new_rows:
+            continue
+        filtered_export.append({**item, 'rows': new_rows})
+
+    if filtered_export:
+        ws3 = workbook.create_sheet("Export_600")
+        # Same visual sizing as Export List (export_list): resize source width 800px, embed 200×150 in column A merges.
+        _populate_export_list_sheet(ws3, filtered_export, 800, removed_columns, embed_width=200, embed_height=150)
+
+    n_export_styles = len(export_data)
+    total_card_rows = sum(len(item.get('rows') or []) for item in export_data)
+    too_heavy_for_full_catalog = (
+        n_export_styles > WORKBOOK_FULL_CATALOG_MAX_STYLES
+        or total_card_rows > WORKBOOK_FULL_CATALOG_MAX_ROWS
+    )
+    include_full_catalog = bool(want_full_catalog) and not too_heavy_for_full_catalog
+
+    if want_full_catalog and too_heavy_for_full_catalog:
+        current_app.logger.info(
+            "export_workbook: omitting Full_catalog (%s styles, %s rows; limits %s/%s)",
+            n_export_styles,
+            total_card_rows,
+            WORKBOOK_FULL_CATALOG_MAX_STYLES,
+            WORKBOOK_FULL_CATALOG_MAX_ROWS,
+        )
+
+    if include_full_catalog:
+        ws_fc = workbook.create_sheet("Full_catalog")
+        _populate_export_list_sheet(ws_fc, export_data, 1800, removed_columns, embed_width=1800, embed_height=1350)
+    elif want_full_catalog and too_heavy_for_full_catalog:
+        ws_note = workbook.create_sheet("Notes")
+        ws_note.append(["Full_catalog sheet omitted (timeout guard)"])
+        note_body = (
+            f"This export has {n_export_styles} styles and {total_card_rows} inventory rows. "
+            f"The Full_catalog sheet (1800px images) is skipped when there are more than "
+            f"{WORKBOOK_FULL_CATALOG_MAX_STYLES} styles or {WORKBOOK_FULL_CATALOG_MAX_ROWS} rows "
+            "so the server can finish within typical gateway timeouts (Cloudflare 524). "
+            "Sheets dbinfo, style_totals, and Export_600 are still included. "
+            'Uncheck "Include Full Catalog" for a faster job, use a shorter style list for a full workbook, '
+            "or ask IT to raise origin/proxy time limits."
+        )
+        ws_note.append([note_body])
+        ws_note.column_dimensions["A"].width = 100
+
+    formatted_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    filename = f"list_creator_workbook_{formatted_date}.xlsx"
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+    return filename, output
 
 
 def list_from_dropbox(list_input, current_user):
@@ -225,7 +503,7 @@ def process_list_input(list_input, current_user):
             if normalize_style(style) not in normalized_db_styles:
                 if style not in missing_styles:
                     missing_styles.append(style)
-                placeholder_data = [('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')]
+                placeholder_data = [('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')]
                 if data:
                     data.extend(placeholder_data)
                 else:
@@ -233,9 +511,6 @@ def process_list_input(list_input, current_user):
         for style in style_list:
             description = get_description_from_mysql(style)
             descriptions[style] = description
-            if description == "No description available":
-                missing_descriptions.append(style)
-                current_app.logger.info(f"Added {style} to missing_descriptions list")
         
         style_count = {}
         for style in style_list:
@@ -310,13 +585,15 @@ def get_description_from_mysql(style):
             cursor = connection.cursor()
             cursor.execute("SELECT description FROM onlinedb.description WHERE style = %s", (style,))
             description_row = cursor.fetchone()
-            return description_row[0].upper() if description_row else "No description available"
+            if description_row and description_row[0] and str(description_row[0]).strip():
+                return str(description_row[0]).strip().upper()
+            return "N/A"
         except Error as e:
             print(f"Error fetching description: {e}")
         finally:
             cursor.close()
             connection.close()
-    return "No description available"
+    return "N/A"
     
 def update_description_in_db(style_index, description):
     """Updates the description for a given style in the MySQL database.
@@ -414,6 +691,7 @@ def get_sql_data(style_list):
             (id.in_stock - id.order_qty) AS quantity,
             id.on_order_qty AS ocean,
             i.RETAIL_PRS AS selling_price,
+            i.SALES_COST AS sales_cost,
             i.PC_CASE AS QTY_in_box,
             i.UT_WT AS unit_weight,
             i.UNIT_COLOR AS color,
@@ -473,7 +751,7 @@ def get_sql_data(style_list):
         # Create placeholder data for each style in the list
         placeholder_data = []
         for style in style_list:
-            placeholder_row = ('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')
+            placeholder_row = ('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')
             placeholder_data.append(placeholder_row)
         
         return placeholder_data
@@ -493,14 +771,14 @@ def create_pivot_table(data):
     df = pd.DataFrame(data)
     
     # Rename columns to match expected structure
-    if len(df.columns) == 16:
+    if len(df.columns) == 17:
         df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
-                     'quantity', 'ocean', 'selling_price', 'pcsBox',
+                     'quantity', 'ocean', 'selling_price', 'sales_cost', 'pcsBox',
                      'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
                      'last_activity', 'Created_dt']
-    elif len(df.columns) == 17:
+    elif len(df.columns) == 18:
         df.columns = ['DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered',
-                     'quantity', 'ocean', 'selling_price', 'pcsBox',
+                     'quantity', 'ocean', 'selling_price', 'sales_cost', 'pcsBox',
                      'unit_weight', 'color', 'item_length', 'item_width', 'item_height',
                      'last_activity', 'Created_dt', 'in_oms_status']
     
@@ -518,6 +796,8 @@ def create_pivot_table(data):
     integer_columns = ['quantity', 'ocean', 'pcsBox',
                      'item_length', 'item_width', 'item_height']
     df[integer_columns] = df[integer_columns].fillna(0).astype(int)
+    if 'sales_cost' in df.columns:
+        df['sales_cost'] = pd.to_numeric(df['sales_cost'], errors='coerce').fillna(0)
     
     # Create dimensions column
     df['dimensions'] = df['item_length'].astype(str) + ' x ' + df['item_width'].astype(str) + ' x ' + df['item_height'].astype(str)
@@ -533,13 +813,14 @@ def create_pivot_table(data):
         display_style = group['SKU_no_color'].iloc[0]
         
         style_data = group.pivot_table(
-            values=['quantity', 'ocean', 'pcsBox', 'dimensions'],
+            values=['quantity', 'ocean', 'pcsBox', 'dimensions', 'sales_cost'],
             index=['color'],
             aggfunc={
                 'quantity': 'sum',
                 'ocean': 'sum',
                 'pcsBox': 'first',
-                'dimensions': 'first'
+                'dimensions': 'first',
+                'sales_cost': 'first'
             }
         ).reset_index()
         
@@ -646,6 +927,199 @@ def get_images_for_selection(sku_list):
             continue
 
     return image_urls
+
+
+MERGE_ROW_COLUMNS = [
+    'DatabaseName', 'SKU', 'SKU_no_color', 'in_stock', 'some_one_ordered', 'quantity', 'ocean',
+    'selling_price', 'sales_cost', 'pcsBox', 'unit_weight', 'color', 'item_length', 'item_width',
+    'item_height', 'last_activity', 'Created_dt',
+]
+
+
+def merge_inventory_rows_cross_database(raw_rows):
+    """
+    Sum quantity (available = in_stock - order_qty in source query) and ocean (incoming)
+    per PROD_CD + color across FDC + E_FAS — same combined totals as product_detail.html.
+    Drops rows where combined available and ocean are both <= 0.
+    """
+    if not raw_rows:
+        return []
+    ncol = len(raw_rows[0])
+    if ncol == len(MERGE_ROW_COLUMNS):
+        cols = MERGE_ROW_COLUMNS
+    elif ncol == len(MERGE_ROW_COLUMNS) + 1:
+        cols = MERGE_ROW_COLUMNS + ['in_oms_status']
+    else:
+        current_app.logger.warning(f"merge_inventory_rows_cross_database: unexpected ncol {ncol}")
+        return raw_rows
+
+    df = pd.DataFrame([tuple(r) for r in raw_rows], columns=cols[:ncol])
+    df['SKU'] = df['SKU'].astype(str).str.strip()
+    df['color'] = df['color'].fillna('').astype(str).str.strip()
+
+    sum_cols = ['quantity', 'ocean', 'in_stock', 'some_one_ordered']
+    first_cols = ['SKU_no_color', 'selling_price', 'sales_cost', 'pcsBox', 'unit_weight',
+                  'item_length', 'item_width', 'item_height', 'last_activity', 'Created_dt']
+    agg = {'quantity': 'sum', 'ocean': 'sum', 'in_stock': 'sum', 'some_one_ordered': 'sum'}
+    for c in first_cols:
+        agg[c] = 'first'
+
+    merged = df.groupby(['SKU', 'color'], as_index=False).agg(agg)
+    merged['DatabaseName'] = 'combined'
+    merged = merged[(merged['quantity'] > 0) | (merged['ocean'] > 0)]
+
+    out = []
+    for _, row in merged.iterrows():
+        rec = (
+            'combined',
+            row['SKU'],
+            row['SKU_no_color'],
+            row['in_stock'],
+            row['some_one_ordered'],
+            row['quantity'],
+            row['ocean'],
+            row['selling_price'],
+            row['sales_cost'],
+            row['pcsBox'],
+            row['unit_weight'],
+            row['color'],
+            row['item_length'],
+            row['item_width'],
+            row['item_height'],
+            row['last_activity'],
+            row['Created_dt'],
+        )
+        if ncol == 18:
+            rec = rec + ('',)
+        out.append(rec)
+    return out
+
+
+def discover_styles_with_positive_inventory(style_prefix='', limit=4000):
+    """
+    DISTINCT ALT_CD values that have (available > 0 OR incoming > 0) in either OMS DB,
+    matching product_detail availability logic (per-DB row, combined later via merge).
+    """
+    alt_codes = set()
+    prefix = (style_prefix or '').strip().upper()
+    conn_fdc = pyodbc.connect(
+        f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={sql_server_config["database_fdc"]};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+    )
+    conn_oms_ef = pyodbc.connect(
+        f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={sql_server_config["database_oms_ef"]};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+    )
+    sql_base = """
+        SELECT DISTINCT RTRIM(LTRIM(i.ALT_CD)) AS alt_cd
+        FROM dbo.inv AS i
+        INNER JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+        WHERE (
+            (ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0)) > 0
+            OR ISNULL(id.on_order_qty, 0) > 0
+        )
+    """
+    try:
+        for conn in (conn_fdc, conn_oms_ef):
+            cursor = conn.cursor()
+            if prefix:
+                q = sql_base + " AND (UPPER(i.ALT_CD) LIKE ? OR UPPER(i.PROD_CD) LIKE ?)"
+                cursor.execute(q, (f"{prefix}%", f"{prefix}%"))
+            else:
+                cursor.execute(sql_base)
+            for row in cursor.fetchall():
+                if row and row[0]:
+                    alt_codes.add(str(row[0]).strip())
+            cursor.close()
+    finally:
+        conn_fdc.close()
+        conn_oms_ef.close()
+
+    ordered = sorted(alt_codes)
+    return ordered[:limit]
+
+
+def _resolve_catalog_image_url(display_style, image_urls):
+    """Pick default DAM image URL for a style (same rules as list creator cards)."""
+    if not display_style or not image_urls:
+        return '/static/no_image_available.jpg'
+    for k, imgs in image_urls.items():
+        if normalize_style(str(k)) == normalize_style(str(display_style)):
+            ordered = sorted(imgs, key=lambda x: x['filename'])
+            pick = next((im for im in ordered if im.get('default')), ordered[0])
+            return pick['fullsize_path']
+    return '/static/no_image_available.jpg'
+
+
+def _chunk_list(items, size):
+    for i in range(0, len(items), size):
+        yield items[i:i + size]
+
+
+def build_export_data_from_list_input(list_input_str, current_user=None):
+    """
+    Build export_list-shaped payloads from OMS + descriptions + DAM (no browser cards).
+    Combines FDC + E_FAS like product_detail (sum available + incoming per SKU/color).
+    Empty input or Dropbox-looking input → discover ALT_CD styles that have stock/ocean > 0.
+    """
+    if current_user is None:
+        current_user = session.get('username', 'export')
+    text = (list_input_str or '').strip()
+    if not text or 'dropbox' in text.lower():
+        discovered = discover_styles_with_positive_inventory('', limit=3500)
+        if not discovered:
+            return []
+        text = ','.join(discovered)
+    style_list = list_from_origin(text, current_user)
+    if not style_list:
+        return []
+    merged_all = []
+    for chunk in _chunk_list(style_list, 120):
+        raw = get_sql_data(chunk)
+        merged_all.extend(merge_inventory_rows_cross_database(raw))
+    merged_all = merge_inventory_rows_cross_database(merged_all)
+    if not merged_all:
+        return []
+    pivot_cards = create_pivot_table(merged_all)
+    if not pivot_cards:
+        return []
+    image_urls = get_images_for_selection(style_list)
+    export_items = []
+    for style_group in pivot_cards:
+        if not style_group:
+            continue
+        row0 = style_group[0]
+        display_style = row0['style']
+        desc = get_description_from_mysql(display_style)
+        sp = row0.get('selling_price', 0)
+        try:
+            price_str = f"${float(sp):.2f}"
+        except (TypeError, ValueError):
+            price_str = f"${sp}"
+        img_path = _resolve_catalog_image_url(display_style, image_urls)
+        rows_out = []
+        for row in style_group:
+            q = int(row.get('quantity', 0) or 0)
+            o = int(row.get('ocean', 0) or 0)
+            if q <= 0 and o <= 0:
+                continue
+            rows_out.append({
+                'color': str(row.get('color', '') or ''),
+                'quantity': str(q),
+                'ocean': str(o),
+                'total': str(q + o),
+                'pcsBox': str(int(row.get('pcsBox', 0) or 0)),
+                'dimensions': str(row.get('dimensions', '') or ''),
+            })
+        if not rows_out:
+            continue
+        export_items.append({
+            'style': display_style,
+            'description': desc if desc else 'N/A',
+            'price': price_str,
+            'image': img_path,
+            'rows': rows_out,
+        })
+    return export_items
+
 
 @v6_listcreator_bp.route('/list_image/dropbox/<path:filename>')
 def serve_dropbox_image(filename):
@@ -802,206 +1276,185 @@ def export_images():
         download_name=f'exported_images_{datetime.datetime.now().strftime("%Y%m%d")}.zip'
     )
 
+def _resolve_listcreator_image_path(image_filename):
+    """Resolve DAM / Dropbox / legacy paths for exports. Returns None if missing or placeholder (no image embedded)."""
+    if not image_filename or 'no_image_available' in str(image_filename).lower():
+        return None
+    image_filename = str(image_filename).strip()
+    image_path = None
+    if os.path.isabs(image_filename) and os.path.exists(image_filename):
+        image_path = image_filename
+    elif '/image/' in image_filename:
+        asset_id_match = re.search(r'/image/(\d+)/', image_filename)
+        if asset_id_match:
+            asset_id = int(asset_id_match.group(1))
+            db = py.utilities.models.SessionLocal()
+            try:
+                asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
+                image_path = asset.path if asset else None
+            finally:
+                db.close()
+    elif '/list_image/' in image_filename:
+        filename = re.sub(r'/list_image/', '', image_filename)
+        db = py.utilities.models.SessionLocal()
+        try:
+            asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                filename=filename, is_active=True
+            ).first()
+            image_path = asset.path if asset else None
+        finally:
+            db.close()
+    else:
+        db = py.utilities.models.SessionLocal()
+        try:
+            asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                filename=image_filename, is_active=True
+            ).first()
+            image_path = asset.path if asset else None
+        finally:
+            db.close()
+
+    if not image_path or not os.path.exists(image_path):
+        current_app.logger.debug(f"No image for export cell: {image_filename}")
+        return None
+    return image_path
+
+
+def _populate_export_list_sheet(sheet, data, processing_image_size, removed_columns, embed_width=200, embed_height=150):
+    """Fill one worksheet with the same layout as the standard Export List."""
+    sheet.freeze_panes = 'A2'
+    sheet.column_dimensions[get_column_letter(1)].width = 30
+    sheet.column_dimensions[get_column_letter(2)].width = 12
+    sheet.column_dimensions['B'].width = 15
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=2, max_col=2):
+        cell = row[0]
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    headers = ["Image", "Description", "Price", "Style", "Color", "Quantity"]
+    if not removed_columns.get('ocean'):
+        headers.append("Ocean")
+    headers.append("Total")
+    if not removed_columns.get('pcsBox'):
+        headers.append("PCS/BOX")
+    if not removed_columns.get('dimensions'):
+        headers.append("Dimensions")
+
+    sheet.append(headers)
+
+    for item in data:
+        style = item['style']
+        description = item['description']
+        image_filename = item['image']
+        price = item['price']
+        image_fs = _resolve_listcreator_image_path(image_filename)
+        display_image_src = None
+        if image_fs is not None:
+            if processing_image_size is not None:
+                display_image_src = resize_image(image_fs, processing_image_size)
+            else:
+                display_image_src = image_fs
+
+        rows = item['rows']
+        if not rows:
+            row_data = ["", description, price, style, "", ""]
+            if not removed_columns.get('ocean'):
+                row_data.append("")
+            row_data.append("")
+            if not removed_columns.get('pcsBox'):
+                row_data.append("")
+            if not removed_columns.get('dimensions'):
+                row_data.append("")
+            sheet.append(row_data)
+
+            if display_image_src is not None:
+                img = OpenPyXLImage(display_image_src)
+                img.width = embed_width
+                img.height = embed_height
+                sheet.add_image(img, f"A{sheet.max_row}")
+
+            for _ in range(7):
+                sheet.append([""] * len(headers))
+
+            sheet.merge_cells(start_row=sheet.max_row - 7, start_column=1, end_row=sheet.max_row, end_column=1)
+            sheet.merge_cells(start_row=sheet.max_row - 7, start_column=2, end_row=sheet.max_row, end_column=2)
+            sheet.merge_cells(start_row=sheet.max_row - 7, start_column=3, end_row=sheet.max_row, end_column=3)
+            for col in [2, 3]:
+                for row_num in range(sheet.max_row - 7, sheet.max_row + 1):
+                    sheet.cell(row=row_num, column=col).alignment = Alignment(horizontal='center', vertical='center')
+        else:
+            for index, row in enumerate(rows):
+                quantity = int(float(row['quantity'])) if row['quantity'] else 0
+                ocean = int(float(row['ocean'])) if row.get('ocean') else 0
+
+                row_data = [
+                    "",
+                    description if index == 0 else "",
+                    price if index == 0 else "",
+                    style if index == 0 else "",
+                    row['color'],
+                    quantity
+                ]
+                if not removed_columns.get('ocean'):
+                    row_data.append(ocean)
+                row_data.append(quantity + ocean)
+                if not removed_columns.get('pcsBox'):
+                    row_data.append(int(float(row['pcsBox'])) if row.get('pcsBox') else 0)
+                if not removed_columns.get('dimensions'):
+                    row_data.append(row.get('dimensions', ''))
+                    sheet.column_dimensions[get_column_letter(9)].width = 11
+
+                sheet.append(row_data)
+
+                if index == 0 and display_image_src is not None:
+                    img = OpenPyXLImage(display_image_src)
+                    img.width = embed_width
+                    img.height = embed_height
+                    sheet.add_image(img, f"A{sheet.max_row}")
+
+            rows_mut = list(rows)
+            while len(rows_mut) < 8:
+                sheet.append([""] * len(headers))
+                rows_mut.append({})
+
+            merge_block = len(rows_mut)
+            if merge_block > 8:
+                sheet.merge_cells(start_row=sheet.max_row - merge_block + 1, start_column=1, end_row=sheet.max_row, end_column=1)
+                sheet.merge_cells(start_row=sheet.max_row - merge_block + 1, start_column=2, end_row=sheet.max_row, end_column=2)
+                sheet.merge_cells(start_row=sheet.max_row - merge_block + 1, start_column=3, end_row=sheet.max_row, end_column=3)
+            else:
+                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=1, end_row=sheet.max_row, end_column=1)
+                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=2, end_row=sheet.max_row, end_column=2)
+                sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=3, end_row=sheet.max_row, end_column=3)
+
+            for col in [2, 3]:
+                for row_num in range(sheet.max_row - merge_block + 1, sheet.max_row + 1):
+                    sheet.cell(row=row_num, column=col).alignment = Alignment(horizontal='center', vertical='center')
+
+    last_col = 'G'
+    if not removed_columns.get('pcsBox'):
+        last_col = 'H'
+    if not removed_columns.get('dimensions'):
+        last_col = 'J'
+    if sheet.max_row >= 2:
+        set_border(sheet, f'A2:{last_col}{sheet.max_row}')
+
+
 @v6_listcreator_bp.route('/export_list', methods=['POST'])
 def export_list():
     try:
         request_data = request.get_json()
         data = request_data.get('exportData', [])
         image_size_input = request_data.get('image_size', "800")
-        display_image_size = image_size_input
         processing_image_size = None if image_size_input == "full" else int(image_size_input)
         removed_columns = request_data.get('removedColumns', {})
 
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Exported Data"
-        sheet.freeze_panes = 'A2'  # Freezes row 1
-        highlight_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-        sheet.column_dimensions[get_column_letter(1)].width = 30
-        sheet.column_dimensions[get_column_letter(2)].width = 12
-        sheet.column_dimensions['B'].width = 15
-        for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=2, max_col=2):
-            cell = row[0]
-            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         formatted_date = datetime.datetime.now().strftime("%Y-%m-%d")
         filename = f"exported_data_{formatted_date}.xlsx"
-        
-        headers = ["Image", "Description", "Price", "Style", "Color", "Quantity"]
-        if not removed_columns.get('ocean'):
-            headers.append("Ocean")
-        headers.append("Total")  # Always include Total column
-        if not removed_columns.get('pcsBox'):
-            headers.append("PCS/BOX")
-        if not removed_columns.get('dimensions'):
-            headers.append("Dimensions")
-            
-        sheet.append(headers)
-      
 
-        for item in data:
-            style = item['style']
-            description = item['description']
-            image_filename = item['image']
-            price = item['price']
-
-            # Handle DAM system URLs and legacy paths
-            image_path = None
-            
-            # Check if it's a local dropbox file path (absolute path)
-            if os.path.isabs(image_filename) and os.path.exists(image_filename):
-                # It's a local dropbox file path
-                image_path = image_filename
-            elif '/image/' in image_filename:
-                # DAM system URL - extract asset ID
-                asset_id_match = re.search(r'/image/(\d+)/', image_filename)
-                if asset_id_match:
-                    asset_id = int(asset_id_match.group(1))
-                    db = py.utilities.models.SessionLocal()
-                    try:
-                        asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
-                        image_path = asset.path if asset else None
-                    finally:
-                        db.close()
-            elif '/list_image/' in image_filename:
-                # Legacy path format
-                filename = re.sub(r'/list_image/', '', image_filename)
-                db = py.utilities.models.SessionLocal()
-                try:
-                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
-                        filename=filename, is_active=True
-                    ).first()
-                    image_path = asset.path if asset else None
-                finally:
-                    db.close()
-            else:
-                # Direct filename - search in DAM
-                db = py.utilities.models.SessionLocal()
-                try:
-                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
-                        filename=image_filename, is_active=True
-                    ).first()
-                    image_path = asset.path if asset else None
-                finally:
-                    db.close()
-
-            if not image_path or not os.path.exists(image_path):
-                current_app.logger.error(f"Image not found: {image_filename}")
-                image_path = os.path.join('static', 'no_image_available.jpg')
-
-            if processing_image_size is not None:
-                image_path = resize_image(image_path, processing_image_size)
-
-            rows = item['rows']
-            if not rows:
-                # Create a single row with header info when no color/quantity rows exist
-                row_data = [
-                    "",  # Image placeholder
-                    description,
-                    price,
-                    style,
-                    "",  # Empty color
-                    "",   # Zero quantity
-                ]
-                
-                # Add ocean if not removed
-                if not removed_columns.get('ocean'):
-                    row_data.append("")  # Zero ocean
-                
-                # Add total (always included)
-                row_data.append("")  # Zero total
-                
-                # Add optional columns
-                if not removed_columns.get('pcsBox'):
-                    row_data.append("")
-                if not removed_columns.get('dimensions'):
-                    row_data.append("")
-                    
-                sheet.append(row_data)
-                
-                # Add image for the empty row case
-                img = OpenPyXLImage(image_path)
-                img.width = 200
-                img.height = 150
-                sheet.add_image(img, f"A{sheet.max_row}")
-
-                # Add 7 empty rows to make it 8 rows total
-                for _ in range(7):
-                    empty_row_data = [""] * len(headers)
-                    sheet.append(empty_row_data)
-
-                # Merge cells for the 8 rows
-                sheet.merge_cells(start_row=sheet.max_row - 7, start_column=1, end_row=sheet.max_row, end_column=1)
-                sheet.merge_cells(start_row=sheet.max_row - 7, start_column=2, end_row=sheet.max_row, end_column=2)
-                sheet.merge_cells(start_row=sheet.max_row - 7, start_column=3, end_row=sheet.max_row, end_column=3)
-
-                # Center align merged cells
-                for col in [2, 3]:
-                    for row in range(sheet.max_row - 7, sheet.max_row + 1):
-                        sheet.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
-            if rows:    
-                for index, row in enumerate(rows):
-                    quantity = int(float(row['quantity'])) if row['quantity'] else 0
-                    ocean = int(float(row['ocean'])) if row.get('ocean') else 0
-                    
-                    row_data = [
-                        "",  # Image placeholder
-                        description if index == 0 else "",
-                        price if index == 0 else "",
-                        style if index == 0 else "",
-                        row['color'],
-                        quantity
-                    ]
-                    # Only add ocean if it's not removed
-                    if not removed_columns.get('ocean'):
-                        row_data.append(ocean)
-                    
-                    # Always add total (quantity + ocean)
-                    row_data.append(quantity + ocean)
-                    
-                    # Only add PCS/BOX if not removed
-                    if not removed_columns.get('pcsBox'):
-                        row_data.append(int(float(row['pcsBox'])) if row.get('pcsBox') else 0)
-                    
-                    # Only add dimensions if not removed
-                    if not removed_columns.get('dimensions'):
-                        row_data.append(row.get('dimensions', ''))
-                        sheet.column_dimensions[get_column_letter(9)].width = 11
-
-                    sheet.append(row_data)
-
-                    if index == 0:
-                        img = OpenPyXLImage(image_path)
-                        img.width = 200
-                        img.height = 150
-                        sheet.add_image(img, f"A{sheet.max_row}")
-
-                while len(rows) < 8:
-                    empty_row_data = [""] * len(headers)
-                    sheet.append(empty_row_data)
-                    rows.append(empty_row_data)
-
-                if len(rows) > 8:
-                    sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=1, end_row=sheet.max_row, end_column=1)
-                    sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=2, end_row=sheet.max_row, end_column=2)
-                    sheet.merge_cells(start_row=sheet.max_row - len(rows) + 1, start_column=3, end_row=sheet.max_row, end_column=3)
-                else:
-                    sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=1, end_row=sheet.max_row, end_column=1)
-                    sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=2, end_row=sheet.max_row, end_column=2)
-                    sheet.merge_cells(start_row=sheet.max_row - 8 + 1, start_column=3, end_row=sheet.max_row, end_column=3)
-
-                for col in [2, 3]:
-                        for row in range(sheet.max_row - len(rows) + 1, sheet.max_row + 1):
-                            sheet.cell(row=row, column=col).alignment = Alignment(horizontal='center', vertical='center')
-                
-        # Adjust the column range based on removed columns
-        last_col = 'G'  # Base columns
-        if not removed_columns.get('pcsBox'):
-            last_col = 'H'
-        if not removed_columns.get('dimensions'):
-            last_col = 'J'
-        
-            
-        set_border(sheet, f'A2:{last_col}{sheet.max_row}')
+        _populate_export_list_sheet(sheet, data, processing_image_size, removed_columns)
 
         output = BytesIO()
         workbook.save(output)
@@ -1012,7 +1465,104 @@ def export_list():
     except Exception as e:
         current_app.logger.error(f"Error in export_list: {e}")
         return jsonify({"error": "Internal Server Error"}), 500
-    
+
+
+@v6_listcreator_bp.route('/export_workbook', methods=['POST'])
+@v6_listcreator_bp.route('/export_avail_db', methods=['POST'])
+@login_required
+def export_workbook():
+    """Queue workbook build on a background thread; download via GET .../download/<job_id> when ready."""
+    try:
+        request_data = request.get_json()
+        if request_data is None:
+            return jsonify({"error": "Invalid JSON body"}), 400
+
+        current_user = session.get('username', 'export')
+        app = current_app._get_current_object()
+        slug = _workbook_user_slug(current_user)
+        try:
+            os.makedirs(app.instance_path, exist_ok=True)
+        except OSError:
+            pass
+        os.makedirs(os.path.join(app.instance_path, 'workbook_exports'), exist_ok=True)
+
+        job_id = uuid.uuid4().hex
+        now = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+
+        with _workbook_manifest_lock:
+            manifest = _workbook_load_manifest(app, slug)
+            jobs = manifest.get('jobs') or []
+            while len(jobs) >= WORKBOOK_EXPORT_HISTORY_MAX:
+                dropped = jobs.pop()
+                _workbook_delete_disk_file(app, slug, dropped)
+            edition = int(manifest.get('edition_counter', 0)) + 1
+            manifest['edition_counter'] = edition
+            entry = {
+                'id': job_id,
+                'status': 'running',
+                'edition': edition,
+                'created_at': now,
+                'download_name': None,
+                'error': None,
+                'file': None,
+            }
+            jobs.insert(0, entry)
+            manifest['jobs'] = jobs
+            _workbook_save_manifest(app, slug, manifest)
+
+        payload = dict(request_data)
+        threading.Thread(
+            target=_workbook_export_worker,
+            args=(app, slug, job_id, payload, current_user),
+            daemon=True,
+            name=f'workbook-export-{job_id[:8]}',
+        ).start()
+
+        return jsonify({
+            'ok': True,
+            'jobId': job_id,
+            'edition': edition,
+            'jobs': _workbook_jobs_public(manifest['jobs']),
+        })
+    except Exception as e:
+        current_app.logger.exception(f'Error queueing export_workbook: {e}')
+        return jsonify({"error": "Could not queue export"}), 500
+
+
+@v6_listcreator_bp.route('/export_workbook/jobs', methods=['GET'])
+@login_required
+def export_workbook_jobs():
+    current_user = session.get('username', 'export')
+    app = current_app._get_current_object()
+    slug = _workbook_user_slug(current_user)
+    manifest = _workbook_load_manifest(app, slug)
+    return jsonify({'jobs': _workbook_jobs_public(manifest.get('jobs') or [])})
+
+
+@v6_listcreator_bp.route('/export_workbook/download/<job_id>', methods=['GET'])
+@login_required
+def export_workbook_download(job_id):
+    if not job_id or not re.match(r'^[a-f0-9]{32}$', job_id):
+        return jsonify({'error': 'Invalid job'}), 400
+    current_user = session.get('username', 'export')
+    app = current_app._get_current_object()
+    slug = _workbook_user_slug(current_user)
+    manifest = _workbook_load_manifest(app, slug)
+    job = next((j for j in manifest.get('jobs', []) if j.get('id') == job_id), None)
+    if not job:
+        return jsonify({'error': 'Not found'}), 404
+    if job.get('status') != 'ready':
+        return jsonify({'error': 'File not ready'}), 400
+    fn = job.get('file')
+    dl = job.get('download_name') or 'list_creator_workbook.xlsx'
+    if not fn:
+        return jsonify({'error': 'Missing file'}), 404
+    path = os.path.join(_workbook_user_dir(app, slug), fn)
+    if not os.path.isfile(path):
+        return jsonify({'error': 'File missing'}), 404
+    return send_file(path, download_name=dl, as_attachment=True)
+
+
 @v6_listcreator_bp.route('/export_pdf', methods=['POST'])
 def export_pdf():
     request_data = request.get_json()

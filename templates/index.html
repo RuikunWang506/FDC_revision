@@ -711,6 +711,20 @@
             <span class="badge">NEW</span>
           </div>
         </a>
+
+        {% if current_user == 'yeti' %}
+        <a href="{{ url_for('vendor_app.vendor_app_home') }}" class="tool-card" data-category="additional" data-tool="vendor_app">
+          <div class="card-header">
+            <i class="fas fa-handshake"></i>
+            <h3>Vendor App</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'vendor_app')"></i>
+          </div>
+          <p>Vendor management portal</p>
+          <div class="card-footer">
+            <span class="category">Additional</span>
+          </div>
+        </a>
+        {% endif %}
         
         
         

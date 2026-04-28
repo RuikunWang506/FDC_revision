@@ -615,7 +615,7 @@ def process_bulk_catalog():
         # Trigger background sync to update index files and ensure everything is in sync
         if saved_paths:
             try:
-                _trigger_background_sync(rebuild_index=False)
+                _trigger_background_sync()
                 logger.info(f"Background sync triggered after catalog upload")
             except Exception as e:
                 logger.error(f"Background sync trigger failed: {e}")
@@ -724,7 +724,7 @@ def process_bulk_detail():
         # Trigger background sync to update index files and ensure everything is in sync
         if processed_files:
             try:
-                _trigger_background_sync(rebuild_index=False)
+                _trigger_background_sync()
                 logger.info(f"Background sync triggered after detail upload")
             except Exception as e:
                 logger.error(f"Background sync trigger failed: {e}")
@@ -1125,10 +1125,10 @@ def view_logs():
     """Redirect to log viewer"""
     return redirect('/log_viewer')
 
-def _trigger_background_sync(rebuild_index=False):
+def _trigger_background_sync():
     """
     Trigger a background DAM sync after bulk uploads.
-    This updates index files and ensures database is in sync with file system.
+    Ensures the database matches files on disk (full folder scan each run).
     Runs in a separate thread to not block the upload response.
     """
     from threading import Thread
@@ -1141,9 +1141,7 @@ def _trigger_background_sync(rebuild_index=False):
             # Use DAMSyncServiceV2 to sync
             sync_service = DAMSyncServiceV2()
             
-            # If rebuild_index=True, it will rescan directories
-            # If False, it will use existing index files (faster)
-            sync_service.run_full_sync(force_rebuild_index=rebuild_index)
+            sync_service.run_full_sync()
             
             log_event('info', f'Background sync completed: {sync_service.stats}')
             

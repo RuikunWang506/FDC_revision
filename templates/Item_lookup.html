@@ -122,6 +122,16 @@
     </ul>
     
     <div class="sidebar-content">
+        <div class="mb-3 p-2 border rounded" style="background: #f8fdff; border-color: #17a2b8 !important;">
+            <div class="small font-weight-bold mb-1 text-info">Product detail</div>
+            <form method="get" action="{{ url_for('product_detail.product_detail') }}" id="productDetailQuickFormSidebar">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="search" class="form-control" placeholder="SKU / Style" autocomplete="off" aria-label="Product detail search">
+                    <button type="submit" class="btn btn-info">Go</button>
+                </div>
+            </form>
+        </div>
+
         {% if not image_urls %}
         <div class="mb-4 text-center">
             <button type="button" class="btn btn-info mb-3 mx-2">
@@ -209,16 +219,33 @@
             </div>
             {% endif %}
 
-            <!-- Search form -->
-            <form id="orderLookupForm" onsubmit="redirectToResult(event)" class="mx-auto">
+            {% if not image_urls %}
+            <div class="card shadow-sm mb-4 border-info">
+                <div class="card-body">
+                    <h4 class="mb-2 text-center text-info">2026 New Look </h4>
+                    <p class="text-center small text-muted mb-3">📱 Mobile optimized! 📢 tradeshow optimized!</p>
+                    <form method="get" action="{{ url_for('product_detail.product_detail') }}" id="productDetailQuickFormLanding">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control form-control-lg" id="product_detail_search_main"
+                                   placeholder="Enter SKU or Style" autocomplete="off" aria-label="Product detail search">
+                            <button class="btn btn-info btn-lg" type="submit">View detail</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Classic item lookup (spreadsheet-style results) -->
+            <div class="card shadow-sm mb-3 border-secondary">
+                <div class="card-body">
                 {% if not image_urls %}
-                <h4 class="mb-3 text-center">Enter Input, separate by comma:</h4>
-                <p class="mb-2 text-center">You can put multiple SKUs like n1223 gy, N1551</p>
-                <p class="mb-2 text-center">Style only = all colors, with color = one color</p>
-                <p class="mb-4 text-center">fuzzy search , try %T330 , %f24238%, %-set%</p>
-                
+                <h5 class="mb-3 text-center text-secondary">Classic item lookup (the differences , 差别一览)</h5>
+                <p class="mb-2 small text-center"><b>Multiple skus 多选</b>, n2334 gy, N1551 bk</p>
+                <p class="mb-2 small text-center"><b>Fuzzy search 模糊搜索</b>: try %T330, %-set%, %-S%</p>
+                <p class="mb-2 small text-center"><b>container search 集装箱搜索</b> %f24238% for FT24238</p>
                 {% endif %}
 
+            <form id="orderLookupForm" onsubmit="redirectToResult(event)" class="mx-auto">
                 <div class="form-group">
                     <div class="input-group">
                         <div class="input-group-prepend" id="clearInputButton" style="display: {{ 'block' if user_input else 'none' }};">
@@ -228,16 +255,6 @@
 
                     </div>
                 </div>
-
-                {% if not image_urls %}
-                    <h4 class="mb-3 text-center">Try my new product detail page?</h4>
-                    <div class="form-group">
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="product_detail_search_main" placeholder="Enter SKU or Style">
-                            <button class="btn btn-info" type="button" onclick="redirectToProductDetailMain()">View Detail</button>
-                        </div>
-                    </div>
-                {% endif %}
 
 
                 {% if user_input %}
@@ -274,6 +291,9 @@
                 </div>
                 {% endif %}
             </form>
+
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1710,54 +1730,5 @@ $('#excel_table, #history_table, #purchase_table, #adjustment_table').on('draw.d
 
     </script>
     
-    <!-- Product Detail Search Function -->
-    <script>
-    function redirectToProductDetail() {
-        const searchInput = document.getElementById('product_detail_search');
-        const searchValue = searchInput.value.trim();
-        
-        if (!searchValue) {
-            alert('Please enter a SKU or Style to search');
-            return;
-        }
-        
-        // Redirect to product detail page with the search query
-        window.location.href = '/product_detail?search=' + encodeURIComponent(searchValue);
-    }
-    
-    // Allow Enter key to trigger search
-    document.getElementById('product_detail_search').addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            redirectToProductDetail();
-        }
-    });
-    
-    // Product Detail Search for Main Content
-    function redirectToProductDetailMain() {
-        const searchInput = document.getElementById('product_detail_search_main');
-        if (!searchInput) return;
-        
-        const searchValue = searchInput.value.trim();
-        
-        if (!searchValue) {
-            alert('Please enter a SKU or Style to search');
-            return;
-        }
-        
-        // Redirect to product detail page with the search query
-        window.location.href = '/product_detail?search=' + encodeURIComponent(searchValue);
-    }
-    
-    // Allow Enter key to trigger search in main content
-    const mainSearchInput = document.getElementById('product_detail_search_main');
-    if (mainSearchInput) {
-        mainSearchInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                redirectToProductDetailMain();
-            }
-        });
-    }
-    </script>
-
 </body>
 </html>
