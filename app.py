@@ -51,9 +51,10 @@ app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP for localhost
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Only set SERVER_NAME for production
+# Only set production cookie / scheme. Do NOT pin SERVER_NAME: that forces generated
+# external URLs to www even when staff open the app via the LAN IP (e.g. http://192.168.254.30:port),
+# which slows everything by sending traffic through Cloudflare. Emails use Config.PUBLIC_APP_ORIGIN.
 if app.config.get('ENV') == 'production':
-    app.config['SERVER_NAME'] = 'www.fdcef.com' 
     app.config['PREFERRED_URL_SCHEME'] = 'https'
     app.config['SESSION_COOKIE_SECURE'] = True
 

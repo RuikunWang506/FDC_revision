@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descriptions required — V7 List Creator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+        body { background: #f1f5f9; }
+        .lc-hero {
+            background: linear-gradient(125deg, #1e293b 0%, #4338ca 42%, #6366f1 100%);
+            color: #fff;
+            border-radius: 14px;
+            padding: 1.5rem 1.35rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 12px 32px rgba(30, 27, 75, 0.2);
+        }
+        .lc-hero h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem 0; letter-spacing: -0.02em; }
+        .lc-hero p { opacity: 0.92; margin: 0; font-size: 0.92rem; line-height: 1.45; max-width: 42rem; }
+        .lc-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.07);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            padding: 1.25rem 1.35rem;
+        }
+        .lc-label { color: #64748b; font-size: 0.875rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="lc-hero">
+        <h1>Descriptions first</h1>
+        <p>This list is processed in two steps so the page stays fast: confirm the <strong>snapshot name</strong> (shown in Pacific Time), assign a description for each style, then <strong>Update and build full list</strong>. The HTML snapshot is assembled on the server; you’ll get a link when it’s ready.</p>
+    </div>
+
+    {% if snapshot_time_hint is defined and snapshot_time_hint %}
+    <p class="small text-muted mb-3 mb-md-4">Pacific (Los Angeles) reference: <strong>{{ snapshot_time_hint }}</strong></p>
+    {% endif %}
+
+    <div class="lc-card mb-4">
+        <form method="POST" action="{{ url_for('v7_listcreator.update_descriptions') }}">
+            <div class="form-group mb-4">
+                <label class="lc-label d-block" for="snapshot_name_gate">Snapshot name <span class="text-muted font-weight-normal">(required)</span></label>
+                <input type="text"
+                       class="form-control form-control-lg"
+                       id="snapshot_name_gate"
+                       name="snapshot_name"
+                       maxlength="120"
+                       minlength="2"
+                       required
+                       placeholder="e.g. Nordstrom preorder — Summer 2026"
+                       value="{{ snapshot_name if snapshot_name is defined else '' }}">
+                <small class="form-text text-muted">Used for your saved HTML page label. Stored with timestamps in <strong>Pacific Time</strong> (America/Los_Angeles).</small>
+            </div>
+
+            <div class="alert alert-info py-2 small mb-4">
+                <strong class="mr-1">Source</strong> <code class="small">{{ list_input|e }}</code>
+            </div>
+
+            <h5 class="text-center mb-4">Please select descriptions for the following styles</h5>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 14%">Image</th>
+                            <th style="width: 14%">Style</th>
+                            <th style="width: 34%">Quick select</th>
+                            <th style="width: 38%">All options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for style in missing_descriptions %}
+                        <tr>
+                            <td class="align-middle">
+                                {% if style in dropbox_images %}
+                                    <img src="{{ url_for('v7_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}"
+                                         alt="{{ style }}"
+                                         class="img-fluid" style="max-width: 150px;">
+                                {% elif style in image_urls and image_urls[style] %}
+                                    <img src="{{ image_urls[style][0]['path'] }}"
+                                         data-fullsize="{{ image_urls[style][0]['fullsize_path'] }}"
+                                         alt="{{ style }}"
+                                         class="img-fluid" style="max-width: 150px;">
+                                {% endif %}
+                            </td>
+                            <td class="align-middle">
+                                <input type="hidden" name="style_{{ loop.index }}" value="{{ style }}">
+                                <a href="{{ url_for('item_lookup.item_lookup', user_input=style.lower()) }}" target="_blank" rel="noopener">
+                                    {{ style }}
+                                </a>
+                            </td>
+                            <td class="align-middle">
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='Satchel'">SATCHEL</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">MINI SATCHEL</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">BACKPACK</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
+                            </td>
+                            <td class="align-middle">
+                                <select name="description_{{ loop.index }}" class="form-control">
+                                    <option value="">Select a description</option>
+                                    {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
+                                    <option value="{{ option }}">{{ option }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-lg text-white px-5" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">Update and build full list</button>
+            </div>
+        </form>
+    </div>
+    <p class="small text-muted text-center mb-0">
+        <a href="{{ url_for('v7_listcreator.index') }}">Back to List Creator</a>
+    </p>
+</div>
+</body>
+</html>

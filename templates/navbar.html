@@ -1,3 +1,14 @@
+{% if fdc_is_lan_session %}
+<div class="alert alert-success mb-0 rounded-0 py-1 px-2 text-center small border-0" role="status" style="font-size:0.85rem; position: relative; z-index: 1031;">
+    <strong>LAN</strong>
+    — You are using a direct connection to this server (not through the Cloudflare tunnel), so pages and images should load faster.
+    {% if fdc_lan_current_origin %}
+    <span class="ml-1">Current origin: <code>{{ fdc_lan_current_origin }}</code></span>
+    {% elif fdc_lan_origin_hint %}
+    <span class="ml-1">On the office network you can use: <code>{{ fdc_lan_origin_hint }}</code></span>
+    {% endif %}
+</div>
+{% endif %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>

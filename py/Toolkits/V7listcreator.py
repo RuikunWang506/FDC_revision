@@ -19,6 +19,9 @@ from py.utilities.setting import resize_image
 from py.utilities.dam_utils import get_canonical_assets_for_skus, get_asset_url
 import py.utilities.models
 import datetime
+from datetime import timedelta
+from zoneinfo import ZoneInfo
+from pathlib import Path
 import mysql.connector
 from mysql.connector import Error
 import zipfile
@@ -26,7 +29,7 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 
-v6_listcreator_bp = Blueprint('v6_listcreator', __name__, template_folder='templates')
+v7_listcreator_bp = Blueprint('v7_listcreator', __name__, template_folder='templates')
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
@@ -45,6 +48,268 @@ WORKBOOK_FULL_CATALOG_MAX_ROWS = 80
 # Async workbook exports: rolling file history per user (see export_workbook queue).
 WORKBOOK_EXPORT_HISTORY_MAX = 3
 _workbook_manifest_lock = threading.Lock()
+
+# Staged HTML render for large/Dropbox lists: description gate first, then background full page (cached ~7 days).
+LISTCREATOR_HTML_CACHE_DAYS = 7
+_listcreator_html_lock = threading.Lock()
+LISTCREATOR_SNAPSHOT_LABEL_MAX = 120
+PACIFIC_TZ = ZoneInfo('America/Los_Angeles')
+
+
+def _pst_now_parts():
+    """Wall time in Pacific (PST/PDT) with human label for UI."""
+    dt = datetime.datetime.now(PACIFIC_TZ)
+    return {
+        'created_at_iso': dt.isoformat(timespec='seconds'),
+        'created_at_pt_display': dt.strftime('%Y-%m-%d %I:%M %p %Z'),
+    }
+
+
+def _sanitize_snapshot_label(raw):
+    if not raw or not str(raw).strip():
+        return ''
+    s = re.sub(r'[\s]+', ' ', str(raw).strip())
+    return s[:LISTCREATOR_SNAPSHOT_LABEL_MAX]
+
+
+def _listcreator_input_source_looks_like_dropbox_path(list_input):
+    """True when the user's original submission is a Dropbox/folder-style path vs a SKU line."""
+    if not list_input or not str(list_input).strip():
+        return False
+    s = str(list_input).strip().lower()
+    if 'dropbox' in s:
+        return True
+    x = str(list_input).strip()
+    return '\\' in x or bool(re.match(r'^[a-z]:\\', x)) or x.startswith('\\\\')
+
+
+def _list_input_is_dropbox_subpath_folder(list_input):
+    """True only for `dropbox\\...` synced paths used to write aaaa.xlsx into that folder."""
+    if not list_input or not str(list_input).strip():
+        return False
+    return bool(re.search(r'dropbox\\(.+)', str(list_input).strip(), re.IGNORECASE))
+
+
+def _resolve_v7_export_dropbox_dir(list_input_raw):
+    """
+    Resolved Dropbox synced folder path under LOCAL_DROPBOX_DIR for writing aaaa.xlsx.
+    Returns absolute path string, or None if invalid/missing/not a directory.
+    """
+    if not list_input_raw or not str(list_input_raw).strip():
+        return None
+    m = re.search(r'dropbox\\(.+)', str(list_input_raw).strip(), re.IGNORECASE)
+    if not m:
+        return None
+    relative = m.group(1).strip().rstrip('\\/')
+    root = getattr(Config, 'LOCAL_DROPBOX_DIR', None) or ''
+    if not root:
+        current_app.logger.error('LOCAL_DROPBOX_DIR missing')
+        return None
+    try:
+        base = Path(os.path.abspath(str(root))).resolve()
+        candidate = Path(os.path.join(str(base), relative.replace('/', os.sep)))
+        dest = candidate.resolve(strict=False)
+        dest.relative_to(base)
+    except (ValueError, OSError):
+        current_app.logger.warning('rejecting Dropbox export path (escape or invalid): %r', list_input_raw)
+        return None
+    if not dest.is_dir():
+        current_app.logger.info('Dropbox export folder not present: %s', dest)
+        return None
+    return str(dest)
+
+
+def _slug_for_job_id(display_label: str) -> str:
+    s = re.sub(r'[^a-zA-Z0-9]+', '_', (display_label or '').strip())
+    s = re.sub(r'_+', '_', s).strip('_')
+    return s[:72] if s else 'snapshot'
+
+
+def _listcreator_safe_job_file_id(snapshot_label_slug: str) -> str:
+    """Filesystem + URL-safe id: slug + short suffix (collision-resistant)."""
+    base = snapshot_label_slug.strip('_') or 'snapshot'
+    suf = uuid.uuid4().hex[:12]
+    full = f'{base}_{suf}'
+    if len(full) > 118:
+        full = base[:80].rstrip('_') + '_' + suf
+    return full
+
+
+def _listcreator_job_id_available(app, slug, job_id):
+    jp = os.path.join(_listcreator_html_base(app, slug), 'jobs', f'{job_id}.json')
+    hp = _listcreator_html_snap_path(app, slug, job_id)
+    return not os.path.isfile(jp) and not os.path.isfile(hp)
+
+
+def _allocate_listcreator_job_id(app, slug, sanitized_label_slug: str) -> str:
+    for _ in range(48):
+        jid = _listcreator_safe_job_file_id(sanitized_label_slug)
+        if _listcreator_job_id_available(app, slug, jid):
+            return jid
+    return uuid.uuid4().hex
+
+
+def _valid_listcreator_job_id(job_id):
+    if not job_id or len(job_id) > 120:
+        return False
+    if re.match(r'^[a-f0-9]{32}$', job_id):
+        return True
+    return bool(re.match(r'^[A-Za-z0-9][A-Za-z0-9_-]{6,117}$', str(job_id)))
+
+
+def _listcreator_html_user_slug(username):
+    s = secure_filename((username or '').strip()) or 'user'
+    return s[:120]
+
+
+def _listcreator_html_base(app, slug):
+    base = os.path.join(app.instance_path, 'listcreator_html', slug)
+    os.makedirs(os.path.join(base, 'jobs'), exist_ok=True)
+    os.makedirs(os.path.join(base, 'html'), exist_ok=True)
+    return base
+
+
+def _listcreator_html_job_manifest_path(app, slug, rid):
+    return os.path.join(_listcreator_html_base(app, slug), 'jobs', f'{rid}.json')
+
+
+def _listcreator_html_snap_path(app, slug, rid):
+    return os.path.join(_listcreator_html_base(app, slug), 'html', f'{rid}.html')
+
+
+def _listcreator_html_prune_old(app, slug):
+    """Remove HTML snapshots and manifests older than LISTCREATOR_HTML_CACHE_DAYS."""
+    base = _listcreator_html_base(app, slug)
+    jobs_dir = os.path.join(base, 'jobs')
+    html_dir = os.path.join(base, 'html')
+    cutoff = datetime.datetime.utcnow() - timedelta(days=LISTCREATOR_HTML_CACHE_DAYS)
+    for jd in (jobs_dir,):
+        if not os.path.isdir(jd):
+            continue
+        for name in os.listdir(jd):
+            if not name.endswith('.json'):
+                continue
+            path = os.path.join(jd, name)
+            try:
+                with open(path, encoding='utf-8') as f:
+                    meta = json.load(f)
+                created_raw = meta.get('created_at', '')
+                try:
+                    created = datetime.datetime.fromisoformat(created_raw.replace('Z', '+00:00'))
+                    if created.tzinfo:
+                        created = created.replace(tzinfo=None)
+                except ValueError:
+                    created = datetime.datetime.utcfromtimestamp(os.path.getmtime(path))
+                if created >= cutoff.replace(tzinfo=None):
+                    continue
+                rid = meta.get('id') or name.replace('.json', '')
+                hn = os.path.join(html_dir, f'{rid}.html')
+                if os.path.isfile(hn):
+                    try:
+                        os.remove(hn)
+                    except OSError:
+                        pass
+                os.remove(path)
+            except (OSError, json.JSONDecodeError):
+                continue
+
+
+def _listcreator_html_load_job(app, slug, rid):
+    path = _listcreator_html_job_manifest_path(app, slug, rid)
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _parse_job_created_at(iso_raw):
+    if not iso_raw:
+        return datetime.datetime.utcfromtimestamp(0)
+    s = iso_raw.strip().replace('Z', '+00:00')
+    try:
+        dt = datetime.datetime.fromisoformat(s)
+        return dt.replace(tzinfo=None) if dt.tzinfo else dt
+    except ValueError:
+        return datetime.datetime.utcfromtimestamp(0)
+
+
+def _listcreator_html_list_all_jobs(app, slug):
+    """All HTML snapshot manifests for user, newest first."""
+    jobs_dir = os.path.join(_listcreator_html_base(app, slug), 'jobs')
+    if not os.path.isdir(jobs_dir):
+        return []
+    out = []
+    for name in os.listdir(jobs_dir):
+        if not name.endswith('.json'):
+            continue
+        path = os.path.join(jobs_dir, name)
+        try:
+            with open(path, encoding='utf-8') as f:
+                meta = json.load(f)
+            rid = meta.get('id') or name.replace('.json', '')
+            li_full = meta.get('list_input') or ''
+            out.append({
+                'id': rid,
+                'status': meta.get('status'),
+                'created_at': meta.get('created_at'),
+                'created_at_pt_display': meta.get('created_at_pt_display'),
+                'snapshot_name': meta.get('snapshot_name'),
+                'snapshot_generated_at_pt': meta.get('snapshot_generated_at_pt'),
+                'list_input': li_full,
+                'resolved_styles_full': meta.get('resolved_styles_full') or '',
+                'error': meta.get('error'),
+            })
+        except (OSError, json.JSONDecodeError):
+            continue
+    out.sort(key=lambda j: _parse_job_created_at(j.get('created_at')), reverse=True)
+    return out
+
+
+def _listcreator_html_fail_job(app, slug, rid, message):
+    with _listcreator_html_lock:
+        meta = _listcreator_html_load_job(app, slug, rid)
+        if not meta:
+            return
+        meta['status'] = 'failed'
+        meta['error'] = message
+        p = _listcreator_html_job_manifest_path(app, slug, rid)
+        tmp = p + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, indent=0)
+        os.replace(tmp, p)
+        _listcreator_html_prune_old(app, slug)
+
+
+def _listcreator_html_delete_job_disk(app, slug, rid, meta=None):
+    """Remove cached HTML artifact(s) and the job manifest for this snapshot id."""
+    if meta is None:
+        meta = _listcreator_html_load_job(app, slug, rid) or {}
+    base = _listcreator_html_base(app, slug)
+    html_dir = os.path.join(base, 'html')
+    jp = _listcreator_html_job_manifest_path(app, slug, rid)
+    candidates = []
+    if meta.get('html_file'):
+        candidates.append(os.path.join(html_dir, meta['html_file']))
+    candidates.append(_listcreator_html_snap_path(app, slug, rid))
+    seen = set()
+    for p in candidates:
+        if not p or p in seen:
+            continue
+        seen.add(p)
+        if os.path.isfile(p):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+    if os.path.isfile(jp):
+        try:
+            os.remove(jp)
+        except OSError:
+            return False
+    return True
 
 
 def _workbook_user_slug(username):
@@ -127,6 +392,7 @@ def _workbook_export_worker(app, slug, job_id, payload, current_user):
             dest = os.path.join(user_dir, disk_name)
             with open(dest, 'wb') as f:
                 f.write(bio.getvalue())
+            edition_for_slack = None
             with _workbook_manifest_lock:
                 manifest = _workbook_load_manifest(app, slug)
                 for j in manifest.get('jobs', []):
@@ -135,6 +401,7 @@ def _workbook_export_worker(app, slug, job_id, payload, current_user):
                         j['download_name'] = download_name
                         j['file'] = disk_name
                         j['error'] = None
+                        edition_for_slack = j.get('edition')
                         break
                 _workbook_save_manifest(app, slug, manifest)
             current_app.logger.info(
@@ -142,6 +409,20 @@ def _workbook_export_worker(app, slug, job_id, payload, current_user):
                 job_id,
                 current_user,
             )
+            try:
+                from py.utilities.slack_notify import notify_v7_list_creator_optional, public_origin
+
+                origin = public_origin()
+                dl = f'{origin}/export_workbook/download/{job_id}' if origin else f'/export_workbook/download/{job_id}'
+                notify_v7_list_creator_optional(
+                    '[V7 List Creator] "All styles with any stock" workbook export ready\n'
+                    f'User: {current_user}\n'
+                    f'Edition: #{edition_for_slack if edition_for_slack is not None else "?"}\n'
+                    f'File: {download_name}\n'
+                    f'Download (login required): {dl}\n'
+                )
+            except Exception:
+                current_app.logger.debug('slack v7 workbook notify skipped', exc_info=True)
         except ValueError as e:
             _workbook_fail_job(app, slug, job_id, str(e))
         except Exception:
@@ -403,53 +684,17 @@ def normalize_style(style):
     """Remove dash and convert to uppercase for comparison"""
     return re.sub(r'-', '', style).upper()
 
-@v6_listcreator_bp.route('/v6_listcreator', methods=['GET', 'POST'])
-@v6_listcreator_bp.route("/v6_listcreator/<string:user_input>", methods=["GET"])
-@login_required
-def index(user_input=None):
-    if 'username' not in session:
-        session['next'] = request.url
-        return redirect(url_for("auth.login"))
 
-    current_user = session['username']
+def _phase1_resolve_list_input(list_input, current_user):
+    """Parse Dropbox path or SKU list → style_list and thumbnails map; duplicates/missing-styles metadata."""
     error_message = None
     dropbox_images = {}
-    missing_descriptions = []
-    image_urls = {}
     missing_styles = []
-    duplicate_styles = []
     duplicate_items = []
     clean_list_for_memo = None
-    
-    # Handle GET request with query parameter
-    if request.method == 'GET' and request.args.get('list_input'):
-        list_input = request.args.get('list_input')
-        session['original_input'] = list_input
-        # Process the input as if it was a POST request
-        return process_list_input(list_input, current_user)
-    
-    # Handle POST request
-    if request.method == 'POST':
-        list_input = request.form.get('list_input')
-        session['original_input'] = list_input
-        return process_list_input(list_input, current_user)
-        
-    return render_template('V6_Listcreator.html', current_user=current_user, error_message=error_message)
+    original_input_styles = [s.strip().upper() for s in (list_input or '').split(',') if s.strip()]
 
-def process_list_input(list_input, current_user):
-    """Process the list input and return the appropriate response."""
-    error_message = None
-    dropbox_images = {}
-    missing_descriptions = []
-    image_urls = {}
-    missing_styles = []
-    duplicate_styles = []
-    duplicate_items = []
-    clean_list_for_memo = None
-    
-    original_input_styles = [s.strip().upper() for s in list_input.split(',') if s.strip()]
-
-    if 'dropbox' in list_input.lower():
+    if 'dropbox' in (list_input or '').lower():
         match = re.search(r'dropbox\\(.+)', list_input, re.IGNORECASE)
         if match:
             relative_path = match.group(1)
@@ -468,8 +713,7 @@ def process_list_input(list_input, current_user):
 
         result = list_from_dropbox(list_input, current_user)
         if isinstance(result, dict) and 'error' in result:
-            error_message = result['error']
-            return render_template('V6_Listcreator.html', current_user=current_user, error_message=error_message)
+            return {'error_message': result['error'], 'style_list': [], 'dropbox_images': {}, 'duplicate_items': [], 'missing_styles': [], 'clean_list_for_memo': None}
         style_list, dropbox_images = result
         current_app.logger.info(f"***{current_user}*** processing dropbox input: {list_input}")
         clean_list_for_memo = ','.join(style_list).replace("'", "")
@@ -481,83 +725,156 @@ def process_list_input(list_input, current_user):
             if normalized_orig not in normalized_style_list:
                 missing_styles.append(orig_style)
 
-    if style_list:
-        image_urls = get_images_for_selection(style_list)
-        descriptions = {}
-        data = get_sql_data(style_list)
-        db_styles = set()
-        
-        if data:
-            for row in data:
-                exact_style = row[2].upper() if row[2] else ''
-                if exact_style:
-                    db_styles.add(exact_style)
-                    session[f'verified_{exact_style}'] = True
-                    sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
-                    if sku_match:
-                        base_sku = sku_match.group(1).upper()
-                        db_styles.add(base_sku)
-                        session[f'verified_{base_sku}'] = True
-        normalized_db_styles = {normalize_style(s) for s in db_styles}
-        for style in style_list:
-            if normalize_style(style) not in normalized_db_styles:
-                if style not in missing_styles:
-                    missing_styles.append(style)
-                placeholder_data = [('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')]
-                if data:
-                    data.extend(placeholder_data)
-                else:
-                    data = placeholder_data
-        for style in style_list:
-            description = get_description_from_mysql(style)
-            descriptions[style] = description
-
-        # Drive the "Please select descriptions" prompt instead of silently using N/A on the cards.
-        seen_missing_desc = set()
-        missing_descriptions = []
-        for style in style_list:
-            raw = descriptions.get(style, '') or ''
-            norm = raw.strip().upper()
-            if norm in ('', 'N/A', 'NA') and style not in seen_missing_desc:
-                seen_missing_desc.add(style)
-                missing_descriptions.append(style)
-        
-        style_count = {}
-        for style in style_list:
-            style_upper = style.upper()
-            style_count[style_upper] = style_count.get(style_upper, 0) + 1
-        duplicate_styles = [style for style, count in style_count.items() if count > 1]
-        
-        total_duplicates = sum(len(item['files']) - 1 for item in duplicate_items)
-        final_count = (list_input.count_dropbox_files() if hasattr(list_input, 'count_dropbox_files') else 0) - total_duplicates
+    return {
+        'error_message': error_message,
+        'style_list': style_list,
+        'dropbox_images': dropbox_images,
+        'duplicate_items': duplicate_items,
+        'missing_styles': missing_styles,
+        'clean_list_for_memo': clean_list_for_memo,
+        'original_input_styles': original_input_styles,
+    }
 
 
-        if data:
-            pivot_data = create_pivot_table(data)
-            context = {
-                'current_user': current_user,
-                'data': data,
-                'pivot_data': pivot_data,
-                'image_urls': image_urls,
-                'dropbox_images': dropbox_images,
-                'descriptions': descriptions,
-                'error_message': error_message,
-                'missing_styles': missing_styles,
-                'duplicate_styles': duplicate_styles,
-                'your_input_was': list_input,
-                'clean_list_for_memo': clean_list_for_memo,
-                'duplicate_items': duplicate_items,
-                'missing_descriptions': missing_descriptions,
-                'total_duplicates': total_duplicates,  # Add this line
-                'final_count': final_count  # Add this line
-            }
-            
+@v7_listcreator_bp.route('/v7_listcreator', methods=['GET', 'POST'])
+@v7_listcreator_bp.route("/v7_listcreator/<string:user_input>", methods=["GET"])
+@login_required
+def index(user_input=None):
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for("auth.login"))
 
-            return render_template('V6_Listcreator.html', **context, list_input=list_input)
+    current_user = session['username']
+    error_message = None
+    dropbox_images = {}
+    missing_descriptions = []
+    image_urls = {}
+    missing_styles = []
+    duplicate_styles = []
+    duplicate_items = []
+    clean_list_for_memo = None
     
-    return render_template('V6_Listcreator.html', current_user=current_user, error_message=error_message)
+    # Handle GET request with query parameter — prefill form only; user must add snapshot and POST
+    if request.method == 'GET' and request.args.get('list_input'):
+        list_input = (request.args.get('list_input') or '').strip()
+        session['original_input'] = list_input
+        pst = _pst_now_parts()
+        return render_template(
+            'V7_Listcreator.html',
+            current_user=current_user,
+            list_input=list_input,
+            snapshot_name='',
+            snapshot_time_hint=pst['created_at_pt_display'],
+            error_message=None,
+        )
 
-@v6_listcreator_bp.route('/update_descriptions', methods=['POST'])
+    # Handle POST request
+    if request.method == 'POST':
+        list_input = (request.form.get('list_input') or '').strip()
+        snapshot_name = (request.form.get('snapshot_name') or '').strip()
+        session['original_input'] = list_input
+        if not list_input:
+            pst = _pst_now_parts()
+            return render_template(
+                'V7_Listcreator.html',
+                current_user=current_user,
+                list_input='',
+                snapshot_name=snapshot_name,
+                snapshot_time_hint=pst['created_at_pt_display'],
+                error_message='Enter a SKU list or Dropbox path before running.',
+            )
+        return process_list_input(list_input, current_user, snapshot_name=snapshot_name, enforce_snapshot_label=True)
+
+    pst = _pst_now_parts()
+    return render_template(
+        'V7_Listcreator.html',
+        current_user=current_user,
+        error_message=error_message,
+        snapshot_time_hint=pst['created_at_pt_display'],
+    )
+
+
+def process_list_input(list_input, current_user, snapshot_name='', enforce_snapshot_label=False):
+    """All lists use the snapshot pipeline: descriptions gate when needed, then background HTML snapshot."""
+    pst = _pst_now_parts()
+    if not list_input or not str(list_input).strip():
+        return render_template(
+            'V7_Listcreator.html',
+            current_user=current_user,
+            snapshot_time_hint=pst['created_at_pt_display'],
+            error_message=None,
+        )
+
+    snap_lbl = _sanitize_snapshot_label(snapshot_name)
+
+    phase = _phase1_resolve_list_input(list_input, current_user)
+    if phase.get('error_message'):
+        return render_template(
+            'V7_Listcreator.html',
+            current_user=current_user,
+            list_input=list_input,
+            snapshot_time_hint=pst['created_at_pt_display'],
+            error_message=phase['error_message'],
+            snapshot_name=snapshot_name if snapshot_name is not None else '',
+        )
+
+    style_list = phase['style_list']
+    if not style_list:
+        return render_template(
+            'V7_Listcreator.html',
+            current_user=current_user,
+            snapshot_time_hint=pst['created_at_pt_display'],
+            error_message='No styles resolved from input.',
+            list_input=list_input,
+            snapshot_name=snapshot_name if snapshot_name is not None else '',
+        )
+
+    if enforce_snapshot_label and len(snap_lbl) < 2:
+        return render_template(
+            'V7_Listcreator.html',
+            current_user=current_user,
+            list_input=list_input,
+            snapshot_name=snapshot_name,
+            snapshot_time_hint=pst['created_at_pt_display'],
+            error_message='Enter a snapshot name (at least 2 characters). It labels your saved HTML snapshot; times use Pacific (Los Angeles).',
+        )
+
+    bulk = get_descriptions_bulk(style_list)
+    descriptions = {s: _description_lookup_from_bulk(s, bulk) for s in style_list}
+    seen_m = set()
+    missing_descriptions = []
+    for s in style_list:
+        raw = descriptions.get(s, '') or ''
+        norm = raw.strip().upper()
+        if norm in ('', 'N/A', 'NA') and s not in seen_m:
+            seen_m.add(s)
+            missing_descriptions.append(s)
+
+    if missing_descriptions:
+        image_urls = get_images_for_selection(missing_descriptions)
+        miss_set = set(missing_descriptions)
+        drop_filter = {k: v for k, v in phase['dropbox_images'].items() if k in miss_set}
+        session['original_input'] = list_input
+        session['v7_lc_staged'] = True
+        session['v7_lc_snapshot_name'] = snap_lbl
+        pst_gate = _pst_now_parts()
+        return render_template(
+            'V7_Listcreator_descriptions_gate.html',
+            current_user=current_user,
+            list_input=list_input,
+            snapshot_name=snap_lbl,
+            snapshot_time_hint=pst_gate['created_at_pt_display'],
+            missing_descriptions=missing_descriptions,
+            image_urls=image_urls,
+            dropbox_images=drop_filter,
+        )
+
+    session.pop('v7_lc_staged', None)
+    app = current_app._get_current_object()
+    rid = _enqueue_listcreator_html_job(app, list_input, current_user, snap_lbl)
+    return redirect(url_for('v7_listcreator.html_job_wait', rid=rid))
+
+@v7_listcreator_bp.route('/update_descriptions', methods=['POST'])
 @login_required
 def update_descriptions():
     descriptions = {}
@@ -572,9 +889,196 @@ def update_descriptions():
                 descriptions[style] = value.upper()
                 update_description_in_db(style, value.upper())
 
-    # Redirect with the original input as a query parameter
-    return redirect(url_for('v6_listcreator.index') + f'?list_input={original_input}')
+    if session.pop('v7_lc_staged', None):
+        app = current_app._get_current_object()
+        snap = (
+            _sanitize_snapshot_label(request.form.get('snapshot_name', ''))
+            or session.get('v7_lc_snapshot_name')
+            or ''
+        )
+        session.pop('v7_lc_snapshot_name', None)
+        if len(snap) < 2:
+            flash('Snapshot name required (use at least 2 characters).', 'warning')
+            return redirect(url_for('v7_listcreator.index'))
+        rid = _enqueue_listcreator_html_job(app, original_input, session.get('username', ''), snap)
+        return redirect(url_for('v7_listcreator.html_job_wait', rid=rid))
 
+    return redirect(url_for('v7_listcreator.index', list_input=original_input))
+
+
+@v7_listcreator_bp.route('/v7_listcreator/html_job/<rid>', methods=['GET'])
+@login_required
+def html_job_wait(rid):
+    if not _valid_listcreator_job_id(rid):
+        return redirect(url_for('v7_listcreator.index'))
+    current_user = session.get('username')
+    app = current_app._get_current_object()
+    slug = _listcreator_html_user_slug(current_user)
+    meta = _listcreator_html_load_job(app, slug, rid)
+    if not meta or meta.get('username') != current_user:
+        return redirect(url_for('v7_listcreator.index'))
+    return render_template(
+        'V7_Listcreator_html_job_wait.html',
+        rid=rid,
+        job=meta,
+        cache_days=LISTCREATOR_HTML_CACHE_DAYS,
+    )
+
+
+@v7_listcreator_bp.route('/v7_listcreator/html_job/<rid>/status', methods=['GET'])
+@login_required
+def html_job_status(rid):
+    if not _valid_listcreator_job_id(rid):
+        return jsonify({'ok': False, 'error': 'Invalid job'}), 400
+    current_user = session.get('username')
+    app = current_app._get_current_object()
+    slug = _listcreator_html_user_slug(current_user)
+    meta = _listcreator_html_load_job(app, slug, rid)
+    if not meta or meta.get('username') != current_user:
+        return jsonify({'ok': False, 'error': 'Not found'}), 404
+    out = {
+        'ok': True,
+        'status': meta.get('status'),
+        'error': meta.get('error'),
+        'view_url': meta.get('view_url'),
+        'created_at': meta.get('created_at'),
+        'created_at_pt_display': meta.get('created_at_pt_display'),
+        'snapshot_generated_at_pt': meta.get('snapshot_generated_at_pt'),
+        'snapshot_name': meta.get('snapshot_name'),
+    }
+    return jsonify(out)
+
+
+@v7_listcreator_bp.route('/v7_listcreator/html_job/<rid>/rename', methods=['POST'])
+@login_required
+def html_job_rename(rid):
+    if not _valid_listcreator_job_id(rid):
+        return jsonify({'ok': False, 'error': 'Invalid job'}), 400
+    current_user = session.get('username')
+    app = current_app._get_current_object()
+    slug = _listcreator_html_user_slug(current_user)
+    payload = {}
+    if request.is_json:
+        payload = request.get_json(silent=True) or {}
+    raw_name = (payload.get('snapshot_name') if payload else '') or request.form.get('snapshot_name', '') or ''
+    snap = _sanitize_snapshot_label(raw_name.strip())
+    if len(snap) < 2:
+        return jsonify({'ok': False, 'error': 'Snapshot name needs at least 2 characters'}), 400
+    with _listcreator_html_lock:
+        meta = _listcreator_html_load_job(app, slug, rid)
+        if not meta or meta.get('username') != current_user:
+            return jsonify({'ok': False, 'error': 'Not found'}), 404
+        meta['snapshot_name'] = snap
+        p = _listcreator_html_job_manifest_path(app, slug, rid)
+        tmp = p + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, indent=0)
+        os.replace(tmp, p)
+        _listcreator_html_prune_old(app, slug)
+    return jsonify({'ok': True, 'snapshot_name': snap})
+
+
+@v7_listcreator_bp.route('/v7_listcreator/html_job/<rid>/delete', methods=['DELETE', 'POST'])
+@login_required
+def html_job_delete(rid):
+    if not _valid_listcreator_job_id(rid):
+        return jsonify({'ok': False, 'error': 'Invalid job'}), 400
+    current_user = session.get('username')
+    app = current_app._get_current_object()
+    slug = _listcreator_html_user_slug(current_user)
+    with _listcreator_html_lock:
+        meta = _listcreator_html_load_job(app, slug, rid)
+        if not meta or meta.get('username') != current_user:
+            return jsonify({'ok': False, 'error': 'Not found'}), 404
+        if not _listcreator_html_delete_job_disk(app, slug, rid, meta):
+            return jsonify({'ok': False, 'error': 'Could not remove snapshot files'}), 500
+        _listcreator_html_prune_old(app, slug)
+    return jsonify({'ok': True})
+
+
+@v7_listcreator_bp.route('/v7_listcreator/html_job/<rid>/redo', methods=['POST'])
+@login_required
+def html_job_redo(rid):
+    """Queue a new HTML snapshot using the same list_input and snapshot label (refreshes cached list with latest data)."""
+    if not _valid_listcreator_job_id(rid):
+        return jsonify({'ok': False, 'error': 'Invalid job'}), 400
+    current_user = session.get('username')
+    app = current_app._get_current_object()
+    slug = _listcreator_html_user_slug(current_user)
+    meta = _listcreator_html_load_job(app, slug, rid)
+    if not meta or meta.get('username') != current_user:
+        return jsonify({'ok': False, 'error': 'Not found'}), 404
+    list_input = (meta.get('list_input') or '').strip()
+    if not list_input:
+        return jsonify({'ok': False, 'error': 'No saved input for this job; start a new run from V7.'}), 400
+    snap = _sanitize_snapshot_label(meta.get('snapshot_name') or '')
+    if len(snap) < 2:
+        return jsonify({'ok': False, 'error': 'Snapshot name missing; cannot redo.'}), 400
+    new_rid = _enqueue_listcreator_html_job(app, list_input, current_user, snap)
+    return jsonify({
+        'ok': True,
+        'rid': new_rid,
+        'wait_url': url_for('v7_listcreator.html_job_wait', rid=new_rid),
+    })
+
+
+@v7_listcreator_bp.route('/v7_listcreator/html_cached/<rid>', methods=['GET'])
+@login_required
+def listcreator_cached_html(rid):
+    if not _valid_listcreator_job_id(rid):
+        return jsonify({'error': 'Invalid'}), 400
+    current_user = session.get('username')
+    app = current_app._get_current_object()
+    slug = _listcreator_html_user_slug(current_user)
+    meta = _listcreator_html_load_job(app, slug, rid)
+    if not meta or meta.get('username') != current_user:
+        return jsonify({'error': 'Not found'}), 404
+    if meta.get('status') != 'ready':
+        return jsonify({'error': 'Not ready'}), 400
+    hn = meta.get('html_file')
+    if not hn:
+        return jsonify({'error': 'Missing file'}), 404
+    path = os.path.join(_listcreator_html_base(app, slug), 'html', hn)
+    if not os.path.isfile(path):
+        return jsonify({'error': 'Expired or removed'}), 404
+    _listcreator_html_prune_old(app, slug)
+    return send_file(path, mimetype='text/html')
+
+
+@v7_listcreator_bp.route('/v7_listcreator/html_jobs', methods=['GET'])
+@login_required
+def listcreator_html_jobs_api():
+    """Recent large-list HTML snapshot jobs for dashboard (processing + processed)."""
+    current_user = session.get('username')
+    app = current_app._get_current_object()
+    slug = _listcreator_html_user_slug(current_user)
+    with _listcreator_html_lock:
+        _listcreator_html_prune_old(app, slug)
+    raw = _listcreator_html_list_all_jobs(app, slug)
+    jobs = []
+    for j in raw:
+        rid = j['id']
+        st = j.get('status')
+        vu = url_for('v7_listcreator.listcreator_cached_html', rid=rid) if st == 'ready' else None
+        li_full = j.get('list_input') or ''
+        resolved = j.get('resolved_styles_full') or ''
+        jobs.append({
+            'id': rid,
+            'status': st,
+            'created_at': j.get('created_at'),
+            'created_at_pt_display': j.get('created_at_pt_display'),
+            'snapshot_generated_at_pt': j.get('snapshot_generated_at_pt'),
+            'snapshot_name': j.get('snapshot_name'),
+            'list_input': li_full,
+            'list_input_preview': li_full,
+            'resolved_styles': resolved,
+            'resolved_styles_full': resolved,
+            'source_is_path': _listcreator_input_source_looks_like_dropbox_path(li_full),
+            'view_url': vu,
+            'wait_url': url_for('v7_listcreator.html_job_wait', rid=rid),
+            'error': j.get('error'),
+        })
+    return jsonify({'ok': True, 'jobs': jobs})
 
 
 def get_mysql_connection():
@@ -604,7 +1108,58 @@ def get_description_from_mysql(style):
             cursor.close()
             connection.close()
     return "N/A"
-    
+
+def get_descriptions_bulk(style_list):
+    """Batch-fetch descriptions from MySQL for speed on large SKU lists."""
+    out_by_key = {}
+    if not style_list:
+        return out_by_key
+    unique_ordered = []
+    seen = set()
+    for st in style_list:
+        u = str(st).strip()
+        if u not in seen:
+            seen.add(u)
+            unique_ordered.append(u)
+    conn = get_mysql_connection()
+    if conn:
+        chunk_size = 400
+        try:
+            cursor = conn.cursor()
+            for i in range(0, len(unique_ordered), chunk_size):
+                chunk = unique_ordered[i:i + chunk_size]
+                placeholders = ','.join(['%s'] * len(chunk))
+                q = (
+                    f"SELECT TRIM(style) AS sty, TRIM(description) AS descr FROM onlinedb.description "
+                    f"WHERE style IN ({placeholders})"
+                )
+                cursor.execute(q, tuple(chunk))
+                for row in cursor.fetchall():
+                    sty_raw, descr_raw = row[0], row[1]
+                    if sty_raw is None:
+                        continue
+                    key = str(sty_raw).strip()
+                    descr = descr_raw.strip() if descr_raw else ''
+                    if descr:
+                        udescr = descr.upper()
+                        out_by_key[key] = udescr
+                        out_by_key[key.upper()] = udescr
+        except Error as e:
+            current_app.logger.error(f"get_descriptions_bulk: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+    return out_by_key
+
+
+def _description_lookup_from_bulk(style, bulk_map):
+    if not bulk_map:
+        return 'N/A'
+    s = str(style).strip()
+    v = bulk_map.get(s) or bulk_map.get(s.upper())
+    return v if v else 'N/A'
+
+
 def update_description_in_db(style_index, description):
     """Updates the description for a given style in the MySQL database.
     If the style does not exist, a new row is created."""
@@ -845,6 +1400,231 @@ def create_pivot_table(data):
     
     return style_cards
 
+
+def _build_listcreator_inventory_context(
+    list_input,
+    current_user,
+    style_list,
+    dropbox_images,
+    duplicate_items,
+    clean_list_for_memo,
+    missing_styles,
+    error_message=None,
+):
+    """Full SQL + DAM + pivot context for V7_Listcreator.html (used by sync path and background HTML job)."""
+    from flask import session
+
+    image_urls = get_images_for_selection(style_list)
+    bulk = get_descriptions_bulk(style_list)
+    descriptions = {style: _description_lookup_from_bulk(style, bulk) for style in style_list}
+    data = get_sql_data(style_list)
+    db_styles = set()
+
+    if data:
+        for row in data:
+            exact_style = row[2].upper() if row[2] else ''
+            if exact_style:
+                db_styles.add(exact_style)
+                session[f'verified_{exact_style}'] = True
+                sku_match = re.match(r'([A-Za-z]{1,2}\d{4})', row[2])
+                if sku_match:
+                    base_sku = sku_match.group(1).upper()
+                    db_styles.add(base_sku)
+                    session[f'verified_{base_sku}'] = True
+
+    normalized_db_styles = {normalize_style(s) for s in db_styles}
+    for style in style_list:
+        if normalize_style(style) not in normalized_db_styles:
+            if style not in missing_styles:
+                missing_styles.append(style)
+            placeholder_data = [('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')]
+            if data:
+                data.extend(placeholder_data)
+            else:
+                data = placeholder_data
+
+    seen_missing_desc = set()
+    missing_descriptions = []
+    for style in style_list:
+        raw = descriptions.get(style, '') or ''
+        norm = raw.strip().upper()
+        if norm in ('', 'N/A', 'NA') and style not in seen_missing_desc:
+            seen_missing_desc.add(style)
+            missing_descriptions.append(style)
+
+    style_count = {}
+    for style in style_list:
+        style_upper = style.upper()
+        style_count[style_upper] = style_count.get(style_upper, 0) + 1
+    duplicate_styles_list = [sty for sty, count in style_count.items() if count > 1]
+
+    total_duplicates = sum(len(item['files']) - 1 for item in duplicate_items)
+    final_count = (
+        (list_input.count_dropbox_files() - total_duplicates)
+        if hasattr(list_input, 'count_dropbox_files')
+        else 0
+    )
+
+    if not data:
+        return None
+
+    pivot_data = create_pivot_table(data)
+    return {
+        'current_user': current_user,
+        'data': data,
+        'pivot_data': pivot_data,
+        'image_urls': image_urls,
+        'dropbox_images': dropbox_images,
+        'descriptions': descriptions,
+        'error_message': error_message,
+        'missing_styles': missing_styles,
+        'duplicate_styles': duplicate_styles_list,
+        'your_input_was': list_input,
+        'clean_list_for_memo': clean_list_for_memo,
+        'duplicate_items': duplicate_items,
+        'missing_descriptions': missing_descriptions,
+        'total_duplicates': total_duplicates,
+        'final_count': final_count,
+        'list_input_is_dropbox_folder': _list_input_is_dropbox_subpath_folder(list_input),
+    }
+
+
+def _listcreator_render_html_worker(app, slug, rid, list_input, current_user):
+    with app.app_context():
+        try:
+            with app.test_request_context('/'):
+                from flask import session
+                session.permanent = True
+                session['username'] = current_user
+                phase = _phase1_resolve_list_input(list_input, current_user)
+                if phase.get('error_message'):
+                    _listcreator_html_fail_job(app, slug, rid, phase['error_message'] or 'Invalid input')
+                    return
+                style_list = phase['style_list']
+                if not style_list:
+                    _listcreator_html_fail_job(app, slug, rid, 'No styles to process')
+                    return
+                ms = list(phase['missing_styles'])
+                ctx = _build_listcreator_inventory_context(
+                    list_input,
+                    current_user,
+                    style_list,
+                    phase['dropbox_images'],
+                    phase['duplicate_items'],
+                    phase['clean_list_for_memo'],
+                    ms,
+                    error_message=phase.get('error_message'),
+                )
+                if not ctx:
+                    _listcreator_html_fail_job(app, slug, rid, 'No inventory data for this list')
+                    return
+                memo = ctx.get('clean_list_for_memo')
+                if memo:
+                    resolved_styles_full = str(memo).strip()
+                else:
+                    resolved_styles_full = ','.join(style_list)
+                pst_snap = _pst_now_parts()
+                html = render_template(
+                    'V7_Listcreator.html',
+                    **ctx,
+                    list_input=list_input,
+                    snapshot_generated_at_pt=pst_snap['created_at_pt_display'],
+                )
+                hp = _listcreator_html_snap_path(app, slug, rid)
+                with open(hp, 'w', encoding='utf-8') as f:
+                    f.write(html)
+                view_url = url_for('v7_listcreator.listcreator_cached_html', rid=rid)
+            with _listcreator_html_lock:
+                meta = _listcreator_html_load_job(app, slug, rid)
+                if meta:
+                    meta['status'] = 'ready'
+                    meta['error'] = None
+                    meta['html_file'] = os.path.basename(hp)
+                    meta['view_url'] = view_url
+                    meta['resolved_styles_full'] = resolved_styles_full
+                    meta['snapshot_generated_at_pt'] = pst_snap['created_at_pt_display']
+                    p = _listcreator_html_job_manifest_path(app, slug, rid)
+                    tmp = p + '.tmp'
+                    with open(tmp, 'w', encoding='utf-8') as f:
+                        json.dump(meta, f, indent=0)
+                    os.replace(tmp, p)
+                _listcreator_html_prune_old(app, slug)
+            current_app.logger.info('listcreator HTML job ready rid=%s user=%s', rid, current_user)
+            if meta:
+                try:
+                    from py.utilities.slack_notify import notify_v7_list_creator_optional, public_origin
+
+                    origin = public_origin()
+                    rel = view_url if view_url else ''
+                    full = rel if rel.startswith('http') else (origin + rel if rel.startswith('/') else rel)
+                    lbl = ((meta.get('snapshot_name') or '').strip()) or '(no label)'
+                    li_raw = (list_input or '').strip()
+                    styles_text = (resolved_styles_full or '').strip()
+                    slack_max = 3400
+                    if len(styles_text) > slack_max:
+                        styles_text = styles_text[: slack_max - 20] + '\n… (truncated)'
+
+                    chunks = [
+                        '[V7 List Creator] HTML snapshot ready',
+                        f'User: {current_user}',
+                        f'Snapshot: {lbl}',
+                        f'Job id: {rid}',
+                    ]
+                    if li_raw and _listcreator_input_source_looks_like_dropbox_path(li_raw):
+                        chunks.append(f'Dropbox / folder path (submitted): {li_raw}')
+                    elif li_raw:
+                        chunks.append(f'Source input line: {li_raw}')
+                    if styles_text:
+                        chunks.append(f'Styles (resolved): {styles_text}')
+                    if full:
+                        chunks.append(f'Open snapshot: {full}')
+
+                    notify_v7_list_creator_optional('\n'.join(chunks) + '\n')
+                except Exception:
+                    current_app.logger.debug('slack v7 snapshot notify skipped', exc_info=True)
+        except Exception as e:
+            current_app.logger.exception('listcreator HTML job failed rid=%s', rid)
+            _listcreator_html_fail_job(app, slug, rid, str(e))
+
+
+def _enqueue_listcreator_html_job(app, list_input, current_user, snapshot_name=None):
+    slug = _listcreator_html_user_slug(current_user)
+    display_name = _sanitize_snapshot_label(snapshot_name or '')
+    slug_core = _slug_for_job_id(display_name)
+    rid = _allocate_listcreator_job_id(app, slug, slug_core)
+    pst = _pst_now_parts()
+    meta = {
+        'id': rid,
+        'snapshot_name': display_name,
+        'status': 'running',
+        'created_at': pst['created_at_iso'],
+        'created_at_pt_display': pst['created_at_pt_display'],
+        'list_input': list_input or '',
+        'error': None,
+        'html_file': None,
+        'username': current_user,
+        'view_url': None,
+    }
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError:
+        pass
+    with _listcreator_html_lock:
+        _listcreator_html_prune_old(app, slug)
+        p = _listcreator_html_job_manifest_path(app, slug, rid)
+        tmp = p + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, indent=0)
+        os.replace(tmp, p)
+    threading.Thread(
+        target=_listcreator_render_html_worker,
+        args=(app, slug, rid, list_input, current_user),
+        daemon=True,
+        name=f'listcreator-html-{rid[:8]}',
+    ).start()
+    return rid
+
+
 def normalize_style_for_grouping(style):
     """
     Normalizes style codes for grouping purposes:
@@ -896,7 +1676,7 @@ def get_images_for_selection(sku_list):
                 from py.utilities.dam_utils import search_assets_by_sku_pattern, get_asset_url
                 import py.utilities.models
                 
-                # Search for assets matching the full SKU - only catalog_original source for V6 list creator
+                # Search for assets matching the full SKU - only catalog_original source for V7 list creator
                 matching_assets = search_assets_by_sku_pattern(full_sku, source_filter='catalog_original')
                 
                 # Also search for no-dash version if SKU contains dash
@@ -1131,16 +1911,28 @@ def build_export_data_from_list_input(list_input_str, current_user=None):
     return export_items
 
 
-@v6_listcreator_bp.route('/list_image/dropbox/<path:filename>')
+@v7_listcreator_bp.route('/list_image/dropbox/<path:filename>')
 def serve_dropbox_image(filename):
     dropbox_path = os.path.join(Config.LOCAL_DROPBOX_DIR, filename)
-    
-    # Check if the image exists
-    if not os.path.exists(dropbox_path):
-        return send_from_directory('static', 'no_image_available.jpg')  # Fallback to placeholder if not found
-    return send_file(dropbox_path)
 
-@v6_listcreator_bp.route('/list_image/<path:filename>')
+    if not os.path.exists(dropbox_path):
+        return send_from_directory('static', 'no_image_available.jpg')
+
+    # Thumbnails use ?size=150 in templates; without this we were sending full files (slow + heavy).
+    size = request.args.get('size', 'full')
+    if size == 'full' or size == '':
+        return send_file(dropbox_path)
+    try:
+        sz = int(size) if str(size).isdigit() else 300
+        if sz <= 0:
+            return send_file(dropbox_path)
+        buffer = resize_image(dropbox_path, sz)
+        return send_file(buffer, mimetype='image/jpeg')
+    except Exception as e:
+        current_app.logger.error(f'Error serving dropbox image {filename}: {e}')
+        return send_file(dropbox_path)
+
+@v7_listcreator_bp.route('/list_image/<path:filename>')
 def serve_list_image(filename):
     # Use DAM system to find asset by filename
     import py.utilities.models
@@ -1183,7 +1975,7 @@ def set_border(ws, cell_range):
         for cell in row:
             cell.border = Border(top=thin, left=thin, right=thin, bottom=thin)
 
-@v6_listcreator_bp.app_template_filter('count_dropbox_files')
+@v7_listcreator_bp.app_template_filter('count_dropbox_files')
 def count_dropbox_files(dropbox_path):
     match = re.search(r'dropbox\\(.+)', dropbox_path, re.IGNORECASE)
     if match:
@@ -1194,7 +1986,7 @@ def count_dropbox_files(dropbox_path):
     return 0
 
 
-@v6_listcreator_bp.route('/update_descriptions_bulk', methods=['POST'])
+@v7_listcreator_bp.route('/update_descriptions_bulk', methods=['POST'])
 def update_descriptions_bulk():
     updates = request.json.get('updates', [])
     connection = get_mysql_connection()
@@ -1229,7 +2021,7 @@ def update_descriptions_bulk():
             
     return jsonify({"success": False, "message": "Could not connect to database"})
 
-@v6_listcreator_bp.route('/export_images', methods=['POST'])
+@v7_listcreator_bp.route('/export_images', methods=['POST'])
 def export_images():
     request_data = request.get_json()
     image_paths = request_data.get('imagePaths', [])
@@ -1449,7 +2241,7 @@ def _populate_export_list_sheet(sheet, data, processing_image_size, removed_colu
         set_border(sheet, f'A2:{last_col}{sheet.max_row}')
 
 
-@v6_listcreator_bp.route('/export_list', methods=['POST'])
+@v7_listcreator_bp.route('/export_list', methods=['POST'])
 def export_list():
     try:
         request_data = request.get_json()
@@ -1477,8 +2269,46 @@ def export_list():
         return jsonify({"error": "Internal Server Error"}), 500
 
 
-@v6_listcreator_bp.route('/export_workbook', methods=['POST'])
-@v6_listcreator_bp.route('/export_avail_db', methods=['POST'])
+@v7_listcreator_bp.route('/export_list_to_dropbox', methods=['POST'])
+@login_required
+def export_list_to_dropbox():
+    """Write the same sheet as Export List to LOCAL_DROPBOX_DIR/<relative>/aaaa.xlsx when list_input is dropbox\\..."""
+    try:
+        request_data = request.get_json(force=True, silent=True) or {}
+        list_input_raw = (request_data.get('list_input') or '').strip()
+        dest_dir = _resolve_v7_export_dropbox_dir(list_input_raw)
+        if not dest_dir:
+            return jsonify({
+                'ok': False,
+                'error': 'Original run must use a Dropbox folder path (dropbox\\...) that exists on this server.',
+            }), 400
+
+        data = request_data.get('exportData', [])
+        image_size_input = request_data.get('image_size', '800')
+        if str(image_size_input).lower() == 'full':
+            processing_image_size = None
+        else:
+            try:
+                processing_image_size = int(image_size_input)
+            except (TypeError, ValueError):
+                return jsonify({'ok': False, 'error': 'Invalid image size'}), 400
+        removed_columns = request_data.get('removedColumns', {})
+
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = 'Exported Data'
+        _populate_export_list_sheet(sheet, data, processing_image_size, removed_columns)
+
+        out_path = os.path.join(dest_dir, 'aaaa.xlsx')
+        workbook.save(out_path)
+        return jsonify({'ok': True, 'file': 'aaaa.xlsx'})
+    except Exception as e:
+        current_app.logger.exception('export_list_to_dropbox: %s', e)
+        return jsonify({'ok': False, 'error': str(e) or 'Could not save file'}), 500
+
+
+@v7_listcreator_bp.route('/export_workbook', methods=['POST'])
+@v7_listcreator_bp.route('/export_avail_db', methods=['POST'])
 @login_required
 def export_workbook():
     """Queue workbook build on a background thread; download via GET .../download/<job_id> when ready."""
@@ -1539,7 +2369,7 @@ def export_workbook():
         return jsonify({"error": "Could not queue export"}), 500
 
 
-@v6_listcreator_bp.route('/export_workbook/jobs', methods=['GET'])
+@v7_listcreator_bp.route('/export_workbook/jobs', methods=['GET'])
 @login_required
 def export_workbook_jobs():
     current_user = session.get('username', 'export')
@@ -1549,7 +2379,7 @@ def export_workbook_jobs():
     return jsonify({'jobs': _workbook_jobs_public(manifest.get('jobs') or [])})
 
 
-@v6_listcreator_bp.route('/export_workbook/download/<job_id>', methods=['GET'])
+@v7_listcreator_bp.route('/export_workbook/download/<job_id>', methods=['GET'])
 @login_required
 def export_workbook_download(job_id):
     if not job_id or not re.match(r'^[a-f0-9]{32}$', job_id):
@@ -1573,7 +2403,7 @@ def export_workbook_download(job_id):
     return send_file(path, download_name=dl, as_attachment=True)
 
 
-@v6_listcreator_bp.route('/export_pdf', methods=['POST'])
+@v7_listcreator_bp.route('/export_pdf', methods=['POST'])
 def export_pdf():
     request_data = request.get_json()
     image_paths = request_data.get('imagePaths', [])
@@ -1725,7 +2555,7 @@ def get_sku_sold_price(sku):
             cursor.close()
             connection.close()
                     
-@v6_listcreator_bp.route('/export_lori_format', methods=['POST'])
+@v7_listcreator_bp.route('/export_lori_format', methods=['POST'])
 def export_lori_format():
     try:
         request_data = request.get_json()

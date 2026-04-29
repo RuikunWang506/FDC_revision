@@ -1,4 +1,4 @@
-from flask import (request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory,send_file, Response, make_response,render_template_string)
+from flask import (request, render_template, jsonify, redirect, url_for, session, flash, send_from_directory,send_file, Response, make_response,render_template_string, has_request_context)
 from werkzeug.utils import secure_filename
 # Standard library imports
 import os
@@ -37,7 +37,7 @@ from py.utilities.setting import resize_image  # Import the master resizing func
 from PIL import Image
 from pathlib import Path
 
-from py.Toolkits.V6listcreator import v6_listcreator_bp
+from py.Toolkits.V7listcreator import v7_listcreator_bp
 from py.loris.lori_automation import lori_automation_bp
 from py.other.customer import customer_bp
 from py.order.order_processor import order_processor_bp
@@ -55,17 +55,38 @@ from py.other.tiktok import tiktok_bp
 from py.dam.dam_sync_routes import dam_sync_bp
 from py.other.bag_style_viewer import bag_style_viewer_bp
 from py.Toolkits.boat import boat_service_bp
-from py.utilities.monitor import send_discord_notification
 from py.search.location_service import location_service_bp
 from py.other.external_stock_check import external_stock_check_bp
 from py.other.internal_stock_check import internal_stock_check_bp
 from py.other.burlington_highlight import burlington_highlight_bp
 from py.other.vendor_app import vendor_app_bp
 from py.other.vendor_tiktok_processor import vendor_tiktok_processor_bp
-four_seller_bp = importlib.import_module("py.other.4_seller").four_seller_bp
+from py.utilities.monitor import send_discord_notification
+from py.utilities import lan_detection
+
+four_seller_bp = importlib.import_module('py.other.4_seller').four_seller_bp
 
 
 def register_routes(app):
+
+    @app.context_processor
+    def inject_lan_context():
+        if not has_request_context():
+            return {}
+        on_lan_host = lan_detection.host_is_private_lan(request.host)
+        on_lan_ip = lan_detection.client_ip_is_private_lan(request)
+        use_lan = on_lan_host or on_lan_ip
+        origin = ''
+        try:
+            origin = request.url_root.rstrip('/') if use_lan else ''
+        except RuntimeError:
+            pass
+        hint = getattr(Config, 'LAN_ORIGIN_HINT', '') or ''
+        return {
+            'fdc_is_lan_session': use_lan,
+            'fdc_lan_current_origin': origin,
+            'fdc_lan_origin_hint': hint,
+        }
 
     @app.route('/delete_system_restarted', methods=['POST'])
     @login_required
@@ -91,7 +112,7 @@ def register_routes(app):
     app.register_blueprint(product_detail_bp)
     app.register_blueprint(outofstock_check_bp)
     app.register_blueprint(mobile_lite_bp)
-    app.register_blueprint(v6_listcreator_bp)
+    app.register_blueprint(v7_listcreator_bp)
     app.register_blueprint(lori_automation_bp, url_prefix='/lori_automation')
     app.register_blueprint(customer_bp)
     app.register_blueprint(order_processor_bp)

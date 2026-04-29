@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V6_listcreator</title>
+    <title>V7_listcreator</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
@@ -11,6 +11,89 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 
     <style>
+        :root {
+            --lc-bg: #f1f5f9;
+            --lc-muted: #64748b;
+            --lc-accent: #4f46e5;
+        }
+        body { background: var(--lc-bg); }
+        .lc-hero {
+            background: linear-gradient(125deg, #1e293b 0%, #4338ca 42%, #6366f1 100%);
+            color: #fff;
+            border-radius: 14px;
+            padding: 1.5rem 1.35rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 12px 32px rgba(30, 27, 75, 0.2);
+        }
+        .lc-hero h1 {
+            font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.4rem 0;
+        }
+        .lc-hero p { opacity: 0.9; font-size: 0.92rem; margin: 0; max-width: 46rem; line-height: 1.45; }
+        .lc-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.07);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            padding: 1.25rem 1.35rem;
+        }
+        .lc-panel {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 1rem 1.15rem;
+            margin-top: 1rem;
+        }
+        .lc-label-muted { color: var(--lc-muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 0.35rem; }
+        .lc-job-src-preview {
+            max-height: 9rem;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.8125rem;
+            line-height: 1.35;
+            padding: 0.4rem 0.5rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .lc-job-src-preview.lc-job-preview-trigger {
+            cursor: pointer;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .lc-job-src-preview.lc-job-preview-trigger:hover {
+            border-color: #94a3b8;
+            box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+        }
+        .lc-job-src-preview.lc-job-preview-trigger:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
+        }
+        .lc-job-src-preview.lc-job-src-preview--oneline {
+            max-height: 1.65rem;
+            overflow: hidden;
+            white-space: nowrap;
+            word-break: normal;
+            text-overflow: ellipsis;
+        }
+
+        /* “Your input was” — one style per row */
+        .lc-your-input-lines {
+            max-height: 14rem;
+            overflow-y: auto;
+            font-size: 0.9375rem;
+            line-height: 1.5;
+            border-radius: 6px;
+            padding: 0.35rem 0.5rem;
+            background: rgba(255, 255, 255, 0.48);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+        }
+        .lc-your-input-lines .lc-your-input-row {
+            word-break: break-word;
+        }
+
         /* Image popup and navigation */
         .image-popup {
             display: none;
@@ -498,8 +581,6 @@
             <div class="d-flex flex-column">
                 <button type="button" class="btn btn-success mb-4" data-toggle="modal" data-target="#imageSizeModal">Export List</button>
                 <button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#editDescriptionModal">Edit Desc</button>
-                <button type="button" class="btn btn-danger mb-2" onclick="col_control_Stockonly()">Quantity: Stock NO OCEAN</button>
-                <button type="button" class="btn btn-danger mb-2" onclick="col_control_StockOcean()">Quantity: STOCK+OCEAN</button>
                 <button type="button" class="btn btn-warning mb-2" id="togglePcsBox" onclick="togglePcsBox()">Hide PCS/BOX</button>
                 <button type="button" class="btn btn-warning mb-2" id="toggleDimensions" onclick="toggleDimensions()">Hide Dimensions</button>
                 <button type="button" class="btn btn-info mb-2" onclick="selectNonDropboxImages()">No Dropbox Img</button>
@@ -521,7 +602,10 @@
                         </select>
                         <input type="number" id="removeColumnThreshold" class="form-control form-control-sm" placeholder="Number" min="0" style="width:100px; display:inline-block; margin-left:5px;">
                     </div>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRowsByColumnThreshold()">Delete</button>
+                    <button type="button" class="btn btn-danger btn-sm btn-block" onclick="removeRowsByColumnThreshold()">Delete</button>
+                </div>
+                <div class="card p-2 mb-2" style="background:#f7f7f7; border:1px solid #ddd;">
+                    <a href="{{ url_for('v7_listcreator.index') }}" class="btn btn-outline-secondary btn-sm btn-block">Reset 重置</a>
                 </div>
             </div>
         </div>
@@ -573,19 +657,81 @@
     </div>
     </div>
     <div class="container mt-4">
+        {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
+        <div class="alert alert-light border rounded shadow-sm mb-3 small lc-snapshot-banner" role="note">
+            <strong>Offline HTML snapshot</strong> —
+            Generated <strong>{{ snapshot_generated_at_pt }}</strong>
+            (<span translate="no">Pacific — America/Los_Angeles</span>).
+            Queued timestamps in the snapshots panel use the same zone.
+        </div>
+        {% endif %}
+        {% if not your_input_was %}
+        <div class="lc-hero">
+            <h1>List Creator <span class="font-weight-normal opacity-80">V7 </span></h1>
+            <p>Every run builds a saved HTML snapshot (Pacific time). Enter your styles or a Dropbox folder path plus a snapshot name. If descriptions are missing, you’ll pick them on the next step; otherwise the snapshot queues immediately.</p>
+        </div>
         {% if error_message %}
             <div class="alert alert-danger" role="alert">
                 {{ error_message }}
             </div>
         {% endif %}
-        <h2 style="color: red; text-align:center">List Creator V6.2<sub> - 5/14/25 </sub></h2>
-        <h3 style="color: #eb66a8; text-align:center">now supports -sml styles , not <b style="color: #007bff;">sets</b> but will be noted</h3>
         
-<!-- Add this section to your v6_listcreator.html template -->
-{% if your_input_was %}
-<div class="alert alert-info">
-    <strong>Your input was:</strong> {{ your_input_was }}
-    
+        <div class="lc-card">
+        <form method="POST" action="{{ url_for('v7_listcreator.index') }}" id="v7_listcreator_form">
+            {% set lc_hide_styles = (pivot_data is defined and pivot_data) or (your_input_was is defined and your_input_was) %}
+
+            {% if not lc_hide_styles %}
+            <div class="form-group mb-3">
+                <label class="lc-label-muted d-block mb-1" for="list_input">Styles or Dropbox path</label>
+                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401 or dropbox&#92;folder" value="{{ list_input or '' }}">
+            </div>
+            {% endif %}
+            {% if lc_hide_styles %}
+            <input type="hidden" name="list_input" id="list_input" value="{{ list_input or '' }}">
+            {% endif %}
+            {% if not list_input and not lc_hide_styles %}
+            <div class="form-group mb-3">
+                <label class="lc-label-muted d-block mb-1" for="random_strings_input">Raw list (Excel paste)</label>
+                <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5" placeholder="Comma or new line separated"></textarea>
+            </div>
+            {% endif %}
+            {% if not list_input and not lc_hide_styles %}
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="convert_newlines_checkbox">
+                <label class="form-check-label" for="convert_newlines_checkbox">
+                    Convert above raw list into comma-separated format
+                </label>
+            </div>
+            {% endif %}
+            <div class="form-group mb-4">
+                <label class="lc-label-muted d-block mb-1" for="snapshot_name">Snapshot name <span class="text-muted font-weight-normal">(required)</span></label>
+                <input type="text" class="form-control" id="snapshot_name" name="snapshot_name" maxlength="120" required minlength="2"
+                    placeholder="那个谁的list做一下"
+                    value="{{ snapshot_name if snapshot_name is defined else '' }}">
+                <small class="form-text text-muted">Labels your job (kept ~7 days). {% if snapshot_time_hint is defined and snapshot_time_hint %}<span class="text-dark">{{ snapshot_time_hint }}</span> · {% endif %}Pacific · <span translate="no">America/Los_Angeles</span></small>
+            </div>
+
+            <button type="submit" class="btn btn-lg text-white px-4" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">Run list</button>
+            <label class="form-check-label" for="convert_newlines_checkbox">Slack will notifiy you ! slack 信息通知已上线</label>
+        </form>
+        </div>
+        <div class="lc-panel" id="listcreatorHtmlJobsPanel">
+            <h6 class="font-weight-bold mb-2 text-dark">Jobs ( kepts for 7 days)</h6>
+            <ul id="listcreatorHtmlJobsHistory" class="list-unstyled small mb-0"></ul>
+            <p id="listcreatorHtmlJobsEmptyHint" class="small text-muted mb-0 mt-2">No snapshots yet.</p>
+        </div>
+        {% endif %}
+
+        {% if your_input_was %}
+        <div class="alert alert-info">
+            <strong>Your input was:</strong>
+            <div class="lc-your-input-lines mt-2 mb-0" role="region" aria-label="Submitted list">
+                {% for raw in your_input_was.split(',') %}
+                    {% set part = raw.strip() %}
+                    {% if part %}<div class="lc-your-input-row" translate="no">{{ part }}</div>{% endif %}
+                {% endfor %}
+            </div>
+
     {% if clean_list_for_memo %}
     <div class="mt-2">
         <strong>Your item list is:</strong> 
@@ -617,35 +763,14 @@
         {% endfor %}
     </div>
     {% endif %}
-</div>
-{% endif %}
-        <form method="POST" action="{{ url_for('v6_listcreator.index') }}" id="v6_listcreator_form">
-            {% if not list_input %}
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="convert_newlines_checkbox">
-                <label class="form-check-label" for="convert_newlines_checkbox">
-                    Convert each line to comma-separated format (e.g., T3508 BK, T3508 BR, T3508 TN)
-                </label>
-            </div>
-            {% endif %}
-            <div class="form-group">
-                <label class="mb-1" for="list_input">Styles or Dropbox link</label>
-                <input type="text" class="form-control" id="list_input" name="list_input" placeholder="Styles or Dropbox link" value="{{ list_input or '' }}">
-            </div>
-            {% if not list_input %}
-            <div class="form-group">
-                <label for="random_strings_input">Paste your raw list (e.g. from Excel). Separator can be comma or new line (Enter).</label>
-                <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5"></textarea>
-            </div>
-            {% endif %}
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
+        </div>
+        {% endif %}
         {% if not your_input_was %}
         <div class="container-fluid px-0 px-md-2 mt-4 mb-3 border rounded p-3 bg-light">
-            <p class="small text-muted mb-2 mb-md-3">Build one Excel file (<strong>.xlsx</strong>) with multiple sheets — processing runs <strong>on the server</strong> so you are not blocked by browser/proxy timeouts (e.g. Cloudflare <strong>524</strong>). When ready, download from <strong>Recent exports</strong> below (last <strong>3</strong> editions per user). Availability matches <a href="{{ url_for('product_detail.product_detail', search='t3305') }}" target="_blank" rel="noopener">product detail</a>: <strong>available</strong> = <code>in_stock − order_qty</code>; <strong>ocean</strong> = incoming; <strong>FDC</strong> + <strong>E_FAS</strong> summed per SKU/color. With cards loaded, your edits are used; otherwise the server uses the style field or auto-discovers styles with stock (capped).</p>
+            <p>All styles with any stock</p>
             <div class="d-flex flex-wrap align-items-center">
                 <button type="button" class="btn btn-success d-inline-flex align-items-center" id="btnExportWorkbook" onclick="exportWorkbook()" aria-busy="false">
-                    <span id="exportWorkbookBtnLabel">Queue Excel workbook</span>
+                    <span id="exportWorkbookBtnLabel">Queue Workbook</span>
                     <span id="exportWorkbookBtnSpinner" class="spinner-border spinner-border-sm ml-2 d-none" role="status" aria-hidden="true"></span>
                 </button>
             </div>
@@ -653,6 +778,7 @@
             <div class="form-check mt-2 mb-0">
                 <input class="form-check-input" type="checkbox" id="includeFullCatalog" checked>
                 <label class="form-check-label small" for="includeFullCatalog">Include <strong>Full_catalog</strong> (1800px images) when the export is small enough. For large lists it is omitted automatically. Uncheck to skip it entirely for a faster server job.</label>
+                <p>this will take around 20 minutes</p>
             </div>
             <div class="mt-3 pt-2 border-top">
                 <h6 class="small font-weight-bold text-muted mb-2">Recent exports (last 3)</h6>
@@ -741,8 +867,8 @@
                                     <label for="dropbox_image_{{ style }}" class="image-container">
                                         <div class="image-wrapper" onclick="enlargeImage(this.querySelector('.img-thumbnail'), this.querySelector('.img-thumbnail').dataset.fullsize)">
                                             <img src="/static/icons/dropbox.png" class="dropbox-overlay">
-                                            <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}?size=150" 
-                                                data-fullsize="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}"
+                                            <img src="{{ url_for('v7_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}?size=150" 
+                                                data-fullsize="{{ url_for('v7_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}"
                                                 alt="{{ style }}" 
                                                 class="img-thumbnail">
                                         </div>
@@ -783,7 +909,7 @@
 </script>
     <div class="mt-4 container">
         <h5 class="text-center mb-4">Please select descriptions for the following styles:</h5>
-        <form method="POST" action="{{ url_for('v6_listcreator.update_descriptions') }}">
+        <form method="POST" action="{{ url_for('v7_listcreator.update_descriptions') }}">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -798,7 +924,7 @@
                     <tr>
                         <td>
                             {% if style in dropbox_images %}
-                                <img src="{{ url_for('v6_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" 
+                                <img src="{{ url_for('v7_listcreator.serve_dropbox_image', filename=dropbox_images[style].split('/')[-1]) }}" 
                                      alt="{{ style }}" 
                                      onclick="enlargeImage(this, this.src)",
                                      style="width: 150px; height: auto;">
@@ -861,12 +987,14 @@
                     <button type="button" class="btn btn-outline-primary" onclick="selectImageSize(3000)">3000</button>
                     <button type="button" class="btn btn-outline-primary" onclick="selectImageSize('full')">100%</button>
                 </div>
-                <div class="text-center mt-4">
+                <div class="text-center mt-4 d-flex flex-wrap justify-content-center align-items-center" style="gap: 8px;">
                     <button type="button" class="btn btn-success" onclick="exportWithSelectedSize()">Export List</button>
                     <button type="button" class="btn btn-info" onclick="exportLoriFormat()">Export Lori</button>
                     <button type="button" class="btn btn-primary" onclick="exportSelectedImages()">Export Images</button>
                     <button type="button" class="btn btn-warning" onclick="exportPDF()">Export PDF</button>
-
+                    {% if list_input_is_dropbox_folder | default(false) %}
+                    <button type="button" class="btn btn-dark border" onclick="exportListToDropboxFolder()" title="Saves Excel as aaaa.xlsx in the synced Dropbox folder">Export to Dropbox folder</button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -962,6 +1090,8 @@
     remove: { index: 6, removable: false, name: 'Remove', exportExclude: true, required: true }
 };
 
+var V7_LC_LIST_INPUT_SNAPSHOT = {{ list_input | default('', true) | tojson }};
+
 let selectedImageSize = null;
 let pcsBoxHidden = false;
 let dimensionsHidden = false;
@@ -1041,17 +1171,6 @@ function toggleDimensions() {
     columnConfig.dimensions.visible = !dimensionsHidden;
     button.textContent = dimensionsHidden ? 'Show Dimensions' : 'Hide Dimensions';
     updateTableStructure();
-}
-
-function col_control_Stockonly() {
-    oceanHidden = true;
-    columnConfig.ocean.visible = false;
-    updateTableStructure();
-    removeZeroQuantityRows();
-}
-
-function col_control_StockOcean() {
-    removeZeroStockAndOceanRows();
 }
 
 function updateTableStructure() {
@@ -1150,6 +1269,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ensure counts are correct on load
     if (typeof updateRowCounts === 'function') updateRowCounts();
     if (typeof refreshWorkbookJobs === 'function') refreshWorkbookJobs();
+    if (typeof refreshListcreatorHtmlJobs === 'function') refreshListcreatorHtmlJobs();
 });
 
 // New: updateRowCounts implementation
@@ -1166,49 +1286,26 @@ function updateRowCounts() {
     });
 }
 
-function removeZeroQuantityRows() {
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        const quantity = parseInt(row.cells[1].innerText) || 0;
-        if (quantity <= 0) {
-            row.remove();
-        }
-    });
-}
-
-function removeZeroStockAndOceanRows() {
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        const quantity = parseInt(row.cells[1].innerText) || 0;
-        const ocean = parseInt(row.cells[2].innerText) || 0;
-        if (quantity <= 0 && ocean <= 0) {
-            row.remove();
-        }
-    });
-}
-
 // Export functions
 function setImageSizeAndExport(size) {
     selectedImageSize = size;
     exportList();
 }
 
-function exportList() {
-    const cards = document.querySelectorAll('.card');
+function gatherListcreatorExportData() {
     const exportData = [];
-    
-    cards.forEach(card => {
+    document.querySelectorAll('.card').forEach(card => {
         const style = getCardStyle(card);
-        if (!style) return; // skip cards without valid title (e.g. modal/internal cards)
+        if (!style) return;
         const descriptionElement = card.querySelector('.description-input');
         const rawDesc = descriptionElement ? descriptionElement.value.trim() : '';
         const description = rawDesc || 'N/A';
         const priceElement = card.querySelector('.text-primary');
-        const price = priceElement ? priceElement.innerText.trim() : "N/A";
-        
+        const price = priceElement ? priceElement.innerText.trim() : 'N/A';
+
         const selectedImage = card.querySelector(`input[name="image_option_${style}"]:checked`);
-        let imagePath = '/static/no_image_available.jpg'; // Default fallback
-        
+        let imagePath = '/static/no_image_available.jpg';
+
         if (selectedImage) {
             imagePath = selectedImage.value;
         }
@@ -1226,7 +1323,7 @@ function exportList() {
             const rowDataObj = {};
             Object.entries(columnConfig).forEach(([key, config]) => {
                 if (!config.exportExclude && config.visible) {
-                    rowDataObj[key] = row.cells[config.index].innerText.trim() || "0";
+                    rowDataObj[key] = row.cells[config.index].innerText.trim() || '0';
                 }
             });
             rowData.rows.push(rowDataObj);
@@ -1234,8 +1331,13 @@ function exportList() {
 
         exportData.push(rowData);
     });
+    return exportData;
+}
 
-    fetch('{{ url_for("v6_listcreator.export_list") }}', {
+function exportList() {
+    const exportData = gatherListcreatorExportData();
+
+    fetch('{{ url_for("v7_listcreator.export_list") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1265,8 +1367,59 @@ function exportList() {
     });
 }
 
-var WORKBOOK_JOBS_URL = '{{ url_for("v6_listcreator.export_workbook_jobs") }}';
-var WORKBOOK_DL_TMPL = '{{ url_for("v6_listcreator.export_workbook_download", job_id="00000000000000000000000000000000") }}';
+function exportListToDropboxFolder() {
+    const listSnap = (typeof V7_LC_LIST_INPUT_SNAPSHOT !== 'undefined' && V7_LC_LIST_INPUT_SNAPSHOT != null)
+        ? String(V7_LC_LIST_INPUT_SNAPSHOT).trim() : '';
+    if (!listSnap) {
+        alert('No Dropbox folder path is available for this run.');
+        return;
+    }
+    let imageSizePayload = selectedImageSize;
+    if (imageSizePayload === null || imageSizePayload === undefined) {
+        imageSizePayload = selectedSize;
+    }
+    if (imageSizePayload === null || imageSizePayload === undefined) {
+        imageSizePayload = 1800;
+    }
+
+    const exportData = gatherListcreatorExportData();
+
+    fetch('{{ url_for("v7_listcreator.export_list_to_dropbox") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            exportData,
+            list_input: listSnap,
+            image_size: imageSizePayload,
+            removedColumns: {
+                pcsBox: pcsBoxHidden,
+                dimensions: dimensionsHidden,
+                ocean: oceanHidden
+            }
+        })
+    })
+    .then(function(r) {
+        return r.json().then(function(body) {
+            return { ok: r.ok, status: r.status, body: body };
+        });
+    })
+    .then(function(res) {
+        if (!res.ok || !res.body || !res.body.ok) {
+            var msg = (res.body && res.body.error) ? res.body.error : 'Could not save to Dropbox folder.';
+            throw new Error(msg);
+        }
+        alert('Saved aaaa.xlsx in your Dropbox folder.');
+    })
+    .catch(function(err) {
+        console.error(err);
+        alert(err.message || 'Export to Dropbox failed.');
+    });
+}
+
+var WORKBOOK_JOBS_URL = '{{ url_for("v7_listcreator.export_workbook_jobs") }}';
+var WORKBOOK_DL_TMPL = '{{ url_for("v7_listcreator.export_workbook_download", job_id="00000000000000000000000000000000") }}';
+var LISTCREATOR_HTML_JOBS_URL = '{{ url_for("v7_listcreator.listcreator_html_jobs_api") }}';
 
 function workbookDownloadHref(jobId) {
     return WORKBOOK_DL_TMPL.replace('00000000000000000000000000000000', jobId);
@@ -1320,6 +1473,298 @@ function refreshWorkbookJobs() {
             }
         })
         .catch(function() { /* ignore */ });
+}
+
+var listcreatorHtmlJobsPoll = null;
+var lastListcreatorHtmlJobs = [];
+
+function escapeListcreatorJobsHtml(s) {
+    if (!s) return '';
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+var LC_PREVIEW_JOB_LS_PREFIX = 'v7LcPreviewResolved:';
+
+function lcGetPreferResolvedForJob(rid) {
+    if (!rid) return false;
+    try {
+        return localStorage.getItem(LC_PREVIEW_JOB_LS_PREFIX + rid) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function lcTogglePreferResolvedForJob(rid) {
+    if (!rid) return;
+    try {
+        var next = lcGetPreferResolvedForJob(rid) ? '0' : '1';
+        localStorage.setItem(LC_PREVIEW_JOB_LS_PREFIX + rid, next);
+    } catch (e) {}
+}
+
+function lcAttrEscapePreviewId(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function wireListcreatorPreviewBoxToggle() {
+    var ul = document.getElementById('listcreatorHtmlJobsHistory');
+    if (!ul || ul.dataset.lcPreviewTriggerBound === '1') return;
+    ul.dataset.lcPreviewTriggerBound = '1';
+    function handleToggle(ev, trg) {
+        if (!trg || trg.getAttribute('data-action') !== 'toggle-job-preview') return;
+        ev.preventDefault();
+        var rid = (trg.getAttribute('data-rid') || '').trim();
+        if (!rid) return;
+        lcTogglePreferResolvedForJob(rid);
+        renderListcreatorHtmlJobsHistory(window.lastListcreatorHtmlJobs || []);
+    }
+    ul.addEventListener('click', function(ev) {
+        handleToggle(ev, ev.target.closest('[data-action="toggle-job-preview"]'));
+    });
+    ul.addEventListener('keydown', function(ev) {
+        if (ev.key !== 'Enter' && ev.key !== ' ') return;
+        var trg = ev.target.closest('[data-action="toggle-job-preview"]');
+        if (!trg) return;
+        handleToggle(ev, trg);
+    });
+}
+
+function listcreatorRenameJobUrl(rid) {
+    if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
+    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/rename');
+}
+
+function listcreatorDeleteJobUrl(rid) {
+    if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
+    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/delete');
+}
+
+function listcreatorRedoJobUrl(rid) {
+    if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
+    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/redo');
+}
+
+/** Prefer DELETE; some proxies only allow POST. */
+function listcreatorFetchDelete(url) {
+    return fetch(url, { method: 'DELETE', credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function(r) {
+            if (r.status === 405) {
+                return fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: '{}'
+                });
+            }
+            return r;
+        });
+}
+
+function lcPreviewPayload(j, preferResolved) {
+    var resolved = ((j.resolved_styles_full || j.resolved_styles) || '').trim();
+    var src = ((j.list_input || j.list_input_preview) || '').trim();
+    var isPath = !!j.source_is_path;
+    if (preferResolved) {
+        if (resolved) {
+            var parts = resolved.split(',').filter(function(x) { return !!x.trim(); });
+            var n = parts.length;
+            var cap = 'Resolved style list' + (n ? (' (' + n + ')') : '');
+            return { body: resolved, caption: cap };
+        }
+        return { body: src, caption: 'Still processing — resolved list fills in when rendering completes' };
+    }
+    if (isPath) {
+        return { body: src, caption: 'Dropbox / folder path you submitted , click below to switch' };
+    }
+    return { body: src, caption: 'Source line submitted' };
+}
+
+function wireListcreatorSnapshotJobsActions() {
+    var ul = document.getElementById('listcreatorHtmlJobsHistory');
+    if (!ul || ul.dataset.lcSnapActionsBound === '1') return;
+    ul.dataset.lcSnapActionsBound = '1';
+    ul.addEventListener('click', function(ev) {
+        var redoBtn = ev.target.closest('[data-action="redo-snapshot-job"]');
+        if (redoBtn) {
+            var rawRid = redoBtn.getAttribute('data-rid');
+            if (!rawRid) return;
+            var redoUrl = listcreatorRedoJobUrl(rawRid);
+            if (!redoUrl) return;
+            if (!window.confirm('Queue a fresh snapshot with the same style list and label? You will go to the progress page for the new build.')) return;
+            redoBtn.disabled = true;
+            fetch(redoUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: '{}'
+            })
+                .then(function(r) {
+                    return r.json().then(function(j) {
+                        return { ok: r.ok, data: j };
+                    });
+                })
+                .then(function(res) {
+                    redoBtn.disabled = false;
+                    if (!res.ok || !res.data || !res.data.ok) {
+                        alert((res.data && res.data.error) ? res.data.error : 'Could not queue redo.');
+                        return;
+                    }
+                    if (res.data.wait_url) {
+                        window.location.href = res.data.wait_url;
+                    }
+                })
+                .catch(function() {
+                    redoBtn.disabled = false;
+                    alert('Redo request failed.');
+                });
+            return;
+        }
+        var delBtn = ev.target.closest('[data-action="delete-snapshot-job"]');
+        if (delBtn) {
+            var drid = delBtn.getAttribute('data-rid');
+            if (!drid) return;
+            var st = (delBtn.getAttribute('data-status') || '').trim();
+            var msg = 'Remove this snapshot from your list';
+            msg += ' (manifest and cached HTML are deleted)';
+            msg += '? This cannot be undone.';
+            if (st === 'running') msg += '\n\nThe job may still finish in the background briefly; refresh if something reappears.';
+            if (!window.confirm(msg)) return;
+            var delUrl = listcreatorDeleteJobUrl(drid);
+            if (!delUrl) return;
+            listcreatorFetchDelete(delUrl).then(function(r) {
+                    return r.json().then(function(j) {
+                        return { ok: r.ok, data: j };
+                    });
+                })
+                .then(function(res) {
+                    if (!res.ok || !res.data || !res.data.ok) {
+                        alert((res.data && res.data.error) ? res.data.error : 'Delete failed.');
+                        return;
+                    }
+                    if (typeof refreshListcreatorHtmlJobs === 'function') refreshListcreatorHtmlJobs();
+                })
+                .catch(function() { alert('Delete request failed.'); });
+            return;
+        }
+        var btn = ev.target.closest('[data-action="rename-snapshot-job"]');
+        if (!btn) return;
+        var rid = btn.getAttribute('data-rid');
+        if (!rid) return;
+        var cur = '';
+        (window.lastListcreatorHtmlJobs || []).forEach(function(row) {
+            if (row && row.id === rid) cur = row.snapshot_name || '';
+        });
+        var nw = prompt('New snapshot label (shown in this list)', cur);
+        if (nw === null) return;
+        nw = nw.replace(/^\s+|\s+$/g, '');
+        if (!nw || nw.length < 2) {
+            alert('Use at least 2 characters.');
+            return;
+        }
+        fetch(listcreatorRenameJobUrl(rid), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ snapshot_name: nw })
+        })
+            .then(function(r) {
+                return r.json().then(function(j) {
+                    return { ok: r.ok, data: j };
+                });
+            })
+            .then(function(res) {
+                if (!res.ok || !res.data || !res.data.ok) {
+                    alert((res.data && res.data.error) ? res.data.error : 'Rename failed.');
+                    return;
+                }
+                if (typeof refreshListcreatorHtmlJobs === 'function') refreshListcreatorHtmlJobs();
+            })
+            .catch(function() { alert('Rename request failed.'); });
+    });
+}
+
+function renderListcreatorHtmlJobsHistory(jobs) {
+    var el = document.getElementById('listcreatorHtmlJobsHistory');
+    var emptyHint = document.getElementById('listcreatorHtmlJobsEmptyHint');
+    if (!el) return;
+    wireListcreatorPreviewBoxToggle();
+    wireListcreatorSnapshotJobsActions();
+    window.lastListcreatorHtmlJobs = jobs || [];
+    if (!jobs || !jobs.length) {
+        el.innerHTML = '';
+        if (emptyHint) emptyHint.classList.remove('d-none');
+        return;
+    }
+    if (emptyHint) emptyHint.classList.add('d-none');
+    el.innerHTML = jobs.map(function(j) {
+        var status = (j.status || '');
+        var badge = status === 'ready' ? 'success' : (status === 'running' ? 'warning' : (status === 'failed' ? 'danger' : 'secondary'));
+        var title = escapeListcreatorJobsHtml((j.snapshot_name || '').trim());
+        var subId = j.id ? (j.id.length > 14 ? (j.id.substring(0, 10) + '…') : j.id) : '';
+        var timeLine = escapeListcreatorJobsHtml(j.created_at_pt_display || j.created_at || '');
+        var genLine = '';
+        if (j.snapshot_generated_at_pt && status === 'ready') {
+            genLine = ' · rendered ' + escapeListcreatorJobsHtml(j.snapshot_generated_at_pt);
+        }
+        var headline = title ? ('<strong>' + title + '</strong>') : ('<strong>' + escapeListcreatorJobsHtml(subId || 'Snapshot') + '</strong>');
+        if (title && subId) headline += ' <span class="text-muted small font-weight-normal">· ' + escapeListcreatorJobsHtml(subId) + '</span>';
+        var line = headline + (timeLine ? ' <span class="text-muted">&middot; ' + timeLine + genLine + '</span>' : '');
+        var delSnapBtn = '<button type="button" class="btn btn-sm btn-outline-danger ml-1" data-action="delete-snapshot-job" data-rid="'
+            + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '">Delete</button>';
+        var actions = '';
+        if (status === 'ready' && j.view_url) {
+            actions += '<a class="btn btn-sm btn-outline-success ml-1" href="' + j.view_url + '" target="_blank" rel="noopener">Open snapshot</a>';
+            actions += '<button type="button" class="btn btn-sm btn-outline-secondary ml-1" data-action="redo-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Redo snapshot</button>';
+            actions += '<button type="button" class="btn btn-sm btn-outline-primary ml-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Rename</button>';
+            actions += delSnapBtn;
+        } else if (status === 'running' || status === 'failed') {
+            if (j.wait_url) actions += ' <a class="btn btn-sm btn-outline-secondary ml-1" href="' + j.wait_url + '">' + (status === 'running' ? 'Watch progress' : 'Details') + '</a>';
+            actions += '<button type="button" class="btn btn-sm btn-outline-primary ml-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Rename</button>';
+            actions += delSnapBtn;
+        }
+        var err = (status === 'failed' && j.error) ? (' <span class="text-danger d-block mt-1 small">' + escapeListcreatorJobsHtml(j.error) + '</span>') : '';
+        var jobRid = (j.id || '').trim();
+        var preferThis = lcGetPreferResolvedForJob(jobRid);
+        var pr = lcPreviewPayload(j, preferThis);
+        var previewHtml = '';
+        if (pr.body) {
+            var capHtml = pr.caption ? ('<span class="d-block small text-muted mb-1">' + escapeListcreatorJobsHtml(pr.caption) + '</span>') : '';
+            var prevBoxClass = 'lc-job-src-preview lc-job-preview-trigger' + (!preferThis ? ' lc-job-src-preview--oneline' : '');
+            var ridAttr = jobRid ? (' data-rid="' + lcAttrEscapePreviewId(jobRid) + '"') : '';
+            previewHtml = '<div class="mt-2">' + capHtml + '<div class="' + prevBoxClass + '"' + ridAttr + ' data-action="toggle-job-preview" role="button" tabindex="0" title="Click to switch between source line and resolved styles">' + escapeListcreatorJobsHtml(pr.body) + '</div></div>';
+        }
+        return '<li class="mb-3 border-bottom pb-2">' +
+            '<div>' + line + ' <span class="badge badge-' + badge + '">' + escapeListcreatorJobsHtml(status) + '</span> ' + actions + '</div>' +
+            previewHtml + err + '</li>';
+    }).join('');
+}
+
+function refreshListcreatorHtmlJobs() {
+    if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined') return;
+    fetch(LISTCREATOR_HTML_JOBS_URL, { credentials: 'same-origin' })
+        .then(function(r) {
+            if (!r.ok) throw new Error('html jobs');
+            return r.json();
+        })
+        .then(function(data) {
+            renderListcreatorHtmlJobsHistory(data.jobs || []);
+            var running = (data.jobs || []).some(function(j) { return j.status === 'running'; });
+            if (running && !listcreatorHtmlJobsPoll) {
+                listcreatorHtmlJobsPoll = setInterval(refreshListcreatorHtmlJobs, 4000);
+            }
+            if (!running && listcreatorHtmlJobsPoll) {
+                clearInterval(listcreatorHtmlJobsPoll);
+                listcreatorHtmlJobsPoll = null;
+            }
+        })
+        .catch(function() {
+            var el = document.getElementById('listcreatorHtmlJobsHistory');
+            var emptyHint = document.getElementById('listcreatorHtmlJobsEmptyHint');
+            if (emptyHint) emptyHint.classList.add('d-none');
+            if (el) el.innerHTML = '<li class="text-danger small">Could not load snapshot jobs.</li>';
+        });
 }
 
 function parseWorkbookExportErrorBody(text, status, statusText) {
@@ -1409,7 +1854,7 @@ function exportWorkbook() {
     const includeFullCatalogEl = document.getElementById('includeFullCatalog');
     const includeFullCatalog = includeFullCatalogEl ? includeFullCatalogEl.checked : true;
 
-    fetch('{{ url_for("v6_listcreator.export_workbook") }}', {
+    fetch('{{ url_for("v7_listcreator.export_workbook") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',

@@ -300,7 +300,9 @@ def request_password_reset():
                     return jsonify({"error": "No email address associated with this account. Please contact support."}), 400
                 
                 token = generate_reset_token(username)
-                reset_url = url_for("auth.reset_password", token=token, _external=True)
+                reset_path = url_for("auth.reset_password", token=token)
+                pub = getattr(Config, "PUBLIC_APP_ORIGIN", "https://www.fdcef.com").rstrip("/")
+                reset_url = pub + reset_path
                 
                 # Send email with reset link
                 subject = "Password Reset Request"

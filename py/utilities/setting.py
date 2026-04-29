@@ -23,7 +23,7 @@ class Config:
     }
     
     # Legacy paths - DEPRECATED: Use DAM system instead
-    LOCAL_DROPBOX_DIR = r"C:\users\stream\dropbox"  # Still used by V6listcreator
+    LOCAL_DROPBOX_DIR = r"C:\users\stream\dropbox"  # Still used by V7listcreator
     BURLINGTON_HIGHLIGHT = r"C:\users\stream\dropbox\ruikun" 
     DROPBOX_CONTAINER_CATALOG_DIR = r"C:\users\stream\Dropbox\Pictures-China (1)\container catalog"
     FTP = r"D:\FTP"
@@ -37,6 +37,12 @@ class Config:
     SLACK_WEBHOOK_URL_SHIPPING_RECEIPT = 'https://hooks.slack.com/services/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'
     SLACK_TOKEN = 'xoxb-4986748541874-7439245251395-YMVIoCeqbhWRp4rAFx66JGMK'
     SLACK_CHANNEL = 'C07CGNKSPF1'
+    # V7 List Creator: snapshot ready + workbook export ready → #v7-list_creator_bot
+    # Override with env SLACK_WEBHOOK_URL_V7_LIST_CREATOR if you rotate the webhook.
+    SLACK_WEBHOOK_URL_V7_LIST_CREATOR = os.getenv(
+        'SLACK_WEBHOOK_URL_V7_LIST_CREATOR',
+        'https://hooks.slack.com/services/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',
+    ).strip()
     SERVICE_ACCOUNT_FILE = r'C:/FDC_FLASK_APP/credentials.json'
     
     # Update these scopes to be consistent
@@ -78,6 +84,12 @@ class Config:
 
     # Database URL for SQLAlchemy
     DATABASE_URL = f"mysql+mysqlconnector://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+
+    # --- Public vs LAN base URLs ---
+    # Password reset and other emails must always use the public HTTPS origin (never a LAN IP).
+    PUBLIC_APP_ORIGIN = os.getenv('PUBLIC_APP_ORIGIN', 'https://www.fdcef.com').rstrip('/')
+    # Shown in navbar when user is on LAN; override if your listen port differs from default.
+    LAN_ORIGIN_HINT = os.getenv('LAN_ORIGIN_HINT', 'http://192.168.254.30:5555').rstrip('/')
 
     # Folder paths for image ingestion - use DAM system paths
     CATALOG_ORIGINAL_DIR = Path(IMAGE_DAM_CATALOG_DIR)
