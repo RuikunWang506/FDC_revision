@@ -511,6 +511,16 @@ def process_list_input(list_input, current_user):
         for style in style_list:
             description = get_description_from_mysql(style)
             descriptions[style] = description
+
+        # Drive the "Please select descriptions" prompt instead of silently using N/A on the cards.
+        seen_missing_desc = set()
+        missing_descriptions = []
+        for style in style_list:
+            raw = descriptions.get(style, '') or ''
+            norm = raw.strip().upper()
+            if norm in ('', 'N/A', 'NA') and style not in seen_missing_desc:
+                seen_missing_desc.add(style)
+                missing_descriptions.append(style)
         
         style_count = {}
         for style in style_list:

@@ -640,7 +640,7 @@
             {% endif %}
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
-
+        {% if not your_input_was %}
         <div class="container-fluid px-0 px-md-2 mt-4 mb-3 border rounded p-3 bg-light">
             <p class="small text-muted mb-2 mb-md-3">Build one Excel file (<strong>.xlsx</strong>) with multiple sheets — processing runs <strong>on the server</strong> so you are not blocked by browser/proxy timeouts (e.g. Cloudflare <strong>524</strong>). When ready, download from <strong>Recent exports</strong> below (last <strong>3</strong> editions per user). Availability matches <a href="{{ url_for('product_detail.product_detail', search='t3305') }}" target="_blank" rel="noopener">product detail</a>: <strong>available</strong> = <code>in_stock − order_qty</code>; <strong>ocean</strong> = incoming; <strong>FDC</strong> + <strong>E_FAS</strong> summed per SKU/color. With cards loaded, your edits are used; otherwise the server uses the style field or auto-discovers styles with stock (capped).</p>
             <div class="d-flex flex-wrap align-items-center">
@@ -660,7 +660,7 @@
                 <p class="small text-muted mb-0 mt-2">Each click creates a new edition. Oldest file is removed when you exceed three.</p>
             </div>
         </div>
-
+        {% endif %}
 {% if pivot_data and not missing_descriptions %}
 
 
