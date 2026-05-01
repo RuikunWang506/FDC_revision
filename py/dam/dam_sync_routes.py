@@ -12,7 +12,8 @@ def login_required(f):
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
     return decorated_function
-from threading import Thread
+from threading import Thread, Lock
+import json
 import os
 import re
 import subprocess
@@ -29,7 +30,60 @@ from py.utilities.logging_setup import log_event
 
 dam_sync_bp = Blueprint('dam_sync', __name__, url_prefix='/dam')
 
-HOURLY_TASK_NAME = 'FDC DAM Hourly Sync'
+# Serialized writes to dedicated audit file (parallel to hourly_sync.log / log.txt troubleshooting).
+_dam_cron_audit_lock = Lock()
+
+
+def _dam_cron_audit_path():
+    try:
+        from py.utilities.setting import Config
+        log_file = getattr(Config, 'LOG_FILE', None) or ''
+        base = os.path.dirname(log_file) if log_file else os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', '..'))
+        return os.path.join(base, 'dam_cron_audit.log')
+    except Exception:
+        return os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')), 'dam_cron_audit.log')
+
+
+def dam_cron_audit(event, **kv):
+    """Append one NDJSON-friendly line so you can grep who called /dam/cron/*."""
+    try:
+        row = {'ts': datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'event': event}
+        row.update(kv)
+        line = json.dumps(row, ensure_ascii=False, default=str) + '\n'
+        ap = _dam_cron_audit_path()
+        dname = os.path.dirname(ap)
+        if dname and not os.path.exists(dname):
+            os.makedirs(dname, exist_ok=True)
+        with _dam_cron_audit_lock:
+            with open(ap, 'a', encoding='utf-8') as fh:
+                fh.write(line)
+    except Exception:
+        pass
+
+
+def _cron_request_client():
+    """Best-effort client + proxy forwarding context (never log secrets)."""
+    try:
+        return {
+            'remote_addr': getattr(request, 'remote_addr', None),
+            'xff': (request.headers.get('X-Forwarded-For') or '')[:512],
+            'user_agent': (request.headers.get('User-Agent') or '')[:512],
+            'forwarded': (request.headers.get('Forwarded') or '')[:512],
+            'host': (request.headers.get('Host') or '')[:255],
+            'fwd_proto': (request.headers.get('X-Forwarded-Proto') or '')[:64],
+            'referer': (request.headers.get('Referer') or '')[:512],
+            'method': getattr(request, 'method', ''),
+            'path': getattr(request, 'path', ''),
+            'content_length': getattr(request, 'content_length', None),
+            'secret_header_present': bool((request.headers.get('X-DAM-Cron-Secret') or '').strip()),
+        }
+    except Exception:
+        return {}
+
+# Windows Task Scheduler: primary unattended sync (every 24 hours). Legacy name kept for migration queries.
+DAILY_SYNC_TASK_NAME = 'FDC DAM Daily Sync'
+LEGACY_HOURLY_TASK_NAME = 'FDC DAM Hourly Sync'
 WEEKLY_TASK_NAME = 'FDC DAM Weekly Rebuild'
 
 # Max log lines to retain in memory (prevent unbounded growth)
@@ -261,6 +315,15 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
                         f"updated={st.get('total_updated')} skipped={st.get('total_skipped')} "
                         f"errors={st.get('total_errors')} last_run={sync_status.get('last_run')}",
                     )
+                    dam_cron_audit(
+                        'cron_background_finished_ok',
+                        processed=st.get('total_processed'),
+                        added=st.get('total_added'),
+                        updated=st.get('total_updated'),
+                        skipped=st.get('total_skipped'),
+                        errors=st.get('total_errors'),
+                        last_run=sync_status.get('last_run'),
+                    )
                 except Exception:
                     pass
 
@@ -274,6 +337,7 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
         if log_source == 'cron':
             try:
                 log_event('error', f'🔴 ERROR DAM scheduled sync FAILED (cron): {e}')
+                dam_cron_audit('cron_background_finished_error', error=str(e)[:2000])
             except Exception:
                 pass
         # Use original_print if available, otherwise regular print
@@ -353,17 +417,24 @@ def dam_sync_home():
 @dam_sync_bp.route('/scheduler-next', methods=['GET'])
 @login_required
 def scheduler_next():
-    """Next schtasks run times for hourly/weekly DAM automation (Windows Task Scheduler)."""
+    """Next schtasks run times for daily (24h) + weekly DAM automation (Windows Task Scheduler)."""
     if 'username' not in session:
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
 
-    hourly = {'task': HOURLY_TASK_NAME, **_schtasks_next_run(HOURLY_TASK_NAME)}
+    daily = {'task': DAILY_SYNC_TASK_NAME, **_schtasks_next_run(DAILY_SYNC_TASK_NAME)}
+    # If the server was never re-provisioned, fall back to legacy hourly task name for display.
+    if daily.get('error') or daily.get('next_ts_ms') is None:
+        legacy = {'task': LEGACY_HOURLY_TASK_NAME, **_schtasks_next_run(LEGACY_HOURLY_TASK_NAME)}
+        if not legacy.get('error') and legacy.get('next_ts_ms') is not None:
+            daily = legacy
     weekly = {'task': WEEKLY_TASK_NAME, **_schtasks_next_run(WEEKLY_TASK_NAME)}
     return jsonify({
         'success': True,
         'platform': sys.platform,
-        'hourly': hourly,
+        'daily': daily,
         'weekly': weekly,
+        # Deprecated alias for old frontends
+        'hourly': daily,
     })
 
 
@@ -376,21 +447,34 @@ def dam_cron_start():
     POST JSON body matches /dam/start:
       force_rebuild_index, include_fetch, include_cleanup (all optional booleans).
     """
+    client = _cron_request_client()
+
     if not _dam_cron_secret():
+        dam_cron_audit('cron_start_rejected', outcome='cron_disabled_missing_secret_env', **client)
         return jsonify({
             'success': False,
             'error': 'Cron automation disabled: set environment variable DAM_CRON_SECRET on this server.',
         }), 503
     if not _cron_authorized():
+        dam_cron_audit('cron_start_rejected', outcome='unauthorized_bad_or_missing_secret', **client)
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
 
     if sync_status['is_running']:
+        dam_cron_audit('cron_start_rejected', outcome='sync_already_running', **client)
         return jsonify({'success': False, 'message': 'Sync is already running'}), 400
 
     data = request.get_json() or {}
     force_rebuild_index = data.get('force_rebuild_index', False)
     include_fetch = data.get('include_fetch', True)
     include_cleanup = data.get('include_cleanup', True)
+
+    dam_cron_audit(
+        'cron_start_accepted',
+        fetch=include_fetch,
+        rebuild_index=force_rebuild_index,
+        cleanup=include_cleanup,
+        **client,
+    )
 
     try:
         current_app.logger.info(
@@ -419,9 +503,13 @@ def dam_cron_start():
 @dam_sync_bp.route('/cron/status', methods=['GET'])
 def dam_cron_status():
     """Minimal status for monitoring scripts (same X-DAM-Cron-Secret header)."""
+    client = _cron_request_client()
+
     if not _dam_cron_secret():
+        dam_cron_audit('cron_status_rejected', outcome='cron_disabled_missing_secret_env', **client)
         return jsonify({'configured': False, 'error': 'DAM_CRON_SECRET not set'}), 503
     if not _cron_authorized():
+        dam_cron_audit('cron_status_rejected', outcome='unauthorized_bad_or_missing_secret', **client)
         return jsonify({'error': 'Unauthorized'}), 401
 
     _reconcile_false_errors()

@@ -1879,13 +1879,11 @@ def boat_packslip(container_number):
             if style not in style_carton_totals:
                 style_carton_totals[style] = 0
             style_carton_totals[style] += num_cartons
-            current_app.logger.info(f"Style {style}: adding {num_cartons} cartons, total now = {style_carton_totals[style]}")
         
         # Fill in Total Boxes for each item using the summed carton count
         for item in packslip_data:
             style = item['Style']
             item['Total Boxes'] = style_carton_totals.get(style, 0)
-            current_app.logger.info(f"Item {style} {item['SKU']}: Total Boxes = {item['Total Boxes']}")
 
         # Add order summary fields from pending/active ROSS/BURLINGTON orders.
         full_skus = [item.get('Full SKU', '') for item in packslip_data]

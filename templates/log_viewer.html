@@ -158,6 +158,44 @@
             font-weight: bold;
             color: #007bff;
         }
+
+        .live-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        #live-status {
+            font-size: 0.95rem;
+            color: #555;
+            min-height: 1.2rem;
+        }
+
+        #live-status.connected { color: #198754; font-weight: 600; }
+
+        #live-status.disconnected { color: #6c757d; }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        #live-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse-dot 1.25s ease-in-out infinite;
+        }
+
+        #live-indicator.off {
+            background: #adb5bd;
+            animation: none;
+        }
     </style>
 </head>
 <body>
@@ -184,7 +222,21 @@
         Showing results for: "{{ search_term }}"
     </div>
     {% endif %}
-    
+
+    {% set stream_url = url_for('stream_log') %}
+    <div class="live-panel">
+        <span id="live-indicator"{% if search_term %} class="off"{% endif %} title="Live stream heartbeat"></span>
+        <button type="button"
+                id="live-toggle"
+                class="live-toggle-btn{% if not search_term %} active{% endif %}"
+                data-live-on="{% if search_term %}0{% else %}1{% endif %}"
+                {% if search_term %}disabled title="Clear search — live tail is disabled while filtering"{% endif %}>
+            {% if search_term %}Live off{% else %}Live on{% endif %}
+        </button>
+        <span id="live-status"
+              class="{% if search_term %}disconnected{% endif %}">{{ 'Search mode — live tail disabled.' if search_term else '' }}</span>
+    </div>
+
     <div id="log-container">
         {% for log_class, line in log_lines %}
             <div class="log-entry {{ log_class }}">
@@ -219,64 +271,130 @@
     </div>
 
     <script>
-                       
+        const STREAM_URL = {{ stream_url | tojson }};
+        const SEARCH_TERM_RAW = {{ search_term | tojson }};
         const logContainer = document.getElementById("log-container");
         const searchInput = document.getElementById("search-input");
-        
-        // For live log updates
+        const liveToggle = document.getElementById("live-toggle");
+        const liveStatus = document.getElementById("live-status");
+        const liveIndicator = document.getElementById("live-indicator");
+        const MAX_LIVE_ROWS = 300;
+
+        let evtSource = null;
+        let liveEnabled = {% if search_term %}false{% else %}true{% endif %};
+
+        function setLiveUi(connected, label) {
+            if (liveStatus) {
+                liveStatus.textContent = label || '';
+                liveStatus.classList.toggle('connected', !!connected);
+                liveStatus.classList.toggle('disconnected', !connected);
+            }
+            if (liveIndicator) {
+                liveIndicator.classList.toggle('off', !(connected && liveEnabled));
+            }
+        }
+
+        function trimLiveRows() {
+            for (;;) {
+                const rows = logContainer.querySelectorAll(':scope > .live-stream-line');
+                if (rows.length <= MAX_LIVE_ROWS) break;
+                rows[rows.length - 1].remove();
+            }
+        }
+
+        function applyLogClasses(el, logClass) {
+            el.className = 'log-entry live-stream-line';
+            ['error', 'info', 'success', 'warning'].forEach(c => el.classList.remove(c));
+            if (logClass) el.classList.add(logClass);
+        }
+
         function connectEventSource() {
-            const evtSource = new EventSource("/log/stream");
+            if (!liveEnabled || SEARCH_TERM_RAW) return;
+            if (evtSource) evtSource.close();
+            setLiveUi(false, 'Connecting…');
 
-            evtSource.onmessage = function(event) {
+            evtSource = new EventSource(STREAM_URL);
+
+            evtSource.onopen = () => setLiveUi(true, 'Connected — streaming new lines');
+
+            evtSource.onmessage = function (event) {
                 try {
+                    if (!event.data) return;
                     const data = JSON.parse(event.data);
-                    const { log_class, formatted_line } = data;
+                    const { log_class: logClass, formatted_line: formattedLine } = data;
 
-                    if (formatted_line) {
-                        const logEntry = document.createElement("div");
-                        logEntry.className = "log-entry";
+                    if (!formattedLine) return;
 
-                        if (log_class === 'error') {
-                            logEntry.classList.add('error');
-                        } else if (log_class === 'info') {
-                            logEntry.classList.add('info');
-                        }
+                    const logEntry = document.createElement('div');
+                    applyLogClasses(logEntry, logClass);
 
-                        // If we're searching, highlight the search term in new entries
-                        const searchTerm = "{{ search_term }}";
-                        if (searchTerm && formatted_line.toLowerCase().includes(searchTerm.toLowerCase())) {
-                            const regex = new RegExp(searchTerm, 'gi');
-                            logEntry.innerHTML = formatted_line.replace(
-                                regex, 
-                                match => `<mark class="highlight-search">${match}</mark>`
-                            );
-                        } else {
-                            logEntry.innerHTML = formatted_line;
-                        }
-                        
-                        // Prepend the new line at the top
-                        logContainer.insertBefore(logEntry, logContainer.firstChild);
+                    const st = SEARCH_TERM_RAW;
+                    if (st && formattedLine.toLowerCase().includes(st.toLowerCase())) {
+                        const regex = new RegExp(st.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                        logEntry.innerHTML = formattedLine.replace(regex, m => `<mark class="highlight-search">${m}</mark>`);
+                    } else {
+                        logEntry.innerHTML = formattedLine;
                     }
+
+                    logContainer.insertBefore(logEntry, logContainer.firstChild);
+                    trimLiveRows();
                 } catch (e) {
-                    console.error("Failed to parse log line:", e);
+                    console.error('SSE parse error:', e);
                 }
             };
 
-            evtSource.onerror = function(err) {
-                console.error("EventSource error, reconnecting...", err);
+            evtSource.onerror = () => {
                 evtSource.close();
-                setTimeout(connectEventSource, 3000); // Retry connection after 3 seconds
+                evtSource = null;
+                if (!liveEnabled) {
+                    setLiveUi(false, 'Live off');
+                    return;
+                }
+                setLiveUi(false, 'Disconnected — reconnecting…');
+                setTimeout(() => liveEnabled && !SEARCH_TERM_RAW && connectEventSource(), 3000);
             };
         }
 
-        connectEventSource();
-        
-        // Focus the search input when the page loads
-        window.onload = function() {
+        function stopLiveStream() {
+            liveEnabled = false;
+            if (evtSource) {
+                evtSource.close();
+                evtSource = null;
+            }
+            if (liveToggle) {
+                liveToggle.classList.remove('active');
+                liveToggle.dataset.liveOn = '0';
+                liveToggle.textContent = 'Live off';
+            }
+            setLiveUi(false, 'Live off');
+        }
+
+        function startLiveStream() {
+            if (SEARCH_TERM_RAW) return;
+            liveEnabled = true;
+            if (liveToggle) {
+                liveToggle.classList.add('active');
+                liveToggle.dataset.liveOn = '1';
+                liveToggle.textContent = 'Live on';
+            }
+            connectEventSource();
+        }
+
+        if (liveToggle) {
+            liveToggle.addEventListener('click', () => {
+                if (liveToggle.disabled) return;
+                if (liveToggle.dataset.liveOn === '1') stopLiveStream();
+                else startLiveStream();
+            });
+        }
+
+        if (!SEARCH_TERM_RAW) startLiveStream();
+        else stopLiveStream();
+
+        window.addEventListener('load', () => {
             searchInput.focus();
-            // Position cursor at the end of the input text
             searchInput.selectionStart = searchInput.selectionEnd = searchInput.value.length;
-        };
+        });
     </script>
 </body>
 </html>

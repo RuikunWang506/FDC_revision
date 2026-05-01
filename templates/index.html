@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FDC Main Menu</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   <style>
     /* Scope all styles to dashboard only - avoid navbar conflicts */
     .dashboard-wrapper {
-      background: url('https://images.template.net/551110/Liquid-Swirl-3D-Paint-edit-online.webp') no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='luca-bravo-zAjdgNXsMeg-unsplash.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       font-family: 'Inter', 'Segoe UI', sans-serif;
       color: #e8f4fd;
@@ -34,18 +36,30 @@
     }
     
     .dashboard-wrapper .dashboard-container {
-      max-width: 1400px;
+      max-width: 1480px;
       margin: 0 auto;
       padding: 1.5rem;
       display: grid;
-      grid-template-columns: 250px 1fr;
+      grid-template-columns: minmax(248px, 280px) 1fr;
       gap: 2rem;
       align-items: start;
+    }
+
+    /* scrollable categories on smaller laptop screens */
+    .dashboard-wrapper #dashboard-nav-panel {
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+
+    #dashboard-nav-panel::-webkit-scrollbar { width: 6px; }
+    #dashboard-nav-panel::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.35);
+      border-radius: 6px;
     }
     
     /* Smart Navigation Panel */
     .dashboard-wrapper .nav-panel {
-      background: rgba(18, 25, 38, 0.8);
+      background: rgba(18, 25, 38, 0.9);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(0, 240, 255, 0.2);
       border-radius: 20px;
@@ -74,10 +88,49 @@
       font-size: 0.9rem;
       margin: 0.5rem 0 0 0;
     }
+
+    .dashboard-wrapper .dashboard-nav-search {
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+    }
+    .dashboard-wrapper .dashboard-nav-search label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #8892b0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+    .dashboard-wrapper .dashboard-nav-search label i {
+      color: #00d4ff;
+      font-size: 0.75rem;
+    }
+    .dashboard-wrapper .dashboard-nav-search input[type="search"] {
+      width: 100%;
+      padding: 0.52rem 0.72rem;
+      font-size: 0.86rem;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 240, 255, 0.28);
+      background: rgba(10, 14, 22, 0.55);
+      color: #e8f4fd;
+    }
+    .dashboard-wrapper .dashboard-nav-search input[type="search"]:focus {
+      outline: none;
+      border-color: #00d4ff;
+      box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.22);
+    }
+    .dashboard-wrapper .dashboard-nav-search input[type="search"]::placeholder {
+      color: #627792;
+    }
     
     .dashboard-wrapper .nav-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
+      gap: 0.65rem;
       padding: 1rem 1.2rem;
       margin: 0.5rem 0;
       border-radius: 12px;
@@ -121,9 +174,34 @@
     .dashboard-wrapper .nav-item i {
       font-size: 1.4rem;
       color: #00d4ff;
-      margin-right: 1rem;
+      margin-right: 0;
+      margin-top: 0.15em;
       width: 24px;
+      flex-shrink: 0;
       text-align: center;
+    }
+    
+    .dashboard-wrapper .nav-item .nav-text {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .dashboard-wrapper .nav-item .count {
+      flex-shrink: 0;
+      margin-left: auto;
+      align-self: flex-start;
+      margin-top: 0.06em;
+      min-width: 1.75rem;
+      padding: 0.22rem 0.5rem;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+      color: #e8f4fd;
+      background: rgba(0, 212, 255, 0.16);
+      border: 1px solid rgba(0, 212, 255, 0.35);
+      border-radius: 10px;
     }
     
     .dashboard-wrapper .nav-item .nav-text h4 {
@@ -139,14 +217,16 @@
       font-size: 0.8rem;
     }
     
-    .dashboard-wrapper .nav-item .count {
-      margin-left: auto;
-      background: rgba(0, 212, 255, 0.2);
-      color: #00d4ff;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
+    .dashboard-wrapper .nav-item.nav-item-compact {
+      padding: 0.72rem 0.95rem;
+      margin: 0.35rem 0;
+    }
+    .dashboard-wrapper .nav-item.nav-item-compact .nav-text h4 {
+      font-size: 0.95rem;
+    }
+    .dashboard-wrapper .nav-item.nav-item-compact .nav-text p {
+      font-size: 0.72rem;
+      line-height: 1.25;
     }
     
     /* Main Dashboard Grid */
@@ -170,9 +250,9 @@
     }
     
     .dashboard-wrapper .tool-card {
-      background: #1219265d;
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 240, 255, 0.15);
+      background: rgba(12, 18, 30, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.22);
       border-radius: 18px;
       padding: 0.75rem 1.5rem 1.5rem 1.5rem;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -204,9 +284,8 @@
     
     .dashboard-wrapper .tool-card:hover {
       transform: translateY(-8px) scale(1.02);
-      background: rgba(0, 212, 255, 0.05);
-      border-color: rgba(0, 212, 255, 0.4);
-      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.15);
+      border-color: rgba(0, 212, 255, 0.45);
+      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.18);
     }
     
     .dashboard-wrapper .tool-card .card-header {
@@ -234,15 +313,15 @@
       font-size: 1.1rem;
       font-weight: 600;
       line-height: 1.2;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75), 0 0 12px rgba(0, 0, 0, 0.45);
     }
     
     .dashboard-wrapper .tool-card p {
-      color: #d4dce8;
-      font-size: 0.85rem;
+      color: #eef3fb;
+      font-size: 0.88rem;
       margin: 0;
-      line-height: 1.3;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      line-height: 1.35;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65), 0 0 10px rgba(0, 0, 0, 0.35);
     }
     
     .dashboard-wrapper .tool-card .card-footer {
@@ -281,7 +360,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 80px;
+      max-width: 140px;
     }
     
     .dashboard-wrapper .badge {
@@ -300,59 +379,59 @@
     
 
     
-    /* Category Colors with Different Backgrounds */
-    .dashboard-wrapper .tool-card[data-category="core"] {
+    /* Card accents by category (data-category) */
+    .dashboard-wrapper .tool-card[data-category] {
+      border-right: 2px solid rgba(255, 255, 255, 0.18);
+      border-top: 2px solid rgba(255, 255, 255, 0.16);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .dashboard-wrapper .tool-card[data-category="lookup"] {
       border-left: 6px solid #00d4ff;
-      border-right: 2px solid rgba(0, 212, 255, 0.5);
-      border-top: 2px solid rgba(0, 212, 255, 0.6);
-      border-bottom: 2px solid rgba(0, 212, 255, 0.6);
-      background: linear-gradient(135deg, #0096c8 0%, #006496 100%);
-      box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.15), 0 4px 15px rgba(0, 212, 255, 0.2);
+      background: linear-gradient(135deg, rgba(10, 109, 143, 0.88) 0%, rgba(6, 64, 86, 0.9) 100%);
+      box-shadow: inset 0 0 28px rgba(0, 212, 255, 0.14), 0 6px 18px rgba(0, 0, 0, 0.28);
     }
-    
-    .dashboard-wrapper .tool-card[data-category="core"]:hover {
-      background: linear-gradient(135deg, #00b4e6 0%, #0078b4 100%);
-      border-right-color: rgba(0, 212, 255, 0.8);
-      border-top-color: #00d4ff;
-      border-bottom-color: #00d4ff;
-      box-shadow: inset 0 0 30px rgba(0, 212, 255, 0.25), 0 8px 25px rgba(0, 212, 255, 0.3);
+
+    .dashboard-wrapper .tool-card[data-category="orders"] {
+      border-left: 6px solid #f6c23e;
+      background: linear-gradient(135deg, rgba(138, 109, 31, 0.88) 0%, rgba(92, 71, 16, 0.9) 100%);
+      box-shadow: inset 0 0 28px rgba(246, 194, 62, 0.16), 0 6px 18px rgba(0, 0, 0, 0.28);
     }
-    
-    .dashboard-wrapper .tool-card[data-category="toolkit"] {
+
+    .dashboard-wrapper .tool-card[data-category="inventory"] {
       border-left: 6px solid #1cc88a;
-      border-right: 2px solid rgba(28, 200, 138, 0.5);
-      border-top: 2px solid rgba(28, 200, 138, 0.6);
-      border-bottom: 2px solid rgba(28, 200, 138, 0.6);
-      background: linear-gradient(135deg, #14966e 0%, #0f6e4b 100%);
-      box-shadow: inset 0 0 20px rgba(28, 200, 138, 0.15), 0 4px 15px rgba(28, 200, 138, 0.2);
+      background: linear-gradient(135deg, rgba(17, 107, 79, 0.88) 0%, rgba(10, 68, 48, 0.9) 100%);
+      box-shadow: inset 0 0 28px rgba(28, 200, 138, 0.15), 0 6px 18px rgba(0, 0, 0, 0.28);
     }
-    
-    .dashboard-wrapper .tool-card[data-category="toolkit"]:hover {
-      background: linear-gradient(135deg, #19b482 0%, #12825a 100%);
-      border-right-color: rgba(28, 200, 138, 0.8);
-      border-top-color: #1cc88a;
-      border-bottom-color: #1cc88a;
-      box-shadow: inset 0 0 30px rgba(28, 200, 138, 0.25), 0 8px 25px rgba(28, 200, 138, 0.3);
+
+    .dashboard-wrapper .tool-card[data-category="media"] {
+      border-left: 6px solid #e83e8c;
+      background: linear-gradient(135deg, rgba(124, 45, 82, 0.88) 0%, rgba(79, 28, 52, 0.9) 100%);
+      box-shadow: inset 0 0 28px rgba(232, 62, 140, 0.14), 0 6px 18px rgba(0, 0, 0, 0.28);
     }
-    
-    .dashboard-wrapper .tool-card[data-category="additional"] {
+
+    .dashboard-wrapper .tool-card[data-category="toolkit"] {
+      border-left: 6px solid #6f42c1;
+      background: linear-gradient(135deg, rgba(74, 44, 131, 0.88) 0%, rgba(46, 26, 84, 0.9) 100%);
+      box-shadow: inset 0 0 28px rgba(111, 66, 193, 0.16), 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .dashboard-wrapper .tool-card[data-category="logistics"] {
       border-left: 6px solid #36b9cc;
-      border-right: 2px solid rgba(54, 185, 204, 0.5);
-      border-top: 2px solid rgba(54, 185, 204, 0.6);
-      border-bottom: 2px solid rgba(54, 185, 204, 0.6);
-      background: linear-gradient(135deg, #288ca0 0%, #1e6478 100%);
-      box-shadow: inset 0 0 20px rgba(54, 185, 204, 0.15), 0 4px 15px rgba(54, 185, 204, 0.2);
+      background: linear-gradient(135deg, rgba(30, 103, 115, 0.88) 0%, rgba(18, 68, 80, 0.9) 100%);
+      box-shadow: inset 0 0 28px rgba(54, 185, 204, 0.15), 0 6px 18px rgba(0, 0, 0, 0.28);
     }
-    
-    .dashboard-wrapper .tool-card[data-category="additional"]:hover {
-      background: linear-gradient(135deg, #2da0b4 0%, #23738c 100%);
-      border-right-color: rgba(54, 185, 204, 0.8);
-      border-top-color: #36b9cc;
-      border-bottom-color: #36b9cc;
-      box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.25), 0 8px 25px rgba(54, 185, 204, 0.3);
+
+    .dashboard-wrapper .tool-card[data-category="admin"] {
+      border-left: 6px solid #fd7e14;
+      background: linear-gradient(135deg, rgba(138, 75, 15, 0.88) 0%, rgba(90, 48, 8, 0.9) 100%);
+      box-shadow: inset 0 0 28px rgba(253, 126, 20, 0.15), 0 6px 18px rgba(0, 0, 0, 0.28);
     }
-    
-    
+
+    .dashboard-wrapper .tool-card[data-category]:hover {
+      filter: brightness(1.06);
+      border-color: rgba(0, 212, 255, 0.5);
+    }
     /* Responsive Design */
     @media (max-width: 1200px) {
       .dashboard-wrapper .dashboard-container {
@@ -376,6 +455,31 @@
       }
     }
 
+    /* Background photo — Unsplash (lower left) */
+    .fdc-photo-credit {
+      position: fixed;
+      left: 0.65rem;
+      bottom: 0.55rem;
+      z-index: 100;
+      max-width: min(360px, 94vw);
+      margin: 0;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.68rem;
+      line-height: 1.45;
+      color: rgba(232, 244, 253, 0.9);
+      background: rgba(12, 18, 28, 0.78);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 240, 255, 0.18);
+    }
+    .fdc-photo-credit a {
+      color: #7ee8ff;
+      text-decoration: underline;
+      text-decoration-color: rgba(126, 232, 255, 0.5);
+    }
+    .fdc-photo-credit a:hover {
+      color: #c9f6ff;
+    }
 
   </style>
 </head>
@@ -394,57 +498,96 @@
     
     <div class="dashboard-container">
       <!-- Smart Navigation Panel -->
-      <div class="nav-panel">
+      <div class="nav-panel" id="dashboard-nav-panel">
         <div class="nav-header">
-          <h2>Quick Access</h2>
+          <h2>Quick Access !</h2>
           <p>Navigate by category</p>
         </div>
+
+        <div class="dashboard-nav-search">
+          <label for="dashboardToolSearch"><i class="fas fa-filter"></i> Search tools</label>
+          <input type="search" id="dashboardToolSearch" placeholder="Match title or description…" autocomplete="off" spellcheck="false">
+        </div>
         
-        <div class="nav-item" onclick="filterCategory('favorites')">
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'favorites')">
           <i class="fas fa-star"></i>
           <div class="nav-text">
             <h4>Favorites</h4>
-            <p>我的收藏</p>
-            <P>点亮星星收藏</P>
+            <p>我的收藏 · 点亮星星收藏</p>
           </div>
           <span class="count" id="favoritesCount">0</span>
         </div>
         
-        <div class="nav-item active" onclick="filterCategory('all')">
+        <div class="nav-item nav-item-compact active" onclick="filterCategory(this, 'all')">
           <i class="fas fa-th-large"></i>
           <div class="nav-text">
             <h4>All Tools</h4>
-            <p>everything</p>
             <p>所有功能</p>
           </div>
           <span class="count" id="allToolsCount"></span>
         </div>
         
-        <div class="nav-item" onclick="filterCategory('core')">
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'lookup')">
           <i class="fas fa-search"></i>
           <div class="nav-text">
-            <h4>Core Search</h4>
-            <p>核心搜索功能</p>
+            <h4>Lookup &amp; customers</h4>
+            <p>SKU · invoice · customer</p>
           </div>
-          <span class="count" id="coreCount"></span>
+          <span class="count" id="lookupCount"></span>
         </div>
         
-        <div class="nav-item" onclick="filterCategory('toolkit')">
-          <i class="fas fa-tools"></i>
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'orders')">
+          <i class="fas fa-file-invoice"></i>
           <div class="nav-text">
-            <h4>Toolkits</h4>
-            <p>工具包</p>
+            <h4>Orders &amp; invoices</h4>
+            <p>Sales orders · price edits</p>
+          </div>
+          <span class="count" id="ordersCount"></span>
+        </div>
+        
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'inventory')">
+          <i class="fas fa-boxes"></i>
+          <div class="nav-text">
+            <h4>Inventory &amp; stock</h4>
+            <p>Channels · locations · OOS</p>
+          </div>
+          <span class="count" id="inventoryCount"></span>
+        </div>
+        
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'media')">
+          <i class="fas fa-photo-video"></i>
+          <div class="nav-text">
+            <h4>Media &amp; assets</h4>
+            <p>DAM · images · viewers</p>
+          </div>
+          <span class="count" id="mediaCount"></span>
+        </div>
+        
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'toolkit')">
+          <i class="fas fa-screwdriver-wrench"></i>
+          <div class="nav-text">
+            <h4>Utilities &amp; automation</h4>
+            <p>Lists · labels · scanners</p>
           </div>
           <span class="count" id="toolkitCount"></span>
         </div>
         
-        <div class="nav-item" onclick="filterCategory('additional')">
-          <i class="fas fa-plus-circle"></i>
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'logistics')">
+          <i class="fas fa-ship"></i>
           <div class="nav-text">
-            <h4>Additional Tools</h4>
-            <p>附加工具</p>
+            <h4>Logistics &amp; warehouse</h4>
+            <p>Shipping · floor map</p>
           </div>
-          <span class="count" id="additionalCount"></span>
+          <span class="count" id="logisticsCount"></span>
+        </div>
+        
+        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'admin')">
+          <i class="fas fa-user-shield"></i>
+          <div class="nav-text">
+            <h4>Admin &amp; audit</h4>
+            <p>Users · compliance</p>
+          </div>
+          <span class="count" id="adminCount"></span>
         </div>
         
       </div>
@@ -452,9 +595,8 @@
       <!-- Main Dashboard Grid -->
       <div class="dashboard-grid" id="toolGrid">
         
-        <!-- Core Functions -->
-        
-        <a href="{{ url_for('item_lookup.item_lookup') }}" class="tool-card" data-category="core" data-tool="item_lookup">
+        <!-- Lookup & customers -->
+        <a href="{{ url_for('item_lookup.item_lookup') }}" class="tool-card" data-category="lookup" data-tool="item_lookup">
           <div class="card-header">
             <i class="fas fa-search"></i>
             <h3>SKU/STYLE Lookup</h3>
@@ -462,24 +604,11 @@
           </div>
           <p>Advanced product and style search with intelligent filtering and real-time results</p>
           <div class="card-footer">
-            <span class="category">Core</span>
+            <span class="category">Lookup</span>
           </div>
         </a>
         
-        <a href="{{ url_for('order_lookup.order_lookup') }}" class="tool-card" data-category="core" data-tool="order_lookup">
-          <div class="card-header">
-            <i class="fas fa-file-invoice"></i>
-            <h3>Sales Orders</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_lookup')"></i>
-          </div>
-          <p>Find, manage and print sales orders with advanced search capabilities</p>
-          <div class="card-footer">
-            <span class="category">Core</span>
-            <span class="badge">Jennifer专用</span>
-          </div>
-        </a>
-        
-        <a href="{{ url_for('invoice_lookup.invoice_lookup') }}" class="tool-card" data-category="core" data-tool="invoice_lookup">
+        <a href="{{ url_for('invoice_lookup.invoice_lookup') }}" class="tool-card" data-category="lookup" data-tool="invoice_lookup">
           <div class="card-header">
             <i class="fas fa-file-invoice-dollar"></i>
             <h3>Invoice Lookup</h3>
@@ -487,12 +616,11 @@
           </div>
           <p>Search and view detailed invoice information and line items</p>
           <div class="card-footer">
-            <span class="category">Core</span>
+            <span class="category">Lookup</span>
           </div>
         </a>
         
-        
-        <a href="/customer" class="tool-card" data-category="core" data-tool="customer">
+        <a href="/customer" class="tool-card" data-category="lookup" data-tool="customer">
           <div class="card-header">
             <i class="fas fa-users"></i>
             <h3>Customer Analytics</h3>
@@ -500,12 +628,163 @@
           </div>
           <p>View detailed customer purchase history and behavior insights</p>
           <div class="card-footer">
-            <span class="category">Core</span>
+            <span class="category">Lookup</span>
             <span class="badge">NEW CHANGE</span>
           </div>
         </a>
         
-        <!-- Toolkits -->
+        <!-- Orders & invoices -->
+        <a href="{{ url_for('order_lookup.order_lookup') }}" class="tool-card" data-category="orders" data-tool="order_lookup">
+          <div class="card-header">
+            <i class="fas fa-file-invoice"></i>
+            <h3>Sales Orders</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_lookup')"></i>
+          </div>
+          <p>Find, manage and print sales orders with advanced search capabilities</p>
+          <div class="card-footer">
+            <span class="category">Orders</span>
+            <span class="badge">Jennifer专用</span>
+          </div>
+        </a>
+        
+        <a href="/order_processor" class="tool-card" data-category="orders" data-tool="order_processor">
+          <div class="card-header">
+            <i class="fas fa-edit"></i>
+            <h3>Order Processor</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_processor')"></i>
+          </div>
+          <p>Edit invoice prices, quantities and bulk import to OMS system</p>
+          <div class="card-footer">
+            <span class="category">Orders</span>
+          </div>
+        </a>
+        
+        <!-- Inventory & stock -->
+        <a href="{{ url_for('external_stock_check.external_stock_check_page') }}" class="tool-card" data-category="inventory" data-tool="external_stock_check">
+          <div class="card-header">
+            <i class="fas fa-globe"></i>
+            <h3>External Stock Check</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'external_stock_check')"></i>
+          </div>
+          <p>Monitor TikTok shop inventory and compare with available stock levels</p>
+          <div class="card-footer">
+            <span class="category">Inventory</span>
+          </div>
+        </a>
+        
+        <a href="{{ url_for('internal_stock_check.internal_stock_check_page') }}" class="tool-card" data-category="inventory" data-tool="internal_stock_check">
+          <div class="card-header">
+            <i class="fas fa-layer-group"></i>
+            <h3>Internal Stock Check</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'internal_stock_check')"></i>
+          </div>
+          <p>Track internal inventory and manage stock across all warehouses</p>
+          <div class="card-footer">
+            <span class="category">Inventory</span>
+          </div>
+        </a>
+
+        <a href="{{ url_for('four_seller.four_seller_page') }}" class="tool-card" data-category="inventory" data-tool="four_seller">
+          <div class="card-header">
+            <i class="fas fa-store"></i>
+            <h3>4Seller Stock Sync</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'four_seller')"></i>
+          </div>
+          <p>Sync 4Seller stock export and compare on-hand inventory against our available qty</p>
+          <div class="card-footer">
+            <span class="category">Inventory</span>
+            <span class="badge">NEW</span>
+          </div>
+        </a>
+        
+        <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="inventory" data-tool="location_massive_update">
+          <div class="card-header">
+            <i class="fas fa-warehouse"></i>
+            <h3>Massive Location Update</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_massive_update')"></i>
+          </div>
+          <p>Bulk update locations for styles and all colors with smart suggestions.</p>
+          <div class="card-footer">
+            <span class="category">Inventory</span>
+          </div>
+        </a>
+        
+        <a href="/oosc" class="tool-card" data-category="inventory" data-tool="oosc">
+          <div class="card-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Out of Stock Check</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'oosc')"></i>
+          </div>
+          <p>Monitor negative inventory, view stock status, and wipe locations for oversold items</p>
+          <div class="card-footer">
+            <span class="category">Inventory</span>
+            <span class="badge">NEW</span>
+          </div>
+        </a>
+        
+        <!-- Media & assets -->
+        <a href="/dam" class="tool-card" data-category="media" data-tool="dam">
+          <div class="card-header">
+            <i class="fas fa-folder-open"></i>
+            <h3>DAM System</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'dam')"></i>
+          </div>
+          <p>Digital Asset Management - organize, search and manage product images and files</p>
+          <div class="card-footer">
+            <span class="category">Media</span>
+          </div>
+        </a>
+        
+        <a href="/image_upload" class="tool-card" data-category="media" data-tool="image_upload">
+          <div class="card-header">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Smart Image Upload</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'image_upload')"></i>
+          </div>
+          <p>Bulk upload and AI-powered organization of product images</p>
+          <div class="card-footer">
+            <span class="category">Media</span>
+          </div>
+        </a>
+        
+        <a href="/master_image_viewer" class="tool-card" data-category="media" data-tool="master_image_viewer">
+          <div class="card-header">
+            <i class="fas fa-images"></i>
+            <h3>Master Image Viewer</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'master_image_viewer')"></i>
+          </div>
+          <p>Search and view all images for any SKU across all sources with zoom</p>
+          <div class="card-footer">
+            <span class="category">Media</span>
+          </div>
+        </a>
+        
+        <a href="/bag_style_viewer" class="tool-card" data-category="media" data-tool="bag_style_viewer">
+          <div class="card-header">
+            <i class="fas fa-shopping-bag"></i>
+            <h3>Bag Style Viewer</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'bag_style_viewer')"></i>
+          </div>
+          <p>Browse bag styles by description, search SKU, and manage product descriptions</p>
+          <div class="card-footer">
+            <span class="category">Media</span>
+          </div>
+        </a>
+
+        <a href="/burlington_highlight" class="tool-card" data-category="media" data-tool="burlington_highlight">
+          <div class="card-header">
+            <i class="fas fa-highlighter"></i>
+            <h3>Burlington-highight</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'burlington_highlight')"></i>
+          </div>
+          <p>Search files in the Burlington folder and return matching file path and file name</p>
+          <div class="card-footer">
+            <span class="category">Media</span>
+            <span class="badge">NEW</span>
+          </div>
+        </a>
+        
+        <!-- Utilities & automation -->
         <a href="/v7_listcreator" class="tool-card" data-category="toolkit" data-tool="v7_listcreator">
           <div class="card-header">
             <i class="fas fa-list-ol"></i>
@@ -514,19 +793,7 @@
           </div>
           <p>Create sophisticated product lists with advanced filtering and export options</p>
           <div class="card-footer">
-            <span class="category">Toolkit</span>
-          </div>
-        </a>
-        
-        <a href="/order_processor" class="tool-card" data-category="toolkit" data-tool="order_processor">
-          <div class="card-header">
-            <i class="fas fa-edit"></i>
-            <h3>Order Processor</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_processor')"></i>
-          </div>
-          <p>Edit invoice prices, quantities and bulk import to OMS system</p>
-          <div class="card-footer">
-            <span class="category">Toolkit</span>
+            <span class="category">Utilities</span>
           </div>
         </a>
         
@@ -538,96 +805,37 @@
           </div>
           <p>Automated workflow management and intelligent process optimization</p>
           <div class="card-footer">
-            <span class="category">Toolkit</span>
-          </div>
-        </a>
-        
-        
-        <!-- Additional Tools -->
-        <a href="/dam" class="tool-card" data-category="additional" data-tool="dam">
-          <div class="card-header">
-            <i class="fas fa-folder-open"></i>
-            <h3>DAM System</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'dam')"></i>
-          </div>
-          <p>Digital Asset Management - organize, search and manage product images and files</p>
-          <div class="card-footer">
-            <span class="category">Additional</span>
-          </div>
-        </a>
-        <a href="{{ url_for('external_stock_check.external_stock_check_page') }}" class="tool-card" data-category="core" data-tool="external_stock_check">
-          <div class="card-header">
-            <i class="fas fa-globe"></i>
-            <h3>External Stock Check</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'external_stock_check')"></i>
-          </div>
-          <p>Monitor TikTok shop inventory and compare with available stock levels</p>
-          <div class="card-footer">
-            <span class="category">Core</span>
-          </div>
-        </a>
-        
-        <a href="{{ url_for('internal_stock_check.internal_stock_check_page') }}" class="tool-card" data-category="core" data-tool="internal_stock_check">
-          <div class="card-header">
-            <i class="fas fa-layer-group"></i>
-            <h3>Internal Stock Check</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'internal_stock_check')"></i>
-          </div>
-          <p>Track internal inventory and manage stock across all warehouses</p>
-          <div class="card-footer">
-            <span class="category">Core</span>
+            <span class="category">Utilities</span>
           </div>
         </a>
 
-        <a href="{{ url_for('four_seller.four_seller_page') }}" class="tool-card" data-category="core" data-tool="four_seller">
+        <a href="/mobile_scanner" class="tool-card" data-category="toolkit" data-tool="mobile_scanner">
           <div class="card-header">
-            <i class="fas fa-store"></i>
-            <h3>4Seller Stock Sync</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'four_seller')"></i>
+            <i class="fas fa-camera"></i>
+            <h3>Mobile Barcode Scanner</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'mobile_scanner')"></i>
           </div>
-          <p>Sync 4Seller stock export and compare on-hand inventory against our available qty</p>
+          <p>Use your device camera to scan barcodes and collect decoded values in a list</p>
           <div class="card-footer">
-            <span class="category">Core</span>
+            <span class="category">Utilities</span>
+          </div>
+        </a>
+
+        <a href="{{ url_for('label_resizer.label_resizer_page') }}" class="tool-card" data-category="toolkit" data-tool="label_resizer">
+          <div class="card-header">
+            <i class="fas fa-scissors"></i>
+            <h3>Label_resizer</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'label_resizer')"></i>
+          </div>
+          <p>Upload a US Letter PDF and center-crop each page to 4×6 inches for label printing</p>
+          <div class="card-footer">
+            <span class="category">Utilities</span>
             <span class="badge">NEW</span>
           </div>
         </a>
         
-        <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="additional" data-tool="location_massive_update">
-          <div class="card-header">
-            <i class="fas fa-warehouse"></i>
-            <h3>Massive Location Update</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_massive_update')"></i>
-          </div>
-          <p>Bulk update locations for styles and all colors with smart suggestions.</p>
-          <div class="card-footer">
-            <span class="category">Core</span>
-          </div>
-        </a>
-        <a href="/oosc" class="tool-card" data-category="additional" data-tool="oosc">
-          <div class="card-header">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h3>Out of Stock Check</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'oosc')"></i>
-          </div>
-          <p>Monitor negative inventory, view stock status, and wipe locations for oversold items</p>
-          <div class="card-footer">
-            <span class="category">Additional</span>
-            <span class="badge">NEW</span>
-          </div>
-        </a>
-        <a href="/image_upload" class="tool-card" data-category="additional" data-tool="image_upload">
-          <div class="card-header">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <h3>Smart Image Upload</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'image_upload')"></i>
-          </div>
-          <p>Bulk upload and AI-powered organization of product images</p>
-          <div class="card-footer">
-            <span class="category">Additional</span>
-          </div>
-        </a>
-        
-        <a href="/boat" class="tool-card" data-category="additional" data-tool="boat">
+        <!-- Logistics & warehouse -->
+        <a href="/boat" class="tool-card" data-category="logistics" data-tool="boat">
           <div class="card-header">
             <i class="fas fa-ship"></i>
             <h3>Shipping Intelligence</h3>
@@ -635,35 +843,11 @@
           </div>
           <p>Real-time boat status tracking and shipping schedule optimization</p>
           <div class="card-footer">
-            <span class="category">Additional</span>
+            <span class="category">Logistics</span>
           </div>
         </a>
         
-        <a href="/audit" class="tool-card" data-category="additional" data-tool="audit">
-          <div class="card-header">
-            <i class="fas fa-clipboard-check"></i>
-            <h3>Master Audit</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'audit')"></i>
-          </div>
-          <p>Comprehensive system auditing and compliance tracking tools</p>
-          <div class="card-footer">
-            <span class="category">Additional</span>
-          </div>
-        </a>
-        
-        <a href="/manage_users" class="tool-card" data-category="additional" data-tool="manage_users">
-          <div class="card-header">
-            <i class="fas fa-users-cog"></i>
-            <h3>User Management</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'manage_users')"></i>
-          </div>
-          <p>Manage user accounts, permissions and access control settings</p>
-          <div class="card-footer">
-            <span class="category">Additional</span>
-          </div>
-        </a>
-        
-        <a href="/warehousemap" class="tool-card" data-category="additional" data-tool="warehousemap">
+        <a href="/warehousemap" class="tool-card" data-category="logistics" data-tool="warehousemap">
           <div class="card-header">
             <i class="fas fa-map"></i>
             <h3>Warehouse Map</h3>
@@ -671,49 +855,37 @@
           </div>
           <p>Interactive warehouse layout and location mapping system</p>
           <div class="card-footer">
-            <span class="category">Additional</span>
+            <span class="category">Logistics</span>
           </div>
         </a>
         
-        <a href="/master_image_viewer" class="tool-card" data-category="additional" data-tool="master_image_viewer">
+        <!-- Admin & audit -->
+        <a href="/audit" class="tool-card" data-category="admin" data-tool="audit">
           <div class="card-header">
-            <i class="fas fa-images"></i>
-            <h3>Master Image Viewer</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'master_image_viewer')"></i>
+            <i class="fas fa-clipboard-check"></i>
+            <h3>Master Audit</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'audit')"></i>
           </div>
-          <p>Search and view all images for any SKU across all sources with zoom</p>
+          <p>Comprehensive system auditing and compliance tracking tools</p>
           <div class="card-footer">
-            <span class="category">Additional</span>
+            <span class="category">Admin</span>
           </div>
         </a>
         
-        <a href="/bag_style_viewer" class="tool-card" data-category="additional" data-tool="bag_style_viewer">
+        <a href="/manage_users" class="tool-card" data-category="admin" data-tool="manage_users">
           <div class="card-header">
-            <i class="fas fa-shopping-bag"></i>
-            <h3>Bag Style Viewer</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'bag_style_viewer')"></i>
+            <i class="fas fa-users-cog"></i>
+            <h3>User Management</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'manage_users')"></i>
           </div>
-          <p>Browse bag styles by description, search SKU, and manage product descriptions</p>
+          <p>Manage user accounts, permissions and access control settings</p>
           <div class="card-footer">
-            <span class="category">Additional</span>
-          </div>
-        </a>
-
-        <a href="/burlington_highlight" class="tool-card" data-category="additional" data-tool="burlington_highlight">
-          <div class="card-header">
-            <i class="fas fa-highlighter"></i>
-            <h3>Burlington-highight</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'burlington_highlight')"></i>
-          </div>
-          <p>Search files in the Burlington folder and return matching file path and file name</p>
-          <div class="card-footer">
-            <span class="category">Additional</span>
-            <span class="badge">NEW</span>
+            <span class="category">Admin</span>
           </div>
         </a>
 
         {% if current_user == 'yeti' %}
-        <a href="{{ url_for('vendor_app.vendor_app_home') }}" class="tool-card" data-category="additional" data-tool="vendor_app">
+        <a href="{{ url_for('vendor_app.vendor_app_home') }}" class="tool-card" data-category="admin" data-tool="vendor_app">
           <div class="card-header">
             <i class="fas fa-handshake"></i>
             <h3>Vendor App</h3>
@@ -721,7 +893,7 @@
           </div>
           <p>Vendor management portal</p>
           <div class="card-footer">
-            <span class="category">Additional</span>
+            <span class="category">Admin</span>
           </div>
         </a>
         {% endif %}
@@ -731,6 +903,8 @@
       </div>
     </div>
   </div>
+
+  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@lucabravo?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Luca Bravo</a> on <a href="https://unsplash.com/photos/brown-house-near-body-of-water-zAjdgNXsMeg?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Unsplash</a></p>
 
   {% include 'footer.html' %}
 
@@ -785,6 +959,7 @@
       }
       saveFavorites();
       updateFavorites();
+      applyDashboardFilters({ animate: false });
     }
     
     function updateFavorites() {
@@ -807,63 +982,97 @@
       document.getElementById('favoritesCount').textContent = visibleFavorites;
     }
     
-    function filterCategory(category) {
-      currentFilter = category;
-      
-      // Update navigation active state
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      event.target.closest('.nav-item').classList.add('active');
-      
-      // Filter cards with animation
+    function getDashboardSearchTerm() {
+      const el = document.getElementById('dashboardToolSearch');
+      return el ? el.value.trim().toLowerCase() : '';
+    }
+
+    function categoryAllowsCard(category, cardCategory, tool) {
+      if (category === 'all') return true;
+      if (category === 'favorites') return userFavorites.includes(tool);
+      return cardCategory === category;
+    }
+
+    /** Applies current sidebar category + search box (title / description). */
+    function applyDashboardFilters(options) {
+      options = options || {};
+      const animate = !!options.animate;
+      const category = currentFilter;
+      const term = getDashboardSearchTerm();
       const cards = document.querySelectorAll('.tool-card');
-      const grid = document.getElementById('toolGrid');
-      
-      // Fade out all cards
-      cards.forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-      });
-      
-      setTimeout(() => {
+
+      function updateCards() {
         cards.forEach((card, index) => {
-          const cardCategory = card.getAttribute('data-category');
           const tool = card.getAttribute('data-tool');
-          
-          let show = false;
-          if (category === 'all') {
-            show = true;
-          } else if (category === 'favorites') {
-            show = userFavorites.includes(tool);
-          } else {
-            show = cardCategory === category;
-          }
-          
+          const cardCategory = card.getAttribute('data-category');
+          const h3 = card.querySelector('h3');
+          const p = card.querySelector('p');
+          const title = h3 ? h3.textContent.toLowerCase() : '';
+          const description = p ? p.textContent.toLowerCase() : '';
+
+          const catOk = categoryAllowsCard(category, cardCategory, tool);
+          const searchOk = !term || title.includes(term) || description.includes(term);
+          const show = catOk && searchOk;
+
           if (show) {
             card.style.display = 'flex';
             card.style.order = (category === 'all' && userFavorites.includes(tool)) ? '0' : '1';
-            setTimeout(() => {
+            if (animate) {
+              card.style.opacity = '0';
+              card.style.transform = 'translateY(20px)';
+              setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+              }, index * 25);
+            } else {
               card.style.opacity = '1';
               card.style.transform = 'translateY(0)';
-            }, index * 25);
+            }
           } else {
             card.style.display = 'none';
           }
         });
-      }, 100);
-      
-      // Add visual feedback
+        updateCategoryCounts();
+      }
+
+      if (animate) {
+        cards.forEach(card => {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(20px)';
+        });
+        setTimeout(updateCards, 100);
+      } else {
+        updateCards();
+      }
+    }
+
+    let dashboardSearchDebounce;
+
+    function filterCategory(navEl, category) {
+      currentFilter = category;
+
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      if (navEl && navEl.classList) {
+        navEl.classList.add('active');
+      }
+
+      applyDashboardFilters({ animate: true });
       addFilterFeedback(category);
     }
     
     function addFilterFeedback(category) {
       const categoryNames = {
-        'all': 'All Tools',
-        'core': 'Core Functions',
-        'toolkit': 'Toolkits', 
-        'additional': 'Additional Tools',
-        'favorites': 'Favorites'
+        all: 'All Tools',
+        favorites: 'Favorites',
+        lookup: 'Lookup & customers',
+        orders: 'Orders & invoices',
+        inventory: 'Inventory & stock',
+        media: 'Media & assets',
+        toolkit: 'Utilities & automation',
+        logistics: 'Logistics & warehouse',
+        admin: 'Admin & audit'
       };
       
       // Create feedback element
@@ -884,7 +1093,7 @@
         opacity: 0;
         transition: opacity 0.2s ease;
       `;
-      feedback.textContent = `Showing: ${categoryNames[category]}`;
+      feedback.textContent = `Showing: ${categoryNames[category] || category}`;
       
       document.body.appendChild(feedback);
       
@@ -902,63 +1111,35 @@
     function updateCategoryCounts() {
       const cards = document.querySelectorAll('.tool-card');
       document.getElementById('allToolsCount').textContent = cards.length;
-      document.getElementById('coreCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'core').length;
-      document.getElementById('toolkitCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'toolkit').length;
-      document.getElementById('additionalCount').textContent = Array.from(cards).filter(card => card.getAttribute('data-category') === 'additional').length;
+      const slugs = ['lookup', 'orders', 'inventory', 'media', 'toolkit', 'logistics', 'admin'];
+      const counts = Object.fromEntries(slugs.map(s => [s, 0]));
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-category');
+        if (Object.prototype.hasOwnProperty.call(counts, cat)) counts[cat]++;
+      });
+      slugs.forEach(slug => {
+        const el = document.getElementById(slug + 'Count');
+        if (el) el.textContent = counts[slug];
+      });
     }
     
     document.addEventListener('DOMContentLoaded', function() {
-      // Wait for favorites to load BEFORE displaying cards
       loadFavorites().then(() => {
-        // Now that favorites are loaded, initialize the display
         setTimeout(() => {
-          const cards = document.querySelectorAll('.tool-card');
-          cards.forEach((card, index) => {
-            const tool = card.getAttribute('data-tool');
-            const cardCategory = card.getAttribute('data-category');
-            let show = false;
-            if (currentFilter === 'all') {
-              show = true;
-            } else if (currentFilter === 'favorites') {
-              show = userFavorites.includes(tool);
-            } else {
-              show = cardCategory === currentFilter;
-            }
-            card.style.order = (currentFilter === 'all' && userFavorites.includes(tool)) ? '0' : '1';
-            if (show) {
-              card.style.opacity = '0';
-              card.style.transform = 'translateY(30px)';
-              setTimeout(() => {
-                card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-              }, index * 50 + 200);
-            } else {
-              card.style.display = 'none';
-            }
-          });
-          updateCategoryCounts();
+          applyDashboardFilters({ animate: true });
         }, 50);
       });
+
+      const searchEl = document.getElementById('dashboardToolSearch');
+      if (searchEl) {
+        searchEl.addEventListener('input', function() {
+          clearTimeout(dashboardSearchDebounce);
+          dashboardSearchDebounce = setTimeout(function() {
+            applyDashboardFilters({ animate: false });
+          }, 140);
+        });
+      }
     });
-    
-    // Add search functionality
-    function searchTools(query) {
-      const cards = document.querySelectorAll('.tool-card');
-      const searchTerm = query.toLowerCase();
-      
-      cards.forEach(card => {
-        const title = card.querySelector('h3').textContent.toLowerCase();
-        const description = card.querySelector('p').textContent.toLowerCase();
-        
-        if (title.includes(searchTerm) || description.includes(searchTerm)) {
-          card.style.display = 'flex';
-          card.style.opacity = '1';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
   </script>
 
 </body>

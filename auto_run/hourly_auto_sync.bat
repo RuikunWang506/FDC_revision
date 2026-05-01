@@ -1,7 +1,8 @@
 @echo off
-REM FDC Hourly Auto Sync — Dropbox fetch + DAM index sync + cleanup
+REM LEGACY: was "hourly" Task Scheduler. Use daily_auto_sync.bat — task name is now "FDC DAM Daily Sync" (every 24h).
+REM You can still run this file manually; it performs the same POST as daily_auto_sync.bat.
 REM Secret: DAM_CRON_SECRET env OR auto_run\dam_cron_secret.local.txt
-REM One-time setup: powershell -ExecutionPolicy Bypass -File "%~dp0Setup-DamCron.ps1"
+REM Setup: powershell -ExecutionPolicy Bypass -File "%~dp0Setup-DamCron.ps1 -RegisterScheduledTasks"
 
 setlocal EnableDelayedExpansion
 

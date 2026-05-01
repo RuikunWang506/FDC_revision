@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Label_resizer — FDC</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f6f9; }
+    .hero-card {
+      background: linear-gradient(135deg, #1a3a52 0%, #2c5282 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .upload-zone {
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      background: #fff;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #2b6cb0;
+      background: #ebf8ff;
+    }
+    .hint { font-size: 0.9rem; color: #718096; }
+    #status.alert { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="container py-4" style="max-width: 720px;">
+    <div class="hero-card">
+      <h1 class="h4 mb-2"><i class="fas fa-cut me-2"></i>Label_resizer</h1>
+      <p class="mb-0 opacity-90">Upload a US Letter PDF (8.5×11 in). Each page is center-cropped to <strong>4×6 in</strong> for printing labels.</p>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form id="uploadForm">
+          <div class="upload-zone" id="dropZone" tabindex="0" role="button" aria-label="Choose PDF file">
+            <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+            <p class="mb-2"><strong>Drop a PDF here</strong> or click to browse</p>
+            <p class="hint mb-3">PDF only · max 25 MB · all pages processed</p>
+            <input type="file" name="file" id="fileInput" accept=".pdf,application/pdf" class="d-none">
+            <span class="badge bg-secondary" id="fileName">No file chosen</span>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mt-3" id="submitBtn" disabled>
+            <i class="fas fa-download me-2"></i>Crop &amp; download 4×6 PDF
+          </button>
+        </form>
+        <div id="status" class="d-none"></div>
+      </div>
+    </div>
+
+    <p class="text-muted small mt-3 mb-0">
+      Crop is centered in PDF coordinates (288×432 pt). If a page is smaller than 4×6 in, that page is rejected with an error.
+    </p>
+  </div>
+  {% include 'footer.html' %}
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileName = document.getElementById('fileName');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusEl = document.getElementById('status');
+    const processUrl = {{ url_for('label_resizer.label_resizer_process') | tojson }};
+
+    function setStatus(type, message) {
+      statusEl.className = 'alert alert-' + type;
+      statusEl.textContent = message;
+      statusEl.classList.remove('d-none');
+    }
+    function clearStatus() {
+      statusEl.classList.add('d-none');
+      statusEl.textContent = '';
+    }
+
+    function updateFileLabel() {
+      const f = fileInput.files[0];
+      if (f) {
+        fileName.textContent = f.name;
+        fileName.classList.remove('bg-secondary');
+        fileName.classList.add('bg-primary');
+        submitBtn.disabled = false;
+      } else {
+        fileName.textContent = 'No file chosen';
+        fileName.classList.add('bg-secondary');
+        fileName.classList.remove('bg-primary');
+        submitBtn.disabled = true;
+      }
+    }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+    });
+    fileInput.addEventListener('change', updateFileLabel);
+
+    ['dragenter', 'dragover'].forEach(ev => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
+      });
+    });
+    dropZone.addEventListener('drop', (e) => {
+      const f = e.dataTransfer.files[0];
+      if (f && f.type === 'application/pdf') {
+        fileInput.files = e.dataTransfer.files;
+        updateFileLabel();
+      } else {
+        setStatus('warning', 'Please drop a PDF file.');
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearStatus();
+      if (!fileInput.files[0]) {
+        setStatus('warning', 'Choose a PDF first.');
+        return;
+      }
+      submitBtn.disabled = true;
+      const fd = new FormData(form);
+      try {
+        const res = await fetch(processUrl, { method: 'POST', body: fd });
+        const ct = res.headers.get('content-type') || '';
+        if (res.ok && ct.includes('application/pdf')) {
+          const blob = await res.blob();
+          let name = 'label_4x6.pdf';
+          const cd = res.headers.get('content-disposition');
+          if (cd) {
+            const m = /filename\*=UTF-8''([^;]+)|filename="([^"]+)"/i.exec(cd);
+            const raw = decodeURIComponent((m && (m[1] || m[2]) || '').trim());
+            if (raw) name = raw;
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          setStatus('success', 'Download started. Check your downloads folder.');
+        } else {
+          let msg = 'Request failed.';
+          try {
+            const j = await res.json();
+            if (j.error) msg = j.error;
+          } catch (_) {
+            msg = res.statusText || msg;
+          }
+          setStatus('danger', msg);
+        }
+      } catch (err) {
+        setStatus('danger', err.message || 'Network error.');
+      } finally {
+        submitBtn.disabled = !fileInput.files[0];
+      }
+    });
+  </script>
+</body>
+</html>

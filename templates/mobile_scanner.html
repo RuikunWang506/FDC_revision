@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mobile Barcode Scanner</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+  <style>
+    .scanner-wrap { max-width: 720px; margin: 0 auto; padding: 1rem 1rem 2rem; }
+    .video-shell {
+      position: relative;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0f172a;
+      aspect-ratio: 4 / 3;
+      border: 2px solid rgba(0, 212, 255, 0.35);
+    }
+    #scannerVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scaleX(1);
+    }
+    .perm-banner {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(28, 200, 138, 0.12));
+      border: 1px solid rgba(0, 212, 255, 0.35);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      color: #1e293b;
+    }
+    .perm-banner.dark-context { color: #e8f4fd; }
+    .scan-status {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+    }
+    .barcode-list {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      background: #fff;
+    }
+    .barcode-list li {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      font-family: ui-monospace, monospace;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .barcode-list li:last-child { border-bottom: none; }
+    .barcode-list .meta { font-size: 0.75rem; color: #94a3b8; flex-shrink: 0; }
+    .page-title { color: #0f172a; font-weight: 600; }
+    .badge-engine { font-size: 0.7rem; vertical-align: middle; }
+    .barcode-list .parsed-main { font-family: system-ui, sans-serif; font-weight: 600; font-size: 1rem; color: #0f172a; line-height: 1.35; }
+    .barcode-list .parsed-sub { font-family: ui-monospace, monospace; font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+    .scan-upc { font-family: ui-monospace, monospace; letter-spacing: 0.02em; }
+    .color-ref-wrap summary { cursor: pointer; color: #0369a1; }
+    #colorRefBody td { font-size: 0.82rem; vertical-align: middle; }
+    #colorEditBody input.form-control-sm { min-width: 0; }
+    #colorEditBody td { vertical-align: middle; }
+  </style>
+  <script src="{{ url_for('static', filename='js/fdc_upc13_maps.js') }}"></script>
+</head>
+<body class="bg-light">
+  {% include 'navbar.html' %}
+
+  <div class="scanner-wrap">
+    <h4 class="page-title mb-3"><i class="fas fa-barcode text-info"></i> Mobile barcode scanner</h4>
+
+    <div class="perm-banner" id="permExplain">
+      <strong><i class="fas fa-camera"></i> Camera access</strong>
+      <p class="mb-2 mt-2"><strong>Only 13-digit retail UPC/EAN-13</strong> codes are added (check digit must validate). Each scan shows the UPC immediately, then the app looks up SKUs in MySQL in the background.</p>
+      <button type="button" class="btn btn-primary btn-sm" id="btnStart">
+        <i class="fas fa-video"></i> Start camera
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm ml-2 d-none" id="btnStop">
+        <i class="fas fa-stop"></i> Stop
+      </button>
+    </div>
+
+    <div class="video-shell mb-3">
+      <video id="scannerVideo" playsinline muted autoplay></video>
+    </div>
+    <p class="scan-status mb-3" id="scanStatus">Camera off. Press Start to enable scanning.</p>
+
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+      <strong>Scanned UPCs</strong>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-success" id="btnExportExcel" disabled title="Upload current list as .xlsx">
+          <i class="fas fa-file-excel"></i> Save to Excel
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger" id="btnClear" disabled>Clear list</button>
+      </div>
+    </div>
+    <ul class="barcode-list" id="barcodeList"></ul>
+    <p class="text-muted small mt-2 mb-0" id="engineNote"></p>
+
+    <div class="card border rounded mt-3 mb-3 bg-white">
+      <div class="card-body py-3">
+        <h6 class="mb-2"><i class="fas fa-folder-open text-secondary"></i> Saved Excel files</h6>
+        <p class="small text-muted mb-2">Each export is stored on the server for <strong>24 hours</strong>, then deleted automatically. Only your account sees these downloads.</p>
+        <ul class="list-group list-group-flush" id="exportFilesList"></ul>
+        <p class="small text-muted mb-0 mt-2" id="exportFilesEmpty">No saved files yet.</p>
+      </div>
+    </div>
+
+    <details class="color-ref-wrap mt-4 border rounded p-3 bg-white">
+      <summary><strong>3-digit color code ↔ abbreviation</strong> (reference table)</summary>
+      <p class="small text-muted mb-2 mt-2">
+        Digits 10–12 of the 13-digit UPC are the color code.
+        Defaults ship in <code>static/js/fdc_upc13_maps.js</code>; <strong>Save</strong> writes the same table to the server
+        (<code>instance/mobile_scanner_color_map.json</code>) so SKU lookup uses your edits. This page also mirrors it in <strong>localStorage</strong> on load.
+      </p>
+      <button type="button" class="btn btn-sm btn-outline-primary mb-2" id="btnOpenColorEdit" data-toggle="modal" data-target="#colorEditModal">
+        <i class="fas fa-edit"></i> Edit table
+      </button>
+      <div class="table-responsive rounded border" style="max-height: 340px; overflow-y: auto;">
+        <table class="table table-sm table-striped mb-0">
+          <thead class="thead-light sticky-top"><tr><th>Code</th><th>Abbrev</th><th>Description</th></tr></thead>
+          <tbody id="colorRefBody"></tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="modal fade" id="colorEditModal" tabindex="-1" role="dialog" aria-labelledby="colorEditModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="colorEditModalTitle">Edit 3-digit color table</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-2">
+            <strong>Save</strong> updates this browser and syncs to the server color dictionary (shared for all users).
+            <strong>Reset</strong> clears server overlay and this browser; defaults reload from <code>fdc_upc13_maps.js</code>.
+          </p>
+          <div class="table-responsive border rounded" style="max-height: 55vh;">
+            <table class="table table-sm table-bordered mb-0">
+              <thead class="thead-light"><tr><th style="width: 100px;">Code</th><th style="width: 140px;">Abbrev</th><th>Description</th><th style="width: 52px;"></th></tr></thead>
+              <tbody id="colorEditBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="btnColorEditAddRow">
+            <i class="fas fa-plus"></i> Add row
+          </button>
+        </div>
+        <div class="modal-footer flex-wrap">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-outline-danger mr-auto" id="btnColorEditReset">Reset to file defaults</button>
+          <button type="button" class="btn btn-primary" id="btnColorEditSave">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include 'footer.html' %}
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'fdc_upc13_color_map_saved';
+
+      function cloneDefaultColorMap() {
+        try {
+          return JSON.parse(JSON.stringify((window.FDC_UPC13 && window.FDC_UPC13.COLOR_MAP) || {}));
+        } catch (e) {
+          return {};
+        }
+      }
+
+      window.loadFdcColorMap = function loadFdcColorMap() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            var o = JSON.parse(raw);
+            if (o && typeof o === 'object' && !Array.isArray(o)) return o;
+          }
+        } catch (e) { /* ignore */ }
+        return cloneDefaultColorMap();
+      };
+
+      window.saveFdcColorMapToStorage = function (map) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+      };
+
+      window.resetFdcColorMapStorage = function () {
+        localStorage.removeItem(STORAGE_KEY);
+      };
+
+      function normalizeColorCode(s) {
+        var d = String(s || '').replace(/\D/g, '');
+        if (d === '') return null;
+        var n = parseInt(d, 10);
+        if (isNaN(n) || n > 999) return null;
+        return String(n).padStart(3, '0');
+      }
+
+      function renderColorRefTable() {
+        var tbody = document.getElementById('colorRefBody');
+        if (!tbody) return;
+        var CM = window.loadFdcColorMap();
+        tbody.innerHTML = '';
+        var ids = Object.keys(CM).sort(function (a, b) {
+          return parseInt(a, 10) - parseInt(b, 10);
+        });
+        ids.forEach(function (id) {
+          var row = CM[id] || {};
+          var tr = document.createElement('tr');
+          var td0 = document.createElement('td');
+          var strong = document.createElement('strong');
+          strong.textContent = id;
+          td0.appendChild(strong);
+          var td1 = document.createElement('td');
+          td1.textContent = row.abbrev ? row.abbrev : '—';
+          var td2 = document.createElement('td');
+          td2.textContent = row.desc || '';
+          tr.appendChild(td0);
+          tr.appendChild(td1);
+          tr.appendChild(td2);
+          tbody.appendChild(tr);
+        });
+      }
+
+      function createEditRow(code, abbrev, desc) {
+        var tr = document.createElement('tr');
+
+        var tdCode = document.createElement('td');
+        var iCode = document.createElement('input');
+        iCode.type = 'text';
+        iCode.className = 'form-control form-control-sm ce-code';
+        iCode.maxLength = 8;
+        iCode.placeholder = '207';
+        iCode.value = code || '';
+        tdCode.appendChild(iCode);
+
+        var tdAbbr = document.createElement('td');
+        var iAbbr = document.createElement('input');
+        iAbbr.type = 'text';
+        iAbbr.className = 'form-control form-control-sm ce-abbrev';
+        iAbbr.maxLength = 32;
+        iAbbr.value = abbrev || '';
+        tdAbbr.appendChild(iAbbr);
+
+        var tdDesc = document.createElement('td');
+        var iDesc = document.createElement('input');
+        iDesc.type = 'text';
+        iDesc.className = 'form-control form-control-sm ce-desc';
+        iDesc.maxLength = 160;
+        iDesc.value = desc || '';
+        tdDesc.appendChild(iDesc);
+
+        var tdRm = document.createElement('td');
+        tdRm.className = 'text-center';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-danger ce-remove py-0 px-2';
+        btn.title = 'Remove row';
+        btn.setAttribute('aria-label', 'Remove');
+        btn.innerHTML = '&times;';
+        tdRm.appendChild(btn);
+
+        tr.appendChild(tdCode);
+        tr.appendChild(tdAbbr);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdRm);
+        return tr;
+      }
+
+      function fillColorEditModal() {
+        var tbody = document.getElementById('colorEditBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        var CM = window.loadFdcColorMap();
+        var ids = Object.keys(CM).sort(function (a, b) {
+          return parseInt(a, 10) - parseInt(b, 10);
+        });
+        ids.forEach(function (id) {
+          var row = CM[id] || {};
+          tbody.appendChild(createEditRow(id, row.abbrev || '', row.desc || ''));
+        });
+      }
+
+      function collectColorEditModal() {
+        var tbody = document.getElementById('colorEditBody');
+        if (!tbody) return { ok: false, map: {}, errors: ['Missing editor table'] };
+        var map = {};
+        var errors = [];
+        var rows = tbody.querySelectorAll('tr');
+        rows.forEach(function (tr, idx) {
+          var codeRaw = tr.querySelector('.ce-code');
+          var abbrevIn = tr.querySelector('.ce-abbrev');
+          var descIn = tr.querySelector('.ce-desc');
+          if (!codeRaw || !abbrevIn || !descIn) return;
+          var trimmedCode = codeRaw.value.trim();
+          if (trimmedCode === '') return;
+          var norm = normalizeColorCode(trimmedCode);
+          if (!norm) {
+            errors.push('Row ' + (idx + 1) + ': invalid code (use digits 0–999)');
+            return;
+          }
+          if (Object.prototype.hasOwnProperty.call(map, norm)) {
+            errors.push('Duplicate code ' + norm);
+            return;
+          }
+          map[norm] = { abbrev: abbrevIn.value.trim(), desc: descIn.value.trim() };
+        });
+        return { ok: errors.length === 0, map: map, errors: errors };
+      }
+
+      function refreshColorTablesFromServer(onDone) {
+        fetch('/mobile_scanner/color-map', { credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.success && data.color_map && typeof data.color_map === 'object') {
+              window.saveFdcColorMapToStorage(data.color_map);
+            }
+          })
+          .catch(function () { /* keep existing localStorage */ })
+          .finally(function () {
+            renderColorRefTable();
+            if (typeof onDone === 'function') onDone();
+          });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        refreshColorTablesFromServer();
+
+        $('#colorEditModal').on('show.bs.modal', function () {
+          fillColorEditModal();
+        });
+
+        var btnAdd = document.getElementById('btnColorEditAddRow');
+        if (btnAdd) {
+          btnAdd.addEventListener('click', function () {
+            var tbody = document.getElementById('colorEditBody');
+            if (tbody) tbody.appendChild(createEditRow('', '', ''));
+          });
+        }
+
+        var editBody = document.getElementById('colorEditBody');
+        if (editBody) {
+          editBody.addEventListener('click', function (e) {
+            var rm = e.target.closest('.ce-remove');
+            if (!rm) return;
+            var tr = rm.closest('tr');
+            if (tr) tr.remove();
+          });
+        }
+
+        var btnSave = document.getElementById('btnColorEditSave');
+        if (btnSave) {
+          btnSave.addEventListener('click', function () {
+            var result = collectColorEditModal();
+            if (!result.ok) {
+              alert('Fix errors before saving:\n\n' + result.errors.join('\n'));
+              return;
+            }
+            if (Object.keys(result.map).length === 0) {
+              if (!confirm('Save an empty table? All scans will show “no row in table” until you reset defaults.')) return;
+            }
+            window.saveFdcColorMapToStorage(result.map);
+            fetch('/mobile_scanner/color-map', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ color_map: result.map }),
+            })
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                if (!data.success) {
+                  alert(data.error || 'Server rejected color map');
+                  return;
+                }
+                renderColorRefTable();
+                $('#colorEditModal').modal('hide');
+              })
+              .catch(function (e) {
+                alert('Could not sync color map to server: ' + (e && e.message ? e.message : String(e)));
+              });
+          });
+        }
+
+        var btnReset = document.getElementById('btnColorEditReset');
+        if (btnReset) {
+          btnReset.addEventListener('click', function () {
+            if (!confirm('Remove saved edits on the server and in this browser, then reload defaults from fdc_upc13_maps.js?')) return;
+            fetch('/mobile_scanner/color-map', { method: 'DELETE', credentials: 'same-origin' })
+              .catch(function () { /* still reset locally */ })
+              .finally(function () {
+                window.resetFdcColorMapStorage();
+                refreshColorTablesFromServer(function () {
+                  fillColorEditModal();
+                });
+              });
+          });
+        }
+      });
+    })();
+  </script>
+
+  <script type="module">
+    const video = document.getElementById('scannerVideo');
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const btnClear = document.getElementById('btnClear');
+    const scanStatus = document.getElementById('scanStatus');
+    const barcodeList = document.getElementById('barcodeList');
+    const engineNote = document.getElementById('engineNote');
+
+    const UPC = window.FDC_UPC13 || { MATERIAL_LINE_MAP: {}, COLOR_MAP: {} };
+
+    function validateGtin13CheckDigit(code13) {
+      let sum = 0;
+      for (let i = 0; i < 12; i++) {
+        sum += parseInt(code13[i], 10) * (i % 2 === 0 ? 1 : 3);
+      }
+      const check = (10 - (sum % 10)) % 10;
+      return check === parseInt(code13[12], 10);
+    }
+
+    /** Layout: 1 begin + 2 factory + 2 material + 4 style + 3 color + 1 check = 13 */
+    function parseFdcUpc13(raw) {
+      let cleaned = String(raw).trim().replace(/\D/g, '');
+      if (cleaned.length === 12) cleaned = '0' + cleaned;
+      if (cleaned.length !== 13) return null;
+
+      const beginning = cleaned.slice(0, 1);
+      const factory = cleaned.slice(1, 3);
+      const material = cleaned.slice(3, 5);
+      const style = cleaned.slice(5, 9);
+      const colorId = cleaned.slice(9, 12);
+      const checkOk = validateGtin13CheckDigit(cleaned);
+
+      const matLabel = Object.prototype.hasOwnProperty.call(UPC.MATERIAL_LINE_MAP, material)
+        ? UPC.MATERIAL_LINE_MAP[material]
+        : material;
+
+      const colorMap = typeof window.loadFdcColorMap === 'function' ? window.loadFdcColorMap() : UPC.COLOR_MAP;
+      const ci = colorMap[colorId];
+      let colorAbbrev = '';
+      let colorDesc = '';
+      if (ci) {
+        colorAbbrev = ci.abbrev || '';
+        colorDesc = ci.desc || '';
+      }
+
+      return {
+        cleaned,
+        beginning,
+        factory,
+        material,
+        style,
+        colorId,
+        colorAbbrev,
+        colorDesc,
+        matLabel,
+        checkOk,
+        primaryLine: '',
+      };
+    }
+
+    let stream = null;
+    let zxingControls = null;
+    let barcodeDetectorLoopId = null;
+    let scanningActive = false;
+    let lastRaw = '';
+    let lastAt = 0;
+    const DEBOUNCE_MS = 650;
+
+    window.fdcMobileScannerRecords = [];
+
+    const resolveQueue = [];
+    let resolveActive = 0;
+    const MAX_RESOLVE_PARALLEL = 2;
+
+    function newScanId() {
+      if (crypto.randomUUID) return crypto.randomUUID();
+      return 's' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    async function fetchResolveUpc(rec) {
+      try {
+        const r = await fetch('/mobile_scanner/resolve-upc', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ upc: rec.raw }),
+        });
+        const data = await r.json();
+        rec.resolved = {
+          status: data.success ? 'ok' : 'error',
+          matched_sku: data.matched_sku || '',
+          sku_candidates: data.sku_candidates || [],
+          locations: data.locations || '',
+          error: data.error || '',
+        };
+      } catch (e) {
+        rec.resolved = {
+          status: 'error',
+          matched_sku: '',
+          sku_candidates: [],
+          locations: '',
+          error: e && e.message ? e.message : String(e),
+        };
+      }
+      updateScanRowDOM(rec);
+    }
+
+    function pumpResolveQueue() {
+      while (resolveActive < MAX_RESOLVE_PARALLEL && resolveQueue.length) {
+        const rec = resolveQueue.shift();
+        resolveActive++;
+        fetchResolveUpc(rec).finally(() => {
+          resolveActive--;
+          pumpResolveQueue();
+        });
+      }
+    }
+
+    function enqueueResolveUpc(rec) {
+      resolveQueue.push(rec);
+      pumpResolveQueue();
+    }
+
+    function updateScanRowDOM(rec) {
+      const li = document.getElementById('scan-row-' + rec.id);
+      if (!li) return;
+      const resolveEl = li.querySelector('.scan-resolve-status');
+      const detailEl = li.querySelector('.parsed-main');
+      if (!resolveEl) return;
+      const res = rec.resolved || {};
+      if (res.status === 'pending') return;
+      if (res.status === 'error') {
+        if (detailEl) detailEl.textContent = '';
+        resolveEl.className = 'scan-resolve-status small text-danger mt-1';
+        resolveEl.textContent = 'SKU lookup failed: ' + (res.error || 'unknown');
+        return;
+      }
+      const sku = res.matched_sku;
+      const loc = res.locations;
+      if (detailEl) {
+        detailEl.textContent = sku ? sku : '';
+      }
+      let txt = '';
+      if (sku) {
+        txt = loc ? ('Loc: ' + loc) : '';
+      } else {
+        txt = 'No primary SKU match';
+        if (res.sku_candidates && res.sku_candidates.length) {
+          const tops = res.sku_candidates.slice(0, 6).map((c) => (c && c.sku) ? c.sku : c).join(', ');
+          txt += ' · Candidates: ' + tops;
+        }
+      }
+      resolveEl.className = 'scan-resolve-status small mt-1 ' + (sku ? 'text-muted' : 'text-warning');
+      resolveEl.textContent = txt;
+    }
+
+    function buildScanListItem(rec) {
+      const li = document.createElement('li');
+      li.id = 'scan-row-' + rec.id;
+
+      const left = document.createElement('div');
+      left.style.flex = '1';
+      left.style.minWidth = '0';
+
+      const upcEl = document.createElement('div');
+      upcEl.className = 'scan-upc font-weight-bold';
+      upcEl.textContent = rec.raw;
+
+      const resolveEl = document.createElement('div');
+      resolveEl.className = 'scan-resolve-status small text-info mt-1';
+      resolveEl.textContent = 'Looking up SKU in database…';
+
+      const detailEl = document.createElement('div');
+      detailEl.className = 'parsed-main mt-1';
+      detailEl.style.fontSize = '0.95rem';
+      detailEl.textContent = '';
+
+      const subEl = document.createElement('div');
+      subEl.className = 'parsed-sub mt-1';
+      subEl.textContent = rec.parsed
+        ? (rec.parsed.checkOk ? 'Check digit OK' : 'Check digit mismatch')
+        : '';
+
+      left.appendChild(upcEl);
+      left.appendChild(resolveEl);
+      left.appendChild(detailEl);
+      left.appendChild(subEl);
+
+      const meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.textContent = rec.time_display;
+
+      li.appendChild(left);
+      li.appendChild(meta);
+      return li;
+    }
+
+    function updateExportButtonState() {
+      const btn = document.getElementById('btnExportExcel');
+      const recs = window.fdcMobileScannerRecords || [];
+      if (btn) btn.disabled = recs.length === 0;
+    }
+
+    async function refreshExportFilesList() {
+      const ul = document.getElementById('exportFilesList');
+      const empty = document.getElementById('exportFilesEmpty');
+      if (!ul) return;
+      try {
+        const r = await fetch('/mobile_scanner/exports/list', { credentials: 'same-origin' });
+        const data = await r.json();
+        ul.innerHTML = '';
+        if (!data.success || !data.files || data.files.length === 0) {
+          if (empty) empty.style.display = '';
+          return;
+        }
+        if (empty) empty.style.display = 'none';
+        data.files.forEach((f) => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2 px-0 py-2';
+          const left = document.createElement('span');
+          left.className = 'text-break small';
+          left.textContent = `${f.filename} · ${(f.size_bytes / 1024).toFixed(1)} KB`;
+          const a = document.createElement('a');
+          a.className = 'btn btn-sm btn-outline-primary flex-shrink-0';
+          a.href = f.download_url;
+          a.textContent = 'Download';
+          li.appendChild(left);
+          li.appendChild(a);
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function formatTime(d) {
+      return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function recordCode(raw) {
+      const parsed = parseFdcUpc13(raw);
+      if (!parsed || !parsed.checkOk) return;
+
+      const dedupeKey = parsed.cleaned;
+      const t = Date.now();
+      if (dedupeKey === lastRaw && (t - lastAt) < DEBOUNCE_MS) return;
+      lastRaw = dedupeKey;
+      lastAt = t;
+
+      const recs = window.fdcMobileScannerRecords || [];
+      if (recs.some((r) => r.raw === parsed.cleaned)) {
+        scanStatus.textContent = 'Already scanned: ' + parsed.cleaned;
+        return;
+      }
+
+      const exportParsed = {
+        beginning: parsed.beginning,
+        factory: parsed.factory,
+        material: parsed.material,
+        matLabel: parsed.matLabel,
+        style: parsed.style,
+        colorId: parsed.colorId,
+        colorAbbrev: parsed.colorAbbrev,
+        colorDesc: parsed.colorDesc,
+        checkOk: parsed.checkOk,
+        primaryLine: parsed.primaryLine,
+      };
+
+      const rec = {
+        id: newScanId(),
+        time_iso: new Date().toISOString(),
+        time_display: formatTime(new Date()),
+        raw: parsed.cleaned,
+        parsed: exportParsed,
+        resolved: {
+          status: 'pending',
+          matched_sku: '',
+          sku_candidates: [],
+          locations: '',
+          error: '',
+        },
+      };
+
+      window.fdcMobileScannerRecords.unshift(rec);
+      updateExportButtonState();
+
+      const li = buildScanListItem(rec);
+      barcodeList.insertBefore(li, barcodeList.firstChild);
+      btnClear.disabled = false;
+      scanStatus.textContent = 'Last UPC: ' + parsed.cleaned + ' (resolving SKU…)';
+
+      enqueueResolveUpc(rec);
+    }
+
+    function stopCamera() {
+      scanningActive = false;
+      if (barcodeDetectorLoopId != null) {
+        cancelAnimationFrame(barcodeDetectorLoopId);
+        barcodeDetectorLoopId = null;
+      }
+      if (zxingControls && typeof zxingControls.stop === 'function') {
+        try { zxingControls.stop(); } catch (e) {}
+        zxingControls = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach((tr) => tr.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+      btnStart.classList.remove('d-none');
+      btnStop.classList.add('d-none');
+      scanStatus.textContent = 'Camera stopped.';
+    }
+
+    async function scanBarcodeDetector() {
+      if (!('BarcodeDetector' in window)) return false;
+      try {
+        const formats = [
+          'ean_13', 'ean_8', 'upc_a', 'upc_e',
+          'code_128', 'qr_code', 'data_matrix', 'code_39'
+        ];
+        const detector = new BarcodeDetector({ formats });
+        engineNote.innerHTML = 'Using <span class="badge badge-info badge-engine">Barcode Detection API</span>. Only <strong>valid 13-digit UPC/EAN-13</strong> codes are added to the list.';
+
+        let lastFrame = 0;
+        const intervalMs = 120;
+        scanningActive = true;
+
+        function loop(ts) {
+          if (!scanningActive) return;
+          barcodeDetectorLoopId = requestAnimationFrame(loop);
+          if (!stream || !video.videoWidth) return;
+          if (ts - lastFrame < intervalMs) return;
+          lastFrame = ts;
+          detector.detect(video).then((codes) => {
+            for (const c of codes) {
+              if (c.rawValue) recordCode(c.rawValue);
+            }
+          }).catch(() => {});
+        }
+        barcodeDetectorLoopId = requestAnimationFrame(loop);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function scanZxingFallback() {
+      const { BrowserMultiFormatReader } = await import('https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm');
+      const reader = new BrowserMultiFormatReader();
+      engineNote.innerHTML = 'Using <span class="badge badge-secondary badge-engine">ZXing</span> — accepts many formats; only valid <strong>13-digit UPC/EAN-13</strong> with correct check digit are saved.';
+
+      zxingControls = await reader.decodeFromVideoElement(video, (resultObj, err) => {
+        if (resultObj && typeof resultObj.getText === 'function') {
+          recordCode(resultObj.getText());
+        }
+      });
+      return true;
+    }
+
+    btnStart.addEventListener('click', async () => {
+      lastRaw = '';
+      engineNote.textContent = '';
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        scanStatus.textContent = 'Camera API not available in this browser or context (use HTTPS).';
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+        btnStart.classList.add('d-none');
+        btnStop.classList.remove('d-none');
+        scanStatus.textContent = 'Camera active — point at UPC/EAN-13 barcodes only.';
+
+        const okNative = await scanBarcodeDetector();
+        if (!okNative) {
+          await scanZxingFallback();
+        }
+      } catch (err) {
+        scanStatus.textContent = 'Could not open camera: ' + (err && err.message ? err.message : String(err)) +
+          '. Check permission settings.';
+      }
+    });
+
+    btnStop.addEventListener('click', () => {
+      stopCamera();
+      engineNote.textContent = '';
+    });
+
+    btnClear.addEventListener('click', () => {
+      barcodeList.innerHTML = '';
+      btnClear.disabled = true;
+      lastRaw = '';
+      resolveQueue.length = 0;
+      window.fdcMobileScannerRecords = [];
+      updateExportButtonState();
+    });
+
+    const btnExportExcel = document.getElementById('btnExportExcel');
+    if (btnExportExcel) {
+      btnExportExcel.addEventListener('click', async () => {
+        const recs = window.fdcMobileScannerRecords || [];
+        if (!recs.length) return;
+        btnExportExcel.disabled = true;
+        try {
+          const r = await fetch('/mobile_scanner/export', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ records: recs }),
+          });
+          const data = await r.json();
+          if (!data.success) {
+            alert(data.error || 'Export failed');
+            updateExportButtonState();
+            return;
+          }
+          window.location.href = data.download_url;
+          await refreshExportFilesList();
+        } catch (e) {
+          alert('Export failed: ' + (e && e.message ? e.message : String(e)));
+        } finally {
+          updateExportButtonState();
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshExportFilesList();
+    });
+
+    window.addEventListener('beforeunload', () => stopCamera());
+  </script>
+</body>
+</html>

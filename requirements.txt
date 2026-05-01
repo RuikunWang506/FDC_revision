@@ -23,3 +23,4 @@ PyJWT==2.8.0
 opencv-python==4.8.1.78
 numpy<2.0
 rarfile==4.1  # Optional: for RAR archive support in bulk uploads
+pypdf==5.1.0

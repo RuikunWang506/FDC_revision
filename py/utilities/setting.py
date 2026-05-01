@@ -11,6 +11,16 @@ class Config:
         'password': 'qwe123',
         'database': 'onlinedb'
     }
+
+    # Cloudflare Turnstile (login CAPTCHA). Docs: https://developers.cloudflare.com/turnstile/
+    # In production, set TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY in the environment
+    # (Cloudflare dashboard → Turnstile → your site). Defaults are Cloudflare test keys (always pass).
+    TURNSTILE_SITE_KEY = os.getenv(
+        "TURNSTILE_SITE_KEY", "1x00000000000000000000AA"
+    ).strip()
+    TURNSTILE_SECRET_KEY = os.getenv(
+        "TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA"
+    ).strip()
     
     # SQL Server configuration
     SQL_SERVER_CONFIG = {

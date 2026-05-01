@@ -81,13 +81,35 @@ def login():
     
     client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     location_data = get_location(client_ip)
+
+    def login_page(**extra):
+        ctx = {
+            "client_ip": client_ip,
+            "location": location_data,
+            "turnstile_site_key": Config.TURNSTILE_SITE_KEY or None,
+        }
+        ctx.update(extra)
+        return render_template("login.html", **ctx)
     
     if request.method == "POST":
+        turnstile_token = request.form.get("cf-turnstile-response")
+        client_ip_for_turnstile = (
+            client_ip.split(",")[0].strip() if client_ip else None
+        )
+        if not verify_turnstile_response(turnstile_token, client_ip_for_turnstile):
+            flash("Please complete the security check (CAPTCHA) and try again.")
+            log_event(
+                "WARNING",
+                f"TURNSTILE_FAIL: IP: {client_ip}, UA: {request.headers.get('User-Agent', '')[:200]}",
+            )
+            return login_page()
+
         username = request.form.get("username")
         password = request.form.get("password")
         remember = request.form.get("remember")
         
         if check_credentials(username, password):
+            update_last_login(username)
             # Check if user has an email address
             connection = get_db_connection()
             if connection:
@@ -134,7 +156,7 @@ def login():
             # Log failed login attempt with detailed information
             log_event('WARNING', f'🔴 FAILED_LOGIN: Username: "{username}", Password: "[REDACTED]", IP: {client_ip}, Location: {location_data.get("city", "Unknown")}, User-Agent: {request.headers.get("User-Agent", "Unknown")}')
     
-    return render_template("login.html", client_ip=client_ip, location=location_data)
+    return login_page()
 
 @auth_bp.route("/logout")
 def logout():
@@ -255,8 +277,19 @@ def manage_users():
     
     try:
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT id, username, email, password, created_at FROM users ORDER BY created_at DESC")
+        cursor.execute(
+            "SELECT id, username, email, password, created_at, last_login_at "
+            "FROM users ORDER BY created_at DESC"
+        )
         users = cursor.fetchall()
+        for u in users:
+            ts = u.get("last_login_at")
+            if ts is None:
+                u["last_login_display"] = None
+            elif isinstance(ts, datetime):
+                u["last_login_display"] = ts.strftime("%Y-%m-%d %H:%M")
+            else:
+                u["last_login_display"] = str(ts)
         return render_template("manage_users.html", users=users, current_user=session['username'])
     except Error as e:
         flash(f"Error fetching users: {e}")
@@ -442,6 +475,58 @@ db_config = Config.DB_CONFIG
 def get_db_connection():
     """Establishes a connection to the MySQL database."""
     return get_mysql_connection()
+
+
+def verify_turnstile_response(token, remote_ip=None):
+    """Validate Cloudflare Turnstile token from the login form."""
+    site_key = (getattr(Config, "TURNSTILE_SITE_KEY", None) or "").strip()
+    secret = (getattr(Config, "TURNSTILE_SECRET_KEY", None) or "").strip()
+    if not site_key or not secret:
+        return True
+    if not token:
+        return False
+    try:
+        payload = {"secret": secret, "response": token}
+        if remote_ip:
+            payload["remoteip"] = remote_ip
+        resp = requests.post(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            data=payload,
+            timeout=10,
+        )
+        data = resp.json()
+        return bool(data.get("success"))
+    except (requests.RequestException, ValueError, TypeError) as e:
+        current_app.logger.warning("Turnstile siteverify failed: %s", e)
+        return False
+
+
+def update_last_login(username):
+    """Set users.last_login_at to NOW() after a successful password login."""
+    if not username:
+        return
+    connection = get_db_connection()
+    if not connection:
+        return
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE users SET last_login_at = NOW() WHERE username = %s",
+            (username,),
+        )
+        connection.commit()
+    except Error as e:
+        current_app.logger.warning(
+            "update_last_login failed for %s — run sql/add_users_last_login_at.sql if column missing: %s",
+            username,
+            e,
+        )
+    finally:
+        if "cursor" in locals():
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
 
 def check_credentials(username, password):
     connection = get_db_connection()

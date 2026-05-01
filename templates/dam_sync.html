@@ -110,9 +110,9 @@
             <div class="alert alert-light border mt-3 mb-0" id="scheduler-next-banner">
                 <div class="row">
                     <div class="col-md-6 mb-2 mb-md-0">
-                        <strong><i class="fas fa-clock text-primary me-1"></i>Next hourly sync</strong>
-                        <span id="next-hourly-countdown" class="font-monospace ms-2">Loading…</span>
-                        <div class="small text-muted mt-1" id="next-hourly-detail"></div>
+                        <strong><i class="fas fa-clock text-primary me-1"></i>Next daily sync (24h)</strong>
+                        <span id="next-daily-countdown" class="font-monospace ms-2">Loading…</span>
+                        <div class="small text-muted mt-1" id="next-daily-detail"></div>
                     </div>
                     <div class="col-md-6">
                         <strong><i class="fas fa-calendar-week text-primary me-1"></i>Next weekly rebuild</strong>
@@ -121,7 +121,7 @@
                     </div>
                 </div>
                 <div class="small text-muted mt-2 mb-0" id="scheduler-next-footnote">
-                    Times come from Windows Task Scheduler on this server (tasks must match <code>FDC DAM Hourly Sync</code> / <code>FDC DAM Weekly Rebuild</code>).
+                    Times come from Windows Task Scheduler on this server (tasks <code>FDC DAM Daily Sync</code> every 24h + <code>FDC DAM Weekly Rebuild</code>). Re-register with <code>auto_run\Setup-DamCron.ps1 -RegisterScheduledTasks</code>.
                 </div>
             </div>
         </div>
@@ -148,7 +148,7 @@
                             <br>
                             ⏱️ Often 5–15 minutes depending on volume<br>
                             <span class="badge bg-warning text-dark mt-1">Server automation</span>
-                            <span class="d-block mt-2">Hourly jobs only run if Task Scheduler calls <code>auto_run/hourly_auto_sync.bat</code> <strong>and</strong> the server has <code>DAM_CRON_SECRET</code> set (see below). Posting to <code>/dam/start</code> from curl without a login <strong>does not work</strong> — use <code>POST /dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code>.</span>
+                            <span class="d-block mt-2">Daily automation only runs if Task Scheduler calls <code>auto_run/daily_auto_sync.bat</code> <strong>and</strong> the server has <code>DAM_CRON_SECRET</code> set (see below). Posting to <code>/dam/start</code> from curl without a login <strong>does not work</strong> — use <code>POST /dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code>.</span>
                         </small>
                     </div>
                 </div>
@@ -200,7 +200,7 @@
                             <i class="fas fa-broom"></i> Clean Up Broken Links Only
                         </button>
                         <small class="text-muted d-block mt-1">
-                            Manually run cleanup (already runs automatically every hour)
+                            Manually run cleanup (also runs automatically after each scheduled DAM sync when cleanup is enabled)
                         </small>
                     </div>
                 </div>
@@ -239,10 +239,10 @@
                     <div class="p-3 bg-light rounded mb-3">
                         <p class="mb-2"><strong>Nothing runs “by magic” in the browser.</strong> One of these must be configured on the <strong>Windows server</strong>:</p>
                         <ol class="mb-0">
-                            <li><strong>Task Scheduler</strong> runs <code>auto_run/hourly_auto_sync.bat</code>, which calls <code>POST …/dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code> matching env <code>DAM_CRON_SECRET</code> on the machine running Flask.</li>
+                            <li><strong>Task Scheduler</strong> runs <code>auto_run/daily_auto_sync.bat</code> once per day, which calls <code>POST …/dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code> matching env <code>DAM_CRON_SECRET</code> on the machine running Flask.</li>
                             <li>Or run <code>python py/standalone/smart_auto_filter.py</code> on a schedule (copies from Dropbox per Config paths), then run DAM sync separately.</li>
                         </ol>
-                        <p class="mb-0 mt-2 small text-muted">Check server logs and <code>C:\FDC_FLASK_APP\hourly_sync.log</code> after the scheduled time. <code>GET …/dam/cron/status</code> (same secret header) returns <code>is_running</code> / <code>last_run</code> for scripts.</p>
+                        <p class="mb-0 mt-2 small text-muted">Check server logs and <code>C:\FDC_FLASK_APP\daily_sync.log</code> after the scheduled time. <code>GET …/dam/cron/status</code> (same secret header) returns <code>is_running</code> / <code>last_run</code> for scripts.</p>
                     </div>
                     <div class="alert alert-info mb-0">
                         <i class="fas fa-info-circle me-1"></i>
@@ -254,8 +254,8 @@
                     <ul class="mb-3">
                         <li><strong>Green "Auto Sync" button:</strong>
                             <ul>
-                                <li>Click after uploading many files (don't wait for hourly sync)</li>
-                                <li>Or just let it run automatically</li>
+                                <li>Click after uploading many files (don't wait for the daily sync)</li>
+                                <li>Or let the Windows scheduled task run once every 24 hours</li>
                             </ul>
                         </li>
                         <li><strong>Yellow "Complete Rebuild" button:</strong>
@@ -280,7 +280,7 @@ let pollInterval;
 let lastLogIndex = 0;
 let autoScroll = true;
 
-let schedulerHourlyTs = null;
+let schedulerDailyTs = null;
 let schedulerWeeklyTs = null;
 let schedulerCountdownTimer = null;
 let schedulerRefreshTimer = null;
@@ -323,12 +323,12 @@ function applySchedulerSection(prefix, payload) {
 
 function tickSchedulerCountdown() {
     const now = Date.now();
-    const hourlyEl = document.getElementById('next-hourly-countdown');
+    const dailyEl = document.getElementById('next-daily-countdown');
     const weeklyEl = document.getElementById('next-weekly-countdown');
-    if (!hourlyEl || !weeklyEl) return;
+    if (!dailyEl || !weeklyEl) return;
 
-    if (schedulerHourlyTs != null && !hourlyEl.dataset.error) {
-        hourlyEl.textContent = formatCountdown(schedulerHourlyTs - now);
+    if (schedulerDailyTs != null && !dailyEl.dataset.error) {
+        dailyEl.textContent = formatCountdown(schedulerDailyTs - now);
     }
     if (schedulerWeeklyTs != null && !weeklyEl.dataset.error) {
         weeklyEl.textContent = formatCountdown(schedulerWeeklyTs - now);
@@ -339,54 +339,55 @@ function fetchSchedulerNext() {
     fetch('/dam/scheduler-next')
         .then(function (r) { return r.json(); })
         .then(function (data) {
-            const hourlyEl = document.getElementById('next-hourly-countdown');
+            const dailyEl = document.getElementById('next-daily-countdown');
             const weeklyEl = document.getElementById('next-weekly-countdown');
             const foot = document.getElementById('scheduler-next-footnote');
-            if (!data.success || !data.hourly || !data.weekly) {
-                schedulerHourlyTs = null;
+            const primary = data.daily || data.hourly;
+            if (!data.success || !primary || !data.weekly) {
+                schedulerDailyTs = null;
                 schedulerWeeklyTs = null;
-                if (hourlyEl) { hourlyEl.textContent = '—'; hourlyEl.dataset.error = '1'; }
+                if (dailyEl) { dailyEl.textContent = '—'; dailyEl.dataset.error = '1'; }
                 if (weeklyEl) { weeklyEl.textContent = '—'; weeklyEl.dataset.error = '1'; }
-                var hd = document.getElementById('next-hourly-detail');
+                var dd = document.getElementById('next-daily-detail');
                 var wd = document.getElementById('next-weekly-detail');
-                if (hd) hd.textContent = data.error || 'Could not load scheduler info.';
+                if (dd) dd.textContent = data.error || 'Could not load scheduler info.';
                 if (wd) wd.textContent = '';
                 return;
             }
 
             if (foot && data.platform && data.platform !== 'win32') {
-                foot.textContent = 'Next-run times require Windows Task Scheduler (this server is not Windows).';
+                foot.textContent = 'Next-run times require Windows Task Scheduler (this server is not Windows). Use cron/post-deploy automation calling POST /dam/cron/start with X-DAM-Cron-Secret.';
             }
 
             function ingest(side, payload) {
-                const el = document.getElementById(side === 'hourly' ? 'next-hourly-countdown' : 'next-weekly-countdown');
+                const el = document.getElementById(side === 'daily' ? 'next-daily-countdown' : 'next-weekly-countdown');
                 if (!el) return;
                 delete el.dataset.error;
-                applySchedulerSection(side === 'hourly' ? 'next-hourly' : 'next-weekly', payload);
+                applySchedulerSection(side === 'daily' ? 'next-daily' : 'next-weekly', payload);
                 if (payload.error) {
                     el.dataset.error = '1';
-                    if (side === 'hourly') schedulerHourlyTs = null;
+                    if (side === 'daily') schedulerDailyTs = null;
                     else schedulerWeeklyTs = null;
                     return;
                 }
                 if (payload.next_ts_ms != null) {
                     el.textContent = formatCountdown(payload.next_ts_ms - Date.now());
-                    if (side === 'hourly') schedulerHourlyTs = payload.next_ts_ms;
+                    if (side === 'daily') schedulerDailyTs = payload.next_ts_ms;
                     else schedulerWeeklyTs = payload.next_ts_ms;
                 } else {
-                    if (side === 'hourly') schedulerHourlyTs = null;
+                    if (side === 'daily') schedulerDailyTs = null;
                     else schedulerWeeklyTs = null;
                 }
             }
 
-            ingest('hourly', data.hourly);
+            ingest('daily', primary);
             ingest('weekly', data.weekly);
             tickSchedulerCountdown();
         })
         .catch(function () {
-            var hourlyEl = document.getElementById('next-hourly-countdown');
+            var dailyEl = document.getElementById('next-daily-countdown');
             var weeklyEl = document.getElementById('next-weekly-countdown');
-            if (hourlyEl) { hourlyEl.textContent = '—'; hourlyEl.dataset.error = '1'; }
+            if (dailyEl) { dailyEl.textContent = '—'; dailyEl.dataset.error = '1'; }
             if (weeklyEl) { weeklyEl.textContent = '—'; weeklyEl.dataset.error = '1'; }
         });
 }

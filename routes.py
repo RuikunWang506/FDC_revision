@@ -59,6 +59,8 @@ from py.search.location_service import location_service_bp
 from py.other.external_stock_check import external_stock_check_bp
 from py.other.internal_stock_check import internal_stock_check_bp
 from py.other.burlington_highlight import burlington_highlight_bp
+from py.other.mobile_scanner import mobile_scanner_bp
+from py.other.label_resizer import label_resizer_bp
 from py.other.vendor_app import vendor_app_bp
 from py.other.vendor_tiktok_processor import vendor_tiktok_processor_bp
 from py.utilities.monitor import send_discord_notification
@@ -135,6 +137,8 @@ def register_routes(app):
     app.register_blueprint(location_service_bp)
     app.register_blueprint(pallet_detail_bp)
     app.register_blueprint(burlington_highlight_bp)
+    app.register_blueprint(mobile_scanner_bp)
+    app.register_blueprint(label_resizer_bp)
     app.register_blueprint(vendor_app_bp)
     app.register_blueprint(vendor_tiktok_processor_bp)
     app.register_blueprint(four_seller_bp)
@@ -155,8 +159,15 @@ def register_routes(app):
         proto = request.environ.get("SERVER_PROTOCOL", "HTTP/1.1")
         # app.static_folder points at your 'static' directory
         return send_from_directory(app.static_folder, "robots.txt")
-    
-    
+
+    @app.route("/favicon.ico")
+    def favicon():
+        return send_from_directory(
+            app.static_folder,
+            "icons/favicon-fdc.png",
+            mimetype="image/png",
+        )
+
     @app.route("/health")
     def health_check():
         """Health check endpoint for monitoring"""
@@ -262,35 +273,42 @@ def register_routes(app):
     @app.route('/log/stream', methods=['GET'])
     @login_required
     def stream_log():
+        """Server-Sent Events: tail LOG_FILE for live /log (anti-buffer headers + keepalive)."""
+        log_path = Config.LOG_FILE
+        idle_sleep_s = 0.35
+        keepalive_every_s = 25.0
+
         def generate():
-            with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
-                file.seek(0, 2)  # Move to the end of the file
+            last_keepalive = time.monotonic()
+            with open(log_path, 'r', encoding='utf-8', errors='replace') as file:
+                file.seek(0, 2)
                 while True:
                     line = file.readline()
-                    if not line:
-                        time.sleep(1)  # Wait for new log lines
+                    if line:
+                        last_keepalive = time.monotonic()
+                        formatted_line_tuple = format_logs([line.strip()])
+                        if formatted_line_tuple:
+                            log_cls, formatted_line = formatted_line_tuple[0]
+                        else:
+                            log_cls, formatted_line = '', line.strip()
+                        chunk = json.dumps(
+                            {'log_class': log_cls, 'formatted_line': formatted_line},
+                            ensure_ascii=False,
+                        )
+                        yield f'data: {chunk}\n\n'
                         continue
+                    now = time.monotonic()
+                    if now - last_keepalive >= keepalive_every_s:
+                        yield ':\n\n'
+                        last_keepalive = now
+                    time.sleep(idle_sleep_s)
 
-                    # Format the new log line
-                    formatted_line_tuple = format_logs([line.strip()])
-
-                    # format_logs returns a list of tuples, take the first tuple
-                    if formatted_line_tuple:
-                        log_class, formatted_line = formatted_line_tuple[0]
-                    else:
-                        log_class, formatted_line = '', line.strip()
-
-                    # Prepare the formatted line as a single string
-                    # You can choose to send both log_class and formatted_line or just the formatted_line
-                    # For simplicity, we'll send a JSON string with both
-                    import json
-                    data = json.dumps({
-                        'log_class': log_class,
-                        'formatted_line': formatted_line
-                    })
-
-                    yield f"data: {data}\n\n"  # SSE format: data:<line>
-        return Response(generate(), mimetype='text/event-stream')
+        resp = Response(generate(), mimetype='text/event-stream')
+        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['X-Accel-Buffering'] = 'no'
+        resp.headers['Connection'] = 'keep-alive'
+        return resp
     
     def format_logs(lines):
         formatted = []

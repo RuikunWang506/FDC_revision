@@ -1,227 +1,484 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
-    <!-- Add jQuery and Bootstrap JS -->
-    <script src="{{ url_for('static', filename='js/jquery-3.5.1.slim.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FDC Toolkit — Sign in</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+  <script src="{{ url_for('static', filename='js/jquery-3.5.1.slim.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+  {% if turnstile_site_key %}
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  {% endif %}
+  <style>
+    .login-page {
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      color: #e8f4fd;
+      background: url("{{ url_for('static', filename='luca-bravo-zAjdgNXsMeg-unsplash.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .login-page * { box-sizing: border-box; }
+
+    .login-page a { color: #5ee7ff; }
+    .login-page a:hover { color: #9ef0ff; text-decoration: none; }
+
+    .login-topbar {
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(12, 18, 28, 0.65);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+    }
+
+    .login-topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: #e8f4fd;
+      letter-spacing: 0.02em;
+    }
+
+    .login-topbar-brand img { height: 28px; width: auto; }
+
+    .login-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 3rem;
+      width: 100%;
+    }
+
+    .login-hero {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .login-hero-mark {
+      font-size: 2.75rem;
+      line-height: 1;
+      margin-bottom: 0.35rem;
+      filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.35));
+    }
+
+    .login-hero-title {
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin: 0 0 0.35rem;
+      background: linear-gradient(45deg, #00d4ff, #1cc88a, #36b9cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-hero-sub {
+      color: #8892b0;
+      font-size: 0.95rem;
+      margin: 0;
+      max-width: 26rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(18, 25, 38, 0.82);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      border-radius: 20px;
+      padding: 1.75rem 1.75rem 1.5rem;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+    }
+
+    .login-card::before {
+      content: '';
+      display: block;
+      height: 3px;
+      margin: -1.75rem -1.75rem 1.25rem -1.75rem;
+      border-radius: 20px 20px 0 0;
+      background: linear-gradient(90deg, #00d4ff, #1cc88a, #36b9cc);
+    }
+
+    .login-card label {
+      color: #b8c5d9;
+      font-size: 0.82rem;
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+    }
+
+    .login-card .form-control {
+      background: rgba(10, 14, 22, 0.55);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: #f0f6ff;
+      border-radius: 10px;
+      padding: 0.55rem 0.85rem;
+      height: auto;
+    }
+
+    .login-card .form-control:focus {
+      background: rgba(10, 14, 22, 0.75);
+      border-color: #00d4ff;
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.18);
+      color: #fff;
+    }
+
+    .login-card .form-check-label { color: #c5d0e2; font-size: 0.9rem; }
+
+    .login-card .form-check-input {
+      margin-top: 0.35rem;
+      border-radius: 4px;
+    }
+
+    .login-btn-primary {
+      width: 100%;
+      margin-top: 0.25rem;
+      padding: 0.65rem 1rem;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      border-radius: 12px;
+      color: #0a1628;
+      background: linear-gradient(135deg, #00d4ff 0%, #00b8d9 45%, #1cc88a 100%);
+      box-shadow: 0 8px 24px rgba(0, 212, 255, 0.25);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    .login-btn-primary:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(0, 212, 255, 0.32);
+      color: #061018;
+    }
+
+    .login-forgot-wrap {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .login-forgot-wrap .btn-link {
+      color: #5ee7ff;
+      font-size: 0.9rem;
+      padding: 0;
+    }
+
+    .login-forgot-wrap .btn-link:hover { color: #b8f7ff; }
+
+    .login-flash {
+      margin-top: 1rem;
+      padding: 0.65rem 1rem;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.9rem;
+      background: rgba(255, 193, 7, 0.12);
+      border: 1px solid rgba(255, 193, 7, 0.35);
+      color: #ffe7a8;
+    }
+
+    .login-map-section {
+      width: 100%;
+      max-width: 900px;
+      margin-top: 2.5rem;
+      padding: 0 0.5rem;
+    }
+
+    .login-map-card {
+      background: rgba(18, 25, 38, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.15);
+      border-radius: 20px;
+      padding: 1.25rem 1.5rem 1.5rem;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .login-map-card h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #00d4ff;
+      margin: 0 0 0.75rem;
+      text-align: center;
+    }
+
+    .login-meta {
+      font-size: 0.85rem;
+      color: #8892b0;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .login-meta strong { color: #c5d8ec; font-weight: 600; }
+
+    #map {
+      height: min(360px, 50vh);
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 240, 255, 0.12);
+    }
+
+    .login-footer {
+      margin-top: auto;
+      padding: 1rem;
+      text-align: center;
+      background: rgba(12, 18, 28, 0.7);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0, 240, 255, 0.12);
+      color: #8892b0;
+      font-size: 0.88rem;
+    }
+
+    .login-footer img {
+      width: 28px;
+      height: 28px;
+      vertical-align: middle;
+      margin-right: 0.35rem;
+    }
+
+    /* Dark modal to match */
+    .login-page .modal-content {
+      background: rgba(22, 30, 45, 0.98);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 16px;
+      color: #e8f4fd;
+    }
+
+    .login-page .modal-header {
+      border-bottom-color: rgba(0, 240, 255, 0.15);
+    }
+
+    .login-page .modal-title { color: #00d4ff; }
+
+    .login-page .close {
+      color: #e8f4fd;
+      text-shadow: none;
+      opacity: 0.75;
+    }
+
+    .login-page .modal-body .text-muted { color: #8892b0 !important; }
+
+    .login-page .modal-body .btn-primary {
+      background: linear-gradient(135deg, #00a8cc, #1cc88a);
+      border: none;
+      border-radius: 10px;
+    }
+
+    .login-page .modal-body .form-control {
+      background: rgba(10, 14, 22, 0.65);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: #f0f6ff;
+      border-radius: 10px;
+    }
+
+    .login-page .modal-body .form-control:focus {
+      border-color: #00d4ff;
+      box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+      background: rgba(10, 14, 22, 0.85);
+      color: #fff;
+    }
+
+    @media (max-width: 576px) {
+      .login-card { padding: 1.35rem 1.25rem 1.25rem; }
+      .login-hero-title { font-size: 1.5rem; }
+    }
+
+    .login-page .fdc-photo-credit {
+      position: fixed;
+      left: 0.65rem;
+      bottom: 3.6rem;
+      z-index: 100;
+      max-width: min(360px, 94vw);
+      margin: 0;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.68rem;
+      line-height: 1.45;
+      color: rgba(232, 244, 253, 0.9);
+      background: rgba(12, 18, 28, 0.78);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 240, 255, 0.18);
+    }
+    .login-page .fdc-photo-credit a {
+      color: #7ee8ff;
+      text-decoration: underline;
+      text-decoration-color: rgba(126, 232, 255, 0.5);
+    }
+    .login-page .fdc-photo-credit a:hover {
+      color: #c9f6ff;
+    }
+  </style>
 </head>
-<style>
+<body class="login-page">
 
-.rainbow-text {
-  background-image: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: rainbow-move 5s linear infinite;
-  background-size: 400% 100%;
-}
-
-@keyframes rainbow-move {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 400% 50%; }
-}
-
-
-</style>
-<body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h1 class="text-center rainbow-text">🀅</h1>
-
-                <h2 class="text-center">FDC Toolkit Login</h2>
-                <h5 class="text-center">If you do not have a login, contact: <a href="mailto:tristen@fdcus.com"> tristen</a></h5>
-
-                <form method="POST" action="{{ url_for('auth.login') }}" style="padding-bottom: 10px;" class="mt-4">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                        <label class="form-check-label" for="remember">Remember Me</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">ALT + F4 to Login</button>
-                </form>
-
-
-
-                <div class="mt-3 text-right">
-                    <a href="#" class="btn btn-link"  data-toggle="modal" data-target="#resetPasswordModal">Forgot Password?</a>
-                    <br>
-                </div>
-                
-                <!-- Reset Password Modal -->
-                <div class="modal fade" id="resetPasswordModal" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="resetPasswordForm">
-                                    <div class="form-group">
-                                        <label for="resetIdentifier">Username or Email</label>
-                                        <input type="text" class="form-control" id="resetIdentifier" name="identifier" required>
-                                        <small class="form-text text-muted">Enter either your username or email address</small>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Request Password Reset</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                
-                {% with messages = get_flashed_messages() %}
-                    {% if messages %}
-                        <div class="alert alert-warning mt-3 text-center">
-                            {{ messages[0] }}
-                        </div>
-                    {% endif %}
-                {% endwith %}
-                
-            </div>
-        </div>
+  <header class="login-topbar">
+    <div class="login-topbar-brand">
+      <img src="/static/icons/home.gif" alt="">
+      <span>FDC Toolkit</span>
     </div>
-    <div class="text-center">
-                    
-        {% if location and location.status == 'success' %}
-            
-            <p><b>Your IP is:</b> {{ client_ip }}</p>
-            <p><b>City:</b> {{ location.city }},
-            <b>Region:</b> {{ location.regionName }},
-            <b>Country:</b> {{ location.country }}</p>
-            <p><b>Latitude:</b> {{ location.lat }},
-            <b>Longitude:</b> {{ location.lon }}</p>
-            <h3>👁️ Am Watching You</h3>
-            <!-- Map container -->
-            <div class="container-fluid">
-                <div class="row justify-content-center">
-                    <div class="col-12">
-                        <div class="text-center" id="map" style="height: 400px; width: 100%; margin: 0 auto;"></div>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <p>Location not found.</p>
+    <a href="{{ url_for('auth.login') }}" class="small" style="opacity:0.85;"><i class="fas fa-redo-alt mr-1"></i>Refresh</a>
+  </header>
+
+  <main class="login-main">
+    <div class="login-hero">
+      <div class="login-hero-mark" aria-hidden="true">🀅</div>
+      <h1 class="login-hero-title">FDC V8</h1>
+    </div>
+
+    <div class="login-card">
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <div class="form-group">
+          <label for="username"><i class="fas fa-user mr-1"></i>Username</label>
+          <input type="text" class="form-control" id="username" name="username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="password"><i class="fas fa-lock mr-1"></i>Password</label>
+          <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
+        </div>
+        <div class="form-group form-check mb-2">
+          <input type="checkbox" class="form-check-input" id="remember" name="remember">
+          <label class="form-check-label" for="remember">Remember me on this device</label>
+        </div>
+        {% if turnstile_site_key %}
+        <div class="form-group d-flex justify-content-center mb-2">
+          <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark"></div>
+        </div>
         {% endif %}
+        <button type="submit" class="login-btn-primary">Sign in</button>
+      </form>
+
+      <div class="login-forgot-wrap">
+        <a href="#" class="btn btn-link" data-toggle="modal" data-target="#resetPasswordModal">Forgot password?</a>
+      </div>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="login-flash">{{ messages[0] }}</div>
+        {% endif %}
+      {% endwith %}
     </div>
-</body>
-<footer class="footer mt-5 py-1 bg-light">
-    <div class="container text-center justify-content-between align-items-center">
-        <div style="margin-top: 10px;">
-            <img src="/static/icons/giraffe.ico" alt="Giraffie_here" style="width: 30px; height: 30px;">
-            <span class="text-muted"> Powered by FlamingYeti</span>
+
+    {% if location and location.status == 'success' %}
+    <section class="login-map-section" aria-label="Approximate location">
+      <div class="login-map-card">
+        <h3><i class="fas fa-location-dot mr-2"></i>Session location</h3>
+        <p class="login-meta mb-2">
+          <strong>IP</strong> {{ client_ip }}
+          &nbsp;·&nbsp;
+          <strong>{{ location.city }}</strong>, {{ location.regionName }}, {{ location.country }}
+          <br>
+          <strong>Lat</strong> {{ location.lat }} &nbsp; <strong>Lon</strong> {{ location.lon }}
+        </p>
+        <div id="map"></div>
+      </div>
+    </section>
+    {% else %}
+    <p class="login-meta mt-4">Location lookup unavailable.</p>
+    {% endif %}
+  </main>
+
+  <!-- Reset Password Modal (outside main for overlay stacking) -->
+  <div class="modal fade" id="resetPasswordModal" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resetPasswordModalLabel">Reset password</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <form id="resetPasswordForm">
+            <div class="form-group">
+              <label for="resetIdentifier">Username or email</label>
+              <input type="text" class="form-control" id="resetIdentifier" name="identifier" required>
+              <small class="form-text text-muted">We will email a reset link if the account exists.</small>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Send reset link</button>
+          </form>
+        </div>
+      </div>
     </div>
-</footer>
+  </div>
 
-<script>
-    // Only initialize map when the map container exists on the page.
+  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@lucabravo?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Luca Bravo</a> on <a href="https://unsplash.com/photos/brown-house-near-body-of-water-zAjdgNXsMeg?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Unsplash</a></p>
+
+  <footer class="login-footer">
+    <img src="/static/icons/giraffe.ico" alt="">
+    <span>Giraffie — Powered by FlamingYeti</span>
+  </footer>
+
+  <script>
     (function initLoginMap() {
-        var mapElement = document.getElementById('map');
-        if (!mapElement || typeof L === 'undefined') {
-            return;
-        }
+      var mapElement = document.getElementById('map');
+      if (!mapElement || typeof L === 'undefined') return;
 
-        fetch('https://ipinfo.io/json?token=a1b80ee55f31f3')
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
-                if (!data || !data.loc) {
-                    return;
-                }
+      fetch('https://ipinfo.io/json?token=a1b80ee55f31f3')
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          if (!data || !data.loc) return;
+          var loc = data.loc.split(',');
+          if (loc.length !== 2) return;
+          var lat = parseFloat(loc[0]);
+          var lon = parseFloat(loc[1]);
+          if (Number.isNaN(lat) || Number.isNaN(lon)) return;
 
-                var loc = data.loc.split(',');
-                if (loc.length !== 2) {
-                    return;
-                }
+          var city = data.city || 'Unknown';
+          var region = data.region || 'Unknown';
+          var country = data.country || 'Unknown';
 
-                var lat = parseFloat(loc[0]);
-                var lon = parseFloat(loc[1]);
-                if (Number.isNaN(lat) || Number.isNaN(lon)) {
-                    return;
-                }
-
-                var city = data.city || 'Unknown';
-                var region = data.region || 'Unknown';
-                var country = data.country || 'Unknown';
-
-                var map = L.map('map').setView([lat, lon], 13);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-
-                L.marker([lat, lon]).addTo(map)
-                    .bindPopup('<b>Location:</b> ' + city + ', ' + region + ', ' + country)
-                    .openPopup();
-            })
-            .catch(function(error) {
-                console.error('Error fetching location:', error);
-            });
+          var map = L.map('map', { scrollWheelZoom: false }).setView([lat, lon], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+          }).addTo(map);
+          L.marker([lat, lon]).addTo(map)
+            .bindPopup('<b>' + city + '</b><br>' + region + ', ' + country)
+            .openPopup();
+        })
+        .catch(function (err) { console.error('Map location fetch failed', err); });
     })();
-</script>
+  </script>
 
-<script>
-    // Add error handling for modal
-    $('#resetPasswordModal').on('show.bs.modal', function (e) {
-        console.log('Modal is opening');
-    }).on('shown.bs.modal', function (e) {
-        console.log('Modal is now visible');
-    }).on('hide.bs.modal', function (e) {
-        console.log('Modal is hiding');
-    });
-
-    // Handle password reset form submission
-    document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const identifier = document.getElementById('resetIdentifier').value;
-        
-        fetch('/request_password_reset', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ identifier: identifier })
+  <script>
+    document.getElementById('resetPasswordForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var identifier = document.getElementById('resetIdentifier').value;
+      fetch('/request_password_reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: identifier })
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            if (response.status === 500) throw new Error('Server error. Try again later.');
+            return response.json().then(function (data) {
+              throw new Error(data.error || 'Request failed');
+            });
+          }
+          return response.json();
         })
-        .then(response => {
-            if (!response.ok) {
-                if (response.status === 500) {
-                    throw new Error('Server error. Please try again later.');
-                }
-                return response.json().then(data => {
-                    throw new Error(data.error || 'Unknown error occurred');
-                });
-            }
-            return response.json();
+        .then(function (data) {
+          alert(data.message);
+          $('#resetPasswordModal').modal('hide');
         })
-        .then(data => {
-            alert(data.message);
-            $('#resetPasswordModal').modal('hide');
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error: ' + error.message);
+        .catch(function (error) {
+          alert('Error: ' + error.message);
         });
     });
-</script>
-
-
+  </script>
+</body>
 </html>

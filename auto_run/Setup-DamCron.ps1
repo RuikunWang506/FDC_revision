@@ -2,19 +2,20 @@
 <#
 .SYNOPSIS
   Creates dam_cron_secret.local.txt + optional dam_sync_base_url.local.txt (gitignored).
-  Optionally registers Windows Scheduled Tasks for hourly / weekly DAM sync.
+  Optionally registers Windows Scheduled Tasks for daily (24h) + weekly DAM sync.
   Flask reads the same secret from auto_run/dam_cron_secret.local.txt if DAM_CRON_SECRET env is unset.
 
 .USAGE (elevated PowerShell recommended for tasks):
   Set-Location C:\FDC_FLASK_APP\auto_run
   .\Setup-DamCron.ps1
   .\Setup-DamCron.ps1 -RegisterScheduledTasks
-  .\Setup-DamCron.ps1 -BaseUrl "http://127.0.0.1:5555"
+  .\Setup-DamCron.ps1 -BaseUrl "http://127.0.0.1:5555" -DailyStartTime "03:00"
 #>
 
 [CmdletBinding()]
 param(
     [string]$BaseUrl = "http://127.0.0.1:5555",
+    [string]$DailyStartTime = "03:00",
     [switch]$RegisterScheduledTasks
 )
 
@@ -50,7 +51,7 @@ if (-not $RegisterScheduledTasks) {
     Write-Host ""
     Write-Host "Done. Restart Flask so /dam/cron/start picks up the secret file."
     Write-Host "Test: curl -H `"X-DAM-Cron-Secret: <secret>`" $($BaseUrl.TrimEnd('/'))/dam/cron/status"
-    Write-Host "To register hourly + weekly tasks, re-run: .\Setup-DamCron.ps1 -RegisterScheduledTasks"
+    Write-Host "To register daily (24h) + weekly tasks, re-run: .\Setup-DamCron.ps1 -RegisterScheduledTasks"
     exit 0
 }
 
@@ -60,17 +61,40 @@ if (-not $isAdmin) {
     exit 1
 }
 
-$hourlyBat = Join-Path $here "hourly_auto_sync.bat"
+$dailyBat = Join-Path $here "daily_auto_sync.bat"
 $weeklyBat = Join-Path $here "weekly_complete_rebuild.bat"
+$hourlyBat = Join-Path $here "hourly_auto_sync.bat"
 
-# schtasks needs quoted task names — pass full command line through cmd (ArgumentList splits spaces incorrectly)
-cmd.exe /c "schtasks /Delete /TN `"FDC DAM Hourly Sync`" /F >nul 2>nul"
-cmd.exe /c "schtasks /Create /TN `"FDC DAM Hourly Sync`" /TR `"$hourlyBat`" /SC HOURLY /MO 1 /RU SYSTEM /RL HIGHEST /F"
-if ($LASTEXITCODE -ne 0) { throw "schtasks hourly failed: $LASTEXITCODE" }
+# Remove ANY task that still runs hourly_auto_sync.bat (any task name/path — fixes hourly churn).
+try {
+    Import-Module ScheduledTasks -ErrorAction Stop
+    Get-ScheduledTask -ErrorAction SilentlyContinue | ForEach-Object {
+        $t = $_
+        foreach ($a in @($t.Actions)) {
+            $exe = [string]$a.Execute
+            $arg = [string]$a.Arguments
+            $blob = "$exe $arg"
+            if (($exe -ieq $hourlyBat) -or ($blob -imatch 'hourly_auto_sync\.bat')) {
+                $tp = $t.TaskPath
+                Unregister-ScheduledTask -TaskName $t.TaskName -TaskPath $tp -Confirm:$false -ErrorAction SilentlyContinue
+                Write-Host "Removed scheduled task that referenced hourly_auto_sync.bat: ${tp}$($t.TaskName)"
+                break
+            }
+        }
+    }
+} catch {
+    Write-Warning "ScheduledTasks module unavailable or sweep failed — delete legacy hourly tasks manually. $_"
+}
 
-cmd.exe /c "schtasks /Delete /TN `"FDC DAM Weekly Rebuild`" /F >nul 2>nul"
-cmd.exe /c "schtasks /Create /TN `"FDC DAM Weekly Rebuild`" /TR `"$weeklyBat`" /SC WEEKLY /D SUN /ST 03:00 /RU SYSTEM /RL HIGHEST /F"
+# Remove legacy hourly task name by known title and (re)create daily 24h job
+$null = & schtasks.exe /Delete /TN 'FDC DAM Hourly Sync' /F 2>&1
+$null = & schtasks.exe /Delete /TN 'FDC DAM Daily Sync' /F 2>&1
+$null = & schtasks.exe /Create /TN 'FDC DAM Daily Sync' /TR $dailyBat /SC DAILY /MO 1 /ST $DailyStartTime /RU SYSTEM /RL HIGHEST /F 2>&1
+if ($LASTEXITCODE -ne 0) { throw "schtasks daily (24h) failed: $LASTEXITCODE" }
+
+$null = & schtasks.exe /Delete /TN 'FDC DAM Weekly Rebuild' /F 2>&1
+$null = & schtasks.exe /Create /TN 'FDC DAM Weekly Rebuild' /TR $weeklyBat /SC WEEKLY /D SUN /ST 03:00 /RU SYSTEM /RL HIGHEST /F 2>&1
 if ($LASTEXITCODE -ne 0) { throw "schtasks weekly failed: $LASTEXITCODE" }
 
-Write-Host "Scheduled tasks registered (SYSTEM account)."
-Write-Host "Verify: schtasks /Query /TN `"FDC DAM Hourly Sync`""
+Write-Host "Scheduled tasks registered (SYSTEM account). Daily sync runs every 24 hours at $DailyStartTime (server local time)."
+Write-Host 'Verify: schtasks /Query /TN "FDC DAM Daily Sync"'

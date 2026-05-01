@@ -2,6 +2,37 @@ from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.serving import WSGIRequestHandler
 import os
+import sys
+
+
+def _load_nssm_env_file():
+    """Apply KEY=VALUE lines from nssm-fdcef-environment.env before Config is imported.
+
+    NSSM does not read that file; this lets the same file drive Turnstile and other
+    vars for the fdcef service. Variables already in os.environ (e.g. set in NSSM) win.
+    """
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nssm-fdcef-environment.env")
+    if not os.path.isfile(path):
+        return
+    try:
+        with open(path, encoding="utf-8", errors="replace") as handle:
+            for raw in handle:
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key, val = key.strip(), val.strip()
+                if not key:
+                    continue
+                if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
+                    val = val[1:-1]
+                if key not in os.environ:
+                    os.environ[key] = val
+    except OSError:
+        pass
+
+
+_load_nssm_env_file()
 
 from py.utilities.logging_setup import configure_logging, log_event
 from py.utilities.setting import Config
@@ -43,7 +74,7 @@ class CustomRequestHandler(WSGIRequestHandler):
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
-app.secret_key = 'your-fixed-secret-key-for-persistent-sessions-fdc-flask-app-2025'
+app.secret_key = 'FDCkey2026-may-1-turnstile-update'
 app.config.from_object(Config)
 
 # Session configuration for both local and production
@@ -61,22 +92,28 @@ if app.config.get('ENV') == 'production':
 configure_logging(app)
 register_routes(app)
 
+try:
+    log_event(
+        'info',
+        f'🟣 SYSTEM Flask app process started pid={os.getpid()} cwd={os.getcwd()} argv={sys.argv!r}',
+    )
+except Exception:
+    pass
+
 @app.template_filter('zip')
 def zip_filter(a, b):
     return zip(a, b)
 app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
-    # Only log restart in the reloader subprocess
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         app.logger.info(
             "--------------------------------------------------------------------"
-            "system restarted"
+            "system restarted (dev reloader child)"
             "--------------------------------------------------------------------"
         )
-    
+
     # Configure reloader to exclude log file and output directories
-    import sys
     from werkzeug._reloader import ReloaderLoop
     
     # Get absolute paths for exclusions
