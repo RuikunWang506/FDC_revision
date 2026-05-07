@@ -3,12 +3,14 @@
 import json
 import re
 import uuid
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
 from typing import Optional, Tuple
 
 import pandas as pd
+import pyodbc
 from flask import (
     Blueprint,
     abort,
@@ -24,6 +26,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from py.utilities.database_utils import get_mysql_connection
+from py.utilities.setting import Config
 
 mobile_scanner_bp = Blueprint("mobile_scanner", __name__)
 
@@ -246,8 +249,11 @@ _MATCH_RANK = {
     "fuzzy_material": 0,
     "fuzzy_color_code_material": 0,
     "exact": 1,
+    "style_color_token": 2,
+    "sqlserver_style_color": 2,
     "fuzzy": 2,
     "fuzzy_color_code": 3,
+    "style_wildcard": 4,
     "style_only": 9,
 }
 
@@ -263,6 +269,30 @@ def _pick_best_sku(candidates: list) -> Optional[str]:
         ),
     )
     return ranked[0]["sku"]
+
+
+def _pick_top_ranked_skus(candidates: list) -> list:
+    if not candidates:
+        return []
+    ranked = sorted(
+        candidates,
+        key=lambda x: (
+            _MATCH_RANK.get(x.get("match_type"), 5),
+            len((x.get("sku") or "")),
+            (x.get("sku") or ""),
+        ),
+    )
+    top_rank = _MATCH_RANK.get(ranked[0].get("match_type"), 5)
+    out = []
+    seen = set()
+    for c in ranked:
+        if _MATCH_RANK.get(c.get("match_type"), 5) != top_rank:
+            break
+        sku = (c.get("sku") or "").strip()
+        if sku and sku not in seen:
+            seen.add(sku)
+            out.append(sku)
+    return out
 
 
 def fuzzy_find_skus(
@@ -322,29 +352,77 @@ def fuzzy_find_skus(
     def _fuzzy_two(like_second: str, match_type: str):
         sql = f"""
             SELECT DISTINCT SKU, Style FROM products
-            WHERE LOWER(SKU) LIKE LOWER(%s) AND LOWER(SKU) LIKE LOWER(%s)
+            WHERE
+              (LOWER(SKU) LIKE LOWER(%s) OR LOWER(COALESCE(Style, '')) LIKE LOWER(%s))
+              AND
+              (LOWER(SKU) LIKE LOWER(%s) OR LOWER(COALESCE(Style, '')) LIKE LOWER(%s))
             ORDER BY CHAR_LENGTH(SKU) ASC
             LIMIT {lim}
         """
-        cursor.execute(sql, (like_style, like_second))
+        cursor.execute(sql, (like_style, like_style, like_second, like_second))
         _append_fuzzy_rows(cursor.fetchall(), match_type)
 
     def _fuzzy_three(like_second: str, like_mat: str, match_type: str):
         sql = f"""
             SELECT DISTINCT SKU, Style FROM products
-            WHERE LOWER(SKU) LIKE LOWER(%s) AND LOWER(SKU) LIKE LOWER(%s)
-              AND LOWER(SKU) LIKE LOWER(%s)
+            WHERE
+              (LOWER(SKU) LIKE LOWER(%s) OR LOWER(COALESCE(Style, '')) LIKE LOWER(%s))
+              AND
+              (LOWER(SKU) LIKE LOWER(%s) OR LOWER(COALESCE(Style, '')) LIKE LOWER(%s))
+              AND
+              (LOWER(SKU) LIKE LOWER(%s) OR LOWER(COALESCE(Style, '')) LIKE LOWER(%s))
             ORDER BY CHAR_LENGTH(SKU) ASC
             LIMIT {lim}
         """
         cursor.execute(
             sql,
-            (like_style, like_second, like_mat),
+            (
+                like_style,
+                like_style,
+                like_second,
+                like_second,
+                like_mat,
+                like_mat,
+            ),
         )
         _append_fuzzy_rows(cursor.fetchall(), match_type)
 
+    def _style_color_token_pass():
+        if not color_abbrev:
+            return
+        # Explicit token patterns like "%3815 YL%" and "%3815YL%".
+        patterns = [
+            f"%{style} {color_abbrev}%",
+            f"%{style}{color_abbrev}%",
+            f"%{style}-{color_abbrev}%",
+            f"%{style}_{color_abbrev}%",
+        ]
+        sql = f"""
+            SELECT DISTINCT SKU, Style FROM products
+            WHERE LOWER(SKU) LIKE LOWER(%s)
+               OR LOWER(SKU) LIKE LOWER(%s)
+               OR LOWER(SKU) LIKE LOWER(%s)
+               OR LOWER(SKU) LIKE LOWER(%s)
+            ORDER BY CHAR_LENGTH(SKU) ASC
+            LIMIT {lim}
+        """
+        cursor.execute(sql, (patterns[0], patterns[1], patterns[2], patterns[3]))
+        _append_fuzzy_rows(cursor.fetchall(), "style_color_token")
+
+    def _style_wildcard_pass():
+        # Mirror product_detail wildcard behavior (e.g. search %3305% -> T3305*).
+        sql = f"""
+            SELECT DISTINCT SKU, Style FROM products
+            WHERE LOWER(SKU) LIKE LOWER(%s) OR LOWER(COALESCE(Style, '')) LIKE LOWER(%s)
+            ORDER BY CHAR_LENGTH(SKU) ASC
+            LIMIT {lim}
+        """
+        cursor.execute(sql, (f"%{style}%", f"%{style}%"))
+        _append_fuzzy_rows(cursor.fetchall(), "style_wildcard")
+
     # Fuzzy: style + color abbrev (optionally + material label when 54→WN etc.)
     if color_abbrev:
+        _style_color_token_pass()
         if mapped_material:
             _fuzzy_three(
                 f"%{color_abbrev}%",
@@ -353,23 +431,27 @@ def fuzzy_find_skus(
             )
         if not candidates:
             _fuzzy_two(f"%{color_abbrev}%", "fuzzy")
-    elif color_id:
+    if color_id and not candidates:
         like_color = f"%{color_id}%"
         if mapped_material:
             _fuzzy_three(like_color, f"%{mat_label}%", "fuzzy_color_code_material")
         if not candidates:
             _fuzzy_two(like_color, "fuzzy_color_code")
 
+    # Product-detail-like wildcard pass before final fallback.
+    if not candidates:
+        _style_wildcard_pass()
+
     # Last resort: style substring only
     if not candidates:
         cursor.execute(
             f"""
             SELECT DISTINCT SKU, Style FROM products
-            WHERE LOWER(SKU) LIKE LOWER(%s)
+            WHERE LOWER(SKU) LIKE LOWER(%s) OR LOWER(COALESCE(Style, '')) LIKE LOWER(%s)
             ORDER BY CHAR_LENGTH(SKU) ASC
             LIMIT {lim}
             """,
-            (like_style,),
+            (like_style, like_style),
         )
         for row in cursor.fetchall():
             sku, st = row[0], row[1]
@@ -398,47 +480,313 @@ def _locations_for_sku(cursor, sku: str) -> str:
     return (row[0] or "") if row else ""
 
 
+def _locations_for_skus(cursor, skus: list) -> dict:
+    out = {}
+    for sku in skus:
+        if not sku:
+            continue
+        out[sku] = _locations_for_sku(cursor, sku)
+    return out
+
+
+def _sqlserver_combined_available_by_sku(skus: list) -> dict:
+    """Per SKU: FDC + E_FAS available (in_stock - order_qty), same join as product_detail."""
+    skus = [str(s).strip() for s in (skus or []) if s and str(s).strip()]
+    if not skus:
+        return {}
+
+    cfg = getattr(Config, "SQL_SERVER_CONFIG", None) or {}
+    driver = cfg.get("driver")
+    server = cfg.get("server")
+    user = cfg.get("username")
+    pwd = cfg.get("password")
+    dbs = [cfg.get("database_fdc"), cfg.get("database_oms_ef")]
+    if not driver or not server or not user or not pwd:
+        return {}
+
+    placeholders = ",".join("?" * len(skus))
+    params = [s.upper() for s in skus]
+    query = f"""
+        SELECT UPPER(LTRIM(RTRIM(i.PROD_CD))) AS pc,
+               COALESCE(
+                   SUM(CAST(ISNULL(id.in_stock, 0) AS BIGINT) - CAST(ISNULL(id.order_qty, 0) AS BIGINT)),
+                   0
+               ) AS available
+        FROM dbo.inv AS i
+        LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+        WHERE UPPER(LTRIM(RTRIM(i.PROD_CD))) IN ({placeholders})
+        GROUP BY UPPER(LTRIM(RTRIM(i.PROD_CD)))
+    """
+
+    totals_by_norm: dict[str, int] = defaultdict(int)
+    for db in dbs:
+        if not db:
+            continue
+        conn = None
+        cur = None
+        try:
+            conn = pyodbc.connect(
+                f"DRIVER={driver};SERVER={server};DATABASE={db};UID={user};PWD={pwd}",
+                timeout=5,
+            )
+            cur = conn.cursor()
+            cur.execute(query, params)
+            for row in cur.fetchall():
+                pc = (row[0] or "").strip().upper()
+                av = int(row[1] or 0)
+                totals_by_norm[pc] += av
+        except Exception:
+            continue
+        finally:
+            try:
+                if cur is not None:
+                    cur.close()
+            except Exception:
+                pass
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass
+
+    return {s: int(totals_by_norm[s.upper()]) for s in skus}
+
+
+def _sqlserver_style_color_candidates(style: str, color_abbrev: str, limit: int = 15) -> list:
+    """Fallback to SQL Server inv table (product_detail-like source) for style/color token search."""
+    style = (style or "").strip()
+    color_abbrev = (color_abbrev or "").strip()
+    if not style:
+        return []
+
+    cfg = getattr(Config, "SQL_SERVER_CONFIG", None) or {}
+    driver = cfg.get("driver")
+    server = cfg.get("server")
+    user = cfg.get("username")
+    pwd = cfg.get("password")
+    dbs = [cfg.get("database_fdc"), cfg.get("database_oms_ef")]
+    if not driver or not server or not user or not pwd:
+        return []
+
+    out = []
+    seen = set()
+    lim = max(1, int(limit))
+    for db in dbs:
+        if not db:
+            continue
+        conn = None
+        cur = None
+        try:
+            conn = pyodbc.connect(
+                f"DRIVER={driver};SERVER={server};DATABASE={db};UID={user};PWD={pwd}",
+                timeout=5,
+            )
+            cur = conn.cursor()
+            if color_abbrev:
+                query = f"""
+                    SELECT TOP {lim} i.PROD_CD
+                    FROM dbo.inv AS i
+                    WHERE (UPPER(i.PROD_CD) LIKE ? OR UPPER(i.ALT_CD) LIKE ?)
+                      AND (UPPER(i.PROD_CD) LIKE ? OR UPPER(COALESCE(i.UNIT_COLOR, '')) LIKE ?)
+                    ORDER BY LEN(i.PROD_CD), i.PROD_CD
+                """
+                cur.execute(
+                    query,
+                    f"%{style.upper()}%",
+                    f"%{style.upper()}%",
+                    f"%{style.upper()} {color_abbrev.upper()}%",
+                    f"%{color_abbrev.upper()}%",
+                )
+            else:
+                query = f"""
+                    SELECT TOP {lim} i.PROD_CD
+                    FROM dbo.inv AS i
+                    WHERE UPPER(i.PROD_CD) LIKE ? OR UPPER(i.ALT_CD) LIKE ?
+                    ORDER BY LEN(i.PROD_CD), i.PROD_CD
+                """
+                cur.execute(query, f"%{style.upper()}%", f"%{style.upper()}%")
+
+            for row in cur.fetchall():
+                sku = (row[0] or "").strip() if row else ""
+                if sku and sku not in seen:
+                    seen.add(sku)
+                    out.append(sku)
+        except Exception:
+            continue
+        finally:
+            try:
+                if cur is not None:
+                    cur.close()
+            except Exception:
+                pass
+            try:
+                if conn is not None:
+                    conn.close()
+            except Exception:
+                pass
+    return out
+
+
 def _records_to_rows(records):
     rows = []
     for r in records:
         if not isinstance(r, dict):
             continue
-        p = r.get("parsed") if isinstance(r.get("parsed"), dict) else None
         raw = (r.get("raw") or "").strip()
-        chk = ""
-        if p is not None:
-            chk = "Y" if p.get("checkOk") else "N"
         res = r.get("resolved") if isinstance(r.get("resolved"), dict) else {}
-        cand_list = res.get("sku_candidates") or []
-        if isinstance(cand_list, list):
-            cand_str = " | ".join(
-                str(x.get("sku") if isinstance(x, dict) else x) for x in cand_list[:20]
-            )
-        else:
-            cand_str = ""
-        rows.append(
-            {
-                "scan_time": r.get("time_iso") or r.get("time_display") or "",
-                "raw_barcode": raw,
-                "is_fdc_13_digit_upc": "Y" if p else "N",
-                "matched_sku": res.get("matched_sku") or "",
-                "sku_candidates": cand_str,
-                "location": res.get("locations") or "",
-                "resolve_status": res.get("status") or "",
-                "resolve_error": res.get("error") or "",
-                "beginning_1": p.get("beginning", "") if p else "",
-                "factory_2": p.get("factory", "") if p else "",
-                "material_code_2": p.get("material", "") if p else "",
-                "material_label": p.get("matLabel", "") if p else "",
-                "style_4": p.get("style", "") if p else "",
-                "color_code_3": p.get("colorId", "") if p else "",
-                "color_abbrev": p.get("colorAbbrev", "") if p else "",
-                "color_description": p.get("colorDesc", "") if p else "",
-                "check_digit_ok": chk,
-                "summary_line": res.get("matched_sku") or "",
-            }
+        scan_time = (r.get("time_iso") or r.get("time_display") or "").strip()
+        selected_sku = (res.get("selected_sku") or "").strip()
+        matched_skus = res.get("matched_skus") if isinstance(res.get("matched_skus"), list) else []
+        loc_map = res.get("locations_by_sku") if isinstance(res.get("locations_by_sku"), dict) else {}
+        avail_map = (
+            res.get("available_by_sku")
+            if isinstance(res.get("available_by_sku"), dict)
+            else {}
         )
+
+        def _avail_for(sku_key: str) -> str:
+            v = avail_map.get(sku_key)
+            if v is None or v == "":
+                return ""
+            return str(v)
+
+        if selected_sku:
+            rows.append(
+                {
+                    "sku": selected_sku,
+                    "upc": raw,
+                    "available": _avail_for(selected_sku),
+                    "loc": str(loc_map.get(selected_sku, res.get("locations", "")) or "").strip(),
+                    "time": scan_time,
+                }
+            )
+        elif matched_skus:
+            for sku in matched_skus:
+                sku_s = (sku or "").strip()
+                rows.append(
+                    {
+                        "sku": sku_s,
+                        "upc": raw,
+                        "available": _avail_for(sku_s),
+                        "loc": str(loc_map.get(sku_s, "") or "").strip(),
+                        "time": scan_time,
+                    }
+                )
+        else:
+            ms = (res.get("matched_sku") or "").strip()
+            rows.append(
+                {
+                    "sku": ms,
+                    "upc": raw,
+                    "available": _avail_for(ms) if ms else str(res.get("available", "") or ""),
+                    "loc": (res.get("locations") or "").strip(),
+                    "time": scan_time,
+                }
+            )
     return rows
+
+
+def _canonical_upc_for_store(raw: str) -> str:
+    d = re.sub(r"\D", "", str(raw or "").strip())
+    if len(d) == 12:
+        d = "0" + d
+    return d
+
+
+def _ensure_confirm_table(cursor) -> None:
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS mobile_scanner_upc_sku_confirmed (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            upc VARCHAR(32) NOT NULL,
+            sku VARCHAR(128) NOT NULL,
+            location VARCHAR(512) NOT NULL DEFAULT '',
+            confirmed_by VARCHAR(128) NOT NULL DEFAULT '',
+            confirmed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_mobile_scanner_upc (upc)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+
+
+def _save_confirmed_upc_sku(upc: str, sku: str, location: str, username: str) -> None:
+    conn = get_mysql_connection()
+    if conn is None:
+        raise RuntimeError("Database unavailable")
+    cur = None
+    try:
+        cur = conn.cursor()
+        _ensure_confirm_table(cur)
+        cur.execute(
+            """
+            INSERT INTO mobile_scanner_upc_sku_confirmed (upc, sku, location, confirmed_by)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                sku = VALUES(sku),
+                location = VALUES(location),
+                confirmed_by = VALUES(confirmed_by),
+                confirmed_at = CURRENT_TIMESTAMP
+            """,
+            (
+                _canonical_upc_for_store(upc),
+                str(sku or "").strip(),
+                str(location or "").strip(),
+                str(username or "").strip(),
+            ),
+        )
+        conn.commit()
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def _get_confirmed_upc_sku(upc: str) -> Optional[dict]:
+    conn = get_mysql_connection()
+    if conn is None:
+        return None
+    cur = None
+    try:
+        cur = conn.cursor()
+        _ensure_confirm_table(cur)
+        cur.execute(
+            """
+            SELECT upc, sku, location, confirmed_by, confirmed_at
+            FROM mobile_scanner_upc_sku_confirmed
+            WHERE upc = %s
+            LIMIT 1
+            """,
+            (_canonical_upc_for_store(upc),),
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        return {
+            "upc": (row[0] or "").strip(),
+            "sku": (row[1] or "").strip(),
+            "location": (row[2] or "").strip(),
+            "confirmed_by": (row[3] or "").strip(),
+            "confirmed_at": str(row[4]) if row[4] is not None else "",
+        }
+    except Exception:
+        return None
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @mobile_scanner_bp.route("/mobile_scanner")
@@ -524,13 +872,49 @@ def mobile_scanner_resolve_upc():
     if not parsed:
         return jsonify({"success": False, "error": "Invalid UPC"}), 400
 
+    confirmed = _get_confirmed_upc_sku(cleaned)
+    if confirmed and confirmed.get("sku"):
+        sku = confirmed["sku"]
+        loc = confirmed.get("location", "")
+        avail_by_sku = _sqlserver_combined_available_by_sku([sku])
+        av = avail_by_sku.get(sku, 0)
+        return jsonify(
+            {
+                "success": True,
+                "error": None,
+                "upc": cleaned,
+                "parsed": parsed,
+                "matched_sku": sku,
+                "selected_sku": sku,
+                "matched_skus": [sku],
+                "sku_candidates": [
+                    {
+                        "sku": sku,
+                        "style": parsed["style"],
+                        "match_type": "confirmed_table",
+                    }
+                ],
+                "locations": loc,
+                "locations_by_sku": {sku: loc},
+                "available": av,
+                "available_by_sku": avail_by_sku,
+                "from_confirmed": True,
+                "confirmed_by": confirmed.get("confirmed_by", ""),
+                "confirmed_at": confirmed.get("confirmed_at", ""),
+            }
+        )
+
     conn = get_mysql_connection()
     if conn is None:
         return jsonify({"success": False, "error": "Database unavailable"}), 503
 
     candidates = []
     best = None
+    matched_skus = []
     locations = ""
+    locations_by_sku = {}
+    available_by_sku = {}
+    available_single = None
     err_msg = ""
     cursor = None
     try:
@@ -544,8 +928,32 @@ def mobile_scanner_resolve_upc():
             mat_label=parsed["matLabel"],
             limit=15,
         )
+        if not candidates:
+            ss_skus = _sqlserver_style_color_candidates(
+                parsed["style"],
+                parsed["colorAbbrev"],
+                limit=15,
+            )
+            for sku in ss_skus:
+                candidates.append(
+                    {
+                        "sku": sku,
+                        "style": parsed["style"],
+                        "match_type": "sqlserver_style_color",
+                    }
+                )
+            if ss_skus and not best:
+                best = ss_skus[0]
+        if not best:
+            best = _pick_best_sku(candidates)
+        matched_skus = _pick_top_ranked_skus(candidates)
+        locations_by_sku = _locations_for_skus(cursor, matched_skus)
+        available_by_sku = _sqlserver_combined_available_by_sku(matched_skus)
         if best:
             locations = _locations_for_sku(cursor, best)
+            available_single = available_by_sku.get(best)
+        elif matched_skus:
+            available_single = available_by_sku.get(matched_skus[0])
     except Exception as e:
         current_app.logger.exception("mobile_scanner resolve-upc")
         err_msg = str(e)
@@ -567,8 +975,12 @@ def mobile_scanner_resolve_upc():
             "upc": cleaned,
             "parsed": parsed,
             "matched_sku": best,
+            "matched_skus": matched_skus,
             "sku_candidates": candidates,
             "locations": locations,
+            "locations_by_sku": locations_by_sku,
+            "available": available_single if available_single is not None else "",
+            "available_by_sku": available_by_sku,
         }
     )
 
@@ -589,6 +1001,8 @@ def mobile_scanner_export():
         return jsonify({"success": False, "error": "No valid rows"}), 400
 
     df = pd.DataFrame(rows)
+    if "available" in df.columns:
+        df = df.rename(columns={"available": "Avail"})
     fname = _build_export_filename(session["username"])
     path = _exports_dir() / fname
     try:
@@ -606,6 +1020,41 @@ def mobile_scanner_export():
                 filename=fname,
             ),
             "row_count": len(rows),
+        }
+    )
+
+
+@mobile_scanner_bp.route("/mobile_scanner/confirm-upc-sku", methods=["POST"])
+def mobile_scanner_confirm_upc_sku():
+    if "username" not in session:
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+
+    data = request.get_json(force=True, silent=True) or {}
+    upc = _canonical_upc_for_store(data.get("upc", ""))
+    sku = str(data.get("sku", "") or "").strip()
+    location = str(data.get("location", "") or "").strip()
+    if len(upc) != 13 or not upc.isdigit():
+        return jsonify({"success": False, "error": "UPC must be 13 digits"}), 400
+    if not sku:
+        return jsonify({"success": False, "error": "SKU is required"}), 400
+
+    try:
+        _save_confirmed_upc_sku(
+            upc=upc,
+            sku=sku,
+            location=location,
+            username=session.get("username", ""),
+        )
+    except Exception as e:
+        current_app.logger.exception("mobile_scanner confirm-upc-sku")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+    return jsonify(
+        {
+            "success": True,
+            "upc": upc,
+            "sku": sku,
+            "location": location,
         }
     )
 

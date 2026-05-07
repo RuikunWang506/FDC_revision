@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   <style>
-    .scanner-wrap { max-width: 720px; margin: 0 auto; padding: 1rem 1rem 2rem; }
+    .scanner-wrap { max-width: 1080px; margin: 0 auto; padding: 1rem 1rem 2rem; }
     .video-shell {
       position: relative;
       width: 100%;
@@ -15,14 +15,19 @@
       overflow: hidden;
       background: #0f172a;
       aspect-ratio: 4 / 3;
+      max-height: 320px;
       border: 2px solid rgba(0, 212, 255, 0.35);
     }
     #scannerVideo {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
       display: block;
       transform: scaleX(1);
+      /* Decode uses videoWidth/videoHeight; keep element non-zero for iOS */
+      min-width: 120px;
+      min-height: 80px;
     }
     .perm-banner {
       background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(28, 200, 138, 0.12));
@@ -31,6 +36,79 @@
       padding: 1rem 1.25rem;
       margin-bottom: 1rem;
       color: #1e293b;
+    }
+    .perm-banner .perm-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #btnToggleManualInput { display: none; }
+    .manual-input-panel.card { margin-bottom: 0; }
+    .scan-results-scroll {
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .scanner-compact-card .card-body { padding: 0.75rem 1rem; }
+    @media (max-width: 767.98px) {
+      .scanner-wrap {
+        padding: 0.5rem 0.65rem 1rem;
+      }
+      .page-title {
+        font-size: 1.05rem;
+        margin-bottom: 0.5rem !important;
+      }
+      /* Short strip for layout, but tall enough for BarcodeDetector / ZXing on real frames */
+      .video-shell {
+        border-radius: 8px;
+        aspect-ratio: 2 / 1;
+        max-height: 200px;
+        min-height: 160px;
+        margin-bottom: 0.5rem !important;
+      }
+      .perm-banner {
+        padding: 0.65rem 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+      }
+      .perm-banner .perm-detail { display: none; }
+      .perm-banner .perm-actions { margin-top: 0.35rem; }
+      .scan-status {
+        font-size: 0.8rem;
+        margin-top: 0.35rem;
+        margin-bottom: 0.5rem !important;
+      }
+      #btnToggleManualInput {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+      }
+      .manual-input-panel:not(.is-expanded) {
+        display: none !important;
+      }
+      .scanner-compact-card .card-body {
+        padding: 0.5rem 0.65rem;
+      }
+      .scan-results-scroll {
+        max-height: min(52vh, 420px);
+      }
+      #scanGridTable {
+        font-size: 0.78rem;
+      }
+      #scanGridTable th,
+      #scanGridTable td {
+        padding: 0.35rem 0.3rem;
+      }
+      .engine-note-mobile { margin-top: 0.25rem !important; margin-bottom: 0 !important; }
+      .color-ref-wrap.mt-4 { margin-top: 0.75rem !important; }
+    }
+    @media (min-width: 768px) {
+      .manual-input-panel {
+        display: block !important;
+      }
     }
     .perm-banner.dark-context { color: #e8f4fd; }
     .scan-status {
@@ -69,6 +147,44 @@
     #colorRefBody td { font-size: 0.82rem; vertical-align: middle; }
     #colorEditBody input.form-control-sm { min-width: 0; }
     #colorEditBody td { vertical-align: middle; }
+    .sku-list-box {
+      min-height: 100px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.9rem;
+    }
+    #scanGridTable th,
+    #scanGridTable td {
+      vertical-align: top;
+    }
+    #scanGridTable th:nth-child(1),
+    #scanGridTable td:nth-child(1) { width: 13%; }
+    #scanGridTable th:nth-child(2),
+    #scanGridTable td:nth-child(2) { width: 14%; }
+    #scanGridTable th:nth-child(3),
+    #scanGridTable td:nth-child(3) { width: 9%; text-align: right; }
+    #scanGridTable th:nth-child(4),
+    #scanGridTable td:nth-child(4) {
+      width: 42%;
+      word-break: break-word;
+      white-space: normal;
+    }
+    .scan-sku-cell,
+    .scan-loc-cell {
+      white-space: pre-line;
+    }
+    #scanGridTable th:nth-child(5),
+    #scanGridTable td:nth-child(5) { width: 16%; }
+    #scanGridTable th:nth-child(6),
+    #scanGridTable td:nth-child(6) { width: 6%; text-align: center; }
+    .multi-match-cell {
+      background: #fff3cd;
+      border-color: #ffe69c;
+    }
+    .scan-sku-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
   </style>
   <script src="{{ url_for('static', filename='js/fdc_upc13_maps.js') }}"></script>
 </head>
@@ -79,14 +195,17 @@
     <h4 class="page-title mb-3"><i class="fas fa-barcode text-info"></i> Mobile barcode scanner</h4>
 
     <div class="perm-banner" id="permExplain">
-      <strong><i class="fas fa-camera"></i> Camera access</strong>
-      <p class="mb-2 mt-2"><strong>Only 13-digit retail UPC/EAN-13</strong> codes are added (check digit must validate). Each scan shows the UPC immediately, then the app looks up SKUs in MySQL in the background.</p>
-      <button type="button" class="btn btn-primary btn-sm" id="btnStart">
-        <i class="fas fa-video"></i> Start camera
-      </button>
-      <button type="button" class="btn btn-outline-secondary btn-sm ml-2 d-none" id="btnStop">
-        <i class="fas fa-stop"></i> Stop
-      </button>
+      <strong><i class="fas fa-camera"></i> Camera</strong>
+      <p class="mb-2 mt-2 perm-detail"><strong>Only 13-digit retail UPC/EAN-13</strong> codes are added (check digit must validate). Each scan shows the UPC immediately, then the app looks up SKUs in MySQL in the background.</p>
+      <p class="mb-0 d-md-none small text-muted perm-mobile-hint"><strong>EAN-13 only</strong> · valid check digit</p>
+      <div class="perm-actions mt-2">
+        <button type="button" class="btn btn-primary btn-sm" id="btnStart">
+          <i class="fas fa-video"></i> Start
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="btnStop">
+          <i class="fas fa-stop"></i> Stop
+        </button>
+      </div>
     </div>
 
     <div class="video-shell mb-3">
@@ -94,22 +213,61 @@
     </div>
     <p class="scan-status mb-3" id="scanStatus">Camera off. Press Start to enable scanning.</p>
 
-    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-      <strong>Scanned UPCs</strong>
-      <div class="d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-sm btn-success" id="btnExportExcel" disabled title="Upload current list as .xlsx">
-          <i class="fas fa-file-excel"></i> Save to Excel
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-danger" id="btnClear" disabled>Clear list</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnToggleManualInput" aria-expanded="false" aria-controls="manualInputPanel">
+      <i class="fas fa-keyboard"></i> <span id="btnToggleManualLabel">Show manual entry</span>
+    </button>
+
+    <div class="card border rounded mt-2 mb-2 bg-white manual-input-panel" id="manualInputPanel">
+      <div class="card-body py-3">
+        <h6 class="mb-2 d-none d-md-block"><i class="fas fa-keyboard text-primary"></i> Manual input</h6>
+        <h6 class="mb-2 d-md-none"><i class="fas fa-keyboard text-primary"></i> Manual entry</h6>
+        <p class="small text-muted mb-2 d-none d-md-block">Enter one or more UPC/SKU values (separated by newline, comma, space, or semicolon), then press Enter or click Add code.</p>
+        <p class="small text-muted mb-2 d-md-none">Codes separated by space, comma, or semicolon.</p>
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" id="manualCodeInput" placeholder="Type UPC / codes" autocomplete="off">
+          <div class="input-group-append">
+            <button type="button" class="btn btn-outline-primary" id="btnAddManualCode">
+              <i class="fas fa-keyboard"></i> Add
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-    <ul class="barcode-list" id="barcodeList"></ul>
-    <p class="text-muted small mt-2 mb-0" id="engineNote"></p>
+    <p class="text-muted small mt-2 mb-0 engine-note-mobile" id="engineNote"></p>
 
-    <div class="card border rounded mt-3 mb-3 bg-white">
+    <div class="card border rounded mt-2 mb-2 bg-white scanner-compact-card">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <strong>Results</strong>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-success" id="btnExportExcel" disabled title="Upload current list as .xlsx">
+              <i class="fas fa-file-excel"></i> <span class="d-none d-sm-inline">Save to </span>Excel
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="btnClear" disabled>Clear</button>
+          </div>
+        </div>
+        <div class="table-responsive border rounded scan-results-scroll">
+          <table class="table table-sm table-striped mb-0" id="scanGridTable">
+            <thead class="thead-light sticky-top">
+              <tr>
+                <th>SKU</th>
+                <th>UPC</th>
+                <th>Avail</th>
+                <th>LOC</th>
+                <th>TIME</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="scanGridBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border rounded mt-2 mb-2 bg-white scanner-compact-card">
       <div class="card-body py-3">
         <h6 class="mb-2"><i class="fas fa-folder-open text-secondary"></i> Saved Excel files</h6>
-        <p class="small text-muted mb-2">Each export is stored on the server for <strong>24 hours</strong>, then deleted automatically. Only your account sees these downloads.</p>
+        <p class="small text-muted mb-2">Exports expire after <strong>24 hours</strong>. <span class="d-none d-md-inline">Only your account sees these downloads.</span></p>
         <ul class="list-group list-group-flush" id="exportFilesList"></ul>
         <p class="small text-muted mb-0 mt-2" id="exportFilesEmpty">No saved files yet.</p>
       </div>
@@ -417,10 +575,56 @@
     const btnStop = document.getElementById('btnStop');
     const btnClear = document.getElementById('btnClear');
     const scanStatus = document.getElementById('scanStatus');
-    const barcodeList = document.getElementById('barcodeList');
+    const scanGridBody = document.getElementById('scanGridBody');
     const engineNote = document.getElementById('engineNote');
+    const manualCodeInput = document.getElementById('manualCodeInput');
+    const btnAddManualCode = document.getElementById('btnAddManualCode');
+    const manualInputPanel = document.getElementById('manualInputPanel');
+    const btnToggleManualInput = document.getElementById('btnToggleManualInput');
+    const btnToggleManualLabel = document.getElementById('btnToggleManualLabel');
 
     const UPC = window.FDC_UPC13 || { MATERIAL_LINE_MAP: {}, COLOR_MAP: {} };
+
+    const MQ_MOBILE = typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 767.98px)')
+      : { matches: false, addEventListener: () => {}, addListener: () => {} };
+
+    function syncManualPanelToggleUi() {
+      if (!manualInputPanel || !btnToggleManualInput || !btnToggleManualLabel) return;
+      const mobile = MQ_MOBILE.matches;
+      if (!mobile) {
+        manualInputPanel.classList.add('is-expanded');
+        btnToggleManualInput.setAttribute('aria-expanded', 'true');
+        btnToggleManualLabel.textContent = 'Manual entry';
+        return;
+      }
+      const open = manualInputPanel.classList.contains('is-expanded');
+      btnToggleManualInput.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btnToggleManualLabel.textContent = open ? 'Hide manual entry' : 'Show manual entry';
+    }
+
+    function setManualPanelExpanded(open) {
+      if (!manualInputPanel) return;
+      manualInputPanel.classList.toggle('is-expanded', !!open);
+      syncManualPanelToggleUi();
+      if (open && manualCodeInput && MQ_MOBILE.matches) {
+        setTimeout(() => {
+          try { manualCodeInput.focus(); } catch (e) { /* ignore */ }
+        }, 50);
+      }
+    }
+
+    if (btnToggleManualInput && manualInputPanel) {
+      btnToggleManualInput.addEventListener('click', () => {
+        setManualPanelExpanded(!manualInputPanel.classList.contains('is-expanded'));
+      });
+    }
+    if (typeof MQ_MOBILE.addEventListener === 'function') {
+      MQ_MOBILE.addEventListener('change', () => syncManualPanelToggleUi());
+    } else if (typeof MQ_MOBILE.addListener === 'function') {
+      MQ_MOBILE.addListener(() => syncManualPanelToggleUi());
+    }
+    syncManualPanelToggleUi();
 
     function validateGtin13CheckDigit(code13) {
       let sum = 0;
@@ -492,6 +696,7 @@
     }
 
     async function fetchResolveUpc(rec) {
+      let autoConfirmSku = null;
       try {
         const r = await fetch('/mobile_scanner/resolve-upc', {
           method: 'POST',
@@ -503,20 +708,35 @@
         rec.resolved = {
           status: data.success ? 'ok' : 'error',
           matched_sku: data.matched_sku || '',
+          selected_sku: data.selected_sku || '',
+          matched_skus: data.matched_skus || [],
           sku_candidates: data.sku_candidates || [],
           locations: data.locations || '',
+          locations_by_sku: data.locations_by_sku || {},
+          available: data.available !== undefined && data.available !== null ? data.available : '',
+          available_by_sku: data.available_by_sku || {},
+          from_confirmed: !!data.from_confirmed,
           error: data.error || '',
         };
+        autoConfirmSku = tryAutoPickTwoSkusWhenOneAvailZero(rec);
       } catch (e) {
         rec.resolved = {
           status: 'error',
           matched_sku: '',
+          selected_sku: '',
+          matched_skus: [],
           sku_candidates: [],
           locations: '',
+          locations_by_sku: {},
+          available: '',
+          available_by_sku: {},
           error: e && e.message ? e.message : String(e),
         };
       }
       updateScanRowDOM(rec);
+      if (autoConfirmSku) {
+        postConfirmUpcSku(rec, autoConfirmSku);
+      }
     }
 
     function pumpResolveQueue() {
@@ -535,78 +755,199 @@
       pumpResolveQueue();
     }
 
+    function applySkuChoiceToRecord(rec, chosen) {
+      const res = rec.resolved;
+      if (!res || !chosen) return;
+      const locMap = (res.locations_by_sku && typeof res.locations_by_sku === 'object')
+        ? res.locations_by_sku
+        : {};
+      const availMap = (res.available_by_sku && typeof res.available_by_sku === 'object')
+        ? res.available_by_sku
+        : {};
+      res.selected_sku = chosen;
+      res.matched_sku = chosen;
+      res.locations = locMap[chosen] || '';
+      const av = Object.prototype.hasOwnProperty.call(availMap, chosen) ? availMap[chosen] : '';
+      res.available = av === 0 || av === '0' ? 0 : av;
+    }
+
+    function postConfirmUpcSku(rec, chosen) {
+      if (!rec || !chosen) return Promise.resolve(null);
+      const loc = (rec.resolved && rec.resolved.locations) ? rec.resolved.locations : '';
+      return fetch('/mobile_scanner/confirm-upc-sku', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          upc: rec.raw || '',
+          sku: chosen,
+          location: loc,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data || !data.success) {
+            alert((data && data.error) ? data.error : 'Could not save confirmed UPC/SKU');
+          }
+          return data;
+        })
+        .catch((err) => {
+          alert('Could not save confirmed UPC/SKU: ' + (err && err.message ? err.message : String(err)));
+          return null;
+        });
+    }
+
+    /** Exactly two SKU suggestions and one has Avail 0 → pick the other and return it for DB confirm. */
+    function tryAutoPickTwoSkusWhenOneAvailZero(rec) {
+      const res = rec.resolved;
+      if (!res || res.status !== 'ok' || res.from_confirmed) return null;
+      const skus = (res.matched_skus || []).filter(Boolean);
+      if (skus.length !== 2) return null;
+      const availMap = (res.available_by_sku && typeof res.available_by_sku === 'object')
+        ? res.available_by_sku
+        : {};
+      const s0 = skus[0];
+      const s1 = skus[1];
+      if (!Object.prototype.hasOwnProperty.call(availMap, s0) ||
+          !Object.prototype.hasOwnProperty.call(availMap, s1)) {
+        return null;
+      }
+      const a0 = Number(availMap[s0]);
+      const a1 = Number(availMap[s1]);
+      if (Number.isNaN(a0) || Number.isNaN(a1)) return null;
+      let chosen = null;
+      if (a0 === 0 && a1 !== 0) chosen = s1;
+      else if (a1 === 0 && a0 !== 0) chosen = s0;
+      if (!chosen) return null;
+      applySkuChoiceToRecord(rec, chosen);
+      res.matched_skus = [chosen];
+      return chosen;
+    }
+
     function updateScanRowDOM(rec) {
       const li = document.getElementById('scan-row-' + rec.id);
       if (!li) return;
-      const resolveEl = li.querySelector('.scan-resolve-status');
-      const detailEl = li.querySelector('.parsed-main');
-      if (!resolveEl) return;
+      const skuEl = li.querySelector('.scan-sku-cell');
+      const availEl = li.querySelector('.scan-avail-cell');
+      const locEl = li.querySelector('.scan-loc-cell');
       const res = rec.resolved || {};
       if (res.status === 'pending') return;
       if (res.status === 'error') {
-        if (detailEl) detailEl.textContent = '';
-        resolveEl.className = 'scan-resolve-status small text-danger mt-1';
-        resolveEl.textContent = 'SKU lookup failed: ' + (res.error || 'unknown');
+        if (skuEl) skuEl.textContent = 'LOOKUP ERROR';
+        if (availEl) availEl.textContent = '';
+        if (locEl) locEl.textContent = '';
+        if (skuEl) skuEl.classList.remove('multi-match-cell');
+        if (availEl) availEl.classList.remove('multi-match-cell');
+        if (locEl) locEl.classList.remove('multi-match-cell');
         return;
       }
-      const sku = res.matched_sku;
-      const loc = res.locations;
-      if (detailEl) {
-        detailEl.textContent = sku ? sku : '';
-      }
-      let txt = '';
-      if (sku) {
-        txt = loc ? ('Loc: ' + loc) : '';
+      const matchedSkus = Array.isArray(res.matched_skus) ? res.matched_skus.filter(Boolean) : [];
+      const locMap = (res.locations_by_sku && typeof res.locations_by_sku === 'object') ? res.locations_by_sku : {};
+      const availMap = (res.available_by_sku && typeof res.available_by_sku === 'object') ? res.available_by_sku : {};
+      const multiple = matchedSkus.length > 1;
+      if (matchedSkus.length) {
+        if (multiple && skuEl) {
+          skuEl.innerHTML = '';
+          const wrap = document.createElement('div');
+          wrap.className = 'scan-sku-options';
+          const selected = res.selected_sku || '';
+          matchedSkus.forEach((s) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-sm ' + (selected === s ? 'btn-primary' : 'btn-outline-primary') + ' scan-sku-option py-0 px-1';
+            b.textContent = s;
+            b.dataset.sku = s;
+            wrap.appendChild(b);
+          });
+          skuEl.appendChild(wrap);
+          const locSelected = selected ? (locMap[selected] || '') : '';
+          if (locEl) locEl.textContent = locSelected || 'Click one SKU to confirm';
+          if (availEl) {
+            if (!selected) {
+              availEl.textContent = '';
+            } else if (Object.prototype.hasOwnProperty.call(availMap, selected)) {
+              availEl.textContent = String(availMap[selected]);
+            } else {
+              availEl.textContent = '';
+            }
+          }
+        } else {
+          const chosen = res.selected_sku && matchedSkus.includes(res.selected_sku) ? res.selected_sku : matchedSkus[0];
+          if (skuEl) skuEl.textContent = chosen || '';
+          if (locEl) locEl.textContent = locMap[chosen] || '';
+          if (availEl) {
+            if (Object.prototype.hasOwnProperty.call(availMap, chosen)) {
+              availEl.textContent = String(availMap[chosen]);
+            } else {
+              availEl.textContent = '';
+            }
+          }
+          res.selected_sku = chosen || '';
+        }
       } else {
-        txt = 'No primary SKU match';
-        if (res.sku_candidates && res.sku_candidates.length) {
-          const tops = res.sku_candidates.slice(0, 6).map((c) => (c && c.sku) ? c.sku : c).join(', ');
-          txt += ' · Candidates: ' + tops;
+        const sku = res.matched_sku;
+        const loc = res.locations;
+        if (skuEl) skuEl.textContent = sku || 'NO MATCH';
+        if (locEl) locEl.textContent = loc || '';
+        const av = res.available;
+        if (availEl) {
+          if (av === 0 || av === '0') availEl.textContent = '0';
+          else availEl.textContent = av !== '' && av != null ? String(av) : '';
         }
       }
-      resolveEl.className = 'scan-resolve-status small mt-1 ' + (sku ? 'text-muted' : 'text-warning');
-      resolveEl.textContent = txt;
+      if (skuEl) skuEl.classList.toggle('multi-match-cell', multiple);
+      if (availEl) availEl.classList.toggle('multi-match-cell', multiple);
+      if (locEl) locEl.classList.toggle('multi-match-cell', multiple);
     }
 
     function buildScanListItem(rec) {
-      const li = document.createElement('li');
-      li.id = 'scan-row-' + rec.id;
+      const tr = document.createElement('tr');
+      tr.id = 'scan-row-' + rec.id;
 
-      const left = document.createElement('div');
-      left.style.flex = '1';
-      left.style.minWidth = '0';
+      const tdSku = document.createElement('td');
+      tdSku.className = 'scan-sku-cell';
+      tdSku.textContent = '';
 
-      const upcEl = document.createElement('div');
-      upcEl.className = 'scan-upc font-weight-bold';
-      upcEl.textContent = rec.raw;
+      const tdUpc = document.createElement('td');
+      tdUpc.className = 'scan-upc-cell scan-upc';
+      tdUpc.textContent = rec.raw;
 
-      const resolveEl = document.createElement('div');
-      resolveEl.className = 'scan-resolve-status small text-info mt-1';
-      resolveEl.textContent = 'Looking up SKU in database…';
+      const tdAvail = document.createElement('td');
+      tdAvail.className = 'scan-avail-cell text-right';
+      tdAvail.textContent = '';
 
-      const detailEl = document.createElement('div');
-      detailEl.className = 'parsed-main mt-1';
-      detailEl.style.fontSize = '0.95rem';
-      detailEl.textContent = '';
+      const tdLoc = document.createElement('td');
+      tdLoc.className = 'scan-loc-cell';
+      tdLoc.textContent = '';
 
-      const subEl = document.createElement('div');
-      subEl.className = 'parsed-sub mt-1';
-      subEl.textContent = rec.parsed
-        ? (rec.parsed.checkOk ? 'Check digit OK' : 'Check digit mismatch')
-        : '';
+      const tdTime = document.createElement('td');
+      tdTime.className = 'scan-time-cell';
+      tdTime.textContent = rec.time_display || '';
 
-      left.appendChild(upcEl);
-      left.appendChild(resolveEl);
-      left.appendChild(detailEl);
-      left.appendChild(subEl);
+      const tdRemove = document.createElement('td');
+      tdRemove.className = 'scan-remove-cell';
+      const btnRm = document.createElement('button');
+      btnRm.type = 'button';
+      btnRm.className = 'btn btn-sm btn-outline-danger scan-remove-btn py-0 px-2';
+      btnRm.textContent = '×';
+      btnRm.title = 'Remove row';
+      btnRm.setAttribute('aria-label', 'Remove row');
+      tdRemove.appendChild(btnRm);
 
-      const meta = document.createElement('span');
-      meta.className = 'meta';
-      meta.textContent = rec.time_display;
+      tr.appendChild(tdSku);
+      tr.appendChild(tdUpc);
+      tr.appendChild(tdAvail);
+      tr.appendChild(tdLoc);
+      tr.appendChild(tdTime);
+      tr.appendChild(tdRemove);
+      return tr;
+    }
 
-      li.appendChild(left);
-      li.appendChild(meta);
-      return li;
+    function canonicalUpcLike(raw) {
+      const d = String(raw || '').replace(/\D/g, '');
+      if (!d) return '';
+      if (d.length === 12) return '0' + d;
+      return d;
     }
 
     function updateExportButtonState() {
@@ -651,9 +992,47 @@
       return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
-    function recordCode(raw) {
+    function recordCode(raw, options = {}) {
+      const allowInvalidSave = !!options.allowInvalidSave;
+      const rawDigits = String(raw || '').trim().replace(/\D/g, '');
+
       const parsed = parseFdcUpc13(raw);
-      if (!parsed || !parsed.checkOk) return;
+      if (!parsed || !parsed.checkOk) {
+        if (allowInvalidSave && rawDigits) {
+          const normalizedRaw = rawDigits.length === 12 ? ('0' + rawDigits) : rawDigits;
+          const normalizedCanon = canonicalUpcLike(normalizedRaw);
+          const recs = window.fdcMobileScannerRecords || [];
+          if (!recs.some((r) => canonicalUpcLike(r.raw) === normalizedCanon)) {
+            const rec = {
+              id: newScanId(),
+              time_iso: new Date().toISOString(),
+              time_display: formatTime(new Date()),
+              raw: normalizedRaw,
+              parsed: null,
+              resolved: {
+                status: 'pending',
+                matched_sku: '',
+                selected_sku: '',
+                matched_skus: [],
+                sku_candidates: [],
+                locations: '',
+                locations_by_sku: {},
+                available: '',
+                available_by_sku: {},
+                error: '',
+              },
+            };
+            window.fdcMobileScannerRecords.unshift(rec);
+            updateExportButtonState();
+            const row = buildScanListItem(rec);
+            if (scanGridBody) scanGridBody.insertBefore(row, scanGridBody.firstChild);
+            btnClear.disabled = false;
+            if (normalizedRaw.length === 13) enqueueResolveUpc(rec);
+          }
+        }
+        if (rawDigits) scanStatus.textContent = 'Scanned ' + rawDigits + ' (not a valid UPC/EAN-13 for camera save).';
+        return;
+      }
 
       const dedupeKey = parsed.cleaned;
       const t = Date.now();
@@ -662,7 +1041,8 @@
       lastAt = t;
 
       const recs = window.fdcMobileScannerRecords || [];
-      if (recs.some((r) => r.raw === parsed.cleaned)) {
+      const dedupeCanon = canonicalUpcLike(parsed.cleaned);
+      if (recs.some((r) => canonicalUpcLike(r.raw) === dedupeCanon)) {
         scanStatus.textContent = 'Already scanned: ' + parsed.cleaned;
         return;
       }
@@ -689,8 +1069,13 @@
         resolved: {
           status: 'pending',
           matched_sku: '',
+          selected_sku: '',
+          matched_skus: [],
           sku_candidates: [],
           locations: '',
+          locations_by_sku: {},
+          available: '',
+          available_by_sku: {},
           error: '',
         },
       };
@@ -698,12 +1083,25 @@
       window.fdcMobileScannerRecords.unshift(rec);
       updateExportButtonState();
 
-      const li = buildScanListItem(rec);
-      barcodeList.insertBefore(li, barcodeList.firstChild);
+      const row = buildScanListItem(rec);
+      if (scanGridBody) scanGridBody.insertBefore(row, scanGridBody.firstChild);
       btnClear.disabled = false;
       scanStatus.textContent = 'Last UPC: ' + parsed.cleaned + ' (resolving SKU…)';
 
       enqueueResolveUpc(rec);
+    }
+
+    function addManualCodesFromInput() {
+      const raw = manualCodeInput ? manualCodeInput.value : '';
+      const tokens = String(raw || '')
+        .split(/[\s,;]+/g)
+        .map((x) => String(x || '').trim())
+        .filter(Boolean);
+      if (!tokens.length) return;
+      tokens.forEach((token) => {
+        recordCode(token, { allowInvalidSave: true });
+      });
+      if (manualCodeInput) manualCodeInput.value = '';
     }
 
     function stopCamera() {
@@ -780,10 +1178,18 @@
         return;
       }
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false
-        });
+        /* Never request a very short capture — low height breaks BarcodeDetector / ZXing. */
+        const videoHi = {
+          facingMode: { ideal: 'environment' },
+          width: { min: 640, ideal: 1280 },
+          height: { min: 480, ideal: 720 },
+        };
+        const videoLoose = { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } };
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: videoHi, audio: false });
+        } catch (e1) {
+          stream = await navigator.mediaDevices.getUserMedia({ video: videoLoose, audio: false });
+        }
         video.srcObject = stream;
         await video.play();
         btnStart.classList.add('d-none');
@@ -806,13 +1212,56 @@
     });
 
     btnClear.addEventListener('click', () => {
-      barcodeList.innerHTML = '';
+      if (scanGridBody) scanGridBody.innerHTML = '';
       btnClear.disabled = true;
       lastRaw = '';
       resolveQueue.length = 0;
       window.fdcMobileScannerRecords = [];
       updateExportButtonState();
     });
+
+    if (scanGridBody) {
+      scanGridBody.addEventListener('click', (e) => {
+        const pickBtn = e.target.closest('.scan-sku-option');
+        if (pickBtn) {
+          const trPick = pickBtn.closest('tr[id^="scan-row-"]');
+          if (!trPick) return;
+          const idPick = trPick.id.replace('scan-row-', '');
+          const recPick = (window.fdcMobileScannerRecords || []).find((r) => r.id === idPick);
+          if (!recPick || !recPick.resolved) return;
+          const chosen = pickBtn.dataset.sku || '';
+          if (!chosen) return;
+          applySkuChoiceToRecord(recPick, chosen);
+          postConfirmUpcSku(recPick, chosen);
+          updateScanRowDOM(recPick);
+          return;
+        }
+
+        const btn = e.target.closest('.scan-remove-btn');
+        if (!btn) return;
+        const tr = btn.closest('tr[id^="scan-row-"]');
+        if (!tr) return;
+        const id = tr.id.replace('scan-row-', '');
+        window.fdcMobileScannerRecords = (window.fdcMobileScannerRecords || []).filter((r) => r.id !== id);
+        tr.remove();
+        btnClear.disabled = (window.fdcMobileScannerRecords || []).length === 0;
+        updateExportButtonState();
+      });
+    }
+
+    if (btnAddManualCode) {
+      btnAddManualCode.addEventListener('click', () => {
+        addManualCodesFromInput();
+      });
+    }
+    if (manualCodeInput) {
+      manualCodeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addManualCodesFromInput();
+        }
+      });
+    }
 
     const btnExportExcel = document.getElementById('btnExportExcel');
     if (btnExportExcel) {

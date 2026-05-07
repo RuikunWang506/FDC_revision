@@ -63,6 +63,7 @@ from py.other.mobile_scanner import mobile_scanner_bp
 from py.other.label_resizer import label_resizer_bp
 from py.other.vendor_app import vendor_app_bp
 from py.other.vendor_tiktok_processor import vendor_tiktok_processor_bp
+from py.other.email import email_bp
 from py.utilities.monitor import send_discord_notification
 from py.utilities import lan_detection
 
@@ -142,6 +143,7 @@ def register_routes(app):
     app.register_blueprint(vendor_app_bp)
     app.register_blueprint(vendor_tiktok_processor_bp)
     app.register_blueprint(four_seller_bp)
+    app.register_blueprint(email_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
 
@@ -210,52 +212,31 @@ def register_routes(app):
         try:
             with open(Config.LOG_FILE, 'r', encoding='utf-8', errors='replace') as file:
                 lines = file.readlines()
-            
-            # If there's a search term, filter logs across all pages
+
             if search_term:
-                filtered_lines = []
-                for line in lines:
-                    if search_term.lower() in line.lower():
-                        filtered_lines.append(line)
-                
-                formatted_lines = format_logs(filtered_lines)
-                reversed_lines = list(reversed(formatted_lines))
-                
-                # Return search results with pagination
-                per_page = 100
-                page = request.args.get('page', 1, type=int)
-                start = (page - 1) * per_page
-                end = start + per_page
-                paginated_log_lines = reversed_lines[start:end]
-                
-                # Calculate total pages for search results
-                total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
-                
-                return render_template('log_viewer.html', 
-                                    log_lines=paginated_log_lines, 
-                                    page=page, 
-                                    total_pages=total_pages,
-                                    current_user=current_user,
-                                    search_term=search_term), 200
+                raw_lines = [ln for ln in lines if search_term.lower() in ln.lower()]
             else:
-                # Original pagination logic for all logs
-                formatted_lines = format_logs(lines)
-                reversed_lines = list(reversed(formatted_lines))
-                
-                per_page = 100
-                page = request.args.get('page', 1, type=int)
-                start = (page - 1) * per_page
-                end = start + per_page
-                paginated_log_lines = reversed_lines[start:end]
-                
-                total_pages = len(reversed_lines) // per_page + (1 if len(reversed_lines) % per_page > 0 else 0)
-                
-                return render_template('log_viewer.html', 
-                                    log_lines=paginated_log_lines, 
-                                    page=page, 
-                                    total_pages=total_pages,
-                                    current_user=current_user,
-                                    search_term=''), 200
+                raw_lines = lines
+
+            formatted_lines = format_logs(raw_lines)
+            reversed_lines = list(reversed(formatted_lines))
+
+            per_page = 100
+            n = len(reversed_lines)
+            total_pages = max(1, (n + per_page - 1) // per_page)
+            page = request.args.get('page', 1, type=int) or 1
+            page = max(1, min(page, total_pages))
+            start = (page - 1) * per_page
+            paginated_log_lines = reversed_lines[start : start + per_page]
+
+            return render_template(
+                'log_viewer.html',
+                log_lines=paginated_log_lines,
+                page=page,
+                total_pages=total_pages,
+                current_user=current_user,
+                search_term=search_term,
+            ), 200
 
         except Exception as e:
             app.logger.error('Error accessing log file: %s', e)

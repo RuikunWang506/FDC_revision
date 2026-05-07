@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail — {{ active_account.label }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body { padding-top: 76px; background: #eef2f7; }
+        .fdc-mail-shell {
+            display: grid;
+            grid-template-columns: 220px minmax(280px, 360px) 1fr;
+            gap: 0;
+            min-height: calc(100vh - 92px);
+            background: #fff;
+            border: 1px solid #dfe7f3;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .fdc-mail-shell.fdc-mail-shell-container {
+            /* Keep boat lane readable without over-expanding full layout */
+            grid-template-columns: 220px minmax(220px, 280px) minmax(280px, 360px) minmax(320px, 1fr);
+            min-width: 980px;
+        }
+        .fdc-mail-col { border-right: 1px solid #e8edf5; min-height: 0; }
+        .fdc-mail-col:last-child { border-right: none; }
+        .fdc-mail-head { padding: 10px 12px; font-weight: 600; background: #f8fafc; border-bottom: 1px solid #e8edf5; }
+        .fdc-mail-list { overflow-y: auto; max-height: calc(100vh - 140px); }
+        .fdc-mail-item {
+            display: block; padding: 10px 12px; border-bottom: 1px solid #f1f5f9;
+            color: inherit; text-decoration: none;
+        }
+        .fdc-mail-item:hover { background: #f8fafc; text-decoration: none; color: inherit; }
+        .fdc-mail-item.active { background: #e8f0fe; border-left: 3px solid #2563eb; padding-left: 9px; }
+        .fdc-mail-sub { font-weight: 600; font-size: 0.95rem; }
+        .fdc-mail-from { font-size: 0.82rem; color: #64748b; }
+        .fdc-mail-badge-unread { font-size: 0.65rem; vertical-align: middle; }
+        .fdc-mail-search { border-bottom: 1px solid #e8edf5; padding: 8px 10px; background: #fff; }
+        .fdc-mail-search .form-control { font-size: 0.85rem; }
+        .fdc-mail-acct-chip { font-size: 0.7rem; color: #1d4ed8; background: #e8f0fe; border-radius: 999px; padding: 2px 8px; }
+        .fdc-mail-attachments { border: 1px solid #e8edf5; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; background: #f8fafc; }
+        .fdc-mail-attachments h6 { font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; color: #334155; }
+        .fdc-mail-att-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+        .fdc-mail-att-item { font-size: 0.85rem; }
+        .fdc-mail-att-thumb { max-width: 120px; max-height: 90px; border-radius: 6px; border: 1px solid #e2e8f0; object-fit: contain; background: #fff; }
+        .fdc-preview { overflow-y: auto; max-height: calc(100vh - 140px); padding: 12px 14px; }
+        .fdc-preview iframe { width: 100%; min-height: 520px; border: 1px solid #e8edf5; border-radius: 6px; background: #fff; }
+        .fdc-mailbox-nav .nav-link { padding: 6px 12px; border-radius: 6px; color: #1f2937; }
+        .fdc-mailbox-nav .nav-link.active { background: #e8f0fe; color: #1d4ed8; font-weight: 600; }
+        .fdc-mail-aside-scroll { max-height: calc(100vh - 220px); overflow-y: auto; }
+        .fdc-mail-clip { font-size: 0.85rem; color: #64748b; flex-shrink: 0; }
+        .fdc-container-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            pointer-events: none;
+        }
+        .fdc-container-card .card-body { line-height: 1.35; }
+        .fdc-boat-lane .fdc-mail-list {
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .fdc-boat-lane .table.table-boat-open {
+            font-size: 0.76rem;
+            margin-bottom: 0;
+            table-layout: fixed;
+            width: 100%;
+            min-width: 0;
+        }
+        .fdc-boat-lane .table.table-boat-open th,
+        .fdc-boat-lane .table.table-boat-open td {
+            vertical-align: middle;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* Fit target lengths: FDC<=8, BOL<=12(with emoji), Date=MM/DD */
+        .fdc-boat-lane .table.table-boat-open .fdc-boat-col-fdc { width: 8ch; }
+        .fdc-boat-lane .table.table-boat-open .fdc-boat-col-bol { width: 12ch; }
+        .fdc-boat-lane .table.table-boat-open .fdc-boat-col-date { width: 5ch; }
+        .fdc-boat-lane a {
+            word-break: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .fdc-boat-lane tr.fdc-boat-row-active { background: #e8f0fe; }
+        .fdc-boat-lane .table.table-striped tbody tr.fdc-boat-row-active > td {
+            background-color: #dbeafe !important;
+        }
+        .fdc-mail-newmail-banner {
+            position: fixed;
+            top: 80px;
+            right: 16px;
+            max-width: min(380px, calc(100vw - 32px));
+            z-index: 1080;
+            padding: 12px 38px 12px 14px;
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
+            font-size: 0.9rem;
+            line-height: 1.35;
+        }
+        .fdc-mail-newmail-banner[hidden] { display: none !important; }
+        .fdc-mail-newmail-dismiss {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 1.35rem;
+            line-height: 1;
+            padding: 4px 8px;
+            cursor: pointer;
+        }
+        .fdc-mail-newmail-dismiss:hover { color: #f8fafc; }
+        @media (max-width: 1100px) {
+            .fdc-mail-shell:not(.fdc-mail-shell-container) { grid-template-columns: 200px minmax(240px, 1fr); grid-template-rows: 1fr auto; }
+            .fdc-mail-shell.fdc-mail-shell-container { min-width: 0; overflow-x: auto; }
+            .fdc-mail-col.preview-col { grid-column: 1 / -1; border-right: none; border-top: 1px solid #e8edf5; }
+        }
+    </style>
+</head>
+<body>
+{% include 'navbar.html' %}
+
+<div id="fdc-mail-newmail-banner" class="fdc-mail-newmail-banner" hidden role="status" aria-live="polite">
+    <button type="button" class="fdc-mail-newmail-dismiss" aria-label="Dismiss notification">&times;</button>
+    <div class="fdc-mail-newmail-text"></div>
+</div>
+
+<div class="container-fluid px-3 pb-3"
+     id="fdc-mail-page-root"
+     data-account-id="{{ active_account_id }}"
+     data-thread-sidebar="{{ '1' if selected_uid is not none else '' }}"
+     data-sidebar-poll-query="{{ (sidebar_poll_query or '')|e }}"
+     data-view-msg-q="{{ (view_msg_group_q or '')|e }}"
+     data-mail-group="{{ (mail_group or '')|e }}"
+     data-search-scope="{{ (search_scope or 'current')|e }}"
+     data-selected-uid="{{ '' if selected_uid is none else selected_uid }}"
+     data-mail-poll-delay-ms="{{ mail_poll_initial_delay_ms|default(2500) }}"
+>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info py-2">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="fdc-mail-shell shadow-sm{% if (mail_group or '') == 'container' %} fdc-mail-shell-container{% endif %}">
+        <aside class="fdc-mail-col">
+            <div class="fdc-mail-head d-flex justify-content-between align-items-center">
+                <span>Mailboxes</span>
+                <a class="small" href="{{ url_for('email.mailboxes') }}">All</a>
+            </div>
+            <div class="fdc-mail-aside-scroll">
+                <nav class="nav flex-column fdc-mailbox-nav p-2">
+                    {% for a in accounts %}
+                        <a class="nav-link {% if a.id == active_account_id %}active{% endif %}"
+                           href="{{ url_for('email.inbox', account_id=a.id) }}{{ inbox_nav_query|default('') }}">
+                            <div>{{ a.label }}</div>
+                            <div class="small text-muted text-truncate">{{ a.email }}</div>
+                        </a>
+                    {% endfor %}
+                </nav>
+                <div class="fdc-mail-head py-2 px-3 border-top mb-0 small text-muted">Filter</div>
+                <nav class="nav flex-column fdc-mailbox-nav px-2 pb-2">
+                    <a class="nav-link {% if (list_filter or '') == 'attachments' %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{% if (list_filter or '') == 'attachments' %}{{ filter_query_all|default('') }}{% else %}{{ filter_query_attachments|default('') }}{% endif %}">
+                        <i class="fas fa-paperclip mr-1 small"></i>Attachments only
+                    </a>
+                </nav>
+                <div class="fdc-mail-head py-2 px-3 border-top mb-0 small text-muted">Allmail group</div>
+                <nav class="nav flex-column fdc-mailbox-nav px-2 pb-2">
+                    <a class="nav-link {% if (mail_group or '') == 'container' %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_container|default('') }}">Container</a>
+                    <a class="nav-link {% if (mail_group or '') == 'burlington' %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_burlington|default('') }}">Burlington</a>
+                    <a class="nav-link {% if (mail_group or '') == 'gabe' %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_gabe|default('') }}">Gabe</a>
+                    <a class="nav-link {% if (mail_group or '') == 'ross' %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_ross|default('') }}">Ross</a>
+                    <a class="nav-link {% if (mail_group or '') == 'macy' %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_macy|default('') }}">Macy</a>
+                    <a class="nav-link {% if (mail_group or '') == 'tj' %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_tj|default('') }}">TJ</a>
+                </nav>
+            </div>
+            <div class="p-2 border-top">
+                <a class="btn btn-primary btn-sm btn-block" href="{{ url_for('email.send_mail', account_id=active_account_id) }}">Compose</a>
+            </div>
+        </aside>
+
+        {% if (mail_group or '') == 'container' %}
+        <section class="fdc-mail-col fdc-boat-lane">
+            <div class="fdc-mail-head d-flex flex-column align-items-stretch">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Open containers</span>
+                    <a class="small" href="https://www.fdcef.com/boat" target="_blank" rel="noopener">Boat</a>
+                </div>
+                {% if boat_lane_toggle_suffix is defined %}
+                    <a class="small mt-1" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ boat_lane_toggle_suffix }}">
+                        {% if show_landed_container %}Hide landed ✔️827✔️{% else %}Show landed ✔️827✔️{% endif %}
+                    </a>
+                {% endif %}
+                {% if (fdc_focus or bol_focus) and boat_lane_clear_suffix is defined %}
+                    <a class="small mt-1" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ boat_lane_clear_suffix }}">Clear FDC / BOL filter</a>
+                {% endif %}
+            </div>
+            <div class="fdc-mail-list p-0">
+                {% if not (boat_lane_rows or []) %}
+                    <div class="p-2 text-muted small">No open rows (landed ✔️827✔️ hidden).</div>
+                {% else %}
+                    <table class="table table-sm table-striped mb-0 table-boat-open">
+                        <thead class="thead-light"><tr><th class="fdc-boat-col-fdc">FDC</th><th class="fdc-boat-col-bol">BOL</th><th class="fdc-boat-col-date">Date</th></tr></thead>
+                        <tbody>
+                        {% for br in boat_lane_rows %}
+                            {% set fdcv = (fdc_focus|default('')|trim|lower) %}
+                            {% set bolv = (bol_focus|default('')|trim|lower) %}
+                            {% set cval = (br.container|default('')|trim|lower) %}
+                            {% set bval = (br.bol|default('')|trim|lower) %}
+                            <tr class="{% if (fdcv and (fdcv == cval or fdcv == bval)) or (bolv and (bolv == bval or bolv == cval)) %}fdc-boat-row-active{% endif %}">
+                                <td class="fdc-boat-col-fdc">
+                                    {% if br.container %}
+                                        <a href="{{ br.fdcef_container_url|default('https://www.fdcef.com/container_search') }}" target="_blank" rel="noopener" title="{{ br.container }}">{{ br.container }}</a>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="fdc-boat-col-bol" title="{{ br.bol or '' }}">
+                                    {% if br.bol %}
+                                        <a href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ br.bol_href_suffix }}">{{ br.bol }}</a>{% if br.bol_has_mail %} ⭐{% endif %}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="fdc-boat-col-date text-muted small">
+                                    <div class="d-flex align-items-center">
+                                        <span>{{ br.mail_body_date_hint or '' }}{% if br.mail_body_date_manual %} ⭐{% endif %}</span>
+                                    </div>
+                                    <form method="post" action="{{ url_for('email.boat_date_override', account_id=active_account_id) }}" class="mt-1">
+                                        <input type="hidden" name="mail_group" value="container">
+                                        <input type="hidden" name="container" value="{{ br.container }}">
+                                        <input type="hidden" name="bol" value="{{ br.bol }}">
+                                        <input type="hidden" name="return_suffix" value="{{ boat_lane_return_suffix|default('') }}">
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" name="manual_date" value="{{ br.mail_body_date_hint or '' }}" placeholder="MM/DD" class="form-control form-control-sm mr-1" style="width: 4.3rem; height: 1.25rem; font-size: 0.7rem; padding: 0.05rem 0.2rem;">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary p-0" style="width: 1.45rem; height: 1.25rem; line-height: 1;">↵</button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="fdc-mail-col fdc-mail-list-col">
+            <div class="fdc-mail-head d-flex justify-content-between align-items-center">
+                <span>{{ inbox_header_title|default('Inbox') }}</span>
+                <span class="small text-muted">{{ active_account.email }}</span>
+            </div>
+            <div class="fdc-mail-search">
+                <form method="get" action="{{ url_for('email.inbox', account_id=active_account_id) }}" class="mb-0">
+                    {% if list_filter %}
+                        <input type="hidden" name="filter" value="{{ list_filter }}">
+                    {% endif %}
+                    {% if mail_group %}
+                        <input type="hidden" name="mail_group" value="{{ mail_group }}">
+                    {% endif %}
+                    {% if (mail_group or '') == 'container' and (fdc_focus or bol_focus) %}
+                        {% if fdc_focus %}<input type="hidden" name="fdc" value="{{ fdc_focus }}">{% endif %}
+                        {% if bol_focus %}<input type="hidden" name="bol" value="{{ bol_focus }}">{% endif %}
+                    {% endif %}
+                    <div class="input-group input-group-sm">
+                        <input
+                            class="form-control"
+                            type="search"
+                            name="q"
+                            placeholder="Search subject, sender, uid"
+                            value="{{ search_query or '' }}"
+                        >
+                        <div class="input-group-append">
+                            <select class="custom-select custom-select-sm" name="scope">
+                                <option value="current" {% if (search_scope or 'current') == 'current' %}selected{% endif %}>This inbox</option>
+                                <option value="all" {% if (search_scope or 'current') == 'all' %}selected{% endif %}>All inboxes</option>
+                            </select>
+                            <button class="btn btn-outline-primary" type="submit">Search</button>
+                            {% if search_query %}
+                                <a class="btn btn-outline-secondary" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ search_clear_suffix|default('') }}">Clear</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="fdc-mail-list">
+                {% if not messages %}
+                    <div class="p-3 text-muted small">No messages loaded.</div>
+                {% endif %}
+                {% for m in messages %}
+                    <a class="fdc-mail-item {% if selected_uid is not none and m.uid == selected_uid %}active{% endif %}"
+                       data-mail-key="{{ (m.account_id or active_account_id) }}:{{ m.uid }}"
+                       href="{{ url_for('email.view_message', account_id=(m.account_id or active_account_id), uid=m.uid) }}{{ view_msg_group_q|default('') }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="fdc-mail-sub text-truncate mr-2">{{ m.subject }}</div>
+                            <span class="d-flex align-items-center flex-shrink-0">
+                                {% if m.has_attachments %}
+                                    <i class="fas fa-paperclip fdc-mail-clip mr-2" title="Has attachments"></i>
+                                {% endif %}
+                                {% if not m.is_read %}
+                                    <span class="badge badge-primary fdc-mail-badge-unread">Unread</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if (search_scope or 'current') == 'all' or (mail_group and mail_group != 'container') %}
+                            <div class="mb-1"><span class="fdc-mail-acct-chip">{{ m.account_labels_display or m.account_label or m.account_email }}</span></div>
+                        {% endif %}
+                        {% if mail_group == 'container' %}
+                        <div class="card fdc-container-card mt-1 mb-1 shadow-none">
+                            <div class="card-body py-2 px-2">
+                                <div class="font-weight-bold small text-primary mb-1">{{ m.account_labels_display or m.account_label or m.account_email }}</div>
+                                <div class="small">
+                                    <span class="text-muted">Container:</span>
+                                    {% if m.get('container_ids') %}
+                                        {% for cid in m.container_ids %}<span class="badge badge-light border text-dark mr-1">{{ cid }}</span>{% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </div>
+                                <div class="small mt-1">
+                                    <span class="text-muted">Origin:</span>
+                                    {% if m.get('container_origin') %}<strong>{{ m.container_origin }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="fdc-mail-from text-truncate">{{ m.from_addr }}</div>
+                        <div class="small text-muted mt-1">
+                            {% if m.internal_date %}
+                                {{ m.internal_date.strftime('%Y-%m-%d %H:%M') }}
+                            {% elif m.header_date %}
+                                {{ m.header_date.strftime('%Y-%m-%d %H:%M') }}
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="fdc-mail-col preview-col">
+            <div class="fdc-mail-head d-flex justify-content-between align-items-center">
+                <span class="text-truncate mr-2 d-flex align-items-center">
+                    {% if attachments %}
+                        <i class="fas fa-paperclip text-muted mr-2 flex-shrink-0" title="Has attachments"></i>
+                    {% endif %}
+                    <span class="text-truncate">{{ preview_subject or 'Preview' }}</span>
+                </span>
+                {% if selected_uid %}
+                    <div class="d-flex align-items-center">
+                        <a class="btn btn-sm btn-outline-primary mr-2"
+                           href="{{ url_for('email.send_mail', account_id=active_account_id, reply=selected_uid) }}">Reply</a>
+                        <form method="post" action="{{ url_for('email.mark_read', account_id=active_account_id, uid=selected_uid) }}" class="mb-0">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Mark read</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="fdc-preview">
+                {% if mail_group == 'container' and selected_uid is not none %}
+                <div class="card fdc-container-card mb-2 shadow-sm" style="pointer-events: auto;">
+                    <div class="card-body py-2 px-3">
+                        <div class="font-weight-bold small text-primary mb-1">{{ active_account.label }}</div>
+                        <div class="small">
+                            <span class="text-muted">Container:</span>
+                            {% if preview_container_ids %}
+                                {% for cid in preview_container_ids %}<span class="badge badge-light border text-dark mr-1">{{ cid }}</span>{% endfor %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </div>
+                        <div class="small mt-1">
+                            <span class="text-muted">Origin:</span>
+                            {% if preview_container_origin %}<strong>{{ preview_container_origin }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if selected_uid is not none and addressed_here is defined and not addressed_here %}
+                    <div class="alert alert-warning small py-2 mb-2">
+                        To/Cc/Bcc does not list <strong>{{ active_account.email }}</strong>. The message is still in this mailbox on the server (forwarding, BCC, alias, or resend).
+                    </div>
+                {% endif %}
+                {% if preview_html %}
+                    <div class="small text-muted mb-2">
+                        {% if preview_meta %}
+                            <div><strong>From:</strong> {{ preview_meta.from }}</div>
+                            <div><strong>To:</strong> {{ preview_meta.to }}</div>
+                            {% if preview_meta.date %}<div><strong>Date:</strong> {{ preview_meta.date }}</div>{% endif %}
+                        {% endif %}
+                    </div>
+                    {% if attachments %}
+                        <div class="fdc-mail-attachments">
+                            <h6 class="mb-2">Attachments</h6>
+                            <div class="fdc-mail-att-row">
+                                {% for a in attachments %}
+                                    <div class="fdc-mail-att-item mb-2 mr-3">
+                                        {% set ct = (a.content_type or '')|lower %}
+                                        {% if ct.startswith('image/') %}
+                                            <div class="mb-1">
+                                                <img class="fdc-mail-att-thumb"
+                                                     src="{{ url_for('email.download_attachment', account_id=active_account_id, uid=selected_uid, att_idx=a.index, inline=1) }}"
+                                                     alt="{{ a.filename }}">
+                                            </div>
+                                        {% endif %}
+                                        <a href="{{ url_for('email.download_attachment', account_id=active_account_id, uid=selected_uid, att_idx=a.index) }}">{{ a.filename }}</a>
+                                        <span class="text-muted small"> · {{ a.content_type or 'file' }} · {{ (a.size / 1024)|round(1) if a.size else 0 }} KB</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <iframe sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                            srcdoc="{{ preview_html | e }}"></iframe>
+                {% else %}
+                    <div class="text-muted">Select a message to preview sanitized HTML.</div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+<script>
+(function () {
+    var root = document.getElementById('fdc-mail-page-root');
+    if (!root) return;
+
+    var POLL_MS = 5 * 60 * 1000;
+    var pollDelayMs = parseInt(root.getAttribute('data-mail-poll-delay-ms') || '2500', 10);
+    if (pollDelayMs < 500) pollDelayMs = 500;
+    var listEl = document.querySelector('.fdc-mail-list-col .fdc-mail-list');
+    if (!listEl) return;
+
+    var accountId = root.getAttribute('data-account-id') || '';
+    var threadSidebar = root.getAttribute('data-thread-sidebar') === '1';
+    var sidebarPollQuery = root.getAttribute('data-sidebar-poll-query') || '';
+    var viewMsgQ = root.getAttribute('data-view-msg-q') || '';
+    var mailGroup = root.getAttribute('data-mail-group') || '';
+    var searchScope = root.getAttribute('data-search-scope') || 'current';
+    var selectedUid = root.getAttribute('data-selected-uid') || '';
+
+    var banner = document.getElementById('fdc-mail-newmail-banner');
+    var bannerText = banner ? banner.querySelector('.fdc-mail-newmail-text') : null;
+    var dismissBtn = banner ? banner.querySelector('.fdc-mail-newmail-dismiss') : null;
+
+    if (dismissBtn && banner) {
+        dismissBtn.addEventListener('click', function () {
+            banner.hidden = true;
+        });
+    }
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function uidKey(m) {
+        var aid = m.account_id != null ? m.account_id : accountId;
+        return aid + ':' + m.uid;
+    }
+
+    function listFingerprint(rows) {
+        return rows
+            .map(function (m) {
+                return (
+                    uidKey(m) +
+                    '|' +
+                    (m.is_read ? '1' : '0') +
+                    '|' +
+                    (m.subject || '') +
+                    '|' +
+                    (m.has_attachments ? '1' : '0')
+                );
+            })
+            .join('\u0001');
+    }
+
+    function showBanner(count, polledAt) {
+        if (!banner || !bannerText) return;
+        banner.hidden = false;
+        bannerText.textContent =
+            'New mail: ' + count + ' new message' + (count === 1 ? '' : 's') + ' (refreshed ' + polledAt + ').';
+    }
+
+    function renderRows(messages) {
+        if (!messages || messages.length === 0) {
+            listEl.innerHTML = '<div class="p-3 text-muted small">No messages loaded.</div>';
+            return;
+        }
+        var html = '';
+        var showAcctChip = searchScope === 'all' || (mailGroup && mailGroup !== 'container');
+        var i;
+        for (i = 0; i < messages.length; i++) {
+            var m = messages[i];
+            var aid = m.account_id != null ? m.account_id : parseInt(accountId, 10);
+            var href = '/email/' + aid + '/message/' + m.uid + viewMsgQ;
+            var active =
+                selectedUid !== '' &&
+                String(m.uid) === String(selectedUid) &&
+                String(aid) === String(accountId);
+            var activeCls = active ? ' active' : '';
+            var attIcon = m.has_attachments
+                ? '<i class="fas fa-paperclip fdc-mail-clip mr-2" title="Has attachments"></i>'
+                : '';
+            var unreadBadge = !m.is_read
+                ? '<span class="badge badge-primary fdc-mail-badge-unread">Unread</span>'
+                : '';
+            var dt = m.internal_date || m.header_date || '';
+            var subj = escapeHtml(m.subject || '');
+            var fromAddr = escapeHtml(m.from_addr || '');
+            var labelChip = escapeHtml(m.account_labels_display || m.account_label || m.account_email || '');
+            html +=
+                '<a class="fdc-mail-item' +
+                activeCls +
+                '" data-mail-key="' +
+                aid +
+                ':' +
+                m.uid +
+                '" href="' +
+                escapeHtml(href) +
+                '">' +
+                '<div class="d-flex justify-content-between align-items-start">' +
+                '<div class="fdc-mail-sub text-truncate mr-2">' +
+                subj +
+                '</div>' +
+                '<span class="d-flex align-items-center flex-shrink-0">' +
+                attIcon +
+                unreadBadge +
+                '</span></div>';
+            if (showAcctChip) {
+                html +=
+                    '<div class="mb-1"><span class="fdc-mail-acct-chip">' + labelChip + '</span></div>';
+            }
+            if (mailGroup === 'container') {
+                var cids = m.container_ids || [];
+                var j;
+                var badges = '';
+                for (j = 0; j < cids.length; j++) {
+                    badges +=
+                        '<span class="badge badge-light border text-dark mr-1">' +
+                        escapeHtml(cids[j]) +
+                        '</span>';
+                }
+                var origin = escapeHtml(m.container_origin || '');
+                html +=
+                    '<div class="card fdc-container-card mt-1 mb-1 shadow-none">' +
+                    '<div class="card-body py-2 px-2">' +
+                    '<div class="font-weight-bold small text-primary mb-1">' +
+                    labelChip +
+                    '</div>' +
+                    '<div class="small"><span class="text-muted">Container:</span> ';
+                html += cids.length ? badges : '<span class="text-muted">—</span>';
+                html +=
+                    '</div><div class="small mt-1"><span class="text-muted">Origin:</span> ';
+                html += origin
+                    ? '<strong>' + origin + '</strong>'
+                    : '<span class="text-muted">—</span>';
+                html += '</div></div></div>';
+            }
+            html +=
+                '<div class="fdc-mail-from text-truncate">' +
+                fromAddr +
+                '</div>' +
+                '<div class="small text-muted mt-1">' +
+                escapeHtml(dt) +
+                '</div></a>';
+        }
+        listEl.innerHTML = html;
+    }
+
+    var prevKeys = null;
+    var lastListFp = null;
+
+    function pollUrl() {
+        if (threadSidebar) {
+            return '/email/' + accountId + '/inbox/poll?' + sidebarPollQuery;
+        }
+        var qs = window.location.search || '';
+        return '/email/' + accountId + '/inbox/poll' + qs;
+    }
+
+    function tick() {
+        if (document.hidden) return;
+        fetch(pollUrl(), { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+            .then(function (r) {
+                return r.json();
+            })
+            .then(function (data) {
+                if (!data || !data.ok || !Array.isArray(data.messages)) return;
+                var rows = data.messages;
+                var keys = {};
+                var i;
+                var k;
+                for (i = 0; i < rows.length; i++) {
+                    k = uidKey(rows[i]);
+                    keys[k] = true;
+                }
+                var newCount = 0;
+                if (prevKeys !== null) {
+                    for (i = 0; i < rows.length; i++) {
+                        k = uidKey(rows[i]);
+                        if (!prevKeys[k]) newCount++;
+                    }
+                }
+                prevKeys = keys;
+                var fp = listFingerprint(rows);
+                if (lastListFp !== null && fp === lastListFp) {
+                    /* List markup unchanged — avoids repaint flicker; bodies still prefetch server-side. */
+                } else {
+                    renderRows(rows);
+                    lastListFp = fp;
+                }
+                if (newCount > 0) {
+                    showBanner(newCount, data.polled_at || '');
+                }
+            })
+            .catch(function () {});
+    }
+
+    var pollTimer = setInterval(tick, POLL_MS);
+    setTimeout(tick, pollDelayMs);
+    window.addEventListener('pagehide', function () {
+        clearInterval(pollTimer);
+    });
+})();
+</script>
+</body>
+</html>

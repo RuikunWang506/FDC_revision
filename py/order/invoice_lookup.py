@@ -2,6 +2,11 @@ import pyodbc
 import pandas as pd
 from datetime import datetime
 from flask import Blueprint, request, render_template, session, current_app
+
+
+def _request_client_ip() -> str:
+    xf = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    return xf or (request.remote_addr or "")
 from py.utilities.setting import Config, login_required
 
 invoice_lookup_bp = Blueprint('invoice_lookup', __name__)
@@ -172,9 +177,10 @@ def invoice_lookup(invoice_number=None):
 
     if request.method == "POST":
         invoice_number = request.form.get("invoice_number", "").strip()
-        current_app.logger.info(f"User {current_user} searched for invoice: {invoice_number}")
-
         if invoice_number:
+            current_app.logger.info(
+                f"***{current_user}***__@@@searched invoice@@@ {invoice_number} ip={_request_client_ip()}"
+            )
             header_info, items_html = generate_invoice(invoice_number)
             
             if not header_info:
@@ -183,7 +189,9 @@ def invoice_lookup(invoice_number=None):
     
     elif invoice_number:
         # URL path-based lookup (e.g., /invoice_lookup/33623)
-        current_app.logger.info(f"User {current_user} accessed invoice via URL path: {invoice_number}")
+        current_app.logger.info(
+            f"***{current_user}***__@@@invoice via URL@@@ {invoice_number} ip={_request_client_ip()}"
+        )
         header_info, items_html = generate_invoice(invoice_number)
         
         if not header_info:
@@ -194,7 +202,9 @@ def invoice_lookup(invoice_number=None):
         # Check for query parameter (e.g., /invoice_lookup?invoice_number=33623)
         invoice_number = request.args.get('invoice_number', '').strip()
         if invoice_number:
-            current_app.logger.info(f"User {current_user} accessed invoice via query param: {invoice_number}")
+            current_app.logger.info(
+                f"***{current_user}***__@@@invoice via query@@@ {invoice_number} ip={_request_client_ip()}"
+            )
             header_info, items_html = generate_invoice(invoice_number)
             
             if not header_info:

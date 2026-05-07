@@ -136,6 +136,9 @@ class Config:
     for dir_path in OUTPUT_DIRS.values():
         dir_path.mkdir(parents=True, exist_ok=True)
 
+    # Mail UI (IMAP/SMTP): local cache dir on Windows server
+    EMAIL_DATA_DIR = Path(os.getenv('EMAIL_DATA_DIR', r'D:\Email'))
+
 
 # Utility functions
 from functools import wraps

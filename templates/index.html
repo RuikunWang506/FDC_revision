@@ -633,6 +633,18 @@
           </div>
         </a>
         
+        <a href="{{ url_for('email.mailboxes') }}" class="tool-card" data-category="lookup" data-tool="fdc_mail">
+          <div class="card-header">
+            <i class="fas fa-envelope"></i>
+            <h3>Mail</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'fdc_mail')"></i>
+          </div>
+          <p>IMAP inbox, read and send mail (FatCow mailboxes)</p>
+          <div class="card-footer">
+            <span class="category">Lookup</span>
+          </div>
+        </a>
+        
         <!-- Orders & invoices -->
         <a href="{{ url_for('order_lookup.order_lookup') }}" class="tool-card" data-category="orders" data-tool="order_lookup">
           <div class="card-header">
@@ -842,6 +854,18 @@
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'boat')"></i>
           </div>
           <p>Real-time boat status tracking and shipping schedule optimization</p>
+          <div class="card-footer">
+            <span class="category">Logistics</span>
+          </div>
+        </a>
+
+        <a href="https://www.fdcef.com/container_search" class="tool-card" data-category="logistics" data-tool="fdcef_container_search">
+          <div class="card-header">
+            <i class="fas fa-box"></i>
+            <h3>FDCEF container search</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'fdcef_container_search')"></i>
+          </div>
+          <p>Open fdcef.com container lookup (paste container id in search)</p>
           <div class="card-footer">
             <span class="category">Logistics</span>
           </div>

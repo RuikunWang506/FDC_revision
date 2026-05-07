@@ -622,7 +622,15 @@ def get_location(ip):
     try:
         response = requests.get(f'https://ipinfo.io/{ip}/json', timeout=2)
         if response.status_code != 200:
-            current_app.logger.warning(f"Location lookup failed for IP {ip}: HTTP {response.status_code}")
+            # 429 is routine when the free tier rate limit is hit; avoid warning spam.
+            if response.status_code == 429:
+                current_app.logger.debug(
+                    "Location lookup skipped for IP %s: HTTP 429 (rate limited)", ip
+                )
+            else:
+                current_app.logger.warning(
+                    "Location lookup failed for IP %s: HTTP %s", ip, response.status_code
+                )
             return {}
 
         payload = response.json() or {}

@@ -1933,7 +1933,6 @@ def boat_packslip(container_number):
         }
 
         if excluded_sample_styles:
-            current_app.logger.info(f"Excluding sample-only styles from packslip: {sorted(excluded_sample_styles)}")
             packslip_data = [item for item in packslip_data if item.get('Style') not in excluded_sample_styles]
 
         if not packslip_data:
@@ -2220,8 +2219,16 @@ def boat_packslip(container_number):
         output = BytesIO()
         wb.save(output)
         output.seek(0)
-        
-        # Return as download
+
+        current_user = session.get("username") or session.get("user") or "unknown"
+        client_ip = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip() or (request.remote_addr or "")
+        bol_disp = (bol_num or "").strip() or "N/A"
+        # Same log-viewer convention as boat_service(): ***user***__@@@action@@@ …
+        current_app.logger.info(
+            f"***{current_user}***__@@@downloaded packing slip@@@ "
+            f"https://www.fdcef.com/boat FDC_container={container_number} BOL={bol_disp} ip={client_ip}"
+        )
+
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

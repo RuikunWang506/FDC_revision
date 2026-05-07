@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail — Manage accounts</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>body { padding-top: 76px; background: #f4f7fb; }</style>
+</head>
+<body>
+{% include 'navbar.html' %}
+
+<div class="container py-4">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Mail accounts</h4>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('email.mailboxes') }}">Back to mail</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Add mailbox</div>
+        <div class="card-body">
+            <form method="post" class="row">
+                <input type="hidden" name="action" value="add">
+                <div class="col-md-3 mb-2">
+                    <label class="small text-muted">Label</label>
+                    <input class="form-control" name="label" placeholder="orders" required>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="small text-muted">Email</label>
+                    <input class="form-control" name="email" type="email" required>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="small text-muted">Password</label>
+                    <input class="form-control" name="password" type="password" required autocomplete="new-password">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="small text-muted">Inbox folder</label>
+                    <input class="form-control" name="inbox_folder" value="INBOX">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="small text-muted">IMAP host</label>
+                    <input class="form-control" name="imap_host" value="imap.fatcow.com">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="small text-muted">IMAP port</label>
+                    <input class="form-control" name="imap_port" value="993">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="small text-muted">SMTP host</label>
+                    <input class="form-control" name="smtp_host" value="smtp.fatcow.com">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="small text-muted">SMTP port</label>
+                    <input class="form-control" name="smtp_port" value="465">
+                </div>
+                <div class="col-12 mt-2">
+                    <button type="submit" class="btn btn-primary">Save (encrypt password)</button>
+                </div>
+            </form>
+            <p class="small text-muted mb-0 mt-3">
+                Fernet key: set <code>MAIL_FERNET_KEY</code> in the environment, or rely on <code>D:\\Email\\.fernet_key</code> (auto-created).
+                Run <code>sql/mail_accounts.sql</code> on MySQL before adding accounts.
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Existing mailboxes</div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Label</th>
+                        <th>Email</th>
+                        <th>IMAP</th>
+                        <th>SMTP</th>
+                        <th>Inbox</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in accounts %}
+                        <tr>
+                            <td>{{ a.label }}</td>
+                            <td>{{ a.email }}</td>
+                            <td>{{ a.imap_host }}:{{ a.imap_port }}</td>
+                            <td>{{ a.smtp_host }}:{{ a.smtp_port }}</td>
+                            <td>{{ a.inbox_folder }}</td>
+                            <td class="text-right">
+                                <form method="post" onsubmit="return confirm('Delete this mailbox from the app database?');">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="account_id" value="{{ a.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -750,7 +750,7 @@
                             </button>
                         </div>
                         <div class="col-md-4">
-                            <button id="manual-add-store-btn" class="btn btn-info btn-lg w-100" data-bs-toggle="modal" data-bs-target="#addStoreModal">
+                            <button type="button" id="manual-add-store-btn" class="btn btn-info btn-lg w-100">
                                 <i class="fas fa-plus"></i> Manual Add
                             </button>
                         </div>
@@ -1184,8 +1184,26 @@
         }
     }
 
+    /** Full-page loading overlay (supports overlapping loadAndRenderOrders calls). */
+    let _shippingPageOverlayDepth = 0;
+    function showShippingPageOverlay(message) {
+        _shippingPageOverlayDepth += 1;
+        const el = document.getElementById('loading-overlay');
+        const status = document.getElementById('processing-status');
+        if (status && message) status.textContent = message;
+        if (el) el.style.display = 'flex';
+    }
+    function hideShippingPageOverlay() {
+        _shippingPageOverlayDepth = Math.max(0, _shippingPageOverlayDepth - 1);
+        if (_shippingPageOverlayDepth === 0) {
+            const el = document.getElementById('loading-overlay');
+            if (el) el.style.display = 'none';
+        }
+    }
+
     // Define global functions first
     window.loadAndRenderOrders = async function() {
+        showShippingPageOverlay('Loading orders…');
         console.log('Starting to load orders...');
         try {
             // Load store information first
@@ -1249,6 +1267,8 @@
             renderPendingOrders();
             // Don't render shipped orders until user expands the section
             console.log('Showing sample orders due to API error:', error.message);
+        } finally {
+            hideShippingPageOverlay();
         }
     };
 
@@ -1774,17 +1794,104 @@
     // Make storeInfoCache globally accessible
     window.storeInfoCache = storeInfoCache;
 
-    // Function to get store information by store number
-    function getStoreInfo(storeNumber) {
+    /** Encode ship-to text for a safe HTML data attribute (handles Unicode). */
+    function encodeShipToForDataAttr(text) {
+        if (text == null || text === '') return '';
+        try {
+            return btoa(unescape(encodeURIComponent(String(text))));
+        } catch (e) {
+            return '';
+        }
+    }
+
+    /**
+     * Best-effort parse of PDF / order "Ship To" block into store form fields.
+     * Handles common US patterns: optional phone, optional company keywords, City, ST ZIP last line.
+     */
+    function parseShipToAddressForStore(raw) {
+        const out = {
+            storeName: '',
+            company: '',
+            address1: '',
+            address2: '',
+            address3: '',
+            city: '',
+            state: '',
+            zip: '',
+            phone: ''
+        };
+        if (!raw || typeof raw !== 'string') return out;
+
+        let normalized = raw.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ');
+        let lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+        const phoneRe = /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/;
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const pm = lines[i].match(phoneRe);
+            if (pm) {
+                const digits = pm[0].replace(/\D/g, '');
+                out.phone = digits.length === 10
+                    ? digits.replace(/(\d{3})(\d{3})(\d{4})/, '($1)$2-$3')
+                    : pm[0].trim();
+                lines[i] = lines[i].replace(pm[0], '').trim();
+                if (!lines[i]) lines.splice(i, 1);
+                break;
+            }
+        }
+
+        function looksLikeCompany(line) {
+            return line && /\b(INC|LLC|LTD|CORP|CO\.|COMPANY)\b/i.test(line) && !/^\d/.test(line.trim());
+        }
+
+        if (lines.length === 0) return out;
+
+        const last = lines[lines.length - 1];
+        let csz = last.match(/^([^,]+),\s*([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/);
+        if (csz) {
+            out.city = csz[1].trim();
+            out.state = csz[2].trim().toUpperCase();
+            out.zip = csz[3].trim();
+            lines.pop();
+        } else {
+            const stZipOnly = last.match(/^([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/);
+            if (stZipOnly && lines.length >= 2) {
+                out.state = stZipOnly[1].toUpperCase();
+                out.zip = stZipOnly[2];
+                lines.pop();
+                out.city = lines.pop().trim();
+            }
+        }
+
+        if (lines.length && looksLikeCompany(lines[0])) {
+            out.company = lines.shift().trim();
+        }
+        if (lines.length) {
+            out.storeName = lines.shift().trim();
+        }
+        if (lines.length && looksLikeCompany(lines[0]) && !out.company) {
+            out.company = lines.shift().trim();
+        }
+        out.address1 = (lines.shift() || '').trim();
+        out.address2 = (lines.shift() || '').trim();
+        if (lines.length) {
+            out.address3 = lines.join(', ').trim();
+        }
+
+        return out;
+    }
+
+    // Function to get store information by store number (optional ship_to_address from order row)
+    function getStoreInfo(storeNumber, shipToRaw) {
         if (!storeNumber) return 'N/A';
+        const shipStr = shipToRaw != null ? String(shipToRaw) : '';
+        const shipB64 = encodeShipToForDataAttr(shipStr);
         if (storeInfoCache[storeNumber]) {
             return storeInfoCache[storeNumber];
-        } else {
-            // Return a button for adding new store
-            return `<button class="btn btn-sm btn-success add-store-btn" data-store-number="${storeNumber}" title="Add New Store ${storeNumber}">
+        }
+        const shipAttr = shipB64 ? ` data-ship-to-b64="${shipB64}"` : '';
+        return `<button type="button" class="btn btn-sm btn-success add-store-btn" data-store-number="${storeNumber}"${shipAttr} title="Add New Store ${storeNumber} (prefill from Ship To)">
                 <i class="fas fa-plus"></i> Add Store ${storeNumber}
             </button>`;
-        }
     }
 
     // Function to load store information
@@ -1932,9 +2039,11 @@
             // Add orders for this batch (wrapped in collapsible section)
             orders.forEach(order => {
                 overallIndex++;
-                // Extract first 4 digits from PO number for store lookup
+                // Extract store prefix from PO (e.g. 0709-000016 → 0709); normalize digits for edit-store lookup
                 const storeNumber = order.po_number ? order.po_number.substring(0, 4) : '';
-                const internalAddress = getStoreInfo(storeNumber);
+                const storePrefixDigits = (order.po_number || '').substring(0, 4).replace(/\D/g, '').slice(0, 4);
+                const editStoreNumberFromPo = storePrefixDigits.length ? storePrefixDigits.padStart(4, '0') : '';
+                const internalAddress = getStoreInfo(storeNumber, order.ship_to_address || '');
                 
                 // Format ship-to address for better display
                 let formattedShipToAddress = order.ship_to_address || 'N/A';
@@ -2041,6 +2150,10 @@
                         ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : `<button class="btn btn-outline-primary btn-sm mt-2 w-100 add-tracking-btn" data-po="${order.po_number}"><i class="fas fa-plus"></i> Add Tracking</button>`}
                     </td>
                     <td class="order-cell">
+                        ${containerId !== 'shipped-orders-table-body' && editStoreNumberFromPo ? `
+                        <button type="button" class="btn btn-outline-secondary edit-store-from-po-btn me-2" data-store-number="${editStoreNumberFromPo}" title="Edit store ${editStoreNumberFromPo} (from PO)">
+                            <i class="fas fa-store"></i>
+                        </button>` : ''}
                         <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
                             <i class="fas fa-file-pdf"></i>
                         </button>
@@ -2267,7 +2380,7 @@
         orderList.forEach((order, index) => {
             // Extract first 4 digits from PO number for store lookup
             const storeNumber = order.po_number ? order.po_number.substring(0, 4) : '';
-            const internalAddress = getStoreInfo(storeNumber);
+            const internalAddress = getStoreInfo(storeNumber, order.ship_to_address || '');
             
             // Format ship-to address for better display
             let formattedShipToAddress = order.ship_to_address || 'N/A';
@@ -2760,9 +2873,28 @@
                 const poNumber = e.target.closest('.delete-order-btn').getAttribute('data-po');
                 deleteOrder(poNumber);
             }
+            if (e.target.closest('.edit-store-from-po-btn')) {
+                const btn = e.target.closest('.edit-store-from-po-btn');
+                const sn = (btn.getAttribute('data-store-number') || '').trim();
+                if (sn && typeof window.editStore === 'function') {
+                    window.editStore(sn);
+                } else if (sn) {
+                    alert('Store editor is still loading. Expand Store Information once or refresh the page.');
+                }
+            }
             if (e.target.closest('.add-store-btn')) {
-                const storeNumber = e.target.closest('.add-store-btn').getAttribute('data-store-number');
-                openAddStoreModal(storeNumber);
+                const btn = e.target.closest('.add-store-btn');
+                const storeNumber = btn.getAttribute('data-store-number') || '';
+                const b64 = btn.getAttribute('data-ship-to-b64');
+                let shipRaw = '';
+                if (b64) {
+                    try {
+                        shipRaw = decodeURIComponent(escape(atob(b64)));
+                    } catch (err) {
+                        console.warn('Could not decode ship-to from button:', err);
+                    }
+                }
+                openAddStoreModal(storeNumber, shipRaw);
             }
             if (e.target.closest('.save-pkg-btn')) {
                 console.log('Save button clicked!');
@@ -3138,32 +3270,50 @@
         }
     });
 
-        // Function to open Add Store modal with pre-populated store number
-        window.openAddStoreModal = function(storeNumber = '') {
-            // Pre-populate the store number if provided
+        // Function to open Add Store modal with store number and optional Ship To text from the order row
+        window.openAddStoreModal = function(storeNumber = '', shipToRaw = '') {
+            const parsed = parseShipToAddressForStore(shipToRaw || '');
+
             if (storeNumber) {
                 document.getElementById('add-store-number').value = storeNumber;
-                document.getElementById('add-store-name').value = 'Lori\'s Gift Shop #' + storeNumber;
-                document.getElementById('add-address3').value = 'Lori\'s Gift Shop #' + storeNumber;
-
+            } else {
+                document.getElementById('add-store-number').value = '';
             }
-            
-            // Clear other fields
-            document.getElementById('add-company').value = '';
-            document.getElementById('add-phone').value = '(972)759-5000';
-            document.getElementById('add-address1').value = '';
-            document.getElementById('add-address2').value = '';
-            
-            document.getElementById('add-city').value = '';
-            document.getElementById('add-state').value = '';
-            document.getElementById('add-zip-code').value = '';
+
+            if (parsed.storeName) {
+                document.getElementById('add-store-name').value = parsed.storeName;
+            } else if (storeNumber) {
+                document.getElementById('add-store-name').value = 'Lori\'s Gift Shop #' + storeNumber;
+            } else {
+                document.getElementById('add-store-name').value = '';
+            }
+
+            document.getElementById('add-company').value = parsed.company || '';
+            document.getElementById('add-phone').value = parsed.phone || '(972)759-5000';
+            document.getElementById('add-address1').value = parsed.address1 || '';
+            document.getElementById('add-address2').value = parsed.address2 || '';
+
+            if (parsed.address3) {
+                document.getElementById('add-address3').value = parsed.address3;
+            } else if (storeNumber) {
+                document.getElementById('add-address3').value = 'Lori\'s Gift Shop #' + storeNumber;
+            } else {
+                document.getElementById('add-address3').value = '';
+            }
+
+            document.getElementById('add-city').value = parsed.city || '';
+            document.getElementById('add-state').value = parsed.state || '';
+            document.getElementById('add-zip-code').value = parsed.zip || '';
             document.getElementById('add-status').value = 'Active';
             document.getElementById('add-memo').value = '';
-            
-            // Show the modal
+
             const modal = new bootstrap.Modal(document.getElementById('addStoreModal'));
             modal.show();
         }
+
+        document.getElementById('manual-add-store-btn')?.addEventListener('click', function () {
+            openAddStoreModal('', '');
+        });
 
         // Sidebar Functions
         function updateSelectedOrdersList() {
@@ -4569,17 +4719,22 @@
             });
         }
 
-        // Edit store
+        // Edit store (also used from pending orders row "Edit store" button)
         async function editStore(storeNumber) {
             try {
                 const response = await fetch('/lori_automation/get_store_info');
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
                 
-                const store = data.data.find(s => s.store_number === storeNumber);
+                const want = String(storeNumber || '').trim();
+                const wantPadded = want.padStart(4, '0');
+                const store = (data.data || []).find(s => {
+                    const sn = String(s.store_number || '').trim();
+                    return sn === want || sn === wantPadded || sn.padStart(4, '0') === wantPadded;
+                });
                 if (!store) throw new Error('Store not found');
                 
-                currentEditingStoreNumber = storeNumber;
+                currentEditingStoreNumber = String(store.store_number || '').trim() || wantPadded;
                 
                 // Populate edit modal
                 document.getElementById('edit-store-number').value = store.store_number || '';
@@ -4603,6 +4758,7 @@
                 alert('加载店铺信息失败: ' + error.message);
             }
         }
+        window.editStore = editStore;
 
         // Save store
         document.getElementById('save-store-btn').addEventListener('click', async function() {

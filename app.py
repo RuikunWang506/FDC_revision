@@ -37,6 +37,7 @@ _load_nssm_env_file()
 from py.utilities.logging_setup import configure_logging, log_event
 from py.utilities.setting import Config
 from routes import register_routes
+from py.utilities.navigation_audit import register_navigation_audit
 from py.utilities.auth import log_event
 
 
@@ -91,6 +92,7 @@ if app.config.get('ENV') == 'production':
 
 configure_logging(app)
 register_routes(app)
+register_navigation_audit(app)
 
 try:
     log_event(
@@ -106,6 +108,10 @@ def zip_filter(a, b):
 app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
+    # Debug + auto-reload on code changes (dev). Set FLASK_DEBUG=0 to disable both.
+    _raw = str(os.environ.get("FLASK_DEBUG", "1")).strip().lower()
+    _dev_debug = _raw not in ("0", "false", "no", "")
+
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         app.logger.info(
             "--------------------------------------------------------------------"
@@ -113,33 +119,39 @@ if __name__ == "__main__":
             "--------------------------------------------------------------------"
         )
 
-    # Configure reloader to exclude log file and output directories
-    from werkzeug._reloader import ReloaderLoop
-    
-    # Get absolute paths for exclusions
-    exclude_dirs = [
-        os.path.abspath('log.txt'),
-        os.path.abspath('output'),
-        os.path.abspath('static/file backup'),
-        os.path.abspath('__pycache__'),
-    ]
-    
-    # Patch the reloader to exclude these paths
-    original_trigger_reload = ReloaderLoop.trigger_reload
-    def patched_trigger_reload(self, filename):
-        # Don't trigger reload for excluded files/directories
-        abs_filename = os.path.abspath(filename) if filename else ''
-        for exclude in exclude_dirs:
-            if abs_filename.startswith(exclude):
-                return
-        return original_trigger_reload(self, filename)
-    
-    ReloaderLoop.trigger_reload = patched_trigger_reload
-    
+    if _dev_debug:
+        # Exclude noisy paths so log/output churn does not restart the server.
+        try:
+            from werkzeug._reloader import ReloaderLoop
+        except ImportError:  # pragma: no cover
+            ReloaderLoop = None  # type: ignore
+
+        if ReloaderLoop is not None:
+            _root = os.path.dirname(os.path.abspath(__file__))
+            exclude_dirs = [
+                os.path.abspath(os.path.join(_root, "log.txt")),
+                os.path.abspath(os.path.join(_root, "output")),
+                os.path.abspath(os.path.join(_root, "static", "file backup")),
+                os.path.abspath(os.path.join(_root, "__pycache__")),
+                os.path.normcase(Config.LOG_FILE) if getattr(Config, "LOG_FILE", None) else "",
+            ]
+            exclude_dirs = [p for p in exclude_dirs if p]
+
+            _original_trigger_reload = ReloaderLoop.trigger_reload
+
+            def _patched_trigger_reload(self, filename):  # type: ignore[misc]
+                abs_filename = os.path.normcase(os.path.abspath(filename)) if filename else ""
+                for ex in exclude_dirs:
+                    if ex and abs_filename.startswith(os.path.normcase(ex)):
+                        return
+                return _original_trigger_reload(self, filename)
+
+            ReloaderLoop.trigger_reload = _patched_trigger_reload  # type: ignore[method-assign]
+
     app.run(
         host='0.0.0.0',
         port=5555,
-        debug=True,
+        debug=_dev_debug,
         request_handler=CustomRequestHandler,
-        use_reloader=False
+        use_reloader=_dev_debug,
     )
