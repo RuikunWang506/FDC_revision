@@ -47,7 +47,10 @@ WORKBOOK_FULL_CATALOG_MAX_ROWS = 80
 
 # Async workbook exports: rolling file history per user (see export_workbook queue).
 WORKBOOK_EXPORT_HISTORY_MAX = 3
+# Mark "running" jobs failed if no heartbeat for this long (hangs, stuck threads).
+WORKBOOK_EXPORT_STALE_AFTER_SEC = int(os.environ.get("WORKBOOK_EXPORT_STALE_AFTER_SEC", "3600"))
 _workbook_manifest_lock = threading.Lock()
+
 
 # Staged HTML render for large/Dropbox lists: description gate first, then background full page (cached ~7 days).
 LISTCREATOR_HTML_CACHE_DAYS = 7
@@ -346,6 +349,76 @@ def _workbook_save_manifest(app, slug, data):
     os.replace(tmp, path)
 
 
+def _parse_workbook_job_created_at(iso_s):
+    if not iso_s:
+        return None
+    s = str(iso_s).strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        dt = datetime.datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt.astimezone(datetime.timezone.utc)
+    except ValueError:
+        return None
+
+
+def _workbook_sweep_stale_running_jobs(app, slug):
+    """Fail running jobs older than WORKBOOK_EXPORT_STALE_AFTER_SEC (hang / zombie UI)."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    with _workbook_manifest_lock:
+        manifest = _workbook_load_manifest(app, slug)
+        jobs = manifest.get("jobs") or []
+        changed = False
+        for j in jobs:
+            if j.get("status") != "running":
+                continue
+            created = _parse_workbook_job_created_at(j.get("created_at"))
+            if created is None:
+                continue
+            if (now - created).total_seconds() <= WORKBOOK_EXPORT_STALE_AFTER_SEC:
+                continue
+            j["status"] = "failed"
+            j["error"] = (
+                "Export did not finish within the time limit. The job may have hung (database or images), "
+                "or the server was busy. Try again with fewer styles, uncheck Full catalog, or check server logs."
+            )
+            changed = True
+        if changed:
+            _workbook_save_manifest(app, slug, manifest)
+
+
+def workbook_exports_fail_orphaned_running(app):
+    """On process start: mark all 'running' jobs failed (background threads never survive restart)."""
+    root = os.path.join(app.instance_path, "workbook_exports")
+    if not os.path.isdir(root):
+        return
+    msg = (
+        "Server restarted before this export finished. Please queue the workbook again."
+    )
+    for slug in os.listdir(root):
+        user_dir = os.path.join(root, slug)
+        if not os.path.isdir(user_dir):
+            continue
+        with _workbook_manifest_lock:
+            manifest = _workbook_load_manifest(app, slug)
+            jobs = manifest.get("jobs") or []
+            changed = False
+            for j in jobs:
+                if j.get("status") != "running":
+                    continue
+                j["status"] = "failed"
+                j["error"] = msg
+                changed = True
+            if changed:
+                _workbook_save_manifest(app, slug, manifest)
+                app.logger.info(
+                    "workbook export: marked interrupted running job(s) failed slug=%s",
+                    slug,
+                )
+
+
 def _workbook_delete_disk_file(app, slug, job):
     fn = job.get('file')
     if not fn:
@@ -386,6 +459,11 @@ def _workbook_jobs_public(jobs):
 def _workbook_export_worker(app, slug, job_id, payload, current_user):
     with app.app_context():
         try:
+            current_app.logger.info(
+                "workbook export worker started job_id=%s user=%s",
+                job_id,
+                current_user,
+            )
             download_name, bio = _build_workbook_from_request_data(payload, current_user)
             user_dir = _workbook_user_dir(app, slug)
             disk_name = f'{job_id}.xlsx'
@@ -2320,6 +2398,7 @@ def export_workbook():
         current_user = session.get('username', 'export')
         app = current_app._get_current_object()
         slug = _workbook_user_slug(current_user)
+        _workbook_sweep_stale_running_jobs(app, slug)
         try:
             os.makedirs(app.instance_path, exist_ok=True)
         except OSError:
@@ -2375,6 +2454,7 @@ def export_workbook_jobs():
     current_user = session.get('username', 'export')
     app = current_app._get_current_object()
     slug = _workbook_user_slug(current_user)
+    _workbook_sweep_stale_running_jobs(app, slug)
     manifest = _workbook_load_manifest(app, slug)
     return jsonify({'jobs': _workbook_jobs_public(manifest.get('jobs') or [])})
 

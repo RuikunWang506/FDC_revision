@@ -32,6 +32,19 @@ def _load_nssm_env_file():
         pass
 
 
+def _running_as_windows_service():
+    """Best-effort detection for NSSM/Windows service context."""
+    service_markers = (
+        "NSSM_SERVICE_NAME",
+        "NSSM_APPLICATION",
+        "NSSM_EXE",
+        "SERVICE_NAME",
+    )
+    if any(os.environ.get(name) for name in service_markers):
+        return True
+    return str(os.environ.get("SESSIONNAME", "")).strip().lower() == "services"
+
+
 _load_nssm_env_file()
 
 from py.utilities.logging_setup import configure_logging, log_event
@@ -95,6 +108,13 @@ register_routes(app)
 register_navigation_audit(app)
 
 try:
+    from py.Toolkits.V7listcreator import workbook_exports_fail_orphaned_running
+
+    workbook_exports_fail_orphaned_running(app)
+except Exception:
+    pass
+
+try:
     log_event(
         'info',
         f'🟣 SYSTEM Flask app process started pid={os.getpid()} cwd={os.getcwd()} argv={sys.argv!r}',
@@ -108,8 +128,9 @@ def zip_filter(a, b):
 app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
-    # Debug + auto-reload on code changes (dev). Set FLASK_DEBUG=0 to disable both.
-    _raw = str(os.environ.get("FLASK_DEBUG", "1")).strip().lower()
+    # Debug + auto-reload on code changes (dev). Default to off when started as a service.
+    _default_debug = "0" if _running_as_windows_service() else "1"
+    _raw = str(os.environ.get("FLASK_DEBUG", _default_debug)).strip().lower()
     _dev_debug = _raw not in ("0", "false", "no", "")
 
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':

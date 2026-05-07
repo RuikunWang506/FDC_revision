@@ -65,6 +65,12 @@ _BOAT_LANE_MAIL_SCAN_BLOBS: List[Dict[str, Any]] = []
 _ALLMAIL_GROUP_IDS = frozenset(
     {"burlington", "container", "gabe", "ross", "macy", "tj"}
 )
+_BT_ROUTE_PICKUP_GROUPS = frozenset({"burlington", "gabe", "ross", "macy", "tj"})
+_BURLINGTON_ROUTE_ID_RE = re.compile(r"\bCS\d{8,}\b", flags=re.IGNORECASE)
+_BURLINGTON_PO_LIST_RE = re.compile(r"list\s+of\s+po\s*#?[’'`s]*\s*:\s*([0-9,\s]+)", flags=re.IGNORECASE)
+_BURLINGTON_SHIP_START_RE = re.compile(r"ship\s+window\s+start\s*:\s*([0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4})", flags=re.IGNORECASE)
+_BURLINGTON_SHIP_CANCEL_RE = re.compile(r"ship\s+window\s+cancel\s*:\s*([0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4})", flags=re.IGNORECASE)
+_BURLINGTON_PICKUP_SLOT_RE = re.compile(r"\b(CS\d{8,})\b\s*-\s*([0-9]{1,2}/[0-9]{1,2})\s+at\s+([0-9]{1,2}:[0-9]{2})", flags=re.IGNORECASE)
 _CONTAINER_SENDER_EMAILS = frozenset(
     {
         "op@fm-transportation.com",
@@ -422,6 +428,202 @@ def _message_matches_mail_group(row: Dict[str, Any], group: str) -> bool:
     return False
 
 
+def _normalize_bt_mode(v: str) -> str:
+    s = (v or "").strip().lower()
+    return "pickup" if s == "pickup" else "route"
+
+
+def _message_matches_bt_mode(row: Dict[str, Any], mode: str) -> bool:
+    """
+    route: keep routing/non-pickup mails
+    pickup: keep pickup-request mails
+    """
+    blob = " ".join(
+        [
+            str(row.get("subject") or ""),
+            str(row.get("from_addr") or ""),
+            str(row.get("container_origin") or ""),
+        ]
+    ).lower()
+    is_pickup = bool(re.search(r"\bpick[\s\-]?up\b|\bpu\b|\bp/u\b", blob))
+    if _normalize_bt_mode(mode) == "pickup":
+        return is_pickup
+    return not is_pickup
+
+
+def _extract_burlington_route_fields(subject: str, body_html: str) -> Dict[str, Any]:
+    text = _strip_html_to_scan_text(body_html or "")
+    subject_s = str(subject or "")
+    route_m = _BURLINGTON_ROUTE_ID_RE.search(subject_s) or _BURLINGTON_ROUTE_ID_RE.search(text)
+    route_id = route_m.group(0).upper() if route_m else ""
+    po_list: List[str] = []
+    po_m = _BURLINGTON_PO_LIST_RE.search(text)
+    if po_m:
+        raw = po_m.group(1)
+        for token in re.split(r"[,\s]+", raw):
+            t = token.strip()
+            if t.isdigit():
+                po_list.append(t)
+    # Deduplicate while preserving order
+    seen_po = set()
+    po_list = [p for p in po_list if not (p in seen_po or seen_po.add(p))]
+    start_m = _BURLINGTON_SHIP_START_RE.search(text)
+    cancel_m = _BURLINGTON_SHIP_CANCEL_RE.search(text)
+    return {
+        "burlington_route_id": route_id,
+        "burlington_po_list": po_list,
+        "burlington_ship_start": start_m.group(1) if start_m else "",
+        "burlington_ship_cancel": cancel_m.group(1) if cancel_m else "",
+    }
+
+
+def _extract_burlington_pickup_fields(subject: str, body_html: str) -> Dict[str, Any]:
+    text = _strip_html_to_scan_text(body_html or "")
+    subj = str(subject or "")
+    slot_m = _BURLINGTON_PICKUP_SLOT_RE.search(subj) or _BURLINGTON_PICKUP_SLOT_RE.search(text)
+    route_m = _BURLINGTON_ROUTE_ID_RE.search(subj) or _BURLINGTON_ROUTE_ID_RE.search(text)
+    route_id = route_m.group(0).upper() if route_m else ""
+    slot_date = ""
+    slot_time = ""
+    if slot_m:
+        route_id = slot_m.group(1).upper()
+        slot_date = slot_m.group(2)
+        slot_time = slot_m.group(3)
+    title = route_id
+    if route_id and (slot_date or slot_time):
+        title = f"{route_id} - {slot_date} at {slot_time}".strip()
+    return {
+        "burlington_pickup_route_id": route_id,
+        "burlington_pickup_slot_date": slot_date,
+        "burlington_pickup_slot_time": slot_time,
+        "burlington_pickup_title": title,
+    }
+
+
+def _enrich_burlington_route_rows(rows: List[Dict[str, Any]]) -> None:
+    if not rows:
+        return
+    pairs: List[Tuple[int, int]] = []
+    for m in rows:
+        try:
+            aid = int(m.get("account_id") or 0)
+            uid_i = int(m.get("uid") or 0)
+        except (TypeError, ValueError):
+            continue
+        if aid > 0 and uid_i > 0:
+            pairs.append((aid, uid_i))
+    if not pairs:
+        return
+    conn = get_mysql_connection()
+    if not conn:
+        return
+    cur = None
+    body_map: Dict[Tuple[int, int], str] = {}
+    try:
+        cur = conn.cursor(dictionary=True)
+        uniq_pairs = sorted(set(pairs))
+        placeholders = ",".join(["(%s,%s)"] * len(uniq_pairs))
+        params: List[Any] = []
+        for aid, uid_i in uniq_pairs:
+            params.extend([aid, uid_i])
+        cur.execute(
+            f"""
+            SELECT mail_account_id AS aid, imap_uid AS uid, body_html_sanitized, subject
+            FROM mail_message_meta
+            WHERE (mail_account_id, imap_uid) IN ({placeholders})
+            """,
+            tuple(params),
+        )
+        for row in cur.fetchall():
+            try:
+                key = (int(row.get("aid") or 0), int(row.get("uid") or 0))
+            except (TypeError, ValueError):
+                continue
+            body_map[key] = str(row.get("body_html_sanitized") or "")
+    except MySQLError:
+        return
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        conn.close()
+
+    for m in rows:
+        try:
+            key = (int(m.get("account_id") or 0), int(m.get("uid") or 0))
+        except (TypeError, ValueError):
+            continue
+        parsed = _extract_burlington_route_fields(
+            str(m.get("subject") or ""),
+            body_map.get(key, ""),
+        )
+        m.update(parsed)
+
+
+def _enrich_burlington_pickup_rows(rows: List[Dict[str, Any]]) -> None:
+    if not rows:
+        return
+    pairs: List[Tuple[int, int]] = []
+    for m in rows:
+        try:
+            aid = int(m.get("account_id") or 0)
+            uid_i = int(m.get("uid") or 0)
+        except (TypeError, ValueError):
+            continue
+        if aid > 0 and uid_i > 0:
+            pairs.append((aid, uid_i))
+    if not pairs:
+        return
+    conn = get_mysql_connection()
+    if not conn:
+        return
+    cur = None
+    body_map: Dict[Tuple[int, int], str] = {}
+    try:
+        cur = conn.cursor(dictionary=True)
+        uniq_pairs = sorted(set(pairs))
+        placeholders = ",".join(["(%s,%s)"] * len(uniq_pairs))
+        params: List[Any] = []
+        for aid, uid_i in uniq_pairs:
+            params.extend([aid, uid_i])
+        cur.execute(
+            f"""
+            SELECT mail_account_id AS aid, imap_uid AS uid, body_html_sanitized
+            FROM mail_message_meta
+            WHERE (mail_account_id, imap_uid) IN ({placeholders})
+            """,
+            tuple(params),
+        )
+        for row in cur.fetchall():
+            try:
+                key = (int(row.get("aid") or 0), int(row.get("uid") or 0))
+            except (TypeError, ValueError):
+                continue
+            body_map[key] = str(row.get("body_html_sanitized") or "")
+    except MySQLError:
+        return
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        conn.close()
+
+    for m in rows:
+        try:
+            key = (int(m.get("account_id") or 0), int(m.get("uid") or 0))
+        except (TypeError, ValueError):
+            continue
+        parsed = _extract_burlington_pickup_fields(
+            str(m.get("subject") or ""),
+            body_map.get(key, ""),
+        )
+        m.update(parsed)
+
+
 def _list_inbox_all_accounts_merged(
     *,
     per_account_limit: int = 150,
@@ -685,6 +887,9 @@ _BLEACH_PROTOCOLS = set(bleach.sanitizer.ALLOWED_PROTOCOLS) | {"data", "cid"}
 def sanitize_html_fragment(html: str) -> str:
     if not html:
         return ""
+    # Remove style/script blocks entirely so CSS text doesn't leak into visible body.
+    html = re.sub(r"<style\b[^>]*>.*?</style>", "", html, flags=re.IGNORECASE | re.DOTALL)
+    html = re.sub(r"<script\b[^>]*>.*?</script>", "", html, flags=re.IGNORECASE | re.DOTALL)
     cleaned = bleach.clean(
         html,
         tags=_BLEACH_TAGS,
@@ -692,6 +897,8 @@ def sanitize_html_fragment(html: str) -> str:
         protocols=_BLEACH_PROTOCOLS,
         strip=True,
     )
+    # Some malformed bodies still leak inline CSS text like "P {margin-top:0;margin-bottom:0;}".
+    cleaned = re.sub(r"\bP\s*\{\s*margin-top\s*:\s*0\s*;\s*margin-bottom\s*:\s*0\s*;\s*\}", "", cleaned, flags=re.IGNORECASE)
     cleaned = bleach_linkify(cleaned)
     return cleaned
 
@@ -1330,6 +1537,7 @@ def _inbox_query_suffix(
     fdc: Optional[str] = None,
     bol: Optional[str] = None,
     show_landed: bool = False,
+    bt_mode: Optional[str] = None,
 ) -> str:
     params: Dict[str, str] = {}
     if q and q.strip():
@@ -1352,6 +1560,9 @@ def _inbox_query_suffix(
         params["bol"] = bs
     if show_landed:
         params["show_landed"] = "1"
+    bm = _normalize_bt_mode(bt_mode or "")
+    if bm == "pickup":
+        params["bt_mode"] = "pickup"
     return "?" + urlencode(params) if params else ""
 
 
@@ -1363,6 +1574,10 @@ def _sidebar_poll_query_string() -> str:
     mg = (request.args.get("mail_group") or "").strip().lower()
     if mg in _ALLMAIL_GROUP_IDS:
         d["mail_group"] = mg
+    if mg in _BT_ROUTE_PICKUP_GROUPS:
+        bm = _normalize_bt_mode(request.args.get("bt_mode") or "")
+        if bm == "pickup":
+            d["bt_mode"] = "pickup"
     if mg == "container":
         fdc = _sanitize_lane_param(request.args.get("fdc") or "")
         bol = _sanitize_lane_param(request.args.get("bol") or "")
@@ -1567,6 +1782,7 @@ def _fetch_messages_for_mail_ui(
     list_filter: str,
     show_full_folder: bool,
     mail_group: str,
+    bt_mode: str,
     fdc_focus: str,
     bol_focus: str,
 ) -> List[Dict[str, Any]]:
@@ -1641,6 +1857,12 @@ def _fetch_messages_for_mail_ui(
                 since_days=MAIL_COMBINED_INBOX_MAX_DAYS,
             )
             _msgs_inner = [m for m in _msgs_inner if _message_matches_mail_group(m, mail_group)]
+            if mail_group in _BT_ROUTE_PICKUP_GROUPS:
+                _msgs_inner = [m for m in _msgs_inner if _message_matches_bt_mode(m, bt_mode)]
+            if mail_group == "burlington" and _normalize_bt_mode(bt_mode) == "route":
+                _enrich_burlington_route_rows(_msgs_inner)
+            if mail_group == "burlington" and _normalize_bt_mode(bt_mode) == "pickup":
+                _enrich_burlington_pickup_rows(_msgs_inner)
             if q:
                 ql = q.lower()
                 _msgs_inner = [
@@ -1729,6 +1951,14 @@ def _serialize_mail_row_for_poll(m: Dict[str, Any], fallback_account_id: int) ->
         "header_date": fmt(header),
         "container_ids": [str(x) for x in (m.get("container_ids") or []) if x],
         "container_origin": str(m.get("container_origin") or ""),
+        "burlington_route_id": str(m.get("burlington_route_id") or ""),
+        "burlington_po_list": [str(x) for x in (m.get("burlington_po_list") or []) if x],
+        "burlington_ship_start": str(m.get("burlington_ship_start") or ""),
+        "burlington_ship_cancel": str(m.get("burlington_ship_cancel") or ""),
+        "burlington_pickup_route_id": str(m.get("burlington_pickup_route_id") or ""),
+        "burlington_pickup_slot_date": str(m.get("burlington_pickup_slot_date") or ""),
+        "burlington_pickup_slot_time": str(m.get("burlington_pickup_slot_time") or ""),
+        "burlington_pickup_title": str(m.get("burlington_pickup_title") or ""),
     }
 
 
@@ -2262,6 +2492,96 @@ def _reply_seed_from_raw(raw: bytes) -> Dict[str, str]:
     return {"to": to_addr, "subject": subj, "message_id": mid}
 
 
+def _header_get(msg, name: str) -> str:
+    try:
+        return str(msg.get(name) or "")
+    except Exception:
+        return ""
+
+
+def _find_sent_reply_for_message(
+    acc: Dict[str, Any],
+    *,
+    orig_message_id: str,
+    pickup_route_id: str = "",
+    lookback: int = 180,
+) -> Optional[Dict[str, Any]]:
+    """
+    Find a likely sent reply in Sent folders:
+    - prefer In-Reply-To / References containing original Message-ID
+    - fallback: same CS route id in subject/body for Burlington pickup
+    """
+    client = _imap_connect(acc)
+    try:
+        sent_candidates = [
+            "Sent",
+            "INBOX.Sent",
+            "Sent Items",
+            "INBOX.Sent Items",
+            "INBOX/Sent",
+            "INBOX/Sent Items",
+        ]
+        try:
+            all_folders = client.list_folders()
+            for _, _, folder_name in all_folders:
+                fn = str(folder_name or "")
+                fl = fn.lower()
+                if "sent" in fl and fn not in sent_candidates:
+                    sent_candidates.append(fn)
+        except Exception:
+            pass
+
+        orig_mid = (orig_message_id or "").strip().strip("<>").lower()
+        route_id = (pickup_route_id or "").strip().upper()
+
+        for folder in sent_candidates:
+            try:
+                client.select_folder(folder, readonly=True)
+            except Exception:
+                continue
+            try:
+                uids = client.search(["ALL"])
+            except Exception:
+                continue
+            if not uids:
+                continue
+            uids = sorted(uids)[-max(20, int(lookback)) :]
+            try:
+                data = client.fetch(uids, ["RFC822"])
+            except Exception:
+                continue
+            for uid in reversed(uids):
+                row = data.get(uid) or {}
+                raw = row.get(b"RFC822") or row.get("RFC822")
+                if not raw:
+                    continue
+                try:
+                    msg = BytesParser(policy=policy.default).parsebytes(raw)
+                except Exception:
+                    continue
+                in_reply_to = _header_get(msg, "In-Reply-To").lower()
+                references = _header_get(msg, "References").lower()
+                subj = _header_get(msg, "Subject")
+                match_mid = bool(orig_mid and (orig_mid in in_reply_to or orig_mid in references))
+                match_route = bool(route_id and route_id in (subj or "").upper())
+                if not (match_mid or match_route):
+                    continue
+                s_subj, s_html, s_meta = parse_and_sanitize_mail(raw)
+                return {
+                    "uid": int(uid),
+                    "folder": folder,
+                    "subject": s_subj,
+                    "html": s_html,
+                    "meta": s_meta,
+                }
+    finally:
+        try:
+            client.logout()
+        except Exception:
+            pass
+    return None
+
+
 def parse_and_sanitize_mail(raw: bytes) -> Tuple[str, str, Dict[str, Any]]:
     try:
         parsed = mailparser.parse_from_bytes(raw)
@@ -2600,6 +2920,8 @@ def inbox(account_id: int):
     mail_group = (request.args.get("mail_group") or "").strip().lower()
     if mail_group not in _ALLMAIL_GROUP_IDS:
         mail_group = ""
+    bt_mode = _normalize_bt_mode(request.args.get("bt_mode") or "")
+    bt_mode = _normalize_bt_mode(request.args.get("bt_mode") or "")
     fdc_focus = _sanitize_lane_param(request.args.get("fdc") or "") if mail_group == "container" else ""
     bol_focus = _sanitize_lane_param(request.args.get("bol") or "") if mail_group == "container" else ""
     show_landed_container = request.args.get("show_landed") in ("1", "true", "yes") if mail_group == "container" else False
@@ -2619,6 +2941,7 @@ def inbox(account_id: int):
             all_in_folder=aif_use,
             mail_group=next_mg,
             show_landed=show_landed_container if next_mg == "container" else False,
+            bt_mode=bt_mode if next_mg in _BT_ROUTE_PICKUP_GROUPS else "route",
         )
 
     messages = _fetch_messages_for_mail_ui(
@@ -2632,6 +2955,7 @@ def inbox(account_id: int):
         list_filter=list_filter,
         show_full_folder=show_full_folder,
         mail_group=mail_group,
+        bt_mode=bt_mode,
         fdc_focus=fdc_focus,
         bol_focus=bol_focus,
     )
@@ -2645,6 +2969,7 @@ def inbox(account_id: int):
         fdc=fdc_focus or None,
         bol=bol_focus or None,
         show_landed=show_landed_container if mail_group == "container" else False,
+        bt_mode=bt_mode if mail_group in _BT_ROUTE_PICKUP_GROUPS else "route",
     )
     filter_query_all = _inbox_query_suffix(
         q=q, scope=search_scope, list_filter="", all_in_folder=False, mail_group=None
@@ -2665,6 +2990,7 @@ def inbox(account_id: int):
         fdc=fdc_focus or None,
         bol=bol_focus or None,
         show_landed=show_landed_container if mail_group == "container" else False,
+        bt_mode=bt_mode if mail_group in _BT_ROUTE_PICKUP_GROUPS else "route",
     )
     view_msg_group_q = _inbox_query_suffix(
         q="",
@@ -2675,6 +3001,7 @@ def inbox(account_id: int):
         fdc=fdc_focus or None,
         bol=bol_focus or None,
         show_landed=show_landed_container if mail_group == "container" else False,
+        bt_mode=bt_mode if mail_group in _BT_ROUTE_PICKUP_GROUPS else "route",
     )
     boat_lane_rows: List[Dict[str, Any]] = []
     boat_lane_clear_suffix = ""
@@ -2723,6 +3050,7 @@ def inbox(account_id: int):
                     fdc=c,
                     bol=None,
                     show_landed=show_landed_container,
+                    bt_mode=bt_mode,
                 )
                 if c
                 else ""
@@ -2737,6 +3065,7 @@ def inbox(account_id: int):
                     fdc=None,
                     bol=b,
                     show_landed=show_landed_container,
+                    bt_mode=bt_mode,
                 )
                 if b
                 else ""
@@ -2783,6 +3112,18 @@ def inbox(account_id: int):
         boat_lane_toggle_suffix=boat_lane_toggle_suffix,
         boat_lane_return_suffix=boat_lane_return_suffix,
         show_landed_container=show_landed_container,
+        bt_mode=bt_mode,
+        bt_mode_toggle_suffix=_inbox_query_suffix(
+            q=q,
+            scope=search_scope,
+            list_filter=list_nav,
+            all_in_folder=show_full_folder if not mail_group else False,
+            mail_group=mail_group or None,
+            fdc=fdc_focus or None,
+            bol=bol_focus or None,
+            show_landed=show_landed_container if mail_group == "container" else False,
+            bt_mode="pickup" if bt_mode == "route" else "route",
+        ) if mail_group in _BT_ROUTE_PICKUP_GROUPS else "",
         allmail_suffix_container=_mail_group_nav_suffix("container"),
         allmail_suffix_burlington=_mail_group_nav_suffix("burlington"),
         allmail_suffix_gabe=_mail_group_nav_suffix("gabe"),
@@ -2830,6 +3171,7 @@ def inbox_poll(account_id: int):
         list_filter=list_filter,
         show_full_folder=show_full_folder,
         mail_group=mail_group,
+        bt_mode=bt_mode,
         fdc_focus=fdc_focus,
         bol_focus=bol_focus,
     )
@@ -2862,6 +3204,7 @@ def view_message(account_id: int, uid: int):
     mail_group_vm = (request.args.get("mail_group") or "").strip().lower()
     if mail_group_vm not in _ALLMAIL_GROUP_IDS:
         mail_group_vm = ""
+    bt_mode_vm = _normalize_bt_mode(request.args.get("bt_mode") or "")
     fdc_focus_vm = _sanitize_lane_param(request.args.get("fdc") or "") if mail_group_vm == "container" else ""
     bol_focus_vm = _sanitize_lane_param(request.args.get("bol") or "") if mail_group_vm == "container" else ""
     show_landed_vm = request.args.get("show_landed") in ("1", "true", "yes") if mail_group_vm == "container" else False
@@ -2879,6 +3222,7 @@ def view_message(account_id: int, uid: int):
             all_in_folder=False,
             mail_group=next_mg,
             show_landed=show_landed_vm if next_mg == "container" else False,
+            bt_mode=bt_mode_vm if next_mg in _BT_ROUTE_PICKUP_GROUPS else "route",
         )
 
     messages = _fetch_messages_for_mail_ui(
@@ -2892,6 +3236,7 @@ def view_message(account_id: int, uid: int):
         list_filter="",
         show_full_folder=show_full_folder,
         mail_group=mail_group_vm,
+        bt_mode=bt_mode_vm,
         fdc_focus=fdc_focus_vm,
         bol_focus=bol_focus_vm,
     )
@@ -2942,6 +3287,7 @@ def view_message(account_id: int, uid: int):
                     fdc=c,
                     bol=None,
                     show_landed=show_landed_vm,
+            bt_mode=bt_mode_vm,
                 )
                 if c
                 else ""
@@ -2956,6 +3302,7 @@ def view_message(account_id: int, uid: int):
                     fdc=None,
                     bol=b,
                     show_landed=show_landed_vm,
+                    bt_mode=bt_mode_vm,
                 )
                 if b
                 else ""
@@ -2978,6 +3325,7 @@ def view_message(account_id: int, uid: int):
     preview_subject = ""
     preview_html = ""
     preview_meta = {}
+    sent_reply_preview: Optional[Dict[str, Any]] = None
     attachments: List[Dict[str, Any]] = []
     addressed_here = True
     preview_container_ids: List[str] = []
@@ -2986,6 +3334,16 @@ def view_message(account_id: int, uid: int):
         raw = fetch_raw_message(acc, uid)
         attachments = list_attachments_meta(raw)
         preview_subject, preview_html, preview_meta = parse_and_sanitize_mail(raw)
+        if mail_group_vm == "burlington" and bt_mode_vm == "pickup":
+            pickup_fields = _extract_burlington_pickup_fields(
+                str(preview_meta.get("subject") or preview_subject or ""),
+                preview_html,
+            )
+            sent_reply_preview = _find_sent_reply_for_message(
+                acc,
+                orig_message_id=str(preview_meta.get("message_id") or ""),
+                pickup_route_id=str(pickup_fields.get("burlington_pickup_route_id") or ""),
+            )
         if mail_group_vm == "container":
             scan_blob = _scan_text_from_raw_message(raw)
             preview_container_ids = _container_ids_from_subject_then_body(
@@ -3025,6 +3383,7 @@ def view_message(account_id: int, uid: int):
         preview_subject=preview_subject,
         preview_html=preview_html,
         preview_meta=preview_meta,
+        sent_reply_preview=sent_reply_preview,
         reply_uid=uid,
         attachments=attachments,
         search_query="",
@@ -3047,6 +3406,7 @@ def view_message(account_id: int, uid: int):
             fdc=fdc_focus_vm or None,
             bol=bol_focus_vm or None,
             show_landed=show_landed_vm if mail_group_vm == "container" else False,
+            bt_mode=bt_mode_vm if mail_group_vm in _BT_ROUTE_PICKUP_GROUPS else "route",
         ),
         inbox_nav_query=_inbox_query_suffix(
             q="",
@@ -3057,6 +3417,7 @@ def view_message(account_id: int, uid: int):
             fdc=fdc_focus_vm or None,
             bol=bol_focus_vm or None,
             show_landed=show_landed_vm if mail_group_vm == "container" else False,
+            bt_mode=bt_mode_vm if mail_group_vm in _BT_ROUTE_PICKUP_GROUPS else "route",
         ),
         filter_query_all=_inbox_query_suffix(
             q="", scope="current", list_filter="", all_in_folder=False, mail_group=None
@@ -3080,6 +3441,18 @@ def view_message(account_id: int, uid: int):
         boat_lane_toggle_suffix=boat_lane_toggle_suffix_vm,
         boat_lane_return_suffix=boat_lane_return_suffix_vm,
         show_landed_container=show_landed_vm,
+        bt_mode=bt_mode_vm,
+        bt_mode_toggle_suffix=_inbox_query_suffix(
+            q="",
+            scope="current",
+            list_filter="",
+            all_in_folder=show_full_folder,
+            mail_group=mail_group_vm or None,
+            fdc=fdc_focus_vm or None,
+            bol=bol_focus_vm or None,
+            show_landed=show_landed_vm if mail_group_vm == "container" else False,
+            bt_mode="pickup" if bt_mode_vm == "route" else "route",
+        ) if mail_group_vm in _BT_ROUTE_PICKUP_GROUPS else "",
         sidebar_poll_query=_sidebar_poll_query_string(),
         mail_poll_initial_delay_ms=int(MAIL_POLL_INITIAL_DELAY_S * 1000),
     )

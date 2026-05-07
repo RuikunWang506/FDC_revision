@@ -46,9 +46,78 @@
         .fdc-mail-att-thumb { max-width: 120px; max-height: 90px; border-radius: 6px; border: 1px solid #e2e8f0; object-fit: contain; background: #fff; }
         .fdc-preview { overflow-y: auto; max-height: calc(100vh - 140px); padding: 12px 14px; }
         .fdc-preview iframe { width: 100%; min-height: 520px; border: 1px solid #e8edf5; border-radius: 6px; background: #fff; }
+        .fdc-preview-split {
+            display: grid;
+            grid-template-rows: minmax(260px, 1fr) minmax(260px, 1fr);
+            gap: 10px;
+            min-height: calc(100vh - 220px);
+        }
+        .fdc-preview-pane {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .fdc-preview-pane iframe {
+            min-height: 0;
+            height: 100%;
+            flex: 1 1 auto;
+        }
         .fdc-mailbox-nav .nav-link { padding: 6px 12px; border-radius: 6px; color: #1f2937; }
         .fdc-mailbox-nav .nav-link.active { background: #e8f0fe; color: #1d4ed8; font-weight: 600; }
         .fdc-mail-aside-scroll { max-height: calc(100vh - 220px); overflow-y: auto; }
+        .fdc-group-mode-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 2px 12px 8px;
+        }
+        .fdc-group-mode-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: #334155;
+            user-select: none;
+            margin-bottom: 0;
+        }
+        .fdc-group-mode-toggle input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .fdc-group-mode-switch {
+            position: relative;
+            width: 34px;
+            height: 18px;
+            border-radius: 999px;
+            background: #cbd5e1;
+            transition: background 0.15s ease;
+            flex: 0 0 auto;
+        }
+        .fdc-group-mode-switch::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
+            transition: transform 0.15s ease;
+        }
+        .fdc-group-mode-toggle input[type="checkbox"]:checked + .fdc-group-mode-switch {
+            background: #3b82f6;
+        }
+        .fdc-group-mode-toggle input[type="checkbox"]:checked + .fdc-group-mode-switch::after {
+            transform: translateX(16px);
+        }
+        .fdc-group-mode-chip {
+            min-width: 4.5ch;
+            text-align: center;
+            font-weight: 600;
+        }
+        .fdc-group-mode-chip.active { color: #1d4ed8; }
         .fdc-mail-clip { font-size: 0.85rem; color: #64748b; flex-shrink: 0; }
         .fdc-container-card {
             background: #f8fafc;
@@ -90,6 +159,13 @@
         .fdc-boat-lane .table.table-striped tbody tr.fdc-boat-row-active > td {
             background-color: #dbeafe !important;
         }
+        .fdc-boat-date-edit {
+            cursor: pointer;
+            color: #0f172a;
+            text-decoration: underline dotted;
+            text-underline-offset: 2px;
+        }
+        .fdc-boat-date-edit:hover { color: #1d4ed8; }
         .fdc-mail-newmail-banner {
             position: fixed;
             top: 80px;
@@ -140,6 +216,7 @@
      data-sidebar-poll-query="{{ (sidebar_poll_query or '')|e }}"
      data-view-msg-q="{{ (view_msg_group_q or '')|e }}"
      data-mail-group="{{ (mail_group or '')|e }}"
+     data-bt-mode="{{ (bt_mode or 'route')|e }}"
      data-search-scope="{{ (search_scope or 'current')|e }}"
      data-selected-uid="{{ '' if selected_uid is none else selected_uid }}"
      data-mail-poll-delay-ms="{{ mail_poll_initial_delay_ms|default(2500) }}"
@@ -190,6 +267,29 @@
                     <a class="nav-link {% if (mail_group or '') == 'tj' %}active{% endif %}"
                        href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_tj|default('') }}">TJ</a>
                 </nav>
+                {% if (mail_group or '') in ['burlington', 'gabe', 'ross', 'macy', 'tj'] and bt_mode_toggle_suffix %}
+                <div class="fdc-group-mode-row border-top">
+                    <form method="get" action="{{ url_for('email.inbox', account_id=active_account_id) }}" class="mb-0">
+                        {% if list_filter %}
+                            <input type="hidden" name="filter" value="{{ list_filter }}">
+                        {% endif %}
+                        {% if search_query %}
+                            <input type="hidden" name="q" value="{{ search_query }}">
+                            <input type="hidden" name="scope" value="{{ search_scope or 'current' }}">
+                        {% endif %}
+                        <input type="hidden" name="mail_group" value="{{ mail_group }}">
+                        <input type="hidden" name="bt_mode" value="{% if (bt_mode or 'route') == 'pickup' %}route{% else %}pickup{% endif %}">
+                        <label class="fdc-group-mode-toggle">
+                            <span class="fdc-group-mode-chip {% if (bt_mode or 'route') == 'route' %}active{% endif %}">Route</span>
+                            <input type="checkbox"
+                                   {% if (bt_mode or 'route') == 'pickup' %}checked{% endif %}
+                                   onchange="this.form.submit()">
+                            <span class="fdc-group-mode-switch" aria-hidden="true"></span>
+                            <span class="fdc-group-mode-chip {% if (bt_mode or 'route') == 'pickup' %}active{% endif %}">Pickup</span>
+                        </label>
+                    </form>
+                </div>
+                {% endif %}
             </div>
             <div class="p-2 border-top">
                 <a class="btn btn-primary btn-sm btn-block" href="{{ url_for('email.send_mail', account_id=active_account_id) }}">Compose</a>
@@ -236,19 +336,17 @@
                                     {% else %}—{% endif %}
                                 </td>
                                 <td class="fdc-boat-col-date text-muted small">
-                                    <div class="d-flex align-items-center">
-                                        <span>{{ br.mail_body_date_hint or '' }}{% if br.mail_body_date_manual %} ⭐{% endif %}</span>
-                                    </div>
-                                    <form method="post" action="{{ url_for('email.boat_date_override', account_id=active_account_id) }}" class="mt-1">
-                                        <input type="hidden" name="mail_group" value="container">
-                                        <input type="hidden" name="container" value="{{ br.container }}">
-                                        <input type="hidden" name="bol" value="{{ br.bol }}">
-                                        <input type="hidden" name="return_suffix" value="{{ boat_lane_return_suffix|default('') }}">
-                                        <div class="d-flex align-items-center">
-                                            <input type="text" name="manual_date" value="{{ br.mail_body_date_hint or '' }}" placeholder="MM/DD" class="form-control form-control-sm mr-1" style="width: 4.3rem; height: 1.25rem; font-size: 0.7rem; padding: 0.05rem 0.2rem;">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary p-0" style="width: 1.45rem; height: 1.25rem; line-height: 1;">↵</button>
-                                        </div>
-                                    </form>
+                                    {% if br.mail_body_date_hint %}
+                                        <span
+                                            class="fdc-boat-date-edit js-boat-date-edit"
+                                            title="Click to edit date"
+                                            data-container="{{ br.container }}"
+                                            data-bol="{{ br.bol }}"
+                                            data-date="{{ br.mail_body_date_hint }}"
+                                            data-return-suffix="{{ boat_lane_return_suffix|default('') }}"
+                                            data-account-id="{{ active_account_id }}"
+                                        >{{ br.mail_body_date_hint }}{% if br.mail_body_date_manual %} ⭐{% endif %}</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
@@ -271,6 +369,9 @@
                     {% endif %}
                     {% if mail_group %}
                         <input type="hidden" name="mail_group" value="{{ mail_group }}">
+                    {% endif %}
+                    {% if (mail_group or '') in ['burlington', 'gabe', 'ross', 'macy', 'tj'] and bt_mode %}
+                        <input type="hidden" name="bt_mode" value="{{ bt_mode }}">
                     {% endif %}
                     {% if (mail_group or '') == 'container' and (fdc_focus or bol_focus) %}
                         {% if fdc_focus %}<input type="hidden" name="fdc" value="{{ fdc_focus }}">{% endif %}
@@ -306,7 +407,15 @@
                        data-mail-key="{{ (m.account_id or active_account_id) }}:{{ m.uid }}"
                        href="{{ url_for('email.view_message', account_id=(m.account_id or active_account_id), uid=m.uid) }}{{ view_msg_group_q|default('') }}">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div class="fdc-mail-sub text-truncate mr-2">{{ m.subject }}</div>
+                            <div class="fdc-mail-sub text-truncate mr-2">
+                                {% if (mail_group or '') == 'burlington' and (bt_mode or 'route') == 'route' %}
+                                    {{ m.burlington_route_id or m.subject }}
+                                {% elif (mail_group or '') == 'burlington' and (bt_mode or 'route') == 'pickup' %}
+                                    {{ m.burlington_pickup_title or m.subject }}
+                                {% else %}
+                                    {{ m.subject }}
+                                {% endif %}
+                            </div>
                             <span class="d-flex align-items-center flex-shrink-0">
                                 {% if m.has_attachments %}
                                     <i class="fas fa-paperclip fdc-mail-clip mr-2" title="Has attachments"></i>
@@ -316,8 +425,20 @@
                                 {% endif %}
                             </span>
                         </div>
-                        {% if (search_scope or 'current') == 'all' or (mail_group and mail_group != 'container') %}
+                        {% if ((search_scope or 'current') == 'all' or (mail_group and mail_group != 'container'))
+                              and not ((mail_group or '') == 'burlington' and (bt_mode or 'route') in ['route', 'pickup']) %}
                             <div class="mb-1"><span class="fdc-mail-acct-chip">{{ m.account_labels_display or m.account_label or m.account_email }}</span></div>
+                        {% endif %}
+                        {% if (mail_group or '') == 'burlington' and (bt_mode or 'route') == 'route' %}
+                        <div class="mb-1">
+                            {% if m.burlington_po_list %}
+                                {% for po in m.burlington_po_list %}
+                                    <span class="fdc-mail-acct-chip mr-1">{{ po }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="small text-muted">No PO found in body.</span>
+                            {% endif %}
+                        </div>
                         {% endif %}
                         {% if mail_group == 'container' %}
                         <div class="card fdc-container-card mt-1 mb-1 shadow-none">
@@ -338,12 +459,23 @@
                             </div>
                         </div>
                         {% endif %}
+                        {% if not ((mail_group or '') == 'burlington' and (bt_mode or 'route') == 'route') %}
                         <div class="fdc-mail-from text-truncate">{{ m.from_addr }}</div>
-                        <div class="small text-muted mt-1">
-                            {% if m.internal_date %}
-                                {{ m.internal_date.strftime('%Y-%m-%d %H:%M') }}
-                            {% elif m.header_date %}
-                                {{ m.header_date.strftime('%Y-%m-%d %H:%M') }}
+                        {% endif %}
+                        <div class="small text-muted mt-1 d-flex justify-content-between align-items-center">
+                            <span>
+                                {% if m.internal_date %}
+                                    {{ m.internal_date.strftime('%Y-%m-%d %H:%M') }}
+                                {% elif m.header_date %}
+                                    {{ m.header_date.strftime('%Y-%m-%d %H:%M') }}
+                                {% endif %}
+                            </span>
+                            {% if (mail_group or '') == 'burlington' and (bt_mode or 'route') == 'route' and (m.burlington_ship_start or m.burlington_ship_cancel) %}
+                            <span class="ml-2 text-nowrap">
+                                {% if m.burlington_ship_start %}{{ m.burlington_ship_start }}{% endif %}
+                                {% if m.burlington_ship_start and m.burlington_ship_cancel %} - {% endif %}
+                                {% if m.burlington_ship_cancel %}{{ m.burlington_ship_cancel }}{% endif %}
+                            </span>
                             {% endif %}
                         </div>
                     </a>
@@ -423,8 +555,28 @@
                             </div>
                         </div>
                     {% endif %}
-                    <iframe sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
-                            srcdoc="{{ preview_html | e }}"></iframe>
+                    {% if (mail_group or '') == 'burlington' and (bt_mode or 'route') == 'pickup' and sent_reply_preview %}
+                        <div class="fdc-preview-split">
+                            <div class="fdc-preview-pane">
+                                <div class="small text-muted mb-1"><strong>Received</strong></div>
+                                <iframe sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                                        srcdoc="{{ preview_html | e }}"></iframe>
+                            </div>
+                            <div class="fdc-preview-pane">
+                                <div class="small text-muted mb-1">
+                                    <strong>Sent reply</strong>
+                                    {% if sent_reply_preview.meta and sent_reply_preview.meta.date %}
+                                        · {{ sent_reply_preview.meta.date }}
+                                    {% endif %}
+                                </div>
+                                <iframe sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                                        srcdoc="{{ sent_reply_preview.html | e }}"></iframe>
+                            </div>
+                        </div>
+                    {% else %}
+                        <iframe sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                                srcdoc="{{ preview_html | e }}"></iframe>
+                    {% endif %}
                 {% else %}
                     <div class="text-muted">Select a message to preview sanitized HTML.</div>
                 {% endif %}
@@ -448,6 +600,7 @@
     var sidebarPollQuery = root.getAttribute('data-sidebar-poll-query') || '';
     var viewMsgQ = root.getAttribute('data-view-msg-q') || '';
     var mailGroup = root.getAttribute('data-mail-group') || '';
+    var btMode = root.getAttribute('data-bt-mode') || 'route';
     var searchScope = root.getAttribute('data-search-scope') || 'current';
     var selectedUid = root.getAttribute('data-selected-uid') || '';
 
@@ -460,6 +613,43 @@
             banner.hidden = true;
         });
     }
+
+    document.addEventListener('click', function (ev) {
+        var el = ev.target.closest('.js-boat-date-edit');
+        if (!el) return;
+        ev.preventDefault();
+        var currentVal = (el.getAttribute('data-date') || '').trim();
+        if (!currentVal) return;
+        var nextVal = window.prompt('Edit date (MM/DD)', currentVal);
+        if (nextVal == null) return;
+        nextVal = String(nextVal).trim();
+        if (!nextVal || nextVal === currentVal) return;
+        if (!/^\d{1,2}\/\d{1,2}$/.test(nextVal)) {
+            window.alert('Use MM/DD format, e.g. 05/08.');
+            return;
+        }
+
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/email/' + encodeURIComponent(el.getAttribute('data-account-id') || '') + '/boat-date-override';
+        form.style.display = 'none';
+
+        function addHidden(name, value) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        }
+        addHidden('mail_group', 'container');
+        addHidden('container', el.getAttribute('data-container') || '');
+        addHidden('bol', el.getAttribute('data-bol') || '');
+        addHidden('manual_date', nextVal);
+        addHidden('return_suffix', el.getAttribute('data-return-suffix') || '');
+
+        document.body.appendChild(form);
+        form.submit();
+    });
 
     function escapeHtml(s) {
         return String(s == null ? '' : s)
@@ -503,7 +693,9 @@
             return;
         }
         var html = '';
-        var showAcctChip = searchScope === 'all' || (mailGroup && mailGroup !== 'container');
+        var isBurlingtonRoute = mailGroup === 'burlington' && btMode === 'route';
+        var isBurlingtonPickup = mailGroup === 'burlington' && btMode === 'pickup';
+        var showAcctChip = (searchScope === 'all' || (mailGroup && mailGroup !== 'container')) && !isBurlingtonRoute && !isBurlingtonPickup;
         var i;
         for (i = 0; i < messages.length; i++) {
             var m = messages[i];
@@ -521,7 +713,14 @@
                 ? '<span class="badge badge-primary fdc-mail-badge-unread">Unread</span>'
                 : '';
             var dt = m.internal_date || m.header_date || '';
-            var subj = escapeHtml(m.subject || '');
+            var subj = escapeHtml(
+                isBurlingtonRoute
+                    ? (m.burlington_route_id || m.subject || '')
+                    : (isBurlingtonPickup
+                        ? (m.burlington_pickup_title || m.subject || '')
+                    : (m.subject || '')
+                    )
+            );
             var fromAddr = escapeHtml(m.from_addr || '');
             var labelChip = escapeHtml(m.account_labels_display || m.account_label || m.account_email || '');
             html +=
@@ -572,13 +771,33 @@
                     : '<span class="text-muted">—</span>';
                 html += '</div></div></div>';
             }
+            if (isBurlingtonRoute) {
+                var poList = Array.isArray(m.burlington_po_list) ? m.burlington_po_list : [];
+                var swStart = escapeHtml(m.burlington_ship_start || '');
+                var swCancel = escapeHtml(m.burlington_ship_cancel || '');
+                if (poList.length) {
+                    html += '<div class="mb-1">';
+                    var k;
+                    for (k = 0; k < poList.length; k++) {
+                        html += '<span class="fdc-mail-acct-chip mr-1">' + escapeHtml(poList[k]) + '</span>';
+                    }
+                    html += '</div>';
+                } else {
+                    html += '<div class="mb-1"><span class="small text-muted">No PO found in body.</span></div>';
+                }
+            } else {
+                html +=
+                    '<div class="fdc-mail-from text-truncate">' +
+                    fromAddr +
+                    '</div>';
+            }
             html +=
-                '<div class="fdc-mail-from text-truncate">' +
-                fromAddr +
-                '</div>' +
-                '<div class="small text-muted mt-1">' +
-                escapeHtml(dt) +
-                '</div></a>';
+                '<div class="small text-muted mt-1 d-flex justify-content-between align-items-center">' +
+                '<span>' + escapeHtml(dt) + '</span>';
+            if (isBurlingtonRoute && (swStart || swCancel)) {
+                html += '<span class="ml-2 text-nowrap">' + swStart + (swStart && swCancel ? ' - ' : '') + swCancel + '</span>';
+            }
+            html += '</div></a>';
         }
         listEl.innerHTML = html;
     }
