@@ -5,31 +5,329 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mail — Mailboxes</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <style>
-        body { padding-top: 76px; background: #f4f7fb; }
-        .fdc-mail-card { border-radius: 12px; border: 1px solid #e3e8ef; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06); }
-        .fdc-mail-meta { color: #64748b; font-size: 0.9rem; }
+        body { padding-top: 76px; margin: 0; }
+
+        .fdc-mail-dashboard-wrapper {
+            background: url("{{ url_for('static', filename='luca-bravo-zAjdgNXsMeg-unsplash.jpg') }}") no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: #e8f4fd;
+            min-height: calc(100vh - 76px);
+            padding-bottom: 2.5rem;
+        }
+
+        .fdc-mail-dashboard-wrapper * { box-sizing: border-box; }
+
+        .fdc-mail-page-title {
+            color: #fff;
+            font-size: 1.75rem;
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+            margin-bottom: 0.25rem;
+        }
+
+        .fdc-mail-meta {
+            color: rgba(232, 244, 253, 0.88);
+            font-size: 0.95rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+        }
+
+        .fdc-mail-tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-top: 0.75rem;
+        }
+
+        .fdc-mail-tool-card {
+            background: rgba(12, 18, 30, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.22);
+            border-radius: 18px;
+            padding: 1rem 1.35rem 1.35rem 1.35rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .fdc-mail-accounts-row {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            overflow-y: visible;
+            padding-bottom: 6px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .fdc-mail-accounts-row::-webkit-scrollbar { height: 6px; }
+        .fdc-mail-accounts-row::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.35);
+            border-radius: 6px;
+        }
+
+        .fdc-mail-account-cell {
+            flex: 1 1 0;
+            min-width: 220px;
+            max-width: 100%;
+            background: rgba(12, 18, 30, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.22);
+            border-radius: 18px;
+            border-left: 6px solid #00d4ff;
+            background: linear-gradient(135deg, rgba(10, 109, 143, 0.88) 0%, rgba(6, 64, 86, 0.9) 100%);
+            box-shadow: inset 0 0 28px rgba(0, 212, 255, 0.14), 0 8px 22px rgba(0, 0, 0, 0.28);
+            padding: 1rem 1.15rem 1.15rem 1.15rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .fdc-mail-account-cell-head {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .fdc-mail-account-cell-head i {
+            font-size: 1.35rem;
+            color: #7ddcff;
+        }
+
+        .fdc-mail-account-cell-head h3 {
+            color: #fff;
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.2;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+        }
+
+        .fdc-mail-account-email {
+            color: #eef3fb;
+            font-size: 0.8rem;
+            margin: 0 0 0.85rem 0;
+            line-height: 1.3;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+        }
+
+        .fdc-mail-account-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .fdc-mail-account-actions a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .fdc-mail-account-actions a:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .fdc-mail-btn-inbox {
+            background: linear-gradient(135deg, #00d4ff, #0891b2);
+            color: #0f172a !important;
+            box-shadow: 0 4px 14px rgba(0, 212, 255, 0.35);
+        }
+
+        .fdc-mail-btn-compose {
+            background: rgba(255, 255, 255, 0.12);
+            color: #e8f4fd !important;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .fdc-mail-tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00d4ff, #1cc88a, #36b9cc);
+            transform: scaleX(0);
+            transition: transform 0.2s ease;
+        }
+
+        a.fdc-mail-tool-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: rgba(0, 212, 255, 0.45);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.18);
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a.fdc-mail-tool-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .fdc-mail-tool-card-head {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .fdc-mail-tool-card-head.fdc-mail-tool-card-head-brand {
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.55rem 0.85rem;
+        }
+
+        .fdc-mail-brand-logo {
+            display: block;
+            max-height: 2.35rem;
+            max-width: min(168px, 100%);
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.94);
+            padding: 6px 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .fdc-mail-tool-card-head i {
+            font-size: 1.65rem;
+            background: linear-gradient(135deg, #ffffff, #e0f7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 1px 2px rgb(0, 0, 0));
+        }
+
+        .fdc-mail-tool-card-head h3 {
+            color: #fff;
+            margin: 0;
+            font-size: 1.12rem;
+            font-weight: 600;
+            line-height: 1.2;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75), 0 0 12px rgba(0, 0, 0, 0.45);
+        }
+
+        .fdc-mail-tool-card-desc,
+        .fdc-mail-tool-card-meta {
+            color: #eef3fb;
+            font-size: 0.88rem;
+            margin: 0;
+            line-height: 1.35;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65), 0 0 10px rgba(0, 0, 0, 0.35);
+        }
+
+        .fdc-mail-tool-card-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .fdc-mail-tool-card .fdc-tag {
+            background: rgba(0, 212, 255, 0.12);
+            color: #7ddcff;
+            padding: 4px 12px;
+            border-radius: 18px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .fdc-mail-tool-card[data-accent="lookup"] {
+            border-left: 6px solid #00d4ff;
+            background: linear-gradient(135deg, rgba(10, 109, 143, 0.88) 0%, rgba(6, 64, 86, 0.9) 100%);
+        }
+
+        .fdc-mail-tool-card[data-accent="orders"] {
+            border-left: 6px solid #f6c23e;
+            background: linear-gradient(135deg, rgba(138, 109, 31, 0.88) 0%, rgba(92, 71, 16, 0.9) 100%);
+        }
+
+        .fdc-mail-tool-card[data-accent="inventory"] {
+            border-left: 6px solid #1cc88a;
+            background: linear-gradient(135deg, rgba(20, 90, 70, 0.88) 0%, rgba(12, 60, 48, 0.9) 100%);
+        }
+
+        .fdc-mail-tool-card[data-accent="tools"] {
+            border-left: 6px solid #858796;
+            background: linear-gradient(135deg, rgba(60, 65, 78, 0.88) 0%, rgba(40, 44, 55, 0.9) 100%);
+        }
+
+        .fdc-mail-tool-card[data-accent="shipping"] {
+            border-left: 6px solid #4e73df;
+            background: linear-gradient(135deg, rgba(45, 70, 130, 0.88) 0%, rgba(30, 48, 95, 0.9) 100%);
+        }
+
+        .fdc-mail-dashboard-wrapper .alert {
+            background: rgba(12, 18, 30, 0.92);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            color: #e8f4fd;
+        }
+
+        .fdc-mail-dashboard-wrapper .alert-link {
+            color: #7ddcff;
+        }
+
+        .fdc-mail-section-label {
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin: 1.75rem 0 0.35rem 0;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+        }
+
+        .fdc-mail-header-bar .btn-outline-light {
+            border-color: rgba(255, 255, 255, 0.45);
+            color: #fff;
+        }
+
+        .fdc-mail-header-bar .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 {% include 'navbar.html' %}
+<div class="fdc-mail-dashboard-wrapper">
 <div class="container py-4">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-info">{{ message }}</div>
+                <div class="alert alert-info py-2">{{ message }}</div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3 fdc-mail-header-bar">
         <div>
-            <h3 class="mb-1">Mail</h3>
-            <div class="fdc-mail-meta">Pick a mailbox to open the inbox.</div>
+            <h1 class="fdc-mail-page-title mb-1">Mail</h1>
+            <div class="fdc-mail-meta">Pick a mailbox or open a combined Allmail view.</div>
         </div>
-        <div>
+        <div class="d-flex gap-2">
             {% if show_admin %}
-                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('email.manage_accounts') }}">Manage accounts</a>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('email.manage_accounts') }}">Manage accounts</a>
             {% endif %}
         </div>
     </div>
@@ -44,23 +342,121 @@
             {% endif %}
         </div>
     {% else %}
-        <div class="row">
+
+        <div class="fdc-mail-accounts-row" role="list">
             {% for a in accounts %}
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card fdc-mail-card h-100">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title mb-1">{{ a.label }}</h5>
-                            <div class="fdc-mail-meta mb-3">{{ a.email }}</div>
-                            <div class="mt-auto">
-                                <a class="btn btn-primary btn-sm" href="{{ url_for('email.inbox', account_id=a.id) }}">Open inbox</a>
-                                <a class="btn btn-outline-primary btn-sm" href="{{ url_for('email.send_mail', account_id=a.id) }}">Compose</a>
-                            </div>
-                        </div>
+            <div class="fdc-mail-account-cell" role="listitem">
+                <div>
+                    <div class="fdc-mail-account-cell-head">
+                        <i class="fas fa-inbox" aria-hidden="true"></i>
+                        <h3>{{ a.label }}</h3>
                     </div>
+                    <p class="fdc-mail-account-email text-truncate" title="{{ a.email }}">{{ a.email }}</p>
                 </div>
+                <div class="fdc-mail-account-actions">
+                    <a class="fdc-mail-btn-inbox" href="{{ url_for('email.inbox', account_id=a.id) }}">
+                        <i class="fas fa-envelope-open-text"></i> Inbox
+                    </a>
+                    <a class="fdc-mail-btn-compose" href="{{ url_for('email.send_mail', account_id=a.id) }}">
+                        <i class="fas fa-pen"></i> Compose
+                    </a>
+                </div>
+            </div>
             {% endfor %}
         </div>
+
+        {% if allmail_nav_account_id is not none %}
+        <h2 class="fdc-mail-section-label">Allmail group</h2>
+        <p class="fdc-mail-meta mb-0">Combined inboxes across accounts (same filters as the mail sidebar).</p>
+        <div class="fdc-mail-tool-grid">
+            <a class="fdc-mail-tool-card" data-accent="lookup"
+               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_container }}">
+                <div>
+                    <div class="fdc-mail-tool-card-head">
+                        <i class="fas fa-ship" aria-hidden="true"></i>
+                        <h3>Container</h3>
+                    </div>
+                    <p class="fdc-mail-tool-card-desc">FM / ClearPoint lane &amp; boat filters</p>
+                </div>
+                <div class="fdc-mail-tool-card-foot">
+                    <span class="fdc-tag">Allmail</span>
+                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
+                </div>
+            </a>
+            <a class="fdc-mail-tool-card" data-accent="orders"
+               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_burlington }}">
+                <div>
+                    <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
+                        <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/burlington.svg') }}" width="140" height="36" alt="">
+                        <h3>Burlington</h3>
+                    </div>
+                    <p class="fdc-mail-tool-card-desc">Route &amp; pickup modes</p>
+                </div>
+                <div class="fdc-mail-tool-card-foot">
+                    <span class="fdc-tag">Allmail</span>
+                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
+                </div>
+            </a>
+            <a class="fdc-mail-tool-card" href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_gabe }}">
+                <div>
+                    <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
+                        <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/gabes.png') }}" width="120" height="32" alt="">
+                        <h3>Gabe</h3>
+                    </div>
+                    <p class="fdc-mail-tool-card-desc">Subject match: gabe</p>
+                </div>
+                <div class="fdc-mail-tool-card-foot">
+                    <span class="fdc-tag">Allmail</span>
+                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
+                </div>
+            </a>
+            <a class="fdc-mail-tool-card" data-accent="inventory"
+               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_ross }}">
+                <div>
+                    <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
+                        <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/ross.svg') }}" width="120" height="36" alt="">
+                        <h3>Ross</h3>
+                    </div>
+                    <p class="fdc-mail-tool-card-desc">Subject match: ross</p>
+                </div>
+                <div class="fdc-mail-tool-card-foot">
+                    <span class="fdc-tag">Allmail</span>
+                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
+                </div>
+            </a>
+            <a class="fdc-mail-tool-card" data-accent="tools"
+               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_macy }}">
+                <div>
+                    <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
+                        <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/macys.svg') }}" width="100" height="36" alt="">
+                        <h3>Macy</h3>
+                    </div>
+                    <p class="fdc-mail-tool-card-desc">Subject match: macy</p>
+                </div>
+                <div class="fdc-mail-tool-card-foot">
+                    <span class="fdc-tag">Allmail</span>
+                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
+                </div>
+            </a>
+            <a class="fdc-mail-tool-card" data-accent="shipping"
+               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_tj }}">
+                <div>
+                    <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
+                        <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/tjmaxx.svg') }}" width="130" height="36" alt="">
+                        <h3>TJ</h3>
+                    </div>
+                    <p class="fdc-mail-tool-card-desc">Subject match: tj</p>
+                </div>
+                <div class="fdc-mail-tool-card-foot">
+                    <span class="fdc-tag">Allmail</span>
+                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
     {% endif %}
+</div>
 </div>
 </body>
 </html>

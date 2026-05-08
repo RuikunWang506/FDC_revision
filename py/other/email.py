@@ -2799,11 +2799,72 @@ def search_cached_messages(
 @login_required
 def mailboxes():
     rows = _fetch_accounts_public()
+    allmail_nav_account_id: Optional[int] = None
+    allmail_suffix_container = ""
+    allmail_suffix_burlington = ""
+    allmail_suffix_gabe = ""
+    allmail_suffix_ross = ""
+    allmail_suffix_macy = ""
+    allmail_suffix_tj = ""
+    if rows:
+        ids_in_list: List[int] = []
+        for r in rows:
+            try:
+                ids_in_list.append(int(r["id"]))
+            except (TypeError, ValueError, KeyError):
+                continue
+        if ids_in_list:
+            # Prefer id 2 when present (common "main" mailbox URL like /email/2/inbox).
+            allmail_nav_account_id = 2 if 2 in ids_in_list else ids_in_list[0]
+        if allmail_nav_account_id is not None:
+            allmail_suffix_container = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="container",
+            )
+            allmail_suffix_burlington = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="burlington",
+            )
+            allmail_suffix_gabe = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="gabe",
+            )
+            allmail_suffix_ross = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="ross",
+            )
+            allmail_suffix_macy = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="macy",
+            )
+            allmail_suffix_tj = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="tj",
+            )
     return render_template(
         "email/mailboxes.html",
         current_user=session["username"],
         accounts=rows,
         show_admin=_accounts_admin_required(),
+        allmail_nav_account_id=allmail_nav_account_id,
+        allmail_suffix_container=allmail_suffix_container,
+        allmail_suffix_burlington=allmail_suffix_burlington,
+        allmail_suffix_gabe=allmail_suffix_gabe,
+        allmail_suffix_ross=allmail_suffix_ross,
+        allmail_suffix_macy=allmail_suffix_macy,
+        allmail_suffix_tj=allmail_suffix_tj,
     )
 
 

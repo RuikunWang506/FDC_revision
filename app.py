@@ -32,6 +32,83 @@ def _load_nssm_env_file():
         pass
 
 
+def _windows_process_ancestor_exes(max_depth=10):
+    """Return normcased full paths of this process's ancestors (parent, grandparent, ...).
+
+    Used so NSSM is detected even when env vars are missing: the outer Python process
+    is a direct child of nssm.exe, and the Werkzeug reloader's inner child is parented
+    by another python.exe whose parent is still nssm.exe.
+    """
+    if os.name != "nt":
+        return []
+    try:
+        import ctypes
+        from ctypes import wintypes
+    except ImportError:
+        return []
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    class PROCESSENTRY32(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", wintypes.DWORD),
+            ("cntUsage", wintypes.DWORD),
+            ("th32ProcessID", wintypes.DWORD),
+            ("th32DefaultHeapID", ctypes.POINTER(ctypes.c_ulong)),
+            ("th32ModuleID", wintypes.DWORD),
+            ("cntThreads", wintypes.DWORD),
+            ("th32ParentProcessID", wintypes.DWORD),
+            ("pcPriClassBase", wintypes.LONG),
+            ("dwFlags", wintypes.DWORD),
+            ("szExeFile", ctypes.c_char * 260),
+        ]
+
+    TH32CS_SNAPPROCESS = 0x00000002
+    pid_to_parent = {}
+    snap = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    if snap == -1:
+        return []
+    try:
+        pe = PROCESSENTRY32()
+        pe.dwSize = ctypes.sizeof(PROCESSENTRY32)
+        if not kernel32.Process32First(snap, ctypes.byref(pe)):
+            return []
+        while True:
+            pid_to_parent[pe.th32ProcessID] = pe.th32ParentProcessID
+            if not kernel32.Process32Next(snap, ctypes.byref(pe)):
+                break
+    finally:
+        kernel32.CloseHandle(snap)
+
+    def _image_path(pid):
+        if pid <= 0:
+            return None
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not handle:
+            return None
+        try:
+            buf = ctypes.create_unicode_buffer(32768)
+            size = wintypes.DWORD(len(buf))
+            if kernel32.QueryFullProcessImageNameW(handle, 0, buf, ctypes.byref(size)):
+                return buf.value
+        finally:
+            kernel32.CloseHandle(handle)
+
+    out = []
+    cur = os.getpid()
+    for _ in range(max_depth):
+        parent = pid_to_parent.get(cur)
+        if parent is None or parent == cur:
+            break
+        path = _image_path(parent)
+        if not path:
+            break
+        out.append(os.path.normcase(path))
+        cur = parent
+    return out
+
+
 def _running_as_windows_service():
     """Best-effort detection for NSSM/Windows service context."""
     service_markers = (
@@ -42,7 +119,13 @@ def _running_as_windows_service():
     )
     if any(os.environ.get(name) for name in service_markers):
         return True
-    return str(os.environ.get("SESSIONNAME", "")).strip().lower() == "services"
+    if str(os.environ.get("SESSIONNAME", "")).strip().lower() == "services":
+        return True
+    service_parent_names = frozenset(("nssm.exe", "services.exe"))
+    for exe in _windows_process_ancestor_exes():
+        if os.path.basename(exe).lower() in service_parent_names:
+            return True
+    return False
 
 
 _load_nssm_env_file()
@@ -128,8 +211,19 @@ def zip_filter(a, b):
 app.jinja_env.filters['zip'] = zip_filter
 
 if __name__ == "__main__":
+    # Optional: set NSSM AppParameters to "... app.py --no-reloader" to force no reloader
+    # even if detection fails. Interactive dev: run without that flag (default debug on).
+    _explicit_no_reloader = "--no-reloader" in sys.argv
+    sys.argv = [a for a in sys.argv if a != "--no-reloader"]
+
+    _as_service = _running_as_windows_service()
+    if _as_service or _explicit_no_reloader:
+        # Override machine-wide FLASK_DEBUG for this process so the service never enables
+        # the Werkzeug reloader (including the inner reloader child).
+        os.environ["FLASK_DEBUG"] = "0"
+
     # Debug + auto-reload on code changes (dev). Default to off when started as a service.
-    _default_debug = "0" if _running_as_windows_service() else "1"
+    _default_debug = "0" if (_as_service or _explicit_no_reloader) else "1"
     _raw = str(os.environ.get("FLASK_DEBUG", _default_debug)).strip().lower()
     _dev_debug = _raw not in ("0", "false", "no", "")
 
