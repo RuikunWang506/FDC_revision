@@ -198,90 +198,400 @@ def update_email():
     
     return render_template("update_email.html")
 
+def _dashboard_tools_grouped(tools):
+    """Group dashboard tool dicts by category; order follows first appearance in tools."""
+    order = []
+    by_cat = {}
+    for t in tools:
+        c = (t.get("category") or "").strip() or "Other"
+        if c not in by_cat:
+            order.append(c)
+            by_cat[c] = []
+        by_cat[c].append(t)
+    return [(c, by_cat[c]) for c in order]
+
+
+def _sidebar_users_ordered(users_list):
+    """Sidebar nav: yeti first, then everyone else A→Z (case-insensitive)."""
+    yeti_rows = []
+    others = []
+    for u in users_list:
+        name = str((u or {}).get("username") or "").strip()
+        if name.lower() == "yeti":
+            yeti_rows.append(u)
+        else:
+            others.append(u)
+    others.sort(key=lambda x: str((x or {}).get("username") or "").lower())
+    return yeti_rows + others
+
+
+def _mail_accounts_for_permissions_ui():
+    """Mailboxes from MySQL for ACL checkboxes (same DB as users)."""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    cur = None
+    try:
+        cur = conn.cursor(dictionary=True)
+        cur.execute(
+            "SELECT id, label, email FROM mail_accounts ORDER BY label ASC, id ASC"
+        )
+        return list(cur.fetchall())
+    except Error:
+        return []
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        if conn.is_connected():
+            conn.close()
+
+
+def _cluster_users_by_group(users_sorted):
+    blocks = []
+    cur_key = None
+    for u in users_sorted:
+        gid = u.get("user_group_id")
+        gname = u.get("group_name") or "Unassigned"
+        gslug = u.get("group_slug") or ""
+        key = (gid, gname, gslug)
+        if key != cur_key:
+            cur_key = key
+            blocks.append(
+                {
+                    "group_id": gid,
+                    "group_name": gname,
+                    "group_slug": gslug,
+                    "users": [],
+                }
+            )
+        blocks[-1]["users"].append(u)
+    return blocks
+
+
+def _visitor_group_id(connection):
+    cur = connection.cursor(dictionary=True)
+    try:
+        cur.execute("SELECT id FROM user_groups WHERE slug = %s LIMIT 1", ("visitor",))
+        row = cur.fetchone()
+        return row["id"] if row else None
+    finally:
+        cur.close()
+
+
 @auth_bp.route("/manage_users", methods=["GET", "POST"])
 @login_required
 def manage_users():
-    # Block access if user is not yetimaster
-    if session['username'] != 'yeti':
+    if session["username"] != "yeti":
         flash("Access denied. Only yeti can manage users.")
         return redirect(url_for("home"))
-    
+
     connection = get_db_connection()
     if not connection:
         flash("Database connection error")
         return redirect(url_for("home"))
-    
-    if request.method == "POST":
-        # Handle adding a new user or updating email
-        if 'update_email' in request.form:
-            user_id = request.form.get("user_id")
-            new_email = request.form.get("new_email")
-            
-            if new_email and not re.match(r"[^@]+@[^@]+\.[^@]+", new_email):
-                flash("Please enter a valid email address")
-            else:
-                try:
-                    cursor = connection.cursor()
-                    cursor.execute("UPDATE users SET email = %s WHERE id = %s", (new_email, user_id))
-                    connection.commit()
-                    flash("Email updated successfully")
-                except Error as e:
-                    connection.rollback()
-                    flash(f"Error updating email: {e}")
-                finally:
-                    if 'cursor' in locals():
-                        cursor.close()
-        else:
-            # Handle adding a new user
-            username = request.form.get("username")
-            password = request.form.get("password")
-            email = request.form.get("email", "")  # Make email optional with default empty string
-            
-            # Validate input - only username and password are required
-            if not username or not password:
-                flash("Username and password are required")
-            elif email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-                flash("Please enter a valid email address if providing one")
-            else:
-                try:
-                    cursor = connection.cursor()
-                    
-                    # Check if username already exists
-                    cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
-                    if cursor.fetchone():
-                        flash("Username already exists")
-                    else:
-                        # Check if email already exists (only if email is provided)
-                        email_exists = False
-                        if email:
-                            cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
-                            if cursor.fetchone():
-                                flash("Email already exists")
-                                email_exists = True
-                        
-                        # Only proceed if email doesn't exist or is empty
-                        if not email_exists:
-                            # Add new user
-                            cursor.execute(
-                                "INSERT INTO users (username, password, email, created_at) VALUES (%s, %s, %s, NOW())",
-                                (username, password, email)
-                            )
-                            connection.commit()
-                            flash("User added successfully")
-                except Error as e:
-                    connection.rollback()
-                    flash(f"Error adding user: {e}")
-                finally:
-                    if 'cursor' in locals():
-                        cursor.close()
-    
+
+    list_cursor = None
     try:
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            "SELECT id, username, email, password, created_at, last_login_at "
-            "FROM users ORDER BY created_at DESC"
+        _ensure_user_groups_schema_once()
+        from py.utilities.user_groups import (
+            PROTECTED_DELETE_SLUGS,
+            backfill_null_user_groups,
+            fetch_groups_list,
+            group_member_counts,
+            parse_permissions_ui,
+            slugify,
         )
-        users = cursor.fetchall()
+
+        if request.method == "POST":
+            act = request.form.get("action") or ""
+
+            if act == "save_group_permissions":
+                try:
+                    gid_int = int(request.form.get("group_id") or 0)
+                except (TypeError, ValueError):
+                    flash("Invalid group.")
+                    return redirect(url_for("auth.manage_users"))
+                dashboard_restrict = request.form.get("dashboard_restrict") == "1"
+                mail_restrict = request.form.get("mail_restrict") == "1"
+                tools_sel = request.form.getlist("tools")
+                mail_sel = []
+                for x in request.form.getlist("mail_account_ids"):
+                    try:
+                        mail_sel.append(int(x))
+                    except (TypeError, ValueError):
+                        continue
+                cur = connection.cursor(dictionary=True)
+                try:
+                    cur.execute("SELECT slug FROM user_groups WHERE id = %s", (gid_int,))
+                    gr = cur.fetchone()
+                    if not gr:
+                        flash("Group not found.")
+                        return redirect(url_for("auth.manage_users"))
+                    base: dict = {}
+                    cur.execute(
+                        "SELECT permissions FROM user_groups WHERE id = %s", (gid_int,)
+                    )
+                    prow = cur.fetchone()
+                    rawp = prow.get("permissions") if prow else None
+                    if rawp:
+                        try:
+                            base = json.loads(rawp) if isinstance(rawp, str) else dict(rawp or {})
+                        except json.JSONDecodeError:
+                            base = {}
+                    if not isinstance(base, dict):
+                        base = {}
+                    if dashboard_restrict:
+                        base["tools"] = tools_sel
+                    else:
+                        base.pop("tools", None)
+                    if mail_restrict:
+                        base["mail_account_ids"] = mail_sel
+                    else:
+                        base.pop("mail_account_ids", None)
+                    cur2 = connection.cursor()
+                    cur2.execute(
+                        "UPDATE user_groups SET permissions = %s WHERE id = %s",
+                        (json.dumps(base), gid_int),
+                    )
+                    connection.commit()
+                    cur2.close()
+                    flash("Group permissions saved. All members of this group pick up changes immediately.")
+                except Error as e:
+                    connection.rollback()
+                    flash(f"Error saving group permissions: {e}")
+                finally:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+                return redirect(url_for("auth.manage_users"))
+
+            if act == "create_group":
+                name = (request.form.get("name") or "").strip()
+                slug_in = (request.form.get("slug") or "").strip()
+                slug = slugify(slug_in or name)
+                if not name:
+                    flash("Group name is required.")
+                    return redirect(url_for("auth.manage_users"))
+                try:
+                    cur = connection.cursor(dictionary=True)
+                    cur.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM user_groups")
+                    nxt = (cur.fetchone() or {}).get("n", 0)
+                    cur.close()
+                    cur2 = connection.cursor()
+                    cur2.execute(
+                        """
+                        INSERT INTO user_groups (name, slug, permissions, sort_order)
+                        VALUES (%s, %s, NULL, %s)
+                        """,
+                        (name, slug, int(nxt)),
+                    )
+                    connection.commit()
+                    cur2.close()
+                    flash(f'Created group "{name}".')
+                except Error as e:
+                    connection.rollback()
+                    flash(f"Could not create group (duplicate slug?): {e}")
+                return redirect(url_for("auth.manage_users"))
+
+            if act == "delete_group":
+                try:
+                    gid_int = int(request.form.get("group_id") or 0)
+                except (TypeError, ValueError):
+                    flash("Invalid group.")
+                    return redirect(url_for("auth.manage_users"))
+                cur = connection.cursor(dictionary=True)
+                try:
+                    cur.execute("SELECT slug FROM user_groups WHERE id = %s", (gid_int,))
+                    gr = cur.fetchone()
+                    if not gr:
+                        flash("Group not found.")
+                        return redirect(url_for("auth.manage_users"))
+                    slug = str(gr.get("slug") or "")
+                    if slug in PROTECTED_DELETE_SLUGS:
+                        flash("That group cannot be deleted.")
+                        return redirect(url_for("auth.manage_users"))
+                    cur.execute(
+                        "SELECT COUNT(*) AS c FROM users WHERE user_group_id = %s",
+                        (gid_int,),
+                    )
+                    cnt = (cur.fetchone() or {}).get("c", 0)
+                    if cnt:
+                        flash("Move or reassign all users out of this group before deleting it.")
+                        return redirect(url_for("auth.manage_users"))
+                    cur2 = connection.cursor()
+                    cur2.execute("DELETE FROM user_groups WHERE id = %s", (gid_int,))
+                    connection.commit()
+                    cur2.close()
+                    flash("Group deleted.")
+                except Error as e:
+                    connection.rollback()
+                    flash(f"Error deleting group: {e}")
+                finally:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+                return redirect(url_for("auth.manage_users"))
+
+            if act == "assign_user_group":
+                try:
+                    uid_int = int(request.form.get("user_id") or 0)
+                    gid_int = int(request.form.get("group_id") or 0)
+                except (TypeError, ValueError):
+                    flash("Invalid selection.")
+                    return redirect(url_for("auth.manage_users"))
+                cur = connection.cursor(dictionary=True)
+                try:
+                    cur.execute(
+                        "SELECT username FROM users WHERE id = %s",
+                        (uid_int,),
+                    )
+                    ur = cur.fetchone()
+                    cur.execute(
+                        "SELECT slug FROM user_groups WHERE id = %s",
+                        (gid_int,),
+                    )
+                    gr = cur.fetchone()
+                    if not ur or not gr:
+                        flash("User or group not found.")
+                        return redirect(url_for("auth.manage_users"))
+                    uname_l = str(ur.get("username") or "").strip().lower()
+                    gslug = str(gr.get("slug") or "").strip().lower()
+                    if gslug == "yeti" and uname_l != "yeti":
+                        flash('Only the "yeti" account may belong to the Yeti group.')
+                        return redirect(url_for("auth.manage_users"))
+                    if uname_l == "yeti" and gslug != "yeti":
+                        flash('User yeti must remain in the Yeti group.')
+                        return redirect(url_for("auth.manage_users"))
+                    cur2 = connection.cursor()
+                    cur2.execute(
+                        "UPDATE users SET user_group_id = %s WHERE id = %s",
+                        (gid_int, uid_int),
+                    )
+                    connection.commit()
+                    cur2.close()
+                    flash("User group updated.")
+                except Error as e:
+                    connection.rollback()
+                    flash(f"Error updating group: {e}")
+                finally:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+                return redirect(url_for("auth.manage_users"))
+
+            elif "update_email" in request.form:
+                user_id = request.form.get("user_id")
+                new_email = request.form.get("new_email")
+
+                if new_email and not re.match(r"[^@]+@[^@]+\.[^@]+", new_email):
+                    flash("Please enter a valid email address")
+                else:
+                    try:
+                        cursor = connection.cursor()
+                        cursor.execute("UPDATE users SET email = %s WHERE id = %s", (new_email, user_id))
+                        connection.commit()
+                        flash("Email updated successfully")
+                    except Error as e:
+                        connection.rollback()
+                        flash(f"Error updating email: {e}")
+                    finally:
+                        if "cursor" in locals():
+                            cursor.close()
+            else:
+                username = request.form.get("username")
+                password = request.form.get("password")
+                email = request.form.get("email", "")
+                try:
+                    new_gid = int(request.form.get("user_group_id") or 0)
+                except (TypeError, ValueError):
+                    new_gid = 0
+
+                if not username or not password:
+                    flash("Username and password are required")
+                elif email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                    flash("Please enter a valid email address if providing one")
+                else:
+                    gid_insert = None
+                    dc = connection.cursor(dictionary=True)
+                    try:
+                        if new_gid:
+                            dc.execute(
+                                "SELECT slug FROM user_groups WHERE id = %s",
+                                (new_gid,),
+                            )
+                            gs = dc.fetchone()
+                            if not gs:
+                                flash("Invalid group.")
+                            elif str(gs.get("slug") or "").lower() == "yeti":
+                                flash("New users cannot be added directly to the Yeti group.")
+                            else:
+                                gid_insert = new_gid
+                        else:
+                            gid_insert = _visitor_group_id(connection)
+                    finally:
+                        dc.close()
+
+                    if gid_insert is None:
+                        pass
+                    else:
+                        try:
+                            cursor = connection.cursor()
+                            cursor.execute(
+                                "SELECT username FROM users WHERE username = %s",
+                                (username,),
+                            )
+                            if cursor.fetchone():
+                                flash("Username already exists")
+                            else:
+                                email_exists = False
+                                if email:
+                                    cursor.execute(
+                                        "SELECT email FROM users WHERE email = %s",
+                                        (email,),
+                                    )
+                                    if cursor.fetchone():
+                                        flash("Email already exists")
+                                        email_exists = True
+
+                                if not email_exists:
+                                    cursor.execute(
+                                        """
+                                        INSERT INTO users (username, password, email, created_at, user_group_id)
+                                        VALUES (%s, %s, %s, NOW(), %s)
+                                        """,
+                                        (username, password, email, gid_insert),
+                                    )
+                                    connection.commit()
+                                    flash("User added successfully")
+                        except Error as e:
+                            connection.rollback()
+                            flash(f"Error adding user: {e}")
+                        finally:
+                            if "cursor" in locals():
+                                cursor.close()
+
+        from py.utilities.dashboard_permissions import DASHBOARD_TOOLS
+
+        backfill_null_user_groups(connection)
+
+        list_cursor = connection.cursor(dictionary=True)
+        list_cursor.execute(
+            """
+            SELECT u.id, u.username, u.email, u.password, u.created_at, u.last_login_at,
+                   u.user_group_id,
+                   ug.name AS group_name, ug.slug AS group_slug, ug.sort_order AS group_sort
+            FROM users u
+            LEFT JOIN user_groups ug ON u.user_group_id = ug.id
+            ORDER BY COALESCE(ug.sort_order, 999) ASC, ug.name ASC, u.username ASC
+            """
+        )
+        users = list_cursor.fetchall()
         for u in users:
             ts = u.get("last_login_at")
             if ts is None:
@@ -290,13 +600,54 @@ def manage_users():
                 u["last_login_display"] = ts.strftime("%Y-%m-%d %H:%M")
             else:
                 u["last_login_display"] = str(ts)
-        return render_template("manage_users.html", users=users, current_user=session['username'])
+
+        groups_raw = fetch_groups_list(connection)
+        counts = group_member_counts(connection)
+        groups_ui = []
+        for g in groups_raw:
+            ui = parse_permissions_ui(g.get("permissions"))
+            groups_ui.append(
+                {
+                    "id": g["id"],
+                    "name": g["name"],
+                    "slug": g["slug"],
+                    "sort_order": g.get("sort_order", 0),
+                    "dashboard_restrict": ui["dashboard_restrict"],
+                    "mail_restrict": ui["mail_restrict"],
+                    "tools_sel": ui["tools_sel"],
+                    "mail_sel": ui["mail_sel"],
+                    "member_count": counts.get(g["id"], 0),
+                }
+            )
+
+        users_by_group = _cluster_users_by_group(users)
+        mail_accounts = _mail_accounts_for_permissions_ui()
+        dashboard_tools_grouped = _dashboard_tools_grouped(DASHBOARD_TOOLS)
+        sidebar_users = _sidebar_users_ordered(users)
+        all_groups_select = fetch_groups_list(connection)
+        default_visitor_id = _visitor_group_id(connection)
+
+        return render_template(
+            "manage_users.html",
+            users=users,
+            users_by_group=users_by_group,
+            groups_ui=groups_ui,
+            all_groups_select=all_groups_select,
+            default_visitor_id=default_visitor_id,
+            sidebar_users=sidebar_users,
+            current_user=session["username"],
+            dashboard_tools_grouped=dashboard_tools_grouped,
+            mail_accounts=mail_accounts,
+        )
     except Error as e:
         flash(f"Error fetching users: {e}")
         return redirect(url_for("home"))
     finally:
-        if 'cursor' in locals():
-            cursor.close()
+        if list_cursor is not None:
+            try:
+                list_cursor.close()
+            except Exception:
+                pass
         if connection and connection.is_connected():
             connection.close()
 
@@ -554,36 +905,81 @@ def check_credentials(username, password):
             if connection and connection.is_connected():
                 connection.close()
     return False
+
+
+_USER_GROUPS_SCHEMA_INITIALIZED = False
+
+
+def _ensure_user_groups_schema_once() -> None:
+    """Create user_groups / user_group_id once per process; seed defaults if empty."""
+    global _USER_GROUPS_SCHEMA_INITIALIZED
+    if _USER_GROUPS_SCHEMA_INITIALIZED:
+        return
+    connection = get_db_connection()
+    if not connection:
+        return
+    try:
+        from py.utilities.user_groups import (
+            ensure_user_groups_schema,
+            seed_user_groups_if_empty,
+            backfill_null_user_groups,
+        )
+
+        ensure_user_groups_schema(connection)
+        seed_user_groups_if_empty(connection)
+        backfill_null_user_groups(connection)
+        _USER_GROUPS_SCHEMA_INITIALIZED = True
+    except Exception as e:
+        print(f"user_groups schema init: {e}")
+    finally:
+        if connection.is_connected():
+            connection.close()
+
+
 def get_user_permissions(username):
+    """Effective ACL JSON from the user's group (not per-user column). yeti = unrestricted."""
+    uname = (username or "").strip()
+    if uname.lower() == "yeti":
+        return {}
+    _ensure_user_groups_schema_once()
     connection = get_db_connection()
     if connection:
         try:
-            cursor = connection.cursor(dictionary=True)  # Use dictionary cursor
+            cursor = connection.cursor(dictionary=True)
             cursor.execute(
-                "SELECT permissions FROM users WHERE username = %s", (username,)
+                """
+                SELECT ug.permissions AS group_permissions
+                FROM users u
+                LEFT JOIN user_groups ug ON u.user_group_id = ug.id
+                WHERE u.username = %s
+                """,
+                (uname,),
             )
             user_data = cursor.fetchone()
-            if user_data:
-                permissions_json = user_data.get('permissions')
-                if permissions_json:
-                    try:
-                        return json.loads(permissions_json)
-                    except json.JSONDecodeError:
-                        print(f"Invalid JSON for user permissions: {username}")
-                        return {}
-                else:  # Handle NULL permissions
-                    return {}
-            else: # User not found
+            if not user_data:
+                return {}
+            permissions_json = user_data.get("group_permissions")
+            if permissions_json is None:
+                return {}
+            try:
+                parsed = (
+                    json.loads(permissions_json)
+                    if isinstance(permissions_json, str)
+                    else dict(permissions_json or {})
+                )
+                return parsed if isinstance(parsed, dict) else {}
+            except json.JSONDecodeError:
+                print(f"Invalid JSON for group permissions: {username}")
                 return {}
         except Error as e:
             print(f"Error fetching user permissions: {e}")
             return {}
         finally:
-            if 'cursor' in locals():
+            if "cursor" in locals():
                 cursor.close()
-            if connection and connection.is_connected():
+            if connection.is_connected():
                 connection.close()
-    return {} # Return empty dict if any issues
+    return {}
 
 def log_user_activity(username):
     client_ip   = request.headers.get('X-Forwarded-For', request.remote_addr)

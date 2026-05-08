@@ -11,9 +11,11 @@ import zipfile
 import threading
 import uuid
 import hashlib
-from datetime import datetime
+import glob
+from datetime import datetime, timedelta
 from urllib.parse import quote
 from sqlalchemy.exc import IntegrityError
+from typing import Any, Dict, Optional
 
 master_image_viewer_bp = Blueprint('master_image_viewer', __name__)
 
@@ -86,6 +88,102 @@ def _load_latest_batch_snapshot():
     except Exception as e:
         log_event('error', f"Failed to load latest batch task snapshot: {str(e)}")
         return None
+
+
+def _parse_batch_iso_datetime(raw: Optional[str]) -> Optional[datetime]:
+    s = (raw or "").strip()
+    if not s:
+        return None
+    if s.endswith("Z"):
+        s = s[:-1]
+    try:
+        return datetime.fromisoformat(s)
+    except ValueError:
+        return None
+
+
+def _batch_snapshot_newest_ts(
+    payload: Dict[str, Any], file_mtime_fallback: Optional[datetime]
+) -> Optional[datetime]:
+    best: Optional[datetime] = None
+    for key in ("finished_at", "updated_at", "saved_at", "started_at"):
+        dt = _parse_batch_iso_datetime(str(payload.get(key) or ""))
+        if dt is not None and (best is None or dt > best):
+            best = dt
+    if best is not None:
+        return best
+    return file_mtime_fallback
+
+
+def _list_batch_fetch_history(*, days: int) -> list:
+    """Running + finished batch jobs from disk snapshots (recent) merged with in-memory tasks."""
+    cutoff = datetime.utcnow() - timedelta(days=max(1, min(int(days), 90)))
+    by_id: Dict[str, Dict[str, Any]] = {}
+    pattern = os.path.join(BATCH_TASK_LOG_DIR, "batch_task_*.json")
+    for path in glob.glob(pattern):
+        try:
+            mtime = datetime.utcfromtimestamp(os.path.getmtime(path))
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError, TypeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        tid = str(data.get("task_id") or "").strip()
+        if not tid:
+            base = os.path.basename(path)
+            if base.startswith("batch_task_") and base.endswith(".json"):
+                tid = base[len("batch_task_") : -len(".json")]
+        if not tid:
+            continue
+        newest = _batch_snapshot_newest_ts(data, mtime)
+        if newest is None or newest < cutoff:
+            continue
+        by_id[tid] = copy.deepcopy(data)
+
+    with batch_tasks_lock:
+        mem_items = [(str(tid), copy.deepcopy(task)) for tid, task in batch_tasks.items()]
+    for tid, task in mem_items:
+        newest = _batch_snapshot_newest_ts(task, None)
+        if newest is None:
+            newest = datetime.utcnow()
+        running_like = _batch_top_status_running_like(str(task.get("status") or ""))
+        if running_like or newest >= cutoff:
+            by_id[tid] = task
+
+    decorated: list = []
+    for tid, full in by_id.items():
+        full = copy.deepcopy(full)
+        full["task_id"] = tid
+        _annotate_batch_runtime_flags(tid, full)
+        summ = full.get("summary") or {}
+        newest_sort = _batch_snapshot_newest_ts(full, None) or datetime.min
+        decorated.append(
+            (
+                newest_sort,
+                {
+                    "task_id": tid,
+                    "status": full.get("status"),
+                    "is_running": full.get("is_running"),
+                    "interrupted": full.get("interrupted"),
+                    "worker_alive": full.get("worker_alive"),
+                    "started_at": full.get("started_at"),
+                    "finished_at": full.get("finished_at"),
+                    "updated_at": full.get("updated_at"),
+                    "total": full.get("total"),
+                    "completed": full.get("completed"),
+                    "summary": {
+                        "synced": summ.get("synced"),
+                        "failed": summ.get("failed"),
+                        "already_synced": summ.get("already_synced"),
+                    },
+                    "error": ((full.get("error") or "")[:500] if full.get("status") == "error" else None),
+                },
+            )
+        )
+    decorated.sort(key=lambda x: x[0], reverse=True)
+    return [row for _, row in decorated]
+
 
 def find_images_by_sku(sku):
     """Find all images related to a SKU using the DAM system, filesystem, and remote China FTP"""
@@ -687,6 +785,96 @@ batch_tasks = {}
 batch_tasks_lock = threading.Lock()
 
 
+def _normalized_batch_sku_list(skus) -> list:
+    """Uppercase non-empty SKUs in order (for persistence + rerun)."""
+    out: list = []
+    for s in skus or []:
+        u = str(s).strip().upper()
+        if u:
+            out.append(u)
+    return out
+
+
+def _slack_notify_batch_china_completed(
+    *,
+    task_id: str,
+    username: Optional[str],
+    tk_user: bool,
+    task_dict: Dict[str, Any],
+    app,
+) -> None:
+    """Same Slack destination as V7 List Creator (#v7-list_creator_bot webhook)."""
+    try:
+        from flask import url_for
+        from py.utilities.slack_notify import notify_v7_list_creator_optional, public_origin
+
+        summ = task_dict.get("summary") or {}
+        synced = int(summ.get("synced") or 0)
+        failed = int(summ.get("failed") or 0)
+        already = int(summ.get("already_synced") or 0)
+        who = (username or "").strip() or ("TK_USER" if tk_user else "unknown")
+        style_list = _normalized_batch_sku_list(task_dict.get("skus"))
+        if not style_list:
+            raw_results = task_dict.get("results") or []
+            style_list = _normalized_batch_sku_list(
+                [r.get("sku") for r in raw_results if isinstance(r, dict)]
+            )
+        n_styles = len(style_list) if style_list else int(task_dict.get("total") or 0)
+        slack_styles_max = 3400
+        styles_display = ", ".join(style_list) if style_list else "(none recorded)"
+        if len(styles_display) > slack_styles_max:
+            styles_display = styles_display[: slack_styles_max - 20] + "\n… (truncated)"
+        chunks = [
+            "[Master Image Viewer] China batch FTP fetch completed",
+            f"User: {who}",
+            f"Task id: {task_id}",
+            f"Styles ({n_styles}): {styles_display}",
+            f"Summary — synced: {synced}, failed: {failed}, already synced: {already}",
+        ]
+        with app.app_context():
+            origin = public_origin()
+            try:
+                open_path = url_for("master_image_viewer.master_image_viewer")
+                if origin and open_path:
+                    chunks.append(f"Open: {origin.rstrip('/')}{open_path}")
+            except Exception:
+                pass
+            notify_v7_list_creator_optional("\n".join(chunks) + "\n")
+    except Exception as exc:
+        log_event("warning", f"Slack batch-complete notify skipped: {exc}")
+
+
+def _batch_top_status_running_like(status: Optional[str]) -> bool:
+    """True if persisted status looks like an in-flight batch (worker may or may not still exist)."""
+    s = (status or "").strip().lower()
+    return s in ("running", "fetching", "syncing")
+
+
+def _annotate_batch_runtime_flags(task_id: str, payload: Dict[str, Any]) -> None:
+    """
+    Set is_running / interrupted / worker_alive so the UI can tell:
+    - live worker vs stale snapshot (e.g. after app restart)
+    - completed / error terminal states
+    """
+    if not isinstance(payload, dict):
+        return
+    tid = (task_id or str(payload.get("task_id") or "")).strip()
+    st = payload.get("status")
+    running_like = _batch_top_status_running_like(str(st) if st is not None else "")
+    with batch_tasks_lock:
+        in_memory = bool(tid and tid in batch_tasks)
+    payload["worker_alive"] = bool(in_memory and running_like)
+    if running_like and not in_memory:
+        payload["interrupted"] = True
+        payload["is_running"] = False
+    elif running_like and in_memory:
+        payload["interrupted"] = False
+        payload["is_running"] = True
+    else:
+        payload["interrupted"] = False
+        payload["is_running"] = False
+
+
 def _persist_batch_task_by_id(task_id):
     with batch_tasks_lock:
         task_snapshot = copy.deepcopy(batch_tasks.get(task_id))
@@ -702,14 +890,15 @@ def _sort_task_candidates(candidates):
     return sorted(candidates, key=sort_key, reverse=True)
 
 
-def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False):
+def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False, app_obj=None):
     """Background task to fetch and sync China FTP images for multiple SKUs."""
+    sku_list = _normalized_batch_sku_list(skus)
     try:
         started_at = _utc_now_iso()
         with batch_tasks_lock:
             batch_tasks[task_id] = {
                 'status': 'running',
-                'total': len(skus),
+                'total': len(sku_list),
                 'completed': 0,
                 'results': [],
                 'error': None,
@@ -720,6 +909,7 @@ def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False
                 'started_at': started_at,
                 'updated_at': started_at,
                 'finished_at': None,
+                'skus': list(sku_list),
                 'summary': {
                     'synced': 0,
                     'failed': 0,
@@ -728,7 +918,7 @@ def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False
             }
         _persist_batch_task_by_id(task_id)
 
-        for idx, sku in enumerate(skus, start=1):
+        for idx, sku in enumerate(sku_list, start=1):
             sku_upper = str(sku).strip().upper()
 
             with batch_tasks_lock:
@@ -861,19 +1051,32 @@ def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False
             batch_tasks[task_id]['updated_at'] = _utc_now_iso()
         _persist_batch_task_by_id(task_id)
 
+        snap_for_slack: Optional[Dict[str, Any]] = None
+        with batch_tasks_lock:
+            snap_for_slack = copy.deepcopy(batch_tasks.get(task_id))
+        if app_obj and snap_for_slack:
+            _slack_notify_batch_china_completed(
+                task_id=task_id,
+                username=username,
+                tk_user=tk_user,
+                task_dict=snap_for_slack,
+                app=app_obj,
+            )
+
         if username:
-            log_event('info', f"***{username.upper()}***__@@@completed batch China FTP fetch@@@__ task:{task_id} styles:{len(skus)}")
+            log_event('info', f"***{username.upper()}***__@@@completed batch China FTP fetch@@@__ task:{task_id} styles:{len(sku_list)}")
         elif tk_user:
-            log_event('info', f"***TK_USER***__@@@completed batch China FTP fetch@@@__ task:{task_id} styles:{len(skus)}")
+            log_event('info', f"***TK_USER***__@@@completed batch China FTP fetch@@@__ task:{task_id} styles:{len(sku_list)}")
     except Exception as e:
         with batch_tasks_lock:
             if task_id not in batch_tasks:
                 batch_tasks[task_id] = {
                     'status': 'error',
-                    'total': len(skus),
+                    'total': len(sku_list),
                     'completed': 0,
                     'results': [],
                     'error': str(e),
+                    'skus': list(sku_list),
                     'started_at': _utc_now_iso(),
                     'updated_at': _utc_now_iso(),
                     'finished_at': _utc_now_iso()
@@ -883,6 +1086,7 @@ def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False
                 batch_tasks[task_id]['error'] = str(e)
                 batch_tasks[task_id]['finished_at'] = _utc_now_iso()
                 batch_tasks[task_id]['updated_at'] = _utc_now_iso()
+                batch_tasks[task_id].setdefault('skus', list(sku_list))
         _persist_batch_task_by_id(task_id)
         log_event('error', f"Batch China FTP fetch failed for task {task_id}: {str(e)}")
 
@@ -899,10 +1103,11 @@ def batch_fetch_china_ftp():
     username = session.get('username')
     tk_user = session.get('tk_user', False)
     task_id = str(uuid.uuid4())[:8]
+    app_obj = current_app._get_current_object()
 
     thread = threading.Thread(
         target=background_batch_china_ftp_fetch,
-        args=(task_id, skus, username, tk_user)
+        args=(task_id, skus, username, tk_user, app_obj)
     )
     thread.daemon = True
     thread.start()
@@ -928,6 +1133,7 @@ def batch_fetch_status():
         return jsonify({'error': 'Task not found'}), 404
 
     status['task_id'] = task_id
+    _annotate_batch_runtime_flags(task_id, status)
     return jsonify(status)
 
 
@@ -945,21 +1151,42 @@ def batch_fetch_latest():
     if running_candidates:
         latest_id, latest_task = _sort_task_candidates(running_candidates)[0]
         latest_task['task_id'] = latest_id
-        latest_task['is_running'] = True
+        _annotate_batch_runtime_flags(latest_id, latest_task)
         return jsonify(latest_task)
 
     if task_items:
         latest_id, latest_task = _sort_task_candidates(task_items)[0]
         latest_task['task_id'] = latest_id
-        latest_task['is_running'] = latest_task.get('status') in ('running', 'fetching', 'syncing')
+        _annotate_batch_runtime_flags(latest_id, latest_task)
         return jsonify(latest_task)
 
     latest_snapshot = _load_latest_batch_snapshot()
     if latest_snapshot:
-        latest_snapshot['is_running'] = latest_snapshot.get('status') in ('running', 'fetching', 'syncing')
+        snap_id = str(latest_snapshot.get('task_id') or '')
+        _annotate_batch_runtime_flags(snap_id, latest_snapshot)
         return jsonify(latest_snapshot)
 
-    return jsonify({'status': 'none', 'is_running': False})
+    return jsonify({'status': 'none', 'is_running': False, 'interrupted': False, 'worker_alive': False})
+
+
+@master_image_viewer_bp.route('/api/batch_fetch_history')
+def batch_fetch_history():
+    """List China batch FTP jobs from the last N days (disk + in-memory)."""
+    try:
+        days = int(request.args.get('days', 3))
+    except (TypeError, ValueError):
+        days = 3
+    days = max(1, min(days, 90))
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    tasks = _list_batch_fetch_history(days=days)
+    return jsonify(
+        {
+            "ok": True,
+            "days": days,
+            "cutoff_utc": cutoff.isoformat() + "Z",
+            "tasks": tasks,
+        }
+    )
 
 
 @master_image_viewer_bp.route('/api/delete_images', methods=['POST'])

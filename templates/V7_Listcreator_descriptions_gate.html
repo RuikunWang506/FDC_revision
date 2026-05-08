@@ -31,11 +31,13 @@
 <div class="container py-4">
     <div class="lc-hero">
         <h1>Descriptions first</h1>
-        <p>This list is processed in two steps so the page stays fast: confirm the <strong>snapshot name</strong> (shown in Pacific Time), assign a description for each style, then <strong>Update and build full list</strong>. The HTML snapshot is assembled on the server; you’ll get a link when it’s ready.</p>
+        <p>This list is processed in two steps so the page stays fast: confirm the <strong>snapshot name</strong> (clock below uses <strong>your local time</strong>), assign a description for each style, then <strong>Update and build full list</strong>. The HTML snapshot is assembled on the server; you’ll get a link when it’s ready.</p>
     </div>
 
-    {% if snapshot_time_hint is defined and snapshot_time_hint %}
-    <p class="small text-muted mb-3 mb-md-4">Pacific (Los Angeles) reference: <strong>{{ snapshot_time_hint }}</strong></p>
+    {% if snapshot_time_hint_iso is defined and snapshot_time_hint_iso %}
+    <p class="small text-muted mb-3 mb-md-4">Reference time: <strong data-fdc-local-iso="{{ snapshot_time_hint_iso }}">{% if snapshot_time_hint is defined and snapshot_time_hint %}{{ snapshot_time_hint }}{% endif %}</strong> <span class="text-muted">(your browser’s local timezone)</span></p>
+    {% elif snapshot_time_hint is defined and snapshot_time_hint %}
+    <p class="small text-muted mb-3 mb-md-4"><strong>{{ snapshot_time_hint }}</strong></p>
     {% endif %}
 
     <div class="lc-card mb-4">
@@ -51,7 +53,7 @@
                        required
                        placeholder="e.g. Nordstrom preorder — Summer 2026"
                        value="{{ snapshot_name if snapshot_name is defined else '' }}">
-                <small class="form-text text-muted">Used for your saved HTML page label. Stored with timestamps in <strong>Pacific Time</strong> (America/Los_Angeles).</small>
+                <small class="form-text text-muted">Used for your saved HTML page label. Timestamps are stored on the server in <strong>Pacific (Los Angeles)</strong> and shown here in your local time.</small>
             </div>
 
             <div class="alert alert-info py-2 small mb-4">
@@ -119,5 +121,19 @@
         <a href="{{ url_for('v7_listcreator.index') }}">Back to List Creator</a>
     </p>
 </div>
+<script>
+(function() {
+    function fmt(iso) {
+        if (!iso) return '';
+        var d = new Date(String(iso).trim());
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+    document.querySelectorAll('[data-fdc-local-iso]').forEach(function(el) {
+        var s = fmt(el.getAttribute('data-fdc-local-iso'));
+        if (s) el.textContent = s;
+    });
+})();
+</script>
 </body>
 </html>

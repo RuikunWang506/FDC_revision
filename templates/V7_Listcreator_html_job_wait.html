@@ -38,7 +38,8 @@
         </h1>
         <p class="meta mb-0" id="jobSubline">
             {% if job and (job.created_at_pt_display or job.created_at) %}
-                Started (Pacific): {{ job.created_at_pt_display or job.created_at }}
+                Started: <span id="jobStartedLocal" data-fdc-local-iso="{{ job.created_at or '' }}">{{ job.created_at_pt_display or job.created_at }}</span>
+                <span class="opacity-80" style="font-size:0.92em"> (your local time)</span>
             {% else %}
                 Large lists render on the server so your browser does not time out.
             {% endif %}
@@ -71,7 +72,19 @@
 <script>
 (function() {
     var rid = {{ rid|tojson }};
-    var pollUrl = {{ url_for('v7_listcreator.html_job_status', rid=rid)|tojson }};
+    var pollUrl = {{ job_poll_url|tojson }};
+
+    function fmtLocal(iso) {
+        if (!iso) return '';
+        var d = new Date(String(iso).trim());
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+    var jst0 = document.getElementById('jobStartedLocal');
+    if (jst0) {
+        var s0 = fmtLocal(jst0.getAttribute('data-fdc-local-iso'));
+        if (s0) jst0.textContent = s0;
+    }
 
     function poll() {
         fetch(pollUrl, { credentials: 'same-origin' })
@@ -84,10 +97,11 @@
                 }
                 var snap = data.snapshot_name;
                 var hl = document.getElementById('jobHeadline');
-                var sub = document.getElementById('jobSubline');
+                var jst = document.getElementById('jobStartedLocal');
                 if (hl && snap) { hl.textContent = snap; }
-                if (sub && (data.created_at_pt_display || data.created_at)) {
-                    sub.textContent = 'Started (Pacific): ' + (data.created_at_pt_display || data.created_at);
+                if (jst && (data.created_at || data.created_at_pt_display)) {
+                    var show = fmtLocal(data.created_at) || (data.created_at_pt_display || data.created_at || '');
+                    jst.textContent = show;
                 }
 
                 var st = data.status;

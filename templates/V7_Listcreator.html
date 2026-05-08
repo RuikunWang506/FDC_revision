@@ -46,6 +46,115 @@
             padding: 1rem 1.15rem;
             margin-top: 1rem;
         }
+        .lc-jobs-panel {
+            border: 1px solid rgba(79, 70, 229, 0.18);
+            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+        }
+        .lc-jobs-panel .lc-jobs-head h6 {
+            font-size: 1rem;
+            letter-spacing: -0.02em;
+        }
+        .lc-jobs-list .lc-job-row {
+            list-style: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.65rem;
+            background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+        }
+        .lc-jobs-list .lc-job-row:last-child { margin-bottom: 0; }
+        .lc-job-headline-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.45rem 0.6rem;
+            line-height: 1.25;
+        }
+        .lc-job-headline-wrap .lc-job-title-line {
+            font-size: 1.0625rem;
+        }
+        .lc-job-headline-wrap .lc-job-title-line strong {
+            font-weight: 700;
+        }
+        .lc-job-subid {
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+        /* Match .lc-job-action-btn visual weight / height */
+        .lc-job-status-badge,
+        .lc-job-owner-badge.lc-job-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1.1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.2;
+            border-radius: 8px;
+        }
+        .lc-job-owner-badge {
+            font-weight: 600;
+            color: #3730a3 !important;
+            background: #eef2ff !important;
+            border: 1px solid #c7d2fe !important;
+            vertical-align: middle;
+        }
+        .lc-job-actions .btn,
+        .lc-job-actions a.btn { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+        .lc-job-actions .lc-job-action-btn {
+            padding: 0.5rem 1.15rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        .lc-job-times {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            margin-top: 0.65rem;
+            padding: 0.65rem 0.75rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #4f46e5;
+        }
+        .lc-job-time-row { line-height: 1.35; }
+        .lc-job-time-k {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            min-width: 4.5rem;
+        }
+        .lc-job-time-v {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .lc-job-time-queued .lc-job-time-v { color: #0f172a; }
+        .lc-job-time-rendered {
+            background: #fff;
+            border: 1px solid #a5b4fc;
+            border-radius: 8px;
+            padding: 0.45rem 0.55rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        .lc-job-time-rendered .lc-job-time-k { color: #4338ca; }
+        .lc-job-time-rendered .lc-job-time-v {
+            color: #312e81;
+            font-weight: 800;
+        }
+        .lc-job-elapsed {
+            font-size: 0.88rem;
+            color: #334155;
+            border-top: 1px dashed #cbd5e1;
+            margin-top: 0.1rem;
+            padding-top: 0.45rem;
+        }
+        .lc-job-elapsed strong { color: #0f172a; font-weight: 800; }
+        .lc-job-elapsed-running strong { color: #b45309; }
         .lc-label-muted { color: var(--lc-muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 0.35rem; }
         .lc-job-src-preview {
             max-height: 9rem;
@@ -77,6 +186,19 @@
             white-space: nowrap;
             word-break: normal;
             text-overflow: ellipsis;
+        }
+        .lc-job-times-preview-row {
+            margin-top: 0.65rem;
+        }
+        .lc-job-times-preview-row .lc-job-times-outer {
+            flex: 0 0 auto;
+        }
+        .lc-job-times-preview-row .lc-job-times {
+            margin-top: 0;
+        }
+        .lc-job-times-preview-row .lc-job-preview-wrap {
+            flex: 1 1 0;
+            min-width: 0;
         }
 
         /* “Your input was” — one style per row */
@@ -660,15 +782,13 @@
         {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
         <div class="alert alert-light border rounded shadow-sm mb-3 small lc-snapshot-banner" role="note">
             <strong>Offline HTML snapshot</strong> —
-            Generated <strong>{{ snapshot_generated_at_pt }}</strong>
-            (<span translate="no">Pacific — America/Los_Angeles</span>).
-            Queued timestamps in the snapshots panel use the same zone.
+            Generated <strong data-fdc-local-iso="{{ snapshot_generated_at_iso if snapshot_generated_at_iso is defined else '' }}">{{ snapshot_generated_at_pt }}</strong>
+            <span class="text-muted">(your local time; server uses Pacific)</span>.
         </div>
         {% endif %}
         {% if not your_input_was %}
         <div class="lc-hero">
             <h1>List Creator <span class="font-weight-normal opacity-80">V7 </span></h1>
-            <p>Every run builds a saved HTML snapshot (Pacific time). Enter your styles or a Dropbox folder path plus a snapshot name. If descriptions are missing, you’ll pick them on the next step; otherwise the snapshot queues immediately.</p>
         </div>
         {% if error_message %}
             <div class="alert alert-danger" role="alert">
@@ -683,7 +803,10 @@
             {% if not lc_hide_styles %}
             <div class="form-group mb-3">
                 <label class="lc-label-muted d-block mb-1" for="list_input">Styles or Dropbox path</label>
-                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401 or dropbox&#92;folder" value="{{ list_input or '' }}">
+                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401 or dropbox&#92;folder" value="{{ list_input or '' }}" autocomplete="off">
+                <div class="d-flex flex-wrap align-items-center mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-1" id="btnV7PickDropboxFolder" title="Open folders on the server’s synced Dropbox (names and image counts only)">Browse server Dropbox 在这里选dropbox的文件夹…</button>
+                </div>
             </div>
             {% endif %}
             {% if lc_hide_styles %}
@@ -708,17 +831,27 @@
                 <input type="text" class="form-control" id="snapshot_name" name="snapshot_name" maxlength="120" required minlength="2"
                     placeholder="那个谁的list做一下"
                     value="{{ snapshot_name if snapshot_name is defined else '' }}">
-                <small class="form-text text-muted">Labels your job (kept ~7 days). {% if snapshot_time_hint is defined and snapshot_time_hint %}<span class="text-dark">{{ snapshot_time_hint }}</span> · {% endif %}Pacific · <span translate="no">America/Los_Angeles</span></small>
+                <small class="form-text text-muted">Labels your job (kept ~7 days). {% if snapshot_time_hint_iso is defined and snapshot_time_hint_iso %}Now: <span class="text-dark" data-fdc-local-iso="{{ snapshot_time_hint_iso }}">{% if snapshot_time_hint is defined and snapshot_time_hint %}{{ snapshot_time_hint }}{% endif %}</span> · {% elif snapshot_time_hint is defined and snapshot_time_hint %}<span class="text-dark">{{ snapshot_time_hint }}</span> · {% endif %}shown in your local time</small>
             </div>
 
             <button type="submit" class="btn btn-lg text-white px-4" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">Run list</button>
             <label class="form-check-label" for="convert_newlines_checkbox">Slack will notifiy you ! slack 信息通知已上线</label>
         </form>
         </div>
-        <div class="lc-panel" id="listcreatorHtmlJobsPanel">
-            <h6 class="font-weight-bold mb-2 text-dark">Jobs ( kepts for 7 days)</h6>
-            <ul id="listcreatorHtmlJobsHistory" class="list-unstyled small mb-0"></ul>
-            <p id="listcreatorHtmlJobsEmptyHint" class="small text-muted mb-0 mt-2">No snapshots yet.</p>
+        <div class="lc-panel lc-jobs-panel" id="listcreatorHtmlJobsPanel">
+            <div class="lc-jobs-head">
+                <div>
+                    <h6 class="font-weight-bold text-dark">HTML snapshot jobs</h6>
+                    <p class="small text-muted mb-0">Queued list builds · kept about <strong>7 days</strong> · filter by person</p>
+                </div>
+            </div>
+            <div class="form-group mb-3 mt-3">
+                <label class="small font-weight-bold text-muted mb-1 d-block" for="listcreatorJobsUserFilter">Show jobs for</label>
+                <select id="listcreatorJobsUserFilter" class="form-control form-control-sm" style="max-width: 22rem;" title="Filter snapshot jobs by account">
+                </select>
+            </div>
+            <ul id="listcreatorHtmlJobsHistory" class="lc-jobs-list list-unstyled small mb-0"></ul>
+            <p id="listcreatorHtmlJobsEmptyHint" class="small text-muted mb-0 mt-3">No snapshots yet. Run a list above to queue one.</p>
         </div>
         {% endif %}
 
@@ -1079,6 +1212,37 @@
     </div>
 </div>
 
+<div class="modal fade" id="v7BrowseDropboxModal" tabindex="-1" role="dialog" aria-labelledby="v7BrowseDropboxModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="v7BrowseDropboxModalLabel">Browse server Dropbox</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-2" id="v7BrowseDropboxServerLine"></p>
+                <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2 py-2 px-3 bg-light rounded" id="v7BrowseDropboxCrumbs" style="flex-wrap: wrap;"></ol></nav>
+                <p class="mb-2" id="v7BrowseDropboxCountLine"></p>
+                <div id="v7BrowseDropboxLoading" class="text-muted small py-3 d-none">Loading…</div>
+                <div id="v7BrowseDropboxError" class="alert alert-danger small d-none" role="alert"></div>
+                <div class="table-responsive border rounded" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light"><tr><th>Folder</th><th>Last updated</th><th class="text-right">Images</th></tr></thead>
+                        <tbody id="v7BrowseDropboxRows"></tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mb-0 mt-2">Folders are sorted by <strong>most recently updated</strong> on the server (folder modification time). Counts are for that folder only (not subfolders). List Creator still matches image <strong>filenames</strong> to SKUs.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="v7BrowseDropboxUseBtn" disabled title="Pick a subfolder (not the Dropbox root)">Use this folder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const columnConfig = {
     color: { index: 0, removable: false, name: 'Color', visible: true, required: true },
@@ -1091,6 +1255,224 @@
 };
 
 var V7_LC_LIST_INPUT_SNAPSHOT = {{ list_input | default('', true) | tojson }};
+window.V7_LOCAL_DROPBOX_ABS = {{ v7_local_dropbox_dir|default('')|tojson }};
+window.V7_BROWSE_DROPBOX_URL = {{ url_for('v7_listcreator.browse_dropbox')|tojson }};
+
+/** Turn a pasted full Windows path into dropbox\relative using the server’s LOCAL_DROPBOX_DIR (see V7listcreator). */
+function v7DecodeMaybeFileUrl(s) {
+    try {
+        if (/^file:/i.test(String(s || ''))) {
+            var u = new URL(s);
+            var p = u.pathname || '';
+            if (/^\/[a-zA-Z]:/i.test(p)) return decodeURIComponent(p.slice(1)).replace(/\//g, '\\');
+            return decodeURIComponent(p.replace(/^\//, '')).replace(/\//g, '\\');
+        }
+    } catch (e) { /* ignore */ }
+    return String(s || '');
+}
+
+function v7NormalizePastedPathToDropboxInput(raw) {
+    var abs = String(window.V7_LOCAL_DROPBOX_ABS || '').trim().replace(/\/+$/, '').replace(/\//g, '\\');
+    if (!raw) return '';
+    var s = String(raw).trim();
+    if ((s.charAt(0) === '"' && s.charAt(s.length - 1) === '"') || (s.charAt(0) === '\'' && s.charAt(s.length - 1) === '\'')) {
+        s = s.slice(1, -1);
+    }
+    s = v7DecodeMaybeFileUrl(s).replace(/\//g, '\\');
+    var lowerAbs = abs.toLowerCase();
+    var lowerS = s.toLowerCase();
+    if (lowerAbs && lowerS.indexOf(lowerAbs) === 0) {
+        var rest = s.slice(abs.length).replace(/^\\+/, '');
+        return 'dropbox\\' + rest;
+    }
+    var dm = s.match(/\\[Dd]ropbox\\(.+)/);
+    if (dm) return 'dropbox\\' + dm[1].replace(/\//g, '\\').replace(/^\\+/, '');
+    return '';
+}
+
+function v7ListInputOnBlurNormalize() {
+    var inp = document.getElementById('list_input');
+    if (!inp) return;
+    var v = inp.value.trim();
+    if (!v) return;
+    if (/^[a-z]:\\/i.test(v) || v.indexOf('\\\\') === 0 || /^file:/i.test(v) || /\\[Dd]ropbox\\/i.test(v)) {
+        var n = v7NormalizePastedPathToDropboxInput(v);
+        if (n) inp.value = n;
+    }
+}
+
+var v7BrowsePickValue = '';
+var v7BrowseCanUse = false;
+
+function v7BrowseDropboxEscapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+}
+
+/** UTC ISO from server → browser local display. */
+function v7BrowseFormatFolderMtime(iso) {
+    if (!iso) return '—';
+    var d = new Date(String(iso).trim());
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+async function v7BrowseDropboxFetch(rel) {
+    var loadEl = document.getElementById('v7BrowseDropboxLoading');
+    var errEl = document.getElementById('v7BrowseDropboxError');
+    var rowsEl = document.getElementById('v7BrowseDropboxRows');
+    var crumbsEl = document.getElementById('v7BrowseDropboxCrumbs');
+    var countLine = document.getElementById('v7BrowseDropboxCountLine');
+    var serverLine = document.getElementById('v7BrowseDropboxServerLine');
+    var useBtn = document.getElementById('v7BrowseDropboxUseBtn');
+    if (!window.V7_BROWSE_DROPBOX_URL) return;
+    if (loadEl) loadEl.classList.remove('d-none');
+    if (errEl) {
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
+    }
+    if (rowsEl) rowsEl.innerHTML = '';
+    if (useBtn) useBtn.disabled = true;
+    v7BrowsePickValue = '';
+    v7BrowseCanUse = false;
+    var u = window.V7_BROWSE_DROPBOX_URL + '?path=' + encodeURIComponent(rel || '');
+    try {
+        var r = await fetch(u, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (ct.indexOf('application/json') < 0) {
+            if (errEl) {
+                errEl.textContent = 'Could not load folders (try signing in again).';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+        var data = await r.json();
+        if (!data.ok) {
+            if (errEl) {
+                errEl.textContent = data.error || 'Request failed.';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+        v7BrowsePickValue = data.dropbox_input_value || '';
+        v7BrowseCanUse = !!data.can_use_folder;
+        if (serverLine) {
+            serverLine.innerHTML = 'Server Dropbox root: <code class="small user-select-all">' +
+                v7BrowseDropboxEscapeHtml(data.server_root_path || '') + '</code>';
+        }
+        if (crumbsEl) {
+            crumbsEl.innerHTML = '';
+            var crumbs = data.breadcrumbs || [];
+            crumbs.forEach(function(c, i) {
+                var li = document.createElement('li');
+                li.className = 'breadcrumb-item' + (i === crumbs.length - 1 ? ' active' : '');
+                if (i === crumbs.length - 1) {
+                    li.setAttribute('aria-current', 'page');
+                    li.textContent = c.name;
+                } else {
+                    var a = document.createElement('a');
+                    a.href = '#';
+                    a.textContent = c.name;
+                    (function(relPart) {
+                        a.addEventListener('click', function(ev) {
+                            ev.preventDefault();
+                            v7BrowseDropboxFetch(relPart || '');
+                        });
+                    })(c.rel);
+                    li.appendChild(a);
+                }
+                crumbsEl.appendChild(li);
+            });
+        }
+        if (countLine) {
+            var n = data.image_count_here != null ? data.image_count_here : 0;
+            countLine.innerHTML = '<strong>Images in this folder:</strong> ' + n +
+                ' <span class="text-muted font-weight-normal">(not including subfolders)</span>';
+        }
+        if (rowsEl) {
+            var dirs = data.directories || [];
+            dirs.forEach(function(d) {
+                var tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.innerHTML = '<td>' + v7BrowseDropboxEscapeHtml(d.name) + '</td>' +
+                    '<td class="text-nowrap small">' + v7BrowseDropboxEscapeHtml(v7BrowseFormatFolderMtime(d.last_updated_iso)) + '</td>' +
+                    '<td class="text-right font-weight-bold">' + (d.image_count != null ? d.image_count : 0) + '</td>';
+                tr.addEventListener('click', function() {
+                    v7BrowseDropboxFetch(d.rel || '');
+                });
+                rowsEl.appendChild(tr);
+            });
+            if (!dirs.length) {
+                var trE = document.createElement('tr');
+                trE.innerHTML = '<td colspan="3" class="text-muted small">No subfolders in this directory.</td>';
+                rowsEl.appendChild(trE);
+            }
+        }
+        if (useBtn) {
+            useBtn.disabled = !v7BrowseCanUse;
+        }
+    } catch (e) {
+        console.warn(e);
+        if (errEl) {
+            errEl.textContent = 'Network error loading folders.';
+            errEl.classList.remove('d-none');
+        }
+    } finally {
+        if (loadEl) loadEl.classList.add('d-none');
+    }
+}
+
+function v7OpenDropboxBrowserModal() {
+    if (window.jQuery && jQuery('#v7BrowseDropboxModal').modal) {
+        jQuery('#v7BrowseDropboxModal').modal('show');
+        v7BrowseDropboxFetch('');
+    }
+}
+
+function v7BrowseDropboxUseFolder() {
+    var inp = document.getElementById('list_input');
+    if (!inp || !v7BrowsePickValue) return;
+    if (inp.value.trim() && !window.confirm('Replace the current path with:\n' + v7BrowsePickValue + ' ?')) return;
+    inp.value = v7BrowsePickValue;
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    if (window.jQuery && jQuery('#v7BrowseDropboxModal').modal) {
+        jQuery('#v7BrowseDropboxModal').modal('hide');
+    }
+}
+
+/** ISO 8601 (UTC or offset) → browser local display. Server records Pacific for snapshots; workbook uses UTC Z. */
+function fdcParseInstant(iso) {
+    if (!iso) return null;
+    var d = new Date(String(iso).trim());
+    return isNaN(d.getTime()) ? null : d;
+}
+function fdcFormatInstantLocal(iso) {
+    var d = fdcParseInstant(iso);
+    if (!d) return '';
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+function fdcApplyLocalTimesFromDataIso() {
+    document.querySelectorAll('[data-fdc-local-iso]').forEach(function(el) {
+        var show = fdcFormatInstantLocal(el.getAttribute('data-fdc-local-iso'));
+        if (show) el.textContent = show;
+    });
+}
+
+/** Human-readable duration between two ISO instants (for job build time). */
+function lcFormatElapsed(isoStart, isoEnd) {
+    var a = fdcParseInstant(isoStart);
+    var b = fdcParseInstant(isoEnd);
+    if (!a || !b) return '';
+    var ms = b.getTime() - a.getTime();
+    if (ms < 0) ms = 0;
+    var secTotal = Math.floor(ms / 1000);
+    if (ms > 0 && secTotal < 1) return 'under 1 sec';
+    if (secTotal < 60) return secTotal + ' sec';
+    var min = Math.floor(secTotal / 60);
+    var sec = secTotal % 60;
+    return min + ' min ' + sec + ' sec';
+}
 
 let selectedImageSize = null;
 let pcsBoxHidden = false;
@@ -1270,6 +1652,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof updateRowCounts === 'function') updateRowCounts();
     if (typeof refreshWorkbookJobs === 'function') refreshWorkbookJobs();
     if (typeof refreshListcreatorHtmlJobs === 'function') refreshListcreatorHtmlJobs();
+    if (typeof fdcApplyLocalTimesFromDataIso === 'function') fdcApplyLocalTimesFromDataIso();
+    var btnPick = document.getElementById('btnV7PickDropboxFolder');
+    if (btnPick && !btnPick.dataset.lcBound) {
+        btnPick.dataset.lcBound = '1';
+        btnPick.addEventListener('click', function() { v7OpenDropboxBrowserModal(); });
+    }
+    var btnUseDrop = document.getElementById('v7BrowseDropboxUseBtn');
+    if (btnUseDrop && !btnUseDrop.dataset.lcBound) {
+        btnUseDrop.dataset.lcBound = '1';
+        btnUseDrop.addEventListener('click', function() { v7BrowseDropboxUseFolder(); });
+    }
+    var listInp = document.getElementById('list_input');
+    if (listInp && !listInp.dataset.v7BlurNorm) {
+        listInp.dataset.v7BlurNorm = '1';
+        listInp.addEventListener('blur', v7ListInputOnBlurNormalize);
+    }
+    var lcJobUserSel = document.getElementById('listcreatorJobsUserFilter');
+    if (lcJobUserSel && !lcJobUserSel.dataset.lcBound) {
+        lcJobUserSel.dataset.lcBound = '1';
+        lcJobUserSel.addEventListener('change', function() {
+            if (typeof refreshListcreatorHtmlJobs === 'function') refreshListcreatorHtmlJobs();
+        });
+    }
 });
 
 // New: updateRowCounts implementation
@@ -1444,7 +1849,8 @@ function renderWorkbookHistory(jobs) {
     el.innerHTML = jobs.map(function(j) {
         var status = j.status || '';
         var badge = status === 'ready' ? 'success' : (status === 'running' ? 'warning' : (status === 'failed' ? 'danger' : 'secondary'));
-        var line = '<strong>Edition #' + (j.edition != null ? j.edition : '?') + '</strong> &middot; ' + (j.created_at || '');
+        var when = fdcFormatInstantLocal(j.created_at) || escapeWorkbookHtml(j.created_at || '');
+        var line = '<strong>Edition #' + (j.edition != null ? j.edition : '?') + '</strong> &middot; ' + when;
         var dl = '';
         if (status === 'ready' && j.id) {
             dl = ' <a class="btn btn-sm btn-outline-primary ml-2" href="' + workbookDownloadHref(j.id) + '">Download</a>';
@@ -1531,19 +1937,25 @@ function wireListcreatorPreviewBoxToggle() {
     });
 }
 
-function listcreatorRenameJobUrl(rid) {
+function listcreatorRenameJobUrl(rid, ownerSlug) {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
-    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/rename');
+    var u = LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/rename');
+    if (ownerSlug) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'owner_slug=' + encodeURIComponent(ownerSlug);
+    return u;
 }
 
-function listcreatorDeleteJobUrl(rid) {
+function listcreatorDeleteJobUrl(rid, ownerSlug) {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
-    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/delete');
+    var u = LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/delete');
+    if (ownerSlug) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'owner_slug=' + encodeURIComponent(ownerSlug);
+    return u;
 }
 
-function listcreatorRedoJobUrl(rid) {
+function listcreatorRedoJobUrl(rid, ownerSlug) {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
-    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/redo');
+    var u = LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/redo');
+    if (ownerSlug) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'owner_slug=' + encodeURIComponent(ownerSlug);
+    return u;
 }
 
 /** Prefer DELETE; some proxies only allow POST. */
@@ -1575,10 +1987,24 @@ function lcPreviewPayload(j, preferResolved) {
         }
         return { body: src, caption: 'Still processing — resolved list fills in when rendering completes' };
     }
-    if (isPath) {
+        if (isPath) {
         return { body: src, caption: 'Dropbox / folder path you submitted , click below to switch' };
     }
     return { body: src, caption: 'Source line submitted' };
+}
+
+function lcPopulateHtmlJobsUserFilter(options, serverFilterUser) {
+    var sel = document.getElementById('listcreatorJobsUserFilter');
+    if (!sel || !options || !options.length) return;
+    var want = (serverFilterUser != null && String(serverFilterUser).length) ? String(serverFilterUser) : (sel.value || '__all__');
+    sel.innerHTML = options.map(function(o) {
+        var v = String(o.value == null ? '' : o.value);
+        var lab = String(o.label == null ? '' : o.label);
+        return '<option value="' + escapeListcreatorJobsHtml(v) + '">' + escapeListcreatorJobsHtml(lab) + '</option>';
+    }).join('');
+    if (Array.prototype.some.call(sel.options, function(opt) { return opt.value === want; })) {
+        sel.value = want;
+    }
 }
 
 function wireListcreatorSnapshotJobsActions() {
@@ -1590,7 +2016,8 @@ function wireListcreatorSnapshotJobsActions() {
         if (redoBtn) {
             var rawRid = redoBtn.getAttribute('data-rid');
             if (!rawRid) return;
-            var redoUrl = listcreatorRedoJobUrl(rawRid);
+            var ownSlug = (redoBtn.getAttribute('data-owner-slug') || '').trim();
+            var redoUrl = listcreatorRedoJobUrl(rawRid, ownSlug);
             if (!redoUrl) return;
             if (!window.confirm('Queue a fresh snapshot with the same style list and label? You will go to the progress page for the new build.')) return;
             redoBtn.disabled = true;
@@ -1631,7 +2058,8 @@ function wireListcreatorSnapshotJobsActions() {
             msg += '? This cannot be undone.';
             if (st === 'running') msg += '\n\nThe job may still finish in the background briefly; refresh if something reappears.';
             if (!window.confirm(msg)) return;
-            var delUrl = listcreatorDeleteJobUrl(drid);
+            var ownDel = (delBtn.getAttribute('data-owner-slug') || '').trim();
+            var delUrl = listcreatorDeleteJobUrl(drid, ownDel);
             if (!delUrl) return;
             listcreatorFetchDelete(delUrl).then(function(r) {
                     return r.json().then(function(j) {
@@ -1663,7 +2091,8 @@ function wireListcreatorSnapshotJobsActions() {
             alert('Use at least 2 characters.');
             return;
         }
-        fetch(listcreatorRenameJobUrl(rid), {
+        var ownRen = (btn.getAttribute('data-owner-slug') || '').trim();
+        fetch(listcreatorRenameJobUrl(rid, ownRen), {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
@@ -1703,26 +2132,64 @@ function renderListcreatorHtmlJobsHistory(jobs) {
         var badge = status === 'ready' ? 'success' : (status === 'running' ? 'warning' : (status === 'failed' ? 'danger' : 'secondary'));
         var title = escapeListcreatorJobsHtml((j.snapshot_name || '').trim());
         var subId = j.id ? (j.id.length > 14 ? (j.id.substring(0, 10) + '…') : j.id) : '';
-        var timeLine = escapeListcreatorJobsHtml(j.created_at_pt_display || j.created_at || '');
-        var genLine = '';
-        if (j.snapshot_generated_at_pt && status === 'ready') {
-            genLine = ' · rendered ' + escapeListcreatorJobsHtml(j.snapshot_generated_at_pt);
+        var headline = '<span class="lc-job-title-line">' + (title ? ('<strong>' + title + '</strong>') : ('<strong>' + escapeListcreatorJobsHtml(subId || 'Snapshot') + '</strong>'));
+        if (title && subId) headline += ' <span class="text-muted lc-job-subid">· ' + escapeListcreatorJobsHtml(subId) + '</span>';
+        headline += '</span>';
+        var queuedShown = fdcFormatInstantLocal(j.created_at);
+        if (!queuedShown) queuedShown = String(j.created_at_pt_display || j.created_at || '').trim();
+        var queuedEsc = escapeListcreatorJobsHtml(queuedShown);
+        var genIso = String(j.snapshot_generated_at_iso || '').trim();
+        var genBlock = '';
+        if (status === 'ready') {
+            var genShown = genIso ? (fdcFormatInstantLocal(genIso) || '') : '';
+            if (!genShown && j.snapshot_generated_at_pt) genShown = String(j.snapshot_generated_at_pt).trim();
+            if (genShown) {
+                genBlock = '<div class="lc-job-time-row lc-job-time-rendered"><span class="lc-job-time-k">Rendered</span> <span class="lc-job-time-v">' + escapeListcreatorJobsHtml(genShown) + '</span></div>';
+            }
         }
-        var headline = title ? ('<strong>' + title + '</strong>') : ('<strong>' + escapeListcreatorJobsHtml(subId || 'Snapshot') + '</strong>');
-        if (title && subId) headline += ' <span class="text-muted small font-weight-normal">· ' + escapeListcreatorJobsHtml(subId) + '</span>';
-        var line = headline + (timeLine ? ' <span class="text-muted">&middot; ' + timeLine + genLine + '</span>' : '');
-        var delSnapBtn = '<button type="button" class="btn btn-sm btn-outline-danger ml-1" data-action="delete-snapshot-job" data-rid="'
-            + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '">Delete</button>';
+        var elapsedHtml = '';
+        if (j.created_at) {
+            if (status === 'ready' && genIso) {
+                var elDone = lcFormatElapsed(j.created_at, genIso);
+                if (elDone) elapsedHtml = '<div class="lc-job-elapsed">Elapsed: <strong>' + escapeListcreatorJobsHtml(elDone) + '</strong></div>';
+            } else if (status === 'running') {
+                var elRun = lcFormatElapsed(j.created_at, new Date().toISOString());
+                if (elRun) elapsedHtml = '<div class="lc-job-elapsed lc-job-elapsed-running">Elapsed: <strong>' + escapeListcreatorJobsHtml(elRun) + '</strong> <span class="text-muted small">(updates when list refreshes)</span></div>';
+            }
+        }
+        var timeBlock = '';
+        if (queuedShown || genBlock || elapsedHtml) {
+            var qRow = queuedShown ? ('<div class="lc-job-time-row lc-job-time-queued"><span class="lc-job-time-k">Queued</span> <span class="lc-job-time-v">' + queuedEsc + '</span></div>') : '';
+            timeBlock = '<div class="lc-job-times">' + qRow + genBlock + elapsedHtml + '</div>';
+        }
+        var line = headline;
+        var stSlug = (j.storage_slug || '').trim();
+        var slugAttr = stSlug ? (' data-owner-slug="' + lcAttrEscapePreviewId(stSlug) + '"') : '';
+        var who = (j.job_username || '').trim();
+        var ownDisp = (j.owner_display || who || stSlug || '(no username)').trim();
+        var ownTip = (j.owner_tooltip || '').trim();
+        var ownTipAttr = ownTip ? (' title="' + lcAttrEscapePreviewId(ownTip) + '"') : '';
+        var whoBadge = ' <span class="badge lc-job-owner-badge lc-job-pill"' + ownTipAttr + '>'
+            + escapeListcreatorJobsHtml(ownDisp) + '</span>';
+        var metaLine = '<div class="lc-job-headline-wrap">' + line + ' <span class="badge badge-' + badge + ' lc-job-status-badge">'
+            + escapeListcreatorJobsHtml(status) + '</span>' + whoBadge + '</div>';
+        var delSnapBtn = '<button type="button" class="btn btn-outline-danger lc-job-action-btn mr-2 mb-1" data-action="delete-snapshot-job" data-rid="'
+            + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '"' + slugAttr + '>Delete</button>';
         var actions = '';
+        var canM = !!j.can_manage;
         if (status === 'ready' && j.view_url) {
-            actions += '<a class="btn btn-sm btn-outline-success ml-1" href="' + j.view_url + '" target="_blank" rel="noopener">Open snapshot</a>';
-            actions += '<button type="button" class="btn btn-sm btn-outline-secondary ml-1" data-action="redo-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Redo snapshot</button>';
-            actions += '<button type="button" class="btn btn-sm btn-outline-primary ml-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Rename</button>';
-            actions += delSnapBtn;
+            actions += '<a class="btn btn-outline-success lc-job-action-btn mr-2 mb-1" href="' + j.view_url + '" target="_blank" rel="noopener">Open snapshot</a>';
+            if (canM) {
+                actions += '<button type="button" class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" data-action="redo-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Redo snapshot</button>';
+                actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
+                actions += delSnapBtn;
+            }
         } else if (status === 'running' || status === 'failed') {
-            if (j.wait_url) actions += ' <a class="btn btn-sm btn-outline-secondary ml-1" href="' + j.wait_url + '">' + (status === 'running' ? 'Watch progress' : 'Details') + '</a>';
-            actions += '<button type="button" class="btn btn-sm btn-outline-primary ml-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Rename</button>';
-            actions += delSnapBtn;
+            if (j.wait_url) actions += '<a class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" href="' + j.wait_url + '">' + (status === 'running' ? 'Watch progress' : 'Details') + '</a>';
+            if (canM) {
+                actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
+                actions += delSnapBtn;
+            }
         }
         var err = (status === 'failed' && j.error) ? (' <span class="text-danger d-block mt-1 small">' + escapeListcreatorJobsHtml(j.error) + '</span>') : '';
         var jobRid = (j.id || '').trim();
@@ -1733,22 +2200,36 @@ function renderListcreatorHtmlJobsHistory(jobs) {
             var capHtml = pr.caption ? ('<span class="d-block small text-muted mb-1">' + escapeListcreatorJobsHtml(pr.caption) + '</span>') : '';
             var prevBoxClass = 'lc-job-src-preview lc-job-preview-trigger' + (!preferThis ? ' lc-job-src-preview--oneline' : '');
             var ridAttr = jobRid ? (' data-rid="' + lcAttrEscapePreviewId(jobRid) + '"') : '';
-            previewHtml = '<div class="mt-2">' + capHtml + '<div class="' + prevBoxClass + '"' + ridAttr + ' data-action="toggle-job-preview" role="button" tabindex="0" title="Click to switch between source line and resolved styles">' + escapeListcreatorJobsHtml(pr.body) + '</div></div>';
+            previewHtml = '<div class="lc-job-preview-wrap">' + capHtml + '<div class="' + prevBoxClass + '"' + ridAttr + ' data-action="toggle-job-preview" role="button" tabindex="0" title="Click to switch between Dropbox path and resolved styles">' + escapeListcreatorJobsHtml(pr.body) + '</div></div>';
         }
-        return '<li class="mb-3 border-bottom pb-2">' +
-            '<div>' + line + ' <span class="badge badge-' + badge + '">' + escapeListcreatorJobsHtml(status) + '</span> ' + actions + '</div>' +
-            previewHtml + err + '</li>';
+        var timesPreviewRow = '';
+        if (timeBlock || previewHtml) {
+            timesPreviewRow = '<div class="lc-job-times-preview-row d-flex flex-column flex-lg-row align-items-lg-start" style="gap: 0.65rem;">' +
+                (timeBlock ? ('<div class="lc-job-times-outer">' + timeBlock + '</div>') : '') +
+                previewHtml +
+                '</div>';
+        }
+        return '<li class="lc-job-row">' +
+            '<div class="d-flex flex-column flex-lg-row flex-lg-wrap align-items-lg-center justify-content-lg-between">' +
+            '<div class="lc-job-main pr-lg-3 mb-2 mb-lg-0" style="min-width: 0;">' + metaLine + '</div>' +
+            '<div class="lc-job-actions d-flex flex-wrap align-items-center flex-shrink-0">' + actions + '</div></div>' +
+            timesPreviewRow + err + '</li>';
     }).join('');
 }
 
 function refreshListcreatorHtmlJobs() {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined') return;
-    fetch(LISTCREATOR_HTML_JOBS_URL, { credentials: 'same-origin' })
+    var url = LISTCREATOR_HTML_JOBS_URL;
+    var sel = document.getElementById('listcreatorJobsUserFilter');
+    var fv = (sel && sel.value) ? sel.value : '__all__';
+    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'filter_user=' + encodeURIComponent(fv);
+    fetch(url, { credentials: 'same-origin' })
         .then(function(r) {
             if (!r.ok) throw new Error('html jobs');
             return r.json();
         })
         .then(function(data) {
+            lcPopulateHtmlJobsUserFilter(data.filter_options || [], data.filter_user || '');
             renderListcreatorHtmlJobsHistory(data.jobs || []);
             var running = (data.jobs || []).some(function(j) { return j.status === 'running'; });
             if (running && !listcreatorHtmlJobsPoll) {

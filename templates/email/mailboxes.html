@@ -326,7 +326,7 @@
             <div class="fdc-mail-meta">Pick a mailbox or open a combined Allmail view.</div>
         </div>
         <div class="d-flex gap-2">
-            {% if show_admin %}
+            {% if show_admin|default(false) %}
                 <a class="btn btn-outline-light btn-sm" href="{{ url_for('email.manage_accounts') }}">Manage accounts</a>
             {% endif %}
         </div>
@@ -335,10 +335,10 @@
     {% if not accounts %}
         <div class="alert alert-warning">
             No mailboxes configured yet.
-            {% if show_admin %}
+            {% if show_admin|default(false) %}
                 <a href="{{ url_for('email.manage_accounts') }}" class="alert-link">Add one</a>.
             {% else %}
-                Ask an administrator to add accounts in MySQL (<code>mail_accounts</code>) or use Manage accounts (yeti).
+                Ask <strong>yeti</strong> or an administrator to add mailboxes (<code>mail_accounts</code>).
             {% endif %}
         </div>
     {% else %}

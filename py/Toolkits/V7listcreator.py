@@ -22,6 +22,7 @@ import datetime
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 from pathlib import Path
+from urllib.parse import quote
 import mysql.connector
 from mysql.connector import Error
 import zipfile
@@ -30,6 +31,15 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 
 v7_listcreator_bp = Blueprint('v7_listcreator', __name__, template_folder='templates')
+
+
+@v7_listcreator_bp.context_processor
+def _v7_listcreator_template_globals():
+    """Expose server Dropbox root so the browser can turn pasted full paths into dropbox\\relative paths."""
+    return {
+        'v7_local_dropbox_dir': getattr(Config, 'LOCAL_DROPBOX_DIR', '') or '',
+    }
+
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
@@ -57,6 +67,48 @@ LISTCREATOR_HTML_CACHE_DAYS = 7
 _listcreator_html_lock = threading.Lock()
 LISTCREATOR_SNAPSHOT_LABEL_MAX = 120
 PACIFIC_TZ = ZoneInfo('America/Los_Angeles')
+
+# Friendly names for snapshot job owner filter + badges (keys: login or storage slug, lowercased).
+LISTCREATOR_JOB_OWNER_DISPLAY = {
+    'xj': 'Elaine',
+    'yeti': 'Tristen',
+}
+
+
+def _listcreator_job_owner_display(job_username: str, storage_slug: str) -> str:
+    """Public label for a job row / filter (mapped name, else login, else folder slug)."""
+    u = (job_username or '').strip()
+    s = (storage_slug or '').strip()
+    for key, label in LISTCREATOR_JOB_OWNER_DISPLAY.items():
+        if u.lower() == key or s.lower() == key:
+            return label
+    if u:
+        return u
+    if s:
+        return s
+    return ''
+
+
+def _listcreator_job_owner_tooltip(job_username: str, storage_slug: str) -> str:
+    """Hover detail: raw login and disk folder for support."""
+    u = (job_username or '').strip()
+    s = (storage_slug or '').strip()
+    parts = []
+    if u:
+        parts.append(f'Login: {u}')
+    if s:
+        parts.append(f'Folder: {s}')
+    return ' · '.join(parts) if parts else ''
+
+
+def _listcreator_my_jobs_filter_label(current_user: str, me_slug: str) -> str:
+    cu = (current_user or '').strip().lower()
+    sl = (me_slug or '').strip().lower()
+    if cu in LISTCREATOR_JOB_OWNER_DISPLAY:
+        return f"My jobs — {LISTCREATOR_JOB_OWNER_DISPLAY[cu]}"
+    if sl in LISTCREATOR_JOB_OWNER_DISPLAY:
+        return f"My jobs — {LISTCREATOR_JOB_OWNER_DISPLAY[sl]}"
+    return 'My jobs'
 
 
 def _pst_now_parts():
@@ -122,6 +174,52 @@ def _resolve_v7_export_dropbox_dir(list_input_raw):
     return str(dest)
 
 
+def _v7_count_images_in_folder(path: Path) -> int:
+    """Non-recursive count of .jpg / .png files (same rule as list_from_dropbox / count_dropbox_files)."""
+    n = 0
+    try:
+        for name in os.listdir(path):
+            if name.lower().endswith(('.jpg', '.png')):
+                n += 1
+    except OSError:
+        return 0
+    return n
+
+
+def _v7_safe_resolve_dropbox_browse_path(relative_raw: str):
+    """Resolve a subpath under LOCAL_DROPBOX_DIR. Returns (Path | None, error_code str)."""
+    root = getattr(Config, 'LOCAL_DROPBOX_DIR', None) or ''
+    if not root:
+        return None, 'not_configured'
+    try:
+        base = Path(os.path.abspath(str(root))).resolve()
+    except OSError:
+        return None, 'not_configured'
+    rel = (relative_raw or '').strip().replace('/', '\\')
+    parts = [p for p in rel.split('\\') if p and p != '.']
+    if any(p == '..' for p in parts):
+        return None, 'invalid'
+    try:
+        candidate = base.joinpath(*parts) if parts else base
+        dest = candidate.resolve(strict=False)
+        dest.relative_to(base)
+    except (ValueError, OSError):
+        return None, 'invalid'
+    if not dest.exists():
+        return None, 'not_found'
+    if not dest.is_dir():
+        return None, 'not_dir'
+    return dest, 'ok'
+
+
+def _v7_rel_path_under_dropbox(base: Path, dest: Path) -> str:
+    try:
+        rel = dest.relative_to(base)
+    except ValueError:
+        return ''
+    return str(rel).replace('/', '\\')
+
+
 def _slug_for_job_id(display_label: str) -> str:
     s = re.sub(r'[^a-zA-Z0-9]+', '_', (display_label or '').strip())
     s = re.sub(r'_+', '_', s).strip('_')
@@ -163,6 +261,55 @@ def _valid_listcreator_job_id(job_id):
 def _listcreator_html_user_slug(username):
     s = secure_filename((username or '').strip()) or 'user'
     return s[:120]
+
+
+def _listcreator_requested_storage_slug(current_user):
+    """Disk folder under listcreator_html for this request (?owner_slug= for shared snapshots)."""
+    raw = (request.args.get('owner_slug') or request.args.get('owner') or '').strip()
+    if not raw:
+        return _listcreator_html_user_slug(current_user)
+    cleaned = secure_filename(raw)[:120]
+    return cleaned if cleaned else _listcreator_html_user_slug(current_user)
+
+
+def _listcreator_html_root(app):
+    return os.path.join(app.instance_path, 'listcreator_html')
+
+
+def _listcreator_html_storage_slugs_with_jobs(app):
+    root = _listcreator_html_root(app)
+    if not os.path.isdir(root):
+        return []
+    slugs = []
+    for name in os.listdir(root):
+        jp = os.path.join(root, name, 'jobs')
+        if os.path.isdir(jp):
+            slugs.append(name)
+    return sorted(slugs)
+
+
+def _listcreator_html_merge_all_user_jobs(app):
+    merged = []
+    for slug in _listcreator_html_storage_slugs_with_jobs(app):
+        for j in _listcreator_html_list_all_jobs(app, slug):
+            row = dict(j)
+            row['storage_slug'] = slug
+            merged.append(row)
+    merged.sort(key=lambda x: _parse_job_created_at(x.get('created_at')), reverse=True)
+    return merged
+
+
+def _listcreator_cached_html_public_url(rid, storage_slug):
+    """Relative URL to open a snapshot; always includes owner_slug for correct on-disk folder."""
+    base = url_for('v7_listcreator.listcreator_cached_html', rid=rid)
+    sep = '&' if '?' in base else '?'
+    return f'{base}{sep}owner_slug={quote(storage_slug, safe="")}'
+
+
+def _listcreator_html_job_wait_public_url(rid, storage_slug):
+    base = url_for('v7_listcreator.html_job_wait', rid=rid)
+    sep = '&' if '?' in base else '?'
+    return f'{base}{sep}owner_slug={quote(storage_slug, safe="")}'
 
 
 def _listcreator_html_base(app, slug):
@@ -261,9 +408,11 @@ def _listcreator_html_list_all_jobs(app, slug):
                 'created_at_pt_display': meta.get('created_at_pt_display'),
                 'snapshot_name': meta.get('snapshot_name'),
                 'snapshot_generated_at_pt': meta.get('snapshot_generated_at_pt'),
+                'snapshot_generated_at_iso': meta.get('snapshot_generated_at_iso'),
                 'list_input': li_full,
                 'resolved_styles_full': meta.get('resolved_styles_full') or '',
                 'error': meta.get('error'),
+                'job_username': (meta.get('username') or '').strip(),
             })
         except (OSError, json.JSONDecodeError):
             continue
@@ -843,6 +992,7 @@ def index(user_input=None):
             list_input=list_input,
             snapshot_name='',
             snapshot_time_hint=pst['created_at_pt_display'],
+            snapshot_time_hint_iso=pst['created_at_iso'],
             error_message=None,
         )
 
@@ -859,6 +1009,7 @@ def index(user_input=None):
                 list_input='',
                 snapshot_name=snapshot_name,
                 snapshot_time_hint=pst['created_at_pt_display'],
+                snapshot_time_hint_iso=pst['created_at_iso'],
                 error_message='Enter a SKU list or Dropbox path before running.',
             )
         return process_list_input(list_input, current_user, snapshot_name=snapshot_name, enforce_snapshot_label=True)
@@ -869,6 +1020,7 @@ def index(user_input=None):
         current_user=current_user,
         error_message=error_message,
         snapshot_time_hint=pst['created_at_pt_display'],
+        snapshot_time_hint_iso=pst['created_at_iso'],
     )
 
 
@@ -880,6 +1032,7 @@ def process_list_input(list_input, current_user, snapshot_name='', enforce_snaps
             'V7_Listcreator.html',
             current_user=current_user,
             snapshot_time_hint=pst['created_at_pt_display'],
+            snapshot_time_hint_iso=pst['created_at_iso'],
             error_message=None,
         )
 
@@ -892,6 +1045,7 @@ def process_list_input(list_input, current_user, snapshot_name='', enforce_snaps
             current_user=current_user,
             list_input=list_input,
             snapshot_time_hint=pst['created_at_pt_display'],
+            snapshot_time_hint_iso=pst['created_at_iso'],
             error_message=phase['error_message'],
             snapshot_name=snapshot_name if snapshot_name is not None else '',
         )
@@ -902,6 +1056,7 @@ def process_list_input(list_input, current_user, snapshot_name='', enforce_snaps
             'V7_Listcreator.html',
             current_user=current_user,
             snapshot_time_hint=pst['created_at_pt_display'],
+            snapshot_time_hint_iso=pst['created_at_iso'],
             error_message='No styles resolved from input.',
             list_input=list_input,
             snapshot_name=snapshot_name if snapshot_name is not None else '',
@@ -914,6 +1069,7 @@ def process_list_input(list_input, current_user, snapshot_name='', enforce_snaps
             list_input=list_input,
             snapshot_name=snapshot_name,
             snapshot_time_hint=pst['created_at_pt_display'],
+            snapshot_time_hint_iso=pst['created_at_iso'],
             error_message='Enter a snapshot name (at least 2 characters). It labels your saved HTML snapshot; times use Pacific (Los Angeles).',
         )
 
@@ -942,6 +1098,7 @@ def process_list_input(list_input, current_user, snapshot_name='', enforce_snaps
             list_input=list_input,
             snapshot_name=snap_lbl,
             snapshot_time_hint=pst_gate['created_at_pt_display'],
+            snapshot_time_hint_iso=pst_gate['created_at_iso'],
             missing_descriptions=missing_descriptions,
             image_urls=image_urls,
             dropbox_images=drop_filter,
@@ -991,14 +1148,16 @@ def html_job_wait(rid):
         return redirect(url_for('v7_listcreator.index'))
     current_user = session.get('username')
     app = current_app._get_current_object()
-    slug = _listcreator_html_user_slug(current_user)
+    slug = _listcreator_requested_storage_slug(current_user)
     meta = _listcreator_html_load_job(app, slug, rid)
-    if not meta or meta.get('username') != current_user:
+    if not meta:
         return redirect(url_for('v7_listcreator.index'))
+    poll_url = url_for('v7_listcreator.html_job_status', rid=rid) + '?owner_slug=' + quote(slug)
     return render_template(
         'V7_Listcreator_html_job_wait.html',
         rid=rid,
         job=meta,
+        job_poll_url=poll_url,
         cache_days=LISTCREATOR_HTML_CACHE_DAYS,
     )
 
@@ -1010,18 +1169,19 @@ def html_job_status(rid):
         return jsonify({'ok': False, 'error': 'Invalid job'}), 400
     current_user = session.get('username')
     app = current_app._get_current_object()
-    slug = _listcreator_html_user_slug(current_user)
+    slug = _listcreator_requested_storage_slug(current_user)
     meta = _listcreator_html_load_job(app, slug, rid)
-    if not meta or meta.get('username') != current_user:
+    if not meta:
         return jsonify({'ok': False, 'error': 'Not found'}), 404
     out = {
         'ok': True,
         'status': meta.get('status'),
         'error': meta.get('error'),
-        'view_url': meta.get('view_url'),
+        'view_url': _listcreator_cached_html_public_url(rid, slug) if meta.get('status') == 'ready' else meta.get('view_url'),
         'created_at': meta.get('created_at'),
         'created_at_pt_display': meta.get('created_at_pt_display'),
         'snapshot_generated_at_pt': meta.get('snapshot_generated_at_pt'),
+        'snapshot_generated_at_iso': meta.get('snapshot_generated_at_iso'),
         'snapshot_name': meta.get('snapshot_name'),
     }
     return jsonify(out)
@@ -1034,7 +1194,7 @@ def html_job_rename(rid):
         return jsonify({'ok': False, 'error': 'Invalid job'}), 400
     current_user = session.get('username')
     app = current_app._get_current_object()
-    slug = _listcreator_html_user_slug(current_user)
+    slug = _listcreator_requested_storage_slug(current_user)
     payload = {}
     if request.is_json:
         payload = request.get_json(silent=True) or {}
@@ -1063,7 +1223,7 @@ def html_job_delete(rid):
         return jsonify({'ok': False, 'error': 'Invalid job'}), 400
     current_user = session.get('username')
     app = current_app._get_current_object()
-    slug = _listcreator_html_user_slug(current_user)
+    slug = _listcreator_requested_storage_slug(current_user)
     with _listcreator_html_lock:
         meta = _listcreator_html_load_job(app, slug, rid)
         if not meta or meta.get('username') != current_user:
@@ -1082,7 +1242,7 @@ def html_job_redo(rid):
         return jsonify({'ok': False, 'error': 'Invalid job'}), 400
     current_user = session.get('username')
     app = current_app._get_current_object()
-    slug = _listcreator_html_user_slug(current_user)
+    slug = _listcreator_requested_storage_slug(current_user)
     meta = _listcreator_html_load_job(app, slug, rid)
     if not meta or meta.get('username') != current_user:
         return jsonify({'ok': False, 'error': 'Not found'}), 404
@@ -1093,10 +1253,11 @@ def html_job_redo(rid):
     if len(snap) < 2:
         return jsonify({'ok': False, 'error': 'Snapshot name missing; cannot redo.'}), 400
     new_rid = _enqueue_listcreator_html_job(app, list_input, current_user, snap)
+    new_slug = _listcreator_html_user_slug(current_user)
     return jsonify({
         'ok': True,
         'rid': new_rid,
-        'wait_url': url_for('v7_listcreator.html_job_wait', rid=new_rid),
+        'wait_url': _listcreator_html_job_wait_public_url(new_rid, new_slug),
     })
 
 
@@ -1107,9 +1268,9 @@ def listcreator_cached_html(rid):
         return jsonify({'error': 'Invalid'}), 400
     current_user = session.get('username')
     app = current_app._get_current_object()
-    slug = _listcreator_html_user_slug(current_user)
+    slug = _listcreator_requested_storage_slug(current_user)
     meta = _listcreator_html_load_job(app, slug, rid)
-    if not meta or meta.get('username') != current_user:
+    if not meta:
         return jsonify({'error': 'Not found'}), 404
     if meta.get('status') != 'ready':
         return jsonify({'error': 'Not ready'}), 400
@@ -1126,26 +1287,71 @@ def listcreator_cached_html(rid):
 @v7_listcreator_bp.route('/v7_listcreator/html_jobs', methods=['GET'])
 @login_required
 def listcreator_html_jobs_api():
-    """Recent large-list HTML snapshot jobs for dashboard (processing + processed)."""
+    """Recent large-list HTML snapshot jobs across all storage folders, with optional user filter."""
     current_user = session.get('username')
     app = current_app._get_current_object()
-    slug = _listcreator_html_user_slug(current_user)
+    me_slug = _listcreator_html_user_slug(current_user)
     with _listcreator_html_lock:
-        _listcreator_html_prune_old(app, slug)
-    raw = _listcreator_html_list_all_jobs(app, slug)
+        for s in _listcreator_html_storage_slugs_with_jobs(app):
+            _listcreator_html_prune_old(app, s)
+    merged = _listcreator_html_merge_all_user_jobs(app)
+    users_nonempty = set()
+    blank_n = 0
+    for j in merged:
+        u = (j.get('job_username') or '').strip()
+        if u:
+            users_nonempty.add(u)
+        else:
+            blank_n += 1
+    filter_options = [
+        {'value': '__all__', 'label': 'All users'},
+        {'value': '__me__', 'label': _listcreator_my_jobs_filter_label(current_user, me_slug)},
+    ]
+    for u in sorted(users_nonempty, key=lambda x: x.lower()):
+        filter_options.append({
+            'value': u,
+            'label': _listcreator_job_owner_display(u, u) or u,
+        })
+    if blank_n:
+        filter_options.append({'value': '__blank__', 'label': '(No username in job)'})
+
+    filter_user = (request.args.get('filter_user') or '__all__').strip()
+    if filter_user in ('__all__', ''):
+        rows = merged
+    elif filter_user == '__blank__':
+        rows = [j for j in merged if not (j.get('job_username') or '').strip()]
+    elif filter_user == '__me__':
+        cu = (current_user or '').strip()
+        rows = [
+            j for j in merged
+            if (j.get('job_username') or '').strip() == cu or j.get('storage_slug') == me_slug
+        ]
+    else:
+        rows = [j for j in merged if (j.get('job_username') or '').strip() == filter_user]
+
     jobs = []
-    for j in raw:
+    for j in rows:
         rid = j['id']
         st = j.get('status')
-        vu = url_for('v7_listcreator.listcreator_cached_html', rid=rid) if st == 'ready' else None
+        storage_slug = j.get('storage_slug') or me_slug
+        vu = _listcreator_cached_html_public_url(rid, storage_slug) if st == 'ready' else None
         li_full = j.get('list_input') or ''
         resolved = j.get('resolved_styles_full') or ''
+        job_user = (j.get('job_username') or '').strip()
+        can_manage = job_user == (current_user or '').strip() or (
+            not job_user and storage_slug == me_slug
+        )
+        owner_display = _listcreator_job_owner_display(job_user, storage_slug)
+        if not owner_display:
+            owner_display = '(no username)'
+        owner_tooltip = _listcreator_job_owner_tooltip(job_user, storage_slug)
         jobs.append({
             'id': rid,
             'status': st,
             'created_at': j.get('created_at'),
             'created_at_pt_display': j.get('created_at_pt_display'),
             'snapshot_generated_at_pt': j.get('snapshot_generated_at_pt'),
+            'snapshot_generated_at_iso': j.get('snapshot_generated_at_iso'),
             'snapshot_name': j.get('snapshot_name'),
             'list_input': li_full,
             'list_input_preview': li_full,
@@ -1153,10 +1359,21 @@ def listcreator_html_jobs_api():
             'resolved_styles_full': resolved,
             'source_is_path': _listcreator_input_source_looks_like_dropbox_path(li_full),
             'view_url': vu,
-            'wait_url': url_for('v7_listcreator.html_job_wait', rid=rid),
+            'wait_url': _listcreator_html_job_wait_public_url(rid, storage_slug),
             'error': j.get('error'),
+            'job_username': job_user,
+            'storage_slug': storage_slug,
+            'owner_display': owner_display,
+            'owner_tooltip': owner_tooltip,
+            'can_manage': can_manage,
         })
-    return jsonify({'ok': True, 'jobs': jobs})
+    return jsonify({
+        'ok': True,
+        'jobs': jobs,
+        'filter_options': filter_options,
+        'filter_user': filter_user,
+        'me_slug': me_slug,
+    })
 
 
 def get_mysql_connection():
@@ -1607,11 +1824,12 @@ def _listcreator_render_html_worker(app, slug, rid, list_input, current_user):
                     **ctx,
                     list_input=list_input,
                     snapshot_generated_at_pt=pst_snap['created_at_pt_display'],
+                    snapshot_generated_at_iso=pst_snap['created_at_iso'],
                 )
                 hp = _listcreator_html_snap_path(app, slug, rid)
                 with open(hp, 'w', encoding='utf-8') as f:
                     f.write(html)
-                view_url = url_for('v7_listcreator.listcreator_cached_html', rid=rid)
+                view_url = _listcreator_cached_html_public_url(rid, slug)
             with _listcreator_html_lock:
                 meta = _listcreator_html_load_job(app, slug, rid)
                 if meta:
@@ -1621,6 +1839,7 @@ def _listcreator_render_html_worker(app, slug, rid, list_input, current_user):
                     meta['view_url'] = view_url
                     meta['resolved_styles_full'] = resolved_styles_full
                     meta['snapshot_generated_at_pt'] = pst_snap['created_at_pt_display']
+                    meta['snapshot_generated_at_iso'] = pst_snap['created_at_iso']
                     p = _listcreator_html_job_manifest_path(app, slug, rid)
                     tmp = p + '.tmp'
                     with open(tmp, 'w', encoding='utf-8') as f:
@@ -2009,6 +2228,84 @@ def serve_dropbox_image(filename):
     except Exception as e:
         current_app.logger.error(f'Error serving dropbox image {filename}: {e}')
         return send_file(dropbox_path)
+
+
+@v7_listcreator_bp.route('/v7_listcreator/browse_dropbox', methods=['GET'])
+@login_required
+def browse_dropbox():
+    """List subfolders under the server's LOCAL_DROPBOX_DIR with image counts (no file names)."""
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for('auth.login'))
+    rel_raw = request.args.get('path', '') or request.args.get('subpath', '')
+    dest, err = _v7_safe_resolve_dropbox_browse_path(rel_raw)
+    if err == 'not_configured':
+        return jsonify({'ok': False, 'error': 'Dropbox folder is not configured on this server.'}), 503
+    if err == 'invalid':
+        return jsonify({'ok': False, 'error': 'Invalid path.'}), 400
+    if err == 'not_found':
+        return jsonify({'ok': False, 'error': 'Folder not found.'}), 404
+    if err == 'not_dir':
+        return jsonify({'ok': False, 'error': 'Not a directory.'}), 400
+    try:
+        base = Path(os.path.abspath(str(Config.LOCAL_DROPBOX_DIR))).resolve()
+    except OSError:
+        return jsonify({'ok': False, 'error': 'Dropbox folder is not configured on this server.'}), 503
+    current_rel = _v7_rel_path_under_dropbox(base, dest)
+    crumbs = [{'name': base.name or 'Dropbox', 'rel': ''}]
+    if current_rel:
+        acc_parts = []
+        for p in current_rel.split('\\'):
+            acc_parts.append(p)
+            crumbs.append({'name': p, 'rel': '\\'.join(acc_parts)})
+    dirs = []
+    try:
+        entries = os.listdir(dest)
+    except OSError as e:
+        current_app.logger.warning('browse_dropbox listdir %s: %s', dest, e)
+        return jsonify({'ok': False, 'error': 'Could not read this folder.'}), 500
+    for name in entries:
+        child = dest / name
+        try:
+            if child.is_dir():
+                try:
+                    mtime = child.stat().st_mtime
+                except OSError:
+                    mtime = 0.0
+                last_updated_iso = datetime.datetime.fromtimestamp(
+                    mtime, datetime.timezone.utc
+                ).strftime('%Y-%m-%dT%H:%M:%SZ')
+                dirs.append({
+                    'name': name,
+                    'rel': _v7_rel_path_under_dropbox(base, child),
+                    'image_count': _v7_count_images_in_folder(child),
+                    'last_updated_iso': last_updated_iso,
+                    'last_updated_unix': int(mtime),
+                })
+        except OSError:
+            continue
+    dirs.sort(key=lambda x: (-x['last_updated_unix'], x['name'].lower()))
+    for d in dirs:
+        d.pop('last_updated_unix', None)
+    image_here = _v7_count_images_in_folder(dest)
+    if current_rel:
+        dropbox_input_value = 'dropbox\\' + current_rel
+        can_use_folder = True
+    else:
+        dropbox_input_value = ''
+        can_use_folder = False
+    return jsonify({
+        'ok': True,
+        'server_folder_label': base.name or 'Dropbox',
+        'server_root_path': str(base),
+        'current_rel': current_rel,
+        'dropbox_input_value': dropbox_input_value,
+        'can_use_folder': can_use_folder,
+        'breadcrumbs': crumbs,
+        'image_count_here': image_here,
+        'directories': dirs,
+    })
+
 
 @v7_listcreator_bp.route('/list_image/<path:filename>')
 def serve_list_image(filename):

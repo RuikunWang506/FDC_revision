@@ -91,6 +91,22 @@ def register_routes(app):
             'fdc_lan_origin_hint': hint,
         }
 
+    @app.context_processor
+    def inject_dashboard_acl():
+        """Jinja: {% if tool_allowed('item_lookup') %} for home dashboard cards."""
+        from flask import session
+        from py.utilities.auth import get_user_permissions
+        from py.utilities.dashboard_permissions import tool_visible_for_user
+
+        def tool_allowed(tool_id: str) -> bool:
+            uname = session.get("username")
+            if not uname:
+                return False
+            perms = get_user_permissions(uname)
+            return tool_visible_for_user(perms, uname, tool_id)
+
+        return {"tool_allowed": tool_allowed}
+
     @app.route('/delete_system_restarted', methods=['POST'])
     @login_required
     def delete_system_restarted():
@@ -369,3 +385,9 @@ def register_routes(app):
                 cursor.close()
             if 'conn' in locals():
                 conn.close()
+
+    @app.before_request
+    def _enforce_dashboard_tool_permissions():
+        from py.utilities.dashboard_permissions import enforce_dashboard_tool_access
+
+        return enforce_dashboard_tool_access()

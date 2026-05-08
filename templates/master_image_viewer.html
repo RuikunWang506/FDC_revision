@@ -766,6 +766,9 @@
                    <button type="button" class="search-btn" id="batchFetchBtn" style="background: linear-gradient(135deg, #f6ad55, #f8b500); margin-left: 0.5rem;">
                        <i class="fas fa-list"></i> Batch Fetch from China
                    </button>
+                   <button type="button" class="search-btn" id="batchHistoryBtn" style="background: #4b5563; margin-left: 0.5rem;">
+                       <i class="fas fa-history"></i> Recent batches (3d)
+                   </button>
             </form>
         </div>
 
@@ -877,6 +880,7 @@
                 <h2 style="margin: 0; color: #1f2937;">Batch Fetch Progress</h2>
                 <button id="batchStatusCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
             </div>
+            <div id="batchStatusOutcome" role="status" style="display: none; margin-bottom: 1rem; padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.9rem; line-height: 1.45; border: 1px solid transparent;"></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px;">
                     <div style="color: #666; font-size: 0.85rem;">Elapsed Time</div>
@@ -897,9 +901,47 @@
                 <div id="currentStyleDetails" style="font-size: 0.9rem; color: #4b5563;">No active style yet.</div>
                 <div id="batchLastUpdated" style="font-size: 0.8rem; color: #6b7280; margin-top: 0.35rem;"></div>
             </div>
+            <div id="batchRerunWrap" style="display: none; margin-bottom: 1rem;">
+                <button type="button" id="batchRerunBtn" class="search-btn" style="width: 100%; padding: 0.65rem 1rem; font-size: 0.95rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Rerun batch (same SKUs)
+                </button>
+                <div id="batchRerunHint" style="font-size: 0.8rem; color: #6b7280; margin-top: 0.35rem;"></div>
+            </div>
             <div style="border: 1px solid #e5e7eb; border-radius: 8px; height: 300px; overflow-y: auto;">
                 <div id="batchResultsList" style="padding: 1rem;"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Batch job history (last 3 days) -->
+    <div id="batchHistoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10002; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 760px; width: 95%; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                <h2 style="margin: 0; color: #1f2937;">China batch jobs</h2>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button type="button" id="batchHistoryRefreshBtn" class="search-btn" style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button type="button" id="batchHistoryCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; line-height: 1;">&times;</button>
+                </div>
+            </div>
+            <p id="batchHistoryMeta" style="font-size: 0.85rem; color: #6b7280; margin: 0 0 1rem 0;"></p>
+            <div id="batchHistoryTableWrap" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: auto; max-height: 58vh;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                    <thead style="background: #f9fafb;">
+                        <tr>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Status</th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Task</th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Progress</th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Summary</th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Updated (local)</th>
+                            <th style="text-align:right; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Open</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batchHistoryTbody"></tbody>
+                </table>
+            </div>
+            <p id="batchHistoryEmpty" style="display: none; color: #6b7280; padding: 1rem 0; margin: 0;">No batch jobs in the last 3 days.</p>
         </div>
     </div>
     <script>
@@ -1777,6 +1819,7 @@
 let batchTaskId = null;
 let batchTaskStartTime = null;
 let batchTaskInterval = null;
+let previousBatchWorkerRunning = false;
 
 const batchFetchBtnEl = document.getElementById('batchFetchBtn');
 const batchFetchCancelBtnEl = document.getElementById('batchFetchCancelBtn');
@@ -1791,6 +1834,62 @@ const batchJobOpenStatusBtnEl = document.getElementById('batchJobOpenStatusBtn')
 
 function isRunningStatus(statusValue) {
     return statusValue === 'running' || statusValue === 'fetching' || statusValue === 'syncing';
+}
+
+/** Uses server is_running / interrupted when present (detects stale UI after restart). */
+function isBatchActivelyRunning(status) {
+    if (!status || status.interrupted === true) return false;
+    if (typeof status.is_running === 'boolean') return status.is_running;
+    return isRunningStatus(status.status);
+}
+
+function applyBatchOutcomeBanner(status) {
+    const el = document.getElementById('batchStatusOutcome');
+    if (!el) return;
+    if (!status || status.status === 'none') {
+        el.style.display = 'none';
+        return;
+    }
+    if (status.interrupted === true) {
+        el.style.display = 'block';
+        el.style.background = '#fef3c7';
+        el.style.borderColor = '#f59e0b';
+        el.style.color = '#78350f';
+        el.innerHTML =
+            '<strong>Interrupted</strong> — This batch is <em>not</em> running anymore (for example after a server restart). ' +
+            'Numbers below are the last saved snapshot. Use the <strong>orange button</strong> under the status box (rerun or open Batch Fetch), or start <strong>Batch Fetch</strong> from the toolbar.';
+        return;
+    }
+    if (status.status === 'error') {
+        el.style.display = 'block';
+        el.style.background = '#fee2e2';
+        el.style.borderColor = '#ef4444';
+        el.style.color = '#7f1d1d';
+        const msg = status.error != null && String(status.error).length ? String(status.error) : 'The batch ended with an error.';
+        el.textContent = '';
+        const lead = document.createElement('strong');
+        lead.textContent = 'Failed — ';
+        el.appendChild(lead);
+        el.appendChild(document.createTextNode(msg));
+        return;
+    }
+    if (!isBatchActivelyRunning(status) && status.status === 'completed') {
+        el.style.display = 'block';
+        el.style.background = '#d1fae5';
+        el.style.borderColor = '#10b981';
+        el.style.color = '#065f46';
+        el.innerHTML = '<strong>Completed</strong> — All styles in this batch finished.';
+        return;
+    }
+    if (isBatchActivelyRunning(status)) {
+        el.style.display = 'block';
+        el.style.background = '#eff6ff';
+        el.style.borderColor = '#93c5fd';
+        el.style.color = '#1e3a8a';
+        el.innerHTML = '<strong>In progress</strong> — Worker is running; this updates every second.';
+        return;
+    }
+    el.style.display = 'none';
 }
 
 function formatTimeStamp(isoValue) {
@@ -1854,18 +1953,26 @@ function renderBatchBanner(status) {
 
     const totalStyles = Number(status.total || 0);
     const completedStyles = Number(status.completed || 0);
-    const running = isRunningStatus(status.status) || status.is_running === true;
+    const active = isBatchActivelyRunning(status);
 
     const currentStyle = status.current_style || {};
     const currentStyleLabel = currentStyle.sku
-        ? ` | Current: ${currentStyle.sku} (${status.current_index || 0}/${totalStyles || '?'})`
+        ? ` | Last style shown: ${currentStyle.sku} (${status.current_index || 0}/${totalStyles || '?'})`
         : '';
 
-    if (running) {
-        batchJobBannerTitleEl.textContent = `Batch Job Running (${completedStyles}/${totalStyles} styles)`;
-        batchJobBannerMetaEl.textContent = `Task ${status.task_id || ''}${currentStyleLabel}`;
+    if (status.interrupted === true) {
+        batchJobBannerTitleEl.textContent = `Batch interrupted — not running (${completedStyles}/${totalStyles} styles in snapshot)`;
+        batchJobBannerMetaEl.textContent =
+            `Saved at ${formatTimeStamp(status.updated_at || status.saved_at)} — start a new batch to continue. Task ${status.task_id || ''}${currentStyleLabel}`;
+    } else if (status.status === 'error') {
+        batchJobBannerTitleEl.textContent = `Last batch failed (${completedStyles}/${totalStyles} styles)`;
+        batchJobBannerMetaEl.textContent = `${status.error || 'Error'} | Task ${status.task_id || ''}`;
+    } else if (active) {
+        const curSku = currentStyle.sku ? ` | Current: ${currentStyle.sku}` : '';
+        batchJobBannerTitleEl.textContent = `Batch running (${completedStyles}/${totalStyles} styles)`;
+        batchJobBannerMetaEl.textContent = `Task ${status.task_id || ''}${curSku}`;
     } else {
-        batchJobBannerTitleEl.textContent = `Last Batch Job: ${completedStyles}/${totalStyles} styles completed`;
+        batchJobBannerTitleEl.textContent = `Last batch: ${completedStyles}/${totalStyles} styles completed`;
         batchJobBannerMetaEl.textContent = `Finished: ${formatTimeStamp(status.finished_at || status.updated_at)} | Task ${status.task_id || ''}`;
     }
 
@@ -1880,6 +1987,15 @@ function renderCurrentStyle(status) {
     const totalStyles = Number(status.total || 0);
     const currentStyleIndex = Number(status.current_index || 0);
     const currentStyle = status.current_style || null;
+
+    if (status.interrupted === true) {
+        currentStyleLabelEl.textContent = 'Status: interrupted (no live worker)';
+        currentStyleDetailsEl.textContent =
+            'The app is showing the last saved progress. This is not actively fetching. Use Batch Fetch again to resume remaining SKUs.';
+        const lastUpdate = status.updated_at || status.saved_at;
+        batchLastUpdatedEl.textContent = lastUpdate ? `Last saved: ${formatTimeStamp(lastUpdate)}` : '';
+        return;
+    }
 
     if (!currentStyle || !currentStyle.sku) {
         currentStyleLabelEl.textContent = 'Current Style: waiting';
@@ -1906,7 +2022,15 @@ function renderBatchResults(status) {
     const resultsContainer = document.getElementById('batchResultsList');
 
     if (results.length === 0) {
-        resultsContainer.innerHTML = '<div style="color:#6b7280;">No style result yet. Waiting for first style...</div>';
+        if (status.interrupted === true) {
+            resultsContainer.innerHTML =
+                '<div style="color:#b45309;">No per-style results in this snapshot — the batch stopped before completing (for example after a restart).</div>';
+        } else if (status.status === 'error') {
+            resultsContainer.innerHTML =
+                '<div style="color:#b91c1c;">Batch failed before any style finished, or results were not recorded.</div>';
+        } else {
+            resultsContainer.innerHTML = '<div style="color:#6b7280;">No style result yet. Waiting for first style...</div>';
+        }
         return;
     }
 
@@ -1942,12 +2066,120 @@ function updateBatchProgress(status) {
     const completedStyles = Number(status.completed || 0);
     const progressPercent = totalStyles > 0 ? (completedStyles / totalStyles) * 100 : 0;
 
-    document.getElementById('progressBar').style.width = `${progressPercent}%`;
+    const bar = document.getElementById('progressBar');
+    bar.style.width = `${progressPercent}%`;
+    if (status.interrupted === true) {
+        bar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+    } else if (status.status === 'error') {
+        bar.style.background = 'linear-gradient(90deg, #ef4444, #b91c1c)';
+    } else {
+        bar.style.background = 'linear-gradient(90deg, #f6ad55, #f8b500)';
+    }
+
     document.getElementById('progressCount').textContent = `${completedStyles}/${totalStyles}`;
 
+    applyBatchOutcomeBanner(status);
     renderCurrentStyle(status);
     renderBatchResults(status);
     renderBatchBanner(status);
+    updateBatchRerunUi(status);
+}
+
+/**
+ * Full list from API when present; otherwise recover from older snapshots (current_sku / results).
+ */
+function inferSkusForRerun(status) {
+    if (!status) return [];
+    if (Array.isArray(status.skus) && status.skus.length > 0) {
+        return status.skus.map(function (s) { return String(s || '').trim().toUpperCase(); }).filter(Boolean);
+    }
+    var out = [];
+    var seen = {};
+    function push(s) {
+        var u = String(s || '').trim().toUpperCase();
+        if (u && !seen[u]) {
+            seen[u] = true;
+            out.push(u);
+        }
+    }
+    if (Array.isArray(status.results)) {
+        status.results.forEach(function (r) { push(r && r.sku); });
+    }
+    push(status.current_sku);
+    if (status.current_style && status.current_style.sku) {
+        push(status.current_style.sku);
+    }
+    return out;
+}
+
+function updateBatchRerunUi(status) {
+    const wrap = document.getElementById('batchRerunWrap');
+    const hint = document.getElementById('batchRerunHint');
+    const btn = document.getElementById('batchRerunBtn');
+    if (!wrap || !btn) return;
+    const skus = inferSkusForRerun(status);
+    window.__batchRerunSkus = skus;
+    if (status.interrupted !== true) {
+        wrap.style.display = 'none';
+        if (hint) hint.textContent = '';
+        return;
+    }
+    wrap.style.display = 'block';
+    var total = Number(status.total || 0);
+    if (skus.length > 0) {
+        btn.textContent =
+            'Rerun batch (' + skus.length + ' SKU' + (skus.length === 1 ? '' : 's') + ')';
+        if (hint) {
+            if (total > skus.length) {
+                hint.textContent =
+                    'Recovered ' +
+                    skus.length +
+                    ' SKU(s) from this snapshot (job had ' +
+                    total +
+                    ' styles). Rerun only covers recovered SKUs — use Batch Fetch to add any missing ones.';
+            } else {
+                hint.textContent = 'Starts a new job with the same ' + skus.length + ' SKU(s).';
+            }
+        }
+    } else {
+        btn.textContent = 'Open Batch Fetch (paste SKUs)';
+        if (hint) {
+            hint.textContent =
+                'No SKUs could be read from this snapshot. Open Batch Fetch and paste your list again.';
+        }
+    }
+}
+
+function handleBatchRerunOrOpenFetch() {
+    if ((window.__batchRerunSkus || []).length > 0) {
+        rerunInterruptedBatch();
+    } else {
+        closeBatchStatusModal();
+        openBatchFetchModal();
+    }
+}
+
+function maybeDesktopNotifyBatchComplete(status) {
+    if (!status || status.status !== 'completed' || status.interrupted === true) return;
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    var tid = status.task_id || '';
+    if (!tid) return;
+    if (window.__batchDesktopNotifiedId === tid) return;
+    window.__batchDesktopNotifiedId = tid;
+    var summ = status.summary || {};
+    var body =
+        (status.completed || 0) +
+        '/' +
+        (status.total || 0) +
+        ' styles — synced ' +
+        (summ.synced != null ? summ.synced : '?') +
+        ', failed ' +
+        (summ.failed != null ? summ.failed : '?');
+    try {
+        new Notification('China batch fetch completed', { body: 'Task ' + tid + '\n' + body });
+    } catch (e) {
+        /* ignore */
+    }
 }
 
 function openBatchFetchModal() {
@@ -1991,11 +2223,23 @@ async function pollBatchTaskStatusOnce() {
             return;
         }
 
+        const wasRunning = previousBatchWorkerRunning;
         const status = await response.json();
         status.task_id = status.task_id || batchTaskId;
         updateBatchProgress(status);
 
-        if (!isRunningStatus(status.status)) {
+        if (
+            wasRunning &&
+            !isBatchActivelyRunning(status) &&
+            status.status === 'completed' &&
+            status.interrupted !== true
+        ) {
+            maybeDesktopNotifyBatchComplete(status);
+        }
+
+        previousBatchWorkerRunning = isBatchActivelyRunning(status);
+
+        if (!isBatchActivelyRunning(status)) {
             if (batchTaskInterval) {
                 clearInterval(batchTaskInterval);
                 batchTaskInterval = null;
@@ -2010,6 +2254,7 @@ function startBatchPolling(taskId) {
     if (!taskId) return;
 
     batchTaskId = taskId;
+    previousBatchWorkerRunning = false;
 
     if (batchTaskInterval) {
         clearInterval(batchTaskInterval);
@@ -2032,6 +2277,14 @@ async function submitBatchFetch() {
     if (skus.length === 0) {
         alert('No valid SKUs found');
         return;
+    }
+
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        try {
+            Notification.requestPermission();
+        } catch (e) {
+            /* ignore */
+        }
     }
 
     closeBatchFetchModal();
@@ -2059,6 +2312,35 @@ async function submitBatchFetch() {
     }
 }
 
+async function rerunInterruptedBatch() {
+    const skus = window.__batchRerunSkus || [];
+    if (!skus.length) {
+        alert('No saved SKU list for this batch (older snapshots may not include it). Use Batch Fetch and paste your SKUs again.');
+        return;
+    }
+
+    openBatchStatusModal();
+
+    try {
+        const response = await fetch('/api/batch_fetch_china_ftp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skus: skus })
+        });
+
+        if (!response.ok) {
+            alert('Failed to start batch fetch');
+            return;
+        }
+
+        const data = await response.json();
+        batchTaskStartTime = Date.now();
+        startBatchPolling(data.task_id);
+    } catch (error) {
+        alert('Failed to start batch fetch: ' + error.message);
+    }
+}
+
 async function restoreLatestBatchStatus() {
     try {
         const response = await fetch('/api/batch_fetch_latest');
@@ -2076,18 +2358,163 @@ async function restoreLatestBatchStatus() {
 
         updateBatchProgress(latest);
 
-        if (latest.task_id && isRunningStatus(latest.status)) {
+        if (latest.task_id && isBatchActivelyRunning(latest)) {
             startBatchPolling(latest.task_id);
+        } else if (batchTaskInterval) {
+            clearInterval(batchTaskInterval);
+            batchTaskInterval = null;
         }
     } catch (error) {
         console.error('Failed to restore latest batch status:', error);
     }
 }
 
+function escapeHtmlBatch(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function batchHistoryStatusPill(t) {
+    if (t.is_running && !t.interrupted) {
+        return { text: 'Running', fg: '#1d4ed8', bg: '#dbeafe' };
+    }
+    if (t.interrupted) {
+        return { text: 'Interrupted', fg: '#b45309', bg: '#fef3c7' };
+    }
+    if (t.status === 'error') {
+        return { text: 'Failed', fg: '#b91c1c', bg: '#fee2e2' };
+    }
+    if (t.status === 'completed') {
+        return { text: 'Finished', fg: '#047857', bg: '#d1fae5' };
+    }
+    return { text: String(t.status || '—'), fg: '#374151', bg: '#f3f4f6' };
+}
+
+function renderBatchHistoryTable(tasks) {
+    const tbody = document.getElementById('batchHistoryTbody');
+    const emptyEl = document.getElementById('batchHistoryEmpty');
+    const wrap = document.getElementById('batchHistoryTableWrap');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!tasks || tasks.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        if (wrap) wrap.style.display = 'none';
+        return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (wrap) wrap.style.display = 'block';
+
+    tasks.forEach(function (t) {
+        const pill = batchHistoryStatusPill(t);
+        const summ = t.summary || {};
+        var prog =
+            (t.completed != null ? t.completed : '?') + '/' + (t.total != null ? t.total : '?');
+        var sumLine =
+            'sync ' +
+            (summ.synced != null ? summ.synced : '-') +
+            ' / fail ' +
+            (summ.failed != null ? summ.failed : '-') +
+            ' / have ' +
+            (summ.already_synced != null ? summ.already_synced : '-');
+        var ts = t.updated_at || t.finished_at || t.started_at || '';
+        var errHtml = '';
+        if (t.error) {
+            errHtml =
+                '<div style="color:#b91c1c;margin-top:0.25rem;">' +
+                escapeHtmlBatch(String(t.error).slice(0, 160)) +
+                '</div>';
+        }
+        var tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #f3f4f6';
+        tr.innerHTML =
+            '<td style="padding:0.5rem 0.75rem;"><span style="display:inline-block;padding:0.15rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:600;color:' +
+            pill.fg +
+            ';background:' +
+            pill.bg +
+            '">' +
+            escapeHtmlBatch(pill.text) +
+            '</span></td>' +
+            '<td style="padding:0.5rem 0.75rem;font-family:monospace;">' +
+            escapeHtmlBatch(t.task_id) +
+            '</td>' +
+            '<td style="padding:0.5rem 0.75rem;">' +
+            escapeHtmlBatch(prog) +
+            '</td>' +
+            '<td style="padding:0.5rem 0.75rem;font-size:0.8rem;color:#4b5563;">' +
+            escapeHtmlBatch(sumLine) +
+            errHtml +
+            '</td>' +
+            '<td style="padding:0.5rem 0.75rem;white-space:nowrap;font-size:0.8rem;">' +
+            escapeHtmlBatch(ts ? formatTimeStamp(ts) : '—') +
+            '</td>' +
+            '<td style="padding:0.5rem 0.75rem;text-align:right;"></td>';
+        var tdBtn = tr.querySelector('td:last-child');
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'search-btn';
+        b.style.cssText = 'padding:0.35rem 0.65rem;font-size:0.8rem;';
+        b.textContent = 'Details';
+        b.addEventListener('click', function () {
+            openBatchFromHistory(t.task_id);
+        });
+        if (tdBtn) tdBtn.appendChild(b);
+        tbody.appendChild(tr);
+    });
+}
+
+async function refreshBatchHistory() {
+    var meta = document.getElementById('batchHistoryMeta');
+    try {
+        var response = await fetch('/api/batch_fetch_history?days=3');
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        var data = await response.json();
+        var days = data.days != null ? data.days : 3;
+        if (meta) {
+            meta.textContent =
+                'Running and finished jobs from the last ' +
+                days +
+                ' days (by last activity). Cutoff UTC: ' +
+                (data.cutoff_utc || '') +
+                '.';
+        }
+        renderBatchHistoryTable(data.tasks || []);
+    } catch (e) {
+        console.error(e);
+        if (meta) meta.textContent = 'Could not load history.';
+        renderBatchHistoryTable([]);
+    }
+}
+
+function openBatchHistoryModal() {
+    var el = document.getElementById('batchHistoryModal');
+    if (el) {
+        el.style.display = 'flex';
+        refreshBatchHistory();
+    }
+}
+
+function closeBatchHistoryModal() {
+    var el = document.getElementById('batchHistoryModal');
+    if (el) el.style.display = 'none';
+}
+
+function openBatchFromHistory(taskId) {
+    if (!taskId) return;
+    closeBatchHistoryModal();
+    batchTaskId = taskId;
+    openBatchStatusModal();
+    startBatchPolling(taskId);
+}
+
 if (batchFetchBtnEl) batchFetchBtnEl.addEventListener('click', openBatchFetchModal);
 if (batchFetchCancelBtnEl) batchFetchCancelBtnEl.addEventListener('click', closeBatchFetchModal);
 if (batchFetchSubmitBtnEl) batchFetchSubmitBtnEl.addEventListener('click', submitBatchFetch);
 if (batchStatusCloseBtnEl) batchStatusCloseBtnEl.addEventListener('click', closeBatchStatusModal);
+const batchRerunBtnEl = document.getElementById('batchRerunBtn');
+if (batchRerunBtnEl) batchRerunBtnEl.addEventListener('click', handleBatchRerunOrOpenFetch);
 if (batchJobOpenStatusBtnEl) batchJobOpenStatusBtnEl.addEventListener('click', openBatchStatusModal);
 
 if (batchFetchModalEl) {
@@ -2102,6 +2529,21 @@ if (batchStatusModalEl) {
     batchStatusModalEl.addEventListener('click', function(e) {
         if (e.target.id === 'batchStatusModal') {
             closeBatchStatusModal();
+        }
+    });
+}
+
+var batchHistoryModalEl = document.getElementById('batchHistoryModal');
+var batchHistoryBtnEl = document.getElementById('batchHistoryBtn');
+var batchHistoryCloseBtnEl = document.getElementById('batchHistoryCloseBtn');
+var batchHistoryRefreshBtnEl = document.getElementById('batchHistoryRefreshBtn');
+if (batchHistoryBtnEl) batchHistoryBtnEl.addEventListener('click', openBatchHistoryModal);
+if (batchHistoryCloseBtnEl) batchHistoryCloseBtnEl.addEventListener('click', closeBatchHistoryModal);
+if (batchHistoryRefreshBtnEl) batchHistoryRefreshBtnEl.addEventListener('click', refreshBatchHistory);
+if (batchHistoryModalEl) {
+    batchHistoryModalEl.addEventListener('click', function (e) {
+        if (e.target.id === 'batchHistoryModal') {
+            closeBatchHistoryModal();
         }
     });
 }

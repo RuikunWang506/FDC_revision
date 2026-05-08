@@ -9,6 +9,7 @@ import os
 import re
 import smtplib
 import base64
+import threading
 from datetime import date, datetime, timedelta, timezone
 from email import policy
 from email.header import decode_header
@@ -16,6 +17,7 @@ from email.parser import BytesParser
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr, parseaddr, parsedate_to_datetime
+from html import unescape as html_unescape
 from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -29,6 +31,7 @@ from flask import (
     Blueprint,
     Response,
     abort,
+    current_app,
     flash,
     jsonify,
     redirect,
@@ -37,8 +40,9 @@ from flask import (
     session,
     url_for,
 )
+from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
-from imapclient import IMAPClient, SEEN
+from imapclient import DELETED, IMAPClient, SEEN
 
 from mysql.connector import Error as MySQLError
 
@@ -46,7 +50,55 @@ from py.utilities.database_utils import get_mysql_connection
 from py.utilities.setting import Config, login_required
 
 email_bp = Blueprint("email", __name__, url_prefix="/email")
+
+
+def _session_mail_allowed_account_ids() -> Optional[Set[int]]:
+    """None = all mailboxes; otherwise allowed mail_accounts.id values."""
+    from py.utilities.auth import get_user_permissions
+    from py.utilities.dashboard_permissions import mail_accounts_allowed_ids
+
+    uname = (session.get("username") or "").strip()
+    return mail_accounts_allowed_ids(get_user_permissions(uname), uname)
+
+
+def _require_mail_account_access(account_id: int) -> None:
+    allowed = _session_mail_allowed_account_ids()
+    if allowed is None:
+        return
+    try:
+        aid = int(account_id)
+    except (TypeError, ValueError):
+        abort(403)
+    if aid not in allowed:
+        abort(403)
 _MAIL_SCHEMA_READY = False
+
+
+class ImapMessageNotFoundError(Exception):
+    """IMAP inbox has no RFC822 for this UID (deleted/expunged or stale bookmark)."""
+
+
+def _inbox_return_suffix_from_view_ctx(
+    *,
+    show_full_folder: bool,
+    mail_group: str,
+    fdc_focus: str,
+    bol_focus: str,
+    show_landed: bool,
+    bt_mode: str,
+) -> str:
+    """Query string for redirecting back to inbox with the same lane/filters as the message view."""
+    return _inbox_query_suffix(
+        q="",
+        scope="current",
+        list_filter="",
+        all_in_folder=show_full_folder,
+        mail_group=mail_group or None,
+        fdc=fdc_focus or None,
+        bol=bol_focus or None,
+        show_landed=show_landed if mail_group == "container" else False,
+        bt_mode=bt_mode if mail_group in _BT_ROUTE_PICKUP_GROUPS else "route",
+    )
 
 # On-disk HTML / RFC822 mirrors under EMAIL_DATA_DIR: ~1 month; mail_message_meta rows pruned by inbox poll job.
 MAIL_LOCAL_RETENTION_DAYS = 31
@@ -60,6 +112,7 @@ _OPEN_BOAT_LANE_TS: float = 0.0
 _OPEN_BOAT_LANE_ROWS: List[Dict[str, Any]] = []
 _BOAT_LANE_MAIL_SCAN_TS: float = 0.0
 _BOAT_LANE_MAIL_SCAN_BLOBS: List[Dict[str, Any]] = []
+_EMAIL_BG_SYNC_LOCKS: Dict[int, threading.Lock] = {}
 
 # Sidebar "Allmail group": cross-mailbox IMAP merge + predicates (independent of per-inbox attachment filter).
 _ALLMAIL_GROUP_IDS = frozenset(
@@ -433,6 +486,36 @@ def _normalize_bt_mode(v: str) -> str:
     return "pickup" if s == "pickup" else "route"
 
 
+def format_mail_list_date(dt: Any) -> str:
+    """Compact inbox date: Today 11:10, Thu 19:26, Jan 8, 01/15/24 (local time, newest-first lists)."""
+    if dt is None:
+        return ""
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        dt = datetime.combine(dt, datetime.min.time())
+    if not isinstance(dt, datetime):
+        return ""
+    now = datetime.now()
+    d, n = dt.date(), now.date()
+    tpart = dt.strftime("%H:%M")
+    if d == n:
+        return f"Today {tpart}"
+    if d == n - timedelta(days=1):
+        return f"Yesterday {tpart}"
+    delta_days = (n - d).days
+    if delta_days < 0:
+        return dt.strftime("%m/%d/%y %H:%M")
+    if 0 < delta_days < 7:
+        return f"{dt.strftime('%a')} {tpart}"
+    if dt.year == now.year:
+        return f"{dt.strftime('%b')} {dt.day}"
+    return dt.strftime("%m/%d/%y")
+
+
+@email_bp.app_template_filter("mail_list_date")
+def _mail_list_date_filter(dt: Any) -> str:
+    return format_mail_list_date(dt)
+
+
 def _message_matches_bt_mode(row: Dict[str, Any], mode: str) -> bool:
     """
     route: keep routing/non-pickup mails
@@ -633,7 +716,7 @@ def _list_inbox_all_accounts_merged(
 ) -> List[Dict[str, Any]]:
     """Load recent inbox rows from every mail account and merge (newest first)."""
     merged: List[Dict[str, Any]] = []
-    for pub in _fetch_accounts_public():
+    for pub in _fetch_accounts_public(session_restricted=True):
         aid = int(pub["id"])
         sec = _fetch_account_secret(aid)
         if not sec:
@@ -816,16 +899,18 @@ def decrypt_secret(blob: bytes) -> str:
         ) from exc
 
 
-def _accounts_admin_required():
-    return session.get("username") == "yeti"
+def _accounts_admin_required() -> bool:
+    """Only the `yeti` user may see mail account management UI and /email/accounts/manage."""
+    u = (session.get("username") or "").strip().lower()
+    return u == "yeti"
 
 
 def accounts_admin_required(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
         if not _accounts_admin_required():
-            flash("Only yeti can manage mail accounts.")
-            return redirect(url_for("home"))
+            flash("Mail account management is only available to user yeti.")
+            return redirect(url_for("email.mailboxes"))
         return f(*args, **kwargs)
 
     return wrapped
@@ -981,7 +1066,7 @@ def _normalize_dt(val: Optional[datetime]) -> Optional[datetime]:
     return val
 
 
-def _fetch_accounts_public() -> List[Dict[str, Any]]:
+def _fetch_accounts_public(*, session_restricted: bool = False) -> List[Dict[str, Any]]:
     conn = get_mysql_connection()
     if not conn:
         return []
@@ -994,7 +1079,12 @@ def _fetch_accounts_public() -> List[Dict[str, Any]]:
             ORDER BY label ASC, id ASC
             """
         )
-        return list(cur.fetchall())
+        rows = list(cur.fetchall())
+        if session_restricted:
+            allowed = _session_mail_allowed_account_ids()
+            if allowed is not None:
+                rows = [r for r in rows if int(r.get("id") or 0) in allowed]
+        return rows
     finally:
         try:
             cur.close()
@@ -1066,16 +1156,81 @@ def _smtp_send(acc: Dict[str, Any], *, to_addrs: List[str], subject: str, body_t
 
 
 def _folder_flags_seen(flags) -> bool:
+    """True if IMAP FLAGS include \\Seen (case-insensitive; some servers vary)."""
     if not flags:
         return False
     try:
-        return SEEN in flags
-    except Exception:
-        for f in flags:
-            fs = f.decode("utf-8", errors="replace") if isinstance(f, bytes) else str(f)
-            if fs.endswith("Seen"):
+        if SEEN in flags:
+            return True
+    except (TypeError, ValueError):
+        pass
+    for f in flags:
+        if isinstance(f, bytes):
+            if f.lower() == br"\seen":
+                return True
+        else:
+            try:
+                s = str(f).lower()
+            except Exception:
+                continue
+            if s == r"\seen" or s.endswith(r"\seen"):
                 return True
     return False
+
+
+def _meta_is_read_by_uid(account_id: int, folder: str, uids: List[int]) -> Dict[int, bool]:
+    """Bulk-load is_read from mail_message_meta (fallback when FETCH omits FLAGS)."""
+    if account_id <= 0 or not uids:
+        return {}
+    uniq = sorted({int(u) for u in uids})
+    conn = get_mysql_connection()
+    if not conn:
+        return {}
+    cur = None
+    try:
+        cur = conn.cursor(dictionary=True)
+        ph = ",".join(["%s"] * len(uniq))
+        cur.execute(
+            f"""
+            SELECT imap_uid, is_read
+            FROM mail_message_meta
+            WHERE mail_account_id = %s AND folder = %s AND imap_uid IN ({ph})
+            """,
+            [account_id, folder] + uniq,
+        )
+        out: Dict[int, bool] = {}
+        for row in cur.fetchall():
+            try:
+                uid_i = int(row["imap_uid"])
+            except (TypeError, ValueError):
+                continue
+            out[uid_i] = bool(row.get("is_read"))
+        return out
+    except MySQLError:
+        return {}
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        conn.close()
+
+
+def _mark_open_message_read_in_list(
+    messages: List[Dict[str, Any]], account_id: int, uid: int
+) -> None:
+    """Sidebar list is built before open; sync row so the current message is not bold as unread."""
+    uid_i = int(uid)
+    aid = int(account_id)
+    for m in messages:
+        try:
+            mid = int(m["uid"])
+            maid = int(m.get("account_id") or aid)
+        except (TypeError, ValueError, KeyError):
+            continue
+        if mid == uid_i and maid == aid:
+            m["is_read"] = True
 
 
 def _imap_structure_has_attachment_disposition(obj) -> bool:
@@ -1828,7 +1983,7 @@ def _fetch_messages_for_mail_ui(
             _msgs_inner = list_container_group_from_cache(
                 limit=500, max_age_days=MAIL_COMBINED_INBOX_MAX_DAYS
             )
-            if not _msgs_inner and _fetch_accounts_public():
+            if not _msgs_inner and _fetch_accounts_public(session_restricted=True):
                 _msgs_inner = _list_inbox_all_accounts_merged(
                     recipient_strict=not show_full_folder,
                     since_days=MAIL_COMBINED_INBOX_MAX_DAYS,
@@ -1914,6 +2069,13 @@ def _fetch_messages_for_mail_ui(
                 m["account_label"] = acc.get("label")
             if not m.get("account_email"):
                 m["account_email"] = acc.get("email")
+    acl = _session_mail_allowed_account_ids()
+    if acl is not None:
+        messages = [
+            m
+            for m in messages
+            if int(m.get("account_id") or account_id) in acl
+        ]
     return messages
 
 
@@ -2027,6 +2189,10 @@ def list_inbox_messages(
         if len(uids) > limit:
             uids = uids[-limit:]
         fetched = client.fetch(uids, ["ENVELOPE", "FLAGS", "INTERNALDATE", "BODYSTRUCTURE"])
+        aid = int(acc.get("id") or 0)
+        meta_reads: Dict[int, bool] = (
+            _meta_is_read_by_uid(aid, folder, [int(u) for u in fetched.keys()]) if aid else {}
+        )
         rows: List[Dict[str, Any]] = []
         for uid, data in fetched.items():
             env = data.get(b"ENVELOPE")
@@ -2051,26 +2217,80 @@ def list_inbox_messages(
                         date_hdr = None
             mb_email = (acc.get("email") or "").strip()
             addressed_here = _envelope_recipient_fields_contain_mailbox(env, mb_email) if env else True
+            uid_i = int(uid)
+            if flags is not None:
+                is_read_imap = _folder_flags_seen(flags)
+            else:
+                # Some hosts omit FLAGS on combined FETCH; use cached DB \\Seen from prior opens.
+                is_read_imap = bool(meta_reads.get(uid_i, False))
             rows.append(
                 {
-                    "uid": int(uid),
+                    "uid": uid_i,
                     "subject": subject or "(no subject)",
                     "from_addr": from_s or "",
                     "internal_date": _normalize_dt(internal),
                     "header_date": _normalize_dt(date_hdr),
-                    "is_read": _folder_flags_seen(flags),
+                    "is_read": is_read_imap,
                     "message_id": msg_id.strip("<> ") if msg_id else "",
                     "has_attachments": has_att,
                     "addressed_here": addressed_here,
                 }
             )
-        rows.sort(key=lambda r: r["internal_date"] or datetime.min, reverse=True)
+        rows.sort(
+            key=lambda r: (
+                r["internal_date"] or r["header_date"] or datetime.min,
+                int(r["uid"]),
+            ),
+            reverse=True,
+        )
         return rows
     finally:
         try:
             client.logout()
         except Exception:
             pass
+
+
+def _sync_lock_for_account(aid: int) -> threading.Lock:
+    lk = _EMAIL_BG_SYNC_LOCKS.get(aid)
+    if lk is None:
+        lk = threading.Lock()
+        _EMAIL_BG_SYNC_LOCKS[aid] = lk
+    return lk
+
+
+def _schedule_imap_sync_prefetch_prune(
+    app: Any, account_id: int, *, skip_meta_backfill: bool = False
+) -> None:
+    """
+    Off-request: IMAP envelope/flags → DB, then body prefetch + prune.
+    skip_meta_backfill: set True when caller just ran backfill synchronously (cold inbox).
+    """
+    def _run() -> None:
+        with app.app_context():
+            try:
+                acc = _fetch_account_secret(account_id)
+                if not acc:
+                    return
+                lock = _sync_lock_for_account(account_id)
+                if not lock.acquire(blocking=False):
+                    return
+                try:
+                    if not skip_meta_backfill:
+                        backfill_recent_metadata(acc, days=31, max_messages=2500)
+                    msgs = _list_inbox_from_mail_meta(acc, limit=150)
+                    _prefetch_mail_bodies_for_poll(msgs, cap=MAIL_POLL_BODY_PREFETCH_CAP)
+                    prune_mail_message_meta_older_than(retention_days=MAIL_META_RETENTION_DAYS)
+                    try:
+                        prune_local_email_mirror_files(retention_days=MAIL_LOCAL_RETENTION_DAYS)
+                    except Exception:
+                        pass
+                finally:
+                    lock.release()
+            except Exception:
+                pass
+
+    threading.Thread(target=_run, daemon=True).start()
 
 
 def backfill_recent_metadata(
@@ -2102,6 +2322,8 @@ def backfill_recent_metadata(
             uids = uids[-max_messages:]
 
         fetched = client.fetch(uids, ["ENVELOPE", "FLAGS", "INTERNALDATE", "BODYSTRUCTURE"])
+        uid_keys = [int(u) for u in fetched.keys()]
+        meta_reads = _meta_is_read_by_uid(int(acc["id"]), folder, uid_keys)
         rows = []
         for uid, data in fetched.items():
             env = data.get(b"ENVELOPE")
@@ -2110,6 +2332,11 @@ def backfill_recent_metadata(
             bs = data.get(b"BODYSTRUCTURE")
             if not env:
                 continue
+            uid_i = int(uid)
+            if flags is not None:
+                ir = 1 if _folder_flags_seen(flags) else 0
+            else:
+                ir = 1 if meta_reads.get(uid_i, False) else 0
             subject = (_decode_mime_header(env.subject) or "")[:1024]
             from_addr = (_addresses_pretty(env.from_) or "")[:512]
             msg_id_b = getattr(env, "message_id", None)
@@ -2124,12 +2351,12 @@ def backfill_recent_metadata(
                 (
                     int(acc["id"]),
                     folder,
-                    int(uid),
+                    uid_i,
                     message_id or None,
                     subject or None,
                     from_addr or None,
                     _normalize_dt(internal),
-                    1 if _folder_flags_seen(flags) else 0,
+                    ir,
                     1 if _bodystructure_has_attachments(bs) else 0,
                     c_json,
                 )
@@ -2261,7 +2488,7 @@ def fetch_raw_message(acc: Dict[str, Any], uid: int, *, mark_seen: bool = False)
         client.select_folder(folder, readonly=not mark_seen)
         data = client.fetch([uid], ["RFC822"])
         if uid not in data or b"RFC822" not in data[uid]:
-            abort(404)
+            raise ImapMessageNotFoundError(f"no RFC822 for uid {uid} in folder {folder!r}")
         raw = bytes(data[uid][b"RFC822"])
         if aid:
             _persist_rfc822_local(aid, folder, int(uid), raw)
@@ -2289,6 +2516,67 @@ def mark_seen_on_server(acc: Dict[str, Any], uid: int) -> None:
             client.logout()
         except Exception:
             pass
+
+
+def delete_message_on_server(acc: Dict[str, Any], uid: int) -> None:
+    """Mark message \\Deleted on IMAP and expunge from the current inbox folder."""
+    folder = acc.get("inbox_folder") or "INBOX"
+    uid_i = int(uid)
+    client = _imap_connect(acc)
+    try:
+        client.select_folder(folder, readonly=False)
+        client.add_flags([uid_i], [DELETED])
+        client.expunge()
+    finally:
+        try:
+            client.logout()
+        except Exception:
+            pass
+
+
+def _delete_message_local_cache(account_id: int, folder: str, uid: int) -> None:
+    """Remove MySQL metadata and on-disk body / RFC822 mirrors for a message."""
+    uid_i = int(uid)
+    conn = get_mysql_connection()
+    if conn:
+        cur = None
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                DELETE FROM mail_message_meta
+                WHERE mail_account_id = %s AND folder = %s AND imap_uid = %s
+                """,
+                (account_id, folder, uid_i),
+            )
+            conn.commit()
+        except MySQLError:
+            pass
+        finally:
+            if cur is not None:
+                try:
+                    cur.close()
+                except Exception:
+                    pass
+            conn.close()
+    for path in (_rfc822_local_path(account_id, folder, uid_i), _cache_body_path(account_id, folder, uid_i)):
+        try:
+            if path.is_file():
+                path.unlink()
+        except OSError:
+            pass
+
+
+def _safe_inbox_return_suffix(raw: Optional[str]) -> str:
+    """Query string only (e.g. from hidden form field); blocks newline injection."""
+    s = (raw or "").strip()
+    if not s:
+        return ""
+    if not s.startswith("?"):
+        s = "?" + s.lstrip("?&")
+    if "\n" in s or "\r" in s:
+        return ""
+    return s
 
 
 def _stringify_addr_field(addr_field) -> str:
@@ -2490,6 +2778,59 @@ def _reply_seed_from_raw(raw: bytes) -> Dict[str, str]:
     if mid and not mid.startswith("<"):
         mid = f"<{mid}>"
     return {"to": to_addr, "subject": subj, "message_id": mid}
+
+
+def _html_to_plain_fallback(html: str) -> str:
+    """Strip tags for multipart/alternative text part (best-effort)."""
+    if not html:
+        return ""
+    t = re.sub(r"(?i)<br\s*/?>", "\n", html)
+    t = re.sub(r"(?i)</p\s*>", "\n\n", t)
+    t = re.sub(r"(?i)</div\s*>", "\n", t)
+    t = re.sub(r"<[^>]+>", "", t)
+    return html_unescape(t).strip()
+
+
+def _reply_compose_bundle_from_raw(raw: bytes, reply_uid: int) -> Dict[str, str]:
+    """Gmail-style reply: headers + HTML body with quoted original (sanitized)."""
+    seed = _reply_seed_from_raw(raw)
+    msg = BytesParser(policy=policy.default).parsebytes(raw)
+    mid_raw = (seed.get("message_id") or "").strip()
+    if mid_raw:
+        mid_bracket = mid_raw if mid_raw.startswith("<") else f"<{mid_raw.strip('<>')}>"
+    else:
+        mid_bracket = ""
+    refs_hdr = _header_get(msg, "References").strip()
+    if refs_hdr and mid_bracket:
+        references = f"{refs_hdr} {mid_bracket}".strip()
+    elif mid_bracket:
+        references = mid_bracket
+    else:
+        references = refs_hdr
+
+    _subj, quoted_inner, meta = parse_and_sanitize_mail(raw)
+    from_disp = str(meta.get("from") or "").strip()
+    date_disp = str(meta.get("date") or "").strip()
+    opener_plain = f"On {date_disp}, {from_disp} wrote:" if (date_disp or from_disp) else "Forwarded message:"
+    opener_safe = bleach.clean(opener_plain, tags=[], strip=True)
+    if not (quoted_inner or "").strip():
+        quoted_inner = "<p style=\"color:#666\">(No message body)</p>"
+
+    quoted_block = (
+        f'<div class="gmail_attr" style="color:#666;font-size:12.8px;margin:16px 0 8px 0">{opener_safe}</div>'
+        f'<blockquote type="cite" style="margin:0 0 0 0.8ex;border-left:1px solid #ccc;padding-left:1ex">'
+        f"{quoted_inner}"
+        f"</blockquote>"
+    )
+    body_html = f"<div><br></div><div><br></div>{quoted_block}"
+    return {
+        "to": seed.get("to") or "",
+        "subject": seed.get("subject") or "",
+        "in_reply_to": mid_bracket,
+        "references": references,
+        "reply_uid": str(int(reply_uid)),
+        "body_html": body_html,
+    }
 
 
 def _header_get(msg, name: str) -> str:
@@ -2798,7 +3139,7 @@ def search_cached_messages(
 @email_bp.route("")
 @login_required
 def mailboxes():
-    rows = _fetch_accounts_public()
+    rows = _fetch_accounts_public(session_restricted=True)
     allmail_nav_account_id: Optional[int] = None
     allmail_suffix_container = ""
     allmail_suffix_burlington = ""
@@ -2927,6 +3268,83 @@ def manage_accounts():
                     pass
                 cur = None
                 return redirect(url_for("email.manage_accounts"))
+            elif action == "update":
+                aid = request.form.get("account_id")
+                try:
+                    aid_int = int(aid)
+                except (TypeError, ValueError):
+                    aid_int = None
+                if not aid_int:
+                    flash("Invalid account.")
+                    return redirect(url_for("email.manage_accounts"))
+                label = (request.form.get("label") or "").strip()
+                email_a = (request.form.get("email") or "").strip()
+                pw = (request.form.get("password") or "").strip()
+                imap_host = (request.form.get("imap_host") or "imap.fatcow.com").strip()
+                smtp_host = (request.form.get("smtp_host") or "smtp.fatcow.com").strip()
+                try:
+                    imap_port = int(request.form.get("imap_port") or 993)
+                    smtp_port = int(request.form.get("smtp_port") or 465)
+                except ValueError:
+                    flash("Ports must be integers.")
+                    return redirect(url_for("email.manage_accounts"))
+                inbox_folder = (request.form.get("inbox_folder") or "INBOX").strip() or "INBOX"
+                if not label or not email_a:
+                    flash("Label and email are required.")
+                    return redirect(url_for("email.manage_accounts"))
+                cur = conn.cursor()
+                try:
+                    if pw:
+                        blob = encrypt_secret(pw)
+                        cur.execute(
+                            """
+                            UPDATE mail_accounts
+                            SET label=%s, email=%s, imap_host=%s, imap_port=%s,
+                                smtp_host=%s, smtp_port=%s, inbox_folder=%s, encrypted_password=%s
+                            WHERE id=%s
+                            """,
+                            (
+                                label,
+                                email_a,
+                                imap_host,
+                                imap_port,
+                                smtp_host,
+                                smtp_port,
+                                inbox_folder,
+                                blob,
+                                aid_int,
+                            ),
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            UPDATE mail_accounts
+                            SET label=%s, email=%s, imap_host=%s, imap_port=%s,
+                                smtp_host=%s, smtp_port=%s, inbox_folder=%s
+                            WHERE id=%s
+                            """,
+                            (
+                                label,
+                                email_a,
+                                imap_host,
+                                imap_port,
+                                smtp_host,
+                                smtp_port,
+                                inbox_folder,
+                                aid_int,
+                            ),
+                        )
+                    conn.commit()
+                    flash("Mailbox updated.")
+                except MySQLError as exc:
+                    conn.rollback()
+                    flash(f"Could not update mailbox (duplicate email?): {exc}")
+                finally:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+                return redirect(url_for("email.manage_accounts"))
             elif action == "delete":
                 aid = request.form.get("account_id")
                 try:
@@ -2972,6 +3390,7 @@ def inbox(account_id: int):
     acc = _fetch_account_secret(account_id)
     if not acc:
         abort(404)
+    _require_mail_account_access(account_id)
     q = (request.args.get("q") or "").strip()
     search_scope = (request.args.get("scope") or "current").strip().lower()
     if search_scope not in {"current", "all"}:
@@ -2981,7 +3400,6 @@ def inbox(account_id: int):
     mail_group = (request.args.get("mail_group") or "").strip().lower()
     if mail_group not in _ALLMAIL_GROUP_IDS:
         mail_group = ""
-    bt_mode = _normalize_bt_mode(request.args.get("bt_mode") or "")
     bt_mode = _normalize_bt_mode(request.args.get("bt_mode") or "")
     fdc_focus = _sanitize_lane_param(request.args.get("fdc") or "") if mail_group == "container" else ""
     bol_focus = _sanitize_lane_param(request.args.get("bol") or "") if mail_group == "container" else ""
@@ -3005,6 +3423,7 @@ def inbox(account_id: int):
             bt_mode=bt_mode if next_mg in _BT_ROUTE_PICKUP_GROUPS else "route",
         )
 
+    # Per-mailbox list from DB snapshot (fast); IMAP sync runs in a background thread.
     messages = _fetch_messages_for_mail_ui(
         account_id,
         acc,
@@ -3020,6 +3439,29 @@ def inbox(account_id: int):
         fdc_focus=fdc_focus,
         bol_focus=bol_focus,
     )
+    bg_skip_meta = False
+    if not mail_group and not messages and not q:
+        backfill_recent_metadata(acc, days=31, max_messages=1000)
+        messages = _fetch_messages_for_mail_ui(
+            account_id,
+            acc,
+            sidebar=False,
+            suppress_flash=False,
+            database_snapshot_only=True,
+            q=q,
+            search_scope=search_scope,
+            list_filter=list_filter,
+            show_full_folder=show_full_folder,
+            mail_group=mail_group,
+            bt_mode=bt_mode,
+            fdc_focus=fdc_focus,
+            bol_focus=bol_focus,
+        )
+        bg_skip_meta = True
+    if not mail_group:
+        _schedule_imap_sync_prefetch_prune(
+            current_app._get_current_object(), account_id, skip_meta_backfill=bg_skip_meta
+        )
     list_nav = "" if mail_group else list_filter
     inbox_nav_query = _inbox_query_suffix(
         q=q,
@@ -3146,7 +3588,7 @@ def inbox(account_id: int):
         inbox_header_title = "Combined inbox"
     else:
         inbox_header_title = "Inbox"
-    all_accounts = _fetch_accounts_public()
+    all_accounts = _fetch_accounts_public(session_restricted=True)
     return render_template(
         "email/email.html",
         current_user=session["username"],
@@ -3159,6 +3601,7 @@ def inbox(account_id: int):
         preview_html=None,
         preview_meta=None,
         reply_uid=None,
+        reply_compose=None,
         search_query=q,
         search_scope=search_scope,
         attachments=[],
@@ -3206,10 +3649,13 @@ def inbox(account_id: int):
 @email_bp.route("/<int:account_id>/inbox/poll")
 @login_required
 def inbox_poll(account_id: int):
-    """JSON inbox list for periodic refresh while the mail UI stays open."""
+    """JSON inbox list: fast DB snapshot for single mailbox; IMAP + body prefetch run in background."""
     acc = _fetch_account_secret(account_id)
     if not acc:
         return jsonify(ok=False, error="not_found"), 404
+    allowed = _session_mail_allowed_account_ids()
+    if allowed is not None and int(account_id) not in allowed:
+        return jsonify(ok=False, error="forbidden"), 403
     sidebar = request.args.get("sidebar") == "1"
     q = (request.args.get("q") or "").strip()
     search_scope = (request.args.get("scope") or "current").strip().lower()
@@ -3218,38 +3664,75 @@ def inbox_poll(account_id: int):
     mail_group = (request.args.get("mail_group") or "").strip().lower()
     if mail_group not in _ALLMAIL_GROUP_IDS:
         mail_group = ""
+    bt_mode = _normalize_bt_mode(request.args.get("bt_mode") or "")
     fdc_focus = _sanitize_lane_param(request.args.get("fdc") or "") if mail_group == "container" else ""
     bol_focus = _sanitize_lane_param(request.args.get("bol") or "") if mail_group == "container" else ""
 
-    messages = _fetch_messages_for_mail_ui(
-        account_id,
-        acc,
-        sidebar=sidebar,
-        suppress_flash=True,
-        database_snapshot_only=False,
-        q=q,
-        search_scope=search_scope,
-        list_filter=list_filter,
-        show_full_folder=show_full_folder,
-        mail_group=mail_group,
-        bt_mode=bt_mode,
-        fdc_focus=fdc_focus,
-        bol_focus=bol_focus,
-    )
-    bodies_prefetched = _prefetch_mail_bodies_for_poll(messages, cap=MAIL_POLL_BODY_PREFETCH_CAP)
-    meta_pruned = prune_mail_message_meta_older_than(retention_days=MAIL_META_RETENTION_DAYS)
-    try:
-        prune_local_email_mirror_files(retention_days=MAIL_LOCAL_RETENTION_DAYS)
-    except Exception:
-        pass
+    if mail_group:
+        messages = _fetch_messages_for_mail_ui(
+            account_id,
+            acc,
+            sidebar=sidebar,
+            suppress_flash=True,
+            database_snapshot_only=False,
+            q=q,
+            search_scope=search_scope,
+            list_filter=list_filter,
+            show_full_folder=show_full_folder,
+            mail_group=mail_group,
+            bt_mode=bt_mode,
+            fdc_focus=fdc_focus,
+            bol_focus=bol_focus,
+        )
+    else:
+        messages = _fetch_messages_for_mail_ui(
+            account_id,
+            acc,
+            sidebar=sidebar,
+            suppress_flash=True,
+            database_snapshot_only=True,
+            q=q,
+            search_scope=search_scope,
+            list_filter=list_filter,
+            show_full_folder=show_full_folder,
+            mail_group=mail_group,
+            bt_mode=bt_mode,
+            fdc_focus=fdc_focus,
+            bol_focus=bol_focus,
+        )
+        bg_skip_meta = False
+        if not messages and not q:
+            backfill_recent_metadata(acc, days=31, max_messages=1000)
+            messages = _fetch_messages_for_mail_ui(
+                account_id,
+                acc,
+                sidebar=sidebar,
+                suppress_flash=True,
+                database_snapshot_only=True,
+                q=q,
+                search_scope=search_scope,
+                list_filter=list_filter,
+                show_full_folder=show_full_folder,
+                mail_group=mail_group,
+                bt_mode=bt_mode,
+                fdc_focus=fdc_focus,
+                bol_focus=bol_focus,
+            )
+            bg_skip_meta = True
+        _schedule_imap_sync_prefetch_prune(
+            current_app._get_current_object(), account_id, skip_meta_backfill=bg_skip_meta
+        )
+
     payload = [_serialize_mail_row_for_poll(m, account_id) for m in messages]
     polled_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     return jsonify(
         ok=True,
         messages=payload,
         polled_at=polled_at,
-        bodies_prefetched=bodies_prefetched,
-        meta_pruned=meta_pruned,
+        bodies_prefetched=0,
+        meta_pruned=0,
+        list_source="db_snapshot" if not mail_group else "imap_merged",
+        sync_queued=not bool(mail_group),
     )
 
 
@@ -3259,8 +3742,9 @@ def view_message(account_id: int, uid: int):
     acc = _fetch_account_secret(account_id)
     if not acc:
         abort(404)
+    _require_mail_account_access(account_id)
     folder = acc.get("inbox_folder") or "INBOX"
-    all_accounts = _fetch_accounts_public()
+    all_accounts = _fetch_accounts_public(session_restricted=True)
     show_full_folder = request.args.get("all_in_folder") == "1"
     mail_group_vm = (request.args.get("mail_group") or "").strip().lower()
     if mail_group_vm not in _ALLMAIL_GROUP_IDS:
@@ -3301,6 +3785,29 @@ def view_message(account_id: int, uid: int):
         fdc_focus=fdc_focus_vm,
         bol_focus=bol_focus_vm,
     )
+    bg_skip_meta_vm = False
+    if not mail_group_vm and not messages:
+        backfill_recent_metadata(acc, days=31, max_messages=1000)
+        messages = _fetch_messages_for_mail_ui(
+            account_id,
+            acc,
+            sidebar=True,
+            suppress_flash=False,
+            database_snapshot_only=True,
+            q="",
+            search_scope="current",
+            list_filter="",
+            show_full_folder=show_full_folder,
+            mail_group=mail_group_vm,
+            bt_mode=bt_mode_vm,
+            fdc_focus=fdc_focus_vm,
+            bol_focus=bol_focus_vm,
+        )
+        bg_skip_meta_vm = True
+    if not mail_group_vm:
+        _schedule_imap_sync_prefetch_prune(
+            current_app._get_current_object(), account_id, skip_meta_backfill=bg_skip_meta_vm
+        )
     boat_lane_rows_vm: List[Dict[str, Any]] = []
     boat_lane_clear_suffix_vm = ""
     boat_lane_return_suffix_vm = ""
@@ -3391,8 +3898,13 @@ def view_message(account_id: int, uid: int):
     addressed_here = True
     preview_container_ids: List[str] = []
     preview_container_origin = ""
+    reply_compose: Optional[Dict[str, str]] = None
+    aid_vm = int(acc.get("id") or 0)
+    uid_i = int(uid)
+    cached_before = bool(aid_vm and _try_local_rfc822(aid_vm, folder, uid_i))
     try:
-        raw = fetch_raw_message(acc, uid)
+        raw = fetch_raw_message(acc, uid_i, mark_seen=True)
+        reply_compose = _reply_compose_bundle_from_raw(raw, uid_i)
         attachments = list_attachments_meta(raw)
         preview_subject, preview_html, preview_meta = parse_and_sanitize_mail(raw)
         if mail_group_vm == "burlington" and bt_mode_vm == "pickup":
@@ -3420,7 +3932,7 @@ def view_message(account_id: int, uid: int):
         upsert_message_cache(
             account_id,
             folder,
-            uid,
+            uid_i,
             message_id=str(preview_meta.get("message_id") or ""),
             subject=str(preview_meta.get("subject") or ""),
             from_addr=str(preview_meta.get("from") or ""),
@@ -3429,7 +3941,27 @@ def view_message(account_id: int, uid: int):
             body_html_sanitized=preview_html,
             has_attachments=len(attachments) > 0,
         )
-        update_read_db(account_id, folder, uid, True)
+        update_read_db(account_id, folder, uid_i, True)
+        if cached_before:
+            try:
+                mark_seen_on_server(acc, uid_i)
+            except Exception:
+                pass
+        _mark_open_message_read_in_list(messages, account_id, uid_i)
+    except ImapMessageNotFoundError:
+        _delete_message_local_cache(account_id, folder, uid_i)
+        flash("This message is no longer available (it may have been deleted).")
+        suffix = _inbox_return_suffix_from_view_ctx(
+            show_full_folder=show_full_folder,
+            mail_group=mail_group_vm,
+            fdc_focus=fdc_focus_vm,
+            bol_focus=bol_focus_vm,
+            show_landed=show_landed_vm,
+            bt_mode=bt_mode_vm,
+        )
+        return redirect(url_for("email.inbox", account_id=account_id) + suffix)
+    except HTTPException:
+        raise
     except Exception as exc:
         flash(f"Could not load message: {exc}")
 
@@ -3439,6 +3971,7 @@ def view_message(account_id: int, uid: int):
         accounts=all_accounts,
         active_account_id=account_id,
         active_account=_strip_secret(acc),
+        reply_compose=reply_compose,
         messages=messages,
         selected_uid=uid,
         preview_subject=preview_subject,
@@ -3525,7 +4058,11 @@ def download_attachment(account_id: int, uid: int, att_idx: int):
     acc = _fetch_account_secret(account_id)
     if not acc:
         abort(404)
-    raw = fetch_raw_message(acc, uid)
+    _require_mail_account_access(account_id)
+    try:
+        raw = fetch_raw_message(acc, uid)
+    except ImapMessageNotFoundError:
+        abort(404)
     got = get_attachment_by_index(raw, att_idx)
     if not got:
         abort(404)
@@ -3548,22 +4085,26 @@ def send_mail(account_id: int):
     acc = _fetch_account_secret(account_id)
     if not acc:
         abort(404)
-    all_accounts = _fetch_accounts_public()
+    _require_mail_account_access(account_id)
+    all_accounts = _fetch_accounts_public(session_restricted=True)
     reply_uid = request.args.get("reply", type=int)
 
-    defaults = {"to": "", "subject": "", "body": "", "reply_uid": reply_uid}
+    defaults = {"to": "", "subject": "", "body": "", "reply_uid": reply_uid, "body_format": "text"}
     extra_headers: Dict[str, str] = {}
 
     if request.method == "GET" and reply_uid:
         try:
             raw = fetch_raw_message(acc, reply_uid)
-            seed = _reply_seed_from_raw(raw)
-            defaults["subject"] = seed.get("subject") or defaults["subject"]
-            if seed.get("to"):
-                defaults["to"] = seed["to"]
-            if seed.get("message_id"):
-                extra_headers["In-Reply-To"] = seed["message_id"]
-                extra_headers["References"] = seed["message_id"]
+            bundle = _reply_compose_bundle_from_raw(raw, reply_uid)
+            defaults["subject"] = bundle.get("subject") or defaults["subject"]
+            if bundle.get("to"):
+                defaults["to"] = bundle["to"]
+            if bundle.get("in_reply_to"):
+                extra_headers["In-Reply-To"] = bundle["in_reply_to"]
+            if bundle.get("references"):
+                extra_headers["References"] = bundle["references"]
+            defaults["body"] = bundle.get("body_html") or defaults["body"]
+            defaults["body_format"] = "html"
         except Exception as exc:
             flash(f"Could not prepare reply: {exc}")
 
@@ -3571,6 +4112,7 @@ def send_mail(account_id: int):
         to_raw = (request.form.get("to") or "").strip()
         subject = (request.form.get("subject") or "").strip()
         body = request.form.get("body") or ""
+        body_format = (request.form.get("body_format") or "html").strip().lower()
         reply_uid_form = request.form.get("reply_uid", type=int)
         ir = (request.form.get("in_reply_to") or "").strip()
         refs = (request.form.get("references") or "").strip()
@@ -3587,16 +4129,36 @@ def send_mail(account_id: int):
                 hdrs["In-Reply-To"] = ir
             if refs:
                 hdrs["References"] = refs
-            safe_html = sanitize_html_fragment(f"<pre>{bleach.clean(body, tags=[], strip=True)}</pre>")
+            if body_format == "html":
+                safe_html = sanitize_html_fragment(body)
+                body_text = _html_to_plain_fallback(body) or _html_to_plain_fallback(safe_html)
+            else:
+                body_text = body
+                safe_html = sanitize_html_fragment(f"<pre>{bleach.clean(body, tags=[], strip=True)}</pre>")
             try:
-                _smtp_send(acc, to_addrs=to_addrs, subject=subject, body_text=body, html_body=safe_html, extra_headers=hdrs or None)
+                _smtp_send(
+                    acc,
+                    to_addrs=to_addrs,
+                    subject=subject,
+                    body_text=body_text,
+                    html_body=safe_html,
+                    extra_headers=hdrs or None,
+                )
                 flash("Message sent.")
                 if reply_uid_form:
                     return redirect(url_for("email.view_message", account_id=account_id, uid=reply_uid_form))
                 return redirect(url_for("email.inbox", account_id=account_id))
             except Exception as exc:
                 flash(f"Send failed: {exc}")
-        defaults.update({"to": to_raw, "subject": subject, "body": body, "reply_uid": reply_uid_form})
+        defaults.update(
+            {
+                "to": to_raw,
+                "subject": subject,
+                "body": body,
+                "reply_uid": reply_uid_form,
+                "body_format": body_format,
+            }
+        )
 
     return render_template(
         "email/send.html",
@@ -3615,6 +4177,7 @@ def boat_date_override(account_id: int):
     acc = _fetch_account_secret(account_id)
     if not acc:
         abort(404)
+    _require_mail_account_access(account_id)
     if (request.form.get("mail_group") or "").strip().lower() != "container":
         return redirect(url_for("email.inbox", account_id=account_id))
 
@@ -3681,6 +4244,7 @@ def mark_read(account_id: int, uid: int):
     acc = _fetch_account_secret(account_id)
     if not acc:
         abort(404)
+    _require_mail_account_access(account_id)
     folder = acc.get("inbox_folder") or "INBOX"
     try:
         mark_seen_on_server(acc, uid)
@@ -3689,4 +4253,22 @@ def mark_read(account_id: int, uid: int):
     except Exception as exc:
         flash(f"Could not mark read: {exc}")
     return redirect(request.referrer or url_for("email.inbox", account_id=account_id))
+
+
+@email_bp.route("/<int:account_id>/message/<int:uid>/delete", methods=["POST"])
+@login_required
+def delete_message(account_id: int, uid: int):
+    acc = _fetch_account_secret(account_id)
+    if not acc:
+        abort(404)
+    _require_mail_account_access(account_id)
+    folder = acc.get("inbox_folder") or "INBOX"
+    return_suffix = _safe_inbox_return_suffix(request.form.get("return_suffix"))
+    try:
+        delete_message_on_server(acc, uid)
+        _delete_message_local_cache(account_id, folder, uid)
+        flash("Message deleted.")
+    except Exception as exc:
+        flash(f"Could not delete message: {exc}")
+    return redirect(url_for("email.inbox", account_id=account_id) + return_suffix)
 

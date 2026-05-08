@@ -6,131 +6,179 @@
     <title>Mail — Compose</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
-        body { padding-top: 76px; background: #f4f7fb; }
-        .fdc-compose { max-width: 920px; }
-        .fdc-preview-wrap { display: none; }
-        .fdc-preview-wrap.show { display: block; }
-        .fdc-preview-frame { width: 100%; min-height: 320px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; }
+        body { padding-top: 76px; background: #e8eaed; min-height: 100vh; }
+        .fdc-send-hint { max-width: 640px; margin: 1rem auto; padding: 0 16px; }
+        .fdc-gmail-compose-root {
+            position: fixed;
+            right: 16px;
+            bottom: 0;
+            z-index: 2060;
+            width: min(100vw - 32px, 520px);
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.22));
+        }
+        .fdc-gmail-compose-root.fdc-gmail-compose-minimized .fdc-gmail-compose-body { display: none; }
+        .fdc-gmail-compose-root.fdc-gmail-compose-minimized { width: 280px; }
+        .fdc-gmail-compose-card {
+            background: #fff;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            border: 1px solid #dadce0;
+            border-bottom: none;
+        }
+        .fdc-gmail-compose-titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #404040;
+            color: #fff;
+            padding: 8px 10px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .fdc-gmail-compose-titlebar button {
+            background: transparent;
+            border: none;
+            color: #e8eaed;
+            font-size: 18px;
+            line-height: 1;
+            padding: 2px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .fdc-gmail-compose-titlebar button:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+        .fdc-gmail-compose-body { border-top: 1px solid #e8eaed; }
+        .fdc-gmail-compose-field {
+            border: none;
+            border-bottom: 1px solid #e8eaed;
+            border-radius: 0;
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+        .fdc-gmail-compose-field:focus { box-shadow: none; outline: none; }
+        .fdc-gmail-compose-toolbar {
+            padding: 4px 8px;
+            border-bottom: 1px solid #e8eaed;
+            background: #f8f9fa;
+            display: flex;
+            gap: 4px;
+        }
+        .fdc-gmail-compose-toolbar button {
+            border: none;
+            background: transparent;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #444;
+            cursor: pointer;
+        }
+        .fdc-gmail-compose-toolbar button:hover { background: #e8eaed; }
+        .fdc-compose-editor {
+            min-height: 220px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #202124;
+            outline: none;
+        }
+        .fdc-gmail-compose-footer { padding: 8px 12px; border-top: 1px solid #e8eaed; }
     </style>
 </head>
 <body>
 {% include 'navbar.html' %}
 
-<div class="container py-4 fdc-compose">
+<div class="fdc-send-hint">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-info">{{ message }}</div>
+                <div class="alert alert-info py-2">{{ message }}</div>
             {% endfor %}
         {% endif %}
     {% endwith %}
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Compose — {{ active_account.label }}</h4>
-        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('email.inbox', account_id=active_account_id) }}">Back to inbox</a>
+    <p class="text-muted small mb-0">Compose in the window at the bottom right — same as Gmail. <a href="{{ url_for('email.inbox', account_id=active_account_id) }}">Back to inbox</a></p>
+    <div class="card mt-3">
+        <div class="card-header py-2">From mailbox</div>
+        <div class="list-group list-group-flush">
+            {% for a in accounts %}
+                <a class="list-group-item list-group-item-action {% if a.id == active_account_id %}active{% endif %}"
+                   href="{{ url_for('email.send_mail', account_id=a.id) }}{% if defaults.reply_uid %}?reply={{ defaults.reply_uid }}{% endif %}">
+                    <div class="font-weight-bold">{{ a.label }}</div>
+                    <small class="{% if a.id == active_account_id %}text-white-50{% else %}text-muted{% endif %}">{{ a.email }}</small>
+                </a>
+            {% endfor %}
+        </div>
     </div>
+</div>
 
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-header py-2">Mailboxes</div>
-                <div class="list-group list-group-flush">
-                    {% for a in accounts %}
-                        <a class="list-group-item list-group-item-action {% if a.id == active_account_id %}active{% endif %}"
-                           href="{{ url_for('email.send_mail', account_id=a.id) }}">
-                            <div class="font-weight-bold">{{ a.label }}</div>
-                            <small class="{% if a.id == active_account_id %}text-white-50{% else %}text-muted{% endif %}">{{ a.email }}</small>
-                        </a>
-                    {% endfor %}
-                </div>
+<div id="fdc-gmail-compose-root" class="fdc-gmail-compose-root">
+    <div class="fdc-gmail-compose-card">
+        <div class="fdc-gmail-compose-titlebar">
+            <span id="fdc-gmail-compose-title">{% if defaults.reply_uid %}Reply{% else %}New message{% endif %}</span>
+            <div>
+                <button type="button" id="fdc-gmail-compose-minbtn" title="Minimize">&#8722;</button>
+                <a class="text-reset" style="text-decoration:none" href="{{ url_for('email.inbox', account_id=active_account_id) }}" title="Close">&times;</a>
             </div>
         </div>
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <form method="post">
-                        <input type="hidden" name="reply_uid" value="{{ defaults.reply_uid or '' }}">
-                        <input type="hidden" name="in_reply_to" value="{{ request.form.get('in_reply_to', hidden_headers.get('In-Reply-To', '')) }}">
-                        <input type="hidden" name="references" value="{{ request.form.get('references', hidden_headers.get('References', '')) }}">
-
-                        <div class="form-group">
-                            <label for="to">To</label>
-                            <input class="form-control" id="to" name="to" required value="{{ defaults.to }}">
-                            <small class="form-text text-muted">Separate multiple addresses with comma or semicolon.</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="subject">Subject</label>
-                            <input class="form-control" id="subject" name="subject" required value="{{ defaults.subject }}">
-                        </div>
-                        <div class="form-group">
-                            <label for="body">Message</label>
-                            <textarea class="form-control" id="body" name="body" rows="14">{{ defaults.body }}</textarea>
-                            <small class="form-text text-muted">Sent as plain text with an HTML-safe preview wrapper.</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <button type="submit" class="btn btn-primary mr-2">Send</button>
-                            <button type="button" class="btn btn-outline-secondary" id="previewBtn">Preview</button>
-                        </div>
-                    </form>
+        <div class="fdc-gmail-compose-body">
+            <form method="post" action="{{ url_for('email.send_mail', account_id=active_account_id) }}" id="fdc-gmail-compose-form" class="mb-0">
+                <input type="hidden" name="reply_uid" id="fdc-compose-reply-uid" value="{{ defaults.reply_uid or '' }}">
+                <input type="hidden" name="in_reply_to" value="{{ request.form.get('in_reply_to', hidden_headers.get('In-Reply-To', '')) }}">
+                <input type="hidden" name="references" value="{{ request.form.get('references', hidden_headers.get('References', '')) }}">
+                <input type="hidden" name="body_format" id="fdc-compose-body-format" value="{{ defaults.get('body_format', 'html') }}">
+                <input type="hidden" name="body" id="fdc-compose-body-hidden" value="">
+                <input type="text" class="form-control fdc-gmail-compose-field" name="to" id="fdc-compose-to" placeholder="To" required value="{{ defaults.to }}">
+                <input type="text" class="form-control fdc-gmail-compose-field" name="subject" id="fdc-compose-subject" placeholder="Subject" required value="{{ defaults.subject }}">
+                <div class="fdc-gmail-compose-toolbar">
+                    <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                    <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                    <button type="button" data-cmd="insertLineBreak" title="Line break">&#182;</button>
                 </div>
-            </div>
-            <div class="card mt-3 fdc-preview-wrap" id="previewWrap">
-                <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                    <span>Preview</span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="hidePreviewBtn">Hide</button>
+                <div id="fdc-compose-editor" class="fdc-compose-editor" contenteditable="true" role="textbox" aria-multiline="true"></div>
+                <div class="fdc-gmail-compose-footer">
+                    <button type="submit" class="btn btn-primary btn-sm">Send</button>
                 </div>
-                <div class="card-body">
-                    <iframe id="previewFrame" class="fdc-preview-frame" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"></iframe>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 <script>
-  (function () {
-    const bodyEl = document.getElementById('body');
-    const subjectEl = document.getElementById('subject');
-    const toEl = document.getElementById('to');
-    const previewBtn = document.getElementById('previewBtn');
-    const hideBtn = document.getElementById('hidePreviewBtn');
-    const wrap = document.getElementById('previewWrap');
-    const frame = document.getElementById('previewFrame');
-
-    function escapeHtml(input) {
-      return String(input || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+(function () {
+    var dock = document.getElementById('fdc-gmail-compose-root');
+    var form = document.getElementById('fdc-gmail-compose-form');
+    var editor = document.getElementById('fdc-compose-editor');
+    var initialBody = {{ (defaults.body or '') | tojson }};
+    var initialFmt = {{ (defaults.get('body_format') or 'html') | tojson }};
+    if (editor) {
+        if (initialFmt === 'html' && initialBody) {
+            editor.innerHTML = initialBody;
+        } else if (initialBody) {
+            editor.innerHTML = '<pre style="white-space:pre-wrap;font:inherit;margin:0">' +
+                String(initialBody).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+        } else {
+            editor.innerHTML = '<div><br></div>';
+        }
     }
-
-    function renderPreview() {
-      const safeSubject = escapeHtml(subjectEl ? subjectEl.value : '');
-      const safeTo = escapeHtml(toEl ? toEl.value : '');
-      const safeBody = escapeHtml(bodyEl ? bodyEl.value : '').replace(/\n/g, '<br>');
-      frame.srcdoc = `
-        <!doctype html>
-        <html><head><meta charset="utf-8"><style>
-          body{font-family:Arial,sans-serif;margin:14px;color:#111827}
-          .meta{font-size:12px;color:#6b7280;margin-bottom:12px}
-          .subject{font-size:18px;font-weight:600;margin-bottom:8px}
-          .box{border:1px solid #e5e7eb;border-radius:6px;padding:12px;line-height:1.5}
-        </style></head><body>
-          <div class="subject">${safeSubject || '(no subject)'}</div>
-          <div class="meta">To: ${safeTo || '(none)'}</div>
-          <div class="box">${safeBody || '<em>(empty message)</em>'}</div>
-        </body></html>
-      `;
-      wrap.classList.add('show');
-      wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    if (previewBtn) previewBtn.addEventListener('click', renderPreview);
-    if (hideBtn) hideBtn.addEventListener('click', function () {
-      wrap.classList.remove('show');
+    document.getElementById('fdc-gmail-compose-minbtn').addEventListener('click', function () {
+        dock.classList.toggle('fdc-gmail-compose-minimized');
     });
-  })();
+    form.addEventListener('submit', function () {
+        document.getElementById('fdc-compose-body-hidden').value = editor.innerHTML;
+        document.getElementById('fdc-compose-body-format').value = 'html';
+    });
+    document.querySelectorAll('.fdc-gmail-compose-toolbar button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var cmd = btn.getAttribute('data-cmd');
+            editor.focus();
+            if (cmd === 'insertLineBreak') {
+                document.execCommand('insertHTML', false, '<br>');
+            } else {
+                document.execCommand(cmd, false, null);
+            }
+        });
+    });
+})();
 </script>
 </body>
 </html>
