@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from flask import current_app
+
+from py.other import burlington_label_processor_db as blp_db
 
 RETENTION_DAYS = 5
 ORIGINAL_NAME = "original.pdf"
@@ -35,15 +36,27 @@ def _parse_created_at(value: str) -> datetime | None:
         return None
 
 
+def _job_has_pdfs(job_dir: Path) -> bool:
+    return (job_dir / PROCESSED_NAME).is_file() or (job_dir / ORIGINAL_NAME).is_file()
+
+
 def cleanup_old_jobs() -> int:
-    """Remove job folders older than RETENTION_DAYS. Returns count removed."""
+    """
+    After RETENTION_DAYS, remove only original/processed PDFs.
+    Job metadata is kept in MySQL for traceability.
+    Returns count of jobs whose PDFs were removed.
+    """
     cutoff = datetime.now(timezone.utc) - timedelta(days=RETENTION_DAYS)
     removed = 0
     for job_dir in _jobs_root().iterdir():
         if not job_dir.is_dir():
             continue
+        job_id = job_dir.name
+        if not _is_valid_job_id(job_id):
+            continue
         meta_path = job_dir / META_NAME
         created = None
+        meta: dict[str, Any] | None = None
         if meta_path.is_file():
             try:
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
@@ -52,9 +65,24 @@ def cleanup_old_jobs() -> int:
                 pass
         if created is None:
             created = datetime.fromtimestamp(job_dir.stat().st_mtime, tz=timezone.utc)
-        if created < cutoff:
-            shutil.rmtree(job_dir, ignore_errors=True)
-            removed += 1
+        if created >= cutoff:
+            continue
+        if meta:
+            blp_db.save_job_record(job_id, meta)
+        for name in (ORIGINAL_NAME, PROCESSED_NAME):
+            path = job_dir / name
+            if path.is_file():
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
+        if meta_path.is_file():
+            try:
+                meta_path.unlink()
+            except OSError:
+                pass
+        blp_db.mark_pdfs_removed(job_id)
+        removed += 1
     return removed
 
 
@@ -146,23 +174,40 @@ def save_job(
         json.dumps(meta, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    try:
+        blp_db.save_job_record(job_id, meta, parse_result=parse_result)
+    except Exception:
+        current_app.logger.exception("Failed to save burlington label job to database")
     return job_id
+
+
+def _meta_from_disk(job_dir: Path) -> dict[str, Any] | None:
+    meta_path = job_dir / META_NAME
+    if not meta_path.is_file():
+        return None
+    try:
+        return json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 def list_jobs(limit: int = 50) -> list[dict[str, Any]]:
     cleanup_old_jobs()
+    db_items = blp_db.list_job_summaries(limit=limit)
+    if db_items:
+        for item in db_items:
+            job_dir = _jobs_root() / str(item.get("id") or "")
+            item["pdfs_available"] = _job_has_pdfs(job_dir) if job_dir.is_dir() else False
+        return db_items
+
     items: list[dict[str, Any]] = []
     for job_dir in _jobs_root().iterdir():
         if not job_dir.is_dir():
             continue
-        meta_path = job_dir / META_NAME
-        if not meta_path.is_file():
+        meta = _meta_from_disk(job_dir)
+        if not meta:
             continue
-        try:
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if not (job_dir / PROCESSED_NAME).is_file():
+        if not _job_has_pdfs(job_dir):
             continue
         items.append(
             {
@@ -177,6 +222,7 @@ def list_jobs(limit: int = 50) -> list[dict[str, Any]]:
                 "bill_of_lading": meta.get("bill_of_lading") or [],
                 "page_count": meta.get("page_count"),
                 "output_page_count": meta.get("output_page_count"),
+                "pdfs_available": True,
             }
         )
     items.sort(key=lambda x: x.get("created_at") or "", reverse=True)
@@ -198,15 +244,11 @@ def _is_valid_job_id(job_id: str) -> bool:
 
 def load_job_meta(job_id: str) -> dict[str, Any] | None:
     job_dir = _job_dir(job_id)
-    if not job_dir:
-        return None
-    meta_path = job_dir / META_NAME
-    if not meta_path.is_file():
-        return None
-    try:
-        return json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
+    if job_dir:
+        meta = _meta_from_disk(job_dir)
+        if meta:
+            return meta
+    return blp_db.load_job_meta(job_id)
 
 
 def job_file_path(job_id: str, kind: str) -> Path | None:
@@ -218,10 +260,132 @@ def job_file_path(job_id: str, kind: str) -> Path | None:
     return path if path.is_file() else None
 
 
+def _order_id_candidates(order_number: str | int | None) -> set[str]:
+    raw = str(order_number or "").strip()
+    if not raw:
+        return set()
+    out = {raw}
+    if raw.isdigit():
+        n = int(raw)
+        if n < 10000:
+            out.add(str(n).zfill(4))
+        out.add(str(n).zfill(5))
+    return out
+
+
+def find_job_id_by_query(query: str) -> str | None:
+    """Resolve job id from DB, then on-disk meta (order / PO / BOL)."""
+    job_id = blp_db.find_job_id_by_query(query)
+    if job_id:
+        return job_id
+    return _find_job_id_on_disk_by_query(query)
+
+
+def _find_job_id_on_disk_by_query(query: str) -> str | None:
+    raw = str(query or "").strip()
+    if not raw:
+        return None
+    raw_upper = raw.upper()
+    order_candidates = _order_id_candidates(raw) if raw.isdigit() else {raw}
+
+    best_id: str | None = None
+    best_created: datetime | None = None
+    for job_dir in _jobs_root().iterdir():
+        if not job_dir.is_dir() or not _is_valid_job_id(job_dir.name):
+            continue
+        meta = _meta_from_disk(job_dir)
+        if not meta:
+            continue
+        matched = False
+        if order_candidates:
+            orders = {str(x).strip() for x in (meta.get("order_numbers") or [])}
+            for link in meta.get("po_links") or []:
+                if link.get("order_id"):
+                    orders.add(str(link["order_id"]).strip())
+            if order_candidates & orders:
+                matched = True
+        for po in meta.get("po_numbers") or []:
+            po_s = str(po).strip()
+            if po_s == raw or raw in po_s or po_s in raw:
+                matched = True
+                break
+        for link in meta.get("po_links") or []:
+            po_s = str(link.get("po") or "").strip()
+            if po_s == raw or raw in po_s:
+                matched = True
+                break
+        for bol in meta.get("bill_of_lading") or []:
+            bol_s = str(bol).strip().upper()
+            if bol_s == raw_upper or raw_upper in bol_s:
+                matched = True
+                break
+        if not matched:
+            continue
+        created = _parse_created_at(meta.get("created_at", "")) or datetime.fromtimestamp(
+            job_dir.stat().st_mtime, tz=timezone.utc
+        )
+        if best_created is None or created > best_created:
+            best_created = created
+            best_id = job_dir.name
+    return best_id
+
+
+def find_job_id_on_disk(
+    *,
+    order_number: str | int | None = None,
+    bol: str | None = None,
+) -> str | None:
+    """Find newest on-disk job meta matching order and/or BOL."""
+    order_candidates = _order_id_candidates(order_number)
+    bol_clean = str(bol or "").strip().upper()
+    if not order_candidates and not bol_clean:
+        return None
+
+    best_id: str | None = None
+    best_created: datetime | None = None
+    for job_dir in _jobs_root().iterdir():
+        if not job_dir.is_dir() or not re.fullmatch(r"[a-f0-9]{32}", job_dir.name):
+            continue
+        meta = _meta_from_disk(job_dir)
+        if not meta:
+            continue
+        matched = False
+        if order_candidates:
+            orders = {str(x).strip() for x in (meta.get("order_numbers") or [])}
+            for link in meta.get("po_links") or []:
+                if link.get("order_id"):
+                    orders.add(str(link["order_id"]).strip())
+            if order_candidates & orders:
+                matched = True
+        if bol_clean:
+            bols = {str(x).strip().upper() for x in (meta.get("bill_of_lading") or [])}
+            if bol_clean in bols:
+                matched = True
+            else:
+                for part in bol_clean.split(","):
+                    if part.strip() in bols:
+                        matched = True
+                        break
+        if not matched:
+            continue
+        created = _parse_created_at(meta.get("created_at", "")) or datetime.fromtimestamp(
+            job_dir.stat().st_mtime, tz=timezone.utc
+        )
+        if best_created is None or created > best_created:
+            best_created = created
+            best_id = job_dir.name
+    return best_id
+
+
 def delete_job(job_id: str) -> bool:
-    """Delete a saved job folder. Returns True if removed."""
+    """Delete a saved job folder and database record."""
+    removed = False
     job_dir = _job_dir(job_id)
-    if not job_dir:
-        return False
-    shutil.rmtree(job_dir, ignore_errors=True)
-    return not job_dir.exists()
+    if job_dir:
+        import shutil
+
+        shutil.rmtree(job_dir, ignore_errors=True)
+        removed = not job_dir.exists()
+    if blp_db.delete_job_record(job_id):
+        removed = True
+    return removed

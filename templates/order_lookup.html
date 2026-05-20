@@ -215,6 +215,17 @@
             font-weight: 500;
         }
 
+        a.bol-processor-link {
+            color: #2563eb !important;
+            text-decoration: underline !important;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        a.bol-processor-link:hover {
+            color: #1d4ed8 !important;
+        }
+
         .table-wrapper {
             background: white;
             border-radius: 15px;
@@ -252,6 +263,21 @@
             background-color: #f8f9fa;
             transform: scale(1.01);
             box-shadow: var(--shadow);
+        }
+
+        #items_table tfoot .items-summary-row th {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 14px 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        #items_table tfoot .items-summary-row th.text-right {
+            text-align: right;
+            padding-right: 20px;
         }
 
         .location-badge {
@@ -323,6 +349,14 @@
             color: white;
         }
 
+        .download-btn-warehouse {
+            background: linear-gradient(135deg, #b7791f, #d69e2e);
+        }
+
+        .download-btn-warehouse:hover {
+            color: white;
+        }
+
         .download-buttons-wrap {
             display: flex;
             flex-wrap: wrap;
@@ -362,6 +396,25 @@
             background: linear-gradient(135deg, #0d6e4f, #1a9c6e);
             border: none;
             font-weight: 700;
+        }
+
+        #etaFashionLabelModal .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        #etaFashionLabelModal .modal-header {
+            background: linear-gradient(135deg, #1a1a1a, #4a4a4a);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        #etaFashionLabelModal .btn-eta-submit {
+            background: linear-gradient(135deg, #1a1a1a, #4a4a4a);
+            border: none;
+            font-weight: 700;
+            color: white;
         }
 
         .success-badge {
@@ -715,7 +768,8 @@
     <div class="page-header">
         <div class="container">
             <h1 class="text-center mb-0">
-                <i class="fas fa-search mr-3"></i>Order Lookup System
+                <i class="fas fa-search mr-3"></i>
+                <a href="https://fdcef.com/order_lookup" style="color: inherit; text-decoration: none;">Order Lookup System</a>
             </h1>
         </div>
     </div>
@@ -878,10 +932,6 @@
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 }
                 
-                .sidebar-btn.reset-btn {
-                    background: linear-gradient(135deg, #ff0000, #ff6b6b);
-                }
-                
                 .sidebar-btn.label-btn {
                     background: linear-gradient(135deg, #ffd700, #ffed4e);
                     color: #333;
@@ -889,6 +939,16 @@
 
                 .sidebar-btn.ez-btn {
                     background: linear-gradient(135deg, #0d6e4f, #1a9c6e);
+                    color: white;
+                }
+
+                .sidebar-btn.bol-btn {
+                    background: linear-gradient(135deg, #2c5282, #4a6fa5);
+                    color: white;
+                }
+
+                .sidebar-btn.eta-label-btn {
+                    background: linear-gradient(135deg, #1a1a1a, #4a4a4a);
                     color: white;
                 }
                 
@@ -1045,13 +1105,6 @@
                     <div class="sidebar-section">
                         <div class="sidebar-section-title">Order Actions</div>
                         
-                        {% if items_html or labels_generated %}
-                        <button type="button" id="clearInputsBtn" class="sidebar-btn reset-btn">
-                            <i class="fas fa-redo-alt"></i>
-                            <span>Reset / Clear / 重置</span>
-                        </button>
-                        {% endif %}
-
                         {% if items_html and all_descriptions_have_dash %}
                         <button type="button" class="sidebar-btn label-btn" onclick="generateLabel()">
                             <i class="fas fa-barcode"></i>
@@ -1061,8 +1114,18 @@
                         {% if items_html and header_info %}
                         <button type="button" class="sidebar-btn ez-btn" id="ezLabelBtn" data-toggle="modal" data-target="#ezLabelModal"{% if ez_default_boxes %} data-default-boxes="{{ ez_default_boxes }}"{% endif %}>
                             <i class="fas fa-sticky-note"></i>
-                            <span>ez简易贴纸</span>
+                            <span>ez label简易贴纸</span>
                         </button>
+                        <button type="button" class="sidebar-btn bol-btn" id="createBolBtn">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Create BOL</span>
+                        </button>
+                        {% if header_info.customer_id|string == '00951' %}
+                        <button type="button" class="sidebar-btn eta-label-btn" id="etaFashionLabelBtn" data-toggle="modal" data-target="#etaFashionLabelModal"{% if ez_default_boxes %} data-default-boxes="{{ ez_default_boxes }}"{% endif %}>
+                            <i class="fas fa-tag"></i>
+                            <span>ETA Special Label</span>
+                        </button>
+                        {% endif %}
                         {% endif %}
                         
                         {% if header_info and header_info.customer_id|string == '01221' %}
@@ -1091,27 +1154,6 @@
                     {% endif %}
                 </div>
 
-                <script>
-                document.getElementById('clearInputsBtn').onclick = function() {
-                    document.getElementById('order_number').value = '';
-                    document.getElementById('po_number').value = '';
-                    var infoSections = [
-                        '.row.mb-4',
-                        '.table-wrapper',
-                        '.alert-custom',
-                        '.alert-info',
-                        '.download-section',
-                        '.success-badge',
-                        '.info-card'
-                    ];
-                    infoSections.forEach(function(selector) {
-                        var els = document.querySelectorAll(selector);
-                        els.forEach(function(el) {
-                            el.style.display = 'none';
-                        });
-                    });
-                };
-                </script>
             </form>
         </div>
 
@@ -1238,6 +1280,21 @@
                         <span class="info-value">{{ header_info.tracking_number }}</span>
                     </div>
                     {% endif %}
+
+                    {% if header_info.label_burlington_bol %}
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>BOL:</span>
+                        <span class="info-value">
+                            <a href="{{ header_info.label_burlington_url or url_for('burlington_label_processor.burlington_label_processor_page') }}"
+                               class="bol-processor-link"
+                               target="_blank"
+                               rel="noopener"
+                               title="Open Burlington label processor entry">
+                                {{ header_info.label_burlington_bol }} <i class="fas fa-external-link-alt fa-xs"></i>
+                            </a>
+                        </span>
+                    </div>
+                    {% endif %}
                     
                     {% if header_info.ship_address_1 or header_info.ship_address_2 or header_info.ship_address_3 or (header_info.ship_to_city and header_info.ship_to_city != 'N/A') %}
                     <div class="info-row" style="display: block;">
@@ -1304,7 +1361,7 @@
                     </div>
                     {% endif %}
                     
-                    {% if not (header_info.order_status and header_info.order_status != 'N/A') and not (header_info.priority and header_info.priority != 'N/A' and header_info.priority != 'Normal') and not (header_info.ship_method and header_info.ship_method != 'N/A') and not (header_info.tracking_number and header_info.tracking_number != 'N/A') and not (header_info.ship_to_city and header_info.ship_to_city != 'N/A') and not (header_info.attention and header_info.attention != 'N/A') and not (header_info.phone and header_info.phone != 'N/A') and not (header_info.email and header_info.email != 'N/A') and not header_info.locations %}
+                    {% if not (header_info.order_status and header_info.order_status != 'N/A') and not (header_info.priority and header_info.priority != 'N/A' and header_info.priority != 'Normal') and not (header_info.ship_method and header_info.ship_method != 'N/A') and not (header_info.tracking_number and header_info.tracking_number != 'N/A') and not header_info.label_burlington_bol and not (header_info.ship_to_city and header_info.ship_to_city != 'N/A') and not (header_info.attention and header_info.attention != 'N/A') and not (header_info.phone and header_info.phone != 'N/A') and not (header_info.email and header_info.email != 'N/A') and not header_info.locations %}
                     <div class="text-center p-3 text-muted">
                         <i class="fas fa-info-circle mr-2"></i>No shipping/status information available
                     </div>
@@ -1361,13 +1418,29 @@
                             <th><i class="fas fa-sort-numeric-up mr-1"></i>Qty</th>
                             <th><i class="fas fa-dollar-sign mr-1"></i>Price</th>
                             <th><i class="fas fa-box mr-1"></i>Per Box</th>
+                            <th><i class="fas fa-cubes mr-1"></i>Boxes</th>
                             <th><i class="fas fa-map-marker-alt mr-1"></i>Location</th>
                             <th><i class="fas fa-warehouse mr-1"></i>Stock</th>
+                            <th><i class="fas fa-weight-hanging mr-1"></i>Weight (lbs)</th>
                         </tr>
                     </thead>
                     <tbody>
                     {{ items_html | safe }}
                     </tbody>
+                    {% if items_total_qty is not none and items_total_boxes is not none %}
+                    <tfoot>
+                        <tr class="items-summary-row">
+                            <th colspan="3" class="text-right">Total</th>
+                            <th>{{ items_total_qty }}</th>
+                            <th></th>
+                            <th></th>
+                            <th>{{ items_total_boxes }}</th>
+                            <th></th>
+                            <th></th>
+                            <th>{% if items_total_weight is not none %}{{ '%.2f'|format(items_total_weight) }}{% endif %}</th>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
                 </table>
             </div>
         </div>
@@ -1403,6 +1476,9 @@
                 <a href="{{ url_for('download_label_pdf') }}" class="download-btn download-btn-pdf" target="_blank" rel="noopener">
                     <i class="fas fa-file-pdf mr-2"></i>PDF 单张打印版
                 </a>
+                <button type="button" id="printWarehouseLabelBtn" class="download-btn download-btn-warehouse" title="4×6 单张打印版 → warehouse printer">
+                    <i class="fas fa-print mr-2"></i>打印到 warehouse (4×6)
+                </button>
                 <a href="{{ url_for('download_label_pdf_4perpage') }}" class="download-btn download-btn-4up" target="_blank" rel="noopener">
                     <i class="fas fa-copy mr-2"></i>PDF 4per page 每页4张版
                 </a>
@@ -1553,7 +1629,15 @@
         }
 
         function generateLabel() {
-            document.getElementById('generateLabelForm').submit();
+            var form = document.getElementById('generateLabelForm');
+            var orderInput = document.getElementById('order_number');
+            if (form && orderInput) {
+                var hidden = form.querySelector('input[name="order_number"]');
+                if (hidden) {
+                    hidden.value = orderInput.value.trim();
+                }
+            }
+            form.submit();
             showOnlyHighlights = true;
             $('#info_list_table').DataTable().draw();
         }
@@ -1601,10 +1685,7 @@
                 newOrderStr = newOrderStr.substring(newOrderStr.length - digitLength);
             }
             
-            orderInput.value = newOrderStr;
-            
-            // Submit the form
-            document.getElementById('orderForm').submit();
+            window.location.href = '/order_lookup/' + encodeURIComponent(newOrderStr);
         }
 
         $('#toggleHighlights').on('click', function() {
@@ -1938,8 +2019,10 @@
                         { "width": "80px", "targets": 3 },  // Qty
                         { "width": "80px", "targets": 4 },  // Price
                         { "width": "80px", "targets": 5 },  // Per Box
-                        { "width": "120px", "targets": 6 }, // Location
-                        { "width": "90px", "targets": 7 }   // Stock
+                        { "width": "70px", "targets": 6 },  // Boxes
+                        { "width": "120px", "targets": 7 }, // Location
+                        { "width": "90px", "targets": 8 },  // Stock
+                        { "width": "90px", "targets": 9 }   // Weight (lbs)
                     ],
                     "initComplete": function() {
                         var table = $('#items_table').DataTable();
@@ -2043,7 +2126,7 @@
 
             function parseBoxesFromNotes(text) {
                 if (!text) return null;
-                const m = String(text).match(/(\d+)\s*boxes\b/i);
+                const m = String(text).match(/(\d+)\s*box(?:es)?\b/i);
                 if (!m) return null;
                 const n = parseInt(m[1], 10);
                 return n > 0 ? n : null;
@@ -2062,10 +2145,131 @@
                 }
                 if (boxes) {
                     $('#ezTotalBoxes').val(boxes);
+                } else {
+                    $('#ezTotalBoxes').val('');
                 }
             }
 
             $('#ezLabelModal').on('show.bs.modal', prefillEzLabelModal);
+
+            function prefillEtaFashionLabelModal() {
+                let boxes = null;
+                const notesEl = document.getElementById('order_notes');
+                if (notesEl && notesEl.value) {
+                    boxes = parseBoxesFromNotes(notesEl.value);
+                }
+                if (!boxes) {
+                    const btn = document.getElementById('etaFashionLabelBtn');
+                    const fromBtn = btn && btn.dataset.defaultBoxes ? parseInt(btn.dataset.defaultBoxes, 10) : null;
+                    if (fromBtn && fromBtn > 0) boxes = fromBtn;
+                }
+                if (boxes) {
+                    $('#etaFashionTotalBoxes').val(boxes);
+                } else {
+                    $('#etaFashionTotalBoxes').val('');
+                }
+            }
+
+            $('#etaFashionLabelModal').on('show.bs.modal', prefillEtaFashionLabelModal);
+
+            $('#etaFashionLabelSubmitBtn').on('click', async function() {
+                const totalBoxes = parseInt($('#etaFashionTotalBoxes').val(), 10);
+                if (!totalBoxes || totalBoxes < 1) {
+                    alert('Please enter total boxes (positive number).');
+                    return;
+                }
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Generating…');
+                try {
+                    const response = await fetch('{{ url_for("order_lookup.eta_fashion_label_from_order_lookup") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            total_boxes: totalBoxes,
+                            order_number: ($('#order_number').val() || '{{ header_info.order_number if header_info else "" }}').trim()
+                        })
+                    });
+                    if (!response.ok) {
+                        let msg = 'Failed to generate special label PDF.';
+                        try {
+                            const err = await response.json();
+                            if (err && err.error) msg = err.error;
+                        } catch (e) { /* ignore */ }
+                        throw new Error(msg);
+                    }
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    $('#etaFashionLabelModal').modal('hide');
+                    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                } catch (err) {
+                    alert(err.message || 'Failed to generate special labels.');
+                } finally {
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+
+            $('#printWarehouseLabelBtn').on('click', async function() {
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Printing…');
+                try {
+                    const response = await fetch('{{ url_for("print_label_pdf_warehouse") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || !data.ok) {
+                        throw new Error((data && data.error) || 'Failed to print labels.');
+                    }
+                    $btn.removeClass('download-btn-warehouse').addClass('btn-success')
+                        .html('<i class="fas fa-check mr-2"></i>Sent to printer');
+                    setTimeout(function() {
+                        $btn.removeClass('btn-success').addClass('download-btn-warehouse').html(originalHtml);
+                        $btn.prop('disabled', false);
+                    }, 2500);
+                    return;
+                } catch (err) {
+                    alert(err.message || 'Failed to print to warehouse printer.');
+                } finally {
+                    if (!$btn.hasClass('btn-success')) {
+                        $btn.prop('disabled', false).html(originalHtml);
+                    }
+                }
+            });
+
+            $('#createBolBtn').on('click', async function() {
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i><span>Creating BOL…</span>');
+                try {
+                    const response = await fetch('{{ url_for("order_lookup.bol_from_order_lookup") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            order_number: ($('#order_number').val() || '{{ header_info.order_number if header_info else "" }}').trim()
+                        })
+                    });
+                    if (!response.ok) {
+                        let msg = 'Failed to generate BOL PDF.';
+                        try {
+                            const err = await response.json();
+                            if (err && err.error) msg = err.error;
+                        } catch (e) { /* ignore */ }
+                        throw new Error(msg);
+                    }
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                } catch (err) {
+                    alert(err.message || 'Failed to generate BOL.');
+                } finally {
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
 
             $('#ezLabelSubmitBtn').on('click', async function() {
                 const service = ($('#ezShippingService').val() || '').trim();
@@ -2085,7 +2289,11 @@
                     const response = await fetch('{{ url_for("ez_label_from_order_lookup") }}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ service: service, total_boxes: totalBoxes })
+                        body: JSON.stringify({
+                            service: service,
+                            total_boxes: totalBoxes,
+                            order_number: ($('#order_number').val() || '{{ header_info.order_number if header_info else "" }}').trim()
+                        })
                     });
                     if (!response.ok) {
                         let msg = 'Failed to generate ez label PDF.';
@@ -2187,6 +2395,37 @@
             }
         });
     </script>
+    {% if items_html and header_info and header_info.customer_id|string == '00951' %}
+    <div class="modal fade" id="etaFashionLabelModal" tabindex="-1" role="dialog" aria-labelledby="etaFashionLabelModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="etaFashionLabelModalTitle">
+                        <i class="fas fa-tag mr-2"></i>[special Label] — ETA Fashion
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-0">
+                        <label for="etaFashionTotalBoxes"><strong>Total boxes</strong></label>
+                        <input type="number" class="form-control" id="etaFashionTotalBoxes" min="1" step="1" placeholder="10" required>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        US Letter (8.5×11): four 8.5×2.75 labels per page. Vendor prefilled FDC; box numbers 1 through total.
+                    </small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-eta-submit" id="etaFashionLabelSubmitBtn">
+                        <i class="fas fa-file-pdf mr-1"></i>Submit &amp; open PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     {% if items_html and header_info %}
     <div class="modal fade" id="ezLabelModal" tabindex="-1" role="dialog" aria-labelledby="ezLabelModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -2210,7 +2449,7 @@
                     </div>
                     <small class="text-muted d-block mt-2">
                         Portrait 4×6 labels: FDC logo, 827 address, service, ship-to, box count.
-                        Total boxes is prefilled from order notes (e.g. <em>30 boxes</em>).
+                        Total boxes is prefilled from order notes (e.g. <em>1 box</em> or <em>30 boxes</em>).
                     </small>
                 </div>
                 <div class="modal-footer">

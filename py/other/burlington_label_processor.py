@@ -19,11 +19,13 @@ from py.order.order_search import find_order_number_by_po
 from py.utilities.setting import Config
 from py.other.burlington_label_processor_storage import (
     delete_job,
+    find_job_id_by_query,
     job_file_path,
     list_jobs,
     load_job_meta,
     save_job,
 )
+from py.other.boat_container_lookup import enrich_sku_rows_with_container
 from py.other.label_status import mark_burlington_labels
 from py.utilities.setting import login_required
 
@@ -40,6 +42,12 @@ SUMMARY_HEADERS = ("PO #", "Order", "Pages", "Styles", "Total Qty")
 SUMMARY_COL_WEIGHTS = (0.26, 0.14, 0.10, 0.34, 0.16)
 SUMMARY_MARGIN_PT = 10.0
 SUMMARY_TITLE_PT = 11.0
+
+PO_GRID_6X4_W_PT = 6 * INCH_PT
+PO_GRID_6X4_H_PT = 4 * INCH_PT
+PO_GRID_HEADERS = ("PO #", "Order", "Invoice", "Boxes", "Notes", "Styles", "Stock", "Ocean", "Total")
+PO_GRID_MARGIN_PT = 8.0
+PO_GRID_TITLE_PT = 9.0
 
 
 def _crop_single_page(page, page_num: int) -> PageObject:
@@ -279,6 +287,244 @@ def _draw_summary_table_page(
             x += col_widths[i]
 
 
+def _po_grid_notes_raw(notes: str) -> str:
+    return (notes or "").replace("\u00a0", " ").strip()
+
+
+def _po_grid_is_invoice_ready(entry: dict) -> bool:
+    """Same as UI green row: not invoiced and has order notes."""
+    if entry.get("invoice_status") != "not_invoiced":
+        return False
+    raw = _po_grid_notes_raw(str(entry.get("order_notes") or ""))
+    return bool(raw) and raw not in ("—", "-")
+
+
+def _po_grid_invoice_text(entry: dict) -> str:
+    inv = entry.get("invoice_status")
+    if inv == "invoiced":
+        num = entry.get("invoice_number")
+        return f"Inv #{num}" if num else "Invoiced"
+    if inv == "not_invoiced":
+        if _po_grid_is_invoice_ready(entry):
+            return "(rdy)"
+        return "Not Inv"
+    return "—"
+
+
+def _po_grid_notes_for_label(notes: str) -> str:
+    """
+    Keep location only: drop box-count prefix.
+    Supports '67 boxes■■L-4', '70 boxes L-1', '70 BOXES L-5', etc.
+    """
+    raw = _po_grid_notes_raw(notes)
+    if not raw or raw in ("—", "-"):
+        return ""
+    square_sep = re.search(r"[\u25a0\u2588\uf0a7\uf0a8]{2,}|■■", raw)
+    if square_sep:
+        after = raw[square_sep.end() :].strip()
+        return after
+    box_loc = re.match(r"^\d+\s+boxes?\s+(.+)$", raw, re.I)
+    if box_loc:
+        return box_loc.group(1).strip()
+    if re.fullmatch(r"\d+\s*boxes?\b", raw, re.I):
+        return ""
+    if re.search(r"\bbox(es)?\b", raw, re.I):
+        return ""
+    return raw
+
+
+def _po_grid_truncate(text: str, max_len: int) -> str:
+    t = (text or "").strip()
+    if len(t) <= max_len:
+        return t or "—"
+    return t[: max_len - 1] + "…"
+
+
+def _overview_rows_for_po_grid(po_overview: list[dict]) -> list[tuple[str, ...]]:
+    rows: list[tuple[str, ...]] = []
+    for entry in po_overview:
+        po = entry.get("po") or ""
+        if not po or po == "(no PO)":
+            continue
+        if not _po_grid_is_invoice_ready(entry):
+            continue
+        notes_label = _po_grid_notes_for_label(str(entry.get("order_notes") or ""))
+        if not notes_label:
+            continue
+        rows.append(
+            (
+                str(po),
+                str(entry.get("order_id") or "—"),
+                _po_grid_invoice_text(entry),
+                str(entry.get("page_count") or ""),
+                _po_grid_truncate(notes_label, 36),
+                _po_grid_truncate(str(entry.get("styles") or "—"), 28),
+                str(
+                    entry.get("warehouse_qty_total")
+                    if entry.get("warehouse_qty_total") is not None
+                    else "—"
+                ),
+                str(
+                    entry.get("ocean_qty_total")
+                    if entry.get("ocean_qty_total") is not None
+                    else "—"
+                ),
+                str(entry.get("total_qty") or ""),
+            )
+        )
+    return rows
+
+
+def _column_widths_for_po_grid(
+    c: canvas.Canvas,
+    headers: tuple[str, ...],
+    rows: list[tuple[str, ...]],
+    font_size: float,
+    table_w: float,
+) -> list[float]:
+    font = "Helvetica"
+    font_bold = "Helvetica-Bold"
+    raw: list[float] = []
+    for col_idx, header in enumerate(headers):
+        c.setFont(font_bold, font_size)
+        w = c.stringWidth(header, font_bold, font_size) + 6
+        c.setFont(font, font_size)
+        for row in rows:
+            if col_idx < len(row):
+                w = max(w, c.stringWidth(str(row[col_idx]), font, font_size) + 6)
+        raw.append(max(w, 18.0))
+    total = sum(raw) or 1.0
+    return [table_w * (w / total) for w in raw]
+
+
+def _pick_po_grid_layout(
+    c: canvas.Canvas,
+    headers: tuple[str, ...],
+    rows: list[tuple[str, ...]],
+) -> tuple[float, list[list[tuple[str, ...]]], list[float], float, float]:
+    margin = PO_GRID_MARGIN_PT
+    table_w = PO_GRID_6X4_W_PT - (2 * margin)
+    usable_h = PO_GRID_6X4_H_PT - (2 * margin) - PO_GRID_TITLE_PT - 6
+    if not rows:
+        return 7.0, [[]], _column_widths_for_po_grid(c, headers, rows, 7.0, table_w), 10.0, 11.0
+
+    for font_size in (7.0, 6.5, 6.0, 5.5, 5.0, 4.5, 4.0, 3.5, 3.0):
+        row_h = font_size * 1.32
+        header_h = font_size * 1.45
+        col_widths = _column_widths_for_po_grid(c, headers, rows, font_size, table_w)
+        max_rows = int((usable_h - header_h) // row_h) if row_h > 0 else 0
+        if max_rows < 1:
+            continue
+        if len(rows) <= max_rows:
+            return font_size, [rows], col_widths, row_h, header_h
+        chunks = [rows[i : i + max_rows] for i in range(0, len(rows), max_rows)]
+        return font_size, chunks, col_widths, row_h, header_h
+
+    font_size = 3.0
+    row_h = font_size * 1.32
+    header_h = font_size * 1.45
+    col_widths = _column_widths_for_po_grid(c, headers, rows, font_size, table_w)
+    max_rows = max(1, int((usable_h - header_h) // row_h))
+    chunks = [rows[i : i + max_rows] for i in range(0, len(rows), max_rows)]
+    return font_size, chunks, col_widths, row_h, header_h
+
+
+def _draw_po_grid_table_page(
+    c: canvas.Canvas,
+    headers: tuple[str, ...],
+    rows: list[tuple[str, ...]],
+    *,
+    col_widths: list[float],
+    font_size: float,
+    row_h: float,
+    header_h: float,
+    page_index: int,
+    page_total: int,
+) -> None:
+    w, h = PO_GRID_6X4_W_PT, PO_GRID_6X4_H_PT
+    margin = PO_GRID_MARGIN_PT
+    table_w = sum(col_widths)
+    font = "Helvetica"
+    font_bold = "Helvetica-Bold"
+
+    title = "All PO Numbers"
+    if page_total > 1:
+        title += f" ({page_index}/{page_total})"
+    c.setFont(font_bold, PO_GRID_TITLE_PT)
+    c.drawCentredString(w / 2, h - margin - PO_GRID_TITLE_PT, title)
+
+    y_top = h - margin - PO_GRID_TITLE_PT - 6
+    y = y_top - header_h
+
+    c.setFillColor(colors.HexColor("#e8eef5"))
+    c.rect(margin, y, table_w, header_h, fill=1, stroke=0)
+    c.setFillColor(colors.black)
+    c.setStrokeColor(colors.HexColor("#94a3b8"))
+    c.setLineWidth(0.5)
+
+    x = margin
+    for i, label in enumerate(headers):
+        cell = _fit_cell_text(c, label, col_widths[i] - 4, font_bold, font_size)
+        c.drawString(x + 2, y + (header_h - font_size) / 2, cell)
+        if i > 0:
+            c.line(x, y, x, y + header_h)
+        x += col_widths[i]
+    c.line(margin, y, margin + table_w, y)
+    c.line(margin + table_w, y, margin + table_w, y + header_h)
+
+    c.setFont(font, font_size)
+    for row_idx, row in enumerate(rows):
+        y -= row_h
+        if row_idx % 2 == 1:
+            c.setFillColor(colors.HexColor("#f6f8fa"))
+            c.rect(margin, y, table_w, row_h, fill=1, stroke=0)
+        c.setFillColor(colors.black)
+        c.rect(margin, y, table_w, row_h, fill=0, stroke=1)
+        x = margin
+        for i, value in enumerate(row):
+            if i > 0:
+                c.line(x, y, x, y + row_h)
+            cell = _fit_cell_text(c, value, col_widths[i] - 4, font, font_size)
+            c.drawString(x + 2, y + (row_h - font_size) / 2, cell)
+            x += col_widths[i]
+        c.line(margin + table_w, y, margin + table_w, y + row_h)
+
+
+def _render_po_grid_6x4_pdf_bytes(po_overview: list[dict]) -> bytes:
+    rows = _overview_rows_for_po_grid(po_overview)
+    if not rows:
+        raise ValueError(
+            "No invoice-ready POs to print (need (rdy) with location, e.g. after boxes or ■■)."
+        )
+
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=(PO_GRID_6X4_W_PT, PO_GRID_6X4_H_PT))
+    font_size, chunks, col_widths, row_h, header_h = _pick_po_grid_layout(
+        c, PO_GRID_HEADERS, rows
+    )
+    total = len(chunks)
+    drawn = 0
+    for idx, chunk in enumerate(chunks, start=1):
+        if not chunk:
+            continue
+        if drawn:
+            c.showPage()
+        _draw_po_grid_table_page(
+            c,
+            PO_GRID_HEADERS,
+            chunk,
+            col_widths=col_widths,
+            font_size=font_size,
+            row_h=row_h,
+            header_h=header_h,
+            page_index=idx,
+            page_total=total,
+        )
+        drawn += 1
+    c.save()
+    return buf.getvalue()
+
+
 def _render_summary_label_pdf_bytes(
     chunks: list[list[tuple[str, ...]]],
     font_size: float,
@@ -466,46 +712,52 @@ def _sku_key(style: str, color: str) -> str:
     return f"{style}-{color}"
 
 
-def _canonical_sku_for_lookup(sku: str) -> str:
-    """Normalize to dashed PROD_CD form (e.g. N2612 BK -> N2612-BK)."""
+def _sku_match_key(sku: str) -> str:
+    """Normalize SKU for comparison (dash and space equivalent: T3770-TN == T3770 TN)."""
+    return re.sub(r"[\s\-]+", " ", (sku or "").replace("\u00a0", " ").strip().upper())
+
+
+def _prod_cd_for_lookup(sku: str) -> str:
+    """Normalize to OMS PROD_CD form with space (e.g. T3770-TN -> T3770 TN)."""
     s = (sku or "").replace("\u00a0", " ").strip().upper()
     if not s:
         return s
-    if "-" in s:
-        return s
-    parts = s.split(None, 1)
-    if len(parts) == 2 and parts[1]:
-        return f"{parts[0]}-{parts[1]}"
+    if "-" in s and " " not in s:
+        style, _, color = s.partition("-")
+        if color:
+            return f"{style} {color}".strip()
     return s
 
 
 def _fetch_sku_inventory_for_label_skus(skus: list[str]) -> dict[str, dict[str, int]]:
-    """Per-SKU inventory using product detail search (PROD_CD with dash)."""
-    styles_to_skus: dict[str, set[str]] = defaultdict(set)
-    for sku in skus:
-        canon = _canonical_sku_for_lookup(sku)
-        if not canon or "-" not in canon:
-            continue
-        style_part = canon.split("-", 1)[0]
-        styles_to_skus[style_part].add(canon.lower())
+    """Per-SKU inventory using product detail search (PROD_CD with space)."""
+    wanted = {_sku_match_key(sku) for sku in skus if _sku_match_key(sku)}
+    if not wanted:
+        return {}
 
     inventory: dict[str, dict[str, int]] = {}
-    for style, wanted in styles_to_skus.items():
+    seen_search: set[str] = set()
+    for sku in skus:
+        prod_cd = _prod_cd_for_lookup(sku)
+        search_term = prod_cd.lower()
+        if not search_term or search_term in seen_search:
+            continue
+        seen_search.add(search_term)
         try:
-            groups = search_product_data(style.lower()) or []
+            groups = search_product_data(search_term) or []
         except Exception as e:
             current_app.logger.error(
-                "Inventory search failed for style %s: %s", style, e
+                "Inventory search failed for %s: %s", prod_cd, e
             )
             continue
         for group in groups:
             for color in group.get("colors") or []:
                 prod_sku = str(color.get("sku") or "").strip()
-                lookup_key = _canonical_sku_for_lookup(prod_sku).lower()
-                if lookup_key not in wanted:
+                match_key = _sku_match_key(prod_sku)
+                if match_key not in wanted:
                     continue
                 combined = (color.get("totals") or {}).get("combined") or {}
-                inventory[lookup_key] = {
+                inventory[match_key] = {
                     "in_warehouse": int(combined.get("available", 0) or 0),
                     "sold_reserved": int(combined.get("sold", 0) or 0),
                 }
@@ -613,20 +865,78 @@ def _fetch_style_ocean_total(style: str) -> int:
         return 0
 
 
+def _refresh_po_order_links(po_detail: list[dict], po_overview: list[dict]) -> None:
+    """Re-resolve order numbers from PO (fresh match on each table view)."""
+    order_cache: dict[str, str | None] = {}
+
+    def _order_for_po(po: str | None) -> str | None:
+        if not po or po == "(no PO)":
+            return None
+        if po not in order_cache:
+            order_cache[po] = find_order_number_by_po(po)
+        return order_cache[po]
+
+    for row in po_detail:
+        row["order_id"] = _order_for_po(row.get("po"))
+
+    detail_by_po = {row.get("po"): row.get("order_id") for row in po_detail}
+    for row in po_overview:
+        po = row.get("po")
+        if po in detail_by_po:
+            row["order_id"] = detail_by_po[po]
+        else:
+            row["order_id"] = _order_for_po(po)
+
+
+def _apply_order_enrichment_to_row(row: dict, order_cache: dict[str, dict]) -> None:
+    """Fresh order notes + invoice status (invoice-ready highlight source)."""
+    row["order_notes"] = ""
+    row["invoice_status"] = None
+    row["invoice_number"] = None
+    order_id = row.get("order_id")
+    if not order_id:
+        return
+    if order_id not in order_cache:
+        order_cache[order_id] = _fetch_order_enrichment(order_id)
+    meta = order_cache[order_id]
+    inv = meta.get("invoice_number") or "not invoiced"
+    if inv and inv != "not invoiced":
+        row["invoice_status"] = "invoiced"
+        row["invoice_number"] = inv
+    else:
+        row["invoice_status"] = "not_invoiced"
+    row["order_notes"] = meta.get("notes") or ""
+
+
+def _refresh_po_table_data(po_detail: list[dict], po_overview: list[dict]) -> None:
+    """Re-resolve orders, notes, inventory, and containers (each Tables/history open)."""
+    from py.other import boat_container_lookup as bcl
+
+    bcl._sku_index_cache["built_at"] = 0.0
+    _refresh_po_order_links(po_detail, po_overview)
+    _enrich_po_detail(po_detail)
+    _enrich_po_overview(po_overview)
+
+
 def _enrich_po_detail(po_detail: list[dict]) -> None:
+    order_cache: dict[str, dict] = {}
     all_skus: list[str] = []
     for row in po_detail:
+        _apply_order_enrichment_to_row(row, order_cache)
         for sku_row in row.get("skus") or []:
-            canon = _canonical_sku_for_lookup(str(sku_row.get("sku") or ""))
-            if canon:
-                sku_row["sku"] = canon
-                all_skus.append(canon)
+            prod_cd = _prod_cd_for_lookup(str(sku_row.get("sku") or ""))
+            if prod_cd:
+                sku_row["sku"] = prod_cd
+                all_skus.append(prod_cd)
 
     inv_map = _fetch_sku_inventory_for_label_skus(all_skus) if all_skus else {}
 
     for row in po_detail:
+        enrich_sku_rows_with_container(row.get("skus") or [])
+
+    for row in po_detail:
         for sku_row in row.get("skus") or []:
-            key = _canonical_sku_for_lookup(str(sku_row.get("sku") or "")).lower()
+            key = _sku_match_key(str(sku_row.get("sku") or ""))
             inv = inv_map.get(key, {})
             sku_row["in_warehouse"] = int(inv.get("in_warehouse", 0) or 0)
             sku_row["sold_reserved"] = int(inv.get("sold_reserved", 0) or 0)
@@ -645,24 +955,9 @@ def _enrich_po_overview(po_overview: list[dict]) -> None:
             if s.strip() and s.strip() != "—"
         ]
         row["style_list"] = style_list
-        row["order_notes"] = ""
-        row["invoice_status"] = None
-        row["invoice_number"] = None
         row["warehouse_qty_total"] = 0
         row["ocean_qty_total"] = 0
-
-        order_id = row.get("order_id")
-        if order_id:
-            if order_id not in order_cache:
-                order_cache[order_id] = _fetch_order_enrichment(order_id)
-            meta = order_cache[order_id]
-            inv = meta.get("invoice_number") or "not invoiced"
-            if inv and inv != "not invoiced":
-                row["invoice_status"] = "invoiced"
-                row["invoice_number"] = inv
-            else:
-                row["invoice_status"] = "not_invoiced"
-            row["order_notes"] = meta.get("notes") or ""
+        _apply_order_enrichment_to_row(row, order_cache)
 
         wh_total = 0
         ocean_total = 0
@@ -803,14 +1098,6 @@ def burlington_label_processor_process():
     order_lookup_base = url_for("order_lookup.order_lookup", _external=True).rstrip("/")
     product_detail_base = url_for("product_detail.product_detail", _external=True).rstrip("/")
 
-    try:
-        mark_burlington_labels(
-            parse_result.get("po_overview") or [],
-            session.get("username"),
-        )
-    except Exception:
-        current_app.logger.exception("Failed to record Burlington label status")
-
     job_id = None
     try:
         job_id = save_job(
@@ -824,6 +1111,15 @@ def burlington_label_processor_process():
     except Exception:
         current_app.logger.exception("Failed to save burlington label processor job to output")
 
+    try:
+        mark_burlington_labels(
+            parse_result.get("po_detail") or [],
+            session.get("username"),
+            job_id=job_id,
+        )
+    except Exception:
+        current_app.logger.exception("Failed to record Burlington label status")
+
     return jsonify(
         {
             "download_name": download_name,
@@ -836,10 +1132,57 @@ def burlington_label_processor_process():
     )
 
 
+@burlington_label_processor_bp.route("/burlington_label_processor/po_grid_label", methods=["POST"])
+@login_required
+def burlington_label_processor_po_grid_label():
+    """6×4 inch PDF grid of all PO overview rows for printing."""
+    data = request.get_json(silent=True) or {}
+    po_overview = data.get("po_overview")
+    job_id = (data.get("job_id") or "").strip()
+
+    if job_id and not po_overview:
+        meta = load_job_meta(job_id)
+        if not meta:
+            return jsonify({"error": "Job not found."}), 404
+        parse_result = meta.get("parse_result") or {}
+        po_overview = parse_result.get("po_overview") or []
+        po_detail = parse_result.get("po_detail") or []
+        _refresh_po_table_data(po_detail, po_overview)
+
+    if not isinstance(po_overview, list) or not po_overview:
+        return jsonify({"error": "No PO overview data. Process a PDF or open Tables first."}), 400
+
+    try:
+        pdf_bytes = _render_po_grid_6x4_pdf_bytes(po_overview)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Could not build PO grid label: {e}"}), 400
+
+    return jsonify(
+        {
+            "download_name": "burlington_po_grid_6x4.pdf",
+            "pdf_base64": base64.b64encode(pdf_bytes).decode("ascii"),
+        }
+    )
+
+
 @burlington_label_processor_bp.route("/burlington_label_processor/history")
 @login_required
 def burlington_label_processor_history():
-    return jsonify({"jobs": list_jobs()})
+    return jsonify({"jobs": list_jobs(limit=150)})
+
+
+@burlington_label_processor_bp.route("/burlington_label_processor/history/search")
+@login_required
+def burlington_label_processor_history_search():
+    query = (request.args.get("q") or "").strip()
+    if not query:
+        return jsonify({"error": "Enter an order #, PO #, or BOL."}), 400
+    job_id = find_job_id_by_query(query)
+    if not job_id:
+        return jsonify({"found": False, "error": f"No processed job found for “{query}”."}), 404
+    return jsonify({"found": True, "job_id": job_id, "query": query})
 
 
 @burlington_label_processor_bp.route("/burlington_label_processor/history/<string:job_id>")
@@ -853,11 +1196,11 @@ def burlington_label_processor_history_detail(job_id):
     parse_result = meta.pop("parse_result", {})
     po_overview = parse_result.get("po_overview") or []
     po_detail = parse_result.get("po_detail") or []
-    if po_overview and "invoice_status" not in (po_overview[0] or {}):
-        _enrich_po_overview(po_overview)
-    first_skus = (po_detail[0].get("skus") or []) if po_detail else []
-    if first_skus and "in_warehouse" not in first_skus[0]:
-        _enrich_po_detail(po_detail)
+    _refresh_po_table_data(po_detail, po_overview)
+    try:
+        mark_burlington_labels(po_detail, session.get("username"), job_id=job_id)
+    except Exception:
+        current_app.logger.exception("Failed to refresh Burlington label status from history")
     return jsonify(
         {
             "job": meta,
@@ -874,7 +1217,7 @@ def burlington_label_processor_history_detail(job_id):
 def burlington_label_processor_history_original(job_id):
     path = job_file_path(job_id, "original")
     if not path:
-        return jsonify({"error": "Original file not found."}), 404
+        return jsonify({"error": "Original PDF not found (removed after 5 days). Table data remains in history."}), 404
     meta = load_job_meta(job_id) or {}
     name = secure_filename(meta.get("original_filename") or "original.pdf")
     return send_file(path, mimetype="application/pdf", as_attachment=True, download_name=name)
@@ -885,7 +1228,7 @@ def burlington_label_processor_history_original(job_id):
 def burlington_label_processor_history_processed(job_id):
     path = job_file_path(job_id, "processed")
     if not path:
-        return jsonify({"error": "Processed file not found."}), 404
+        return jsonify({"error": "4×6 PDF not found (removed after 5 days). Table data remains in history."}), 404
     meta = load_job_meta(job_id) or {}
     name = secure_filename(meta.get("download_name") or "label_4x6.pdf")
     return send_file(path, mimetype="application/pdf", as_attachment=True, download_name=name)

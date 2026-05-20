@@ -40,8 +40,11 @@
     .sku-nested-table td { padding: 0.25rem 0.4rem; vertical-align: middle; }
     .sku-nested-table .num { text-align: right; font-variant-numeric: tabular-nums; }
     #poOverviewTable tbody tr { background: #fff !important; }
-    #poOverviewTable tbody tr.has-order-notes { background: #d4edda !important; }
-    #poOverviewTable tbody tr.has-order-notes td { background: transparent !important; }
+    #poOverviewTable tbody tr.has-order-notes,
+    #poDetailTable tbody tr.has-order-notes { background: #d4edda !important; }
+    #poOverviewTable tbody tr.has-order-notes td,
+    #poDetailTable tbody tr.has-order-notes td { background: transparent !important; }
+    #poDetailTable tbody tr { background: #fff !important; }
     a.ocean-qty-link {
       display: block;
       color: #2b6cb0;
@@ -144,6 +147,23 @@
     text-decoration: underline;
     filter: brightness(0.95);
   }
+  .container-status-arrived { color: #15803d; font-weight: 600; }
+  .container-status-ocean { color: #1d4ed8; font-weight: 600; }
+  .container-status-missing {
+    color: #c53030;
+    font-weight: 700;
+    background: #fed7d7;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+  .sku-nested-table tbody tr.sku-row-missing-container { background: #fff5f5 !important; }
+  .sku-nested-table tbody tr.sku-row-missing-container td { background: transparent !important; }
+  .sku-nested-table tbody tr.sku-row-missing-container .container-cell {
+    background: #feb2b2 !important;
+  }
+  #poDetailTable tbody tr.has-missing-container { box-shadow: inset 4px 0 0 #e53e3e; }
+  .sku-nested-table .container-cell { white-space: nowrap; font-size: 0.85em; }
+
   .hist-chip-bol {
     background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
     color: #c05621;
@@ -152,6 +172,19 @@
   .hist-empty { color: #a0aec0; font-size: 0.75rem; font-style: italic; }
   .history-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px solid #edf2f7; }
   .history-actions .btn { font-size: 0.72rem; padding: 0.2rem 0.45rem; }
+  .history-search-wrap {
+    padding: 0.5rem 0.65rem 0.35rem;
+    border-bottom: 1px solid #edf2f7;
+    background: #f8fafc;
+  }
+  .history-search-wrap .input-group { flex-wrap: nowrap; }
+  .history-search-wrap .form-control {
+    font-size: 0.8rem;
+    min-width: 0;
+  }
+  .history-search-wrap .btn { font-size: 0.78rem; white-space: nowrap; }
+  .history-item.hist-search-hidden { display: none !important; }
+  .history-item.hist-search-match { box-shadow: 0 0 0 2px #4299e1; }
   .burlington-label-processor-main { position: relative; min-height: 12rem; }
   .burlington-label-processor-loading {
     display: none;
@@ -178,7 +211,7 @@
   <div class="container-fluid burlington-label-processor-page py-4">
     <div class="hero-card">
       <h1 class="h4 mb-2"><i class="fas fa-cut me-2"></i>Burlington Label Processor</h1>
-      <p class="mb-0 opacity-90">Upload a US Letter PDF (8.5×11 in). Each page is center-cropped to <strong>4×6 in</strong>. Files are saved under <strong>output/burlington_label_processor</strong> for 5 days. A <strong>black separator page</strong> is inserted before each new PO.</p>
+      <p class="mb-0 opacity-90">Upload a US Letter PDF (8.5×11 in). Each page is center-cropped to <strong>4×6 in</strong>. Original and 4×6 PDFs are kept for <strong>5 days</strong>; PO tables and BOL data are stored in the database for traceability. A <strong>black separator page</strong> is inserted before each new PO. Matched orders show <strong>BOL</strong> on Order Lookup.</p>
     </div>
 
     <div class="row layout-row g-4">
@@ -208,7 +241,12 @@
     <div id="resultsWrap" class="d-none results-section">
       <div class="card shadow-sm mb-3">
         <div class="card-body">
-          <h2 class="h6"><i class="fas fa-hashtag me-1"></i>All PO numbers</h2>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <h2 class="h6 mb-0"><i class="fas fa-hashtag me-1"></i>All PO numbers</h2>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="printPoGridBtn" disabled title="Open 6×4 PDF grid in a new tab for printing">
+              <i class="fas fa-print me-1"></i>Print PO grid (6×4)
+            </button>
+          </div>
           <div class="table-responsive">
             <table class="table table-sm table-bordered table-parse mb-0" id="poOverviewTable">
               <thead class="table-light">
@@ -288,6 +326,18 @@
             <i class="fas fa-sync-alt"></i>
           </button>
         </div>
+        <div class="history-search-wrap">
+          <label class="visually-hidden" for="historySearchInput">Search history</label>
+          <div class="input-group input-group-sm">
+            <input type="search" class="form-control" id="historySearchInput"
+                   placeholder="Order, PO, or BOL…" autocomplete="off"
+                   aria-label="Search processed history by order, PO, or BOL">
+            <button type="button" class="btn btn-primary" id="historySearchBtn" title="Find and open tables">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+          <p class="text-muted mb-0 mt-1" style="font-size: 0.68rem;">Opens matching job tables</p>
+        </div>
         <div class="card-body p-2" id="historyList">
           <p class="text-muted small mb-0 px-1">Loading…</p>
         </div>
@@ -313,18 +363,25 @@
     const poDetailBody = document.querySelector('#poDetailTable tbody');
     const poOverviewBody = document.querySelector('#poOverviewTable tbody');
     const processUrl = {{ url_for('burlington_label_processor.burlington_label_processor_process') | tojson }};
+    const poGridLabelUrl = {{ url_for('burlington_label_processor.burlington_label_processor_po_grid_label') | tojson }};
     const historyUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history') | tojson }};
+    const historySearchUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_search') | tojson }};
     const historyDetailUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_detail', job_id='__ID__') | tojson }};
     const historyOriginalUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_original', job_id='__ID__') | tojson }};
     const historyProcessedUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_processed', job_id='__ID__') | tojson }};
     const historyDeleteUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_delete', job_id='__ID__') | tojson }};
     const orderLookupBase = {{ url_for('order_lookup.order_lookup', _external=True) | tojson }}.replace(/\/$/, '');
     const historyListEl = document.getElementById('historyList');
+    const historySearchInput = document.getElementById('historySearchInput');
+    const historySearchBtn = document.getElementById('historySearchBtn');
     const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
     const historyLoadingOverlay = document.getElementById('historyLoadingOverlay');
     const loadingOverlayMessage = document.getElementById('loadingOverlayMessage');
     let activeHistoryId = null;
     let pageLoadSeq = 0;
+    let lastPoOverview = [];
+    let cachedHistoryJobs = [];
+    const printPoGridBtn = document.getElementById('printPoGridBtn');
 
     function historyUrlFor(template, jobId) {
       return template.replace('__ID__', encodeURIComponent(jobId));
@@ -431,20 +488,119 @@
       );
     }
 
+    function normalizeOrderId(value) {
+      const s = String(value || '').trim();
+      if (!s || !/^\d+$/.test(s)) return s;
+      return String(parseInt(s, 10));
+    }
+
+    function jobMatchesSearchTerm(job, term) {
+      const raw = String(term || '').trim();
+      if (!raw || !job) return false;
+      const rawUp = raw.toUpperCase();
+      const orderNorm = /^\d+$/.test(raw) ? normalizeOrderId(raw) : '';
+      if (orderNorm) {
+        const orders = (job.order_numbers || []).map(normalizeOrderId);
+        if (orders.includes(orderNorm)) return true;
+        for (const link of job.po_links || []) {
+          if (link.order_id && normalizeOrderId(link.order_id) === orderNorm) return true;
+        }
+      }
+      for (const po of job.po_numbers || []) {
+        const poS = String(po).trim();
+        if (poS === raw || poS.includes(raw) || raw.includes(poS)) return true;
+      }
+      for (const link of job.po_links || []) {
+        const poS = String(link.po || '').trim();
+        if (poS === raw || poS.includes(raw) || raw.includes(poS)) return true;
+      }
+      for (const b of job.bill_of_lading || []) {
+        const bolS = String(b).trim().toUpperCase();
+        if (bolS === rawUp || bolS.includes(rawUp) || rawUp.includes(bolS)) return true;
+      }
+      return false;
+    }
+
+    function findJobIdFromSearch(term) {
+      const raw = String(term || '').trim();
+      if (!raw) return null;
+      for (const job of cachedHistoryJobs) {
+        if (jobMatchesSearchTerm(job, raw)) return job.id;
+      }
+      return null;
+    }
+
+    function applyHistorySearchFilter(term) {
+      const raw = String(term || '').trim();
+      const items = historyListEl.querySelectorAll('.history-item');
+      if (!raw) {
+        items.forEach(el => {
+          el.classList.remove('hist-search-hidden', 'hist-search-match');
+        });
+        return null;
+      }
+      let firstMatchId = null;
+      items.forEach(el => {
+        const jobId = el.dataset.jobId;
+        const job = cachedHistoryJobs.find(j => j.id === jobId);
+        const match = job && jobMatchesSearchTerm(job, raw);
+        el.classList.toggle('hist-search-hidden', !match);
+        el.classList.toggle('hist-search-match', !!match);
+        if (match && !firstMatchId) firstMatchId = jobId;
+      });
+      return firstMatchId;
+    }
+
+    async function resolveJobIdFromSearch(term) {
+      let jobId = findJobIdFromSearch(term);
+      if (jobId) return jobId;
+      try {
+        const res = await fetch(historySearchUrl + '?q=' + encodeURIComponent(term));
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.job_id) return data.job_id;
+      } catch (_) {}
+      return null;
+    }
+
+    async function searchHistoryAndOpen(openTables) {
+      const term = (historySearchInput && historySearchInput.value || '').trim();
+      if (!term) {
+        applyHistorySearchFilter('');
+        return;
+      }
+      applyHistorySearchFilter(term);
+      const jobId = await resolveJobIdFromSearch(term);
+      if (!jobId) {
+        setStatus('warning', 'No processed job found for “' + term + '”.');
+        return;
+      }
+      if (openTables !== false) {
+        await openHistoryJob(jobId);
+      }
+      const item = historyListEl.querySelector('.history-item[data-job-id="' + jobId + '"]');
+      if (item) {
+        item.classList.remove('hist-search-hidden');
+        item.classList.add('hist-search-match');
+        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
     async function loadHistory() {
       historyListEl.innerHTML = '<p class="text-muted small mb-0 px-1">Loading…</p>';
       try {
         const res = await fetch(historyUrl);
         const data = await res.json();
-        renderHistoryList(data.jobs || []);
+        cachedHistoryJobs = data.jobs || [];
+        renderHistoryList(cachedHistoryJobs);
       } catch (_) {
+        cachedHistoryJobs = [];
         historyListEl.innerHTML = '<p class="text-danger small mb-0 px-1">Could not load history.</p>';
       }
     }
 
     function renderHistoryList(jobs) {
       if (!jobs.length) {
-        historyListEl.innerHTML = '<p class="text-muted small mb-0 px-1">No processed files in the last 5 days.</p>';
+        historyListEl.innerHTML = '<p class="text-muted small mb-0 px-1">No label jobs yet.</p>';
         return;
       }
       historyListEl.innerHTML = '';
@@ -461,8 +617,10 @@
           renderHistSection('BOL', job.bill_of_lading, 'hist-chip-bol') +
           '<div class="history-actions">' +
           '<button type="button" class="btn btn-outline-primary btn-view-hist" data-id="' + escapeHtml(job.id) + '"><i class="fas fa-table"></i> Tables</button>' +
-          '<a class="btn btn-outline-secondary" href="' + historyUrlFor(historyOriginalUrl, job.id) + '" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> Original</a>' +
-          '<a class="btn btn-outline-success" href="' + historyUrlFor(historyProcessedUrl, job.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> 4×6</a>' +
+          (job.pdfs_available !== false
+            ? '<a class="btn btn-outline-secondary" href="' + historyUrlFor(historyOriginalUrl, job.id) + '" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> Original</a>' +
+              '<a class="btn btn-outline-success" href="' + historyUrlFor(historyProcessedUrl, job.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> 4×6</a>'
+            : '<span class="text-muted small align-self-center" title="PDFs removed after 5 days; table data kept in database">PDFs expired</span>') +
           '<button type="button" class="btn btn-outline-danger btn-remove-hist" data-id="' + escapeHtml(job.id) + '" title="Remove from history"><i class="fas fa-trash-alt"></i></button>' +
           '</div>';
         historyListEl.appendChild(div);
@@ -544,7 +702,39 @@
     }
 
     refreshHistoryBtn.addEventListener('click', loadHistory);
-    loadHistory();
+    if (historySearchBtn) {
+      historySearchBtn.addEventListener('click', () => searchHistoryAndOpen(true));
+    }
+    if (historySearchInput) {
+      historySearchInput.addEventListener('input', () => {
+        applyHistorySearchFilter(historySearchInput.value);
+      });
+      historySearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          searchHistoryAndOpen(true);
+        }
+      });
+    }
+    loadHistory().then(async () => {
+      const params = new URLSearchParams(window.location.search);
+      let jobId = params.get('job');
+      const orderQ = params.get('order');
+      const bolQ = params.get('bol');
+      if (!jobId && (orderQ || bolQ)) {
+        if (historySearchInput) {
+          historySearchInput.value = orderQ || bolQ || '';
+        }
+        jobId = await resolveJobIdFromSearch(orderQ || bolQ);
+      }
+      if (jobId) {
+        if (historySearchInput && (orderQ || bolQ)) {
+          historySearchInput.value = orderQ || bolQ || historySearchInput.value;
+          applyHistorySearchFilter(historySearchInput.value);
+        }
+        openHistoryJob(jobId);
+      }
+    });
 
     function setStatus(type, message) {
       statusEl.className = 'alert alert-' + type;
@@ -579,10 +769,7 @@
     function canonicalSkuForSearch(sku) {
       const s = String(sku || '').trim();
       if (!s) return s;
-      if (s.includes('-')) return s;
-      const parts = s.split(/\s+/).filter(Boolean);
-      if (parts.length >= 2) return parts[0] + '-' + parts.slice(1).join('-');
-      return s;
+      return s.replace(/-/g, ' ');
     }
 
     function productDetailLink(style, base) {
@@ -652,12 +839,15 @@
       return escapeHtml(t);
     }
 
-    function downloadPdfBase64(b64, name) {
+    function pdfBlobFromBase64(b64) {
       const bin = atob(b64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+      return new Blob([bytes], { type: 'application/pdf' });
+    }
+
+    function downloadPdfBase64(b64, name) {
+      const url = URL.createObjectURL(pdfBlobFromBase64(b64));
       const a = document.createElement('a');
       a.href = url;
       a.download = name || 'label_4x6.pdf';
@@ -665,6 +855,16 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+    }
+
+    function openPdfBase64(b64) {
+      const url = URL.createObjectURL(pdfBlobFromBase64(b64));
+      const win = window.open(url, '_blank');
+      if (!win) {
+        URL.revokeObjectURL(url);
+        throw new Error('Pop-up blocked. Allow pop-ups for this site to view the PDF.');
+      }
+      setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
     }
 
     function renderPagesTable(pages) {
@@ -700,6 +900,21 @@
       }
     }
 
+    function containerStatusCell(skuRow) {
+      const container = skuRow.container ? String(skuRow.container).trim() : '';
+      const status = (skuRow.container_status || 'missing').toLowerCase();
+      const cls = status === 'arrived'
+        ? 'container-status-arrived'
+        : (status === 'ocean' ? 'container-status-ocean' : 'container-status-missing');
+      const label = status === 'arrived' ? 'arrived' : (status === 'ocean' ? 'ocean' : 'missing');
+      if (!container) {
+        return '<span class="' + cls + '">missing</span>';
+      }
+      const boatHref = '/boat';
+      return '<a href="' + escapeHtml(boatHref) + '" target="_blank" rel="noopener" class="' + cls + '" title="View on Boat">' +
+        escapeHtml(container) + ' · ' + escapeHtml(label) + '</a>';
+    }
+
     function renderPoDetailTable(poDetail, orderLookupBase, productDetailBase) {
       poDetailBody.innerHTML = '';
       if (!poDetail.length) {
@@ -710,25 +925,40 @@
       const pdBase = productDetailBase || 'https://www.fdcef.com/product_detail';
       for (const row of poDetail) {
         let skuHtml = '—';
+        let anyMissingContainer = false;
         if (row.skus && row.skus.length) {
-          const bodyRows = row.skus.map(s =>
-            '<tr>' +
+          const bodyRows = row.skus.map(s => {
+            const status = (s.container_status || 'missing').toLowerCase();
+            const isMissing = status === 'missing' || !String(s.container || '').trim();
+            if (isMissing) anyMissingContainer = true;
+            const rowCls = isMissing ? ' class="sku-row-missing-container"' : '';
+            return '<tr' + rowCls + '>' +
             '<td>' + productDetailLink(s.sku, pdBase) + '</td>' +
+            '<td class="container-cell">' + containerStatusCell(s) + '</td>' +
             '<td class="num">' + escapeHtml(s.qty) + '</td>' +
             '<td class="num">' + escapeHtml(s.in_warehouse != null ? s.in_warehouse : '—') + '</td>' +
             '<td class="num">' + escapeHtml(s.sold_reserved != null ? s.sold_reserved : '—') + '</td>' +
-            '</tr>'
-          ).join('');
+            '</tr>';
+          }).join('');
           skuHtml =
             '<table class="table table-sm table-bordered sku-nested-table mb-0">' +
             '<thead class="table-light"><tr>' +
-            '<th>SKU</th><th class="num">Qty</th><th class="num">In Warehouse</th><th class="num">Sold/Reserved</th>' +
+            '<th>SKU</th><th>Container</th><th class="num">Qty</th><th class="num">In Warehouse</th><th class="num">Sold/Reserved</th>' +
             '</tr></thead><tbody>' + bodyRows + '</tbody></table>';
         }
         const tr = document.createElement('tr');
+        if (row.order_notes && String(row.order_notes).trim()) {
+          tr.classList.add('has-order-notes');
+        }
+        if (anyMissingContainer) {
+          tr.classList.add('has-missing-container');
+        }
+        const notesHint = (row.order_notes && String(row.order_notes).trim())
+          ? ' <span class="text-success fw-semibold" title="' + escapeHtml(String(row.order_notes)) + '">(ready)</span>'
+          : '';
         tr.innerHTML =
           '<td>' + escapeHtml(row.po) + '</td>' +
-          '<td>' + orderLink(row.order_id, orderLookupBase) + '</td>' +
+          '<td>' + orderLink(row.order_id, orderLookupBase) + notesHint + '</td>' +
           '<td>' + escapeHtml(row.page_count) + '</td>' +
           '<td>' + escapeHtml(row.bill_of_lading || '—') + '</td>' +
           '<td>' + skuHtml + '</td>' +
@@ -772,12 +1002,55 @@
       renderPagesTable(data.pages || []);
       const pdBase = data.product_detail_base || 'https://www.fdcef.com/product_detail';
       renderPoDetailTable(data.po_detail || [], data.order_lookup_base || '/order_lookup', pdBase);
-      renderPoOverviewTable(data.po_overview || [], data.order_lookup_base || '/order_lookup', pdBase);
+      lastPoOverview = data.po_overview || [];
+      renderPoOverviewTable(lastPoOverview, data.order_lookup_base || '/order_lookup', pdBase);
+      if (printPoGridBtn) {
+        const hasPo = lastPoOverview.some(r => r.po && r.po !== '(no PO)');
+        printPoGridBtn.disabled = !hasPo;
+      }
       resultsWrap.classList.remove('d-none');
     }
 
     function hideResults() {
       resultsWrap.classList.add('d-none');
+      lastPoOverview = [];
+      if (printPoGridBtn) printPoGridBtn.disabled = true;
+    }
+
+    async function printPoGridLabel() {
+      const hasPo = lastPoOverview.some(r => r.po && r.po !== '(no PO)');
+      if (!hasPo) {
+        setStatus('warning', 'No PO numbers to print.');
+        return;
+      }
+      const seq = ++pageLoadSeq;
+      setPageLoading(true, 'Building 6×4 PO grid label…');
+      try {
+        const res = await fetch(poGridLabelUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            po_overview: lastPoOverview,
+            job_id: activeHistoryId || null,
+          }),
+        });
+        if (seq !== pageLoadSeq) return;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        if (data.pdf_base64) {
+          openPdfBase64(data.pdf_base64);
+          setStatus('success', '6×4 PO grid PDF opened in a new tab. Print from the browser or send to your label printer.');
+        }
+      } catch (err) {
+        if (seq !== pageLoadSeq) return;
+        setStatus('danger', err.message || 'Could not build PO grid label.');
+      } finally {
+        if (seq === pageLoadSeq) setPageLoading(false);
+      }
+    }
+
+    if (printPoGridBtn) {
+      printPoGridBtn.addEventListener('click', printPoGridLabel);
     }
 
     function updateFileLabel() {

@@ -2,7 +2,8 @@ import pyodbc
 import pandas as pd
 
 from datetime import datetime, timedelta
-from flask import Blueprint, request, render_template, session, current_app, jsonify
+from flask import Blueprint, request, render_template, session, current_app, jsonify, redirect, url_for, send_file
+import io
 import re
 
 # Import helper to fetch locations for SKUs so we can populate Location server-side
@@ -52,11 +53,88 @@ def get_recent_fdc_orders(limit=100):
     return orders
 
 
+def _clean_ship_field(val) -> str:
+    s = str(val or "").strip()
+    if not s or s.lower() in ("none", "nan", "n/a"):
+        return ""
+    return s
+
+
+def fetch_order_ship_to_lines(order_number: str | int) -> tuple[list[str] | None, str | None]:
+    """
+    Ship-to lines matching order lookup display: SP_CUS_NM, street lines, city/state/zip.
+    """
+    order_number = str(order_number).strip()
+    if len(order_number) == 5:
+        database_name = "omsdata_FDC"
+    elif len(order_number) == 4:
+        database_name = "oms_EF"
+    else:
+        return None, "Invalid order number."
+
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+            f'DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT SP_CUS_NM, SP_ADR, SP_ADR_2, SP_ADR_3,
+                   SP_ADR_CT, SP_ADR_ST, SP_ADR_ZP, SP_ADR_CN
+            FROM dbo.orders
+            WHERE ord_num = ?
+            """,
+            (order_number,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return None, f"Order {order_number} not found."
+
+        cus_nm = _clean_ship_field(row[0])
+        adr1 = _clean_ship_field(row[1])
+        adr2 = _clean_ship_field(row[2])
+        adr3 = _clean_ship_field(row[3])
+        city = _clean_ship_field(row[4])
+        state = _clean_ship_field(row[5])
+        zip_code = _clean_ship_field(row[6])
+        country = _clean_ship_field(row[7])
+
+        lines = []
+        if cus_nm:
+            lines.append(cus_nm)
+        if adr1 and adr1.upper() != cus_nm.upper():
+            lines.append(adr1)
+        if adr2:
+            lines.append(adr2)
+        if adr3:
+            lines.append(adr3)
+        elif city or state or zip_code:
+            city_line = city
+            if state:
+                city_line = f"{city_line}, {state}" if city_line else state
+            if zip_code:
+                city_line = f"{city_line} {zip_code}".strip() if city_line else zip_code
+            if city_line:
+                lines.append(city_line)
+        if country:
+            lines.append(country)
+
+        if not lines:
+            return None, "Ship-to address is empty for this order."
+        return lines, None
+    except Exception as e:
+        current_app.logger.error("Error fetching ship-to for order %s: %s", order_number, e)
+        return None, str(e)
+
+
 def parse_boxes_from_notes(notes: str | None) -> int | None:
-    """Extract total box count from notes like '30 boxes, L-1'."""
+    """Extract total box count from notes like '1 box' or '30 boxes, L-1'."""
     if not notes:
         return None
-    match = re.search(r"(\d+)\s*boxes\b", str(notes), re.IGNORECASE)
+    match = re.search(r"(\d+)\s*box(?:es)?\b", str(notes), re.IGNORECASE)
     if not match:
         return None
     try:
@@ -64,6 +142,17 @@ def parse_boxes_from_notes(notes: str | None) -> int | None:
     except ValueError:
         return None
     return count if count > 0 else None
+
+
+def line_box_count(qty, per_box) -> int:
+    """Boxes for one line: ceil(qty / per_box); if per_box is 0, treat each unit as one box."""
+    qty = int(qty or 0)
+    per_box = int(per_box or 0)
+    if qty <= 0:
+        return 0
+    if per_box > 0:
+        return (qty + per_box - 1) // per_box
+    return qty
 
 
 def fetch_order_notes(order_number: str | int) -> str:
@@ -167,6 +256,64 @@ def fetch_in_warehouse_by_skus(skus):
     return stock_by_sku
 
 
+def fetch_case_weights_by_skus(skus, database_name: str) -> dict[str, float]:
+    """CASE_WT (lbs per case/box) from dbo.inv, keyed by uppercase trimmed SKU."""
+    if not skus or not database_name:
+        return {}
+
+    cleaned = []
+    seen = set()
+    for sku in skus:
+        try:
+            key = str(sku).replace("\u00a0", " ").strip().upper()
+        except Exception:
+            key = str(sku).strip().upper()
+        if key and key not in seen:
+            seen.add(key)
+            cleaned.append(key)
+
+    if not cleaned:
+        return {}
+
+    placeholders = ",".join(["?"] * len(cleaned))
+    weights: dict[str, float] = {}
+    conn = None
+    cursor = None
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+            f'DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        cursor.execute(
+            f"""
+            SELECT UPPER(LTRIM(RTRIM(PROD_CD))) AS sku, CASE_WT
+            FROM dbo.inv
+            WHERE UPPER(LTRIM(RTRIM(PROD_CD))) IN ({placeholders})
+            """,
+            cleaned,
+        )
+        for row in cursor.fetchall():
+            sku_key = str(row[0] or "").strip().upper()
+            try:
+                wt = float(row[1]) if row[1] is not None else 0.0
+            except (TypeError, ValueError):
+                wt = 0.0
+            if sku_key and wt > 0:
+                weights[sku_key] = wt
+    except Exception as e:
+        current_app.logger.error(
+            "Error fetching case weights from %s: %s", database_name, e
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return weights
+
+
 def fetch_sku_inventory_by_skus(skus):
     """Fetch in-warehouse and sold/reserved per SKU from FDC and E_FAS (summed).
 
@@ -249,7 +396,7 @@ def generate_order(order_number):
             database_name = 'oms_EF'
         else:
             print("Invalid input length. Please provide a 4 or 5-digit input.")
-            return None, None  # Return None for both values in case of an error
+            return None, None, False, None, None, None
 
         conn = pyodbc.connect(
             f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
@@ -391,7 +538,7 @@ def generate_order(order_number):
         if df.empty:
             cursor.close()
             conn.close()
-            return None, None, False
+            return None, None, False, None, None, None
 
         # Extract header information (same for all rows)
         # Calculate discount as percentage of package amount
@@ -541,12 +688,58 @@ def generate_order(order_number):
             current_app.logger.error(f"Error mapping stock into items_df for order {order_number}: {e}")
             items_df['Stock'] = 0
 
-        # Keep column order with Stock right after Location.
-        items_df = items_df[['line', 'SKU', 'Descrip', 'Qty', 'price', 'per_box', 'Location', 'Stock']]
-        
         # Format Qty and per_box as integers (removing decimals)
         items_df['Qty'] = items_df['Qty'].fillna(0).astype(int)
         items_df['per_box'] = items_df['per_box'].fillna(0).astype(int)
+
+        items_df['Boxes'] = items_df.apply(
+            lambda r: line_box_count(r['Qty'], r['per_box']), axis=1
+        )
+        items_total_qty = int(items_df['Qty'].sum())
+        items_total_boxes = int(items_df['Boxes'].sum())
+
+        try:
+            case_weights = fetch_case_weights_by_skus(
+                items_df['SKU'].astype(str).tolist(), database_name
+            )
+            items_df['_line_weight'] = items_df.apply(
+                lambda r: (
+                    round(
+                        case_weights.get(str(r['SKU']).strip().upper(), 0.0) * int(r['Boxes']),
+                        2,
+                    )
+                    if case_weights.get(str(r['SKU']).strip().upper(), 0.0) and int(r['Boxes'])
+                    else 0.0
+                ),
+                axis=1,
+            )
+            items_total_weight = round(float(items_df['_line_weight'].sum()), 2)
+            items_df['Weight'] = items_df['_line_weight'].apply(
+                lambda w: f"{w:.2f}" if w else ""
+            )
+            items_df = items_df.drop(columns=['_line_weight'])
+        except Exception as e:
+            current_app.logger.error(
+                "Error mapping weight into items_df for order %s: %s", order_number, e
+            )
+            items_df['Weight'] = ""
+            items_total_weight = 0.0
+
+        # Keep column order: Boxes before Location; Weight after Stock.
+        items_df = items_df[
+            [
+                'line',
+                'SKU',
+                'Descrip',
+                'Qty',
+                'price',
+                'per_box',
+                'Boxes',
+                'Location',
+                'Stock',
+                'Weight',
+            ]
+        ]
         
         # Check if ALL descriptions contain a dash "-" for label generation
         all_descriptions_have_dash = items_df['Descrip'].str.contains('-', na=False).all()
@@ -567,20 +760,35 @@ def generate_order(order_number):
         else:
             items_html = full_table_html
         
-        return enrich_header_info(header_info), items_html, all_descriptions_have_dash
+        return (
+            enrich_header_info(header_info),
+            items_html,
+            all_descriptions_have_dash,
+            items_total_qty,
+            items_total_boxes,
+            items_total_weight,
+        )
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-        return None, None, False
+        return None, None, False, None, None, None
 
 
-@order_lookup_bp.route("/order_lookup", methods=["GET", "POST"])
 @order_lookup_bp.route("/order_lookup/<string:order_number>", methods=["GET"])
+@order_lookup_bp.route("/order_lookup", methods=["GET", "POST"])
 @login_required
 def order_lookup(order_number=None):
+    if request.method == "GET" and not order_number:
+        query_order = (request.args.get("order_number") or "").strip()
+        if query_order:
+            return redirect(url_for("order_lookup.order_lookup", order_number=query_order))
+
     current_user = session['username']
     header_info = None
     items_html = None
+    items_total_qty = None
+    items_total_boxes = None
+    items_total_weight = None
     all_descriptions_have_dash = False
     recent_fdc_orders = get_recent_fdc_orders(100)
 
@@ -603,29 +811,25 @@ def order_lookup(order_number=None):
             return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, recent_fdc_orders=recent_fdc_orders, all_descriptions_have_dash=False, po_number=po_number)
 
         session['order_number'] = order_number
-
-        if current_user == 'fdc':
-            current_app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, recent_fdc_orders=recent_fdc_orders, all_descriptions_have_dash=False, po_number=po_number)
-
-        header_info, items_html, all_descriptions_have_dash = generate_order(order_number)
-
-        if items_html:
-            current_app.logger.info("***%s***__@@@search order@@@__ %s",current_user, order_number)
-        else:
-            header_info = None
-            items_html = None
-            all_descriptions_have_dash = False
+        return redirect(url_for("order_lookup.order_lookup", order_number=order_number))
 
     elif order_number:
-        # Handle GET request with order_number in the URL
-        
+        # Keep session aligned when navigating via URL (sidebar, links, prev/next).
+        session['order_number'] = order_number
+
         if current_user == 'fdc':
             current_app.logger.info("User %s does not have permission to view order details", current_user)
             return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, recent_fdc_orders=recent_fdc_orders, all_descriptions_have_dash=False)
         
-        header_info, items_html, all_descriptions_have_dash = generate_order(order_number)
-        
+        (
+            header_info,
+            items_html,
+            all_descriptions_have_dash,
+            items_total_qty,
+            items_total_boxes,
+            items_total_weight,
+        ) = generate_order(order_number)
+
         if items_html:
             current_app.logger.info("***%s***__@@@search order@@@__ %s",current_user, order_number)
         else:
@@ -633,6 +837,9 @@ def order_lookup(order_number=None):
             header_info = None
             items_html = None
             all_descriptions_have_dash = False
+            items_total_qty = None
+            items_total_boxes = None
+            items_total_weight = None
 
     ez_default_boxes = None
     if header_info and header_info.get("notes"):
@@ -644,6 +851,9 @@ def order_lookup(order_number=None):
         "order_lookup.html",
         header_info=header_info,
         items_html=items_html,
+        items_total_qty=items_total_qty,
+        items_total_boxes=items_total_boxes,
+        items_total_weight=items_total_weight,
         order_number=order_number,
         current_user=current_user,
         recent_fdc_orders=recent_fdc_orders,
@@ -1089,4 +1299,94 @@ def update_order_notes():
     except Exception as e:
         current_app.logger.error(f"Error updating order notes: {str(e)}")
         return {'success': False, 'message': f'Database error: {str(e)}'}, 500
+
+
+@order_lookup_bp.route("/bol_from_order_lookup", methods=["POST"])
+@login_required
+def bol_from_order_lookup():
+    """Generate a fillable US Letter Bill of Lading PDF for the current order."""
+    current_user = session.get("username", "unknown")
+    payload = request.get_json(silent=True) or {}
+    order_number = str(
+        payload.get("order_number") or session.get("order_number") or ""
+    ).strip()
+    if not order_number:
+        return jsonify({"ok": False, "error": "No order in session. Look up an order first."}), 400
+
+    try:
+        from py.other.bol_pdf import build_bol_pdf, fetch_order_bol_context
+
+        ctx, err = fetch_order_bol_context(order_number)
+        if err:
+            return jsonify({"ok": False, "error": err}), 400
+
+        current_app.logger.info(
+            "***%s***__@@@create BOL@@@__ %s",
+            current_user,
+            order_number,
+        )
+        pdf_data = build_bol_pdf(ctx)
+        filename = f"{order_number}_BOL.pdf"
+        return send_file(
+            io.BytesIO(pdf_data),
+            download_name=filename,
+            as_attachment=False,
+            mimetype="application/pdf",
+        )
+    except Exception as e:
+        current_app.logger.exception("BOL PDF failed for order %s", order_number)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@order_lookup_bp.route("/eta_fashion_label_from_order_lookup", methods=["POST"])
+@login_required
+def eta_fashion_label_from_order_lookup():
+    """ETA Fashion (00951) box labels: 8.5×2.75 on US Letter, vendor FDC prefilled."""
+    from py.other.eta_fashion_label_pdf import (
+        ETA_FASHION_CUSTOMER_ID,
+        build_eta_fashion_label_pdf,
+        fetch_order_customer_id,
+    )
+
+    current_user = session.get("username", "unknown")
+    payload = request.get_json(silent=True) or {}
+    order_number = str(
+        payload.get("order_number") or session.get("order_number") or ""
+    ).strip()
+    if not order_number:
+        return jsonify({"ok": False, "error": "No order in session. Look up an order first."}), 400
+
+    try:
+        total_boxes = int(payload.get("total_boxes"))
+    except (TypeError, ValueError):
+        total_boxes = 0
+    if total_boxes < 1:
+        return jsonify({"ok": False, "error": "Total boxes must be a positive number."}), 400
+
+    customer_id, err = fetch_order_customer_id(order_number)
+    if err:
+        return jsonify({"ok": False, "error": err}), 400
+    if customer_id != ETA_FASHION_CUSTOMER_ID:
+        return jsonify(
+            {"ok": False, "error": "Special Label is only available for ETA Fashion (00951)."}
+        ), 403
+
+    try:
+        current_app.logger.info(
+            "***%s***__@@@ETA Fashion special label@@@__ %s boxes=%s",
+            current_user,
+            order_number,
+            total_boxes,
+        )
+        pdf_data = build_eta_fashion_label_pdf(total_boxes)
+        filename = f"{order_number}_eta_fashion_{total_boxes}boxes.pdf"
+        return send_file(
+            io.BytesIO(pdf_data),
+            download_name=filename,
+            as_attachment=False,
+            mimetype="application/pdf",
+        )
+    except Exception as e:
+        current_app.logger.exception("ETA Fashion label PDF failed for order %s", order_number)
+        return jsonify({"ok": False, "error": str(e)}), 500
 

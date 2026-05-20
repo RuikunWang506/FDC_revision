@@ -7,18 +7,30 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from collections import defaultdict
 from reportlab.lib import colors as rl_colors
 from reportlab.lib.colors import HexColor
+from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from py.order.order_search import fetch_order_notes, get_recent_fdc_orders, parse_boxes_from_notes
+from py.order.order_search import (
+    fetch_order_notes,
+    fetch_order_ship_to_lines,
+    get_recent_fdc_orders,
+    parse_boxes_from_notes,
+)
 from py.utilities.setting import Config
 from flask import request, session, send_file, flash, redirect, url_for, render_template, jsonify, current_app
 from py.utilities.setting import login_required
 import io
 import os
+import subprocess
+import sys
+import tempfile
+import threading
 from pathlib import Path
+
+WAREHOUSE_LABEL_PRINTER = os.getenv("WAREHOUSE_LABEL_PRINTER", "warehouse printer").strip()
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
@@ -1056,25 +1068,161 @@ def _record_jennifer_label_download(order_number, username, logger):
         logger.exception("Failed to record Jennifer label status")
 
 
+def _resolve_sumatra_pdf_path():
+    explicit = os.getenv("SUMATRA_PDF_PATH", "").strip()
+    if explicit and os.path.isfile(explicit):
+        return explicit
+    for candidate in (
+        r"C:\Program Files\SumatraPDF\SumatraPDF.exe",
+        r"C:\Program Files (x86)\SumatraPDF\SumatraPDF.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\SumatraPDF\SumatraPDF.exe"),
+    ):
+        if candidate and os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def _resolve_adobe_reader_path():
+    explicit = os.getenv("ADOBE_READER_PATH", "").strip()
+    if explicit and os.path.isfile(explicit):
+        return explicit
+    for candidate in (
+        r"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe",
+        r"C:\Program Files (x86)\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe",
+        r"C:\Program Files\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe",
+    ):
+        if candidate and os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def _print_pdf_via_sumatra(path, printer_name, logger):
+    sumatra = _resolve_sumatra_pdf_path()
+    if not sumatra:
+        return False
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    subprocess.run(
+        [sumatra, "-print-to", printer_name, "-silent", path],
+        check=True,
+        timeout=120,
+        creationflags=flags,
+    )
+    logger.info("Queued label PDF via SumatraPDF to %s", printer_name)
+    return True
+
+
+def _print_pdf_via_adobe(path, printer_name, logger):
+    adobe = _resolve_adobe_reader_path()
+    if not adobe:
+        return False
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    subprocess.run(
+        [adobe, "/t", path, printer_name],
+        check=True,
+        timeout=120,
+        creationflags=flags,
+    )
+    logger.info("Queued label PDF via Adobe Reader to %s", printer_name)
+    return True
+
+
+def _print_pdf_via_shell_execute(path, printer_name, logger):
+    import win32api
+
+    try:
+        import pywintypes
+    except ImportError:
+        pywintypes = None
+
+    attempts = (
+        ("printto", f'"{printer_name}"'),
+        ("print", f'/d:"{printer_name}"'),
+    )
+    errors = []
+    for verb, params in attempts:
+        try:
+            rc = win32api.ShellExecute(0, verb, path, params, ".", 0)
+            if rc > 32:
+                logger.info("Queued label PDF via ShellExecute(%s) to %s", verb, printer_name)
+                return True
+            errors.append(f"{verb}: Windows code {rc}")
+        except Exception as exc:
+            if pywintypes and isinstance(exc, pywintypes.error):
+                errors.append(f"{verb}: {exc}")
+            else:
+                raise
+    logger.warning("ShellExecute print attempts failed: %s", "; ".join(errors))
+    return False
+
+
+def _print_pdf_to_windows_printer(pdf_bytes, printer_name, logger):
+    """Send a PDF to a named Windows printer (4×6 label PDF from excel_labels_to_pdf)."""
+    if sys.platform != "win32":
+        raise RuntimeError("Direct printer output is only supported on Windows.")
+    try:
+        import win32print
+    except ImportError as exc:
+        raise RuntimeError("pywin32 is required for direct warehouse printing.") from exc
+
+    printer_name = (printer_name or "").strip()
+    if not printer_name:
+        raise RuntimeError("Warehouse printer name is not configured.")
+
+    flags = win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS
+    installed = {entry[2] for entry in win32print.EnumPrinters(flags)}
+    if printer_name not in installed:
+        sample = ", ".join(sorted(installed)[:6])
+        raise RuntimeError(
+            f'Printer "{printer_name}" was not found. Installed printers include: {sample}'
+        )
+
+    fd, path = tempfile.mkstemp(suffix=".pdf", prefix="fdc_label_")
+    os.close(fd)
+    abs_path = os.path.abspath(path)
+    try:
+        with open(path, "wb") as handle:
+            handle.write(pdf_bytes)
+
+        failures = []
+        for label, attempt in (
+            ("SumatraPDF", lambda: _print_pdf_via_sumatra(abs_path, printer_name, logger)),
+            ("ShellExecute", lambda: _print_pdf_via_shell_execute(abs_path, printer_name, logger)),
+            ("Adobe Reader", lambda: _print_pdf_via_adobe(abs_path, printer_name, logger)),
+        ):
+            try:
+                if attempt():
+                    break
+            except Exception as exc:
+                failures.append(f"{label}: {exc}")
+                logger.warning("%s warehouse print attempt failed: %s", label, exc)
+        else:
+            hint = (
+                "Install SumatraPDF (recommended) or set SUMATRA_PDF_PATH, "
+                "assign a default app for .pdf files, and confirm the printer is online."
+            )
+            detail = "; ".join(failures) if failures else "no PDF print handler responded"
+            raise RuntimeError(
+                f'Could not print 4×6 labels to "{printer_name}". {hint} ({detail})'
+            )
+
+        def _cleanup():
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
+        threading.Timer(120.0, _cleanup).start()
+    except Exception:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        raise
+
+
 def get_order_ship_to_lines(order_number):
-    """Return cleaned ship-to address lines for ez stickers."""
-    df, error = get_data_from_sql(order_number)
-    if error:
-        return None, error
-    if df is None or df.empty:
-        return None, "No order data found for ship-to address."
-    row = df.iloc[0]
-    lines = []
-    first = str(row.get("SP_ADR") or "").strip()
-    if first:
-        lines.append(f"TO: {first}" if not first.upper().startswith("TO:") else first)
-    for col in ("SP_ADR_2", "SP_ADR_22", "SP_ADR_3"):
-        part = str(row.get(col) or "").strip()
-        if part and part.lower() not in ("none", "nan"):
-            lines.append(part)
-    if not lines:
-        return None, "Ship-to address is empty for this order."
-    return lines, None
+    """Return ship-to lines for ez stickers (same fields as order lookup)."""
+    return fetch_order_ship_to_lines(order_number)
 
 
 def _ez_logo_path():
@@ -1100,6 +1248,27 @@ def _ez_ship_to_display_lines(ship_to_lines):
     return raw
 
 
+def _ez_font_metrics(font_name, font_size):
+    try:
+        ascent = pdfmetrics.getAscent(font_name) / 1000.0 * font_size
+        descent = abs(pdfmetrics.getDescent(font_name) / 1000.0 * font_size)
+    except Exception:
+        ascent = font_size * 0.72
+        descent = font_size * 0.22
+    return ascent, descent
+
+
+def _ez_baseline_below(y_bottom, font_name, font_size, gap_pt=10):
+    """Next baseline when stacking downward (PDF y decreases)."""
+    ascent, _ = _ez_font_metrics(font_name, font_size)
+    return y_bottom - gap_pt - ascent
+
+
+def _ez_bottom_below_baseline(y_baseline, font_name, font_size):
+    _, descent = _ez_font_metrics(font_name, font_size)
+    return y_baseline - descent
+
+
 def _ez_draw_centered(c, y, text, font_name, font_size, color=None):
     if color:
         c.setFillColor(color)
@@ -1109,13 +1278,13 @@ def _ez_draw_centered(c, y, text, font_name, font_size, color=None):
     c.drawCentredString(EZ_PAGE_W / 2, y, text)
     if color:
         c.setFillColor(rl_colors.black)
-    return y - font_size - 4
 
 
 def _ez_draw_label_page(c, logo_path, service, ship_to_lines, box_num, total_boxes):
     """Match Savvy/UCL 4x6 reference: logo banner, from line, service, TO block, totals."""
     cx = EZ_PAGE_W / 2
-    y = EZ_PAGE_H - 0.12 * inch
+    top_y = EZ_PAGE_H - 0.10 * inch
+    y_bottom = top_y
 
     if logo_path and os.path.isfile(logo_path):
         logo_w = EZ_PAGE_W - 0.36 * inch
@@ -1123,39 +1292,53 @@ def _ez_draw_label_page(c, logo_path, service, ship_to_lines, box_num, total_box
         c.drawImage(
             str(logo_path),
             (EZ_PAGE_W - logo_w) / 2,
-            y - logo_h,
+            top_y - logo_h,
             width=logo_w,
             height=logo_h,
             preserveAspectRatio=True,
             mask="auto",
         )
-        y -= logo_h + 0.12 * inch
+        y_bottom = top_y - logo_h
     else:
         c.setFont("Times-Bold", 28)
-        c.drawCentredString(cx, y - 20, "F.D.C")
-        y -= 0.55 * inch
+        c.drawCentredString(cx, top_y - 20, "F.D.C")
+        y_bottom = top_y - 0.55 * inch
 
-    y = _ez_draw_centered(c, y, EZ_FROM_LINE, "Times-Bold", 11)
-    y -= 0.14 * inch
+    from_font, from_size = "Times-Bold", 12
+    y = _ez_baseline_below(y_bottom, from_font, from_size, gap_pt=14)
+    _ez_draw_centered(c, y, EZ_FROM_LINE, from_font, from_size)
+    y_bottom = _ez_bottom_below_baseline(y, from_font, from_size)
 
     service_text = str(service or "").strip().upper()
-    y = _ez_draw_centered(c, y, service_text, "Times-Bold", 34)
-    y -= 0.12 * inch
+    ucl_font, ucl_size = "Times-Bold", 46
+    y = _ez_baseline_below(y_bottom, ucl_font, ucl_size, gap_pt=16)
+    _ez_draw_centered(c, y, service_text, ucl_font, ucl_size)
+    y_bottom = _ez_bottom_below_baseline(y, ucl_font, ucl_size)
 
-    y = _ez_draw_centered(c, y, "TO:", "Times-Bold", 13)
-    for line in _ez_ship_to_display_lines(ship_to_lines):
+    to_label_font, to_label_size = "Times-Bold", 16
+    y = _ez_baseline_below(y_bottom, to_label_font, to_label_size, gap_pt=14)
+    _ez_draw_centered(c, y, "TO:", to_label_font, to_label_size)
+    y_bottom = _ez_bottom_below_baseline(y, to_label_font, to_label_size)
+
+    to_lines = _ez_ship_to_display_lines(ship_to_lines)
+    for line in to_lines:
         font = _label_font_name(line, bold=True)
-        c.setFont(font, 11)
-        c.drawCentredString(cx, y, line)
-        y -= 13
+        if font.startswith("LabelCJK"):
+            line_size = 14
+        else:
+            font = "Times-Bold"
+            line_size = 14
+        y = _ez_baseline_below(y_bottom, font, line_size, gap_pt=6)
+        _ez_draw_centered(c, y, line, font, line_size)
+        y_bottom = _ez_bottom_below_baseline(y, font, line_size)
 
-    y -= 0.2 * inch
-    y = _ez_draw_centered(c, y, f"TOTAL {total_boxes} BOXES", "Times-Bold", 13)
-    y -= 0.08 * inch
+    box_word = "BOX" if int(total_boxes) == 1 else "BOXES"
+    total_font, total_size = "Times-Bold", 14
+    y = _ez_baseline_below(y_bottom, total_font, total_size, gap_pt=14)
+    _ez_draw_centered(c, y, f"TOTAL {total_boxes} {box_word}", total_font, total_size)
 
-    _ez_draw_centered(c, y, f"Box {box_num}", "Times-Roman", 26, color=EZ_GREY)
-    y -= 0.35 * inch
-    _ez_draw_centered(c, 0.42 * inch, f"Box {box_num} of {total_boxes}", "Times-Roman", 14, color=EZ_GREY)
+    _ez_draw_centered(c, 1.05 * inch, f"Box {box_num}", "Times-Roman", 28, color=EZ_GREY)
+    _ez_draw_centered(c, 0.40 * inch, f"Box {box_num} of {total_boxes}", "Times-Roman", 15, color=EZ_GREY)
 
 
 def build_ez_sticker_pdf(ship_to_lines, service, total_boxes, order_number=None):
@@ -1284,15 +1467,56 @@ def register_label_maker_routes(app):
             flash(f'Error generating 4-per-page PDF: {str(e)}', 'error')
             return redirect(url_for('order_lookup'))
 
+    @app.route('/print_label_pdf_warehouse', methods=['POST'])
+    @login_required
+    def print_label_pdf_warehouse():
+        current_user = session['username']
+        order_number = session.get('label_order_number')
+
+        if not order_number:
+            return jsonify({
+                "ok": False,
+                "error": "No label order in session. Generate labels first.",
+            }), 400
+
+        try:
+            app.logger.info(
+                "***%s***__@@@printing label PDF to warehouse@@@__ %s printer=%s",
+                current_user,
+                order_number,
+                WAREHOUSE_LABEL_PRINTER,
+            )
+            excel_data, error_message, _, _, _, _, _ = process_orders(order_number)
+            if error_message or excel_data is None:
+                return jsonify({"ok": False, "error": error_message or "Failed to build labels."}), 400
+
+            pdf_data = excel_labels_to_pdf(excel_data)
+            _print_pdf_to_windows_printer(pdf_data, WAREHOUSE_LABEL_PRINTER, app.logger)
+            _record_jennifer_label_download(order_number, current_user, app.logger)
+
+            return jsonify({
+                "ok": True,
+                "printer": WAREHOUSE_LABEL_PRINTER,
+                "order_number": order_number,
+            })
+        except Exception as e:
+            app.logger.exception("Warehouse label print failed")
+            return jsonify({"ok": False, "error": str(e)}), 500
+
     @app.route('/ez_label_from_order_lookup', methods=['POST'])
     @login_required
     def ez_label_from_order_lookup():
         current_user = session['username']
-        order_number = session.get('label_order_number') or session.get('order_number')
-        if not order_number:
-            return jsonify({"ok": False, "error": "No order in session. Generate or lookup an order first."}), 400
-
         payload = request.get_json(silent=True) or {}
+        order_number = str(
+            payload.get("order_number")
+            or session.get("order_number")
+            or session.get("label_order_number")
+            or ""
+        ).strip()
+        if not order_number:
+            return jsonify({"ok": False, "error": "No order in session. Look up an order first."}), 400
+
         service = str(payload.get("service") or "").strip()
         try:
             total_boxes = int(payload.get("total_boxes"))
@@ -1344,7 +1568,12 @@ def register_label_maker_routes(app):
     def label_maker_from_order_lookup():
         current_user = session['username']
         try:
-            order_number = session.get('order_number')
+            order_number = (
+                (request.form.get('order_number') or session.get('order_number') or '')
+                .strip()
+            )
+            if order_number:
+                session['order_number'] = order_number
             if not order_number:
                 flash('Please lookup an order first before generating labels.', 'error')
                 return redirect(url_for('order_lookup'))
