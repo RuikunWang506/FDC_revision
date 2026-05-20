@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mail — {{ active_account.label }}</title>
+    <title>Mail — {% if mail_group %}All mailboxes{% else %}{{ active_account.label }}{% endif %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -18,10 +18,27 @@
             border-radius: 10px;
             overflow: hidden;
         }
+        .fdc-mail-shell.fdc-mail-shell-folders {
+            grid-template-columns: 220px minmax(120px, 168px) minmax(280px, 360px) 1fr;
+        }
         .fdc-mail-shell.fdc-mail-shell-container {
             /* Keep boat lane readable without over-expanding full layout */
             grid-template-columns: 220px minmax(220px, 280px) minmax(280px, 360px) minmax(320px, 1fr);
             min-width: 980px;
+        }
+        .fdc-mail-shell.fdc-mail-shell-container.fdc-mail-shell-folders {
+            grid-template-columns: 220px minmax(120px, 168px) minmax(220px, 280px) minmax(280px, 360px) minmax(320px, 1fr);
+        }
+        .fdc-mail-folders-col .fdc-mail-list {
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        .fdc-mail-folders-col .nav-link {
+            font-size: 0.8rem;
+            padding: 6px 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .fdc-mail-col { border-right: 1px solid #e8edf5; min-height: 0; }
         .fdc-mail-col:last-child { border-right: none; }
@@ -107,6 +124,20 @@
         .fdc-mail-att-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
         .fdc-mail-att-item { font-size: 0.85rem; }
         .fdc-mail-att-thumb { max-width: 120px; max-height: 90px; border-radius: 6px; border: 1px solid #e2e8f0; object-fit: contain; background: #fff; }
+        .fdc-mail-att-thumb-wrap { display: inline-block; cursor: pointer; }
+        .fdc-mail-att-thumb-wrap:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+        .fdc-mail-att-actions { display: inline-flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; vertical-align: middle; }
+        .fdc-mail-att-preview-btn {
+            border: none;
+            background: #e8f0fe;
+            color: #1d4ed8;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .fdc-mail-att-preview-btn:hover { background: #dbeafe; color: #1e3a8a; }
         .fdc-preview { overflow-y: auto; max-height: calc(100vh - 140px); padding: 12px 14px; }
         .fdc-preview iframe { width: 100%; min-height: 520px; border: 1px solid #e8edf5; border-radius: 6px; background: #fff; }
         .fdc-preview-split {
@@ -127,6 +158,17 @@
         }
         .fdc-mailbox-nav .nav-link { padding: 6px 12px; border-radius: 6px; color: #1f2937; }
         .fdc-mailbox-nav .nav-link.active { background: #e8f0fe; color: #1d4ed8; font-weight: 600; }
+        .fdc-mail-viewing-panel {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e8edf5;
+            background: #fafbfd;
+        }
+        .fdc-mail-viewing-panel .fdc-mail-viewing-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 4px; }
+        .fdc-mail-viewing-panel .fdc-mail-viewing-primary { font-weight: 600; font-size: 0.88rem; color: #0f172a; line-height: 1.25; word-break: break-word; }
+        .fdc-mail-viewing-panel .fdc-mail-viewing-accounts { font-size: 0.72rem; color: #475569; line-height: 1.35; margin-top: 6px; }
+        .fdc-mailbox-select-wrap { padding: 10px 12px 6px; }
+        .fdc-mailbox-select-wrap label { font-size: 0.7rem; color: #64748b; margin-bottom: 4px; display: block; }
+        .fdc-mailbox-select-wrap .form-control { font-size: 0.82rem; }
         .fdc-mail-aside-scroll { max-height: calc(100vh - 220px); overflow-y: auto; }
         .fdc-group-mode-row {
             display: flex;
@@ -263,29 +305,30 @@
             right: 16px;
             bottom: 0;
             z-index: 2060;
-            width: min(100vw - 32px, 520px);
+            width: min(100vw - 32px, 560px);
             font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.22));
+            filter: drop-shadow(0 8px 28px rgba(15, 23, 42, 0.18));
         }
         .fdc-gmail-compose-root[hidden] { display: none !important; }
         .fdc-gmail-compose-root.fdc-gmail-compose-minimized .fdc-gmail-compose-body { display: none; }
-        .fdc-gmail-compose-root.fdc-gmail-compose-minimized { width: 280px; }
+        .fdc-gmail-compose-root.fdc-gmail-compose-minimized { width: 300px; }
         .fdc-gmail-compose-card {
             background: #fff;
-            border-radius: 8px 8px 0 0;
+            border-radius: 12px 12px 0 0;
             overflow: hidden;
-            border: 1px solid #dadce0;
+            border: 1px solid #e2e8f0;
             border-bottom: none;
+            box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.06);
         }
         .fdc-gmail-compose-titlebar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #404040;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             color: #fff;
-            padding: 8px 10px;
+            padding: 10px 12px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: default;
             user-select: none;
         }
@@ -295,53 +338,149 @@
             color: #e8eaed;
             font-size: 18px;
             line-height: 1;
-            padding: 2px 8px;
+            padding: 4px 8px;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 6px;
         }
         .fdc-gmail-compose-titlebar button:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
         .fdc-gmail-compose-body { border-top: 1px solid #e8eaed; }
-        .fdc-gmail-compose-field {
-            border: none;
-            border-bottom: 1px solid #e8eaed;
-            border-radius: 0;
-            font-size: 13px;
-            padding: 8px 12px;
+        .fdc-compose-from-row {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eef2f7;
+            background: #fafbfd;
         }
-        .fdc-gmail-compose-field:focus {
-            box-shadow: none;
-            border-color: #e8eaed;
+        .fdc-compose-label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .fdc-compose-select {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            font-size: 0.82rem;
+            padding: 6px 10px;
+            background: #fff;
+        }
+        .fdc-compose-select:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
             outline: none;
         }
-        .fdc-gmail-compose-toolbar {
-            padding: 4px 8px;
-            border-bottom: 1px solid #e8eaed;
-            background: #f8f9fa;
+        .fdc-compose-select:disabled {
+            opacity: 0.85;
+            cursor: not-allowed;
+            background: #f1f5f9;
+        }
+        .fdc-compose-field-wrap {
             display: flex;
-            gap: 4px;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #eef2f7;
+            padding: 4px 12px;
+            background: #fff;
+        }
+        .fdc-compose-field-icon {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            width: 1.25rem;
+            text-align: center;
+        }
+        .fdc-compose-input {
+            flex: 1;
+            border: none !important;
+            border-radius: 0 !important;
+            font-size: 13px;
+            padding: 8px 4px;
+            min-width: 0;
+            box-shadow: none !important;
+        }
+        .fdc-compose-input:focus {
+            outline: none;
+            box-shadow: none !important;
+        }
+        .fdc-gmail-compose-toolbar {
+            padding: 6px 10px;
+            border-bottom: 1px solid #eef2f7;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
         }
         .fdc-gmail-compose-toolbar button {
             border: none;
-            background: transparent;
-            padding: 4px 8px;
-            border-radius: 4px;
+            background: #fff;
+            padding: 5px 10px;
+            border-radius: 6px;
             font-size: 13px;
-            color: #444;
+            color: #334155;
             cursor: pointer;
+            border: 1px solid #e2e8f0;
         }
-        .fdc-gmail-compose-toolbar button:hover { background: #e8eaed; }
-        .fdc-compose-editor {
-            min-height: 200px;
-            max-height: 360px;
+        .fdc-gmail-compose-toolbar button:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .fdc-compose-attach-zone {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eef2f7;
+            background: #fafbfd;
+        }
+        .fdc-compose-attach-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+            background: #fff;
+            color: #475569;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .fdc-compose-attach-btn:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+        .fdc-compose-file-list {
+            margin-top: 8px;
+            max-height: 72px;
             overflow-y: auto;
-            padding: 12px 14px;
+        }
+        .fdc-compose-file-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            margin: 2px 6px 2px 0;
+            border-radius: 6px;
+            background: #f1f5f9;
+            font-size: 0.75rem;
+            color: #334155;
+        }
+        .fdc-compose-editor {
+            min-height: 220px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 14px 14px;
             font-size: 13px;
-            line-height: 1.5;
+            line-height: 1.55;
             color: #202124;
             outline: none;
+            border-bottom: 1px solid #eef2f7;
         }
-        .fdc-compose-editor:focus { background: #fafafa; }
-        .fdc-gmail-compose-footer { padding: 8px 12px; border-top: 1px solid #e8eaed; background: #fff; }
+        .fdc-compose-editor:focus { background: #fafbff; }
+        .fdc-gmail-compose-footer {
+            padding: 10px 12px;
+            border-top: 1px solid #eef2f7;
+            background: #fff;
+        }
         @media (max-width: 1100px) {
             .fdc-mail-shell:not(.fdc-mail-shell-container) { grid-template-columns: 200px minmax(240px, 1fr); grid-template-rows: 1fr auto; }
             .fdc-mail-shell.fdc-mail-shell-container { min-width: 0; overflow-x: auto; }
@@ -377,22 +516,40 @@
         {% endif %}
     {% endwith %}
 
-    <div class="fdc-mail-shell shadow-sm{% if (mail_group or '') == 'container' %} fdc-mail-shell-container{% endif %}">
+    <div class="fdc-mail-shell shadow-sm{% if (mail_group or '') == 'container' %} fdc-mail-shell-container{% endif %}{% if not mail_group and imap_folder_nav %} fdc-mail-shell-folders{% endif %}">
         <aside class="fdc-mail-col">
             <div class="fdc-mail-head d-flex justify-content-between align-items-center">
                 <span>Mailboxes</span>
                 <a class="small" href="{{ url_for('email.mailboxes') }}">All</a>
             </div>
-            <div class="fdc-mail-aside-scroll">
-                <nav class="nav flex-column fdc-mailbox-nav p-2">
+            {% set mail_group_labels = {'container': 'Container', 'burlington': 'Burlington', 'gabe': 'Gabe', 'ross': 'Ross', 'macy': 'Macy', 'tj': 'TJ'} %}
+            <div class="fdc-mail-viewing-panel">
+                <div class="fdc-mail-viewing-title">Currently viewing</div>
+                {% if mail_group %}
+                    <div class="fdc-mail-viewing-primary">All mailboxes — {{ mail_group_labels.get(mail_group, mail_group) }}</div>
+                    <div class="fdc-mail-viewing-accounts" title="{% for a in accounts %}{{ a.label }}{% if not loop.last %}, {% endif %}{% endfor %}">
+                        <span class="font-weight-bold text-secondary">Including:</span>
+                        {% for a in accounts %}<span class="text-nowrap d-inline-block mr-1">{{ a.label }}</span>{% if not loop.last %}<span class="text-muted">·</span>{% endif %}{% endfor %}
+                    </div>
+                {% else %}
+                    <div class="fdc-mail-viewing-primary">{{ active_account.label }}</div>
+                    <div class="small text-muted text-truncate" title="{{ active_account.email }}">{{ active_account.email }}</div>
+                {% endif %}
+            </div>
+            <div class="fdc-mailbox-select-wrap">
+                <label for="fdc-mailbox-select">Switch mailbox</label>
+                <select id="fdc-mailbox-select" class="form-control form-control-sm" aria-label="Switch mailbox">
+                    {% if mail_group %}
+                        <option value="{{ url_for('email.inbox', account_id=active_account_id) }}{{ inbox_nav_query|default('') }}"
+                                selected>All mail</option>
+                    {% endif %}
                     {% for a in accounts %}
-                        <a class="nav-link {% if a.id == active_account_id %}active{% endif %}"
-                           href="{{ url_for('email.inbox', account_id=a.id) }}{{ inbox_nav_query|default('') }}">
-                            <div>{{ a.label }}</div>
-                            <div class="small text-muted text-truncate">{{ a.email }}</div>
-                        </a>
+                        <option value="{{ url_for('email.inbox', account_id=a.id) }}{{ individual_inbox_nav_query|default('') }}"
+                                {% if not mail_group and a.id == active_account_id %}selected{% endif %}>{{ a.label }}</option>
                     {% endfor %}
-                </nav>
+                </select>
+            </div>
+            <div class="fdc-mail-aside-scroll">
                 <div class="fdc-mail-head py-2 px-3 border-top mb-0 small text-muted">Filter</div>
                 <nav class="nav flex-column fdc-mailbox-nav px-2 pb-2">
                     <a class="nav-link {% if (list_filter or '') == 'attachments' %}active{% endif %}"
@@ -443,6 +600,19 @@
                 <button type="button" class="btn btn-primary btn-sm btn-block" id="fdc-gmail-compose-new">Compose</button>
             </div>
         </aside>
+
+        {% if not mail_group and imap_folder_nav %}
+        <section class="fdc-mail-col fdc-mail-folders-col">
+            <div class="fdc-mail-head">Folders</div>
+            <nav class="nav flex-column fdc-mailbox-nav p-2 fdc-mail-list">
+                {% for fn, suffix in imap_folder_nav %}
+                    <a class="nav-link {% if fn == imap_folder_effective %}active{% endif %}"
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ suffix }}"
+                       title="{{ fn }}">{{ fn }}</a>
+                {% endfor %}
+            </nav>
+        </section>
+        {% endif %}
 
         {% if (mail_group or '') == 'container' %}
         <section class="fdc-mail-col fdc-boat-lane">
@@ -732,19 +902,43 @@
                     </div>
                     {% if attachments %}
                         <div class="fdc-mail-attachments">
-                            <h6 class="mb-2">Attachments</h6>
+                            <h6 class="mb-2">Attachments <span class="text-muted font-weight-normal small">(PDF / images: preview in new window)</span></h6>
                             <div class="fdc-mail-att-row">
                                 {% for a in attachments %}
+                                    {% set ct = (a.content_type or '')|lower %}
+                                    {% set fnl = (a.filename or '')|lower %}
+                                    {% set qs_tail = view_msg_group_q.lstrip('?') if view_msg_group_q else '' %}
+                                    {% set dl_url = url_for('email.download_attachment', account_id=active_account_id, uid=selected_uid, att_idx=a.index) ~ ('?' ~ qs_tail if qs_tail else '') %}
+                                    {% set pv_base = url_for('email.download_attachment', account_id=active_account_id, uid=selected_uid, att_idx=a.index, inline=1) %}
+                                    {% set preview_url = pv_base ~ ('&' ~ qs_tail if qs_tail else '') %}
+                                    {% set is_img = ct.startswith('image/') %}
+                                    {% set is_pdf = ('pdf' in ct) or fnl.endswith('.pdf') %}
                                     <div class="fdc-mail-att-item mb-2 mr-3">
-                                        {% set ct = (a.content_type or '')|lower %}
-                                        {% if ct.startswith('image/') %}
+                                        {% if is_img %}
                                             <div class="mb-1">
-                                                <img class="fdc-mail-att-thumb"
-                                                     src="{{ url_for('email.download_attachment', account_id=active_account_id, uid=selected_uid, att_idx=a.index, inline=1) }}"
-                                                     alt="{{ a.filename }}">
+                                                <span role="button" tabindex="0"
+                                                      class="fdc-mail-att-thumb-wrap js-mail-att-preview"
+                                                      data-preview-url="{{ preview_url|e }}"
+                                                      title="Preview image">
+                                                    <img class="fdc-mail-att-thumb"
+                                                         src="{{ preview_url }}"
+                                                         alt="{{ a.filename }}">
+                                                </span>
                                             </div>
+                                            <div class="fdc-mail-att-actions">
+                                                <button type="button" class="fdc-mail-att-preview-btn js-mail-att-preview" data-preview-url="{{ preview_url|e }}">Preview</button>
+                                                <a href="{{ dl_url }}">Download</a>
+                                            </div>
+                                            <div class="small text-muted">{{ a.filename }}</div>
+                                        {% elif is_pdf %}
+                                            <div class="fdc-mail-att-actions mb-1">
+                                                <i class="fas fa-file-pdf text-danger" aria-hidden="true"></i>
+                                                <button type="button" class="fdc-mail-att-preview-btn js-mail-att-preview" data-preview-url="{{ preview_url|e }}">Preview</button>
+                                                <a href="{{ dl_url }}">{{ a.filename }}</a>
+                                            </div>
+                                        {% else %}
+                                            <a href="{{ dl_url }}">{{ a.filename }}</a>
                                         {% endif %}
-                                        <a href="{{ url_for('email.download_attachment', account_id=active_account_id, uid=selected_uid, att_idx=a.index) }}">{{ a.filename }}</a>
                                         <span class="text-muted small"> · {{ a.content_type or 'file' }} · {{ (a.size / 1024)|round(1) if a.size else 0 }} KB</span>
                                     </div>
                                 {% endfor %}
@@ -791,22 +985,49 @@
             </div>
         </div>
         <div class="fdc-gmail-compose-body">
-            <form method="post" action="{{ url_for('email.send_mail', account_id=active_account_id) }}" id="fdc-gmail-compose-form" class="mb-0">
+            <form method="post" enctype="multipart/form-data" action="{{ url_for('email.send_mail', account_id=active_account_id) }}" id="fdc-gmail-compose-form" class="mb-0">
                 <input type="hidden" name="reply_uid" id="fdc-compose-reply-uid" value="">
                 <input type="hidden" name="in_reply_to" id="fdc-compose-in-reply-to" value="">
                 <input type="hidden" name="references" id="fdc-compose-references" value="">
                 <input type="hidden" name="body_format" value="html">
                 <input type="hidden" name="body" id="fdc-compose-body-hidden" value="">
-                <input type="text" class="form-control fdc-gmail-compose-field" name="to" id="fdc-compose-to" placeholder="To" autocomplete="email" required>
-                <input type="text" class="form-control fdc-gmail-compose-field" name="subject" id="fdc-compose-subject" placeholder="Subject" required>
+                <div class="fdc-compose-from-row">
+                    <label class="fdc-compose-label" for="fdc-compose-account">From</label>
+                    <select id="fdc-compose-account" class="form-control fdc-compose-select" aria-label="Send from mailbox" data-default-account="{{ active_account_id }}">
+                        {% for ma in accounts %}
+                            <option value="{{ ma.id }}"
+                                    data-send-url="{{ url_for('email.send_mail', account_id=ma.id) }}"
+                                    {% if ma.id == active_account_id %}selected{% endif %}>{{ ma.label }} — {{ ma.email }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="fdc-compose-field-wrap">
+                    <span class="fdc-compose-field-icon" title="Recipients"><i class="fas fa-at"></i></span>
+                    <input type="text" class="form-control fdc-compose-input" name="to" id="fdc-compose-to" placeholder="Recipients" autocomplete="email" required>
+                </div>
+                <div class="fdc-compose-field-wrap">
+                    <span class="fdc-compose-field-icon" title="Subject"><i class="fas fa-heading"></i></span>
+                    <input type="text" class="form-control fdc-compose-input" name="subject" id="fdc-compose-subject" placeholder="Subject" required>
+                </div>
                 <div class="fdc-gmail-compose-toolbar">
-                    <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
-                    <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                    <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+                    <button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+                    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+                    <button type="button" data-cmd="insertUnorderedList" title="Bullet list"><i class="fas fa-list-ul"></i></button>
                     <button type="button" data-cmd="insertLineBreak" title="Line break">&#182;</button>
                 </div>
-                <div id="fdc-compose-editor" class="fdc-compose-editor" contenteditable="true" role="textbox" aria-multiline="true"></div>
-                <div class="fdc-gmail-compose-footer">
-                    <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                <div class="fdc-compose-attach-zone">
+                    <label class="fdc-compose-attach-btn mb-0">
+                        <i class="fas fa-paperclip"></i> Attach files
+                        <input type="file" name="attachments" id="fdc-compose-files" multiple class="d-none" tabindex="-1">
+                    </label>
+                    <div id="fdc-compose-file-list" class="fdc-compose-file-list"></div>
+                    <div class="small text-muted mt-1" style="font-size:0.72rem;">Up to 12 files, 15 MB total</div>
+                </div>
+                <div id="fdc-compose-editor" class="fdc-compose-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Compose email…"></div>
+                <div class="fdc-gmail-compose-footer d-flex justify-content-between align-items-center flex-wrap">
+                    <button type="button" class="btn btn-light btn-sm border" id="fdc-compose-discard">Discard</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3"><i class="fas fa-paper-plane mr-1"></i> Send</button>
                 </div>
             </form>
         </div>
@@ -824,7 +1045,14 @@
     var replyBtn = document.getElementById('fdc-gmail-reply');
     var minBtn = document.getElementById('fdc-gmail-compose-minbtn');
     var closeBtn = document.getElementById('fdc-gmail-compose-closebtn');
+    var mailRoot = document.getElementById('fdc-mail-page-root');
+    var accountSel = document.getElementById('fdc-compose-account');
+    var fileInput = document.getElementById('fdc-compose-files');
+    var fileListEl = document.getElementById('fdc-compose-file-list');
+    var discardBtn = document.getElementById('fdc-compose-discard');
     if (!dock || !form || !editor) return;
+
+    var activeAccountId = mailRoot ? String(mailRoot.getAttribute('data-account-id') || '') : '';
 
     var replyPack = null;
     try {
@@ -839,9 +1067,81 @@
         if (el) el.value = v || '';
     }
 
+    function syncComposeAction() {
+        if (!accountSel) return;
+        var opt = accountSel.options[accountSel.selectedIndex];
+        var url = opt && opt.getAttribute('data-send-url');
+        if (url) form.action = url;
+    }
+
+    function resetAccountToDefault() {
+        if (!accountSel) return;
+        var def = accountSel.getAttribute('data-default-account');
+        if (!def) return;
+        for (var i = 0; i < accountSel.options.length; i++) {
+            if (String(accountSel.options[i].value) === String(def)) {
+                accountSel.selectedIndex = i;
+                break;
+            }
+        }
+    }
+
+    function setReplyAccountLock(lock) {
+        if (!accountSel) return;
+        if (lock && activeAccountId) {
+            accountSel.disabled = true;
+            for (var j = 0; j < accountSel.options.length; j++) {
+                if (String(accountSel.options[j].value) === activeAccountId) {
+                    accountSel.selectedIndex = j;
+                    break;
+                }
+            }
+        } else {
+            accountSel.disabled = false;
+        }
+        syncComposeAction();
+    }
+
+    function formatFileSize(n) {
+        if (n < 1024) return n + ' B';
+        if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+        return (n / 1048576).toFixed(1) + ' MB';
+    }
+
+    function refreshFileList() {
+        if (!fileInput || !fileListEl) return;
+        fileListEl.innerHTML = '';
+        var files = fileInput.files;
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            var chip = document.createElement('span');
+            chip.className = 'fdc-compose-file-chip';
+            chip.textContent = f.name + ' (' + formatFileSize(f.size) + ')';
+            fileListEl.appendChild(chip);
+        }
+    }
+
+    function clearAttachments() {
+        if (fileInput) fileInput.value = '';
+        if (fileListEl) fileListEl.innerHTML = '';
+    }
+
+    function discardCompose() {
+        form.reset();
+        setHidden('fdc-compose-body-hidden', '');
+        editor.innerHTML = '<div><br></div>';
+        clearAttachments();
+        resetAccountToDefault();
+        setReplyAccountLock(false);
+        syncComposeAction();
+        dock.hidden = true;
+        dock.classList.remove('fdc-gmail-compose-minimized');
+    }
+
     function openCompose(kind) {
         dock.hidden = false;
         dock.classList.remove('fdc-gmail-compose-minimized');
+        clearAttachments();
         if (kind === 'reply' && replyPack && replyPack.body_html) {
             if (titleEl) titleEl.textContent = 'Reply';
             setHidden('fdc-compose-reply-uid', replyPack.reply_uid || '');
@@ -852,6 +1152,7 @@
             if (toEl) toEl.value = replyPack.to || '';
             if (subEl) subEl.value = replyPack.subject || '';
             editor.innerHTML = replyPack.body_html || '<div><br></div>';
+            setReplyAccountLock(true);
         } else {
             if (titleEl) titleEl.textContent = 'New message';
             setHidden('fdc-compose-reply-uid', '');
@@ -862,9 +1163,20 @@
             if (toEl2) toEl2.value = '';
             if (subEl2) subEl2.value = '';
             editor.innerHTML = '<div><br></div>';
+            setReplyAccountLock(false);
         }
+        syncComposeAction();
         editor.focus();
     }
+
+    if (accountSel) {
+        accountSel.addEventListener('change', syncComposeAction);
+        syncComposeAction();
+    }
+
+    if (fileInput) fileInput.addEventListener('change', refreshFileList);
+
+    if (discardBtn) discardBtn.addEventListener('click', discardCompose);
 
     if (newBtn) newBtn.addEventListener('click', function () { openCompose('new'); });
     if (replyBtn && replyPack && replyPack.body_html) {
@@ -897,6 +1209,51 @@
                 document.execCommand(cmd, false, null);
             }
         });
+    });
+})();
+</script>
+
+<script>
+(function () {
+    var sel = document.getElementById('fdc-mailbox-select');
+    if (!sel) return;
+    sel.addEventListener('change', function () {
+        var v = sel.value;
+        if (v) window.location.href = v;
+    });
+})();
+</script>
+
+<script>
+(function () {
+    function openAttPreview(url) {
+        if (!url) return;
+        var w = Math.min(1040, Math.floor(window.screen.width * 0.92));
+        var h = Math.min(860, Math.floor(window.screen.height * 0.88));
+        var feat =
+            'noopener,noreferrer,width=' +
+            w +
+            ',height=' +
+            h +
+            ',left=' +
+            Math.max(0, Math.floor((window.screen.width - w) / 2)) +
+            ',top=' +
+            Math.max(0, Math.floor((window.screen.height - h) / 4)) +
+            ',menubar=no,toolbar=no,scrollbars=yes,resizable=yes';
+        window.open(url, 'fdcMailAttPreview', feat);
+    }
+    document.addEventListener('click', function (ev) {
+        var el = ev.target.closest('.js-mail-att-preview');
+        if (!el) return;
+        ev.preventDefault();
+        openAttPreview(el.getAttribute('data-preview-url'));
+    });
+    document.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Enter' && ev.key !== ' ') return;
+        var el = ev.target.closest('.js-mail-att-preview[role="button"]');
+        if (!el) return;
+        ev.preventDefault();
+        openAttPreview(el.getAttribute('data-preview-url'));
     });
 })();
 </script>

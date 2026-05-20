@@ -871,14 +871,14 @@
         </a>
         {%- endif %}
 
-        {%- if tool_allowed('label_resizer') %}
-        <a href="{{ url_for('label_resizer.label_resizer_page') }}" class="tool-card" data-category="toolkit" data-tool="label_resizer">
+        {%- if tool_allowed('burlington_label_processor') %}
+        <a href="{{ url_for('burlington_label_processor.burlington_label_processor_page') }}" class="tool-card" data-category="toolkit" data-tool="burlington_label_processor">
           <div class="card-header">
             <i class="fas fa-scissors"></i>
-            <h3>Label_resizer</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'label_resizer')"></i>
+            <h3>Burlington Label Processor</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'burlington_label_processor')"></i>
           </div>
-          <p>Upload a US Letter PDF and center-crop each page to 4×6 inches for label printing</p>
+          <p>Process Burlington label PDFs: crop to 4×6, parse POs, and download with separators</p>
           <div class="card-footer">
             <span class="category">Utilities</span>
             <span class="badge">NEW</span>

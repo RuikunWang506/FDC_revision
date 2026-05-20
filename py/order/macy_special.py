@@ -513,7 +513,7 @@ def process_orders(po_num, order_number, apt, carrier, project):
     print("process_orders: Adding summary information.")
     ws_labels["B" + str(summary_start_row)] = "FDC"
     ws_labels["C" + str(summary_start_row)].font = ft_summary
-    ws_labels["B" + str(summary_start_row + 1)] = "内部单号:"
+    ws_labels["B" + str(summary_start_row + 1)] = "内部单号internal sku:"
     ws_labels["C" + str(summary_start_row + 1)] = str(order_number)
     ws_labels["C" + str(summary_start_row + 1)].font = ft_summary
     ws_labels["B" + str(summary_start_row + 3)] = "Boxes #:"

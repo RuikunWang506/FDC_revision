@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burlington Label Processor — FDC</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f6f9; }
+    .hero-card {
+      background: linear-gradient(135deg, #1a3a52 0%, #2c5282 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .upload-zone {
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      background: #fff;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #2b6cb0;
+      background: #ebf8ff;
+    }
+    .hint { font-size: 0.9rem; color: #718096; }
+    #status.alert { margin-top: 1rem; }
+    .results-section { margin-top: 1.5rem; }
+    .results-section h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+    .table-parse th { white-space: nowrap; font-size: 0.85rem; }
+    .table-parse td { font-size: 0.85rem; vertical-align: middle; }
+    .sku-list { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; }
+    .sku-nested-table { font-size: 0.78rem; margin: 0; background: #fff; }
+    .sku-nested-table th { white-space: nowrap; padding: 0.25rem 0.4rem; font-size: 0.72rem; }
+    .sku-nested-table td { padding: 0.25rem 0.4rem; vertical-align: middle; }
+    .sku-nested-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+    #poOverviewTable tbody tr { background: #fff !important; }
+    #poOverviewTable tbody tr.has-order-notes { background: #d4edda !important; }
+    #poOverviewTable tbody tr.has-order-notes td { background: transparent !important; }
+    a.ocean-qty-link {
+      display: block;
+      color: #2b6cb0;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    a.ocean-qty-link:hover { text-decoration: underline; }
+    .parse-ok { color: #276749; }
+    .parse-fail { color: #c53030; }
+    tr.nonstandard-qty td { background: #fff5f5 !important; }
+    tr.nonstandard-qty td.qty-cell { font-weight: 700; color: #c53030; }
+    .burlington-label-processor-page {
+      width: 100%;
+      max-width: none;
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+    .layout-row { align-items: flex-start; margin-left: 0; margin-right: 0; }
+    .history-col {
+      position: sticky;
+      top: 3.75rem;
+      align-self: flex-start;
+      z-index: 20;
+    }
+    .history-sidebar {
+      max-height: calc(100vh - 4.5rem);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(26, 58, 82, 0.12);
+      border: 1px solid #e2e8f0;
+    }
+    .history-sidebar .card-body {
+      overflow-y: auto;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .history-sidebar .card-header {
+    background: #1a3a52;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .history-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem;
+    margin-bottom: 0.65rem;
+    background: #fff;
+    font-size: 0.8rem;
+  }
+  .history-item.active {
+    border-color: #2b6cb0;
+    box-shadow: 0 0 0 2px rgba(43, 108, 176, 0.15);
+  }
+  .history-item .hist-time { color: #718096; font-size: 0.75rem; margin-bottom: 0.5rem; }
+  .history-item .hist-section { margin-bottom: 0.55rem; }
+  .history-item .hist-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #718096;
+    margin-bottom: 0.3rem;
+  }
+  .hist-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .hist-chip {
+    display: inline-block;
+    padding: 0.28rem 0.55rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+  .hist-chip-file {
+    background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+    color: #2d3748;
+    border: 1px solid #cbd5e0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hist-chip-po {
+    background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+    color: #2c5282;
+    border: 1px solid #90cdf4;
+  }
+  .hist-chip-order {
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    color: #22543d;
+    border: 1px solid #9ae6b4;
+  }
+  a.hist-chip-link {
+    text-decoration: none;
+    color: inherit;
+  }
+  a.hist-chip-link:hover {
+    text-decoration: underline;
+    filter: brightness(0.95);
+  }
+  .hist-chip-bol {
+    background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+    color: #c05621;
+    border: 1px solid #f6ad55;
+  }
+  .hist-empty { color: #a0aec0; font-size: 0.75rem; font-style: italic; }
+  .history-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px solid #edf2f7; }
+  .history-actions .btn { font-size: 0.72rem; padding: 0.2rem 0.45rem; }
+  .burlington-label-processor-main { position: relative; min-height: 12rem; }
+  .burlington-label-processor-loading {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    background: rgba(244, 246, 249, 0.92);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.75rem;
+    border-radius: 8px;
+  }
+  .burlington-label-processor-loading.is-active { display: flex; }
+  .burlington-label-processor-loading .spinner-border { width: 2.5rem; height: 2.5rem; color: #2b6cb0; }
+  .burlington-label-processor-loading p { margin: 0; color: #4a5568; font-weight: 600; font-size: 0.95rem; }
+  body.burlington-label-processor-busy .upload-zone { pointer-events: none; opacity: 0.55; }
+  body.burlington-label-processor-busy .history-item { pointer-events: none; opacity: 0.65; }
+  body.burlington-label-processor-busy #refreshHistoryBtn { pointer-events: none; opacity: 0.5; }
+  </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="container-fluid burlington-label-processor-page py-4">
+    <div class="hero-card">
+      <h1 class="h4 mb-2"><i class="fas fa-cut me-2"></i>Burlington Label Processor</h1>
+      <p class="mb-0 opacity-90">Upload a US Letter PDF (8.5×11 in). Each page is center-cropped to <strong>4×6 in</strong>. Files are saved under <strong>output/burlington_label_processor</strong> for 5 days. A <strong>black separator page</strong> is inserted before each new PO.</p>
+    </div>
+
+    <div class="row layout-row g-4">
+    <div class="col-12 col-lg-9 col-xl-9 burlington-label-processor-main" id="burlingtonLabelProcessorMain">
+      <div id="historyLoadingOverlay" class="burlington-label-processor-loading" role="status" aria-live="polite" aria-busy="false">
+        <div class="spinner-border" aria-hidden="true"></div>
+        <p id="loadingOverlayMessage">Loading…</p>
+      </div>
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form id="uploadForm">
+          <div class="upload-zone" id="dropZone" tabindex="0" role="button" aria-label="Choose PDF file">
+            <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+            <p class="mb-2"><strong>Drop a PDF here</strong> or click to browse</p>
+            <p class="hint mb-3">PDF only · max 25 MB · all pages processed</p>
+            <input type="file" name="file" id="fileInput" accept=".pdf,application/pdf" class="d-none">
+            <span class="badge bg-secondary" id="fileName">No file chosen</span>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mt-3" id="submitBtn" disabled>
+            <i class="fas fa-download me-2"></i>Crop, parse &amp; download 4×6 PDF
+          </button>
+        </form>
+        <div id="status" class="d-none"></div>
+      </div>
+    </div>
+
+    <div id="resultsWrap" class="d-none results-section">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h2 class="h6"><i class="fas fa-hashtag me-1"></i>All PO numbers</h2>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered table-parse mb-0" id="poOverviewTable">
+              <thead class="table-light">
+                <tr>
+                  <th>PO #</th>
+                  <th>Order</th>
+                  <th>Invoice Status</th>
+                  <th>Boxes</th>
+                  <th>Order Notes</th>
+                  <th>Styles</th>
+                  <th>Stock Qty</th>
+                  <th>Ocean Qty</th>
+                  <th>Total Qty</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h2 class="h6"><i class="fas fa-list me-1"></i>Summary by PO</h2>
+          <p class="text-muted small mb-2">Unique style + color per PO, page count, and total quantity.</p>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered table-parse mb-0" id="poDetailTable">
+              <thead class="table-light">
+                <tr>
+                  <th>PO #</th>
+                  <th>Order</th>
+                  <th>Pages</th>
+                  <th>Bill of Lading</th>
+                  <th>SKUs (style-color)</th>
+                  <th>Total Qty</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h2 class="h6 text-success"><i class="fas fa-check-circle me-1"></i>Successfully parsed pages</h2>
+          <p class="text-muted small mb-2" id="parseSummary"></p>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered table-parse mb-0" id="pagesTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Page</th>
+                  <th>PO #</th>
+                  <th>Bill of Lading</th>
+                  <th>Style</th>
+                  <th>Color</th>
+                  <th>SKU</th>
+                  <th>Qty</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="text-muted small mt-3 mb-0">
+      Crop is centered in PDF coordinates (288×432 pt). If a page is smaller than 4×6 in, that page is rejected with an error. Black separator pages are inserted between POs. Labels where a SKU’s carton qty appears fewer than 2 times get a red dotted border. One or two PO summary labels are appended at the end.
+    </p>
+    </div>
+
+    <div class="col-12 col-lg-3 col-xl-3 history-col">
+      <div class="card shadow-sm history-sidebar">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+          <span><i class="fas fa-history me-1"></i>Processed history</span>
+          <button type="button" class="btn btn-sm btn-outline-light" id="refreshHistoryBtn" title="Refresh">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+        <div class="card-body p-2" id="historyList">
+          <p class="text-muted small mb-0 px-1">Loading…</p>
+        </div>
+        <div class="card-footer py-2 text-muted" style="font-size: 0.72rem;">
+          Stored locally up to 5 days
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  {% include 'footer.html' %}
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileName = document.getElementById('fileName');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusEl = document.getElementById('status');
+    const resultsWrap = document.getElementById('resultsWrap');
+    const parseSummary = document.getElementById('parseSummary');
+    const pagesTableBody = document.querySelector('#pagesTable tbody');
+    const poDetailBody = document.querySelector('#poDetailTable tbody');
+    const poOverviewBody = document.querySelector('#poOverviewTable tbody');
+    const processUrl = {{ url_for('burlington_label_processor.burlington_label_processor_process') | tojson }};
+    const historyUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history') | tojson }};
+    const historyDetailUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_detail', job_id='__ID__') | tojson }};
+    const historyOriginalUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_original', job_id='__ID__') | tojson }};
+    const historyProcessedUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_processed', job_id='__ID__') | tojson }};
+    const historyDeleteUrl = {{ url_for('burlington_label_processor.burlington_label_processor_history_delete', job_id='__ID__') | tojson }};
+    const orderLookupBase = {{ url_for('order_lookup.order_lookup', _external=True) | tojson }}.replace(/\/$/, '');
+    const historyListEl = document.getElementById('historyList');
+    const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+    const historyLoadingOverlay = document.getElementById('historyLoadingOverlay');
+    const loadingOverlayMessage = document.getElementById('loadingOverlayMessage');
+    let activeHistoryId = null;
+    let pageLoadSeq = 0;
+
+    function historyUrlFor(template, jobId) {
+      return template.replace('__ID__', encodeURIComponent(jobId));
+    }
+
+    function setPageLoading(loading, message) {
+      document.body.classList.toggle('burlington-label-processor-busy', loading);
+      if (historyLoadingOverlay) {
+        historyLoadingOverlay.classList.toggle('is-active', loading);
+        historyLoadingOverlay.setAttribute('aria-busy', loading ? 'true' : 'false');
+      }
+      if (loadingOverlayMessage && message) {
+        loadingOverlayMessage.textContent = message;
+      }
+      if (refreshHistoryBtn) refreshHistoryBtn.disabled = loading;
+      if (fileInput) fileInput.disabled = loading;
+      if (loading) {
+        submitBtn.disabled = true;
+      } else {
+        submitBtn.disabled = !fileInput.files[0];
+      }
+    }
+
+    function formatHistTime(iso) {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch (_) {
+        return iso;
+      }
+    }
+
+    function renderHistChips(values, chipClass) {
+      if (!values || !values.length) {
+        return '<span class="hist-empty">—</span>';
+      }
+      const chips = values.map(v =>
+        '<span class="hist-chip ' + chipClass + '" title="' + escapeHtml(v) + '">' + escapeHtml(v) + '</span>'
+      ).join('');
+      return '<div class="hist-chips">' + chips + '</div>';
+    }
+
+    function renderHistSection(label, values, chipClass) {
+      return (
+        '<div class="hist-section">' +
+        '<div class="hist-section-label">' + escapeHtml(label) + '</div>' +
+        renderHistChips(values, chipClass) +
+        '</div>'
+      );
+    }
+
+    function renderHistOrderChips(orderNumbers) {
+      if (!orderNumbers || !orderNumbers.length) {
+        return '<span class="hist-empty">—</span>';
+      }
+      const chips = orderNumbers.map(v => {
+        const href = orderLookupBase + '/' + encodeURIComponent(v);
+        return '<a class="hist-chip hist-chip-order hist-chip-link" href="' + escapeHtml(href) +
+          '" target="_blank" rel="noopener" title="Open order ' + escapeHtml(v) + '">' +
+          escapeHtml(v) + ' <i class="fas fa-external-link-alt fa-xs"></i></a>';
+      }).join('');
+      return '<div class="hist-chips">' + chips + '</div>';
+    }
+
+    function renderHistPoChips(poLinks, poNumbers) {
+      const entries = (poLinks && poLinks.length)
+        ? poLinks
+        : (poNumbers || []).map(po => ({ po: po, order_id: null }));
+      if (!entries.length) {
+        return '<span class="hist-empty">—</span>';
+      }
+      const chips = entries.map(entry => {
+        const po = entry.po || entry;
+        const orderId = entry.order_id;
+        const href = orderId
+          ? orderLookupBase + '/' + encodeURIComponent(orderId)
+          : orderLookupBase;
+        const title = orderId
+          ? 'Open order ' + orderId + ' (PO ' + po + ')'
+          : 'Open order lookup (PO ' + po + ')';
+        return '<a class="hist-chip hist-chip-po hist-chip-link" href="' + escapeHtml(href) +
+          '" target="_blank" rel="noopener" title="' + escapeHtml(title) + '">' +
+          escapeHtml(po) + ' <i class="fas fa-external-link-alt fa-xs"></i></a>';
+      }).join('');
+      return '<div class="hist-chips">' + chips + '</div>';
+    }
+
+    function renderHistPoSection(poLinks, poNumbers) {
+      return (
+        '<div class="hist-section">' +
+        '<div class="hist-section-label">PO #</div>' +
+        renderHistPoChips(poLinks, poNumbers) +
+        '</div>'
+      );
+    }
+
+    function renderHistOrderSection(orderNumbers) {
+      return (
+        '<div class="hist-section">' +
+        '<div class="hist-section-label">Order #</div>' +
+        renderHistOrderChips(orderNumbers) +
+        '</div>'
+      );
+    }
+
+    async function loadHistory() {
+      historyListEl.innerHTML = '<p class="text-muted small mb-0 px-1">Loading…</p>';
+      try {
+        const res = await fetch(historyUrl);
+        const data = await res.json();
+        renderHistoryList(data.jobs || []);
+      } catch (_) {
+        historyListEl.innerHTML = '<p class="text-danger small mb-0 px-1">Could not load history.</p>';
+      }
+    }
+
+    function renderHistoryList(jobs) {
+      if (!jobs.length) {
+        historyListEl.innerHTML = '<p class="text-muted small mb-0 px-1">No processed files in the last 5 days.</p>';
+        return;
+      }
+      historyListEl.innerHTML = '';
+      for (const job of jobs) {
+        const div = document.createElement('div');
+        div.className = 'history-item' + (job.id === activeHistoryId ? ' active' : '');
+        div.dataset.jobId = job.id;
+        const fname = job.original_filename || job.download_name || 'PDF';
+        div.innerHTML =
+          '<div class="hist-time">' + escapeHtml(formatHistTime(job.created_at)) + '</div>' +
+          renderHistSection('File', [fname], 'hist-chip-file') +
+          renderHistPoSection(job.po_links, job.po_numbers) +
+          renderHistOrderSection(job.order_numbers) +
+          renderHistSection('BOL', job.bill_of_lading, 'hist-chip-bol') +
+          '<div class="history-actions">' +
+          '<button type="button" class="btn btn-outline-primary btn-view-hist" data-id="' + escapeHtml(job.id) + '"><i class="fas fa-table"></i> Tables</button>' +
+          '<a class="btn btn-outline-secondary" href="' + historyUrlFor(historyOriginalUrl, job.id) + '" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> Original</a>' +
+          '<a class="btn btn-outline-success" href="' + historyUrlFor(historyProcessedUrl, job.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> 4×6</a>' +
+          '<button type="button" class="btn btn-outline-danger btn-remove-hist" data-id="' + escapeHtml(job.id) + '" title="Remove from history"><i class="fas fa-trash-alt"></i></button>' +
+          '</div>';
+        historyListEl.appendChild(div);
+      }
+      historyListEl.querySelectorAll('.btn-view-hist').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openHistoryJob(btn.dataset.id);
+        });
+      });
+      historyListEl.querySelectorAll('.btn-remove-hist').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeHistoryJob(btn.dataset.id);
+        });
+      });
+      historyListEl.querySelectorAll('.history-actions a').forEach(a => {
+        a.addEventListener('click', (e) => e.stopPropagation());
+      });
+      historyListEl.querySelectorAll('.hist-chip-link').forEach(a => {
+        a.addEventListener('click', (e) => e.stopPropagation());
+      });
+      historyListEl.querySelectorAll('.history-item').forEach(el => {
+        el.addEventListener('click', () => openHistoryJob(el.dataset.jobId));
+      });
+    }
+
+    async function removeHistoryJob(jobId) {
+      if (!jobId) return;
+      const item = historyListEl.querySelector('.history-item[data-job-id="' + jobId + '"]');
+      const chip = item && item.querySelector('.hist-chip-file');
+      const name = chip ? chip.textContent.trim() : 'this entry';
+      if (!confirm('Remove "' + name + '" from processed history? This deletes the saved original and 4×6 files.')) {
+        return;
+      }
+      try {
+        const res = await fetch(historyUrlFor(historyDeleteUrl, jobId), { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setStatus('danger', data.error || 'Could not remove entry.');
+          return;
+        }
+        if (activeHistoryId === jobId) {
+          activeHistoryId = null;
+          hideResults();
+          clearStatus();
+        }
+        await loadHistory();
+        setStatus('success', 'Removed from history.');
+      } catch (err) {
+        setStatus('danger', err.message || 'Could not remove entry.');
+      }
+    }
+
+    async function openHistoryJob(jobId) {
+      if (!jobId) return;
+      const seq = ++pageLoadSeq;
+      setPageLoading(true, 'Loading saved results…');
+      activeHistoryId = jobId;
+      historyListEl.querySelectorAll('.history-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.jobId === jobId);
+      });
+      try {
+        const res = await fetch(historyUrlFor(historyDetailUrl, jobId));
+        if (seq !== pageLoadSeq) return;
+        if (!res.ok) throw new Error('Not found');
+        const data = await res.json();
+        if (seq !== pageLoadSeq) return;
+        showResults(data);
+        activeHistoryId = (data.job && data.job.id) || jobId;
+        setStatus('success', 'Loaded saved results from ' + formatHistTime(data.job && data.job.created_at) + '.');
+        resultsWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        if (seq !== pageLoadSeq) return;
+        setStatus('danger', err.message || 'Could not load saved job.');
+      } finally {
+        if (seq === pageLoadSeq) setPageLoading(false);
+      }
+    }
+
+    refreshHistoryBtn.addEventListener('click', loadHistory);
+    loadHistory();
+
+    function setStatus(type, message) {
+      statusEl.className = 'alert alert-' + type;
+      statusEl.textContent = message;
+      statusEl.classList.remove('d-none');
+    }
+    function clearStatus() {
+      statusEl.classList.add('d-none');
+      statusEl.textContent = '';
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function orderLink(orderId, base) {
+      if (!orderId) return '<span class="text-muted">—</span>';
+      const href = base + '/' + encodeURIComponent(orderId);
+      return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' +
+        escapeHtml(orderId) + ' <i class="fas fa-external-link-alt fa-xs"></i></a>';
+    }
+
+    function skuDisplayLabel(sku) {
+      return String(sku).replace(/-/g, ' ');
+    }
+
+    function canonicalSkuForSearch(sku) {
+      const s = String(sku || '').trim();
+      if (!s) return s;
+      if (s.includes('-')) return s;
+      const parts = s.split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) return parts[0] + '-' + parts.slice(1).join('-');
+      return s;
+    }
+
+    function productDetailLink(style, base) {
+      if (!style) return '';
+      const searchSku = canonicalSkuForSearch(style);
+      const href = base + '?search=' + encodeURIComponent(searchSku);
+      return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' +
+        escapeHtml(skuDisplayLabel(style)) + ' <i class="fas fa-external-link-alt fa-xs"></i></a>';
+    }
+
+    function primaryStyleForRow(row) {
+      const list = (row.style_list && row.style_list.length)
+        ? row.style_list
+        : ((row.styles && row.styles !== '—')
+            ? row.styles.split(',').map(s => s.trim()).filter(Boolean)
+            : []);
+      return list.length ? list[0] : null;
+    }
+
+    function styleLinks(row, productDetailBase) {
+      const list = (row.style_list && row.style_list.length)
+        ? row.style_list
+        : ((row.styles && row.styles !== '—')
+            ? row.styles.split(',').map(s => s.trim()).filter(Boolean)
+            : []);
+      if (!list.length) return '<span class="text-muted">—</span>';
+      return list.map(s => productDetailLink(s, productDetailBase)).join(', ');
+    }
+
+    function productDetailOceanLink(row, productDetailBase) {
+      const style = primaryStyleForRow(row);
+      const qty = row.ocean_qty_total;
+      const label = qty != null ? String(qty) : '—';
+      if (!style || label === '—') {
+        return '<span class="text-muted">' + escapeHtml(label) + '</span>';
+      }
+      const pdBase = productDetailBase || 'https://www.fdcef.com/product_detail';
+      const href = pdBase + '?search=' + encodeURIComponent(style) + '#ocean';
+      return '<a href="' + escapeHtml(href) + '" class="ocean-qty-link" target="_blank" rel="noopener" title="View ocean for ' + escapeHtml(style) + '">' +
+        escapeHtml(label) + ' <i class="fas fa-external-link-alt fa-xs"></i></a>';
+    }
+
+    function invoiceStatusCell(row) {
+      if (row.invoice_status === 'invoiced') {
+        let html = '<span class="text-success fw-semibold"><i class="fas fa-check-circle"></i> Invoiced</span>';
+        if (row.invoice_number) {
+          html += '<br><small class="text-muted">Invoice #' + escapeHtml(row.invoice_number) + '</small>';
+        }
+        return html;
+      }
+      if (row.invoice_status === 'not_invoiced') {
+        let html = '<span class="text-danger fw-semibold"><i class="fas fa-times-circle"></i> Not Invoiced</span>';
+        if (row.order_notes && String(row.order_notes).trim()) {
+          html += ' <span class="text-success fw-semibold">(ready)</span>';
+        }
+        return html;
+      }
+      return '<span class="text-muted">—</span>';
+    }
+
+    function notesCell(notes) {
+      if (!notes) return '<span class="text-muted">—</span>';
+      const t = String(notes);
+      if (t.length > 100) {
+        return '<span title="' + escapeHtml(t) + '">' + escapeHtml(t.slice(0, 100)) + '…</span>';
+      }
+      return escapeHtml(t);
+    }
+
+    function downloadPdfBase64(b64, name) {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name || 'label_4x6.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderPagesTable(pages) {
+      pagesTableBody.innerHTML = '';
+      const okPages = pages.filter(p => p.ok);
+      if (!okPages.length) {
+        pagesTableBody.innerHTML =
+          '<tr><td colspan="7" class="text-muted">No pages parsed successfully.</td></tr>';
+        return;
+      }
+      for (const p of okPages) {
+        const items = p.items && p.items.length ? p.items : [{ style: '—', color: '—', qty: '—' }];
+        for (let i = 0; i < items.length; i++) {
+          const it = items[i];
+          const skuRaw = (it.style && it.color && it.style !== '—')
+            ? it.style + '-' + it.color : '';
+          const sku = skuRaw ? escapeHtml(skuDisplayLabel(skuRaw)) : '—';
+          const tr = document.createElement('tr');
+          if (p.nonstandard_qty) tr.classList.add('nonstandard-qty');
+          const qtyNote = p.nonstandard_qty
+            ? ' <i class="fas fa-border-style" title="Non-standard qty — dotted border on PDF"></i>'
+            : '';
+          tr.innerHTML =
+            (i === 0 ? '<td rowspan="' + items.length + '">' + p.page + '</td>' : '') +
+            (i === 0 ? '<td rowspan="' + items.length + '">' + escapeHtml(p.po || '—') + '</td>' : '') +
+            (i === 0 ? '<td rowspan="' + items.length + '">' + escapeHtml(p.bill_of_lading || '—') + '</td>' : '') +
+            '<td>' + escapeHtml(it.style) + '</td>' +
+            '<td>' + escapeHtml(it.color) + '</td>' +
+            '<td>' + sku + '</td>' +
+            '<td class="qty-cell">' + escapeHtml(it.qty) + qtyNote + '</td>';
+          pagesTableBody.appendChild(tr);
+        }
+      }
+    }
+
+    function renderPoDetailTable(poDetail, orderLookupBase, productDetailBase) {
+      poDetailBody.innerHTML = '';
+      if (!poDetail.length) {
+        poDetailBody.innerHTML =
+          '<tr><td colspan="6" class="text-muted">No PO data extracted.</td></tr>';
+        return;
+      }
+      const pdBase = productDetailBase || 'https://www.fdcef.com/product_detail';
+      for (const row of poDetail) {
+        let skuHtml = '—';
+        if (row.skus && row.skus.length) {
+          const bodyRows = row.skus.map(s =>
+            '<tr>' +
+            '<td>' + productDetailLink(s.sku, pdBase) + '</td>' +
+            '<td class="num">' + escapeHtml(s.qty) + '</td>' +
+            '<td class="num">' + escapeHtml(s.in_warehouse != null ? s.in_warehouse : '—') + '</td>' +
+            '<td class="num">' + escapeHtml(s.sold_reserved != null ? s.sold_reserved : '—') + '</td>' +
+            '</tr>'
+          ).join('');
+          skuHtml =
+            '<table class="table table-sm table-bordered sku-nested-table mb-0">' +
+            '<thead class="table-light"><tr>' +
+            '<th>SKU</th><th class="num">Qty</th><th class="num">In Warehouse</th><th class="num">Sold/Reserved</th>' +
+            '</tr></thead><tbody>' + bodyRows + '</tbody></table>';
+        }
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + escapeHtml(row.po) + '</td>' +
+          '<td>' + orderLink(row.order_id, orderLookupBase) + '</td>' +
+          '<td>' + escapeHtml(row.page_count) + '</td>' +
+          '<td>' + escapeHtml(row.bill_of_lading || '—') + '</td>' +
+          '<td>' + skuHtml + '</td>' +
+          '<td><strong>' + escapeHtml(row.total_qty) + '</strong></td>';
+        poDetailBody.appendChild(tr);
+      }
+    }
+
+    function renderPoOverviewTable(poOverview, orderLookupBase, productDetailBase) {
+      poOverviewBody.innerHTML = '';
+      if (!poOverview.length) {
+        poOverviewBody.innerHTML =
+          '<tr><td colspan="9" class="text-muted">No PO numbers found.</td></tr>';
+        return;
+      }
+      const pdBase = productDetailBase || 'https://www.fdcef.com/product_detail';
+      for (const row of poOverview) {
+        const tr = document.createElement('tr');
+        if (row.order_notes && String(row.order_notes).trim()) {
+          tr.classList.add('has-order-notes');
+        }
+        tr.innerHTML =
+          '<td>' + escapeHtml(row.po) + '</td>' +
+          '<td>' + orderLink(row.order_id, orderLookupBase) + '</td>' +
+          '<td>' + invoiceStatusCell(row) + '</td>' +
+          '<td>' + escapeHtml(row.page_count) + '</td>' +
+          '<td>' + notesCell(row.order_notes) + '</td>' +
+          '<td>' + styleLinks(row, pdBase) + '</td>' +
+          '<td>' + escapeHtml(row.warehouse_qty_total != null ? row.warehouse_qty_total : '—') + '</td>' +
+          '<td>' + productDetailOceanLink(row, pdBase) + '</td>' +
+          '<td><strong>' + escapeHtml(row.total_qty) + '</strong></td>';
+        poOverviewBody.appendChild(tr);
+      }
+    }
+
+    function showResults(data) {
+      const failed = data.page_count - data.parsed_count;
+      parseSummary.textContent =
+        data.parsed_count + ' of ' + data.page_count + ' page(s) parsed' +
+        (failed ? ' (' + failed + ' skipped — missing PO / BOL / line items).' : '.');
+      renderPagesTable(data.pages || []);
+      const pdBase = data.product_detail_base || 'https://www.fdcef.com/product_detail';
+      renderPoDetailTable(data.po_detail || [], data.order_lookup_base || '/order_lookup', pdBase);
+      renderPoOverviewTable(data.po_overview || [], data.order_lookup_base || '/order_lookup', pdBase);
+      resultsWrap.classList.remove('d-none');
+    }
+
+    function hideResults() {
+      resultsWrap.classList.add('d-none');
+    }
+
+    function updateFileLabel() {
+      const f = fileInput.files[0];
+      if (f) {
+        fileName.textContent = f.name;
+        fileName.classList.remove('bg-secondary');
+        fileName.classList.add('bg-primary');
+        submitBtn.disabled = false;
+      } else {
+        fileName.textContent = 'No file chosen';
+        fileName.classList.add('bg-secondary');
+        fileName.classList.remove('bg-primary');
+        submitBtn.disabled = true;
+      }
+    }
+
+    dropZone.addEventListener('click', () => {
+      if (document.body.classList.contains('burlington-label-processor-busy')) return;
+      fileInput.click();
+    });
+    dropZone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+    });
+    fileInput.addEventListener('change', () => { updateFileLabel(); hideResults(); });
+
+    ['dragenter', 'dragover'].forEach(ev => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(ev => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
+      });
+    });
+    dropZone.addEventListener('drop', (e) => {
+      if (document.body.classList.contains('burlington-label-processor-busy')) return;
+      const f = e.dataTransfer.files[0];
+      if (f && f.type === 'application/pdf') {
+        fileInput.files = e.dataTransfer.files;
+        updateFileLabel();
+        hideResults();
+      } else {
+        setStatus('warning', 'Please drop a PDF file.');
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (document.body.classList.contains('burlington-label-processor-busy')) return;
+      clearStatus();
+      hideResults();
+      if (!fileInput.files[0]) {
+        setStatus('warning', 'Choose a PDF first.');
+        return;
+      }
+      const seq = ++pageLoadSeq;
+      setPageLoading(true, 'Cropping, parsing & building 4×6 PDF…');
+      const fd = new FormData(form);
+      try {
+        const res = await fetch(processUrl, { method: 'POST', body: fd });
+        if (seq !== pageLoadSeq) return;
+        const ct = res.headers.get('content-type') || '';
+        if (res.ok && ct.includes('application/json')) {
+          const data = await res.json();
+          if (data.pdf_base64) {
+            downloadPdfBase64(data.pdf_base64, data.download_name);
+          }
+          showResults(data);
+          if (data.job_id) {
+            activeHistoryId = data.job_id;
+            loadHistory();
+          }
+          let okMsg = 'Download started. Parsed ' + (data.parsed_count || 0) + ' label page(s)';
+          if (data.separator_count) {
+            okMsg += '; inserted ' + data.separator_count + ' black separator page(s) between POs';
+          }
+          if (data.summary_label_count) {
+            okMsg += '; appended ' + data.summary_label_count + ' PO summary label(s)';
+          }
+          if (data.nonstandard_qty_count) {
+            okMsg += '; ' + data.nonstandard_qty_count + ' page(s) with non-standard qty (dotted border)';
+          }
+          okMsg += ' (' + (data.output_page_count || data.page_count) + ' pages in output PDF).';
+          setStatus('success', okMsg + ' See tables below.');
+        } else {
+          let msg = 'Request failed.';
+          try {
+            const j = await res.json();
+            if (j.error) msg = j.error;
+          } catch (_) {
+            msg = res.statusText || msg;
+          }
+          setStatus('danger', msg);
+        }
+      } catch (err) {
+        if (seq === pageLoadSeq) {
+          setStatus('danger', err.message || 'Network error.');
+        }
+      } finally {
+        if (seq === pageLoadSeq) setPageLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -802,8 +802,9 @@
 
             {% if not lc_hide_styles %}
             <div class="form-group mb-3">
-                <label class="lc-label-muted d-block mb-1" for="list_input">Styles or Dropbox path</label>
-                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401 or dropbox&#92;folder" value="{{ list_input or '' }}" autocomplete="off">
+                <label class="lc-label-muted d-block mb-1" for="list_input">Styles, container, or Dropbox path, you can mix container and style, but dropbox link by itself</label>
+                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401,F26193 · dropbox&#92;folder" value="{{ list_input or '' }}" autocomplete="off">
+                <small class="form-text text-muted">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>dropbox\folder</code> path.</small>
                 <div class="d-flex flex-wrap align-items-center mt-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-1" id="btnV7PickDropboxFolder" title="Open folders on the server’s synced Dropbox (names and image counts only)">Browse server Dropbox 在这里选dropbox的文件夹…</button>
                 </div>

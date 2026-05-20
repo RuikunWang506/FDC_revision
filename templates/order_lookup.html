@@ -307,6 +307,63 @@
             text-decoration: none;
         }
 
+        .download-btn-pdf {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+        }
+
+        .download-btn-pdf:hover {
+            color: white;
+        }
+
+        .download-btn-4up {
+            background: linear-gradient(135deg, #6c3483, #8e44ad);
+        }
+
+        .download-btn-4up:hover {
+            color: white;
+        }
+
+        .download-buttons-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .ez-label-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 14px;
+            width: 100%;
+        }
+
+        .download-btn-ez {
+            background: linear-gradient(135deg, #0d6e4f, #1a9c6e);
+            min-width: 260px;
+        }
+
+        .download-btn-ez:hover {
+            color: white;
+        }
+
+        #ezLabelModal .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        #ezLabelModal .modal-header {
+            background: linear-gradient(135deg, #0d6e4f, #1a9c6e);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        #ezLabelModal .btn-ez-submit {
+            background: linear-gradient(135deg, #0d6e4f, #1a9c6e);
+            border: none;
+            font-weight: 700;
+        }
+
         .success-badge {
             background: linear-gradient(135deg, var(--secondary-color), #3da35a);
             color: white;
@@ -379,7 +436,8 @@
         /* Order lines table: inline edit targets (delegated JS — all pages) */
         #items_table tbody tr:not(.child) td:nth-child(3),
         #items_table tbody tr:not(.child) td:nth-child(4),
-        #items_table tbody tr:not(.child) td:nth-child(5) {
+        #items_table tbody tr:not(.child) td:nth-child(5),
+        #items_table tbody tr:not(.child) td:nth-child(6) {
             cursor: pointer;
             position: relative;
             transition: background-color 0.2s ease;
@@ -387,7 +445,8 @@
 
         #items_table tbody tr:not(.child) td:nth-child(3):hover,
         #items_table tbody tr:not(.child) td:nth-child(4):hover,
-        #items_table tbody tr:not(.child) td:nth-child(5):hover {
+        #items_table tbody tr:not(.child) td:nth-child(5):hover,
+        #items_table tbody tr:not(.child) td:nth-child(6):hover {
             background-color: #e8f4f8 !important;
             outline: 2px solid var(--primary-color);
         }
@@ -423,10 +482,234 @@
                 justify-content: center;
             }
         }
+
+        .order-lookup-content {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .recent-orders-sidebar {
+            position: fixed;
+            left: -280px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 280px;
+            max-height: 80vh;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 0 15px 15px 0;
+            box-shadow: 5px 0 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .recent-orders-sidebar.open {
+            left: 0;
+        }
+
+        .recent-orders-toggle {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 0 10px 10px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 999;
+        }
+
+        .recent-orders-toggle:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            box-shadow: 5px 0 20px rgba(102, 126, 234, 0.45);
+        }
+
+        .recent-orders-sidebar-header {
+            padding: 16px 14px 10px;
+            border-bottom: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .recent-orders-sidebar-header .header-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .recent-orders-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 2px 6px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .recent-orders-close:hover {
+            color: #fff;
+        }
+
+        .recent-orders-sidebar-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0 0 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .recent-orders-sidebar-header .subtitle {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .recent-orders-filter {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .recent-orders-filter input {
+            width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .recent-orders-filter input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .recent-orders-list {
+            list-style: none;
+            margin: 0;
+            padding: 8px 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .recent-order-item {
+            margin: 0;
+        }
+
+        .recent-order-item a {
+            display: block;
+            padding: 10px 14px;
+            text-decoration: none;
+            color: var(--dark-bg);
+            border-left: 3px solid transparent;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .recent-order-item a:hover {
+            background: #eef4fc;
+            border-left-color: var(--primary-color);
+        }
+
+        .recent-order-item.active a {
+            background: #e3f2fd;
+            border-left-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .recent-order-num {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .recent-order-customer {
+            display: block;
+            font-size: 12px;
+            color: #495057;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .recent-order-date {
+            display: block;
+            font-size: 11px;
+            color: #868e96;
+            margin-top: 2px;
+        }
+
+        .recent-order-empty {
+            padding: 20px 14px;
+            text-align: center;
+            color: #868e96;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .recent-orders-sidebar {
+                width: 260px;
+                left: -260px;
+            }
+        }
+
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
+
+    <button type="button" class="recent-orders-toggle" id="recentOrdersToggle" onclick="toggleRecentOrdersSidebar()" aria-label="Recent FDC orders" title="Recent orders">
+        <i class="fas fa-list-ul"></i>
+    </button>
+
+    <aside class="recent-orders-sidebar" id="recentOrdersSidebar" aria-label="Recent FDC orders">
+            <div class="recent-orders-sidebar-header">
+                <div class="header-text">
+                    <h2><i class="fas fa-list-ul mr-2"></i>Recent FDC Orders</h2>
+                    <div class="subtitle">Last 100 from FDC database</div>
+                </div>
+                <button type="button" class="recent-orders-close" onclick="toggleRecentOrdersSidebar()" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="recent-orders-filter">
+                <input type="search" id="recentOrdersFilter" placeholder="Filter by order # or customer..." autocomplete="off">
+            </div>
+            <ul class="recent-orders-list" id="recentOrdersList">
+                {% for order in recent_fdc_orders or [] %}
+                <li class="recent-order-item{% if order_number and order.order_number == order_number|string %} active{% endif %}"
+                    data-search="{{ order.order_number }} {{ order.customer_name }} {{ order.order_date }}">
+                    <a href="{{ url_for('order_lookup.order_lookup', order_number=order.order_number) }}">
+                        <span class="recent-order-num">#{{ order.order_number }}</span>
+                        <span class="recent-order-customer">{{ order.customer_name or '—' }}</span>
+                        {% if order.order_date %}
+                        <span class="recent-order-date">{{ order.order_date }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% else %}
+                <li class="recent-order-empty">No recent orders found</li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        <main class="order-lookup-content">
 
     <!-- Page Header -->
     <div class="page-header">
@@ -494,26 +777,6 @@
                 .input-with-nav .submit-btn {
                     margin: 0;
                     padding: 12px 25px;
-                }
-                .quick-access {
-                    background: linear-gradient(135deg, rgba(74, 144, 226, 0.1), rgba(80, 200, 120, 0.1));
-                    padding: 20px;
-                    border-radius: 12px;
-                    margin-bottom: 20px;
-                    border-left: 4px solid var(--primary-color);
-                }
-                .quick-access-label {
-                    font-weight: 700;
-                    color: var(--dark-bg);
-                    margin-bottom: 12px;
-                    display: block;
-                    font-size: 13px;
-                    text-transform: uppercase;
-                }
-                .quick-badges {
-                    display: flex;
-                    gap: 10px;
-                    flex-wrap: wrap;
                 }
                 
                 /* Floating Sidebar Styles */
@@ -623,35 +886,18 @@
                     background: linear-gradient(135deg, #ffd700, #ffed4e);
                     color: #333;
                 }
+
+                .sidebar-btn.ez-btn {
+                    background: linear-gradient(135deg, #0d6e4f, #1a9c6e);
+                    color: white;
+                }
                 
                 .sidebar-btn.macy-btn {
                     background: linear-gradient(135deg, #e74c3c, #c0392b);
                 }
                 
-                .quick-link {
-                    display: flex;
-                    align-items: center;
-                    padding: 10px;
-                    margin-bottom: 8px;
-                    background: #f8f9fa;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    color: var(--dark-bg);
-                    transition: all 0.2s;
-                    font-size: 13px;
-                }
                 
-                .quick-link:hover {
-                    background: #e9ecef;
-                    transform: translateX(5px);
-                    color: var(--primary-color);
-                }
                 
-                .quick-link i {
-                    width: 20px;
-                    margin-right: 10px;
-                    color: var(--primary-color);
-                }
                 
                 .action-buttons {
                     display: none !important;
@@ -662,9 +908,6 @@
                     }
                     .action-buttons {
                         grid-template-columns: 1fr;
-                    }
-                    .quick-badges {
-                        flex-direction: column;
                     }
                     .info-badge {
                         width: 100%;
@@ -686,24 +929,6 @@
             <form method="POST" action="/order_lookup" id="orderForm">
                 <!-- Header -->
 
-                <!-- Quick Access Row - Before Main Search -->
-                {% if not header_info %}
-                <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; justify-content: center;">
-                    <span style="font-weight: 700; color: var(--dark-bg); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <i class="fas fa-bolt mr-2" style="color: var(--primary-color);"></i>Quick Access:
-                    </span>
-                    {% if latest_orders and latest_orders.ef %}
-                    <span class="info-badge" onclick="document.getElementById('order_number').value = '{{ latest_orders.ef }}';" style="cursor: pointer; white-space: nowrap;">
-                        <i class="fas fa-zap mr-1"></i>EF: {{ latest_orders.ef }}
-                    </span>
-                    {% endif %}
-                    {% if latest_orders and latest_orders.fdc %}
-                    <span class="info-badge" onclick="document.getElementById('order_number').value = '{{ latest_orders.fdc }}';" style="cursor: pointer; white-space: nowrap;">
-                        <i class="fas fa-zap mr-1"></i>FDC: {{ latest_orders.fdc }}
-                    </span>
-                    {% endif %}
-                </div>
-                {% endif %}
 
                 <!-- Main Search Grid -->
                 <div class="search-grid">
@@ -767,7 +992,14 @@
                                     <i class="fas fa-check-circle mr-2"></i>Invoiced
                                 </div>
                                 <div style="color: #666; font-size: 13px; margin-top: 5px;">
-                                    Invoice #{{ header_info.invoice_number }}
+                                    Invoice #
+                                    <a href="{{ url_for('invoice_lookup.invoice_lookup', invoice_number=header_info.invoice_number) }}"
+                                       target="_blank"
+                                       rel="noopener"
+                                       style="color: #4a90e2; text-decoration: none; font-weight: 600;">
+                                        {{ header_info.invoice_number }}
+                                        <i class="fas fa-external-link-alt" style="font-size: 0.85em;"></i>
+                                    </a>
                                 </div>
                             {% else %}
                                 <div style="color: #dc3545; font-size: 18px; font-weight: 700;">
@@ -776,24 +1008,38 @@
                             {% endif %}
                         </div>
                     </div>
-                    {% endif %}
-                    
-                    <!-- Quick Access Section -->
+
                     <div class="sidebar-section">
-                        <div class="sidebar-section-title">Quick Access</div>
-                        {% if latest_orders and latest_orders.ef %}
-                        <a href="#" class="quick-link" onclick="event.preventDefault(); document.getElementById('order_number').value = '{{ latest_orders.ef }}'; document.getElementById('orderForm').submit();">
-                            <i class="fas fa-zap"></i>
-                            Latest EF: {{ latest_orders.ef }}
-                        </a>
-                        {% endif %}
-                        {% if latest_orders and latest_orders.fdc %}
-                        <a href="#" class="quick-link" onclick="event.preventDefault(); document.getElementById('order_number').value = '{{ latest_orders.fdc }}'; document.getElementById('orderForm').submit();">
-                            <i class="fas fa-zap"></i>
-                            Latest FDC: {{ latest_orders.fdc }}
-                        </a>
-                        {% endif %}
+                        <div class="sidebar-section-title">Label Status</div>
+                        <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                            {% if header_info.label_burlington %}
+                            <div style="color: #2b6cb0; font-size: 15px; font-weight: 700; margin-bottom: 6px;">
+                                <i class="fas fa-tag mr-2"></i>Burlington label created
+                            </div>
+                            {% endif %}
+                            {% if header_info.label_jennifer %}
+                            <div style="color: #b7791f; font-size: 15px; font-weight: 700; margin-bottom: 6px;">
+                                <i class="fas fa-file-excel mr-2"></i>Jennifer label created
+                            </div>
+                            {% endif %}
+                            {% if header_info.label_ez %}
+                            <div style="color: #0d6e4f; font-size: 15px; font-weight: 700; margin-bottom: 6px;">
+                                <i class="fas fa-sticky-note mr-2"></i>EZ label printed
+                                {% if header_info.label_ez_service %}
+                                <div style="font-size: 12px; font-weight: 600; color: #555; margin-top: 4px;">
+                                    {{ header_info.label_ez_service }}{% if header_info.label_ez_boxes %} · {{ header_info.label_ez_boxes }} boxes{% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            {% if not header_info.label_burlington and not header_info.label_jennifer and not header_info.label_ez %}
+                            <div style="color: #888; font-size: 14px; font-weight: 600;">
+                                <i class="fas fa-minus-circle mr-2"></i>No labels recorded
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
+                    {% endif %}
                     
                     <!-- Action Buttons Section -->
                     <div class="sidebar-section">
@@ -810,6 +1056,12 @@
                         <button type="button" class="sidebar-btn label-btn" onclick="generateLabel()">
                             <i class="fas fa-barcode"></i>
                             <span>Generate Label / 打标签</span>
+                        </button>
+                        {% endif %}
+                        {% if items_html and header_info %}
+                        <button type="button" class="sidebar-btn ez-btn" id="ezLabelBtn" data-toggle="modal" data-target="#ezLabelModal"{% if ez_default_boxes %} data-default-boxes="{{ ez_default_boxes }}"{% endif %}>
+                            <i class="fas fa-sticky-note"></i>
+                            <span>ez简易贴纸</span>
                         </button>
                         {% endif %}
                         
@@ -1141,17 +1393,21 @@
         <div class="download-section">
             <div class="text-center">
                 <h3 class="mb-4">
-                    <i class="fas fa-tag mr-2"></i>Label Generation Complete
+                    <i class="fas fa-tag mr-2"></i>label 生成
                 </h3>
 
-                <a href="{{ url_for('download_label_excel') }}" class="download-btn">
-                    <i class="fas fa-download mr-2"></i>Download Excel File / 下载excel 文件
+                <div class="download-buttons-wrap">
+                <a href="{{ url_for('download_label_excel') }}" class="download-btn" target="_blank" rel="noopener">
+                    <i class="fas fa-download mr-2"></i>Excel文件（编辑）
                 </a>
-                
-                <div class="success-badge mt-4">
-                    <i class="fas fa-check-circle mr-2"></i>Labels are ready for printing
+                <a href="{{ url_for('download_label_pdf') }}" class="download-btn download-btn-pdf" target="_blank" rel="noopener">
+                    <i class="fas fa-file-pdf mr-2"></i>PDF 单张打印版
+                </a>
+                <a href="{{ url_for('download_label_pdf_4perpage') }}" class="download-btn download-btn-4up" target="_blank" rel="noopener">
+                    <i class="fas fa-copy mr-2"></i>PDF 4per page 每页4张版
+                </a>
                 </div>
-                
+
                 <div class="info-card mt-4">
                     <div class="info-card-header">
                         <i class="fas fa-info-circle mr-2"></i>Label Details / 标签详情
@@ -1252,6 +1508,8 @@
         </div>
     </div>
     {% endif %}
+
+    </main>
 
     <!-- JavaScript Dependencies -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -1474,7 +1732,7 @@
 
         function bindItemsTableEditableDelegation() {
             // DataTables only keeps the current page in the DOM; direct bindings on tbody tr
-            // miss page 2+. Delegate from #items_table so every page can edit description/qty/price.
+            // miss page 2+. Delegate from #items_table so every page can edit description/qty/price/per_box.
             var $table = $('#items_table');
             if (!$table.length) return;
 
@@ -1506,16 +1764,25 @@
                     cell.data('editType', 'price');
                     startEditingCell(cell, 'price');
                 });
+            $table.off('click' + ns, 'tbody td:nth-child(6)')
+                .on('click' + ns, 'tbody td:nth-child(6)', function(e) {
+                    var cell = $(this);
+                    if (cell.closest('tr').hasClass('child')) return;
+                    if (currentEditingCell && currentEditingCell[0] === cell[0]) return;
+                    if (currentEditingCell) saveEditableCell(currentEditingCell, currentEditingCell.data('editType'));
+                    cell.data('editType', 'per_box');
+                    startEditingCell(cell, 'per_box');
+                });
         }
 
         function startEditingCell(cell, type) {
             currentEditingCell = cell;
             var currentText = cell.text().trim();
             cell.addClass('editing');
-            var inputType = (type === 'qty' || type === 'price') ? 'number' : 'text';
+            var inputType = (type === 'qty' || type === 'price' || type === 'per_box') ? 'number' : 'text';
             var input = $('<input type="' + inputType + '" class="description-input">');
             input.val(currentText);
-            if (type === 'qty') {
+            if (type === 'qty' || type === 'per_box') {
                 input.attr('min', '0');
                 input.attr('step', '1');
             }
@@ -1585,6 +1852,13 @@
             } else if (type === 'price') {
                 url = '/update_order_price';
                 data.price = newText;
+            } else if (type === 'per_box') {
+                url = '/update_order_per_box';
+                data.per_box = newText;
+            }
+            if (!url) {
+                cell.text(newText);
+                return;
             }
             $.ajax({
                 url: url,
@@ -1766,8 +2040,93 @@
 
             // Enable ship date inline editing
             makeShipDateEditable();
+
+            function parseBoxesFromNotes(text) {
+                if (!text) return null;
+                const m = String(text).match(/(\d+)\s*boxes\b/i);
+                if (!m) return null;
+                const n = parseInt(m[1], 10);
+                return n > 0 ? n : null;
+            }
+
+            function prefillEzLabelModal() {
+                let boxes = null;
+                const notesEl = document.getElementById('order_notes');
+                if (notesEl && notesEl.value) {
+                    boxes = parseBoxesFromNotes(notesEl.value);
+                }
+                if (!boxes) {
+                    const btn = document.getElementById('ezLabelBtn');
+                    const fromBtn = btn && btn.dataset.defaultBoxes ? parseInt(btn.dataset.defaultBoxes, 10) : null;
+                    if (fromBtn && fromBtn > 0) boxes = fromBtn;
+                }
+                if (boxes) {
+                    $('#ezTotalBoxes').val(boxes);
+                }
+            }
+
+            $('#ezLabelModal').on('show.bs.modal', prefillEzLabelModal);
+
+            $('#ezLabelSubmitBtn').on('click', async function() {
+                const service = ($('#ezShippingService').val() || '').trim();
+                const totalBoxes = parseInt($('#ezTotalBoxes').val(), 10);
+                if (!service) {
+                    alert('Please enter a shipping service (e.g. UCL).');
+                    return;
+                }
+                if (!totalBoxes || totalBoxes < 1) {
+                    alert('Please enter total boxes (positive number).');
+                    return;
+                }
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Generating…');
+                try {
+                    const response = await fetch('{{ url_for("ez_label_from_order_lookup") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ service: service, total_boxes: totalBoxes })
+                    });
+                    if (!response.ok) {
+                        let msg = 'Failed to generate ez label PDF.';
+                        try {
+                            const err = await response.json();
+                            if (err && err.error) msg = err.error;
+                        } catch (e) { /* ignore */ }
+                        throw new Error(msg);
+                    }
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    $('#ezLabelModal').modal('hide');
+                    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                    setTimeout(function() { window.location.reload(); }, 800);
+                } catch (err) {
+                    alert(err.message || 'Failed to generate ez labels.');
+                } finally {
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
         });
         
+
+        function toggleRecentOrdersSidebar() {
+            const sidebar = document.getElementById('recentOrdersSidebar');
+            const toggleBtn = document.getElementById('recentOrdersToggle');
+            if (!sidebar || !toggleBtn) return;
+            const width = window.innerWidth <= 768 ? 260 : 280;
+            const isOpen = sidebar.classList.contains('open');
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                toggleBtn.style.left = '0';
+                localStorage.setItem('recentOrdersSidebarOpen', 'false');
+            } else {
+                sidebar.classList.add('open');
+                toggleBtn.style.left = width + 'px';
+                localStorage.setItem('recentOrdersSidebarOpen', 'true');
+            }
+        }
+
         // Floating Sidebar Toggle Function
         function toggleSidebar() {
             const sidebar = document.getElementById('floatingSidebar');
@@ -1798,8 +2157,73 @@
             } else {
                 toggleBtn.style.right = '0';
             }
+
+            const recentSidebar = document.getElementById('recentOrdersSidebar');
+            const recentToggle = document.getElementById('recentOrdersToggle');
+            if (recentSidebar && recentToggle) {
+                const recentWidth = window.innerWidth <= 768 ? 260 : 280;
+                if (localStorage.getItem('recentOrdersSidebarOpen') === 'true') {
+                    recentSidebar.classList.add('open');
+                    recentToggle.style.left = recentWidth + 'px';
+                } else {
+                    recentToggle.style.left = '0';
+                }
+            }
+
+            const recentFilter = document.getElementById('recentOrdersFilter');
+            const recentList = document.getElementById('recentOrdersList');
+            if (recentFilter && recentList) {
+                recentFilter.addEventListener('input', function() {
+                    const q = this.value.trim().toLowerCase();
+                    recentList.querySelectorAll('.recent-order-item').forEach(function(item) {
+                        const hay = (item.getAttribute('data-search') || '').toLowerCase();
+                        item.style.display = !q || hay.indexOf(q) !== -1 ? '' : 'none';
+                    });
+                });
+                const activeItem = recentList.querySelector('.recent-order-item.active');
+                if (activeItem) {
+                    activeItem.scrollIntoView({ block: 'nearest' });
+                }
+            }
         });
     </script>
+    {% if items_html and header_info %}
+    <div class="modal fade" id="ezLabelModal" tabindex="-1" role="dialog" aria-labelledby="ezLabelModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ezLabelModalTitle">
+                        <i class="fas fa-sticky-note mr-2"></i>ez简易贴纸
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="ezShippingService"><strong>Shipping service</strong> (e.g. UCL)</label>
+                        <input type="text" class="form-control" id="ezShippingService" placeholder="UCL" value="UCL" autocomplete="off">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="ezTotalBoxes"><strong>Total boxes</strong></label>
+                        <input type="number" class="form-control" id="ezTotalBoxes" min="1" step="1" placeholder="13" required>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        Portrait 4×6 labels: FDC logo, 827 address, service, ship-to, box count.
+                        Total boxes is prefilled from order notes (e.g. <em>30 boxes</em>).
+                    </small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-ez-submit" id="ezLabelSubmitBtn">
+                        <i class="fas fa-file-pdf mr-1"></i>Submit &amp; open PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     {% include 'footer.html' %}
 </body>
 </html>

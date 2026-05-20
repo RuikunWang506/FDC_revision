@@ -74,7 +74,7 @@ _POST_AUDIT_PATH_PREFIXES = (
     "/image_upload",
     "/mysql_connector",
     "/mobile_scanner",
-    "/label_resizer",
+    "/burlington_label_processor",
     "/location_massive_audit",
     "/warehousemap",
     "/tiktok",

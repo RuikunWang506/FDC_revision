@@ -1122,13 +1122,37 @@
     }
 
     // Tracking number functions
-    function openAddTrackingModal(poNumber) {
+    function openAddTrackingModal(poNumber, currentTracking) {
         const modal = new bootstrap.Modal(document.getElementById('addTrackingModal'));
+        const isEdit = !!currentTracking;
+
+        // Toggle modal labels between Add and Edit modes
+        const titleEl = document.getElementById('addTrackingModalLabel');
+        if (titleEl) {
+            titleEl.innerHTML = isEdit
+                ? '<i class="fas fa-pen"></i> Edit Tracking Number'
+                : '<i class="fas fa-barcode"></i> Add Tracking Number';
+        }
+        const submitBtn = document.getElementById('submit-tracking-btn');
+        if (submitBtn) {
+            submitBtn.innerHTML = isEdit
+                ? '<i class="fas fa-check"></i> Update'
+                : '<i class="fas fa-check"></i> Submit';
+        }
+
         document.getElementById('tracking-po-display').value = poNumber;
-        document.getElementById('tracking-input').value = '';
-        document.getElementById('tracking-input').focus();
+        document.getElementById('tracking-input').value = currentTracking || '';
         modal.show();
-        
+
+        // Focus input after modal is shown so it works reliably
+        setTimeout(() => {
+            const input = document.getElementById('tracking-input');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 250);
+
         // Store the current PO number for submission
         window.currentTrackingPO = poNumber;
     }
@@ -2147,7 +2171,7 @@
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                         </select>
-                        ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : `<button class="btn btn-outline-primary btn-sm mt-2 w-100 add-tracking-btn" data-po="${order.po_number}"><i class="fas fa-plus"></i> Add Tracking</button>`}
+                        ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div><button class="btn btn-outline-secondary btn-sm mt-1 w-100 edit-tracking-btn" data-po="${order.po_number}" data-tracking="${order.tracking}"><i class="fas fa-pen"></i> Edit Tracking</button>` : `<button class="btn btn-outline-primary btn-sm mt-2 w-100 add-tracking-btn" data-po="${order.po_number}"><i class="fas fa-plus"></i> Add Tracking</button>`}
                     </td>
                     <td class="order-cell">
                         ${containerId !== 'shipped-orders-table-body' && editStoreNumberFromPo ? `
@@ -2413,7 +2437,7 @@
                         <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                     </select>
-                    ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : ''}
+                    ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div><button class="btn btn-outline-secondary btn-sm mt-1 w-100 edit-tracking-btn" data-po="${order.po_number}" data-tracking="${order.tracking}"><i class="fas fa-pen"></i> Edit Tracking</button>` : ''}
                 </td>
                 <td class="order-cell">
                     <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
@@ -2957,6 +2981,14 @@
             if (e.target.closest('.add-tracking-btn')) {
                 const poNumber = e.target.closest('.add-tracking-btn').getAttribute('data-po');
                 openAddTrackingModal(poNumber);
+            }
+
+            // Handle Edit Tracking button clicks
+            if (e.target.closest('.edit-tracking-btn')) {
+                const editBtn = e.target.closest('.edit-tracking-btn');
+                const poNumber = editBtn.getAttribute('data-po');
+                const currentTracking = editBtn.getAttribute('data-tracking') || '';
+                openAddTrackingModal(poNumber, currentTracking);
             }
         });
 

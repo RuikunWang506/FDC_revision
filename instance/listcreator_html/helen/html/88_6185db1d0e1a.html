@@ -46,6 +46,115 @@
             padding: 1rem 1.15rem;
             margin-top: 1rem;
         }
+        .lc-jobs-panel {
+            border: 1px solid rgba(79, 70, 229, 0.18);
+            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+        }
+        .lc-jobs-panel .lc-jobs-head h6 {
+            font-size: 1rem;
+            letter-spacing: -0.02em;
+        }
+        .lc-jobs-list .lc-job-row {
+            list-style: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.65rem;
+            background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+        }
+        .lc-jobs-list .lc-job-row:last-child { margin-bottom: 0; }
+        .lc-job-headline-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.45rem 0.6rem;
+            line-height: 1.25;
+        }
+        .lc-job-headline-wrap .lc-job-title-line {
+            font-size: 1.0625rem;
+        }
+        .lc-job-headline-wrap .lc-job-title-line strong {
+            font-weight: 700;
+        }
+        .lc-job-subid {
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+        /* Match .lc-job-action-btn visual weight / height */
+        .lc-job-status-badge,
+        .lc-job-owner-badge.lc-job-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1.1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.2;
+            border-radius: 8px;
+        }
+        .lc-job-owner-badge {
+            font-weight: 600;
+            color: #3730a3 !important;
+            background: #eef2ff !important;
+            border: 1px solid #c7d2fe !important;
+            vertical-align: middle;
+        }
+        .lc-job-actions .btn,
+        .lc-job-actions a.btn { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+        .lc-job-actions .lc-job-action-btn {
+            padding: 0.5rem 1.15rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        .lc-job-times {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            margin-top: 0.65rem;
+            padding: 0.65rem 0.75rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #4f46e5;
+        }
+        .lc-job-time-row { line-height: 1.35; }
+        .lc-job-time-k {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            min-width: 4.5rem;
+        }
+        .lc-job-time-v {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .lc-job-time-queued .lc-job-time-v { color: #0f172a; }
+        .lc-job-time-rendered {
+            background: #fff;
+            border: 1px solid #a5b4fc;
+            border-radius: 8px;
+            padding: 0.45rem 0.55rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+        .lc-job-time-rendered .lc-job-time-k { color: #4338ca; }
+        .lc-job-time-rendered .lc-job-time-v {
+            color: #312e81;
+            font-weight: 800;
+        }
+        .lc-job-elapsed {
+            font-size: 0.88rem;
+            color: #334155;
+            border-top: 1px dashed #cbd5e1;
+            margin-top: 0.1rem;
+            padding-top: 0.45rem;
+        }
+        .lc-job-elapsed strong { color: #0f172a; font-weight: 800; }
+        .lc-job-elapsed-running strong { color: #b45309; }
         .lc-label-muted { color: var(--lc-muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 0.35rem; }
         .lc-job-src-preview {
             max-height: 9rem;
@@ -77,6 +186,19 @@
             white-space: nowrap;
             word-break: normal;
             text-overflow: ellipsis;
+        }
+        .lc-job-times-preview-row {
+            margin-top: 0.65rem;
+        }
+        .lc-job-times-preview-row .lc-job-times-outer {
+            flex: 0 0 auto;
+        }
+        .lc-job-times-preview-row .lc-job-times {
+            margin-top: 0;
+        }
+        .lc-job-times-preview-row .lc-job-preview-wrap {
+            flex: 1 1 0;
+            min-width: 0;
         }
 
         /* “Your input was” — one style per row */
@@ -608,10 +730,6 @@
             
 
             
-            <li class="nav-item">
-                <a class="nav-link" href="/audit">📝 audit</a>
-            </li>
-            
         </ul>
 
         <ul class="navbar-nav ml-auto align-items-center">
@@ -630,12 +748,12 @@
                 <a class="nav-link dropdown-toggle d-none d-lg-flex align-items-center" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <div class="user-avatar">
                         
-                        <span>X</span>
+                        <span>H</span>
                         
                     </div>
                     <span class="ml-2">
                         
-                            <div style="color: red;">👑尊贵的叉鸡👑</div>
+                            HELEN
                         
                     </span>
                 </a>
@@ -805,7 +923,7 @@ $(function() {
 
         <div class="bookmark-sidebar">
             <div class="section-header" onclick="toggleSection('styles-section')">
-                <h5>Styles (8 styles / 0 pics)</h5>
+                <h5>Styles (7 styles / 0 pics)</h5>
                 <span class="collapse-icon">▼</span>
                 <div class="dropdown mb-2">
                     <button class="btn btn-danger dropdown-toggle" type="button" id="sortDropdownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -821,21 +939,19 @@ $(function() {
             <div id="styles-section">
                 <ul id="style-list">
                     
-                        <li><a href="#GN2636">GN2636</a></li>
+                        <li><a href="#N2629">N2629</a></li>
                     
-                        <li><a href="#L1895">L1895</a></li>
+                        <li><a href="#N2630">N2630</a></li>
                     
-                        <li><a href="#M1147">M1147</a></li>
+                        <li><a href="#T3718">T3718</a></li>
                     
-                        <li><a href="#M1169">M1169</a></li>
+                        <li><a href="#T3797">T3797</a></li>
                     
-                        <li><a href="#M1171">M1171</a></li>
+                        <li><a href="#T3809">T3809</a></li>
                     
-                        <li><a href="#M1173">M1173</a></li>
+                        <li><a href="#T3814">T3814</a></li>
                     
-                        <li><a href="#N0680">N0680</a></li>
-                    
-                        <li><a href="#N1814">N1814</a></li>
+                        <li><a href="#T3877">T3877</a></li>
                     
                 </ul>
             </div>
@@ -853,54 +969,31 @@ $(function() {
                         
                             
                             <li class="list-group-item">
-                                MINI SATCHEL
-                            </li>
-                        
-                    
-                        
-                        
-                            
-                            <li class="list-group-item">
-                                3-IN-1 SET
-                            </li>
-                        
-                    
-                        
-                        
-                    
-                        
-                        
-                            
-                            <li class="list-group-item">
-                                CROSSBODY
-                            </li>
-                        
-                    
-                        
-                        
-                            
-                            <li class="list-group-item">
                                 SATCHEL
                             </li>
                         
                     
                         
                         
-                    
-                        
-                        
                             
                             <li class="list-group-item">
-                                MINI BACKPACK
+                                MINI SATCHEL
                             </li>
                         
                     
                         
                         
-                            
-                            <li class="list-group-item">
-                                MINI BAG
-                            </li>
+                    
+                        
+                        
+                    
+                        
+                        
+                    
+                        
+                        
+                    
+                        
                         
                     
                 </ul>
@@ -912,9 +1005,8 @@ $(function() {
         
         <div class="alert alert-light border rounded shadow-sm mb-3 small lc-snapshot-banner" role="note">
             <strong>Offline HTML snapshot</strong> —
-            Generated <strong>2026-05-07 01:15 PM PDT</strong>
-            (<span translate="no">Pacific — America/Los_Angeles</span>).
-            Queued timestamps in the snapshots panel use the same zone.
+            Generated <strong data-fdc-local-iso="2026-05-19T16:31:00-07:00">2026-05-19 04:31 PM PDT</strong>
+            <span class="text-muted">(your local time; server uses Pacific)</span>.
         </div>
         
         
@@ -925,28 +1017,25 @@ $(function() {
             <div class="lc-your-input-lines mt-2 mb-0" role="region" aria-label="Submitted list">
                 
                     
-                    <div class="lc-your-input-row" translate="no">gn2636</div>
+                    <div class="lc-your-input-row" translate="no">N2629</div>
                 
                     
-                    <div class="lc-your-input-row" translate="no">l1895</div>
+                    <div class="lc-your-input-row" translate="no">N2630</div>
                 
                     
-                    <div class="lc-your-input-row" translate="no">m1147</div>
+                    <div class="lc-your-input-row" translate="no">T3718</div>
                 
                     
-                    <div class="lc-your-input-row" translate="no">m1169</div>
+                    <div class="lc-your-input-row" translate="no">T3797</div>
                 
                     
-                    <div class="lc-your-input-row" translate="no">m1171</div>
+                    <div class="lc-your-input-row" translate="no">T3809</div>
                 
                     
-                    <div class="lc-your-input-row" translate="no">m1173</div>
+                    <div class="lc-your-input-row" translate="no">T3814</div>
                 
                     
-                    <div class="lc-your-input-row" translate="no">n0680</div>
-                
-                    
-                    <div class="lc-your-input-row" translate="no">n1814</div>
+                    <div class="lc-your-input-row" translate="no">T3877</div>
                 
             </div>
 
@@ -984,14 +1073,6 @@ $(function() {
     
         
         
-            
-        
-        
-    
-        
-        
-            
-        
         
     
         
@@ -1000,13 +1081,9 @@ $(function() {
     
         
         
-            
-        
         
     
         
-        
-            
         
         
     
@@ -1015,18 +1092,18 @@ $(function() {
     
         
         
-            <div class="card mb-3" id="GN2636">
+            <div class="card mb-3" id="N2629">
                 
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
                         <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            GN2636
+                            N2629
                             
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">5</span>]</span></span>
+                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">8</span>]</span></span>
                             
                         </div>
                         <textarea class="description-input mx-3 form-control" placeholder="Enter description"
-                            style="height: 40px;width:200px; resize: none;" rows="1">MINI SATCHEL</textarea>
+                            style="height: 40px;width:200px; resize: none;" rows="1">SATCHEL</textarea>
                         <p class="card-text mb-0 font-weight-bold text-primary">
                             $12.00
                         </p>
@@ -1051,281 +1128,81 @@ $(function() {
                                     
                                     <tr>
                                         <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">328</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">328</td>
-                                        <td>36</td>
-                                        <td>11 x 3 x 7</td>
+                                        <td contenteditable="true" class="quantity-cell">-579</td>
+                                        <td class="ocean-cell">580</td>
+                                        <td class="total-cell">1</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>BR</td>
+                                        <td contenteditable="true" class="quantity-cell">-200</td>
+                                        <td class="ocean-cell">200</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>DM</td>
-                                        <td contenteditable="true" class="quantity-cell">96</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">96</td>
-                                        <td>36</td>
-                                        <td>11 x 3 x 7</td>
+                                        <td contenteditable="true" class="quantity-cell">-100</td>
+                                        <td class="ocean-cell">100</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>LV</td>
-                                        <td contenteditable="true" class="quantity-cell">96</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">96</td>
-                                        <td>36</td>
-                                        <td>11 x 3 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>ST</td>
-                                        <td contenteditable="true" class="quantity-cell">192</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">192</td>
-                                        <td>36</td>
-                                        <td>11 x 3 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>WT</td>
-                                        <td contenteditable="true" class="quantity-cell">191</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">191</td>
-                                        <td>36</td>
-                                        <td>11 x 3 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
-                        </div>
-        
-                        <div class="col-6">
-                            <div class="d-flex flex-wrap">
-                                
-                                
-                                
-                                    
-                                    <div class="image-option">
-                                        <input type="radio" id="catalog_image_GN2636_1" name="image_option_GN2636" value="/image/332637/800" checked>
-                                        <label for="catalog_image_GN2636_1">
-                                        <img src="/image/332637/150" 
-                                            data-fullsize="/image/332637/800"
-                                            alt="GN2636" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
-                                        </label>
-                                    </div>
-                                    
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-        
-            <div class="card mb-3" id="M1147">
-                
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            M1147
-                            
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">5</span>]</span></span>
-                            
-                        </div>
-                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
-                            style="height: 40px;width:200px; resize: none;" rows="1">MINI SATCHEL</textarea>
-                        <p class="card-text mb-0 font-weight-bold text-primary">
-                            $14.00
-                        </p>
-                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
-                    </div>
-        
-                    <div class="row">
-                        <div class="col-6">
-                            <table class="table table-bordered table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Color</th>
-                                        <th>Quantity</th>
-                                        <th>Ocean</th>
-                                        <th>Total</th>
-                                        <th>PCS/BOX</th>
-                                        <th>Dimensions</th>
-                                        <th>Remove</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    
-                                    <tr>
-                                        <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">276</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">276</td>
+                                        <td contenteditable="true" class="quantity-cell">-100</td>
+                                        <td class="ocean-cell">100</td>
+                                        <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>15 x 7 x 4</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>BR</td>
-                                        <td contenteditable="true" class="quantity-cell">136</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">136</td>
-                                        <td>24</td>
-                                        <td>16 x 5 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>MV</td>
-                                        <td contenteditable="true" class="quantity-cell">120</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">120</td>
-                                        <td>20</td>
-                                        <td>15 x 4 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>NV</td>
-                                        <td contenteditable="true" class="quantity-cell">120</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">120</td>
-                                        <td>20</td>
-                                        <td>15 x 4 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>WN</td>
-                                        <td contenteditable="true" class="quantity-cell">96</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">96</td>
-                                        <td>24</td>
-                                        <td>16 x 5 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
-                        </div>
-        
-                        <div class="col-6">
-                            <div class="d-flex flex-wrap">
-                                
-                                
-                                
-                                    
-                                    <div class="image-option">
-                                        <input type="radio" id="catalog_image_M1147_1" name="image_option_M1147" value="/image/146450/800" checked>
-                                        <label for="catalog_image_M1147_1">
-                                        <img src="/image/146450/150" 
-                                            data-fullsize="/image/146450/800"
-                                            alt="M1147" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
-                                        </label>
-                                    </div>
-                                    
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            
-        
-        
-            <div class="card mb-3" id="L1895">
-                
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            L1895
-                            
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">5</span>]</span></span>
-                            
-                        </div>
-                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
-                            style="height: 40px;width:200px; resize: none;" rows="1">3-IN-1 SET</textarea>
-                        <p class="card-text mb-0 font-weight-bold text-primary">
-                            $18.50
-                        </p>
-                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
-                    </div>
-        
-                    <div class="row">
-                        <div class="col-6">
-                            <table class="table table-bordered table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Color</th>
-                                        <th>Quantity</th>
-                                        <th>Ocean</th>
-                                        <th>Total</th>
-                                        <th>PCS/BOX</th>
-                                        <th>Dimensions</th>
-                                        <th>Remove</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    
-                                    <tr>
-                                        <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">288</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">288</td>
-                                        <td>16</td>
-                                        <td>13 x 5 x 11</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>BR</td>
-                                        <td contenteditable="true" class="quantity-cell">121</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">121</td>
-                                        <td>16</td>
-                                        <td>13 x 5 x 11</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>DM</td>
-                                        <td contenteditable="true" class="quantity-cell">21</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">21</td>
-                                        <td>16</td>
-                                        <td>13 x 5 x 11</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>OW</td>
-                                        <td contenteditable="true" class="quantity-cell">56</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">56</td>
-                                        <td>16</td>
-                                        <td>13 x 5 x 11</td>
+                                        <td contenteditable="true" class="quantity-cell">-200</td>
+                                        <td class="ocean-cell">200</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>TP</td>
-                                        <td contenteditable="true" class="quantity-cell">96</td>
+                                        <td>ST</td>
+                                        <td contenteditable="true" class="quantity-cell">-179</td>
+                                        <td class="ocean-cell">180</td>
+                                        <td class="total-cell">1</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>WT</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">96</td>
-                                        <td>16</td>
-                                        <td>13 x 5 x 11</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>YL</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
@@ -1341,223 +1218,11 @@ $(function() {
                                 
                                     
                                     <div class="image-option">
-                                        <input type="radio" id="catalog_image_L1895_1" name="image_option_L1895" value="/image/332091/800" checked>
-                                        <label for="catalog_image_L1895_1">
-                                        <img src="/image/332091/150" 
-                                            data-fullsize="/image/332091/800"
-                                            alt="L1895" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
-                                        </label>
-                                    </div>
-                                    
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            
-        
-        
-            <div class="card mb-3" id="M1169">
-                
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            M1169
-                            
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">4</span>]</span></span>
-                            
-                        </div>
-                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
-                            style="height: 40px;width:200px; resize: none;" rows="1">CROSSBODY</textarea>
-                        <p class="card-text mb-0 font-weight-bold text-primary">
-                            $13.75
-                        </p>
-                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
-                    </div>
-        
-                    <div class="row">
-                        <div class="col-6">
-                            <table class="table table-bordered table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Color</th>
-                                        <th>Quantity</th>
-                                        <th>Ocean</th>
-                                        <th>Total</th>
-                                        <th>PCS/BOX</th>
-                                        <th>Dimensions</th>
-                                        <th>Remove</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    
-                                    <tr>
-                                        <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">72</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">72</td>
-                                        <td>20</td>
-                                        <td>10 x 3 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>BG</td>
-                                        <td contenteditable="true" class="quantity-cell">90</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">90</td>
-                                        <td>20</td>
-                                        <td>10 x 3 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>BR</td>
-                                        <td contenteditable="true" class="quantity-cell">82</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">82</td>
-                                        <td>20</td>
-                                        <td>10 x 3 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>TN</td>
-                                        <td contenteditable="true" class="quantity-cell">100</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">100</td>
-                                        <td>20</td>
-                                        <td>10 x 3 x 7</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
-                        </div>
-        
-                        <div class="col-6">
-                            <div class="d-flex flex-wrap">
-                                
-                                
-                                
-                                    
-                                    <div class="image-option">
-                                        <input type="radio" id="catalog_image_M1169_1" name="image_option_M1169" value="/image/331628/800" checked>
-                                        <label for="catalog_image_M1169_1">
-                                        <img src="/image/331628/150" 
-                                            data-fullsize="/image/331628/800"
-                                            alt="M1169" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
-                                        </label>
-                                    </div>
-                                    
-                                
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            
-        
-        
-            <div class="card mb-3" id="M1171">
-                
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            M1171
-                            
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">4</span>]</span></span>
-                            
-                        </div>
-                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
-                            style="height: 40px;width:200px; resize: none;" rows="1">SATCHEL</textarea>
-                        <p class="card-text mb-0 font-weight-bold text-primary">
-                            $13.75
-                        </p>
-                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
-                    </div>
-        
-                    <div class="row">
-                        <div class="col-6">
-                            <table class="table table-bordered table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Color</th>
-                                        <th>Quantity</th>
-                                        <th>Ocean</th>
-                                        <th>Total</th>
-                                        <th>PCS/BOX</th>
-                                        <th>Dimensions</th>
-                                        <th>Remove</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    
-                                    <tr>
-                                        <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">31</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">31</td>
-                                        <td>20</td>
-                                        <td>8 x 3 x 6</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>BG</td>
-                                        <td contenteditable="true" class="quantity-cell">104</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">104</td>
-                                        <td>20</td>
-                                        <td>8 x 3 x 6</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>BR</td>
-                                        <td contenteditable="true" class="quantity-cell">110</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">110</td>
-                                        <td>20</td>
-                                        <td>8 x 3 x 6</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>TN</td>
-                                        <td contenteditable="true" class="quantity-cell">35</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">35</td>
-                                        <td>20</td>
-                                        <td>8 x 3 x 6</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
-                        </div>
-        
-                        <div class="col-6">
-                            <div class="d-flex flex-wrap">
-                                
-                                
-                                
-                                    
-                                    <div class="image-option">
-                                        <input type="radio" id="catalog_image_M1171_1" name="image_option_M1171" value="/image/331629/800" checked>
-                                        <label for="catalog_image_M1171_1">
-                                        <img src="/image/331629/150" 
-                                            data-fullsize="/image/331629/800"
-                                            alt="M1171" 
+                                        <input type="radio" id="catalog_image_N2629_1" name="image_option_N2629" value="/image/332690/800" checked>
+                                        <label for="catalog_image_N2629_1">
+                                        <img src="/image/332690/150" 
+                                            data-fullsize="/image/332690/800"
+                                            alt="N2629" 
                                             class="img-thumbnail"
                                             onclick="enlargeImage(this, this.dataset.fullsize)">
                                         </label>
@@ -1571,14 +1236,14 @@ $(function() {
             </div>
             
         
-            <div class="card mb-3" id="M1173">
+            <div class="card mb-3" id="T3718">
                 
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
                         <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            M1173
+                            T3718
                             
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">5</span>]</span></span>
+                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">6</span>]</span></span>
                             
                         </div>
                         <textarea class="description-input mx-3 form-control" placeholder="Enter description"
@@ -1607,51 +1272,61 @@ $(function() {
                                     
                                     <tr>
                                         <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">320</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">320</td>
-                                        <td>20</td>
-                                        <td>12 x 4 x 6</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>BG</td>
-                                        <td contenteditable="true" class="quantity-cell">160</td>
+                                        <td>BL</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">160</td>
-                                        <td>20</td>
-                                        <td>12 x 4 x 6</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>DM</td>
-                                        <td contenteditable="true" class="quantity-cell">60</td>
+                                        <td>BR</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">60</td>
-                                        <td>20</td>
-                                        <td>12 x 4 x 6</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>TN</td>
-                                        <td contenteditable="true" class="quantity-cell">160</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">160</td>
-                                        <td>20</td>
-                                        <td>12 x 4 x 6</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>WT</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>YL</td>
-                                        <td contenteditable="true" class="quantity-cell">60</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">60</td>
-                                        <td>20</td>
-                                        <td>12 x 4 x 6</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
@@ -1667,11 +1342,11 @@ $(function() {
                                 
                                     
                                     <div class="image-option">
-                                        <input type="radio" id="catalog_image_M1173_1" name="image_option_M1173" value="/image/332746/800" checked>
-                                        <label for="catalog_image_M1173_1">
-                                        <img src="/image/332746/150" 
-                                            data-fullsize="/image/332746/800"
-                                            alt="M1173" 
+                                        <input type="radio" id="catalog_image_T3718_1" name="image_option_T3718" value="/image/332692/800" checked>
+                                        <label for="catalog_image_T3718_1">
+                                        <img src="/image/332692/150" 
+                                            data-fullsize="/image/332692/800"
+                                            alt="T3718" 
                                             class="img-thumbnail"
                                             onclick="enlargeImage(this, this.dataset.fullsize)">
                                         </label>
@@ -1684,23 +1359,21 @@ $(function() {
                 </div>
             </div>
             
-            
         
-        
-            <div class="card mb-3" id="N0680">
+            <div class="card mb-3" id="T3797">
                 
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
                         <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            N0680
+                            T3797
                             
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">10</span>]</span></span>
+                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">9</span>]</span></span>
                             
                         </div>
                         <textarea class="description-input mx-3 form-control" placeholder="Enter description"
-                            style="height: 40px;width:200px; resize: none;" rows="1">MINI BACKPACK</textarea>
+                            style="height: 40px;width:200px; resize: none;" rows="1">SATCHEL</textarea>
                         <p class="card-text mb-0 font-weight-bold text-primary">
-                            $12.00
+                            $15.00
                         </p>
                         <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
                     </div>
@@ -1723,41 +1396,41 @@ $(function() {
                                     
                                     <tr>
                                         <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">549</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">549</td>
-                                        <td>16</td>
-                                        <td>9 x 5 x 9</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>BG</td>
                                         <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
                                         <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>0 x 0 x 0</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>BL</td>
+                                        <td contenteditable="true" class="quantity-cell">1</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">1</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>BR</td>
-                                        <td contenteditable="true" class="quantity-cell">319</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">319</td>
-                                        <td>16</td>
-                                        <td>9 x 5 x 9</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>GY</td>
-                                        <td contenteditable="true" class="quantity-cell">200</td>
+                                        <td>DM</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">200</td>
-                                        <td>16</td>
-                                        <td>9 x 5 x 9</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
@@ -1767,57 +1440,47 @@ $(function() {
                                         <td class="ocean-cell">0</td>
                                         <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>0 x 0 x 0</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>MT</td>
-                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td>OR</td>
+                                        <td contenteditable="true" class="quantity-cell">79</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">0</td>
-                                        <td>20</td>
-                                        <td>0 x 0 x 0</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>PK</td>
-                                        <td contenteditable="true" class="quantity-cell">197</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">197</td>
+                                        <td class="total-cell">79</td>
                                         <td>16</td>
-                                        <td>9 x 5 x 9</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>RD</td>
+                                        <td>OW</td>
                                         <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
                                         <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>0 x 0 x 0</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>TN</td>
-                                        <td contenteditable="true" class="quantity-cell">297</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">297</td>
-                                        <td>16</td>
-                                        <td>9 x 5 x 9</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>WT</td>
-                                        <td contenteditable="true" class="quantity-cell">198</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">198</td>
+                                        <td class="total-cell">0</td>
                                         <td>16</td>
-                                        <td>9 x 5 x 9</td>
+                                        <td>12 x 5 x 9</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
@@ -1833,22 +1496,423 @@ $(function() {
                                 
                                     
                                     <div class="image-option">
-                                        <input type="radio" id="catalog_image_N0680_1" name="image_option_N0680" value="/image/1595/800" checked>
-                                        <label for="catalog_image_N0680_1">
-                                        <img src="/image/1595/150" 
-                                            data-fullsize="/image/1595/800"
-                                            alt="N0680" 
+                                        <input type="radio" id="catalog_image_T3797_1" name="image_option_T3797" value="/image/332779/800" checked>
+                                        <label for="catalog_image_T3797_1">
+                                        <img src="/image/332779/150" 
+                                            data-fullsize="/image/332779/800"
+                                            alt="T3797" 
                                             class="img-thumbnail"
                                             onclick="enlargeImage(this, this.dataset.fullsize)">
                                         </label>
                                     </div>
                                     
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        
+            <div class="card mb-3" id="T3809">
+                
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
+                            T3809
+                            
+                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">9</span>]</span></span>
+                            
+                        </div>
+                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
+                            style="height: 40px;width:200px; resize: none;" rows="1">SATCHEL</textarea>
+                        <p class="card-text mb-0 font-weight-bold text-primary">
+                            $15.00
+                        </p>
+                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
+                    </div>
+        
+                    <div class="row">
+                        <div class="col-6">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Color</th>
+                                        <th>Quantity</th>
+                                        <th>Ocean</th>
+                                        <th>Total</th>
+                                        <th>PCS/BOX</th>
+                                        <th>Dimensions</th>
+                                        <th>Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    
+                                    <tr>
+                                        <td>BK</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>BL</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>BR</td>
+                                        <td contenteditable="true" class="quantity-cell">1</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">1</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>DM</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>LV</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>OW</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>PK</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>TN</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>WT</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
+                        </div>
+        
+                        <div class="col-6">
+                            <div class="d-flex flex-wrap">
+                                
+                                
+                                
+                                    
                                     <div class="image-option">
-                                        <input type="radio" id="catalog_image_N0680_2" name="image_option_N0680" value="/image/164086/800" >
-                                        <label for="catalog_image_N0680_2">
-                                        <img src="/image/164086/150" 
-                                            data-fullsize="/image/164086/800"
-                                            alt="N0680" 
+                                        <input type="radio" id="catalog_image_T3809_1" name="image_option_T3809" value="/image/332694/800" checked>
+                                        <label for="catalog_image_T3809_1">
+                                        <img src="/image/332694/150" 
+                                            data-fullsize="/image/332694/800"
+                                            alt="T3809" 
+                                            class="img-thumbnail"
+                                            onclick="enlargeImage(this, this.dataset.fullsize)">
+                                        </label>
+                                    </div>
+                                    
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        
+            <div class="card mb-3" id="T3814">
+                
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
+                            T3814
+                            
+                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">9</span>]</span></span>
+                            
+                        </div>
+                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
+                            style="height: 40px;width:200px; resize: none;" rows="1">SATCHEL</textarea>
+                        <p class="card-text mb-0 font-weight-bold text-primary">
+                            $15.00
+                        </p>
+                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
+                    </div>
+        
+                    <div class="row">
+                        <div class="col-6">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Color</th>
+                                        <th>Quantity</th>
+                                        <th>Ocean</th>
+                                        <th>Total</th>
+                                        <th>PCS/BOX</th>
+                                        <th>Dimensions</th>
+                                        <th>Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    
+                                    <tr>
+                                        <td>BK</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>BR</td>
+                                        <td contenteditable="true" class="quantity-cell">1</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">1</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>DM</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>LV</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>OW</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>SG</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>TN</td>
+                                        <td contenteditable="true" class="quantity-cell">1</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">1</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>WT</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>YL</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>16</td>
+                                        <td>12 x 5 x 9</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
+                        </div>
+        
+                        <div class="col-6">
+                            <div class="d-flex flex-wrap">
+                                
+                                
+                                
+                                    
+                                    <div class="image-option">
+                                        <input type="radio" id="catalog_image_T3814_1" name="image_option_T3814" value="/image/332695/800" checked>
+                                        <label for="catalog_image_T3814_1">
+                                        <img src="/image/332695/150" 
+                                            data-fullsize="/image/332695/800"
+                                            alt="T3814" 
+                                            class="img-thumbnail"
+                                            onclick="enlargeImage(this, this.dataset.fullsize)">
+                                        </label>
+                                    </div>
+                                    
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        
+            <div class="card mb-3" id="T3877">
+                
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
+                            T3877
+                            
+                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">4</span>]</span></span>
+                            
+                        </div>
+                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
+                            style="height: 40px;width:200px; resize: none;" rows="1">SATCHEL</textarea>
+                        <p class="card-text mb-0 font-weight-bold text-primary">
+                            $15.00
+                        </p>
+                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
+                    </div>
+        
+                    <div class="row">
+                        <div class="col-6">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Color</th>
+                                        <th>Quantity</th>
+                                        <th>Ocean</th>
+                                        <th>Total</th>
+                                        <th>PCS/BOX</th>
+                                        <th>Dimensions</th>
+                                        <th>Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    
+                                    <tr>
+                                        <td>BK</td>
+                                        <td contenteditable="true" class="quantity-cell">300</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">300</td>
+                                        <td>16</td>
+                                        <td>12 x 4 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>GY</td>
+                                        <td contenteditable="true" class="quantity-cell">201</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">201</td>
+                                        <td>16</td>
+                                        <td>12 x 4 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>TN</td>
+                                        <td contenteditable="true" class="quantity-cell">200</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">200</td>
+                                        <td>16</td>
+                                        <td>12 x 4 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>WT</td>
+                                        <td contenteditable="true" class="quantity-cell">300</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">300</td>
+                                        <td>16</td>
+                                        <td>12 x 4 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
+                        </div>
+        
+                        <div class="col-6">
+                            <div class="d-flex flex-wrap">
+                                
+                                
+                                
+                                    
+                                    <div class="image-option">
+                                        <input type="radio" id="catalog_image_T3877_1" name="image_option_T3877" value="/image/332689/800" checked>
+                                        <label for="catalog_image_T3877_1">
+                                        <img src="/image/332689/150" 
+                                            data-fullsize="/image/332689/800"
+                                            alt="T3877" 
                                             class="img-thumbnail"
                                             onclick="enlargeImage(this, this.dataset.fullsize)">
                                         </label>
@@ -1864,18 +1928,18 @@ $(function() {
             
         
         
-            <div class="card mb-3" id="N1814">
+            <div class="card mb-3" id="N2630">
                 
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
                         <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
-                            N1814
+                            N2630
                             
-                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">7</span>]</span></span>
+                                <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">8</span>]</span></span>
                             
                         </div>
                         <textarea class="description-input mx-3 form-control" placeholder="Enter description"
-                            style="height: 40px;width:200px; resize: none;" rows="1">MINI BAG</textarea>
+                            style="height: 40px;width:200px; resize: none;" rows="1">MINI SATCHEL</textarea>
                         <p class="card-text mb-0 font-weight-bold text-primary">
                             $12.00
                         </p>
@@ -1900,61 +1964,61 @@ $(function() {
                                     
                                     <tr>
                                         <td>BK</td>
-                                        <td contenteditable="true" class="quantity-cell">150</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">150</td>
+                                        <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>10 x 4 x 8</td>
+                                        <td>10 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>BG</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>BR</td>
-                                        <td contenteditable="true" class="quantity-cell">258</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">258</td>
+                                        <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>10 x 4 x 8</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>GY</td>
-                                        <td contenteditable="true" class="quantity-cell">159</td>
+                                        <td>DM</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">159</td>
+                                        <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>10 x 4 x 8</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
-                                        <td>OL</td>
-                                        <td contenteditable="true" class="quantity-cell">3</td>
+                                        <td>LV</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">3</td>
+                                        <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>10 x 4 x 8</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
                                     <tr>
                                         <td>ST</td>
-                                        <td contenteditable="true" class="quantity-cell">19</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
                                         <td class="ocean-cell">0</td>
-                                        <td class="total-cell">19</td>
+                                        <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>9 x 8 x 4</td>
-                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td>TN</td>
-                                        <td contenteditable="true" class="quantity-cell">148</td>
-                                        <td class="ocean-cell">0</td>
-                                        <td class="total-cell">148</td>
-                                        <td>20</td>
-                                        <td>10 x 4 x 8</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
@@ -1964,7 +2028,17 @@ $(function() {
                                         <td class="ocean-cell">0</td>
                                         <td class="total-cell">0</td>
                                         <td>20</td>
-                                        <td>10 x 4 x 8</td>
+                                        <td>10 x 5 x 8</td>
+                                        <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>YL</td>
+                                        <td contenteditable="true" class="quantity-cell">0</td>
+                                        <td class="ocean-cell">0</td>
+                                        <td class="total-cell">0</td>
+                                        <td>20</td>
+                                        <td>10 x 5 x 8</td>
                                         <td><span class="remove-row" onclick="removeRow(this)">X</span></td>
                                     </tr>
                                     
@@ -1980,44 +2054,11 @@ $(function() {
                                 
                                     
                                     <div class="image-option">
-                                        <input type="radio" id="catalog_image_N1814_1" name="image_option_N1814" value="/image/141453/800" checked>
-                                        <label for="catalog_image_N1814_1">
-                                        <img src="/image/141453/150" 
-                                            data-fullsize="/image/141453/800"
-                                            alt="N1814" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
-                                        </label>
-                                    </div>
-                                    
-                                    <div class="image-option">
-                                        <input type="radio" id="catalog_image_N1814_2" name="image_option_N1814" value="/image/143135/800" >
-                                        <label for="catalog_image_N1814_2">
-                                        <img src="/image/143135/150" 
-                                            data-fullsize="/image/143135/800"
-                                            alt="N1814" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
-                                        </label>
-                                    </div>
-                                    
-                                    <div class="image-option">
-                                        <input type="radio" id="catalog_image_N1814_3" name="image_option_N1814" value="/image/156587/800" >
-                                        <label for="catalog_image_N1814_3">
-                                        <img src="/image/156587/150" 
-                                            data-fullsize="/image/156587/800"
-                                            alt="N1814" 
-                                            class="img-thumbnail"
-                                            onclick="enlargeImage(this, this.dataset.fullsize)">
-                                        </label>
-                                    </div>
-                                    
-                                    <div class="image-option">
-                                        <input type="radio" id="catalog_image_N1814_4" name="image_option_N1814" value="/image/147376/800" >
-                                        <label for="catalog_image_N1814_4">
-                                        <img src="/image/147376/150" 
-                                            data-fullsize="/image/147376/800"
-                                            alt="N1814" 
+                                        <input type="radio" id="catalog_image_N2630_1" name="image_option_N2630" value="/image/332691/800" checked>
+                                        <label for="catalog_image_N2630_1">
+                                        <img src="/image/332691/150" 
+                                            data-fullsize="/image/332691/800"
+                                            alt="N2630" 
                                             class="img-thumbnail"
                                             onclick="enlargeImage(this, this.dataset.fullsize)">
                                         </label>
@@ -2122,9 +2163,9 @@ $(function() {
                     <tbody>
                         
                         <tr>
-                            <td>GN2636</td>
-                            <td>MINI SATCHEL</td>
-                            <td><input type="text" class="form-control" name="new_desc_GN2636"></td>
+                            <td>N2629</td>
+                            <td>SATCHEL</td>
+                            <td><input type="text" class="form-control" name="new_desc_N2629"></td>
                             <td>
                                 <input type="hidden" name="style_1" value="">
                                 <select name="description_1" class="form-control">
@@ -2202,9 +2243,9 @@ $(function() {
                         </tr>
                         
                         <tr>
-                            <td>L1895</td>
-                            <td>3-IN-1 SET</td>
-                            <td><input type="text" class="form-control" name="new_desc_L1895"></td>
+                            <td>N2630</td>
+                            <td>MINI SATCHEL</td>
+                            <td><input type="text" class="form-control" name="new_desc_N2630"></td>
                             <td>
                                 <input type="hidden" name="style_2" value="">
                                 <select name="description_2" class="form-control">
@@ -2282,9 +2323,9 @@ $(function() {
                         </tr>
                         
                         <tr>
-                            <td>M1147</td>
-                            <td>MINI SATCHEL</td>
-                            <td><input type="text" class="form-control" name="new_desc_M1147"></td>
+                            <td>T3718</td>
+                            <td>SATCHEL</td>
+                            <td><input type="text" class="form-control" name="new_desc_T3718"></td>
                             <td>
                                 <input type="hidden" name="style_3" value="">
                                 <select name="description_3" class="form-control">
@@ -2362,9 +2403,9 @@ $(function() {
                         </tr>
                         
                         <tr>
-                            <td>M1169</td>
-                            <td>CROSSBODY</td>
-                            <td><input type="text" class="form-control" name="new_desc_M1169"></td>
+                            <td>T3797</td>
+                            <td>SATCHEL</td>
+                            <td><input type="text" class="form-control" name="new_desc_T3797"></td>
                             <td>
                                 <input type="hidden" name="style_4" value="">
                                 <select name="description_4" class="form-control">
@@ -2442,9 +2483,9 @@ $(function() {
                         </tr>
                         
                         <tr>
-                            <td>M1171</td>
+                            <td>T3809</td>
                             <td>SATCHEL</td>
-                            <td><input type="text" class="form-control" name="new_desc_M1171"></td>
+                            <td><input type="text" class="form-control" name="new_desc_T3809"></td>
                             <td>
                                 <input type="hidden" name="style_5" value="">
                                 <select name="description_5" class="form-control">
@@ -2522,9 +2563,9 @@ $(function() {
                         </tr>
                         
                         <tr>
-                            <td>M1173</td>
+                            <td>T3814</td>
                             <td>SATCHEL</td>
-                            <td><input type="text" class="form-control" name="new_desc_M1173"></td>
+                            <td><input type="text" class="form-control" name="new_desc_T3814"></td>
                             <td>
                                 <input type="hidden" name="style_6" value="">
                                 <select name="description_6" class="form-control">
@@ -2602,92 +2643,12 @@ $(function() {
                         </tr>
                         
                         <tr>
-                            <td>N0680</td>
-                            <td>MINI BACKPACK</td>
-                            <td><input type="text" class="form-control" name="new_desc_N0680"></td>
+                            <td>T3877</td>
+                            <td>SATCHEL</td>
+                            <td><input type="text" class="form-control" name="new_desc_T3877"></td>
                             <td>
                                 <input type="hidden" name="style_7" value="">
                                 <select name="description_7" class="form-control">
-                                    <option value="">Select a description</option>
-                                    
-                                        <option value="2-IN-1 SET">2-IN-1 SET</option>
-                                    
-                                        <option value="3-IN-1 SET">3-IN-1 SET</option>
-                                    
-                                        <option value="BACKPACK">BACKPACK</option>
-                                    
-                                        <option value="BELT BAG">BELT BAG</option>
-                                    
-                                        <option value="BUCKET BAG">BUCKET BAG</option>
-                                    
-                                        <option value="CROSSBODY">CROSSBODY</option>
-                                    
-                                        <option value="CROSSBODY 2-IN-1">CROSSBODY 2-IN-1</option>
-                                    
-                                        <option value="CROSSBODY SET">CROSSBODY SET</option>
-                                    
-                                        <option value="FLAP BAG">FLAP BAG</option>
-                                    
-                                        <option value="FRAME BAG">FRAME BAG</option>
-                                    
-                                        <option value="GIFT SET">GIFT SET</option>
-                                    
-                                        <option value="HOBO">HOBO</option>
-                                    
-                                        <option value="JELLY BAG">JELLY BAG</option>
-                                    
-                                        <option value="LARGE CROSSBODY">LARGE CROSSBODY</option>
-                                    
-                                        <option value="LARGE NYLON CROSSBODY">LARGE NYLON CROSSBODY</option>
-                                    
-                                        <option value="MINI BACKPACK">MINI BACKPACK</option>
-                                    
-                                        <option value="MINI BAG">MINI BAG</option>
-                                    
-                                        <option value="MINI BELT BAG">MINI BELT BAG</option>
-                                    
-                                        <option value="MINI BUCKET">MINI BUCKET</option>
-                                    
-                                        <option value="MINI FRAME BAG">MINI FRAME BAG</option>
-                                    
-                                        <option value="MINI HOBO">MINI HOBO</option>
-                                    
-                                        <option value="MINI SATCHEL">MINI SATCHEL</option>
-                                    
-                                        <option value="MINI STRAW BAG">MINI STRAW BAG</option>
-                                    
-                                        <option value="NYLON BACKPACK">NYLON BACKPACK</option>
-                                    
-                                        <option value="NYLON CROSSBODY">NYLON CROSSBODY</option>
-                                    
-                                        <option value="NYLON HOBO">NYLON HOBO</option>
-                                    
-                                        <option value="PATENT BAG">PATENT BAG</option>
-                                    
-                                        <option value="PATENT MINI SATCHEL">PATENT MINI SATCHEL</option>
-                                    
-                                        <option value="SATCHEL">SATCHEL</option>
-                                    
-                                        <option value="SLING">SLING</option>
-                                    
-                                        <option value="STRAW BAG">STRAW BAG</option>
-                                    
-                                        <option value="STRAW CROSSBODY">STRAW CROSSBODY</option>
-                                    
-                                        <option value="TOTE">TOTE</option>
-                                    
-                                        <option value="WALLET">WALLET</option>
-                                    
-                                </select>
-                        </tr>
-                        
-                        <tr>
-                            <td>N1814</td>
-                            <td>MINI BAG</td>
-                            <td><input type="text" class="form-control" name="new_desc_N1814"></td>
-                            <td>
-                                <input type="hidden" name="style_8" value="">
-                                <select name="description_8" class="form-control">
                                     <option value="">Select a description</option>
                                     
                                         <option value="2-IN-1 SET">2-IN-1 SET</option>
@@ -2772,6 +2733,37 @@ $(function() {
     </div>
 </div>
 
+<div class="modal fade" id="v7BrowseDropboxModal" tabindex="-1" role="dialog" aria-labelledby="v7BrowseDropboxModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="v7BrowseDropboxModalLabel">Browse server Dropbox</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-2" id="v7BrowseDropboxServerLine"></p>
+                <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2 py-2 px-3 bg-light rounded" id="v7BrowseDropboxCrumbs" style="flex-wrap: wrap;"></ol></nav>
+                <p class="mb-2" id="v7BrowseDropboxCountLine"></p>
+                <div id="v7BrowseDropboxLoading" class="text-muted small py-3 d-none">Loading…</div>
+                <div id="v7BrowseDropboxError" class="alert alert-danger small d-none" role="alert"></div>
+                <div class="table-responsive border rounded" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light"><tr><th>Folder</th><th>Last updated</th><th class="text-right">Images</th></tr></thead>
+                        <tbody id="v7BrowseDropboxRows"></tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mb-0 mt-2">Folders are sorted by <strong>most recently updated</strong> on the server (folder modification time). Counts are for that folder only (not subfolders). List Creator still matches image <strong>filenames</strong> to SKUs.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="v7BrowseDropboxUseBtn" disabled title="Pick a subfolder (not the Dropbox root)">Use this folder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const columnConfig = {
     color: { index: 0, removable: false, name: 'Color', visible: true, required: true },
@@ -2783,7 +2775,225 @@ $(function() {
     remove: { index: 6, removable: false, name: 'Remove', exportExclude: true, required: true }
 };
 
-var V7_LC_LIST_INPUT_SNAPSHOT = "gn2636, l1895, m1147, m1169, m1171, m1173, n0680, n1814";
+var V7_LC_LIST_INPUT_SNAPSHOT = "N2629,N2630,T3718,T3797,T3809,T3814,T3877";
+window.V7_LOCAL_DROPBOX_ABS = "";
+window.V7_BROWSE_DROPBOX_URL = "/v7_listcreator/browse_dropbox";
+
+/** Turn a pasted full Windows path into dropbox\relative using the server’s LOCAL_DROPBOX_DIR (see V7listcreator). */
+function v7DecodeMaybeFileUrl(s) {
+    try {
+        if (/^file:/i.test(String(s || ''))) {
+            var u = new URL(s);
+            var p = u.pathname || '';
+            if (/^\/[a-zA-Z]:/i.test(p)) return decodeURIComponent(p.slice(1)).replace(/\//g, '\\');
+            return decodeURIComponent(p.replace(/^\//, '')).replace(/\//g, '\\');
+        }
+    } catch (e) { /* ignore */ }
+    return String(s || '');
+}
+
+function v7NormalizePastedPathToDropboxInput(raw) {
+    var abs = String(window.V7_LOCAL_DROPBOX_ABS || '').trim().replace(/\/+$/, '').replace(/\//g, '\\');
+    if (!raw) return '';
+    var s = String(raw).trim();
+    if ((s.charAt(0) === '"' && s.charAt(s.length - 1) === '"') || (s.charAt(0) === '\'' && s.charAt(s.length - 1) === '\'')) {
+        s = s.slice(1, -1);
+    }
+    s = v7DecodeMaybeFileUrl(s).replace(/\//g, '\\');
+    var lowerAbs = abs.toLowerCase();
+    var lowerS = s.toLowerCase();
+    if (lowerAbs && lowerS.indexOf(lowerAbs) === 0) {
+        var rest = s.slice(abs.length).replace(/^\\+/, '');
+        return 'dropbox\\' + rest;
+    }
+    var dm = s.match(/\\[Dd]ropbox\\(.+)/);
+    if (dm) return 'dropbox\\' + dm[1].replace(/\//g, '\\').replace(/^\\+/, '');
+    return '';
+}
+
+function v7ListInputOnBlurNormalize() {
+    var inp = document.getElementById('list_input');
+    if (!inp) return;
+    var v = inp.value.trim();
+    if (!v) return;
+    if (/^[a-z]:\\/i.test(v) || v.indexOf('\\\\') === 0 || /^file:/i.test(v) || /\\[Dd]ropbox\\/i.test(v)) {
+        var n = v7NormalizePastedPathToDropboxInput(v);
+        if (n) inp.value = n;
+    }
+}
+
+var v7BrowsePickValue = '';
+var v7BrowseCanUse = false;
+
+function v7BrowseDropboxEscapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+}
+
+/** UTC ISO from server → browser local display. */
+function v7BrowseFormatFolderMtime(iso) {
+    if (!iso) return '—';
+    var d = new Date(String(iso).trim());
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+async function v7BrowseDropboxFetch(rel) {
+    var loadEl = document.getElementById('v7BrowseDropboxLoading');
+    var errEl = document.getElementById('v7BrowseDropboxError');
+    var rowsEl = document.getElementById('v7BrowseDropboxRows');
+    var crumbsEl = document.getElementById('v7BrowseDropboxCrumbs');
+    var countLine = document.getElementById('v7BrowseDropboxCountLine');
+    var serverLine = document.getElementById('v7BrowseDropboxServerLine');
+    var useBtn = document.getElementById('v7BrowseDropboxUseBtn');
+    if (!window.V7_BROWSE_DROPBOX_URL) return;
+    if (loadEl) loadEl.classList.remove('d-none');
+    if (errEl) {
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
+    }
+    if (rowsEl) rowsEl.innerHTML = '';
+    if (useBtn) useBtn.disabled = true;
+    v7BrowsePickValue = '';
+    v7BrowseCanUse = false;
+    var u = window.V7_BROWSE_DROPBOX_URL + '?path=' + encodeURIComponent(rel || '');
+    try {
+        var r = await fetch(u, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (ct.indexOf('application/json') < 0) {
+            if (errEl) {
+                errEl.textContent = 'Could not load folders (try signing in again).';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+        var data = await r.json();
+        if (!data.ok) {
+            if (errEl) {
+                errEl.textContent = data.error || 'Request failed.';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+        v7BrowsePickValue = data.dropbox_input_value || '';
+        v7BrowseCanUse = !!data.can_use_folder;
+        if (serverLine) {
+            serverLine.innerHTML = 'Server Dropbox root: <code class="small user-select-all">' +
+                v7BrowseDropboxEscapeHtml(data.server_root_path || '') + '</code>';
+        }
+        if (crumbsEl) {
+            crumbsEl.innerHTML = '';
+            var crumbs = data.breadcrumbs || [];
+            crumbs.forEach(function(c, i) {
+                var li = document.createElement('li');
+                li.className = 'breadcrumb-item' + (i === crumbs.length - 1 ? ' active' : '');
+                if (i === crumbs.length - 1) {
+                    li.setAttribute('aria-current', 'page');
+                    li.textContent = c.name;
+                } else {
+                    var a = document.createElement('a');
+                    a.href = '#';
+                    a.textContent = c.name;
+                    (function(relPart) {
+                        a.addEventListener('click', function(ev) {
+                            ev.preventDefault();
+                            v7BrowseDropboxFetch(relPart || '');
+                        });
+                    })(c.rel);
+                    li.appendChild(a);
+                }
+                crumbsEl.appendChild(li);
+            });
+        }
+        if (countLine) {
+            var n = data.image_count_here != null ? data.image_count_here : 0;
+            countLine.innerHTML = '<strong>Images in this folder:</strong> ' + n +
+                ' <span class="text-muted font-weight-normal">(not including subfolders)</span>';
+        }
+        if (rowsEl) {
+            var dirs = data.directories || [];
+            dirs.forEach(function(d) {
+                var tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.innerHTML = '<td>' + v7BrowseDropboxEscapeHtml(d.name) + '</td>' +
+                    '<td class="text-nowrap small">' + v7BrowseDropboxEscapeHtml(v7BrowseFormatFolderMtime(d.last_updated_iso)) + '</td>' +
+                    '<td class="text-right font-weight-bold">' + (d.image_count != null ? d.image_count : 0) + '</td>';
+                tr.addEventListener('click', function() {
+                    v7BrowseDropboxFetch(d.rel || '');
+                });
+                rowsEl.appendChild(tr);
+            });
+            if (!dirs.length) {
+                var trE = document.createElement('tr');
+                trE.innerHTML = '<td colspan="3" class="text-muted small">No subfolders in this directory.</td>';
+                rowsEl.appendChild(trE);
+            }
+        }
+        if (useBtn) {
+            useBtn.disabled = !v7BrowseCanUse;
+        }
+    } catch (e) {
+        console.warn(e);
+        if (errEl) {
+            errEl.textContent = 'Network error loading folders.';
+            errEl.classList.remove('d-none');
+        }
+    } finally {
+        if (loadEl) loadEl.classList.add('d-none');
+    }
+}
+
+function v7OpenDropboxBrowserModal() {
+    if (window.jQuery && jQuery('#v7BrowseDropboxModal').modal) {
+        jQuery('#v7BrowseDropboxModal').modal('show');
+        v7BrowseDropboxFetch('');
+    }
+}
+
+function v7BrowseDropboxUseFolder() {
+    var inp = document.getElementById('list_input');
+    if (!inp || !v7BrowsePickValue) return;
+    if (inp.value.trim() && !window.confirm('Replace the current path with:\n' + v7BrowsePickValue + ' ?')) return;
+    inp.value = v7BrowsePickValue;
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    if (window.jQuery && jQuery('#v7BrowseDropboxModal').modal) {
+        jQuery('#v7BrowseDropboxModal').modal('hide');
+    }
+}
+
+/** ISO 8601 (UTC or offset) → browser local display. Server records Pacific for snapshots; workbook uses UTC Z. */
+function fdcParseInstant(iso) {
+    if (!iso) return null;
+    var d = new Date(String(iso).trim());
+    return isNaN(d.getTime()) ? null : d;
+}
+function fdcFormatInstantLocal(iso) {
+    var d = fdcParseInstant(iso);
+    if (!d) return '';
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+function fdcApplyLocalTimesFromDataIso() {
+    document.querySelectorAll('[data-fdc-local-iso]').forEach(function(el) {
+        var show = fdcFormatInstantLocal(el.getAttribute('data-fdc-local-iso'));
+        if (show) el.textContent = show;
+    });
+}
+
+/** Human-readable duration between two ISO instants (for job build time). */
+function lcFormatElapsed(isoStart, isoEnd) {
+    var a = fdcParseInstant(isoStart);
+    var b = fdcParseInstant(isoEnd);
+    if (!a || !b) return '';
+    var ms = b.getTime() - a.getTime();
+    if (ms < 0) ms = 0;
+    var secTotal = Math.floor(ms / 1000);
+    if (ms > 0 && secTotal < 1) return 'under 1 sec';
+    if (secTotal < 60) return secTotal + ' sec';
+    var min = Math.floor(secTotal / 60);
+    var sec = secTotal % 60;
+    return min + ' min ' + sec + ' sec';
+}
 
 let selectedImageSize = null;
 let pcsBoxHidden = false;
@@ -2963,6 +3173,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof updateRowCounts === 'function') updateRowCounts();
     if (typeof refreshWorkbookJobs === 'function') refreshWorkbookJobs();
     if (typeof refreshListcreatorHtmlJobs === 'function') refreshListcreatorHtmlJobs();
+    if (typeof fdcApplyLocalTimesFromDataIso === 'function') fdcApplyLocalTimesFromDataIso();
+    var btnPick = document.getElementById('btnV7PickDropboxFolder');
+    if (btnPick && !btnPick.dataset.lcBound) {
+        btnPick.dataset.lcBound = '1';
+        btnPick.addEventListener('click', function() { v7OpenDropboxBrowserModal(); });
+    }
+    var btnUseDrop = document.getElementById('v7BrowseDropboxUseBtn');
+    if (btnUseDrop && !btnUseDrop.dataset.lcBound) {
+        btnUseDrop.dataset.lcBound = '1';
+        btnUseDrop.addEventListener('click', function() { v7BrowseDropboxUseFolder(); });
+    }
+    var listInp = document.getElementById('list_input');
+    if (listInp && !listInp.dataset.v7BlurNorm) {
+        listInp.dataset.v7BlurNorm = '1';
+        listInp.addEventListener('blur', v7ListInputOnBlurNormalize);
+    }
+    var lcJobUserSel = document.getElementById('listcreatorJobsUserFilter');
+    if (lcJobUserSel && !lcJobUserSel.dataset.lcBound) {
+        lcJobUserSel.dataset.lcBound = '1';
+        lcJobUserSel.addEventListener('change', function() {
+            if (typeof refreshListcreatorHtmlJobs === 'function') refreshListcreatorHtmlJobs();
+        });
+    }
 });
 
 // New: updateRowCounts implementation
@@ -3137,7 +3370,8 @@ function renderWorkbookHistory(jobs) {
     el.innerHTML = jobs.map(function(j) {
         var status = j.status || '';
         var badge = status === 'ready' ? 'success' : (status === 'running' ? 'warning' : (status === 'failed' ? 'danger' : 'secondary'));
-        var line = '<strong>Edition #' + (j.edition != null ? j.edition : '?') + '</strong> &middot; ' + (j.created_at || '');
+        var when = fdcFormatInstantLocal(j.created_at) || escapeWorkbookHtml(j.created_at || '');
+        var line = '<strong>Edition #' + (j.edition != null ? j.edition : '?') + '</strong> &middot; ' + when;
         var dl = '';
         if (status === 'ready' && j.id) {
             dl = ' <a class="btn btn-sm btn-outline-primary ml-2" href="' + workbookDownloadHref(j.id) + '">Download</a>';
@@ -3224,19 +3458,25 @@ function wireListcreatorPreviewBoxToggle() {
     });
 }
 
-function listcreatorRenameJobUrl(rid) {
+function listcreatorRenameJobUrl(rid, ownerSlug) {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
-    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/rename');
+    var u = LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/rename');
+    if (ownerSlug) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'owner_slug=' + encodeURIComponent(ownerSlug);
+    return u;
 }
 
-function listcreatorDeleteJobUrl(rid) {
+function listcreatorDeleteJobUrl(rid, ownerSlug) {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
-    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/delete');
+    var u = LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/delete');
+    if (ownerSlug) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'owner_slug=' + encodeURIComponent(ownerSlug);
+    return u;
 }
 
-function listcreatorRedoJobUrl(rid) {
+function listcreatorRedoJobUrl(rid, ownerSlug) {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined' || !rid) return '';
-    return LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/redo');
+    var u = LISTCREATOR_HTML_JOBS_URL.replace(/html_jobs$/i, 'html_job/' + encodeURIComponent(rid) + '/redo');
+    if (ownerSlug) u += (u.indexOf('?') >= 0 ? '&' : '?') + 'owner_slug=' + encodeURIComponent(ownerSlug);
+    return u;
 }
 
 /** Prefer DELETE; some proxies only allow POST. */
@@ -3268,10 +3508,24 @@ function lcPreviewPayload(j, preferResolved) {
         }
         return { body: src, caption: 'Still processing — resolved list fills in when rendering completes' };
     }
-    if (isPath) {
+        if (isPath) {
         return { body: src, caption: 'Dropbox / folder path you submitted , click below to switch' };
     }
     return { body: src, caption: 'Source line submitted' };
+}
+
+function lcPopulateHtmlJobsUserFilter(options, serverFilterUser) {
+    var sel = document.getElementById('listcreatorJobsUserFilter');
+    if (!sel || !options || !options.length) return;
+    var want = (serverFilterUser != null && String(serverFilterUser).length) ? String(serverFilterUser) : (sel.value || '__all__');
+    sel.innerHTML = options.map(function(o) {
+        var v = String(o.value == null ? '' : o.value);
+        var lab = String(o.label == null ? '' : o.label);
+        return '<option value="' + escapeListcreatorJobsHtml(v) + '">' + escapeListcreatorJobsHtml(lab) + '</option>';
+    }).join('');
+    if (Array.prototype.some.call(sel.options, function(opt) { return opt.value === want; })) {
+        sel.value = want;
+    }
 }
 
 function wireListcreatorSnapshotJobsActions() {
@@ -3283,7 +3537,8 @@ function wireListcreatorSnapshotJobsActions() {
         if (redoBtn) {
             var rawRid = redoBtn.getAttribute('data-rid');
             if (!rawRid) return;
-            var redoUrl = listcreatorRedoJobUrl(rawRid);
+            var ownSlug = (redoBtn.getAttribute('data-owner-slug') || '').trim();
+            var redoUrl = listcreatorRedoJobUrl(rawRid, ownSlug);
             if (!redoUrl) return;
             if (!window.confirm('Queue a fresh snapshot with the same style list and label? You will go to the progress page for the new build.')) return;
             redoBtn.disabled = true;
@@ -3324,7 +3579,8 @@ function wireListcreatorSnapshotJobsActions() {
             msg += '? This cannot be undone.';
             if (st === 'running') msg += '\n\nThe job may still finish in the background briefly; refresh if something reappears.';
             if (!window.confirm(msg)) return;
-            var delUrl = listcreatorDeleteJobUrl(drid);
+            var ownDel = (delBtn.getAttribute('data-owner-slug') || '').trim();
+            var delUrl = listcreatorDeleteJobUrl(drid, ownDel);
             if (!delUrl) return;
             listcreatorFetchDelete(delUrl).then(function(r) {
                     return r.json().then(function(j) {
@@ -3356,7 +3612,8 @@ function wireListcreatorSnapshotJobsActions() {
             alert('Use at least 2 characters.');
             return;
         }
-        fetch(listcreatorRenameJobUrl(rid), {
+        var ownRen = (btn.getAttribute('data-owner-slug') || '').trim();
+        fetch(listcreatorRenameJobUrl(rid, ownRen), {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
@@ -3396,26 +3653,64 @@ function renderListcreatorHtmlJobsHistory(jobs) {
         var badge = status === 'ready' ? 'success' : (status === 'running' ? 'warning' : (status === 'failed' ? 'danger' : 'secondary'));
         var title = escapeListcreatorJobsHtml((j.snapshot_name || '').trim());
         var subId = j.id ? (j.id.length > 14 ? (j.id.substring(0, 10) + '…') : j.id) : '';
-        var timeLine = escapeListcreatorJobsHtml(j.created_at_pt_display || j.created_at || '');
-        var genLine = '';
-        if (j.snapshot_generated_at_pt && status === 'ready') {
-            genLine = ' · rendered ' + escapeListcreatorJobsHtml(j.snapshot_generated_at_pt);
+        var headline = '<span class="lc-job-title-line">' + (title ? ('<strong>' + title + '</strong>') : ('<strong>' + escapeListcreatorJobsHtml(subId || 'Snapshot') + '</strong>'));
+        if (title && subId) headline += ' <span class="text-muted lc-job-subid">· ' + escapeListcreatorJobsHtml(subId) + '</span>';
+        headline += '</span>';
+        var queuedShown = fdcFormatInstantLocal(j.created_at);
+        if (!queuedShown) queuedShown = String(j.created_at_pt_display || j.created_at || '').trim();
+        var queuedEsc = escapeListcreatorJobsHtml(queuedShown);
+        var genIso = String(j.snapshot_generated_at_iso || '').trim();
+        var genBlock = '';
+        if (status === 'ready') {
+            var genShown = genIso ? (fdcFormatInstantLocal(genIso) || '') : '';
+            if (!genShown && j.snapshot_generated_at_pt) genShown = String(j.snapshot_generated_at_pt).trim();
+            if (genShown) {
+                genBlock = '<div class="lc-job-time-row lc-job-time-rendered"><span class="lc-job-time-k">Rendered</span> <span class="lc-job-time-v">' + escapeListcreatorJobsHtml(genShown) + '</span></div>';
+            }
         }
-        var headline = title ? ('<strong>' + title + '</strong>') : ('<strong>' + escapeListcreatorJobsHtml(subId || 'Snapshot') + '</strong>');
-        if (title && subId) headline += ' <span class="text-muted small font-weight-normal">· ' + escapeListcreatorJobsHtml(subId) + '</span>';
-        var line = headline + (timeLine ? ' <span class="text-muted">&middot; ' + timeLine + genLine + '</span>' : '');
-        var delSnapBtn = '<button type="button" class="btn btn-sm btn-outline-danger ml-1" data-action="delete-snapshot-job" data-rid="'
-            + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '">Delete</button>';
+        var elapsedHtml = '';
+        if (j.created_at) {
+            if (status === 'ready' && genIso) {
+                var elDone = lcFormatElapsed(j.created_at, genIso);
+                if (elDone) elapsedHtml = '<div class="lc-job-elapsed">Elapsed: <strong>' + escapeListcreatorJobsHtml(elDone) + '</strong></div>';
+            } else if (status === 'running') {
+                var elRun = lcFormatElapsed(j.created_at, new Date().toISOString());
+                if (elRun) elapsedHtml = '<div class="lc-job-elapsed lc-job-elapsed-running">Elapsed: <strong>' + escapeListcreatorJobsHtml(elRun) + '</strong> <span class="text-muted small">(updates when list refreshes)</span></div>';
+            }
+        }
+        var timeBlock = '';
+        if (queuedShown || genBlock || elapsedHtml) {
+            var qRow = queuedShown ? ('<div class="lc-job-time-row lc-job-time-queued"><span class="lc-job-time-k">Queued</span> <span class="lc-job-time-v">' + queuedEsc + '</span></div>') : '';
+            timeBlock = '<div class="lc-job-times">' + qRow + genBlock + elapsedHtml + '</div>';
+        }
+        var line = headline;
+        var stSlug = (j.storage_slug || '').trim();
+        var slugAttr = stSlug ? (' data-owner-slug="' + lcAttrEscapePreviewId(stSlug) + '"') : '';
+        var who = (j.job_username || '').trim();
+        var ownDisp = (j.owner_display || who || stSlug || '(no username)').trim();
+        var ownTip = (j.owner_tooltip || '').trim();
+        var ownTipAttr = ownTip ? (' title="' + lcAttrEscapePreviewId(ownTip) + '"') : '';
+        var whoBadge = ' <span class="badge lc-job-owner-badge lc-job-pill"' + ownTipAttr + '>'
+            + escapeListcreatorJobsHtml(ownDisp) + '</span>';
+        var metaLine = '<div class="lc-job-headline-wrap">' + line + ' <span class="badge badge-' + badge + ' lc-job-status-badge">'
+            + escapeListcreatorJobsHtml(status) + '</span>' + whoBadge + '</div>';
+        var delSnapBtn = '<button type="button" class="btn btn-outline-danger lc-job-action-btn mr-2 mb-1" data-action="delete-snapshot-job" data-rid="'
+            + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '"' + slugAttr + '>Delete</button>';
         var actions = '';
+        var canM = !!j.can_manage;
         if (status === 'ready' && j.view_url) {
-            actions += '<a class="btn btn-sm btn-outline-success ml-1" href="' + j.view_url + '" target="_blank" rel="noopener">Open snapshot</a>';
-            actions += '<button type="button" class="btn btn-sm btn-outline-secondary ml-1" data-action="redo-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Redo snapshot</button>';
-            actions += '<button type="button" class="btn btn-sm btn-outline-primary ml-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Rename</button>';
-            actions += delSnapBtn;
+            actions += '<a class="btn btn-outline-success lc-job-action-btn mr-2 mb-1" href="' + j.view_url + '" target="_blank" rel="noopener">Open snapshot</a>';
+            if (canM) {
+                actions += '<button type="button" class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" data-action="redo-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Redo snapshot</button>';
+                actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
+                actions += delSnapBtn;
+            }
         } else if (status === 'running' || status === 'failed') {
-            if (j.wait_url) actions += ' <a class="btn btn-sm btn-outline-secondary ml-1" href="' + j.wait_url + '">' + (status === 'running' ? 'Watch progress' : 'Details') + '</a>';
-            actions += '<button type="button" class="btn btn-sm btn-outline-primary ml-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '">Rename</button>';
-            actions += delSnapBtn;
+            if (j.wait_url) actions += '<a class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" href="' + j.wait_url + '">' + (status === 'running' ? 'Watch progress' : 'Details') + '</a>';
+            if (canM) {
+                actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
+                actions += delSnapBtn;
+            }
         }
         var err = (status === 'failed' && j.error) ? (' <span class="text-danger d-block mt-1 small">' + escapeListcreatorJobsHtml(j.error) + '</span>') : '';
         var jobRid = (j.id || '').trim();
@@ -3426,22 +3721,36 @@ function renderListcreatorHtmlJobsHistory(jobs) {
             var capHtml = pr.caption ? ('<span class="d-block small text-muted mb-1">' + escapeListcreatorJobsHtml(pr.caption) + '</span>') : '';
             var prevBoxClass = 'lc-job-src-preview lc-job-preview-trigger' + (!preferThis ? ' lc-job-src-preview--oneline' : '');
             var ridAttr = jobRid ? (' data-rid="' + lcAttrEscapePreviewId(jobRid) + '"') : '';
-            previewHtml = '<div class="mt-2">' + capHtml + '<div class="' + prevBoxClass + '"' + ridAttr + ' data-action="toggle-job-preview" role="button" tabindex="0" title="Click to switch between source line and resolved styles">' + escapeListcreatorJobsHtml(pr.body) + '</div></div>';
+            previewHtml = '<div class="lc-job-preview-wrap">' + capHtml + '<div class="' + prevBoxClass + '"' + ridAttr + ' data-action="toggle-job-preview" role="button" tabindex="0" title="Click to switch between Dropbox path and resolved styles">' + escapeListcreatorJobsHtml(pr.body) + '</div></div>';
         }
-        return '<li class="mb-3 border-bottom pb-2">' +
-            '<div>' + line + ' <span class="badge badge-' + badge + '">' + escapeListcreatorJobsHtml(status) + '</span> ' + actions + '</div>' +
-            previewHtml + err + '</li>';
+        var timesPreviewRow = '';
+        if (timeBlock || previewHtml) {
+            timesPreviewRow = '<div class="lc-job-times-preview-row d-flex flex-column flex-lg-row align-items-lg-start" style="gap: 0.65rem;">' +
+                (timeBlock ? ('<div class="lc-job-times-outer">' + timeBlock + '</div>') : '') +
+                previewHtml +
+                '</div>';
+        }
+        return '<li class="lc-job-row">' +
+            '<div class="d-flex flex-column flex-lg-row flex-lg-wrap align-items-lg-center justify-content-lg-between">' +
+            '<div class="lc-job-main pr-lg-3 mb-2 mb-lg-0" style="min-width: 0;">' + metaLine + '</div>' +
+            '<div class="lc-job-actions d-flex flex-wrap align-items-center flex-shrink-0">' + actions + '</div></div>' +
+            timesPreviewRow + err + '</li>';
     }).join('');
 }
 
 function refreshListcreatorHtmlJobs() {
     if (typeof LISTCREATOR_HTML_JOBS_URL === 'undefined') return;
-    fetch(LISTCREATOR_HTML_JOBS_URL, { credentials: 'same-origin' })
+    var url = LISTCREATOR_HTML_JOBS_URL;
+    var sel = document.getElementById('listcreatorJobsUserFilter');
+    var fv = (sel && sel.value) ? sel.value : '__all__';
+    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'filter_user=' + encodeURIComponent(fv);
+    fetch(url, { credentials: 'same-origin' })
         .then(function(r) {
             if (!r.ok) throw new Error('html jobs');
             return r.json();
         })
         .then(function(data) {
+            lcPopulateHtmlJobsUserFilter(data.filter_options || [], data.filter_user || '');
             renderListcreatorHtmlJobsHistory(data.jobs || []);
             var running = (data.jobs || []).some(function(j) { return j.status === 'running'; });
             if (running && !listcreatorHtmlJobsPoll) {
@@ -3940,7 +4249,7 @@ function exportWithSelectedSize() {
             
             document.addEventListener('DOMContentLoaded', function() {
                 // Get the input string from the template variable
-                const listInput = "gn2636, l1895, m1147, m1169, m1171, m1173, n0680, n1814";
+                const listInput = "N2629,N2630,T3718,T3797,T3809,T3814,T3877";
                 if (listInput) {
                     // Split by comma and clean up each style
                     originalInputOrder = listInput.split(',').map(s => s.trim().toUpperCase());

@@ -8,20 +8,23 @@ import json
 import os
 import re
 import smtplib
+import time
 import base64
 import threading
 from datetime import date, datetime, timedelta, timezone
 from email import policy
 from email.header import decode_header
 from email.parser import BytesParser
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formataddr, parseaddr, parsedate_to_datetime
+from email.utils import formataddr, formatdate, make_msgid, parseaddr, parsedate_to_datetime
 from html import unescape as html_unescape
 from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, unquote, urlencode
 
 import bleach
 from bleach import linkify as bleach_linkify
@@ -86,6 +89,7 @@ def _inbox_return_suffix_from_view_ctx(
     bol_focus: str,
     show_landed: bool,
     bt_mode: str,
+    mbox: Optional[str] = None,
 ) -> str:
     """Query string for redirecting back to inbox with the same lane/filters as the message view."""
     return _inbox_query_suffix(
@@ -98,6 +102,7 @@ def _inbox_return_suffix_from_view_ctx(
         bol=bol_focus or None,
         show_landed=show_landed if mail_group == "container" else False,
         bt_mode=bt_mode if mail_group in _BT_ROUTE_PICKUP_GROUPS else "route",
+        mbox=mbox,
     )
 
 # On-disk HTML / RFC822 mirrors under EMAIL_DATA_DIR: ~1 month; mail_message_meta rows pruned by inbox poll job.
@@ -106,6 +111,8 @@ MAIL_META_RETENTION_DAYS = MAIL_LOCAL_RETENTION_DAYS
 MAIL_COMBINED_INBOX_MAX_DAYS = 31
 MAIL_POLL_BODY_PREFETCH_CAP = 18
 MAIL_POLL_INITIAL_DELAY_S = 2.5
+MAIL_COMPOSE_MAX_ATTACHMENT_TOTAL_BYTES = 15 * 1024 * 1024
+MAIL_COMPOSE_MAX_ATTACHMENT_FILES = 12
 _EMAIL_DISK_PRUNE_MONO: float = 0.0
 _EMAIL_DISK_PRUNE_INTERVAL_S = 4 * 3600
 _OPEN_BOAT_LANE_TS: float = 0.0
@@ -1137,22 +1144,251 @@ def _imap_connect(acc: Dict[str, Any]) -> IMAPClient:
     return client
 
 
-def _smtp_send(acc: Dict[str, Any], *, to_addrs: List[str], subject: str, body_text: str, html_body: Optional[str], extra_headers: Optional[Dict[str, str]]):
+def _smtp_send(
+    acc: Dict[str, Any],
+    *,
+    to_addrs: List[str],
+    subject: str,
+    body_text: str,
+    html_body: Optional[str],
+    extra_headers: Optional[Dict[str, str]],
+    attachments: Optional[List[Tuple[str, bytes, str]]] = None,
+) -> str:
+    """
+    Send via SMTP. Returns Message-ID (RFC angle-bracket form) for locating the copy in Sent via IMAP.
+    """
     pwd = decrypt_secret(acc["encrypted_password"])
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = acc["email"]
-    msg["To"] = ", ".join(to_addrs)
-    if extra_headers:
-        for k, v in extra_headers.items():
-            if v:
-                msg[k] = v
-    msg.attach(MIMEText(body_text or "", "plain", "utf-8"))
-    if html_body:
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
+    att_list = attachments or []
+    em = (acc.get("email") or "").strip()
+    dom = em.split("@", 1)[1].strip() if "@" in em else "localhost"
+    message_id_hdr = make_msgid(domain=dom)
+
+    def _headers_into(m: MIMEMultipart) -> None:
+        m["Subject"] = subject
+        m["From"] = acc["email"]
+        m["To"] = ", ".join(to_addrs)
+        m["Message-ID"] = message_id_hdr
+        m["Date"] = formatdate(localtime=True)
+        if extra_headers:
+            for k, v in extra_headers.items():
+                if v:
+                    m[k] = v
+
+    if att_list:
+        msg = MIMEMultipart("mixed")
+        _headers_into(msg)
+        alt = MIMEMultipart("alternative")
+        alt.attach(MIMEText(body_text or "", "plain", "utf-8"))
+        if html_body:
+            alt.attach(MIMEText(html_body, "html", "utf-8"))
+        msg.attach(alt)
+        for fn, blob, ctype in att_list:
+            ct = (ctype or "application/octet-stream").strip()
+            if "/" in ct:
+                maintype, subtype = ct.split("/", 1)
+            else:
+                maintype, subtype = "application", "octet-stream"
+            part = MIMEBase(maintype, subtype)
+            part.set_payload(blob)
+            encoders.encode_base64(part)
+            part.add_header("Content-Disposition", "attachment", filename=str(fn))
+            msg.attach(part)
+    else:
+        msg = MIMEMultipart("alternative")
+        _headers_into(msg)
+        msg.attach(MIMEText(body_text or "", "plain", "utf-8"))
+        if html_body:
+            msg.attach(MIMEText(html_body, "html", "utf-8"))
+
     with smtplib.SMTP_SSL(acc["smtp_host"], int(acc["smtp_port"]), timeout=45) as s:
         s.login(acc["email"], pwd)
         s.sendmail(acc["email"], to_addrs, msg.as_string())
+    return message_id_hdr
+
+
+def _compose_body_preview_line(body_text: str, limit: int = 160) -> str:
+    """First logical line of plain body for Slack (single line, truncated)."""
+    raw = (body_text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not raw:
+        return "(empty)"
+    line = raw.split("\n", 1)[0].strip()
+    line = re.sub(r"\s+", " ", line)
+    if len(line) > limit:
+        return line[: limit - 1] + "…"
+    return line
+
+
+def _sent_folder_candidates(acc: Dict[str, Any], client: Optional[IMAPClient] = None) -> List[str]:
+    """Ordered folder names that may hold server-side Sent copies."""
+    sent_candidates = [
+        "Sent",
+        "INBOX.Sent",
+        "Sent Items",
+        "INBOX.Sent Items",
+        "INBOX/Sent",
+        "INBOX/Sent Items",
+        "[Gmail]/Sent Mail",
+    ]
+    own_client = False
+    if client is None:
+        try:
+            client = _imap_connect(acc)
+            own_client = True
+        except Exception:
+            return sent_candidates
+    try:
+        all_folders = client.list_folders()
+        for _, _, folder_name in all_folders:
+            fn = str(folder_name or "")
+            if "sent" in fn.lower() and fn not in sent_candidates:
+                sent_candidates.append(fn)
+    except Exception:
+        pass
+    finally:
+        if own_client:
+            try:
+                client.logout()
+            except Exception:
+                pass
+    return sent_candidates
+
+
+def _find_sent_uid_by_message_id(acc: Dict[str, Any], message_id: str) -> Optional[Tuple[str, int]]:
+    """
+    Return (imap_folder_name, uid) for the outbound message in a Sent folder, using Message-ID header search.
+    """
+    mid = (message_id or "").strip()
+    if not mid:
+        return None
+    client = _imap_connect(acc)
+    try:
+        folders = _sent_folder_candidates(acc, client)
+        for folder in folders:
+            try:
+                client.select_folder(folder, readonly=True)
+            except Exception:
+                continue
+            try:
+                uids = client.search(["HEADER", "Message-ID", mid])
+            except Exception:
+                continue
+            if uids:
+                try:
+                    uid_max = max(int(u) for u in uids)
+                except (TypeError, ValueError):
+                    continue
+                return folder, uid_max
+    finally:
+        try:
+            client.logout()
+        except Exception:
+            pass
+    return None
+
+
+def _find_sent_uid_with_retries(
+    acc: Dict[str, Any], message_id: str, delays: Tuple[float, ...] = (0.0, 0.5, 2.0)
+) -> Optional[Tuple[str, int]]:
+    """FatCow / other hosts may copy to Sent shortly after SMTP accept."""
+    for i, d in enumerate(delays):
+        if i and d > 0:
+            time.sleep(d)
+        got = _find_sent_uid_by_message_id(acc, message_id)
+        if got:
+            return got
+    return None
+
+
+def _public_mail_message_url(account_id: int, uid: int, folder: Optional[str]) -> str:
+    """HTTPS fdcef.com link to open the message (requires mbox when not default inbox)."""
+    try:
+        from py.utilities.slack_notify import public_origin
+    except Exception:
+        public_origin = None  # type: ignore
+    base = ""
+    try:
+        base = (public_origin() if public_origin else "") or ""
+    except Exception:
+        base = ""
+    base = base.strip().rstrip("/") or str(getattr(Config, "PUBLIC_APP_ORIGIN", "") or "").strip().rstrip("/")
+    if not base:
+        base = "https://www.fdcef.com"
+    path = f"/email/{int(account_id)}/message/{int(uid)}"
+    mb = (folder or "").strip()
+    if mb:
+        return f"{base}{path}?{urlencode({'mbox': mb})}"
+    return f"{base}{path}"
+
+
+def _slack_notify_outbound_mail(
+    *,
+    ok: bool,
+    status_label: str,
+    account_id: int,
+    subject: str,
+    to_display: str,
+    from_email: str,
+    body_preview: str,
+    attachment_names: List[str],
+    message_id: str,
+    sent_folder: Optional[str],
+    sent_uid: Optional[int],
+    err_text: Optional[str],
+) -> None:
+    try:
+        from py.utilities.slack_notify import notify_mail_sent_optional
+    except Exception:
+        return
+    lines = [
+        f"*Outbound mail* — {'SUCCESS' if ok else 'FAIL'} — `{status_label}`",
+        f"*Subject:* {subject or '(no subject)'}",
+        f"*To:* {to_display}",
+        f"*From:* {from_email}",
+        f"*Body preview (first line):* {body_preview}",
+    ]
+    if attachment_names:
+        lines.append("*Attachments:* " + ", ".join(attachment_names))
+    else:
+        lines.append("*Attachments:* none")
+    mid_s = (message_id or "").strip()
+    if mid_s:
+        lines.append(f"*Message-ID:* `{mid_s}`")
+    if ok and sent_folder and sent_uid is not None:
+        lines.append(f"*Stored in IMAP folder:* `{sent_folder}` (UID {sent_uid})")
+        lines.append("*Open on fdcef.com:* " + _public_mail_message_url(account_id, sent_uid, sent_folder))
+    elif ok:
+        lines.append(
+            "*Stored in IMAP folder:* not located yet (server may delay Sent copy or use a nonstandard folder)."
+        )
+    if not ok and err_text:
+        lines.append(f"*Error:* {err_text}")
+    try:
+        notify_mail_sent_optional("\n".join(lines))
+    except Exception:
+        try:
+            current_app.logger.debug("slack outbound mail notify skipped", exc_info=True)
+        except Exception:
+            pass
+
+
+def _compose_attachments_from_request() -> Tuple[List[Tuple[str, bytes, str]], Optional[str]]:
+    """Parse multipart uploads for compose; returns (attachments, error_message)."""
+    files = request.files.getlist("attachments")
+    out: List[Tuple[str, bytes, str]] = []
+    total = 0
+    for f in files:
+        if not f or not (getattr(f, "filename", None) or "").strip():
+            continue
+        if len(out) >= MAIL_COMPOSE_MAX_ATTACHMENT_FILES:
+            return [], f"At most {MAIL_COMPOSE_MAX_ATTACHMENT_FILES} attachments."
+        fn = secure_filename(f.filename) or "attachment"
+        blob = f.read()
+        total += len(blob)
+        if total > MAIL_COMPOSE_MAX_ATTACHMENT_TOTAL_BYTES:
+            return [], "Attachments exceed the total size limit (15 MB)."
+        ctype = (getattr(f, "content_type", None) or "").strip() or "application/octet-stream"
+        out.append((fn, blob, ctype))
+    return out, None
 
 
 def _folder_flags_seen(flags) -> bool:
@@ -1693,6 +1929,7 @@ def _inbox_query_suffix(
     bol: Optional[str] = None,
     show_landed: bool = False,
     bt_mode: Optional[str] = None,
+    mbox: Optional[str] = None,
 ) -> str:
     params: Dict[str, str] = {}
     if q and q.strip():
@@ -1718,7 +1955,57 @@ def _inbox_query_suffix(
     bm = _normalize_bt_mode(bt_mode or "")
     if bm == "pickup":
         params["bt_mode"] = "pickup"
+    mb = (mbox or "").strip()
+    if mb:
+        params["mbox"] = mb
     return "?" + urlencode(params) if params else ""
+
+
+def _default_mail_folder(acc: Dict[str, Any]) -> str:
+    return (acc.get("inbox_folder") or "INBOX").strip() or "INBOX"
+
+
+def _mbox_decode(raw: Optional[str]) -> str:
+    if not raw:
+        return ""
+    try:
+        return unquote(str(raw)).strip()
+    except Exception:
+        return str(raw).strip()
+
+
+def _list_imap_folder_names(acc: Dict[str, Any]) -> List[str]:
+    client = _imap_connect(acc)
+    try:
+        names: List[str] = []
+        for triple in client.list_folders():
+            _a, _b, name = triple
+            fn = str(name or "").strip()
+            if fn:
+                names.append(fn)
+        names.sort(key=lambda s: s.lower())
+        return names
+    except Exception:
+        return []
+    finally:
+        try:
+            client.logout()
+        except Exception:
+            pass
+
+
+def _resolve_imap_folder_for_ui(acc: Dict[str, Any]) -> Tuple[str, List[str]]:
+    default_f = _default_mail_folder(acc)
+    folders = _list_imap_folder_names(acc)
+    req = _mbox_decode(request.args.get("mbox"))
+    if req and folders:
+        if req in folders:
+            return req, folders
+        flash("That folder is not available; showing the default inbox.")
+        return default_f, folders
+    if req and not folders:
+        return req, folders
+    return default_f, folders
 
 
 def _sidebar_poll_query_string() -> str:
@@ -1726,6 +2013,9 @@ def _sidebar_poll_query_string() -> str:
     d: Dict[str, str] = {"sidebar": "1"}
     if request.args.get("all_in_folder") == "1":
         d["all_in_folder"] = "1"
+    mb = _mbox_decode(request.args.get("mbox"))
+    if mb:
+        d["mbox"] = mb
     mg = (request.args.get("mail_group") or "").strip().lower()
     if mg in _ALLMAIL_GROUP_IDS:
         d["mail_group"] = mg
@@ -1746,13 +2036,15 @@ def _sidebar_poll_query_string() -> str:
     return urlencode(d)
 
 
-def _list_inbox_from_mail_meta(acc: Dict[str, Any], *, limit: int = 150) -> List[Dict[str, Any]]:
+def _list_inbox_from_mail_meta(
+    acc: Dict[str, Any], *, limit: int = 150, folder: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Fast path: last-known inbox rows from MySQL (body may be cached asynchronously)."""
     conn = get_mysql_connection()
     if not conn:
         return []
     aid = int(acc["id"])
-    folder = acc.get("inbox_folder") or "INBOX"
+    folder = (folder or "").strip() or (acc.get("inbox_folder") or "INBOX")
     cur = None
     try:
         cur = conn.cursor(dictionary=True)
@@ -1940,6 +2232,7 @@ def _fetch_messages_for_mail_ui(
     bt_mode: str,
     fdc_focus: str,
     bol_focus: str,
+    imap_folder: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Shared inbox / thread-sidebar message list (same rules as inbox vs view_message)."""
     if sidebar:
@@ -1950,9 +2243,13 @@ def _fetch_messages_for_mail_ui(
         search_scope = "current"
     attachment_only = list_filter == "attachments"
     apply_recipient_strict = search_scope == "current" and not show_full_folder
+    eff_folder = _default_mail_folder(acc)
+    if not mail_group:
+        if imap_folder and str(imap_folder).strip():
+            eff_folder = str(imap_folder).strip()
 
     if database_snapshot_only and not mail_group and not (q and search_scope == "all"):
-        db_msgs = _list_inbox_from_mail_meta(acc, limit=150)
+        db_msgs = _list_inbox_from_mail_meta(acc, limit=150, folder=eff_folder)
         if db_msgs:
             _msgs_inner = db_msgs
             if q:
@@ -2036,7 +2333,7 @@ def _fetch_messages_for_mail_ui(
             if not _msgs_inner and not suppress_flash:
                 flash("No matches in cached metadata across all inboxes.")
         else:
-            _msgs_inner = list_inbox_messages(acc)
+            _msgs_inner = list_inbox_messages(acc, folder=eff_folder)
             if q:
                 ql = q.lower()
                 _msgs_inner = [
@@ -2173,8 +2470,9 @@ def list_inbox_messages(
     *,
     limit: int = 150,
     since_days: Optional[int] = None,
+    folder: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    folder = acc.get("inbox_folder") or "INBOX"
+    folder = (folder or "").strip() or (acc.get("inbox_folder") or "INBOX")
     client = _imap_connect(acc)
     try:
         client.select_folder(folder, readonly=True)
@@ -2466,7 +2764,9 @@ def prune_local_email_mirror_files(*, retention_days: int = MAIL_LOCAL_RETENTION
     return removed
 
 
-def fetch_raw_message(acc: Dict[str, Any], uid: int, *, mark_seen: bool = False) -> bytes:
+def fetch_raw_message(
+    acc: Dict[str, Any], uid: int, *, mark_seen: bool = False, folder: Optional[str] = None
+) -> bytes:
     """
     Load full RFC822 bytes: prefer on-disk mirror under EMAIL_DATA_DIR when available,
     otherwise fetch from IMAP.
@@ -2477,7 +2777,7 @@ def fetch_raw_message(acc: Dict[str, Any], uid: int, *, mark_seen: bool = False)
     mark_seen: when True and the message is fetched from IMAP (not local), set \\Seen in the
     same IMAP session to avoid a second connection—no effect on cache hits.
     """
-    folder = acc.get("inbox_folder") or "INBOX"
+    folder = (folder or "").strip() or (acc.get("inbox_folder") or "INBOX")
     aid = int(acc.get("id") or 0)
     cached = _try_local_rfc822(aid, folder, int(uid)) if aid else None
     if cached is not None:
@@ -2505,8 +2805,8 @@ def fetch_raw_message(acc: Dict[str, Any], uid: int, *, mark_seen: bool = False)
             pass
 
 
-def mark_seen_on_server(acc: Dict[str, Any], uid: int) -> None:
-    folder = acc.get("inbox_folder") or "INBOX"
+def mark_seen_on_server(acc: Dict[str, Any], uid: int, *, folder: Optional[str] = None) -> None:
+    folder = (folder or "").strip() or (acc.get("inbox_folder") or "INBOX")
     client = _imap_connect(acc)
     try:
         client.select_folder(folder, readonly=False)
@@ -2518,9 +2818,9 @@ def mark_seen_on_server(acc: Dict[str, Any], uid: int) -> None:
             pass
 
 
-def delete_message_on_server(acc: Dict[str, Any], uid: int) -> None:
+def delete_message_on_server(acc: Dict[str, Any], uid: int, *, folder: Optional[str] = None) -> None:
     """Mark message \\Deleted on IMAP and expunge from the current inbox folder."""
-    folder = acc.get("inbox_folder") or "INBOX"
+    folder = (folder or "").strip() or (acc.get("inbox_folder") or "INBOX")
     uid_i = int(uid)
     client = _imap_connect(acc)
     try:
@@ -3142,11 +3442,16 @@ def mailboxes():
     rows = _fetch_accounts_public(session_restricted=True)
     allmail_nav_account_id: Optional[int] = None
     allmail_suffix_container = ""
-    allmail_suffix_burlington = ""
-    allmail_suffix_gabe = ""
-    allmail_suffix_ross = ""
-    allmail_suffix_macy = ""
-    allmail_suffix_tj = ""
+    allmail_suffix_burlington_route = ""
+    allmail_suffix_burlington_pickup = ""
+    allmail_suffix_gabe_route = ""
+    allmail_suffix_gabe_pickup = ""
+    allmail_suffix_ross_route = ""
+    allmail_suffix_ross_pickup = ""
+    allmail_suffix_macy_route = ""
+    allmail_suffix_macy_pickup = ""
+    allmail_suffix_tj_route = ""
+    allmail_suffix_tj_pickup = ""
     if rows:
         ids_in_list: List[int] = []
         for r in rows:
@@ -3164,35 +3469,70 @@ def mailboxes():
                 list_filter="",
                 mail_group="container",
             )
-            allmail_suffix_burlington = _inbox_query_suffix(
+            allmail_suffix_burlington_route = _inbox_query_suffix(
                 q="",
                 scope="current",
                 list_filter="",
                 mail_group="burlington",
             )
-            allmail_suffix_gabe = _inbox_query_suffix(
+            allmail_suffix_burlington_pickup = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="burlington",
+                bt_mode="pickup",
+            )
+            allmail_suffix_gabe_route = _inbox_query_suffix(
                 q="",
                 scope="current",
                 list_filter="",
                 mail_group="gabe",
             )
-            allmail_suffix_ross = _inbox_query_suffix(
+            allmail_suffix_gabe_pickup = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="gabe",
+                bt_mode="pickup",
+            )
+            allmail_suffix_ross_route = _inbox_query_suffix(
                 q="",
                 scope="current",
                 list_filter="",
                 mail_group="ross",
             )
-            allmail_suffix_macy = _inbox_query_suffix(
+            allmail_suffix_ross_pickup = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="ross",
+                bt_mode="pickup",
+            )
+            allmail_suffix_macy_route = _inbox_query_suffix(
                 q="",
                 scope="current",
                 list_filter="",
                 mail_group="macy",
             )
-            allmail_suffix_tj = _inbox_query_suffix(
+            allmail_suffix_macy_pickup = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="macy",
+                bt_mode="pickup",
+            )
+            allmail_suffix_tj_route = _inbox_query_suffix(
                 q="",
                 scope="current",
                 list_filter="",
                 mail_group="tj",
+            )
+            allmail_suffix_tj_pickup = _inbox_query_suffix(
+                q="",
+                scope="current",
+                list_filter="",
+                mail_group="tj",
+                bt_mode="pickup",
             )
     return render_template(
         "email/mailboxes.html",
@@ -3201,11 +3541,16 @@ def mailboxes():
         show_admin=_accounts_admin_required(),
         allmail_nav_account_id=allmail_nav_account_id,
         allmail_suffix_container=allmail_suffix_container,
-        allmail_suffix_burlington=allmail_suffix_burlington,
-        allmail_suffix_gabe=allmail_suffix_gabe,
-        allmail_suffix_ross=allmail_suffix_ross,
-        allmail_suffix_macy=allmail_suffix_macy,
-        allmail_suffix_tj=allmail_suffix_tj,
+        allmail_suffix_burlington_route=allmail_suffix_burlington_route,
+        allmail_suffix_burlington_pickup=allmail_suffix_burlington_pickup,
+        allmail_suffix_gabe_route=allmail_suffix_gabe_route,
+        allmail_suffix_gabe_pickup=allmail_suffix_gabe_pickup,
+        allmail_suffix_ross_route=allmail_suffix_ross_route,
+        allmail_suffix_ross_pickup=allmail_suffix_ross_pickup,
+        allmail_suffix_macy_route=allmail_suffix_macy_route,
+        allmail_suffix_macy_pickup=allmail_suffix_macy_pickup,
+        allmail_suffix_tj_route=allmail_suffix_tj_route,
+        allmail_suffix_tj_pickup=allmail_suffix_tj_pickup,
     )
 
 
@@ -3405,6 +3750,17 @@ def inbox(account_id: int):
     bol_focus = _sanitize_lane_param(request.args.get("bol") or "") if mail_group == "container" else ""
     show_landed_container = request.args.get("show_landed") in ("1", "true", "yes") if mail_group == "container" else False
 
+    imap_folder_list: List[str] = []
+    imap_folder_effective = _default_mail_folder(acc)
+    mbox_nav: Optional[str] = None
+    if not mail_group:
+        imap_folder_effective, imap_folder_list = _resolve_imap_folder_for_ui(acc)
+        if imap_folder_effective != _default_mail_folder(acc):
+            mbox_nav = imap_folder_effective
+
+    def _iq(**kwargs):
+        return _inbox_query_suffix(mbox=mbox_nav, **kwargs)
+
     def _mail_group_nav_suffix(target: str) -> str:
         next_mg: Optional[str] = None
         if mail_group == target:
@@ -3413,7 +3769,7 @@ def inbox(account_id: int):
             next_mg = target
         lf_use = list_filter if not next_mg else ""
         aif_use = show_full_folder if not next_mg else False
-        return _inbox_query_suffix(
+        return _iq(
             q=q,
             scope=search_scope,
             list_filter=lf_use,
@@ -3438,6 +3794,7 @@ def inbox(account_id: int):
         bt_mode=bt_mode,
         fdc_focus=fdc_focus,
         bol_focus=bol_focus,
+        imap_folder=imap_folder_effective if not mail_group else None,
     )
     bg_skip_meta = False
     if not mail_group and not messages and not q:
@@ -3456,6 +3813,7 @@ def inbox(account_id: int):
             bt_mode=bt_mode,
             fdc_focus=fdc_focus,
             bol_focus=bol_focus,
+            imap_folder=imap_folder_effective if not mail_group else None,
         )
         bg_skip_meta = True
     if not mail_group:
@@ -3463,7 +3821,7 @@ def inbox(account_id: int):
             current_app._get_current_object(), account_id, skip_meta_backfill=bg_skip_meta
         )
     list_nav = "" if mail_group else list_filter
-    inbox_nav_query = _inbox_query_suffix(
+    inbox_nav_query = _iq(
         q=q,
         scope=search_scope,
         list_filter=list_nav,
@@ -3474,17 +3832,17 @@ def inbox(account_id: int):
         show_landed=show_landed_container if mail_group == "container" else False,
         bt_mode=bt_mode if mail_group in _BT_ROUTE_PICKUP_GROUPS else "route",
     )
-    filter_query_all = _inbox_query_suffix(
+    filter_query_all = _iq(
         q=q, scope=search_scope, list_filter="", all_in_folder=False, mail_group=None
     )
-    filter_query_attachments = _inbox_query_suffix(
+    filter_query_attachments = _iq(
         q=q,
         scope=search_scope,
         list_filter="attachments",
         all_in_folder=show_full_folder,
         mail_group=None,
     )
-    search_clear_suffix = _inbox_query_suffix(
+    search_clear_suffix = _iq(
         q="",
         scope=search_scope,
         list_filter=list_filter if not mail_group else "",
@@ -3495,7 +3853,7 @@ def inbox(account_id: int):
         show_landed=show_landed_container if mail_group == "container" else False,
         bt_mode=bt_mode if mail_group in _BT_ROUTE_PICKUP_GROUPS else "route",
     )
-    view_msg_group_q = _inbox_query_suffix(
+    view_msg_group_q = _iq(
         q="",
         scope="current",
         list_filter="",
@@ -3512,7 +3870,7 @@ def inbox(account_id: int):
     if mail_group == "container":
         boat_lane_rows = _get_open_container_bol_rows(include_landed=show_landed_container)
         _enrich_boat_lane_rows_with_mail_hints(boat_lane_rows)
-        boat_lane_clear_suffix = _inbox_query_suffix(
+        boat_lane_clear_suffix = _iq(
             q=q,
             scope=search_scope,
             list_filter=list_nav,
@@ -3520,7 +3878,7 @@ def inbox(account_id: int):
             mail_group="container",
             show_landed=show_landed_container,
         )
-        boat_lane_toggle_suffix = _inbox_query_suffix(
+        boat_lane_toggle_suffix = _iq(
             q=q,
             scope=search_scope,
             list_filter=list_nav,
@@ -3530,7 +3888,7 @@ def inbox(account_id: int):
             bol=bol_focus or None,
             show_landed=not show_landed_container,
         )
-        boat_lane_return_suffix = _inbox_query_suffix(
+        boat_lane_return_suffix = _iq(
             q=q,
             scope=search_scope,
             list_filter=list_nav,
@@ -3544,7 +3902,7 @@ def inbox(account_id: int):
             c = (br.get("container") or "").strip()
             b = (br.get("bol") or "").strip()
             br["fdc_href_suffix"] = (
-                _inbox_query_suffix(
+                _iq(
                     q=q,
                     scope=search_scope,
                     list_filter=list_nav,
@@ -3559,7 +3917,7 @@ def inbox(account_id: int):
                 else ""
             )
             br["bol_href_suffix"] = (
-                _inbox_query_suffix(
+                _iq(
                     q=q,
                     scope=search_scope,
                     list_filter=list_nav,
@@ -3587,7 +3945,27 @@ def inbox(account_id: int):
     elif mail_group:
         inbox_header_title = "Combined inbox"
     else:
-        inbox_header_title = "Inbox"
+        if imap_folder_effective != _default_mail_folder(acc):
+            inbox_header_title = imap_folder_effective
+        else:
+            inbox_header_title = "Inbox"
+    imap_folder_nav: List[Tuple[str, str]] = []
+    if not mail_group and imap_folder_list:
+        for fn in imap_folder_list:
+            m_for = fn if fn != _default_mail_folder(acc) else None
+            imap_folder_nav.append(
+                (
+                    fn,
+                    _inbox_query_suffix(
+                        q=q,
+                        scope=search_scope,
+                        list_filter=list_filter,
+                        all_in_folder=show_full_folder,
+                        mail_group=None,
+                        mbox=m_for,
+                    ),
+                )
+            )
     all_accounts = _fetch_accounts_public(session_restricted=True)
     return render_template(
         "email/email.html",
@@ -3617,7 +3995,7 @@ def inbox(account_id: int):
         boat_lane_return_suffix=boat_lane_return_suffix,
         show_landed_container=show_landed_container,
         bt_mode=bt_mode,
-        bt_mode_toggle_suffix=_inbox_query_suffix(
+        bt_mode_toggle_suffix=_iq(
             q=q,
             scope=search_scope,
             list_filter=list_nav,
@@ -3636,6 +4014,13 @@ def inbox(account_id: int):
         allmail_suffix_tj=_mail_group_nav_suffix("tj"),
         view_msg_group_q=view_msg_group_q,
         inbox_nav_query=inbox_nav_query,
+        individual_inbox_nav_query=_inbox_query_suffix(
+            q=q,
+            scope=search_scope,
+            list_filter=list_filter,
+            all_in_folder=show_full_folder,
+            mail_group=None,
+        ),
         filter_query_all=filter_query_all,
         filter_query_attachments=filter_query_attachments,
         search_clear_suffix=search_clear_suffix,
@@ -3643,6 +4028,8 @@ def inbox(account_id: int):
         preview_container_origin=None,
         sidebar_poll_query="",
         mail_poll_initial_delay_ms=int(MAIL_POLL_INITIAL_DELAY_S * 1000),
+        imap_folder_nav=imap_folder_nav,
+        imap_folder_effective=imap_folder_effective,
     )
 
 
@@ -3668,6 +4055,10 @@ def inbox_poll(account_id: int):
     fdc_focus = _sanitize_lane_param(request.args.get("fdc") or "") if mail_group == "container" else ""
     bol_focus = _sanitize_lane_param(request.args.get("bol") or "") if mail_group == "container" else ""
 
+    imap_folder_effective_poll = _default_mail_folder(acc)
+    if not mail_group:
+        imap_folder_effective_poll, _imap_poll_folders = _resolve_imap_folder_for_ui(acc)
+
     if mail_group:
         messages = _fetch_messages_for_mail_ui(
             account_id,
@@ -3683,6 +4074,7 @@ def inbox_poll(account_id: int):
             bt_mode=bt_mode,
             fdc_focus=fdc_focus,
             bol_focus=bol_focus,
+            imap_folder=None,
         )
     else:
         messages = _fetch_messages_for_mail_ui(
@@ -3699,6 +4091,7 @@ def inbox_poll(account_id: int):
             bt_mode=bt_mode,
             fdc_focus=fdc_focus,
             bol_focus=bol_focus,
+            imap_folder=imap_folder_effective_poll,
         )
         bg_skip_meta = False
         if not messages and not q:
@@ -3717,6 +4110,7 @@ def inbox_poll(account_id: int):
                 bt_mode=bt_mode,
                 fdc_focus=fdc_focus,
                 bol_focus=bol_focus,
+                imap_folder=imap_folder_effective_poll,
             )
             bg_skip_meta = True
         _schedule_imap_sync_prefetch_prune(
@@ -3743,7 +4137,6 @@ def view_message(account_id: int, uid: int):
     if not acc:
         abort(404)
     _require_mail_account_access(account_id)
-    folder = acc.get("inbox_folder") or "INBOX"
     all_accounts = _fetch_accounts_public(session_restricted=True)
     show_full_folder = request.args.get("all_in_folder") == "1"
     mail_group_vm = (request.args.get("mail_group") or "").strip().lower()
@@ -3753,6 +4146,18 @@ def view_message(account_id: int, uid: int):
     fdc_focus_vm = _sanitize_lane_param(request.args.get("fdc") or "") if mail_group_vm == "container" else ""
     bol_focus_vm = _sanitize_lane_param(request.args.get("bol") or "") if mail_group_vm == "container" else ""
     show_landed_vm = request.args.get("show_landed") in ("1", "true", "yes") if mail_group_vm == "container" else False
+
+    imap_folder_list_vm: List[str] = []
+    imap_folder_effective_vm = _default_mail_folder(acc)
+    mbox_nav_vm: Optional[str] = None
+    if not mail_group_vm:
+        imap_folder_effective_vm, imap_folder_list_vm = _resolve_imap_folder_for_ui(acc)
+        if imap_folder_effective_vm != _default_mail_folder(acc):
+            mbox_nav_vm = imap_folder_effective_vm
+    folder = imap_folder_effective_vm
+
+    def _iq_vm(**kwargs):
+        return _inbox_query_suffix(mbox=mbox_nav_vm, **kwargs)
 
     def _mail_group_nav_suffix_vm(target: str) -> str:
         next_mg: Optional[str] = None
@@ -3784,6 +4189,7 @@ def view_message(account_id: int, uid: int):
         bt_mode=bt_mode_vm,
         fdc_focus=fdc_focus_vm,
         bol_focus=bol_focus_vm,
+        imap_folder=imap_folder_effective_vm if not mail_group_vm else None,
     )
     bg_skip_meta_vm = False
     if not mail_group_vm and not messages:
@@ -3802,6 +4208,7 @@ def view_message(account_id: int, uid: int):
             bt_mode=bt_mode_vm,
             fdc_focus=fdc_focus_vm,
             bol_focus=bol_focus_vm,
+            imap_folder=imap_folder_effective_vm if not mail_group_vm else None,
         )
         bg_skip_meta_vm = True
     if not mail_group_vm:
@@ -3814,7 +4221,7 @@ def view_message(account_id: int, uid: int):
     if mail_group_vm == "container":
         boat_lane_rows_vm = _get_open_container_bol_rows(include_landed=show_landed_vm)
         _enrich_boat_lane_rows_with_mail_hints(boat_lane_rows_vm)
-        boat_lane_clear_suffix_vm = _inbox_query_suffix(
+        boat_lane_clear_suffix_vm = _iq_vm(
             q="",
             scope="current",
             list_filter="",
@@ -3822,7 +4229,7 @@ def view_message(account_id: int, uid: int):
             mail_group="container",
             show_landed=show_landed_vm,
         )
-        boat_lane_toggle_suffix_vm = _inbox_query_suffix(
+        boat_lane_toggle_suffix_vm = _iq_vm(
             q="",
             scope="current",
             list_filter="",
@@ -3832,7 +4239,7 @@ def view_message(account_id: int, uid: int):
             bol=bol_focus_vm or None,
             show_landed=not show_landed_vm,
         )
-        boat_lane_return_suffix_vm = _inbox_query_suffix(
+        boat_lane_return_suffix_vm = _iq_vm(
             q="",
             scope="current",
             list_filter="",
@@ -3846,7 +4253,7 @@ def view_message(account_id: int, uid: int):
             c = (br.get("container") or "").strip()
             b = (br.get("bol") or "").strip()
             br["fdc_href_suffix"] = (
-                _inbox_query_suffix(
+                _iq_vm(
                     q="",
                     scope="current",
                     list_filter="",
@@ -3855,13 +4262,13 @@ def view_message(account_id: int, uid: int):
                     fdc=c,
                     bol=None,
                     show_landed=show_landed_vm,
-            bt_mode=bt_mode_vm,
+                    bt_mode=bt_mode_vm,
                 )
                 if c
                 else ""
             )
             br["bol_href_suffix"] = (
-                _inbox_query_suffix(
+                _iq_vm(
                     q="",
                     scope="current",
                     list_filter="",
@@ -3889,7 +4296,27 @@ def view_message(account_id: int, uid: int):
     elif mail_group_vm:
         inbox_header_title_vm = "Combined inbox"
     else:
-        inbox_header_title_vm = "Inbox"
+        if imap_folder_effective_vm != _default_mail_folder(acc):
+            inbox_header_title_vm = imap_folder_effective_vm
+        else:
+            inbox_header_title_vm = "Inbox"
+    imap_folder_nav_vm: List[Tuple[str, str]] = []
+    if not mail_group_vm and imap_folder_list_vm:
+        for fn in imap_folder_list_vm:
+            m_for = fn if fn != _default_mail_folder(acc) else None
+            imap_folder_nav_vm.append(
+                (
+                    fn,
+                    _inbox_query_suffix(
+                        q="",
+                        scope="current",
+                        list_filter="",
+                        all_in_folder=show_full_folder,
+                        mail_group=None,
+                        mbox=m_for,
+                    ),
+                )
+            )
     preview_subject = ""
     preview_html = ""
     preview_meta = {}
@@ -3903,7 +4330,7 @@ def view_message(account_id: int, uid: int):
     uid_i = int(uid)
     cached_before = bool(aid_vm and _try_local_rfc822(aid_vm, folder, uid_i))
     try:
-        raw = fetch_raw_message(acc, uid_i, mark_seen=True)
+        raw = fetch_raw_message(acc, uid_i, mark_seen=True, folder=folder)
         reply_compose = _reply_compose_bundle_from_raw(raw, uid_i)
         attachments = list_attachments_meta(raw)
         preview_subject, preview_html, preview_meta = parse_and_sanitize_mail(raw)
@@ -3944,7 +4371,7 @@ def view_message(account_id: int, uid: int):
         update_read_db(account_id, folder, uid_i, True)
         if cached_before:
             try:
-                mark_seen_on_server(acc, uid_i)
+                mark_seen_on_server(acc, uid_i, folder=folder)
             except Exception:
                 pass
         _mark_open_message_read_in_list(messages, account_id, uid_i)
@@ -3958,6 +4385,7 @@ def view_message(account_id: int, uid: int):
             bol_focus=bol_focus_vm,
             show_landed=show_landed_vm,
             bt_mode=bt_mode_vm,
+            mbox=mbox_nav_vm,
         )
         return redirect(url_for("email.inbox", account_id=account_id) + suffix)
     except HTTPException:
@@ -3991,7 +4419,7 @@ def view_message(account_id: int, uid: int):
         allmail_suffix_ross=_mail_group_nav_suffix_vm("ross"),
         allmail_suffix_macy=_mail_group_nav_suffix_vm("macy"),
         allmail_suffix_tj=_mail_group_nav_suffix_vm("tj"),
-        view_msg_group_q=_inbox_query_suffix(
+        view_msg_group_q=_iq_vm(
             q="",
             scope="current",
             list_filter="",
@@ -4002,7 +4430,7 @@ def view_message(account_id: int, uid: int):
             show_landed=show_landed_vm if mail_group_vm == "container" else False,
             bt_mode=bt_mode_vm if mail_group_vm in _BT_ROUTE_PICKUP_GROUPS else "route",
         ),
-        inbox_nav_query=_inbox_query_suffix(
+        inbox_nav_query=_iq_vm(
             q="",
             scope="current",
             list_filter="",
@@ -4013,10 +4441,17 @@ def view_message(account_id: int, uid: int):
             show_landed=show_landed_vm if mail_group_vm == "container" else False,
             bt_mode=bt_mode_vm if mail_group_vm in _BT_ROUTE_PICKUP_GROUPS else "route",
         ),
-        filter_query_all=_inbox_query_suffix(
+        individual_inbox_nav_query=_inbox_query_suffix(
+            q="",
+            scope="current",
+            list_filter="",
+            all_in_folder=show_full_folder,
+            mail_group=None,
+        ),
+        filter_query_all=_iq_vm(
             q="", scope="current", list_filter="", all_in_folder=False, mail_group=None
         ),
-        filter_query_attachments=_inbox_query_suffix(
+        filter_query_attachments=_iq_vm(
             q="",
             scope="current",
             list_filter="attachments",
@@ -4036,7 +4471,7 @@ def view_message(account_id: int, uid: int):
         boat_lane_return_suffix=boat_lane_return_suffix_vm,
         show_landed_container=show_landed_vm,
         bt_mode=bt_mode_vm,
-        bt_mode_toggle_suffix=_inbox_query_suffix(
+        bt_mode_toggle_suffix=_iq_vm(
             q="",
             scope="current",
             list_filter="",
@@ -4049,6 +4484,8 @@ def view_message(account_id: int, uid: int):
         ) if mail_group_vm in _BT_ROUTE_PICKUP_GROUPS else "",
         sidebar_poll_query=_sidebar_poll_query_string(),
         mail_poll_initial_delay_ms=int(MAIL_POLL_INITIAL_DELAY_S * 1000),
+        imap_folder_nav=imap_folder_nav_vm,
+        imap_folder_effective=imap_folder_effective_vm,
     )
 
 
@@ -4059,8 +4496,14 @@ def download_attachment(account_id: int, uid: int, att_idx: int):
     if not acc:
         abort(404)
     _require_mail_account_access(account_id)
+    eff_folder = _default_mail_folder(acc)
+    mg = (request.args.get("mail_group") or "").strip().lower()
+    if mg not in _ALLMAIL_GROUP_IDS:
+        mg = ""
+    if not mg:
+        eff_folder, _fd = _resolve_imap_folder_for_ui(acc)
     try:
-        raw = fetch_raw_message(acc, uid)
+        raw = fetch_raw_message(acc, uid, folder=eff_folder)
     except ImapMessageNotFoundError:
         abort(404)
     got = get_attachment_by_index(raw, att_idx)
@@ -4068,9 +4511,12 @@ def download_attachment(account_id: int, uid: int, att_idx: int):
         abort(404)
     payload, fn, ctype = got
     safe = secure_filename(fn) or "attachment"
-    inline = request.args.get("inline") in ("1", "true", "yes")
+    inline_req = request.args.get("inline") in ("1", "true", "yes")
     ct_lower = (ctype or "").lower()
-    if inline and ct_lower.startswith("image/"):
+    fn_lower = (safe or "").lower()
+    pdf_like = "pdf" in ct_lower or fn_lower.endswith(".pdf")
+    image_like = ct_lower.startswith("image/")
+    if inline_req and (image_like or pdf_like):
         disp = "inline"
     else:
         disp = "attachment"
@@ -4121,7 +4567,10 @@ def send_mail(account_id: int):
         if refs:
             extra_headers["References"] = refs
         to_addrs = [x.strip() for x in re.split(r"[;,]", to_raw) if x.strip()]
-        if not to_addrs or not subject:
+        att_parts, att_err = _compose_attachments_from_request()
+        if att_err:
+            flash(att_err)
+        elif not to_addrs or not subject:
             flash("To and subject are required.")
         else:
             hdrs = {}
@@ -4135,21 +4584,56 @@ def send_mail(account_id: int):
             else:
                 body_text = body
                 safe_html = sanitize_html_fragment(f"<pre>{bleach.clean(body, tags=[], strip=True)}</pre>")
+            body_preview = _compose_body_preview_line(body_text)
+            att_names_slack = [fn for fn, _b, _ct in (att_parts or [])]
             try:
-                _smtp_send(
+                msg_id_out = _smtp_send(
                     acc,
                     to_addrs=to_addrs,
                     subject=subject,
                     body_text=body_text,
                     html_body=safe_html,
                     extra_headers=hdrs or None,
+                    attachments=att_parts if att_parts else None,
                 )
+                sent_pair = _find_sent_uid_with_retries(acc, msg_id_out)
                 flash("Message sent.")
+                _slack_notify_outbound_mail(
+                    ok=True,
+                    status_label="200",
+                    account_id=account_id,
+                    subject=subject,
+                    to_display=", ".join(to_addrs),
+                    from_email=str(acc.get("email") or ""),
+                    body_preview=body_preview,
+                    attachment_names=att_names_slack,
+                    message_id=msg_id_out,
+                    sent_folder=sent_pair[0] if sent_pair else None,
+                    sent_uid=sent_pair[1] if sent_pair else None,
+                    err_text=None,
+                )
                 if reply_uid_form:
                     return redirect(url_for("email.view_message", account_id=account_id, uid=reply_uid_form))
                 return redirect(url_for("email.inbox", account_id=account_id))
             except Exception as exc:
                 flash(f"Send failed: {exc}")
+                try:
+                    _slack_notify_outbound_mail(
+                        ok=False,
+                        status_label="send_failed",
+                        account_id=account_id,
+                        subject=subject,
+                        to_display=", ".join(to_addrs),
+                        from_email=str(acc.get("email") or ""),
+                        body_preview=body_preview,
+                        attachment_names=att_names_slack,
+                        message_id="",
+                        sent_folder=None,
+                        sent_uid=None,
+                        err_text=str(exc),
+                    )
+                except Exception:
+                    pass
         defaults.update(
             {
                 "to": to_raw,
@@ -4245,9 +4729,12 @@ def mark_read(account_id: int, uid: int):
     if not acc:
         abort(404)
     _require_mail_account_access(account_id)
-    folder = acc.get("inbox_folder") or "INBOX"
+    folder = _default_mail_folder(acc)
+    mb_q = _mbox_decode(request.args.get("mbox"))
+    if mb_q:
+        folder = mb_q
     try:
-        mark_seen_on_server(acc, uid)
+        mark_seen_on_server(acc, uid, folder=folder)
         update_read_db(account_id, folder, uid, True)
         flash("Marked read.")
     except Exception as exc:
@@ -4262,13 +4749,44 @@ def delete_message(account_id: int, uid: int):
     if not acc:
         abort(404)
     _require_mail_account_access(account_id)
-    folder = acc.get("inbox_folder") or "INBOX"
     return_suffix = _safe_inbox_return_suffix(request.form.get("return_suffix"))
+    folder = _default_mail_folder(acc)
+    rs = return_suffix or ""
+    if "mbox=" in rs:
+        try:
+            from urllib.parse import parse_qs
+
+            pq = parse_qs(rs.lstrip("?&"))
+            v = (pq.get("mbox") or [""])[0]
+            if v:
+                folder = _mbox_decode(v)
+        except Exception:
+            pass
     try:
-        delete_message_on_server(acc, uid)
+        delete_message_on_server(acc, uid, folder=folder)
         _delete_message_local_cache(account_id, folder, uid)
         flash("Message deleted.")
     except Exception as exc:
         flash(f"Could not delete message: {exc}")
     return redirect(url_for("email.inbox", account_id=account_id) + return_suffix)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

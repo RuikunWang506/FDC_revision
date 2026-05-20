@@ -2,14 +2,23 @@ import pyodbc
 import pandas as pd
 import os
 import re
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from collections import defaultdict
+from reportlab.lib import colors as rl_colors
+from reportlab.lib.colors import HexColor
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from py.order.order_search import fetch_order_notes, get_recent_fdc_orders, parse_boxes_from_notes
 from py.utilities.setting import Config
-from flask import request, session, send_file, flash, redirect, url_for, render_template
+from flask import request, session, send_file, flash, redirect, url_for, render_template, jsonify, current_app
 from py.utilities.setting import login_required
-from py.order.order_search import get_latest_order_ids
 import io
+import os
+from pathlib import Path
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
@@ -19,6 +28,86 @@ ft = Font(name="Arial", size=12)
 ft_bold = Font(name="Arial", size=12, bold=True)
 ft_summary = Font(name="Arial", size=14, bold=True)
 Yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+
+LABEL_PAGE_W = 6 * inch
+LABEL_PAGE_H = 4 * inch
+LABEL_MARGIN_L = 0.18 * inch
+LABEL_MARGIN_T = 0.12 * inch
+LABEL_MARGIN_B = 0.20 * inch
+LABEL_FONT_SIZE = 11
+LABEL_HIGHLIGHT_FONT_SIZE = LABEL_FONT_SIZE + 1
+LABEL_SUMMARY_FONT_SIZE = 14
+# Column X positions from Excel widths (A–E), scaled to printable width
+_EXCEL_COL_W = (11.71, 12.29, 12.43, 6.57, 8.43)
+_print_w = LABEL_PAGE_W - (2 * LABEL_MARGIN_L)
+_col_x = LABEL_MARGIN_L
+LABEL_COL_X = []
+for _cw in _EXCEL_COL_W:
+    LABEL_COL_X.append(_col_x)
+    _col_x += (_cw / sum(_EXCEL_COL_W)) * _print_w
+# Shorthand: A=left labels, B=style/carton#, C=right labels, D=values, E=PCS
+LABEL_COL_A = LABEL_COL_X[0]
+LABEL_COL_B = LABEL_COL_X[1]
+LABEL_COL_C = LABEL_COL_X[2]
+LABEL_COL_D = LABEL_COL_X[3]
+LABEL_COL_E = LABEL_COL_X[4]
+
+# Landscape letter 11×8.5: four 5.5×4.25 boxes (2×2), matches 6×4 label aspect
+AVERY_PAGE_SIZE = landscape(letter)
+AVERY_BOX_W = 5.5 * inch
+AVERY_BOX_H = 4.25 * inch
+AVERY_POSITIONS = (
+    (0, AVERY_BOX_H),
+    (AVERY_BOX_W, AVERY_BOX_H),
+    (0, 0),
+    (AVERY_BOX_W, 0),
+)
+AVERY_LABEL_SCALE = min(AVERY_BOX_W / LABEL_PAGE_W, AVERY_BOX_H / LABEL_PAGE_H)
+LABEL_INTERNAL_SKU_TEXT = "内部单号internal Invoice:"
+
+# Portrait 4×6 ez简易贴纸 (vertical)
+EZ_PAGE_W = 4 * inch
+EZ_PAGE_H = 6 * inch
+EZ_FROM_LINE = "827 S LAWSON ST, CITY OF INDUSTRY, CA 91748"
+EZ_GREY = HexColor("#6e6e6e")
+_LABEL_CJK_REGISTERED = False
+
+
+def _label_ensure_cjk_fonts():
+    global _LABEL_CJK_REGISTERED
+    if _LABEL_CJK_REGISTERED:
+        return
+    import os
+    candidates = (
+        (os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "msyh.ttc"), 0),
+        (os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "msyhbd.ttc"), 0),
+        (os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "simhei.ttf"), None),
+    )
+    regular_path = None
+    bold_path = None
+    for path, _ in candidates:
+        if os.path.isfile(path):
+            if "bd" in path.lower() or "bold" in path.lower():
+                bold_path = bold_path or path
+            else:
+                regular_path = regular_path or path
+    if regular_path:
+        pdfmetrics.registerFont(TTFont("LabelCJK", regular_path))
+        pdfmetrics.registerFont(TTFont("LabelCJK-Bold", bold_path or regular_path))
+        _LABEL_CJK_REGISTERED = True
+
+
+def _label_has_cjk(text):
+    return any("\u4e00" <= ch <= "\u9fff" for ch in str(text))
+
+
+def _label_font_name(text, bold=False):
+    if _label_has_cjk(text):
+        _label_ensure_cjk_fonts()
+        if _LABEL_CJK_REGISTERED:
+            return "LabelCJK-Bold" if bold else "LabelCJK"
+    return "Helvetica-Bold" if bold else "Helvetica"
+
 
 def extract_label_numbers(ut_desc):
     """
@@ -317,7 +406,7 @@ def process_orders(order_number):
     print("process_orders: Adding summary information.")
     ws_labels["B" + str(summary_start_row)] = "FDC"
     ws_labels["C" + str(summary_start_row)].font = ft_summary
-    ws_labels["B" + str(summary_start_row + 1)] = "内部单号:"
+    ws_labels["B" + str(summary_start_row + 1)] = LABEL_INTERNAL_SKU_TEXT
     ws_labels["C" + str(summary_start_row + 1)] = str(order_number)
     ws_labels["C" + str(summary_start_row + 1)].font = ft_summary
     ws_labels["B" + str(summary_start_row + 3)] = "Boxes #:"
@@ -556,6 +645,540 @@ def generate_summary_page(ws, from_address, to_address, output_line_number, po_n
     return output_line_number
 
 
+def _label_cell_merge_origin(ws, row, col):
+    """Return top-left (row, col) when cell is inside a merged range."""
+    for merged in ws.merged_cells.ranges:
+        if row >= merged.min_row and row <= merged.max_row and col >= merged.min_col and col <= merged.max_col:
+            return merged.min_row, merged.min_col
+    return row, col
+
+
+def _label_cell_display_value(ws, cell):
+    val = cell.value
+    if isinstance(val, str) and val.startswith("="):
+        ref = val[1:].strip()
+        try:
+            return ws[ref].value
+        except Exception:
+            return val
+    return val
+
+
+def _label_cell_is_yellow(cell):
+    fill = cell.fill
+    if not fill or fill.fill_type != "solid":
+        return False
+    rgb = (fill.start_color.rgb or fill.fgColor.rgb or "") if fill.start_color else ""
+    if isinstance(rgb, str):
+        rgb = rgb.replace("FF", "", 1) if rgb.startswith("FF") else rgb
+        return rgb.upper() in ("FFFF00", "FFFFFF00", "00FFFF00")
+    return False
+
+
+def _label_ws_cell(ws, row, col):
+    origin_r, origin_c = _label_cell_merge_origin(ws, row, col)
+    if origin_r != row or origin_c != col:
+        return None, None
+    cell = ws.cell(row=row, column=col)
+    return _label_cell_display_value(ws, cell), cell
+
+
+def _label_find_starts(ws, max_row):
+    starts = []
+    for row in range(1, max_row + 1):
+        val, _ = _label_ws_cell(ws, row, 1)
+        if val and str(val).strip().upper().startswith("FROM:"):
+            starts.append(row)
+    return starts
+
+
+def _label_find_summary_start(ws, max_row):
+    """Row where the end-of-workbook stats block begins (FDC / internal sku line)."""
+    for row in range(1, max_row + 1):
+        b_val, _ = _label_ws_cell(ws, row, 2)
+        if not b_val:
+            continue
+        b_text = str(b_val).strip()
+        if b_text == LABEL_INTERNAL_SKU_TEXT or b_text == "内部单号:" or b_text.startswith(
+            "内部单号"
+        ):
+            return row - 1
+    return None
+
+
+def _label_block_end(ws, start_row, next_start, max_row):
+    end_row = (next_start - 1) if next_start else max_row
+    while end_row > start_row:
+        if any(
+            _label_ws_cell(ws, end_row, col)[0]
+            for col in range(1, 6)
+        ):
+            break
+        end_row -= 1
+    return end_row
+
+
+def _label_parse_block(ws, start_row, end_row):
+    data = {
+        "from_lines": [],
+        "to_lines": [],
+        "po": "",
+        "style_val": "",
+        "style_yellow": False,
+        "qty_val": "",
+        "qty_yellow": False,
+        "size": "",
+        "color_val": "",
+        "color_yellow": False,
+        "coordinate": "",
+        "preticketed": "",
+        "total_val": "",
+        "carton_num": "",
+        "carton_num_yellow": False,
+        "carton_total": "",
+        "carton_total_yellow": False,
+    }
+    mode = None
+
+    for row in range(start_row, end_row + 1):
+        a_val, a_cell = _label_ws_cell(ws, row, 1)
+        a_text = str(a_val).strip() if a_val is not None else ""
+
+        if a_text.upper().startswith("FROM:"):
+            mode = "from"
+            data["from_lines"].append(a_text)
+            continue
+        if a_text.upper().startswith("TO:"):
+            mode = "to"
+            data["to_lines"].append(a_text)
+            continue
+        if a_text == "DEPT#":
+            mode = "fields"
+            po_val, _ = _label_ws_cell(ws, row, 3)
+            data["po"] = str(po_val).strip() if po_val is not None else ""
+            continue
+        if a_text == "STYLE#":
+            mode = "fields"
+            b_val, b_cell = _label_ws_cell(ws, row, 2)
+            d_val, d_cell = _label_ws_cell(ws, row, 4)
+            data["style_val"] = "" if b_val is None else str(b_val)
+            data["style_yellow"] = _label_cell_is_yellow(b_cell) if b_cell else False
+            data["qty_val"] = "" if d_val is None else str(d_val)
+            data["qty_yellow"] = _label_cell_is_yellow(d_cell) if d_cell else False
+            continue
+        if a_text.startswith("SIZE"):
+            mode = "fields"
+            data["size"] = a_text
+            d_val, d_cell = _label_ws_cell(ws, row, 4)
+            data["color_val"] = "" if d_val is None else str(d_val)
+            data["color_yellow"] = _label_cell_is_yellow(d_cell) if d_cell else False
+            continue
+        if a_text.startswith("COORDINATE"):
+            mode = "fields"
+            data["coordinate"] = a_text
+            c_val, _ = _label_ws_cell(ws, row, 3)
+            data["preticketed"] = str(c_val).strip() if c_val is not None else ""
+            continue
+        if a_text.startswith("TOTAL QUANTITY"):
+            mode = "fields"
+            d_val, _ = _label_ws_cell(ws, row, 4)
+            data["total_val"] = "" if d_val is None else str(d_val)
+            continue
+        if a_text == "CARTON":
+            mode = "fields"
+            b_val, b_cell = _label_ws_cell(ws, row, 2)
+            d_val, d_cell = _label_ws_cell(ws, row, 4)
+            data["carton_num"] = "" if b_val is None else str(b_val)
+            data["carton_num_yellow"] = _label_cell_is_yellow(b_cell) if b_cell else False
+            data["carton_total"] = "" if d_val is None else str(d_val)
+            data["carton_total_yellow"] = _label_cell_is_yellow(d_cell) if d_cell else False
+            continue
+
+        if mode == "from" and a_text:
+            data["from_lines"].append(a_text)
+        elif mode == "to" and a_text:
+            data["to_lines"].append(a_text)
+
+    return data
+
+
+def _label_row_baseline(row_idx, total_rows, font_size=LABEL_FONT_SIZE):
+    usable = LABEL_PAGE_H - LABEL_MARGIN_T - LABEL_MARGIN_B
+    step = usable / total_rows
+    return LABEL_PAGE_H - LABEL_MARGIN_T - (row_idx + 1) * step + font_size * 0.32
+
+
+def _label_draw_at(c, x, y, text, bold=False, yellow=False, font_size=None):
+    if text is None or text == "":
+        return 0.0
+    s = str(text).strip()
+    if not s:
+        return 0.0
+    if font_size is None:
+        font_size = LABEL_HIGHLIGHT_FONT_SIZE if yellow else LABEL_FONT_SIZE
+    font = _label_font_name(s, bold=bold)
+    draw_y = y - (font_size - LABEL_FONT_SIZE) * 0.35 if yellow else y
+    if yellow:
+        w = pdfmetrics.stringWidth(s, font, font_size)
+        c.setFillColor(rl_colors.yellow)
+        c.rect(x - 2, draw_y - 3, w + 5, font_size + 5, fill=1, stroke=0)
+        c.setFillColor(rl_colors.black)
+    c.setFont(font, font_size)
+    c.drawString(x, draw_y, s)
+    return pdfmetrics.stringWidth(s, font, font_size)
+
+
+def _label_draw_page(c, data):
+    # Each tuple is a row slot so vertical space fills the 4" label evenly.
+    rows = []
+    rows.extend(("addr", a) for a in data["from_lines"][:3])
+    rows.append(("gap",))
+    rows.extend(("addr", a) for a in data["to_lines"][:4])
+    rows.append(("gap",))
+    rows.append(("dept",))
+    rows.append(("style",))
+    rows.append(("size",))
+    rows.append(("coord",))
+    rows.append(("gap",))
+    rows.append(("total",))
+    rows.append(("gap",))
+    rows.append(("carton",))
+
+    total_rows = len(rows)
+    fs = LABEL_FONT_SIZE
+
+    for row_idx, row in enumerate(rows):
+        y = _label_row_baseline(row_idx, total_rows, fs)
+        kind = row[0]
+
+        if kind == "addr":
+            _label_draw_at(c, LABEL_COL_A, y, row[1])
+        elif kind == "gap":
+            pass
+        elif kind == "dept":
+            _label_draw_at(c, LABEL_COL_A, y, "DEPT#", bold=True)
+            _label_draw_at(c, LABEL_COL_C, y, data["po"], bold=True)
+        elif kind == "style":
+            _label_draw_at(c, LABEL_COL_A, y, "STYLE#", bold=True)
+            _label_draw_at(
+                c, LABEL_COL_B, y, data["style_val"], yellow=data["style_yellow"]
+            )
+            qty_lbl = "QUANTITY"
+            qty_w = _label_draw_at(c, LABEL_COL_C, y, qty_lbl, bold=True)
+            qty_x = LABEL_COL_C + qty_w + 6
+            val_w = _label_draw_at(
+                c, qty_x, y, data["qty_val"], yellow=data["qty_yellow"]
+            )
+            _label_draw_at(c, qty_x + val_w + 6, y, "PCS", bold=True)
+        elif kind == "size":
+            _label_draw_at(c, LABEL_COL_A, y, data["size"] or "SIZE:N-A")
+            _label_draw_at(c, LABEL_COL_C, y, "COLOR:", bold=True)
+            _label_draw_at(
+                c, LABEL_COL_D, y, data["color_val"], yellow=data["color_yellow"]
+            )
+        elif kind == "coord":
+            _label_draw_at(c, LABEL_COL_A, y, data["coordinate"] or "COORDINATE: NO")
+            _label_draw_at(
+                c, LABEL_COL_C, y, data["preticketed"] or "PRE-TICKETED: NO"
+            )
+        elif kind == "total":
+            _label_draw_at(c, LABEL_COL_A, y, "TOTAL QUANTITY IN CARTON", bold=True)
+            _label_draw_at(c, LABEL_COL_D, y, data["total_val"])
+        elif kind == "carton":
+            _label_draw_at(c, LABEL_COL_A, y, "CARTON", bold=True)
+            _label_draw_at(
+                c, LABEL_COL_B, y, data["carton_num"], yellow=data["carton_num_yellow"]
+            )
+            _label_draw_at(c, LABEL_COL_C, y, "OF", bold=True)
+            _label_draw_at(
+                c, LABEL_COL_D, y, data["carton_total"], yellow=data["carton_total_yellow"]
+            )
+
+
+def _label_parse_summary(ws, start_row):
+    lines = []
+    for offset in range(6):
+        row = start_row + offset
+        b_val, _ = _label_ws_cell(ws, row, 2)
+        c_val, _ = _label_ws_cell(ws, row, 3)
+        b_text = str(b_val).strip() if b_val is not None else ""
+        c_text = str(c_val).strip() if c_val is not None else ""
+        if not b_text and not c_text:
+            continue
+        if b_text in ("内部单号:", LABEL_INTERNAL_SKU_TEXT) or b_text.startswith("内部单号"):
+            b_text = LABEL_INTERNAL_SKU_TEXT
+        if b_text and not c_text:
+            lines.append(("heading", b_text))
+        else:
+            lines.append(("pair", b_text, c_text))
+    return lines
+
+
+def _label_draw_summary_pair(c, y, label, value, font_size):
+    """Draw summary label/value on one row without overlap."""
+    label_s = str(label).strip()
+    value_s = str(value).strip()
+    label_font = _label_font_name(label_s, bold=True)
+    label_w = pdfmetrics.stringWidth(label_s, label_font, font_size)
+    value_x = max(LABEL_COL_D, LABEL_COL_B + label_w + 10)
+    _label_draw_at(c, LABEL_COL_B, y, label_s, bold=True, font_size=font_size)
+    _label_draw_at(c, value_x, y, value_s, bold=True, font_size=font_size)
+
+
+def _label_draw_summary_page(c, ws, start_row):
+    lines = _label_parse_summary(ws, start_row)
+    if not lines:
+        return
+    total_rows = len(lines)
+    fs = LABEL_SUMMARY_FONT_SIZE
+
+    for row_idx, line in enumerate(lines):
+        y = _label_row_baseline(row_idx, total_rows, fs)
+        kind = line[0]
+        if kind == "heading":
+            _label_draw_at(c, LABEL_COL_B, y, line[1], bold=True, font_size=fs)
+        else:
+            _label_draw_summary_pair(c, y, line[1], line[2], fs)
+
+
+def _label_collect_from_excel(excel_data):
+    wb = load_workbook(io.BytesIO(excel_data), data_only=False)
+    if "Labels" not in wb.sheetnames:
+        raise ValueError("Workbook is missing the Labels sheet.")
+    ws = wb["Labels"]
+    max_row = ws.max_row or 1
+    starts = _label_find_starts(ws, max_row)
+    summary_start = _label_find_summary_start(ws, max_row)
+    labels = []
+
+    for idx, start_row in enumerate(starts):
+        next_start = starts[idx + 1] if idx + 1 < len(starts) else None
+        end_row = _label_block_end(ws, start_row, next_start, max_row)
+        if summary_start and (next_start is None or end_row >= summary_start):
+            end_row = min(end_row, summary_start - 1)
+            while end_row > start_row and not any(
+                _label_ws_cell(ws, end_row, col)[0] for col in range(1, 6)
+            ):
+                end_row -= 1
+        labels.append(_label_parse_block(ws, start_row, end_row))
+
+    return ws, labels, summary_start
+
+
+def _should_include_summary_on_4up(num_labels, summary_start):
+    """
+    Omit the summary when it would be alone on a new Avery sheet (e.g. 60 labels
+    on 15 sheets → summary would waste 3 of 4 slots on sheet 16).
+    """
+    if not summary_start or num_labels == 0:
+        return False
+    return num_labels % 4 != 0
+
+
+def _label_draw_in_avery_box(c, box_x, box_y, draw_fn, *args):
+    c.saveState()
+    c.translate(box_x, box_y)
+    c.scale(AVERY_LABEL_SCALE, AVERY_LABEL_SCALE)
+    draw_fn(c, *args)
+    c.restoreState()
+
+
+def excel_labels_to_pdf(excel_data):
+    """
+    Convert the Labels worksheet to a landscape 6×4 inch PDF (4×6 label horizontal),
+    one page per shipping label, matching the Excel/printed layout.
+    """
+    ws, labels, summary_start = _label_collect_from_excel(excel_data)
+
+    buf = io.BytesIO()
+    pdf = canvas.Canvas(buf, pagesize=(LABEL_PAGE_W, LABEL_PAGE_H))
+    page_drawn = False
+
+    for data in labels:
+        if page_drawn:
+            pdf.showPage()
+        _label_draw_page(pdf, data)
+        page_drawn = True
+
+    if summary_start:
+        if page_drawn:
+            pdf.showPage()
+        _label_draw_summary_page(pdf, ws, summary_start)
+        page_drawn = True
+
+    if not page_drawn:
+        pdf.showPage()
+
+    pdf.save()
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def excel_labels_to_pdf_4perpage(excel_data):
+    """
+    US Letter landscape 11×8.5 with four 5.5×4.25 labels per page (2×2).
+    Summary is included unless it would occupy a sheet alone (label count divisible by 4).
+    """
+    ws, labels, summary_start = _label_collect_from_excel(excel_data)
+    items = [("label", data) for data in labels]
+    if _should_include_summary_on_4up(len(labels), summary_start):
+        items.append(("summary", summary_start))
+
+    buf = io.BytesIO()
+    pdf = canvas.Canvas(buf, pagesize=AVERY_PAGE_SIZE)
+
+    for page_start in range(0, len(items), 4):
+        if page_start:
+            pdf.showPage()
+        for slot, item in enumerate(items[page_start : page_start + 4]):
+            box_x, box_y = AVERY_POSITIONS[slot]
+            kind, payload = item
+            if kind == "label":
+                _label_draw_in_avery_box(pdf, box_x, box_y, _label_draw_page, payload)
+            else:
+                _label_draw_in_avery_box(
+                    pdf, box_x, box_y, _label_draw_summary_page, ws, payload
+                )
+
+    if not items:
+        pdf.showPage()
+
+    pdf.save()
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def _record_jennifer_label_download(order_number, username, logger):
+    try:
+        from py.other.label_status import mark_jennifer_label
+        mark_jennifer_label(order_number, username)
+    except Exception:
+        logger.exception("Failed to record Jennifer label status")
+
+
+def get_order_ship_to_lines(order_number):
+    """Return cleaned ship-to address lines for ez stickers."""
+    df, error = get_data_from_sql(order_number)
+    if error:
+        return None, error
+    if df is None or df.empty:
+        return None, "No order data found for ship-to address."
+    row = df.iloc[0]
+    lines = []
+    first = str(row.get("SP_ADR") or "").strip()
+    if first:
+        lines.append(f"TO: {first}" if not first.upper().startswith("TO:") else first)
+    for col in ("SP_ADR_2", "SP_ADR_22", "SP_ADR_3"):
+        part = str(row.get(col) or "").strip()
+        if part and part.lower() not in ("none", "nan"):
+            lines.append(part)
+    if not lines:
+        return None, "Ship-to address is empty for this order."
+    return lines, None
+
+
+def _ez_logo_path():
+    try:
+        root = Path(current_app.root_path)
+    except RuntimeError:
+        root = Path(__file__).resolve().parents[2]
+    branded = root / "static" / "images" / "ez_sticker_fdc_logo.png"
+    if branded.is_file():
+        return branded
+    return root / "static" / "icons" / "favicon-fdc.png"
+
+
+def _ez_ship_to_display_lines(ship_to_lines):
+    """Split TO: prefix from first line; return address lines for centered block."""
+    raw = [str(line).strip() for line in (ship_to_lines or []) if str(line).strip()]
+    if not raw:
+        return []
+    first = raw[0]
+    if first.upper().startswith("TO:"):
+        name = first[3:].strip()
+        return ([name] if name else []) + raw[1:]
+    return raw
+
+
+def _ez_draw_centered(c, y, text, font_name, font_size, color=None):
+    if color:
+        c.setFillColor(color)
+    else:
+        c.setFillColor(rl_colors.black)
+    c.setFont(font_name, font_size)
+    c.drawCentredString(EZ_PAGE_W / 2, y, text)
+    if color:
+        c.setFillColor(rl_colors.black)
+    return y - font_size - 4
+
+
+def _ez_draw_label_page(c, logo_path, service, ship_to_lines, box_num, total_boxes):
+    """Match Savvy/UCL 4x6 reference: logo banner, from line, service, TO block, totals."""
+    cx = EZ_PAGE_W / 2
+    y = EZ_PAGE_H - 0.12 * inch
+
+    if logo_path and os.path.isfile(logo_path):
+        logo_w = EZ_PAGE_W - 0.36 * inch
+        logo_h = logo_w * (95 / 272)
+        c.drawImage(
+            str(logo_path),
+            (EZ_PAGE_W - logo_w) / 2,
+            y - logo_h,
+            width=logo_w,
+            height=logo_h,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+        y -= logo_h + 0.12 * inch
+    else:
+        c.setFont("Times-Bold", 28)
+        c.drawCentredString(cx, y - 20, "F.D.C")
+        y -= 0.55 * inch
+
+    y = _ez_draw_centered(c, y, EZ_FROM_LINE, "Times-Bold", 11)
+    y -= 0.14 * inch
+
+    service_text = str(service or "").strip().upper()
+    y = _ez_draw_centered(c, y, service_text, "Times-Bold", 34)
+    y -= 0.12 * inch
+
+    y = _ez_draw_centered(c, y, "TO:", "Times-Bold", 13)
+    for line in _ez_ship_to_display_lines(ship_to_lines):
+        font = _label_font_name(line, bold=True)
+        c.setFont(font, 11)
+        c.drawCentredString(cx, y, line)
+        y -= 13
+
+    y -= 0.2 * inch
+    y = _ez_draw_centered(c, y, f"TOTAL {total_boxes} BOXES", "Times-Bold", 13)
+    y -= 0.08 * inch
+
+    _ez_draw_centered(c, y, f"Box {box_num}", "Times-Roman", 26, color=EZ_GREY)
+    y -= 0.35 * inch
+    _ez_draw_centered(c, 0.42 * inch, f"Box {box_num} of {total_boxes}", "Times-Roman", 14, color=EZ_GREY)
+
+
+def build_ez_sticker_pdf(ship_to_lines, service, total_boxes, order_number=None):
+    """One portrait 4×6 page per box."""
+    total = int(total_boxes)
+    if total < 1:
+        raise ValueError("Total boxes must be at least 1.")
+    service = str(service or "").strip()
+    if not service:
+        raise ValueError("Shipping service is required.")
+
+    logo_path = str(_ez_logo_path())
+    buf = io.BytesIO()
+    pdf = canvas.Canvas(buf, pagesize=(EZ_PAGE_W, EZ_PAGE_H))
+    for box_num in range(1, total + 1):
+        if box_num > 1:
+            pdf.showPage()
+        _ez_draw_label_page(pdf, logo_path, service, ship_to_lines, box_num, total)
+    pdf.save()
+    buf.seek(0)
+    return buf.getvalue()
+
+
 def register_label_maker_routes(app):
     """Register label maker routes with the Flask app."""
 
@@ -579,19 +1202,142 @@ def register_label_maker_routes(app):
                 return redirect(url_for('order_lookup'))
 
             filename = f"{order_number}_label.xlsx"
-
-            # Clear the session data after successful generation
-            session.pop('label_order_number', None)
+            _record_jennifer_label_download(order_number, current_user, app.logger)
 
             return send_file(
                 io.BytesIO(excel_data),
                 download_name=filename,
-                as_attachment=True,
+                as_attachment=False,
                 mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
         except Exception as e:
             flash(f'Error: {str(e)}', 'error')
             return redirect(url_for('order_lookup'))
+
+    @app.route('/download_label_pdf')
+    @login_required
+    def download_label_pdf():
+        current_user = session['username']
+        order_number = session.get('label_order_number')
+
+        if not order_number:
+            flash('No label order available for download. Please generate labels first.', 'error')
+            return redirect(url_for('order_lookup'))
+
+        try:
+            app.logger.info("***%s***__@@@downloading label PDF@@@__ %s", current_user, order_number)
+            excel_data, error_message, _, _, _, _, _ = process_orders(order_number)
+
+            if error_message or excel_data is None:
+                flash(f'Error regenerating labels for PDF: {error_message}', 'error')
+                return redirect(url_for('order_lookup'))
+
+            pdf_data = excel_labels_to_pdf(excel_data)
+            filename = f"{order_number}_label.pdf"
+            _record_jennifer_label_download(order_number, current_user, app.logger)
+
+            return send_file(
+                io.BytesIO(pdf_data),
+                download_name=filename,
+                as_attachment=False,
+                mimetype='application/pdf',
+            )
+        except Exception as e:
+            app.logger.exception("Label PDF download failed")
+            flash(f'Error generating PDF: {str(e)}', 'error')
+            return redirect(url_for('order_lookup'))
+
+    @app.route('/download_label_pdf_4perpage')
+    @login_required
+    def download_label_pdf_4perpage():
+        current_user = session['username']
+        order_number = session.get('label_order_number')
+
+        if not order_number:
+            flash('No label order available for download. Please generate labels first.', 'error')
+            return redirect(url_for('order_lookup'))
+
+        try:
+            app.logger.info(
+                "***%s***__@@@downloading 4-per-page label PDF@@@__ %s",
+                current_user,
+                order_number,
+            )
+            excel_data, error_message, _, _, _, _, _ = process_orders(order_number)
+
+            if error_message or excel_data is None:
+                flash(f'Error regenerating labels for PDF: {error_message}', 'error')
+                return redirect(url_for('order_lookup'))
+
+            pdf_data = excel_labels_to_pdf_4perpage(excel_data)
+            filename = f"{order_number}_label_4perpage.pdf"
+            _record_jennifer_label_download(order_number, current_user, app.logger)
+
+            return send_file(
+                io.BytesIO(pdf_data),
+                download_name=filename,
+                as_attachment=False,
+                mimetype='application/pdf',
+            )
+        except Exception as e:
+            app.logger.exception("4-per-page label PDF download failed")
+            flash(f'Error generating 4-per-page PDF: {str(e)}', 'error')
+            return redirect(url_for('order_lookup'))
+
+    @app.route('/ez_label_from_order_lookup', methods=['POST'])
+    @login_required
+    def ez_label_from_order_lookup():
+        current_user = session['username']
+        order_number = session.get('label_order_number') or session.get('order_number')
+        if not order_number:
+            return jsonify({"ok": False, "error": "No order in session. Generate or lookup an order first."}), 400
+
+        payload = request.get_json(silent=True) or {}
+        service = str(payload.get("service") or "").strip()
+        try:
+            total_boxes = int(payload.get("total_boxes"))
+        except (TypeError, ValueError):
+            total_boxes = 0
+
+        if not service:
+            return jsonify({"ok": False, "error": "Shipping service is required (e.g. UCL)."}), 400
+        if total_boxes < 1:
+            return jsonify({"ok": False, "error": "Total boxes must be a positive number."}), 400
+
+        try:
+            ship_to_lines, addr_error = get_order_ship_to_lines(order_number)
+            if addr_error:
+                return jsonify({"ok": False, "error": addr_error}), 400
+
+            app.logger.info(
+                "***%s***__@@@ez label@@@__ %s service=%s boxes=%s",
+                current_user,
+                order_number,
+                service,
+                total_boxes,
+            )
+            pdf_data = build_ez_sticker_pdf(ship_to_lines, service, total_boxes, order_number)
+            try:
+                from py.other.label_status import mark_ez_label
+                mark_ez_label(
+                    order_number,
+                    current_user,
+                    service=service,
+                    total_boxes=total_boxes,
+                )
+            except Exception:
+                app.logger.exception("Failed to record ez label status")
+
+            filename = f"{order_number}_ez_{total_boxes}boxes.pdf"
+            return send_file(
+                io.BytesIO(pdf_data),
+                download_name=filename,
+                as_attachment=False,
+                mimetype="application/pdf",
+            )
+        except Exception as e:
+            app.logger.exception("Ez label PDF failed")
+            return jsonify({"ok": False, "error": str(e)}), 500
 
     @app.route('/label_maker_from_order_lookup', methods=['GET', 'POST'])
     @login_required
@@ -610,9 +1356,8 @@ def register_label_maker_routes(app):
 
             app.logger.info("***%s***__@@@made labels@@@__ %s",current_user, order_number)
             excel_data, error_message, number_of_labels, duplicate_numbers, info_list, addresslist, warnings = process_orders(order_number)
-
-            # Fetch latest orders for Quick Access section
-            latest_orders = get_latest_order_ids()
+            recent_fdc_orders = get_recent_fdc_orders(100)
+            ez_default_boxes = parse_boxes_from_notes(fetch_order_notes(order_number))
 
             if error_message:
                 return render_template(
@@ -625,7 +1370,8 @@ def register_label_maker_routes(app):
                     error_message=error_message,
                     order_number=order_number,
                     current_user=current_user,
-                    latest_orders=latest_orders
+                    recent_fdc_orders=recent_fdc_orders,
+                    ez_default_boxes=ez_default_boxes,
                 )
 
             # Store only the order_number in session for download (not the large excel data)
@@ -644,14 +1390,13 @@ def register_label_maker_routes(app):
                 warnings=warnings,
                 current_user=current_user,
                 labels_generated=True,  # Flag to show the results section
-                latest_orders=latest_orders
+                recent_fdc_orders=recent_fdc_orders,
+                ez_default_boxes=ez_default_boxes,
             )
         except Exception as e:
             app.logger.error("An error occurred: %s", str(e))
-            try:
-                latest_orders = get_latest_order_ids()
-            except Exception:
-                latest_orders = {'fdc': None, 'ef': None}
+            recent_fdc_orders = get_recent_fdc_orders(100)
+            ez_default_boxes = parse_boxes_from_notes(fetch_order_notes(order_number))
             return render_template(
                 'order_lookup.html',
                 excel_html=None,
@@ -662,7 +1407,8 @@ def register_label_maker_routes(app):
                 error_message=f"An error occurred: {str(e)}",
                 order_number=order_number,
                 current_user=current_user,
-                latest_orders=latest_orders
+                recent_fdc_orders=recent_fdc_orders,
+                ez_default_boxes=ez_default_boxes,
             )
 
 

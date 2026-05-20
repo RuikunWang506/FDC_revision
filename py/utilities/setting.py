@@ -53,6 +53,8 @@ class Config:
         'SLACK_WEBHOOK_URL_V7_LIST_CREATOR',
         'https://hooks.slack.com/services/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',
     ).strip()
+    # Optional override for webmail “message sent” Slack posts (defaults to V7 webhook in notify_mail_sent_optional).
+    SLACK_WEBHOOK_URL_MAIL_SENT = os.getenv('SLACK_WEBHOOK_URL_MAIL_SENT', '').strip()
     SERVICE_ACCOUNT_FILE = r'C:/FDC_FLASK_APP/credentials.json'
     
     # Update these scopes to be consistent

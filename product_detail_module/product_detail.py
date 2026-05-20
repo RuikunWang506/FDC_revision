@@ -1230,6 +1230,94 @@ def get_container_bol(container_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+def fetch_combined_inventory(skus, conn_fdc, conn_oms_ef):
+    """Combined FDC + E_FAS inventory per SKU (matches product_detail combined view)."""
+    result = {
+        sku: {'stock': 0, 'available': 0, 'sold': 0, 'catalog': None, 'color': None}
+        for sku in skus
+    }
+    if not skus:
+        return result
+
+    inv_query = """
+        SELECT
+            i.PROD_CD,
+            CAST(ISNULL(id.in_stock, 0) AS INT),
+            CAST(ISNULL(id.ORDER_QTY, 0) AS INT),
+            CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT),
+            i.DESCRIP,
+            i.UNIT_COLOR
+        FROM dbo.inv i
+        LEFT JOIN dbo.inv_data id ON i.PROD_CD = id.Prod_cd
+        WHERE i.PROD_CD = ?
+    """
+
+    for conn in (conn_fdc, conn_oms_ef):
+        if not conn:
+            continue
+        cursor = conn.cursor()
+        for sku in skus:
+            cursor.execute(inv_query, [sku])
+            row = cursor.fetchone()
+            if not row:
+                continue
+            entry = result[sku]
+            entry['stock'] += int(row[1] or 0)
+            entry['sold'] += int(row[2] or 0)
+            entry['available'] += int(row[3] or 0)
+            if row[4] and not entry['catalog']:
+                entry['catalog'] = row[4]
+            if row[5] and not entry['color']:
+                entry['color'] = (row[5] or '').strip()
+        cursor.close()
+
+    return result
+
+
+def group_container_by_style(items):
+    """Group container line items by style with per-style totals and catalog image."""
+    from collections import OrderedDict
+
+    groups_dict = OrderedDict()
+    for item in sorted(items, key=lambda x: ((x.get('style') or ''), x.get('sku') or '')):
+        style = (item.get('style') or '').strip().upper()
+        if style not in groups_dict:
+            groups_dict[style] = {
+                'style': style,
+                'rows': [],
+                'image_url': None,
+                'totals': {
+                    'container_qty': 0,
+                    'available': 0,
+                    'in_warehouse': 0,
+                    'sold_reserved': 0,
+                },
+            }
+        group = groups_dict[style]
+        group['rows'].append(item)
+        group['totals']['container_qty'] += int(item.get('container_qty', 0) or 0)
+        group['totals']['available'] += int(item.get('available', 0) or 0)
+        group['totals']['in_warehouse'] += int(item.get('in_warehouse', 0) or 0)
+        group['totals']['sold_reserved'] += int(item.get('sold_reserved', 0) or 0)
+
+    style_groups = []
+    grand_totals = {
+        'container_qty': 0,
+        'available': 0,
+        'in_warehouse': 0,
+        'sold_reserved': 0,
+    }
+    for group in groups_dict.values():
+        images = fetch_style_images(group['style'], group['rows'][0]['sku'] if group['rows'] else None)
+        group['image_url'] = images[0]['url'] if images else None
+        group['row_span'] = len(group['rows']) + 1
+        style_groups.append(group)
+        for key in grand_totals:
+            grand_totals[key] += group['totals'][key]
+
+    return style_groups, grand_totals
+
+
 @product_detail_bp.route('/container_search', methods=['GET', 'POST'])
 @login_required
 def container_search():
@@ -1237,17 +1325,18 @@ def container_search():
     current_user = session.get('username', 'Unknown')
     container_id = request.args.get('container_id', '') or request.form.get('container_id', '')
     container_id = container_id.strip().upper()
-    
+
     container_data = []
+    style_groups = []
+    grand_totals = None
     po_date = None
     total_msrp = 0
     latest_containers = []
-    is_arrived = False  # Track if container has been received
-    
+    is_arrived = False
+
     try:
         conn_fdc, conn_oms_ef = get_db_connections()
-        
-        # Get latest 5 containers
+
         if conn_fdc:
             cursor = conn_fdc.cursor()
             cursor.execute("""
@@ -1259,72 +1348,85 @@ def container_search():
             """)
             latest_containers = [row[0] for row in cursor.fetchall()]
             cursor.close()
-        
-        if container_id:
-            for conn, db_name in [(conn_fdc, 'FDC'), (conn_oms_ef, 'E_FAS')]:
-                if not conn:
+
+        if container_id and conn_fdc:
+            cursor = conn_fdc.cursor()
+            query = """
+                SELECT
+                    pl.prod_cd as sku,
+                    LEFT(pl.prod_cd, CHARINDEX(' ', pl.prod_cd + ' ') - 1) as style,
+                    pl.pur_num as po_num,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS po_date,
+                    CASE WHEN pl.hdl_chg > 0 THEN pl.hdl_chg ELSE pl.log_qty END as container_qty,
+                    ISNULL(i.RETAIL_PRS, 0) as price,
+                    pl.hdl_chg
+                FROM plog pl
+                LEFT JOIN dbo.inv i ON pl.prod_cd = i.PROD_CD
+                WHERE pl.pur_num = ?
+                AND (pl.hdl_chg > 0 OR pl.log_qty > 0)
+                ORDER BY style, pl.prod_cd
+            """
+            cursor.execute(query, [container_id])
+            columns = [column[0] for column in cursor.description]
+            rows = cursor.fetchall()
+            cursor.close()
+
+            seen_skus = set()
+            for row in rows:
+                row_dict = dict(zip(columns, row))
+                sku = (row_dict.get('sku') or '').strip()
+                if not sku or sku in seen_skus:
                     continue
-                    
-                cursor = conn.cursor()
-                
-                # Query plog table for all SKUs with this PO number
-                query = """
-                    SELECT 
-                        pl.prod_cd as sku,
-                        LEFT(pl.prod_cd, CHARINDEX(' ', pl.prod_cd + ' ') - 1) as style,
-                        pl.pur_num as po_num,
-                        RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                        RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                        CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS po_date,
-                        CASE WHEN pl.hdl_chg > 0 THEN pl.hdl_chg ELSE pl.log_qty END as qty,
-                        ISNULL(i.RETAIL_PRS, 0) as price,
-                        pl.hdl_chg
-                    FROM plog pl
-                    LEFT JOIN dbo.inv i ON pl.prod_cd = i.PROD_CD
-                    WHERE pl.pur_num = ?
-                    AND (pl.hdl_chg > 0 OR pl.log_qty > 0)
-                    ORDER BY pl.prod_cd
-                """
-                
-                cursor.execute(query, [container_id])
-                columns = [column[0] for column in cursor.description]
-                rows = cursor.fetchall()
-                
-                for row in rows:
-                    row_dict = dict(zip(columns, row))
-                    row_dict['database'] = db_name
-                    container_data.append(row_dict)
-                    
-                    # Check if container has arrived (hdl_chg > 0 indicates received)
-                    if row_dict.get('hdl_chg', 0) > 0:
-                        is_arrived = True
-                    
-                    # Calculate total MSRP
-                    qty = float(row_dict.get('qty', 0) or 0)
-                    price = float(row_dict.get('price', 0) or 0)
-                    total_msrp += qty * price
-                    
-                    # Get PO date from first record
-                    if row_dict.get('po_date') and not po_date:
-                        po_date = row_dict['po_date']
-                
-                cursor.close()
-        
+                seen_skus.add(sku)
+                container_data.append(row_dict)
+
+                if row_dict.get('hdl_chg', 0) > 0:
+                    is_arrived = True
+
+                qty = float(row_dict.get('container_qty', 0) or 0)
+                price = float(row_dict.get('price', 0) or 0)
+                total_msrp += qty * price
+
+                if row_dict.get('po_date') and not po_date:
+                    po_date = row_dict['po_date']
+
+            inventory = fetch_combined_inventory(list(seen_skus), conn_fdc, conn_oms_ef)
+            for item in container_data:
+                sku = (item.get('sku') or '').strip()
+                inv = inventory.get(sku, {})
+                item['catalog'] = inv.get('catalog') or 'N/A'
+                item['color'] = inv.get('color') or '-'
+                item['available'] = inv.get('stock', 0)
+                item['in_warehouse'] = inv.get('available', 0)
+                item['sold_reserved'] = inv.get('sold', 0)
+
+            style_groups, grand_totals = group_container_by_style(container_data)
+
         if conn_fdc:
             conn_fdc.close()
         if conn_oms_ef:
             conn_oms_ef.close()
-        
-        current_app.logger.info(f"Container search for {container_id} by {current_user}: Found {len(container_data)} items, Status: {'arrived' if is_arrived else 'ocean'}, Total MSRP: ${total_msrp:.2f}")
-        
+
+        current_app.logger.info(
+            f"Container search for {container_id} by {current_user}: "
+            f"Found {len(container_data)} items in {len(style_groups)} styles, "
+            f"Status: {'arrived' if is_arrived else 'ocean'}, Total MSRP: ${total_msrp:.2f}"
+        )
+
     except Exception as e:
         current_app.logger.error(f"Error searching container {container_id}: {str(e)}", exc_info=True)
         container_data = []
-    
+        style_groups = []
+        grand_totals = None
+
     return render_template(
         "container_detail.html",
         container_id=container_id,
         container_data=container_data,
+        style_groups=style_groups,
+        grand_totals=grand_totals,
         po_date=po_date,
         total_msrp=total_msrp,
         latest_containers=latest_containers,

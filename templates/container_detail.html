@@ -44,6 +44,7 @@
             font-weight: bold;
             border-bottom: 1px solid rgba(0,0,0,0.1);
             margin-bottom: 15px;
+            text-align: center;
         }
         
         .nav-list {
@@ -58,6 +59,7 @@
             color: rgba(0, 0, 0, 0.8);
             text-decoration: none;
             transition: background-color 0.2s;
+            text-align: center;
         }
         
         .nav-list a:hover {
@@ -104,6 +106,7 @@
             border-radius: 10px;
             margin-bottom: 30px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
         }
         
         .container-header h1 {
@@ -131,6 +134,7 @@
             border-bottom: 2px solid #667eea;
             padding-bottom: 10px;
             margin-bottom: 20px;
+            text-align: center;
         }
         
         .info-grid {
@@ -145,6 +149,7 @@
             padding: 15px;
             border-radius: 8px;
             border-left: 4px solid #4CAF50;
+            text-align: center;
         }
         
         .info-label {
@@ -205,31 +210,96 @@
             display: block;
         }
         
-        table {
+        .items-table-wrap {
             width: 100%;
-            border-collapse: collapse;
+            overflow-x: auto;
             margin-top: 15px;
         }
-        
-        table thead {
+
+        .container-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+
+        .container-items-table thead {
             background-color: #f0f0f0;
             border-bottom: 2px solid #ddd;
         }
-        
-        table th {
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        table td {
-            padding: 10px 12px;
+
+        .container-items-table th,
+        .container-items-table td {
+            padding: 8px 10px;
+            font-size: 13px;
+            text-align: center;
+            vertical-align: middle;
             border-bottom: 1px solid #eee;
         }
-        
-        table tbody tr:hover {
+
+        .container-items-table th {
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .container-items-table tbody tr:hover {
             background-color: #f9f9f9;
+        }
+
+        table tbody tr.style-subtotal {
+            background-color: #2c3e7a;
+            color: white;
+            font-weight: 600;
+        }
+
+        table tbody tr.style-subtotal:hover {
+            background-color: #2c3e7a;
+        }
+
+        table tbody tr.grand-total {
+            background-color: #1a2547;
+            color: white;
+            font-weight: 700;
+        }
+
+        table tbody tr.grand-total:hover {
+            background-color: #1a2547;
+        }
+
+        .style-image-cell {
+            width: 130px;
+            padding: 8px;
+        }
+
+        .style-image-cell img {
+            display: block;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: #fff;
+        }
+
+        .num-col {
+            white-space: nowrap;
+        }
+
+        th.col-available {
+            background-color: #fffacd;
+        }
+
+        td.col-available {
+            background-color: #fffef0;
+        }
+
+        .num-positive {
+            color: #2e7d32;
+        }
+
+        .num-negative {
+            color: #c62828;
         }
         
         .empty-state {
@@ -282,11 +352,11 @@
         
         {% if latest_containers %}
         <div style="padding: 15px 20px; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 15px;">
-            <h4 style="font-size: 13px; font-weight: bold; color: #667eea; margin-bottom: 10px; text-transform: uppercase;">Latest Containers</h4>
+            <h4 style="font-size: 13px; font-weight: bold; color: #667eea; margin-bottom: 10px; text-transform: uppercase; text-align: center;">Latest Containers</h4>
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 {% for container in latest_containers %}
                 <a href="/container_search?container_id={{ container }}" 
-                   style="padding: 8px 12px; background: {% if container == container_id %}#667eea{% else %}#f0f0f0{% endif %}; color: {% if container == container_id %}white{% else %}#333{% endif %}; text-decoration: none; border-radius: 4px; font-size: 13px; transition: background 0.2s;"
+                   style="padding: 8px 12px; background: {% if container == container_id %}#667eea{% else %}#f0f0f0{% endif %}; color: {% if container == container_id %}white{% else %}#333{% endif %}; text-decoration: none; border-radius: 4px; font-size: 13px; transition: background 0.2s; text-align: center;"
                    onmouseover="this.style.background='#667eea'; this.style.color='white';"
                    onmouseout="this.style.background='{% if container == container_id %}#667eea{% else %}#f0f0f0{% endif %}'; this.style.color='{% if container == container_id %}white{% else %}#333{% endif %}';">
                     {{ container }}
@@ -311,7 +381,7 @@
         </div>
         
         <div class="info-section" style="background: #f0f8ff; border-left: 4px solid #667eea; padding: 20px; margin-bottom: 30px;">
-            <h3 style="color: #667eea; border: none; margin: 0 0 15px 0; padding: 0;">Container Info</h3>
+            <h3 style="color: #667eea; border: none; margin: 0 0 15px 0; padding: 0; text-align: center;">Container Info</h3>
             <div class="info-grid">
                 <div class="info-item" style="border-left-color: #667eea;">
                     <div class="info-label">PO Number</div>
@@ -340,28 +410,72 @@
         
         
         <div id="products-section" class="info-section">
-            {% if container_data %}
+            {% if style_groups %}
             <h3>Items</h3>
-            <table class="dataTable">
+            <div class="items-table-wrap">
+            <table class="container-items-table">
                     <thead>
                         <tr>
-                            <th>SKU</th>
+                            <th class="style-image-cell"></th>
                             <th>Style</th>
-                            <th>Qty</th>
+                            <th>Catalog</th>
+                            <th>SKU</th>
+                            <th>Color</th>
+                            <th>Container Qty</th>
+                            <th class="col-available">Available</th>
+                            <th>In Warehouse</th>
+                            <th>Sold/Reserved</th>
                             <th>Price</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in container_data %}
+                        {% for group in style_groups %}
+                        {% for item in group.rows %}
                         <tr>
-                            <td><strong><a href="https://www.fdcef.com/product_detail?search={{ item.get('sku', '')|trim|lower|urlencode }}" target="_blank">{{ item.get('sku', 'N/A')|trim|upper }}</a></strong></td>
-                            <td><strong><a href="https://www.fdcef.com/product_detail?search={{ item.get('style', '')|trim|lower|urlencode }}" target="_blank">{{ item.get('style', 'N/A')|trim|upper }}</a></strong></td>
-                            <td>{{ item.get('qty', 0)|int }}</td>
-                            <td>${{ "%.2f"|format(item.get('price', 0)) }}</td>
+                            {% if loop.first %}
+                            <td class="style-image-cell" rowspan="{{ group.row_span }}">
+                                {% if group.image_url %}
+                                <img src="{{ group.image_url }}" alt="{{ group.style }}">
+                                {% else %}
+                                <span style="color:#999; font-size:11px;">No image</span>
+                                {% endif %}
+                            </td>
+                            <td rowspan="{{ group.row_span }}" style="vertical-align: middle;">
+                                <strong><a href="https://www.fdcef.com/product_detail?search={{ group.style|trim|lower|urlencode }}" target="_blank" style="color:#667eea; text-decoration:none;">{{ group.style|trim|upper }}</a></strong>
+                            </td>
+                            {% endif %}
+                            <td>{{ item.get('catalog', 'N/A')|trim }}</td>
+                            <td><strong><a href="https://www.fdcef.com/product_detail?search={{ item.get('sku', '')|trim|lower|urlencode }}" target="_blank" style="color:#667eea; text-decoration:none;">{{ item.get('sku', 'N/A')|trim|upper }}</a></strong></td>
+                            <td>{{ item.get('color', '-')|trim }}</td>
+                            <td class="num-col">{{ item.get('container_qty', 0)|int }}</td>
+                            <td class="num-col col-available">{{ item.get('available', 0)|int }}</td>
+                            <td class="num-col {% if item.get('in_warehouse', 0) > 0 %}num-positive{% elif item.get('in_warehouse', 0) < 0 %}num-negative{% endif %}">{{ item.get('in_warehouse', 0)|int }}</td>
+                            <td class="num-col">{{ item.get('sold_reserved', 0)|int }}</td>
+                            <td class="num-col">${{ "%.2f"|format(item.get('price', 0)) }}</td>
                         </tr>
                         {% endfor %}
+                        <tr class="style-subtotal">
+                            <td colspan="3"><strong>TOTAL</strong></td>
+                            <td class="num-col">{{ group.totals.container_qty }}</td>
+                            <td class="num-col">{{ group.totals.available }}</td>
+                            <td class="num-col">{{ group.totals.in_warehouse }}</td>
+                            <td class="num-col">{{ group.totals.sold_reserved }}</td>
+                            <td></td>
+                        </tr>
+                        {% endfor %}
+                        {% if grand_totals %}
+                        <tr class="grand-total">
+                            <td colspan="5"><strong>GRAND TOTAL</strong></td>
+                            <td class="num-col">{{ grand_totals.container_qty }}</td>
+                            <td class="num-col">{{ grand_totals.available }}</td>
+                            <td class="num-col">{{ grand_totals.in_warehouse }}</td>
+                            <td class="num-col">{{ grand_totals.sold_reserved }}</td>
+                            <td></td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
+            </div>
                 {% else %}
                 <div class="empty-state">
                     <i class="fas fa-inbox"></i>

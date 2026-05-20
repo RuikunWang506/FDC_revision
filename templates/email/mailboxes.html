@@ -59,27 +59,27 @@
         }
 
         .fdc-mail-accounts-row {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             align-items: stretch;
             gap: 1rem;
             margin-bottom: 1.5rem;
-            overflow-x: auto;
-            overflow-y: visible;
-            padding-bottom: 6px;
-            -webkit-overflow-scrolling: touch;
         }
 
-        .fdc-mail-accounts-row::-webkit-scrollbar { height: 6px; }
-        .fdc-mail-accounts-row::-webkit-scrollbar-thumb {
-            background: rgba(0, 212, 255, 0.35);
-            border-radius: 6px;
+        @media (max-width: 991px) {
+            .fdc-mail-accounts-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 575px) {
+            .fdc-mail-accounts-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         .fdc-mail-account-cell {
-            flex: 1 1 0;
-            min-width: 220px;
+            min-width: 0;
             max-width: 100%;
             background: rgba(12, 18, 30, 0.88);
             backdrop-filter: blur(16px);
@@ -180,6 +180,54 @@
 
         a.fdc-mail-tool-card:hover::before {
             transform: scaleX(1);
+        }
+
+        .fdc-mail-tool-card-static {
+            cursor: default;
+            text-decoration: none;
+            color: inherit;
+        }
+        .fdc-mail-tool-card-static:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 16px 36px rgba(0, 212, 255, 0.14);
+        }
+        .fdc-mail-tool-card-static:hover::before {
+            transform: scaleX(1);
+        }
+        .fdc-mail-tool-card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.65rem;
+            margin-top: auto;
+            padding-top: 0.5rem;
+        }
+        .fdc-mail-tool-card-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.55rem 0.65rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .fdc-mail-tool-card-actions a:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: inherit;
+        }
+        .fdc-mail-mode-route {
+            background: linear-gradient(135deg, #00d4ff, #0891b2);
+            color: #0f172a !important;
+            box-shadow: 0 4px 14px rgba(0, 212, 255, 0.28);
+        }
+        .fdc-mail-mode-pickup {
+            background: rgba(255, 255, 255, 0.12);
+            color: #e8f4fd !important;
+            border: 1px solid rgba(255, 255, 255, 0.35);
         }
 
         .fdc-mail-tool-card-head {
@@ -383,21 +431,29 @@
                     <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
                 </div>
             </a>
-            <a class="fdc-mail-tool-card" data-accent="orders"
-               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_burlington }}">
+            <div class="fdc-mail-tool-card fdc-mail-tool-card-static" data-accent="orders">
                 <div>
                     <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
                         <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/burlington.svg') }}" width="140" height="36" alt="">
                         <h3>Burlington</h3>
                     </div>
-                    <p class="fdc-mail-tool-card-desc">Route &amp; pickup modes</p>
+                    <p class="fdc-mail-tool-card-desc">Combined inbox — route vs pickup</p>
+                </div>
+                <div class="fdc-mail-tool-card-actions">
+                    <a class="fdc-mail-mode-route"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_burlington_route }}">
+                        <i class="fas fa-route" aria-hidden="true"></i> Routing
+                    </a>
+                    <a class="fdc-mail-mode-pickup"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_burlington_pickup }}">
+                        <i class="fas fa-box-open" aria-hidden="true"></i> Pickup
+                    </a>
                 </div>
                 <div class="fdc-mail-tool-card-foot">
                     <span class="fdc-tag">Allmail</span>
-                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
                 </div>
-            </a>
-            <a class="fdc-mail-tool-card" href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_gabe }}">
+            </div>
+            <div class="fdc-mail-tool-card fdc-mail-tool-card-static">
                 <div>
                     <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
                         <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/gabes.png') }}" width="120" height="32" alt="">
@@ -405,13 +461,21 @@
                     </div>
                     <p class="fdc-mail-tool-card-desc">Subject match: gabe</p>
                 </div>
+                <div class="fdc-mail-tool-card-actions">
+                    <a class="fdc-mail-mode-route"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_gabe_route }}">
+                        <i class="fas fa-route" aria-hidden="true"></i> Routing
+                    </a>
+                    <a class="fdc-mail-mode-pickup"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_gabe_pickup }}">
+                        <i class="fas fa-box-open" aria-hidden="true"></i> Pickup
+                    </a>
+                </div>
                 <div class="fdc-mail-tool-card-foot">
                     <span class="fdc-tag">Allmail</span>
-                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
                 </div>
-            </a>
-            <a class="fdc-mail-tool-card" data-accent="inventory"
-               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_ross }}">
+            </div>
+            <div class="fdc-mail-tool-card fdc-mail-tool-card-static" data-accent="inventory">
                 <div>
                     <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
                         <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/ross.svg') }}" width="120" height="36" alt="">
@@ -419,13 +483,21 @@
                     </div>
                     <p class="fdc-mail-tool-card-desc">Subject match: ross</p>
                 </div>
+                <div class="fdc-mail-tool-card-actions">
+                    <a class="fdc-mail-mode-route"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_ross_route }}">
+                        <i class="fas fa-route" aria-hidden="true"></i> Routing
+                    </a>
+                    <a class="fdc-mail-mode-pickup"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_ross_pickup }}">
+                        <i class="fas fa-box-open" aria-hidden="true"></i> Pickup
+                    </a>
+                </div>
                 <div class="fdc-mail-tool-card-foot">
                     <span class="fdc-tag">Allmail</span>
-                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
                 </div>
-            </a>
-            <a class="fdc-mail-tool-card" data-accent="tools"
-               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_macy }}">
+            </div>
+            <div class="fdc-mail-tool-card fdc-mail-tool-card-static" data-accent="tools">
                 <div>
                     <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
                         <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/macys.svg') }}" width="100" height="36" alt="">
@@ -433,13 +505,21 @@
                     </div>
                     <p class="fdc-mail-tool-card-desc">Subject match: macy</p>
                 </div>
+                <div class="fdc-mail-tool-card-actions">
+                    <a class="fdc-mail-mode-route"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_macy_route }}">
+                        <i class="fas fa-route" aria-hidden="true"></i> Routing
+                    </a>
+                    <a class="fdc-mail-mode-pickup"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_macy_pickup }}">
+                        <i class="fas fa-box-open" aria-hidden="true"></i> Pickup
+                    </a>
+                </div>
                 <div class="fdc-mail-tool-card-foot">
                     <span class="fdc-tag">Allmail</span>
-                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
                 </div>
-            </a>
-            <a class="fdc-mail-tool-card" data-accent="shipping"
-               href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_tj }}">
+            </div>
+            <div class="fdc-mail-tool-card fdc-mail-tool-card-static" data-accent="shipping">
                 <div>
                     <div class="fdc-mail-tool-card-head fdc-mail-tool-card-head-brand">
                         <img class="fdc-mail-brand-logo" src="{{ url_for('static', filename='images/mail-brands/tjmaxx.svg') }}" width="130" height="36" alt="">
@@ -447,11 +527,20 @@
                     </div>
                     <p class="fdc-mail-tool-card-desc">Subject match: tj</p>
                 </div>
+                <div class="fdc-mail-tool-card-actions">
+                    <a class="fdc-mail-mode-route"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_tj_route }}">
+                        <i class="fas fa-route" aria-hidden="true"></i> Routing
+                    </a>
+                    <a class="fdc-mail-mode-pickup"
+                       href="{{ url_for('email.inbox', account_id=allmail_nav_account_id) }}{{ allmail_suffix_tj_pickup }}">
+                        <i class="fas fa-box-open" aria-hidden="true"></i> Pickup
+                    </a>
+                </div>
                 <div class="fdc-mail-tool-card-foot">
                     <span class="fdc-tag">Allmail</span>
-                    <span class="small" style="opacity:0.9;">Open <i class="fas fa-arrow-right ml-1"></i></span>
                 </div>
-            </a>
+            </div>
         </div>
         {% endif %}
 

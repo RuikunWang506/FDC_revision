@@ -51,6 +51,18 @@ class DAMSyncServiceV2:
             'start_time': None,
             'end_time': None
         }
+        self.recent_added: List[Dict[str, str]] = []
+        self._recent_added_cap = 500
+
+    def _note_added(self, filename: str, sku: str, source: str, path: str) -> None:
+        if len(self.recent_added) >= self._recent_added_cap:
+            return
+        self.recent_added.append({
+            'filename': filename,
+            'sku': sku or '',
+            'source': source,
+            'path': path,
+        })
         
     def get_db_connection(self):
         """Get database connection"""
@@ -307,6 +319,7 @@ class DAMSyncServiceV2:
                 
                 self.stats['total_added'] += 1
                 self.stats['total_processed'] += 1
+                self._note_added(filename, sku, 'catalog_original', str(file_path))
                 batch_count += 1
                 
                 # Commit every batch_size records
@@ -418,6 +431,7 @@ class DAMSyncServiceV2:
                 
                 self.stats['total_added'] += 1
                 self.stats['total_processed'] += 1
+                self._note_added(filename, sku, 'big_picture', str(file_path))
                 batch_count += 1
                 
                 # Commit every batch_size records

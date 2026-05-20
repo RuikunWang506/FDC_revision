@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mail — Compose</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body { padding-top: 76px; background: #e8eaed; min-height: 100vh; }
         .fdc-send-hint { max-width: 640px; margin: 1rem auto; padding: 0 16px; }
@@ -84,6 +85,13 @@
             outline: none;
         }
         .fdc-gmail-compose-footer { padding: 8px 12px; border-top: 1px solid #e8eaed; }
+        .fdc-send-from-row { padding: 8px 12px 0; border-bottom: 1px solid #e8eaed; }
+        .fdc-send-from-row label { font-size: 11px; color: #5f6368; margin-bottom: 4px; display: block; }
+        .fdc-send-attach { padding: 8px 12px; border-bottom: 1px solid #e8eaed; font-size: 13px; }
+        .fdc-compose-file-chip {
+            display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; margin: 2px 6px 2px 0;
+            border-radius: 6px; background: #f1f5f9; font-size: 0.75rem; color: #334155;
+        }
     </style>
 </head>
 <body>
@@ -122,22 +130,42 @@
             </div>
         </div>
         <div class="fdc-gmail-compose-body">
-            <form method="post" action="{{ url_for('email.send_mail', account_id=active_account_id) }}" id="fdc-gmail-compose-form" class="mb-0">
+            <form method="post" enctype="multipart/form-data" action="{{ url_for('email.send_mail', account_id=active_account_id) }}{% if defaults.reply_uid %}?reply={{ defaults.reply_uid }}{% endif %}" id="fdc-gmail-compose-form" class="mb-0">
                 <input type="hidden" name="reply_uid" id="fdc-compose-reply-uid" value="{{ defaults.reply_uid or '' }}">
                 <input type="hidden" name="in_reply_to" value="{{ request.form.get('in_reply_to', hidden_headers.get('In-Reply-To', '')) }}">
                 <input type="hidden" name="references" value="{{ request.form.get('references', hidden_headers.get('References', '')) }}">
                 <input type="hidden" name="body_format" id="fdc-compose-body-format" value="{{ defaults.get('body_format', 'html') }}">
                 <input type="hidden" name="body" id="fdc-compose-body-hidden" value="">
+                <div class="fdc-send-from-row">
+                    <label for="fdc-compose-account">From</label>
+                    <select id="fdc-compose-account" class="form-control form-control-sm" aria-label="Send from mailbox">
+                        {% for a in accounts %}
+                            <option value="{{ a.id }}"
+                                    data-send-url="{{ url_for('email.send_mail', account_id=a.id) }}{% if defaults.reply_uid %}?reply={{ defaults.reply_uid }}{% endif %}"
+                                    {% if a.id == active_account_id %}selected{% endif %}>{{ a.label }} — {{ a.email }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <input type="text" class="form-control fdc-gmail-compose-field" name="to" id="fdc-compose-to" placeholder="To" required value="{{ defaults.to }}">
                 <input type="text" class="form-control fdc-gmail-compose-field" name="subject" id="fdc-compose-subject" placeholder="Subject" required value="{{ defaults.subject }}">
                 <div class="fdc-gmail-compose-toolbar">
                     <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
                     <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+                    <button type="button" data-cmd="insertUnorderedList" title="Bullet list"><i class="fas fa-list-ul"></i></button>
                     <button type="button" data-cmd="insertLineBreak" title="Line break">&#182;</button>
                 </div>
+                <div class="fdc-send-attach">
+                    <label class="btn btn-light btn-sm border mb-0"><i class="fas fa-paperclip"></i> Attach files
+                        <input type="file" name="attachments" id="fdc-compose-files" multiple class="d-none" tabindex="-1">
+                    </label>
+                    <div id="fdc-compose-file-list" class="mt-2"></div>
+                    <div class="small text-muted mt-1" style="font-size:0.72rem;">Up to 12 files, 15 MB total</div>
+                </div>
                 <div id="fdc-compose-editor" class="fdc-compose-editor" contenteditable="true" role="textbox" aria-multiline="true"></div>
-                <div class="fdc-gmail-compose-footer">
-                    <button type="submit" class="btn btn-primary btn-sm">Send</button>
+                <div class="fdc-gmail-compose-footer d-flex justify-content-between align-items-center flex-wrap">
+                    <a class="btn btn-light btn-sm border" href="{{ url_for('email.inbox', account_id=active_account_id) }}">Discard</a>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane mr-1"></i> Send</button>
                 </div>
             </form>
         </div>
@@ -148,6 +176,9 @@
     var dock = document.getElementById('fdc-gmail-compose-root');
     var form = document.getElementById('fdc-gmail-compose-form');
     var editor = document.getElementById('fdc-compose-editor');
+    var accountSel = document.getElementById('fdc-compose-account');
+    var fileInput = document.getElementById('fdc-compose-files');
+    var fileListEl = document.getElementById('fdc-compose-file-list');
     var initialBody = {{ (defaults.body or '') | tojson }};
     var initialFmt = {{ (defaults.get('body_format') or 'html') | tojson }};
     if (editor) {
@@ -160,6 +191,34 @@
             editor.innerHTML = '<div><br></div>';
         }
     }
+    function syncComposeAction() {
+        if (!accountSel || !form) return;
+        var opt = accountSel.options[accountSel.selectedIndex];
+        var url = opt && opt.getAttribute('data-send-url');
+        if (url) form.action = url;
+    }
+    function formatFileSize(n) {
+        if (n < 1024) return n + ' B';
+        if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+        return (n / 1048576).toFixed(1) + ' MB';
+    }
+    function refreshFileList() {
+        if (!fileInput || !fileListEl) return;
+        fileListEl.innerHTML = '';
+        var files = fileInput.files;
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            var chip = document.createElement('span');
+            chip.className = 'fdc-compose-file-chip';
+            chip.textContent = f.name + ' (' + formatFileSize(f.size) + ')';
+            fileListEl.appendChild(chip);
+        }
+    }
+    if (accountSel) {
+        accountSel.addEventListener('change', syncComposeAction);
+        syncComposeAction();
+    }
+    if (fileInput) fileInput.addEventListener('change', refreshFileList);
     document.getElementById('fdc-gmail-compose-minbtn').addEventListener('click', function () {
         dock.classList.toggle('fdc-gmail-compose-minimized');
     });

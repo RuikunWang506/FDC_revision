@@ -108860,3 +108860,4 @@ werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'v7_lis
 2026-05-01 02:27:28,920 - INFO - ***yeti*** has logged in. IP: ***47.147.7.48***; Location: @@@Hacienda Heights, California, US@@@ (lat: 33.9931, lon: -117.9687); Timezone: @@@America/Los_Angeles@@@; ISP: AS5650 Frontier Communications of America, Inc.; Org: AS5650 Frontier Communications of America, Inc.; Browser: @@@Chrome 147.0.0@@@; OS: Windows 10; Device: @@@Other@@@; Method: POST; URL: https://www.fdcef.com/login; Referrer: https://www.fdcef.com/login
 2026-05-01 02:27:28,921 - INFO - 🟡 OTHER: 47.147.7.48 "POST /login HTTP/1.1" 302
 2026-05-01 02:28:07,465 - INFO - 🟣 SYSTEM Flask app process started pid=20956 cwd=C:\FDC_FLASK_APP argv=['C:\\FDC_FLASK_APP\\app.py']
+2026-05-19 15:02:50,562 - INFO - 🟣 SYSTEM Flask app process started pid=23256 cwd=C:\FDC_FLASK_APP argv=['C:\\FDC_FLASK_APP\\app.py']

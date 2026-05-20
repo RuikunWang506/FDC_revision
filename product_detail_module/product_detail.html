@@ -1653,6 +1653,7 @@
                 });
             });
             updateSkuNavButtons();
+            handleProductDetailDeepLinks();
         });
 
         function setSidebarToggleButtonState(isOpen) {
@@ -1791,6 +1792,30 @@
             headerElement.classList.toggle('collapsed');
         }
         
+        function _historyStyleForSection(section) {
+            let style = section.getAttribute('data-search') || '';
+            if (!style) {
+                style = document.querySelector('.product-header')?.textContent.match(/Style[:\s]*([A-Z0-9]+)/)?.[1] || '';
+            }
+            if (!style) {
+                const searchInput = document.querySelector('input[name="search_input"]');
+                if (searchInput) style = searchInput.value;
+            }
+            return style;
+        }
+
+        function _lazyLoadHistorySection(sectionId, style) {
+            if (sectionId === 'itemHistorySection') {
+                lazyLoadHistoryData(style);
+            } else if (sectionId === 'adjustmentHistorySection') {
+                lazyLoadAdjustmentData(style);
+            } else if (sectionId === 'purchaseHistorySection') {
+                lazyLoadPurchaseData(style);
+            } else if (sectionId === 'oceanSection') {
+                lazyLoadOceanData(style);
+            }
+        }
+
         function toggleHistory(headerElement) {
             const section = headerElement.parentElement;
             const content = section.querySelector('.history-content');
@@ -1805,32 +1830,33 @@
             // Lazy-load history data when opening the section
             if (content.style.display !== 'none') {
                 const sectionId = section.id;
-                
-                // Get style from data attribute (passed from backend)
-                let style = section.getAttribute('data-search') || '';
-                
-                // Fallback: try to extract from first product header
-                if (!style) {
-                    style = document.querySelector('.product-header')?.textContent.match(/Style[:\s]*([A-Z0-9]+)/)?.[1] || '';
-                }
-                
-                // Fallback: use search input value
-                if (!style) {
-                    const searchInput = document.querySelector('input[name="search_input"]');
-                    if (searchInput) style = searchInput.value;
-                }
-                
+                const style = _historyStyleForSection(section);
                 console.log('toggleHistory - section:', sectionId, 'style:', style);
-                
-                if (sectionId === 'itemHistorySection') {
-                    lazyLoadHistoryData(style);
-                } else if (sectionId === 'adjustmentHistorySection') {
-                    lazyLoadAdjustmentData(style);
-                } else if (sectionId === 'purchaseHistorySection') {
-                    lazyLoadPurchaseData(style);
-                } else if (sectionId === 'oceanSection') {
-                    lazyLoadOceanData(style);
-                }
+                _lazyLoadHistorySection(sectionId, style);
+            }
+        }
+
+        function openOceanSection() {
+            const section = document.getElementById('oceanSection');
+            if (!section) return;
+            const header = section.querySelector('.history-header');
+            const content = section.querySelector('.history-content');
+            if (!header || !content) return;
+
+            if (content.style.display === 'none') {
+                toggleHistory(header);
+            } else {
+                const style = _historyStyleForSection(section);
+                if (style) lazyLoadOceanData(style);
+            }
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function handleProductDetailDeepLinks() {
+            const hash = (window.location.hash || '').replace(/^#/, '').toLowerCase();
+            const sectionParam = (new URLSearchParams(window.location.search).get('section') || '').toLowerCase();
+            if (hash === 'ocean' || sectionParam === 'ocean') {
+                window.setTimeout(openOceanSection, 150);
             }
         }
         

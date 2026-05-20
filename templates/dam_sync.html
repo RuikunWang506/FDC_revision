@@ -51,6 +51,26 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             transition: all 0.2s;
         }
+        .history-row {
+            cursor: pointer;
+        }
+        .history-row:hover {
+            background-color: #e9ecef;
+        }
+        .history-detail-list {
+            max-height: 220px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+        }
+        .history-detail-list li {
+            padding: 2px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
     </style>
 </head>
 <body>
@@ -226,7 +246,60 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Progress history -->
+    <div class="card mt-3">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Progress History</h5>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadProgressHistory()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">
+                Daily sync keeps the last <strong>10</strong> runs (summary of new assets).
+                Complete rebuild keeps runs from the last <strong>30 days</strong> (added + files marked inactive).
+            </p>
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <h6 class="text-success"><i class="fas fa-calendar-day me-1"></i>Daily sync (last 10)</h6>
+                    <div id="history-daily-empty" class="text-muted small">Loading…</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" id="history-daily-table" style="display:none;">
+                            <thead><tr><th>When</th><th>Summary</th><th></th></tr></thead>
+                            <tbody id="history-daily-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-warning"><i class="fas fa-tools me-1"></i>Complete rebuild (30 days)</h6>
+                    <div id="history-rebuild-empty" class="text-muted small">Loading…</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" id="history-rebuild-table" style="display:none;">
+                            <thead><tr><th>When</th><th>Summary</th><th></th></tr></thead>
+                            <tbody id="history-rebuild-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History detail modal -->
+    <div class="modal fade" id="historyDetailModal" tabindex="-1" aria-labelledby="historyDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="historyDetailModalLabel">Run details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="history-detail-body">
+                    <div class="text-muted">Loading…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Help -->
     <div class="card mt-3">
         <div class="card-header bg-info text-white">
@@ -569,7 +642,7 @@ function updateStatus(status) {
     // If sync finished, stop polling
     if (!status.is_running && pollInterval) {
         stopPolling();
-        // No page reload; preserve the log as requested
+        loadProgressHistory();
     }
 }
 
@@ -609,7 +682,148 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchSchedulerNext();
     schedulerRefreshTimer = setInterval(fetchSchedulerNext, 60000);
     schedulerCountdownTimer = setInterval(tickSchedulerCountdown, 1000);
+    loadProgressHistory();
 });
+
+function formatHistoryWhen(iso) {
+    if (!iso) return '—';
+    try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleString();
+    } catch (e) {
+        return iso;
+    }
+}
+
+function renderHistoryBucket(kind, entries) {
+    const emptyEl = document.getElementById('history-' + kind + '-empty');
+    const tableEl = document.getElementById('history-' + kind + '-table');
+    const bodyEl = document.getElementById('history-' + kind + '-body');
+    if (!emptyEl || !tableEl || !bodyEl) return;
+
+    bodyEl.innerHTML = '';
+    if (!entries || entries.length === 0) {
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = kind === 'daily'
+            ? 'No daily sync history yet. Run Auto Sync or wait for the scheduled task.'
+            : 'No complete rebuild history in the last 30 days.';
+        tableEl.style.display = 'none';
+        return;
+    }
+
+    emptyEl.style.display = 'none';
+    tableEl.style.display = 'table';
+
+    entries.forEach(function (entry) {
+        const tr = document.createElement('tr');
+        tr.className = 'history-row';
+        const addedN = entry.added_total != null ? entry.added_total : (entry.added || []).length;
+        const inactN = entry.inactivated_total != null ? entry.inactivated_total : (entry.inactivated || []).length;
+        let short = entry.summary || '';
+        if (kind === 'daily' && addedN > 0) {
+            short = `+${addedN} new` + (short ? ` · ${short}` : '');
+        }
+        if (kind === 'rebuild') {
+            const bits = [];
+            if (addedN > 0) bits.push(`+${addedN} added`);
+            if (inactN > 0) bits.push(`${inactN} inactive`);
+            if (bits.length) short = bits.join(', ') + (entry.summary ? ` · ${entry.summary}` : '');
+        }
+        tr.innerHTML =
+            '<td class="text-nowrap small">' + formatHistoryWhen(entry.finished_at || entry.started_at) + '</td>' +
+            '<td class="small">' + (short || '—') + '</td>' +
+            '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-secondary">View</button></td>';
+        tr.querySelector('button').addEventListener('click', function (e) {
+            e.stopPropagation();
+            showHistoryDetail(entry.id);
+        });
+        tr.addEventListener('click', function () { showHistoryDetail(entry.id); });
+        bodyEl.appendChild(tr);
+    });
+}
+
+function loadProgressHistory() {
+    fetch('/dam/history')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) return;
+            renderHistoryBucket('daily', data.daily || []);
+            renderHistoryBucket('rebuild', data.rebuild || []);
+        })
+        .catch(function (err) {
+            console.error('history load failed', err);
+        });
+}
+
+function showHistoryDetail(runId) {
+    const body = document.getElementById('history-detail-body');
+    const title = document.getElementById('historyDetailModalLabel');
+    if (!body) return;
+    body.innerHTML = '<div class="text-muted">Loading…</div>';
+    const modalEl = document.getElementById('historyDetailModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+
+    fetch('/dam/history/' + encodeURIComponent(runId))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success || !data.entry) {
+                body.innerHTML = '<div class="text-danger">Could not load run details.</div>';
+                return;
+            }
+            const e = data.entry;
+            const kindLabel = e.kind === 'rebuild' ? 'Complete rebuild' : 'Daily sync';
+            if (title) title.textContent = kindLabel + ' — ' + formatHistoryWhen(e.finished_at);
+
+            const added = e.added || [];
+            const inact = e.inactivated || [];
+            let html = '<p class="mb-2"><strong>Summary:</strong> ' + (e.summary || '—') + '</p>';
+            html += '<p class="small text-muted mb-3">Triggered by ' + (e.triggered_by || '—') +
+                ' · ' + formatHistoryWhen(e.started_at) + ' → ' + formatHistoryWhen(e.finished_at) + '</p>';
+
+            if (e.error) {
+                html += '<div class="alert alert-danger py-2">' + e.error + '</div>';
+            }
+
+            if (added.length) {
+                html += '<h6 class="text-success mt-3">New assets (' + (e.added_total || added.length) +
+                    (e.added_truncated ? ', showing first ' + added.length : '') + ')</h6>';
+                html += '<ul class="history-detail-list mb-0">';
+                added.forEach(function (row) {
+                    const label = (row.sku ? row.sku + ' · ' : '') + (row.filename || row.path || '');
+                    html += '<li>' + label + (row.source ? ' <span class="text-muted">[' + row.source + ']</span>' : '') + '</li>';
+                });
+                html += '</ul>';
+            } else if (e.kind === 'daily') {
+                html += '<p class="text-muted small mt-2">No new assets recorded for this run.</p>';
+            }
+
+            if (e.kind === 'rebuild' && (inact.length || e.cleanup_count)) {
+                html += '<h6 class="text-danger mt-3">Marked inactive / missing on disk (' +
+                    (e.inactivated_total || inact.length || e.cleanup_count) +
+                    (e.inactivated_truncated ? ', showing first ' + inact.length : '') + ')</h6>';
+                if (inact.length) {
+                    html += '<ul class="history-detail-list mb-0">';
+                    inact.forEach(function (row) {
+                        html += '<li>' + (row.filename || '') + ' <span class="text-muted">' + (row.path || '') + '</span></li>';
+                    });
+                    html += '</ul>';
+                }
+            }
+
+            const preview = e.log_preview || [];
+            if (preview.length) {
+                html += '<h6 class="mt-3">Log excerpt</h6>';
+                html += '<pre class="small bg-light border rounded p-2 mb-0" style="max-height:200px;overflow:auto;">' +
+                    preview.map(function (l) { return l.replace(/</g, '&lt;'); }).join('\n') + '</pre>';
+            }
+            body.innerHTML = html;
+        })
+        .catch(function () {
+            body.innerHTML = '<div class="text-danger">Failed to load run details.</div>';
+        });
+}
 
 function clearLog() {
     const progressLog = document.getElementById('progress-log');

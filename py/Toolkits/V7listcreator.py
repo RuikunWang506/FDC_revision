@@ -22,7 +22,7 @@ import datetime
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 import mysql.connector
 from mysql.connector import Error
 import zipfile
@@ -136,6 +136,165 @@ def _listcreator_input_source_looks_like_dropbox_path(list_input):
         return True
     x = str(list_input).strip()
     return '\\' in x or bool(re.match(r'^[a-z]:\\', x)) or x.startswith('\\\\')
+
+
+def _token_looks_like_style(token):
+    """Catalog style code: 1–2 letters + 4 digits, optional size suffix."""
+    return bool(re.match(r'^[A-Za-z]{1,2}\d{4}([-]?[smlSML]*)?$', (token or '').strip(), re.IGNORECASE))
+
+
+def _extract_container_pur_num_from_token(token):
+    """Container PO from fdcef URL or plain token (e.g. F26193)."""
+    t = (token or '').strip()
+    if not t:
+        return None
+    low = t.lower()
+    if 'container_search' in low or 'container_id=' in low:
+        m = re.search(r'[?&]container_id=([^&#\s]+)', t, re.IGNORECASE)
+        if m:
+            return unquote(m.group(1)).strip().upper()
+    if re.match(r'^https?://', low, re.IGNORECASE):
+        return None
+    s = t.upper()
+    if _token_looks_like_style(s):
+        return None
+    if _listcreator_input_source_looks_like_dropbox_path(t):
+        return None
+    if re.match(r'^[A-Z][A-Z0-9]{3,}$', s):
+        return s
+    return None
+
+
+def _styles_from_container_pur_nums(pur_nums):
+    """
+    Resolve container PO numbers (plog.pur_num) to unique style codes.
+    Returns (pur_num -> [styles], error_message).
+    """
+    unique = []
+    seen = set()
+    for p in pur_nums or []:
+        u = (p or '').strip().upper()
+        if u and u not in seen:
+            seen.add(u)
+            unique.append(u)
+    if not unique:
+        return {}, None
+
+    by_pur = {p: [] for p in unique}
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+            f'DATABASE={sql_server_config["database_fdc"]};UID={sql_server_config["username"]};'
+            f'PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        placeholders = ','.join('?' * len(unique))
+        query = f"""
+            SELECT DISTINCT pl.pur_num,
+                LEFT(pl.prod_cd, CHARINDEX(' ', pl.prod_cd + ' ') - 1) AS style
+            FROM plog pl
+            WHERE pl.pur_num IN ({placeholders})
+            AND (pl.hdl_chg > 0 OR pl.log_qty > 0)
+            AND pl.prod_cd IS NOT NULL AND LTRIM(RTRIM(pl.prod_cd)) <> ''
+        """
+        cursor.execute(query, unique)
+        for row in cursor.fetchall():
+            pur = (row[0] or '').strip().upper()
+            style = (row[1] or '').strip().upper()
+            if pur and style and style not in by_pur.setdefault(pur, []):
+                by_pur[pur].append(style)
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        current_app.logger.error('listcreator container style lookup failed: %s', e, exc_info=True)
+        return None, 'Could not load styles from container database. Try again or enter styles manually.'
+
+    return by_pur, None
+
+
+def _expand_listcreator_mixed_input(list_input):
+    """
+    Expand container IDs/URLs into styles and merge with explicit style tokens.
+    A single Dropbox path is returned unchanged. Returns (expanded_input, error_message).
+    """
+    raw = (list_input or '').strip()
+    if not raw:
+        return raw, None
+
+    tokens = [t.strip() for t in re.split(r'[\s,\n\r;]+', raw) if t.strip()]
+    if not tokens:
+        return raw, None
+
+    if len(tokens) == 1 and _listcreator_input_source_looks_like_dropbox_path(tokens[0]):
+        return raw, None
+
+    dropbox_parts = []
+    style_parts = []
+    container_ids = []
+
+    for tok in tokens:
+        cid = _extract_container_pur_num_from_token(tok)
+        if cid:
+            if cid not in container_ids:
+                container_ids.append(cid)
+        elif _listcreator_input_source_looks_like_dropbox_path(tok):
+            dropbox_parts.append(tok)
+        elif _token_looks_like_style(tok):
+            style_parts.append(tok.strip().upper())
+        else:
+            style_parts.append(tok.strip().upper())
+
+    if dropbox_parts and (container_ids or style_parts):
+        return None, (
+            'Use either one Dropbox folder path by itself, '
+            'or a comma-separated list of styles and/or container numbers (e.g. T3305, F26193).'
+        )
+    if len(dropbox_parts) > 1:
+        return None, 'Only one Dropbox folder path is allowed.'
+    if dropbox_parts:
+        return dropbox_parts[0], None
+
+    if not container_ids:
+        seen = set()
+        unique = []
+        for s in style_parts:
+            if s not in seen:
+                seen.add(s)
+                unique.append(s)
+        return ','.join(unique) if unique else raw, None
+
+    by_pur, db_err = _styles_from_container_pur_nums(container_ids)
+    if db_err:
+        return None, db_err
+
+    all_styles = list(style_parts)
+    missing = []
+    for cid in container_ids:
+        styles = (by_pur or {}).get(cid) or []
+        if not styles:
+            missing.append(cid)
+        else:
+            all_styles.extend(styles)
+
+    if missing:
+        return None, f'No styles found for container(s): {", ".join(missing)}'
+
+    seen = set()
+    unique = []
+    for s in all_styles:
+        su = s.upper()
+        if su not in seen:
+            seen.add(su)
+            unique.append(su)
+
+    expanded = ','.join(unique)
+    current_app.logger.info(
+        'listcreator expanded input: %d container(s), %d explicit style(s) -> %d unique style(s)',
+        len(container_ids),
+        len(style_parts),
+        len(unique),
+    )
+    return expanded, None
 
 
 def _list_input_is_dropbox_subpath_folder(list_input):
@@ -1035,6 +1194,19 @@ def process_list_input(list_input, current_user, snapshot_name='', enforce_snaps
             snapshot_time_hint_iso=pst['created_at_iso'],
             error_message=None,
         )
+
+    expanded_input, expand_err = _expand_listcreator_mixed_input(list_input)
+    if expand_err:
+        return render_template(
+            'V7_Listcreator.html',
+            current_user=current_user,
+            list_input=list_input,
+            snapshot_name=snapshot_name,
+            snapshot_time_hint=pst['created_at_pt_display'],
+            snapshot_time_hint_iso=pst['created_at_iso'],
+            error_message=expand_err,
+        )
+    list_input = expanded_input
 
     snap_lbl = _sanitize_snapshot_label(snapshot_name)
 
@@ -2150,6 +2322,11 @@ def build_export_data_from_list_input(list_input_str, current_user=None):
     if current_user is None:
         current_user = session.get('username', 'export')
     text = (list_input_str or '').strip()
+    if text:
+        expanded, expand_err = _expand_listcreator_mixed_input(text)
+        if expand_err:
+            raise ValueError(expand_err)
+        text = expanded or text
     if not text or 'dropbox' in text.lower():
         discovered = discover_styles_with_positive_inventory('', limit=3500)
         if not discovered:

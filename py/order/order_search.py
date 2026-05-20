@@ -6,6 +6,7 @@ from flask import Blueprint, request, render_template, session, current_app, jso
 import re
 
 # Import helper to fetch locations for SKUs so we can populate Location server-side
+from py.other.label_status import enrich_header_info
 from py.search.item_lookup import fetch_locations
 from py.utilities.setting import Config, login_required
 
@@ -15,52 +16,89 @@ order_lookup_bp = Blueprint('order_lookup', __name__)
 sql_server_config = Config.SQL_SERVER_CONFIG
 
 
+def get_recent_fdc_orders(limit=100):
+    """Return the most recent FDC sales orders with customer names."""
+    orders = []
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+            f'DATABASE=omsdata_FDC;UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        cursor.execute(
+            f"""
+            SELECT TOP {int(limit)}
+                o.ord_num,
+                LTRIM(RTRIM(c.cus_nm)) AS customer_name,
+                RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS order_date
+            FROM dbo.orders o
+            INNER JOIN dbo.customer c ON o.cus_id = c.cus_id
+            WHERE o.ord_num >= 10000 AND o.ord_num <= 99999 AND o.ORD_DT IS NOT NULL
+            ORDER BY o.ORD_DT DESC, o.ord_num DESC
+            """
+        )
+        for row in cursor.fetchall():
+            orders.append({
+                'order_number': str(row[0]).strip(),
+                'customer_name': (row[1] or '').strip(),
+                'order_date': (row[2] or '').strip(),
+            })
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        current_app.logger.error(f"Error fetching recent FDC orders: {e}")
+    return orders
 
-def get_latest_order_ids():
-    """Get the latest order IDs from both FDC and E-Fashion databases based on order date"""
-    latest_orders = {'fdc': None, 'ef': None}
-    
-    databases = {
-        'fdc': 'omsdata_FDC',
-        'ef': 'oms_EF'
-    }
-    
-    for db_key, database_name in databases.items():
-        try:
-            conn = pyodbc.connect(
-                f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
-            )
-            cursor = conn.cursor()
-            
-            # Get the most recent order based on order date (ORD_DT) and digit constraints
-            if db_key == 'fdc':
-                # For FDC, get the most recent 5-digit order (exclude internal system IDs > 99999)
-                cursor.execute("""
-                    SELECT ord_num FROM orders 
-                    WHERE ord_num >= 10000 AND ord_num <= 99999 AND ORD_DT IS NOT NULL
-                    ORDER BY ORD_DT DESC, ord_num DESC
-                """)
-            else:
-                # For E-Fashion, get the most recent 4-digit order
-                cursor.execute("""
-                    SELECT ord_num FROM orders 
-                    WHERE ord_num >= 1000 AND ord_num <= 9999 AND ORD_DT IS NOT NULL
-                    ORDER BY ORD_DT DESC, ord_num DESC
-                """)
-            
-            result = cursor.fetchone()
-            
-            if result and result[0]:
-                latest_orders[db_key] = result[0]
-            
-            cursor.close()
-            conn.close()
-            
-        except Exception as e:
-            current_app.logger.error(f"Error getting latest order ID from {database_name}: {str(e)}")
-            latest_orders[db_key] = "Error"
-    
-    return latest_orders
+
+def parse_boxes_from_notes(notes: str | None) -> int | None:
+    """Extract total box count from notes like '30 boxes, L-1'."""
+    if not notes:
+        return None
+    match = re.search(r"(\d+)\s*boxes\b", str(notes), re.IGNORECASE)
+    if not match:
+        return None
+    try:
+        count = int(match.group(1))
+    except ValueError:
+        return None
+    return count if count > 0 else None
+
+
+def fetch_order_notes(order_number: str | int) -> str:
+    """Load order notes from dbo.ntfile (same source as order lookup header)."""
+    order_number = str(order_number).strip()
+    if len(order_number) == 5:
+        database_name = "omsdata_FDC"
+    elif len(order_number) == 4:
+        database_name = "oms_EF"
+    else:
+        return ""
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+            f'DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT TOP 1 NOTES
+            FROM dbo.ntfile
+            WHERE NT_NUM = ?
+              AND NOTES IS NOT NULL
+              AND LTRIM(RTRIM(NOTES)) <> ''
+            ORDER BY LEN(NOTES) DESC
+            """,
+            (order_number,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        return str(row[0]).strip() if row and row[0] else ""
+    except Exception as e:
+        current_app.logger.error("Error fetching order notes for %s: %s", order_number, e)
+        return ""
 
 
 def fetch_in_warehouse_by_skus(skus):
@@ -127,6 +165,79 @@ def fetch_in_warehouse_by_skus(skus):
                 conn.close()
 
     return stock_by_sku
+
+
+def fetch_sku_inventory_by_skus(skus):
+    """Fetch in-warehouse and sold/reserved per SKU from FDC and E_FAS (summed).
+
+    in_warehouse = in_stock - order_qty (product detail "In Warehouse")
+    sold_reserved = order_qty (product detail "Sold/reserved")
+    Returns mapping keyed by lowercase, stripped SKU.
+    """
+    inventory_by_sku = {}
+
+    if not skus:
+        return inventory_by_sku
+
+    cleaned_skus = []
+    seen = set()
+    for sku in skus:
+        try:
+            normalized = sku.replace('\u00A0', ' ').strip()
+        except Exception:
+            normalized = str(sku).strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            cleaned_skus.append(normalized)
+
+    if not cleaned_skus:
+        return inventory_by_sku
+
+    search_values = [s.upper() for s in cleaned_skus]
+    placeholders = ','.join(['?'] * len(search_values))
+
+    query = f"""
+        SELECT
+            LTRIM(RTRIM(i.PROD_CD)) AS sku,
+            CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT) AS in_warehouse,
+            CAST(ISNULL(id.order_qty, 0) AS INT) AS sold_reserved
+        FROM dbo.inv i
+        LEFT JOIN dbo.inv_data id ON i.PROD_CD = id.prod_cd
+        WHERE UPPER(LTRIM(RTRIM(i.PROD_CD))) IN ({placeholders})
+    """
+
+    for database_name in ('omsdata_FDC', 'oms_EF'):
+        conn = None
+        cursor = None
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+            )
+            cursor = conn.cursor()
+            cursor.execute(query, search_values)
+            for row in cursor.fetchall():
+                sku_value = row[0]
+                if not sku_value:
+                    continue
+                key = str(sku_value).strip().lower()
+                wh = int(row[1] if row[1] is not None else 0)
+                sold = int(row[2] if row[2] is not None else 0)
+                if key not in inventory_by_sku:
+                    inventory_by_sku[key] = {"in_warehouse": 0, "sold_reserved": 0}
+                inventory_by_sku[key]["in_warehouse"] += wh
+                inventory_by_sku[key]["sold_reserved"] += sold
+        except Exception as e:
+            current_app.logger.error(
+                f"Error fetching SKU inventory from {database_name}: {e}"
+            )
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    return inventory_by_sku
+
 
 def generate_order(order_number):
     global file_path
@@ -456,7 +567,7 @@ def generate_order(order_number):
         else:
             items_html = full_table_html
         
-        return header_info, items_html, all_descriptions_have_dash
+        return enrich_header_info(header_info), items_html, all_descriptions_have_dash
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
@@ -471,10 +582,7 @@ def order_lookup(order_number=None):
     header_info = None
     items_html = None
     all_descriptions_have_dash = False
-    
-    # Get latest order IDs from both databases
-    latest_orders = get_latest_order_ids()
-
+    recent_fdc_orders = get_recent_fdc_orders(100)
 
     error_message = None
     po_number = None
@@ -486,19 +594,19 @@ def order_lookup(order_number=None):
             order_number = find_order_number_by_po(po_number)
             if not order_number:
                 error_message = f"No order found for PO: {po_number}"
-                return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False, error_message=error_message, po_number=po_number)
+                return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, recent_fdc_orders=recent_fdc_orders, all_descriptions_have_dash=False, error_message=error_message, po_number=po_number)
             # else, continue as if searching by order number
         else:
             order_number = request.form.get("order_number", "").strip()
 
         if not order_number:
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False, po_number=po_number)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, recent_fdc_orders=recent_fdc_orders, all_descriptions_have_dash=False, po_number=po_number)
 
         session['order_number'] = order_number
 
         if current_user == 'fdc':
             current_app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False, po_number=po_number)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, recent_fdc_orders=recent_fdc_orders, all_descriptions_have_dash=False, po_number=po_number)
 
         header_info, items_html, all_descriptions_have_dash = generate_order(order_number)
 
@@ -514,7 +622,7 @@ def order_lookup(order_number=None):
         
         if current_user == 'fdc':
             current_app.logger.info("User %s does not have permission to view order details", current_user)
-            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, latest_orders=latest_orders, all_descriptions_have_dash=False)
+            return render_template("order_lookup.html", header_info=None, items_html=None, current_user=current_user, recent_fdc_orders=recent_fdc_orders, all_descriptions_have_dash=False)
         
         header_info, items_html, all_descriptions_have_dash = generate_order(order_number)
         
@@ -526,16 +634,23 @@ def order_lookup(order_number=None):
             items_html = None
             all_descriptions_have_dash = False
 
+    ez_default_boxes = None
+    if header_info and header_info.get("notes"):
+        ez_default_boxes = parse_boxes_from_notes(header_info.get("notes"))
+    elif order_number:
+        ez_default_boxes = parse_boxes_from_notes(fetch_order_notes(order_number))
+
     return render_template(
         "order_lookup.html",
         header_info=header_info,
         items_html=items_html,
         order_number=order_number,
         current_user=current_user,
-        latest_orders=latest_orders,
+        recent_fdc_orders=recent_fdc_orders,
         all_descriptions_have_dash=all_descriptions_have_dash,
         error_message=error_message,
-        po_number=po_number
+        po_number=po_number,
+        ez_default_boxes=ez_default_boxes,
     )
 
 def find_order_number_by_po(po_number):
@@ -758,6 +873,59 @@ def update_order_price():
             
     except Exception as e:
         current_app.logger.error(f"Error updating price: {str(e)}")
+        return {'success': False, 'message': f'Database error: {str(e)}'}, 500
+
+
+@order_lookup_bp.route("/update_order_per_box", methods=["POST"])
+@login_required
+def update_order_per_box():
+    """Update per-box quantity (PC_UNIT) for a specific order line."""
+    try:
+        data = request.get_json()
+        order_number = data.get('order_number')
+        line_number = data.get('line_number')
+        sku = data.get('sku')
+        new_per_box = data.get('per_box')
+
+        if not all([order_number, line_number, new_per_box]):
+            return {'success': False, 'message': 'Missing required fields'}, 400
+
+        if len(order_number) == 5:
+            database_name = 'omsdata_FDC'
+        elif len(order_number) == 4:
+            database_name = 'oms_EF'
+        else:
+            return {'success': False, 'message': 'Invalid order number format'}, 400
+
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+
+        update_query = """
+            UPDATE DBO.ORD_LOG
+            SET PC_UNIT = ?
+            WHERE ORD_NUM = ? AND COMM_LN = ?
+        """
+
+        cursor.execute(update_query, (new_per_box, order_number, line_number))
+        conn.commit()
+
+        rows_affected = cursor.rowcount
+
+        cursor.close()
+        conn.close()
+
+        if rows_affected > 0:
+            current_user = session.get('username', 'unknown')
+            current_app.logger.info(
+                f"***{current_user}***__@@@updated per_box@@@__ Order: {order_number}, Line: {line_number}, SKU: {sku}, New PC_UNIT: {new_per_box}"
+            )
+            return {'success': True, 'message': 'Per box updated successfully'}, 200
+        return {'success': False, 'message': 'No rows were updated'}, 404
+
+    except Exception as e:
+        current_app.logger.error(f"Error updating per_box: {str(e)}")
         return {'success': False, 'message': f'Database error: {str(e)}'}, 500
 
 

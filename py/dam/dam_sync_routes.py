@@ -20,13 +20,14 @@ import subprocess
 import sys
 import io
 from contextlib import redirect_stdout
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath('.'))
 
 from py.utilities.dam_sync_service_v2 import DAMSyncServiceV2
 from py.utilities.logging_setup import log_event
+from py.dam.dam_progress_history import record_completed_run, list_history, get_entry
 
 dam_sync_bp = Blueprint('dam_sync', __name__, url_prefix='/dam')
 
@@ -154,6 +155,24 @@ sync_status = {
     'current_progress': None  # Current progress info
 }
 
+def _utc_now_iso():
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _history_kind(force_rebuild_index: bool) -> str:
+    return 'rebuild' if force_rebuild_index else 'daily'
+
+
+def _resolve_triggered_by(log_source: str) -> str:
+    if log_source == 'cron':
+        return 'scheduled'
+    try:
+        from flask import session
+        return session.get('username') or 'manual'
+    except Exception:
+        return 'manual'
+
+
 def run_sync_background(force_rebuild_index=False, include_fetch=False, include_cleanup=False, log_source='manual'):
     """Run sync in background thread.
 
@@ -161,12 +180,18 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
     Cron runs write to Config.LOG_FILE so they appear on the /log page.
     """
     global sync_status
+    started_at = _utc_now_iso()
+    run_kind = _history_kind(force_rebuild_index)
+    inactivated_paths = []
+    cleanup_count = 0
+    sync_service = None
     
     try:
         sync_status['is_running'] = True
         sync_status['error'] = None
         sync_status['logs'] = []  # Clear previous logs
         sync_status['current_progress'] = None
+        sync_status['run_kind'] = run_kind
 
         if log_source == 'cron':
             try:
@@ -295,7 +320,14 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
                                 if not os.path.exists(asset.path):
                                     asset.is_active = False
                                     cleaned += 1
+                                    fn = getattr(asset, 'filename', None) or os.path.basename(asset.path)
+                                    inactivated_paths.append({
+                                        'filename': fn,
+                                        'path': asset.path,
+                                        'sku': getattr(asset, 'sku', '') or '',
+                                    })
                         
+                        cleanup_count = cleaned
                         db.commit()
                         capture_print(f"✅ Cleanup complete: {cleaned} broken links marked inactive")
                         log_event('info', f'DAM cleanup completed: {cleaned} files marked inactive out of {len(assets)} checked')
@@ -347,6 +379,31 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
             print(f"Error in background sync: {e}")
     finally:
         sync_status['is_running'] = False
+        try:
+            finished_at = _utc_now_iso()
+            record_completed_run(
+                kind=run_kind,
+                started_at=started_at,
+                finished_at=finished_at,
+                log_source=log_source,
+                triggered_by=_resolve_triggered_by(log_source),
+                options={
+                    'force_rebuild_index': force_rebuild_index,
+                    'include_fetch': include_fetch,
+                    'include_cleanup': include_cleanup,
+                },
+                stats=sync_status.get('last_stats'),
+                added=(sync_service.recent_added if sync_service else None),
+                inactivated=inactivated_paths if inactivated_paths else None,
+                cleanup_count=cleanup_count,
+                error=sync_status.get('error'),
+                log_lines=list(sync_status.get('logs') or []),
+            )
+        except Exception as hist_err:
+            try:
+                print(f"Failed to save DAM progress history: {hist_err}")
+            except Exception:
+                pass
 
 
 def _dam_cron_secret():
@@ -520,6 +577,27 @@ def dam_cron_status():
         'error': sync_status.get('error'),
         'log_lines': len(sync_status.get('logs') or []),
     })
+
+
+@dam_sync_bp.route('/history', methods=['GET'])
+@login_required
+def dam_progress_history_list():
+    """List saved daily (last 10) and rebuild (last 30 days) progress summaries."""
+    kind = (request.args.get('kind') or '').strip().lower()
+    if kind and kind not in ('daily', 'rebuild'):
+        return jsonify({'success': False, 'error': 'kind must be daily or rebuild'}), 400
+    data = list_history(kind or None)
+    return jsonify({'success': True, **data})
+
+
+@dam_sync_bp.route('/history/<run_id>', methods=['GET'])
+@login_required
+def dam_progress_history_detail(run_id):
+    """Full summary for one saved run (added / inactivated lists + optional full log)."""
+    entry = get_entry(run_id)
+    if not entry:
+        return jsonify({'success': False, 'error': 'Not found'}), 404
+    return jsonify({'success': True, 'entry': entry})
 
 
 @dam_sync_bp.route('/status')

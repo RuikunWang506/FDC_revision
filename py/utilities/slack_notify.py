@@ -1,9 +1,12 @@
 """
 Optional Slack Incoming Webhooks for V7 List Creator alerts.
 Requires Config.SLACK_WEBHOOK_URL_V7_LIST_CREATOR (unless disabled).
+
+Outbound-mail announcements use the same webhook unless SLACK_WEBHOOK_URL_MAIL_SENT is set.
 """
 
 import logging
+import os
 
 import requests
 
@@ -32,6 +35,20 @@ def notify_v7_list_creator_optional(text_body):
     Send to SLACK_WEBHOOK_URL_V7_LIST_CREATOR if set (otherwise no-op).
     """
     webhook = getattr(Config, "SLACK_WEBHOOK_URL_V7_LIST_CREATOR", None)
+    return send_slack_webhook_optional(webhook, text_body)
+
+
+def notify_mail_sent_optional(text_body):
+    """
+    Announce compose/send results to Slack.
+    Uses SLACK_WEBHOOK_URL_MAIL_SENT (env or Config), else same webhook as V7 List Creator.
+    """
+    webhook = os.getenv("SLACK_WEBHOOK_URL_MAIL_SENT", "").strip()
+    if not webhook:
+        webhook = getattr(Config, "SLACK_WEBHOOK_URL_MAIL_SENT", None) or ""
+    webhook = (webhook or "").strip()
+    if not webhook:
+        webhook = getattr(Config, "SLACK_WEBHOOK_URL_V7_LIST_CREATOR", None) or ""
     return send_slack_webhook_optional(webhook, text_body)
 
 
