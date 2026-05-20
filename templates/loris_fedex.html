@@ -106,7 +106,7 @@
                     </button>
                 </h4>
             </div>
-            <div class="collapse {% if sku or barcode or quantity or table_data or filename_30stickers or filename_exact %}show{% endif %}" id="lorisSection">
+            <div class="collapse {% if sku or barcode or quantity or table_data or loris_stickers_ready %}show{% endif %}" id="lorisSection">
                 <div class="card-body">
                     <form method="post" action="{{ url_for('lori_automation.loris_fedex') }}" enctype="multipart/form-data">
                         <div class="textarea-container" style="display: flex; gap: 10px;">
@@ -173,14 +173,15 @@
                     {% endif %}
 
                     
-                    {% if filename_30stickers and filename_exact %}
+                    {% if loris_stickers_ready and input_data %}
                     <div class="text-center" style="padding-top: 50px;">
                         <h2>View Labels</h2>
                         <div class="d-flex flex-wrap justify-content-center" style="padding-top: 10px;">
-                            <a href="{{ url_for('lori_automation.download_loris_labels', filename=filename_30stickers) }}" class="btn btn-primary btn-lg m-2" target="_blank">View 30 Stickers Version</a>
-                            <a href="{{ url_for('lori_automation.download_loris_labels', filename=filename_exact) }}" class="btn btn-secondary btn-lg m-2" target="_blank">View Exact Quantity Version</a>
+                            <button type="button" class="btn btn-primary btn-lg m-2" onclick="openLorisStickerPdf('30_stickers')">View 30 Stickers Version</button>
+                            <button type="button" class="btn btn-secondary btn-lg m-2" onclick="openLorisStickerPdf('exact_stickers')">View Exact Quantity Version</button>
                         </div>
                     </div>
+                    <textarea id="lorisStickerInputData" class="d-none">{{ input_data }}</textarea>
                     {% endif %}
                 </div>
             </div>
@@ -1284,6 +1285,44 @@
 
             document.getElementById('input_data').value = inputData.trim();
         }
+
+        async function openLorisStickerPdf(variant) {
+            const inputEl = document.getElementById('lorisStickerInputData');
+            const inputData = (inputEl && inputEl.value) ? inputEl.value.trim() : '';
+            if (!inputData) {
+                alert('No sticker data available. Submit your SKU/barcode/quantity data first.');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('input_data', inputData);
+            formData.append('variant', variant);
+            try {
+                const response = await fetch('{{ url_for("lori_automation.generate_stickers_api") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    let msg = 'Failed to generate sticker PDF.';
+                    try {
+                        const err = await response.json();
+                        if (err && err.error) msg = err.error;
+                    } catch (e) { /* ignore */ }
+                    throw new Error(msg);
+                }
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+            } catch (err) {
+                alert(err.message || 'Failed to open sticker PDF.');
+            }
+        }
+
+        {% if loris_stickers_ready and input_data %}
+        document.addEventListener('DOMContentLoaded', function() {
+            openLorisStickerPdf('30_stickers');
+        });
+        {% endif %}
 
         // Add event listeners for Loris Maker if elements exist
         const skuElement = document.getElementById('sku');

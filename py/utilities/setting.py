@@ -131,7 +131,6 @@ class Config:
     # Minimal output directories for legacy code (to be removed)
     OUTPUT_DIRS = {
         'fedex_shipments': Path(r'C:/FDC_FLASK_APP/output/fedex_shipments'),
-        'label_output': Path(r'C:/FDC_FLASK_APP/output/label_output'),
     }
 
     # Create directories for legacy code

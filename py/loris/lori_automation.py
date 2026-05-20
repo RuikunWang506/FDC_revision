@@ -1341,8 +1341,7 @@ def loris_fedex():
         return redirect(url_for("auth.login"))
     
     current_user = session['username']
-    filename_30stickers = None
-    filename_exact = None
+    loris_stickers_ready = False
     error_message = None
     table_data = None
     
@@ -1366,23 +1365,7 @@ def loris_fedex():
                     error_message = "An error occurred while generating the PDFs."
                     current_app.logger.error("PDF generation failed")
                 else:
-                    # Save PDFs to files and set filenames for download links
-                    from py.utilities.setting import Config
-                    
-                    timestamp = datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
-                    filename_30stickers = f"30_stickers_{timestamp}.pdf"
-                    filename_exact = f"exact_stickers_{timestamp}.pdf"
-                    
-                    # Ensure output directory exists
-                    output_dir = Config.OUTPUT_DIRS['label_output']
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                    
-                    # Save the PDFs
-                    with open(output_dir / filename_30stickers, 'wb') as f:
-                        f.write(pdf_30stickers_bytes)
-                    
-                    with open(output_dir / filename_exact, 'wb') as f:
-                        f.write(pdf_exact_bytes)
+                    loris_stickers_ready = True
                     
             except Exception as e:
                 error_message = f"An error occurred: {e}"
@@ -1405,8 +1388,7 @@ def loris_fedex():
     
     
     return render_template("loris_fedex.html", 
-                         filename_30stickers=filename_30stickers, 
-                         filename_exact=filename_exact, 
+                         loris_stickers_ready=loris_stickers_ready,
                          error_message=error_message, 
                          table_data=table_data, 
                          input_data=input_data, 
@@ -1415,88 +1397,84 @@ def loris_fedex():
                          quantity=quantity, 
                          current_user=current_user)
 
+def _validate_loris_sticker_input(input_data):
+    """Return validated tab-separated sticker lines or an error message."""
+    if not input_data or not str(input_data).strip():
+        return None, 'No input data provided'
+
+    lines = str(input_data).strip().split('\n')
+    valid_lines = []
+    for i, line in enumerate(lines):
+        parts = line.strip().split('\t')
+        if len(parts) != 3:
+            continue
+
+        sku, barcode, quantity = parts
+        if not sku.strip():
+            continue
+
+        try:
+            qty = int(quantity)
+            if qty <= 0:
+                current_app.logger.warning("Line %s has invalid quantity %s: %s", i + 1, qty, line)
+                continue
+        except ValueError:
+            current_app.logger.warning("Line %s has non-numeric quantity: %s", i + 1, line)
+            continue
+
+        valid_lines.append(line)
+
+    if not valid_lines:
+        return None, (
+            'No valid data found. Each line must have SKU, barcode, and quantity separated by tabs.'
+        )
+
+    return '\n'.join(valid_lines), None
+
+
 @lori_automation_bp.route("/generate_stickers_api", methods=["POST"])
 def generate_stickers_api():
-    """API endpoint to generate stickers and return filenames as JSON"""
+    """Generate Loris sticker PDF in memory; variant=30_stickers|exact_stickers."""
     if 'username' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
-    
+
     try:
-        # Get input data from request
         input_data = request.form.get("input_data")
-        
-        if not input_data:
-            return jsonify({'error': 'No input data provided'}), 400
-        
-        # Log the input data for debugging
-        current_app.logger.info(f"{session['username']} Received input_data: {input_data[:200]}...")  # Log first 200 chars
-        
-        # Validate input data format
-        lines = input_data.strip().split('\n')
-        valid_lines = []
-        for i, line in enumerate(lines):
-            parts = line.strip().split('\t')
-            if len(parts) != 3:
-                continue
-            
-            # Validate each part
-            sku, barcode, quantity = parts
-            if not sku.strip():
-                continue
-            
-            try:
-                qty = int(quantity)
-                if qty <= 0:
-                    current_app.logger.warning(f"Line {i+1} has invalid quantity {qty}: {line}")
-                    continue
-            except ValueError:
-                current_app.logger.warning(f"Line {i+1} has non-numeric quantity: {line}")
-                continue
-            
-            valid_lines.append(line)
-        
-        if not valid_lines:
-            return jsonify({'error': 'No valid data found. Each line must have SKU, barcode, and quantity separated by tabs.'}), 400
-        
-        # Reconstruct validated input_data
-        validated_input_data = '\n'.join(valid_lines)
-        
-        # Import the main function from loris_sticker
+        variant = (request.form.get("variant") or "30_stickers").strip()
+
+        validated_input_data, validation_error = _validate_loris_sticker_input(input_data)
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+
+        current_app.logger.info(
+            "%s generate_stickers_api variant=%s input_data=%s...",
+            session['username'],
+            variant,
+            validated_input_data[:200],
+        )
+
         from py.loris.loris_sticker import main
-        
-        # Generate PDFs for both versions
+
         pdf_30stickers_bytes, pdf_exact_bytes = main(validated_input_data)
-        
         if not pdf_30stickers_bytes or not pdf_exact_bytes:
             return jsonify({'error': 'PDF generation failed'}), 500
-        
-        # Save PDFs to files
-        from py.utilities.setting import Config
-        
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
-        filename_30stickers = f"30_stickers_{timestamp}.pdf"
-        filename_exact = f"exact_stickers_{timestamp}.pdf"
-        
-        # Ensure output directory exists
-        output_dir = Config.OUTPUT_DIRS['label_output']
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save the PDFs
-        with open(output_dir / filename_30stickers, 'wb') as f:
-            f.write(pdf_30stickers_bytes)
-        
-        with open(output_dir / filename_exact, 'wb') as f:
-            f.write(pdf_exact_bytes)
-                
-        # Return filenames as JSON
-        return jsonify({
-            'success': True,
-            'filename_30stickers': filename_30stickers,
-            'filename_exact': filename_exact
-        })
-        
+
+        if variant == "exact_stickers":
+            pdf_bytes = pdf_exact_bytes
+            download_name = "exact_stickers.pdf"
+        else:
+            pdf_bytes = pdf_30stickers_bytes
+            download_name = "30_stickers.pdf"
+
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            download_name=download_name,
+            as_attachment=False,
+            mimetype='application/pdf',
+        )
+
     except Exception as e:
-        current_app.logger.error(f"Error generating stickers: {str(e)}", exc_info=True)
+        current_app.logger.error("Error generating stickers: %s", str(e), exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 @lori_automation_bp.route("/loris_shipping", methods=["GET"])
@@ -4580,18 +4558,6 @@ def generate_invoice_from_data(order, items, invoice_date=None):
 
 ## Removed test-only endpoint /test_fedx_auth to keep production surface minimal
 
-@lori_automation_bp.route('/download_loris_labels/<path:filename>')
-@login_required
-def download_loris_labels(filename):
-    """Download loris label files."""
-    from py.loris.loris_sticker import download_loris_label
-    result = download_loris_label(filename)
-    if result:
-        return result
-    else:
-        flash('File not found.', 'error')
-        return redirect(url_for('lori_automation.loris_fedex'))
-    
 @lori_automation_bp.route("/send_to_shipped_only", methods=["POST"])
 def send_to_shipped_only():
     if 'username' not in session:

@@ -1473,13 +1473,13 @@
                 <a href="{{ url_for('download_label_excel') }}" class="download-btn" target="_blank" rel="noopener">
                     <i class="fas fa-download mr-2"></i>Excel文件（编辑）
                 </a>
-                <a href="{{ url_for('download_label_pdf') }}" class="download-btn download-btn-pdf" target="_blank" rel="noopener">
+                <a href="#" class="download-btn download-btn-pdf" onclick="openJenniferLabelPdf(event, '{{ url_for('download_label_pdf') }}'); return false;">
                     <i class="fas fa-file-pdf mr-2"></i>PDF 单张打印版
                 </a>
                 <button type="button" id="printWarehouseLabelBtn" class="download-btn download-btn-warehouse" title="4×6 单张打印版 → warehouse printer">
                     <i class="fas fa-print mr-2"></i>打印到 warehouse (4×6)
                 </button>
-                <a href="{{ url_for('download_label_pdf_4perpage') }}" class="download-btn download-btn-4up" target="_blank" rel="noopener">
+                <a href="#" class="download-btn download-btn-4up" onclick="openJenniferLabelPdf(event, '{{ url_for('download_label_pdf_4perpage') }}'); return false;">
                     <i class="fas fa-copy mr-2"></i>PDF 4per page 每页4张版
                 </a>
                 </div>
@@ -1626,6 +1626,22 @@
         function toggleHighlights() {
             showOnlyHighlights = !showOnlyHighlights;
             $('#info_list_table').DataTable().draw();
+        }
+
+        async function openJenniferLabelPdf(event, url) {
+            if (event) event.preventDefault();
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Failed to load label PDF.');
+                }
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_blank');
+                setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 60000);
+            } catch (err) {
+                alert(err.message || 'Failed to open label PDF.');
+            }
         }
 
         function generateLabel() {
@@ -2209,6 +2225,10 @@
                     $btn.prop('disabled', false).html(originalHtml);
                 }
             });
+
+            {% if labels_generated %}
+            openJenniferLabelPdf(null, '{{ url_for('download_label_pdf') }}');
+            {% endif %}
 
             $('#printWarehouseLabelBtn').on('click', async function() {
                 const $btn = $(this);

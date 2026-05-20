@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, session, send_file, redirect, url_for, flash, make_response, current_app
 import py.utilities.models
-from py.utilities.setting import login_required
+from py.utilities.setting import Config, login_required
 from py.utilities.logging_setup import log_event
 import paramiko
 import io
@@ -628,44 +628,38 @@ def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progr
         # Sync images one by one
         synced_count = 0
         failed_count = 0
-
-        # Create local cache directory if it doesn't exist
-        cache_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'china_ftp_downloads')
-        os.makedirs(cache_dir, exist_ok=True)
+        big_picture_base = Config.IMAGE_DAM_BIG_PICTURE_DIR
+        sku_folder = os.path.join(big_picture_base, sku_upper)
+        os.makedirs(sku_folder, exist_ok=True)
 
         for idx, image in enumerate(images_to_sync, start=1):
             filename = image['filename']
             _update_task({'current_sync_index': idx, 'current_filename': filename})
 
             try:
-                # Download image from remote server and cache locally
                 remote_path = image.get('file_path')
-                local_cache_path = os.path.join(cache_dir, f"{sku_upper}_{filename}")
+                local_path = os.path.join(sku_folder, filename)
 
                 try:
-                    # Download from SFTP
+                    # Download from SFTP directly into big_picture folder
                     transport = paramiko.Transport(('219.135.198.130', 22))
                     transport.connect(username='fdc', password='Bst@93109310')
                     sftp = paramiko.SFTPClient.from_transport(transport)
 
-                    # Download file to local cache
-                    sftp.get(remote_path, local_cache_path)
+                    sftp.get(remote_path, local_path)
                     sftp.close()
                     transport.close()
 
-                    # Verify file was downloaded
-                    if not os.path.exists(local_cache_path):
+                    if not os.path.exists(local_path):
                         failed_count += 1
                         log_event('error', f"Failed to download China FTP image {filename} - file not found after download")
                         _update_task({'synced': synced_count, 'failed': failed_count})
                         continue
 
-                    # Now create database record with local path
                     try:
                         from py.utilities.models import ImageAsset
                         db_session = py.utilities.models.SessionLocal()
 
-                        # Check again if image already exists to avoid duplicates
                         existing = db_session.query(ImageAsset).filter(
                             ImageAsset.sku == image['sku'],
                             ImageAsset.filename == image['filename'],
@@ -673,16 +667,14 @@ def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progr
                         ).first()
 
                         if not existing:
-                            # Calculate real sha256 hash from the downloaded file
-                            with open(local_cache_path, 'rb') as f:
+                            with open(local_path, 'rb') as f:
                                 sha256_hash = hashlib.sha256(f.read()).hexdigest()
 
-                            # Create new image asset with LOCAL path
                             new_asset = ImageAsset(
                                 sku=image['sku'],
                                 source='big_picture',
                                 filename=image['filename'],
-                                path=local_cache_path,
+                                path=local_path,
                                 sha256=sha256_hash,
                                 version=1,
                                 width=image.get('width'),
@@ -692,21 +684,22 @@ def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progr
                             )
                             db_session.add(new_asset)
                             db_session.commit()
+                        elif 'china_ftp_downloads' in (existing.path or '').replace('/', '\\'):
+                            existing.path = local_path
+                            db_session.commit()
 
                         db_session.close()
                         synced_count += 1
-                    except IntegrityError as e:
+                    except IntegrityError:
                         db_session.rollback()
                         db_session.close()
-                        # Duplicate SHA256 already exists — skip silently
                         synced_count += 1
                     except Exception as e:
                         failed_count += 1
                         log_event('error', f"Failed to sync image {filename} to database: {str(e)}")
-                        # Clean up downloaded file if sync failed
-                        if os.path.exists(local_cache_path):
+                        if os.path.exists(local_path):
                             try:
-                                os.remove(local_cache_path)
+                                os.remove(local_path)
                             except Exception:
                                 pass
 
@@ -1442,8 +1435,7 @@ def sync_china_image():
         sftp.close()
         transport.close()
         
-        # Save to big_picture folder
-        big_picture_base = r'D:\Individual_big_picture'
+        big_picture_base = Config.IMAGE_DAM_BIG_PICTURE_DIR
         sku_folder = os.path.join(big_picture_base, sku)
         os.makedirs(sku_folder, exist_ok=True)
         

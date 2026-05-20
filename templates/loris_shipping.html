@@ -3840,32 +3840,26 @@
                     `${item.sku}\t${item.barcode}\t${item.quantity}`
                 ).join('\n');
                 
-                // Prepare form data
-                const formData = new FormData();
-                formData.append('input_data', inputData);
-                
-                // Submit to new API endpoint
-                const response = await fetch('/lori_automation/generate_stickers_api', {
+                const formDataWithVariant = new FormData();
+                formDataWithVariant.append('input_data', inputData);
+                formDataWithVariant.append('variant', '30_stickers');
+                const pdfResponse = await fetch('/lori_automation/generate_stickers_api', {
                     method: 'POST',
-                    body: formData
+                    body: formDataWithVariant
                 });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                if (!pdfResponse.ok) {
+                    let msg = 'Could not generate PDF';
+                    try {
+                        const err = await pdfResponse.json();
+                        if (err && err.error) msg = err.error;
+                    } catch (e) { /* ignore */ }
+                    throw new Error(msg);
                 }
-                
-                const result = await response.json();
-                
-                if (result.success && result.filename_30stickers) {
-                    const downloadUrl = `/lori_automation/download_loris_labels/${result.filename_30stickers}`;
-                    
-                    // Open PDF in new tab
-                    window.open(downloadUrl, '_blank');
-                    showToast('30 Stickers PDF generated successfully!', 'success');
-                } else {
-                    throw new Error('Could not generate PDF');
-                }
+                const blob = await pdfResponse.blob();
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                showToast('30 Stickers PDF generated successfully!', 'success');
                 
             } catch (error) {
                 console.error('Error generating 30 stickers:', error);
@@ -3892,32 +3886,26 @@
                     `${item.sku}\t${item.barcode}\t${item.quantity}`
                 ).join('\n');
                 
-                // Prepare form data
-                const formData = new FormData();
-                formData.append('input_data', inputData);
-                
-                // Submit to new API endpoint
-                const response = await fetch('/lori_automation/generate_stickers_api', {
+                const formDataWithVariant = new FormData();
+                formDataWithVariant.append('input_data', inputData);
+                formDataWithVariant.append('variant', 'exact_stickers');
+                const pdfResponse = await fetch('/lori_automation/generate_stickers_api', {
                     method: 'POST',
-                    body: formData
+                    body: formDataWithVariant
                 });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                if (!pdfResponse.ok) {
+                    let msg = 'Could not generate PDF';
+                    try {
+                        const err = await pdfResponse.json();
+                        if (err && err.error) msg = err.error;
+                    } catch (e) { /* ignore */ }
+                    throw new Error(msg);
                 }
-                
-                const result = await response.json();
-                
-                if (result.success && result.filename_exact) {
-                    const downloadUrl = `/lori_automation/download_loris_labels/${result.filename_exact}`;
-                    
-                    // Open PDF in new tab
-                    window.open(downloadUrl, '_blank');
-                    showToast('Exact Quantity PDF generated successfully!', 'success');
-                } else {
-                    throw new Error('Could not generate PDF');
-                }
+                const blob = await pdfResponse.blob();
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                showToast('Exact Quantity PDF generated successfully!', 'success');
                 
             } catch (error) {
                 console.error('Error generating exact stickers:', error);

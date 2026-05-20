@@ -207,25 +207,6 @@ def main(input_data, custom_specs=None):
         logging.error(f"An error occurred: {e}")
         return None, None
 
-def download_loris_label(filename):
-    """Download utility for loris label files."""
-    from py.utilities.setting import Config
-    from flask import send_file
-    
-    try:
-        file_path = Config.OUTPUT_DIRS['label_output'] / filename
-        if file_path.exists():
-            return send_file(
-                str(file_path),
-                as_attachment=False,
-                mimetype='application/pdf'
-            )
-        else:
-            return None
-    except Exception as e:
-        logging.error("Error downloading file %s: %s", filename, str(e))
-        return None
-
 if __name__ == "__main__":
     input_data = """test1	013000006057	44
 tef34	013000001243	18"""
