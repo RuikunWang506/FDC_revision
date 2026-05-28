@@ -155,6 +155,35 @@ def line_box_count(qty, per_box) -> int:
     return qty
 
 
+def full_box_count(qty, per_box) -> int:
+    """Full cartons only (floor); used for display and footer totals."""
+    qty = int(qty or 0)
+    per_box = int(per_box or 0)
+    if qty <= 0:
+        return 0
+    if per_box > 0:
+        return qty // per_box
+    return qty
+
+
+def loose_piece_count(qty, per_box) -> int:
+    """Leftover pieces after full cartons."""
+    qty = int(qty or 0)
+    per_box = int(per_box or 0)
+    if qty <= 0 or per_box <= 0:
+        return 0
+    return qty % per_box
+
+
+def format_boxes_display(qty, per_box) -> str:
+    """e.g. '2' or '1 (loose 19)' for order lookup Boxes column."""
+    full = full_box_count(qty, per_box)
+    loose = loose_piece_count(qty, per_box)
+    if loose > 0:
+        return f"{full} (loose {loose})"
+    return str(full)
+
+
 def fetch_order_notes(order_number: str | int) -> str:
     """Load order notes from dbo.ntfile (same source as order lookup header)."""
     order_number = str(order_number).strip()
@@ -692,11 +721,18 @@ def generate_order(order_number):
         items_df['Qty'] = items_df['Qty'].fillna(0).astype(int)
         items_df['per_box'] = items_df['per_box'].fillna(0).astype(int)
 
-        items_df['Boxes'] = items_df.apply(
+        items_df['_boxes_for_weight'] = items_df.apply(
             lambda r: line_box_count(r['Qty'], r['per_box']), axis=1
         )
+        items_df['Boxes'] = items_df.apply(
+            lambda r: format_boxes_display(r['Qty'], r['per_box']), axis=1
+        )
         items_total_qty = int(items_df['Qty'].sum())
-        items_total_boxes = int(items_df['Boxes'].sum())
+        items_total_boxes = int(
+            items_df.apply(
+                lambda r: full_box_count(r['Qty'], r['per_box']), axis=1
+            ).sum()
+        )
 
         try:
             case_weights = fetch_case_weights_by_skus(
@@ -705,10 +741,12 @@ def generate_order(order_number):
             items_df['_line_weight'] = items_df.apply(
                 lambda r: (
                     round(
-                        case_weights.get(str(r['SKU']).strip().upper(), 0.0) * int(r['Boxes']),
+                        case_weights.get(str(r['SKU']).strip().upper(), 0.0)
+                        * int(r['_boxes_for_weight']),
                         2,
                     )
-                    if case_weights.get(str(r['SKU']).strip().upper(), 0.0) and int(r['Boxes'])
+                    if case_weights.get(str(r['SKU']).strip().upper(), 0.0)
+                    and int(r['_boxes_for_weight'])
                     else 0.0
                 ),
                 axis=1,
@@ -717,13 +755,15 @@ def generate_order(order_number):
             items_df['Weight'] = items_df['_line_weight'].apply(
                 lambda w: f"{w:.2f}" if w else ""
             )
-            items_df = items_df.drop(columns=['_line_weight'])
+            items_df = items_df.drop(columns=['_line_weight', '_boxes_for_weight'])
         except Exception as e:
             current_app.logger.error(
                 "Error mapping weight into items_df for order %s: %s", order_number, e
             )
             items_df['Weight'] = ""
             items_total_weight = 0.0
+            if '_boxes_for_weight' in items_df.columns:
+                items_df = items_df.drop(columns=['_boxes_for_weight'])
 
         # Keep column order: Boxes before Location; Weight after Stock.
         items_df = items_df[
@@ -1341,10 +1381,11 @@ def bol_from_order_lookup():
 @order_lookup_bp.route("/eta_fashion_label_from_order_lookup", methods=["POST"])
 @login_required
 def eta_fashion_label_from_order_lookup():
-    """ETA Fashion (00951) box labels: 8.5×2.75 on US Letter, vendor FDC prefilled."""
+    """ETA Fashion (00951) box labels: Letter 4-in-1 or horizontal 6×4 one per page."""
     from py.other.eta_fashion_label_pdf import (
         ETA_FASHION_CUSTOMER_ID,
-        build_eta_fashion_label_pdf,
+        build_eta_fashion_label_pdf_4x6,
+        build_eta_fashion_label_pdf_letter,
         fetch_order_customer_id,
     )
 
@@ -1371,15 +1412,23 @@ def eta_fashion_label_from_order_lookup():
             {"ok": False, "error": "Special Label is only available for ETA Fashion (00951)."}
         ), 403
 
+    layout = str(payload.get("layout") or "letter").strip().lower()
+    use_4x6 = layout in ("4x6", "4x6_label", "label_4x6")
+
     try:
         current_app.logger.info(
-            "***%s***__@@@ETA Fashion special label@@@__ %s boxes=%s",
+            "***%s***__@@@ETA Fashion special label@@@__ %s boxes=%s layout=%s",
             current_user,
             order_number,
             total_boxes,
+            "4x6" if use_4x6 else "letter",
         )
-        pdf_data = build_eta_fashion_label_pdf(total_boxes)
-        filename = f"{order_number}_eta_fashion_{total_boxes}boxes.pdf"
+        if use_4x6:
+            pdf_data = build_eta_fashion_label_pdf_4x6(total_boxes)
+            filename = f"{order_number}_eta_fashion_4x6_{total_boxes}boxes.pdf"
+        else:
+            pdf_data = build_eta_fashion_label_pdf_letter(total_boxes)
+            filename = f"{order_number}_eta_fashion_letter_{total_boxes}boxes.pdf"
         return send_file(
             io.BytesIO(pdf_data),
             download_name=filename,

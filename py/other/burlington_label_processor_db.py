@@ -327,6 +327,60 @@ def load_job_meta(job_id: str) -> dict[str, Any] | None:
         conn.close()
 
 
+def _load_po_links_by_job_ids(job_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+    """PO + order_id rows for history sidebar (batch)."""
+    if not job_ids:
+        return {}
+    ensure_schema()
+    conn = get_mysql_connection()
+    if not conn:
+        return {}
+    cur = None
+    try:
+        placeholders = ", ".join(["%s"] * len(job_ids))
+        cur = conn.cursor(dictionary=True)
+        cur.execute(
+            f"""
+            SELECT job_id, po, order_id
+            FROM burlington_label_job_po
+            WHERE job_id IN ({placeholders})
+            ORDER BY po
+            """,
+            tuple(job_ids),
+        )
+        by_job: dict[str, list[dict[str, Any]]] = {}
+        for row in cur.fetchall() or []:
+            jid = str(row.get("job_id") or "")
+            if not jid:
+                continue
+            by_job.setdefault(jid, []).append(
+                {
+                    "po": str(row.get("po") or ""),
+                    "order_id": str(row["order_id"]) if row.get("order_id") else None,
+                }
+            )
+        return by_job
+    except MySQLError:
+        return {}
+    finally:
+        if cur is not None:
+            try:
+                cur.close()
+            except Exception:
+                pass
+        conn.close()
+
+
+def _po_links_and_orders(
+    po_rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    po_links = [r for r in po_rows if r.get("po")]
+    order_numbers = sorted(
+        {str(r["order_id"]) for r in po_rows if r.get("order_id")}
+    )
+    return po_links, order_numbers
+
+
 def list_job_summaries(limit: int = 50) -> list[dict[str, Any]]:
     ensure_schema()
     conn = get_mysql_connection()
@@ -347,6 +401,8 @@ def list_job_summaries(limit: int = 50) -> list[dict[str, Any]]:
             (limit,),
         )
         rows = cur.fetchall() or []
+        job_ids = [str(row["id"]) for row in rows if row.get("id")]
+        po_by_job = _load_po_links_by_job_ids(job_ids)
         items: list[dict[str, Any]] = []
         for row in rows:
             po_numbers = []
@@ -366,6 +422,8 @@ def list_job_summaries(limit: int = 50) -> list[dict[str, Any]]:
                 created_iso = created_at.replace(tzinfo=timezone.utc).isoformat()
             else:
                 created_iso = str(created_at or "")
+            jid = str(row["id"])
+            po_links, order_numbers = _po_links_and_orders(po_by_job.get(jid, []))
             items.append(
                 {
                     "id": row["id"],
@@ -374,8 +432,8 @@ def list_job_summaries(limit: int = 50) -> list[dict[str, Any]]:
                     "original_filename": row.get("original_filename"),
                     "download_name": row.get("download_name"),
                     "po_numbers": po_numbers,
-                    "po_links": [],
-                    "order_numbers": [],
+                    "po_links": po_links,
+                    "order_numbers": order_numbers,
                     "bill_of_lading": bill_of_lading,
                     "page_count": row.get("page_count"),
                     "output_page_count": row.get("output_page_count"),

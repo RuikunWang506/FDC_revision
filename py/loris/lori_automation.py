@@ -46,10 +46,10 @@ sql_server_config = Config.SQL_SERVER_CONFIG
 
 # Email configuration
 email_config = {
-    'imap_server': 'imap.fatcow.com',
+    'imap_server': 'imap.gmail.com',
     'imap_port': 993,
     'email': 'elaine@fdcus.com',
-    'password': 'Elaine827$$',
+    'password': 'acamukrkgoifsrtq',
     'sender_filter': 'MI9_Merchant@lorisgifts.com',
     'download_path': r'C:\Users\stream\Dropbox\Elaine\loris 2025\==========LORIS_auto_PENDING====='
 }
@@ -1882,10 +1882,10 @@ def download_pivot_table():
             # Fetch all items for selected orders
             placeholders = ','.join(['%s'] * len(po_numbers))
             query = f"""
-                SELECT vendor_item, quantity, unit_price, upc
-                FROM lori_order_items 
+                SELECT po_number, vendor_item, quantity, unit_price, upc
+                FROM lori_order_items
                 WHERE po_number IN ({placeholders})
-                ORDER BY vendor_item
+                ORDER BY po_number, vendor_item
             """
             cursor.execute(query, po_numbers)
             items = cursor.fetchall()
@@ -1896,6 +1896,28 @@ def download_pivot_table():
             if not items:
                 return jsonify({'error': 'No items found for selected orders'}), 400
             
+            from openpyxl.styles import Font, PatternFill, Alignment
+
+            def style_header_row(worksheet, columns):
+                header_font = Font(bold=True, size=12)
+                header_fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+                header_alignment = Alignment(horizontal='center', vertical='center')
+                for col in columns:
+                    cell = worksheet[f'{col}1']
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = header_alignment
+
+            def style_total_row(worksheet, row_num, columns):
+                total_font = Font(bold=True, size=11)
+                total_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+                total_alignment = Alignment(horizontal='right', vertical='center')
+                for col in columns:
+                    cell = worksheet[f'{col}{row_num}']
+                    cell.font = total_font
+                    cell.fill = total_fill
+                    cell.alignment = total_alignment
+
             # Create pivot table data structure
             pivot_data = {}
             total_quantity = 0
@@ -1912,73 +1934,68 @@ def download_pivot_table():
                         'upc': item['upc'] or ''
                     }
                 
-                # Sum quantities
-                pivot_data[sku]['quantity'] += int(item['quantity']) or 0
-                total_quantity += int(item['quantity']) or 0
+                qty = int(item['quantity']) or 0
+                pivot_data[sku]['quantity'] += qty
+                total_quantity += qty
                 
-                # Keep most recent unit price and UPC
                 if item['unit_price']:
                     pivot_data[sku]['unit_price'] = item['unit_price']
                 if item['upc']:
                     pivot_data[sku]['upc'] = item['upc']
             
-            # Create Excel workbook
             wb = Workbook()
-            ws = wb.active
-            ws.title = 'Pivot Table'
+
+            # Sheet 1: SKU pivot summary
+            ws_pivot = wb.active
+            ws_pivot.title = 'Pivot Summary'
+            ws_pivot['A1'] = 'Vendor Item SKU'
+            ws_pivot['B1'] = 'Sum of Quantity'
+            ws_pivot['C1'] = 'Unit Price'
+            ws_pivot['D1'] = 'UPC'
+            style_header_row(ws_pivot, ['A', 'B', 'C', 'D'])
             
-            # Add headers
-            ws['A1'] = 'Vendor Item SKU'
-            ws['B1'] = 'Sum of Quantity'
-            ws['C1'] = 'Unit Price'
-            ws['D1'] = 'UPC'
-            
-            # Style headers
-            from openpyxl.styles import Font, PatternFill, Alignment
-            header_font = Font(bold=True, size=12)
-            header_fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
-            header_alignment = Alignment(horizontal='center', vertical='center')
-            
-            for col in ['A', 'B', 'C', 'D']:
-                cell = ws[f'{col}1']
-                cell.font = header_font
-                cell.fill = header_fill
-                cell.alignment = header_alignment
-            
-            # Add data rows
             row = 2
             for sku_data in sorted(pivot_data.values(), key=lambda x: x['sku']):
-                ws[f'A{row}'] = sku_data['sku']
-                ws[f'B{row}'] = sku_data['quantity']
-                ws[f'C{row}'] = float(sku_data['unit_price']) if sku_data['unit_price'] else 0
-                ws[f'D{row}'] = sku_data['upc']
-                
-                # Format currency for unit price
-                ws[f'C{row}'].number_format = '$#,##0.00'
-                
+                ws_pivot[f'A{row}'] = sku_data['sku']
+                ws_pivot[f'B{row}'] = sku_data['quantity']
+                ws_pivot[f'C{row}'] = float(sku_data['unit_price']) if sku_data['unit_price'] else 0
+                ws_pivot[f'D{row}'] = sku_data['upc']
+                ws_pivot[f'C{row}'].number_format = '$#,##0.00'
                 row += 1
             
-            # Add total row
             total_row = row
-            ws[f'A{total_row}'] = 'TOTAL'
-            ws[f'B{total_row}'] = total_quantity
+            ws_pivot[f'A{total_row}'] = 'TOTAL'
+            ws_pivot[f'B{total_row}'] = total_quantity
+            style_total_row(ws_pivot, total_row, ['A', 'B', 'C', 'D'])
+            ws_pivot.column_dimensions['A'].width = 25
+            ws_pivot.column_dimensions['B'].width = 18
+            ws_pivot.column_dimensions['C'].width = 15
+            ws_pivot.column_dimensions['D'].width = 20
+
+            # Sheet 2: PO-level line item breakdown
+            ws_detail = wb.create_sheet('PO Breakdown')
+            ws_detail['A1'] = 'PO Number'
+            ws_detail['B1'] = 'Vendor Item Code'
+            ws_detail['C1'] = 'Quantity'
+            style_header_row(ws_detail, ['A', 'B', 'C'])
             
-            # Style total row
-            total_font = Font(bold=True, size=11)
-            total_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
-            total_alignment = Alignment(horizontal='right', vertical='center')
+            detail_row = 2
+            detail_total = 0
+            for item in items:
+                qty = int(item['quantity']) or 0
+                ws_detail[f'A{detail_row}'] = item['po_number'] or ''
+                ws_detail[f'B{detail_row}'] = item['vendor_item'] or 'N/A'
+                ws_detail[f'C{detail_row}'] = qty
+                detail_total += qty
+                detail_row += 1
             
-            for col in ['A', 'B', 'C', 'D']:
-                cell = ws[f'{col}{total_row}']
-                cell.font = total_font
-                cell.fill = total_fill
-                cell.alignment = total_alignment
-            
-            # Set column widths
-            ws.column_dimensions['A'].width = 25
-            ws.column_dimensions['B'].width = 18
-            ws.column_dimensions['C'].width = 15
-            ws.column_dimensions['D'].width = 20
+            detail_total_row = detail_row
+            ws_detail[f'A{detail_total_row}'] = 'TOTAL'
+            ws_detail[f'C{detail_total_row}'] = detail_total
+            style_total_row(ws_detail, detail_total_row, ['A', 'B', 'C'])
+            ws_detail.column_dimensions['A'].width = 18
+            ws_detail.column_dimensions['B'].width = 25
+            ws_detail.column_dimensions['C'].width = 12
             
             # Save to memory
             output = io.BytesIO()

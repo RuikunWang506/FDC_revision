@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.abspath('.'))
 
 from py.utilities.dam_sync_service_v2 import DAMSyncServiceV2
 from py.utilities.logging_setup import log_event
+from py.utilities.monitor import send_discord_notification
 from py.dam.dam_progress_history import record_completed_run, list_history, get_entry
 
 dam_sync_bp = Blueprint('dam_sync', __name__, url_prefix='/dam')
@@ -173,7 +174,99 @@ def _resolve_triggered_by(log_source: str) -> str:
         return 'manual'
 
 
-def run_sync_background(force_rebuild_index=False, include_fetch=False, include_cleanup=False, log_source='manual'):
+def _run_kind_label(force_rebuild_index: bool, fetch_full: bool = False) -> str:
+    if force_rebuild_index and fetch_full:
+        return 'weekly rebuild (full Dropbox scan)'
+    if force_rebuild_index:
+        return 'index rebuild'
+    if fetch_full:
+        return 'full fetch sync'
+    return 'daily sync'
+
+
+def _notify_dam_discord(message: str, *, success=None):
+    """Post to fdcef-status (same webhook as health monitor). Fire-and-forget thread."""
+    if success is True:
+        color = 0x00FF00
+    elif success is False:
+        color = 0xFF0000
+    else:
+        color = 0x3498DB
+
+    def _send():
+        try:
+            ok = send_discord_notification(message, color, title="FDC Flask App Status")
+            if not ok:
+                log_event('error', f'DAM Discord notify failed (send returned false): {message[:200]}')
+        except Exception as e:
+            log_event('error', f'DAM Discord notify exception: {e}')
+
+    Thread(target=_send, daemon=True).start()
+
+
+def _format_dam_run_options(force_rebuild_index, include_fetch, include_cleanup, fetch_full) -> str:
+    parts = []
+    if include_fetch:
+        parts.append('fetch: full scan' if fetch_full else 'fetch: incremental')
+    else:
+        parts.append('fetch: off')
+    parts.append('rebuild index: yes' if force_rebuild_index else 'rebuild index: no')
+    parts.append('cleanup: yes' if include_cleanup else 'cleanup: no')
+    return ' | '.join(parts)
+
+
+def _notify_dam_started(triggered_by, force_rebuild_index, include_fetch, include_cleanup, fetch_full):
+    kind = _run_kind_label(force_rebuild_index, fetch_full)
+    opts = _format_dam_run_options(force_rebuild_index, include_fetch, include_cleanup, fetch_full)
+    _notify_dam_discord(
+        f"**DAM sync started** ({kind})\n"
+        f"Triggered by: **{triggered_by}**\n"
+        f"{opts}",
+    )
+
+
+def _notify_dam_finished(
+    triggered_by,
+    force_rebuild_index,
+    include_fetch,
+    include_cleanup,
+    fetch_full,
+    *,
+    stats=None,
+    error=None,
+    cleanup_count=0,
+):
+    kind = _run_kind_label(force_rebuild_index, fetch_full)
+    if error:
+        _notify_dam_discord(
+            f"**DAM sync failed** ({kind})\n"
+            f"Triggered by: **{triggered_by}**\n"
+            f"Error: {error}",
+            success=False,
+        )
+        return
+
+    st = stats or {}
+    _notify_dam_discord(
+        f"**DAM sync finished** ({kind})\n"
+        f"Triggered by: **{triggered_by}**\n"
+        f"Processed: {st.get('total_processed', '?')} | "
+        f"Added: {st.get('total_added', '?')} | "
+        f"Updated: {st.get('total_updated', '?')} | "
+        f"Skipped: {st.get('total_skipped', '?')} | "
+        f"Errors: {st.get('total_errors', '?')}"
+        + (f" | Cleanup inactive: {cleanup_count}" if cleanup_count else ""),
+        success=True,
+    )
+
+
+def run_sync_background(
+    force_rebuild_index=False,
+    include_fetch=False,
+    include_cleanup=False,
+    log_source='manual',
+    fetch_full=False,
+):
     """Run sync in background thread.
 
     log_source: 'manual' (UI /dam/start) or 'cron' (Task Scheduler /dam/cron/start).
@@ -182,6 +275,7 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
     global sync_status
     started_at = _utc_now_iso()
     run_kind = _history_kind(force_rebuild_index)
+    triggered_by = _resolve_triggered_by(log_source)
     inactivated_paths = []
     cleanup_count = 0
     sync_service = None
@@ -193,12 +287,20 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
         sync_status['current_progress'] = None
         sync_status['run_kind'] = run_kind
 
+        _notify_dam_started(
+            triggered_by,
+            force_rebuild_index,
+            include_fetch,
+            include_cleanup,
+            fetch_full,
+        )
+
         if log_source == 'cron':
             try:
                 log_event(
                     'info',
                     f'🟢 INFO DAM scheduled sync START (cron) fetch={include_fetch} '
-                    f'rebuild_index={force_rebuild_index} cleanup={include_cleanup}',
+                    f'fetch_full={fetch_full} rebuild_index={force_rebuild_index} cleanup={include_cleanup}',
                 )
             except Exception:
                 pass
@@ -265,10 +367,14 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
 
             # Optional: fetch new images from Dropbox first
             if include_fetch:
-                capture_print("\n=== Fetching new images from Dropbox (Smart Auto-Filter) ===")
+                fetch_label = 'FULL' if fetch_full else 'incremental'
+                capture_print(f"\n=== Fetching images from Dropbox (Smart Auto-Filter {fetch_label}) ===")
                 import sys as _sys
                 try:
-                    rc = stream_process([_sys.executable, 'py/standalone/smart_auto_filter.py'], capture_print)
+                    fetch_cmd = [_sys.executable, 'py/standalone/smart_auto_filter.py']
+                    if fetch_full:
+                        fetch_cmd.append('--full')
+                    rc = stream_process(fetch_cmd, capture_print)
                     if rc != 0:
                         # If the subprocess returned non-zero, inspect recent output for a completion marker.
                         recent = '\n'.join(sync_status.get('logs', [])[-200:])
@@ -380,17 +486,31 @@ def run_sync_background(force_rebuild_index=False, include_fetch=False, include_
     finally:
         sync_status['is_running'] = False
         try:
+            _notify_dam_finished(
+                triggered_by,
+                force_rebuild_index,
+                include_fetch,
+                include_cleanup,
+                fetch_full,
+                stats=sync_status.get('last_stats'),
+                error=sync_status.get('error'),
+                cleanup_count=cleanup_count,
+            )
+        except Exception:
+            pass
+        try:
             finished_at = _utc_now_iso()
             record_completed_run(
                 kind=run_kind,
                 started_at=started_at,
                 finished_at=finished_at,
                 log_source=log_source,
-                triggered_by=_resolve_triggered_by(log_source),
+                triggered_by=triggered_by,
                 options={
                     'force_rebuild_index': force_rebuild_index,
                     'include_fetch': include_fetch,
                     'include_cleanup': include_cleanup,
+                    'fetch_full': fetch_full,
                 },
                 stats=sync_status.get('last_stats'),
                 added=(sync_service.recent_added if sync_service else None),
@@ -524,10 +644,12 @@ def dam_cron_start():
     force_rebuild_index = data.get('force_rebuild_index', False)
     include_fetch = data.get('include_fetch', True)
     include_cleanup = data.get('include_cleanup', True)
+    fetch_full = data.get('fetch_full', False)
 
     dam_cron_audit(
         'cron_start_accepted',
         fetch=include_fetch,
+        fetch_full=fetch_full,
         rebuild_index=force_rebuild_index,
         cleanup=include_cleanup,
         **client,
@@ -535,8 +657,9 @@ def dam_cron_start():
 
     try:
         current_app.logger.info(
-            '***cron*** scheduled DAM sync start (fetch=%s rebuild=%s cleanup=%s)',
+            '***cron*** scheduled DAM sync start (fetch=%s fetch_full=%s rebuild=%s cleanup=%s)',
             include_fetch,
+            fetch_full,
             force_rebuild_index,
             include_cleanup,
         )
@@ -549,6 +672,7 @@ def dam_cron_start():
             include_fetch,
             include_cleanup,
             log_source='cron',
+            fetch_full=fetch_full,
         ),
         daemon=True,
     )
@@ -622,6 +746,7 @@ def start_sync():
     force_rebuild_index = data.get('force_rebuild_index', False)
     include_fetch = data.get('include_fetch', False)
     include_cleanup = data.get('include_cleanup', False)
+    fetch_full = data.get('fetch_full', False)
     
     # Log DAM sync access with username
     from flask import current_app, session
@@ -629,8 +754,17 @@ def start_sync():
     current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service")
 
     # Start sync in background thread
-    thread = Thread(target=run_sync_background, args=(force_rebuild_index, include_fetch, include_cleanup))
-    thread.daemon = True
+    thread = Thread(
+        target=run_sync_background,
+        kwargs={
+            'force_rebuild_index': force_rebuild_index,
+            'include_fetch': include_fetch,
+            'include_cleanup': include_cleanup,
+            'log_source': 'manual',
+            'fetch_full': fetch_full,
+        },
+        daemon=True,
+    )
     thread.start()
 
     return jsonify({
@@ -730,11 +864,15 @@ def fetch_from_dropbox():
     from flask import current_app, session
     username = session.get('username', 'Unknown')
     current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (fetch)")
+
     def _run_fetch_only():
         global sync_status
         sync_status['is_running'] = True
         sync_status['error'] = None
         sync_status['logs'] = []
+        _notify_dam_discord(
+            f"**DAM Dropbox fetch started** (incremental)\nTriggered by: **{username}**",
+        )
         try:
             import sys as _sys, subprocess, threading
             def _log(line):
@@ -757,26 +895,31 @@ def fetch_from_dropbox():
                             _log(prefix + line.rstrip())
                 except Exception:
                     pass
-
-                    # Start sync in background thread
-                    thread = Thread(target=run_sync_background)
-                    thread.daemon = True
-                    thread.start()
-
-                    return jsonify({'success': True, 'message': 'DAM sync started'})
-                except Exception as e:
-                    sync_status['is_running'] = False
-                    sync_status['error'] = str(e)
-                    return jsonify({'success': False, 'error': str(e)}), 500
-                else:
+                finally:
+                    try:
+                        stream.close()
+                    except Exception:
+                        pass
+            t_out = threading.Thread(target=reader, args=(proc.stdout, ""), daemon=True)
+            t_err = threading.Thread(target=reader, args=(proc.stderr, "[stderr] "), daemon=True)
+            t_out.start()
+            t_err.start()
+            rc = proc.wait()
+            t_out.join(timeout=1)
+            t_err.join(timeout=1)
+            if rc != 0:
+                recent = '\n'.join(sync_status.get('logs', [])[-200:])
+                success_markers = [
+                    'Full scan complete',
+                    'Processing Complete',
+                    'SCAN_COMPLETE|',
+                ]
+                if not any(marker in recent for marker in success_markers):
                     sync_status['error'] = f"Smart Auto-Filter exited with code {rc}"
-                    # Persist the failure and recent output to the persistent app log for post-mortem
                     try:
                         log_event('error', f"Smart Auto-Filter exited with code {rc}. Recent output:\n{recent}")
                     except Exception as _log_err:
-                        # Best-effort logging, don't let logging failures crash the thread
                         print(f"Failed to write persistent log for Smart Auto-Filter error: {_log_err}")
-            # Attempt to reconcile false-positive errors (if the child printed completion but returned a strange code)
             try:
                 _reconcile_false_errors()
             except Exception:
@@ -785,6 +928,18 @@ def fetch_from_dropbox():
             sync_status['error'] = str(e)
             print(f"Error during fetch: {e}")
         finally:
+            if sync_status.get('error'):
+                _notify_dam_discord(
+                    f"**DAM Dropbox fetch failed** (incremental)\n"
+                    f"Triggered by: **{username}**\n"
+                    f"Error: {sync_status['error']}",
+                    success=False,
+                )
+            else:
+                _notify_dam_discord(
+                    f"**DAM Dropbox fetch finished** (incremental)\nTriggered by: **{username}**",
+                    success=True,
+                )
             sync_status['is_running'] = False
 
     thread = Thread(target=_run_fetch_only)
@@ -812,6 +967,9 @@ def fetch_from_dropbox_full():
         sync_status['is_running'] = True
         sync_status['error'] = None
         sync_status['logs'] = []
+        _notify_dam_discord(
+            f"**DAM Dropbox fetch started** (full scan)\nTriggered by: **{username}**",
+        )
         try:
             import sys as _sys, subprocess, threading
             def _log(line):
@@ -865,6 +1023,18 @@ def fetch_from_dropbox_full():
             sync_status['error'] = str(e)
             print(f"Error during full fetch: {e}")
         finally:
+            if sync_status.get('error'):
+                _notify_dam_discord(
+                    f"**DAM Dropbox fetch failed** (full scan)\n"
+                    f"Triggered by: **{username}**\n"
+                    f"Error: {sync_status['error']}",
+                    success=False,
+                )
+            else:
+                _notify_dam_discord(
+                    f"**DAM Dropbox fetch finished** (full scan)\nTriggered by: **{username}**",
+                    success=True,
+                )
             sync_status['is_running'] = False
 
     thread = Thread(target=_run_full_fetch)
@@ -881,6 +1051,9 @@ def cleanup_broken_links():
     username = session.get('username', 'Unknown')
     current_app.logger.info(f"***{username}***___@@@manually started@@@__DAM Sync Service (cleanup)")
     log_event('info', 'Starting DAM cleanup process')
+    _notify_dam_discord(
+        f"**DAM cleanup started**\nTriggered by: **{username}**",
+    )
     
     import py.utilities.models
     import os
@@ -902,10 +1075,20 @@ def cleanup_broken_links():
         
         db.commit()
         log_event('info', f'DAM cleanup completed: {cleaned} files marked inactive out of {len(assets)} checked')
+        _notify_dam_discord(
+            f"**DAM cleanup finished**\n"
+            f"Triggered by: **{username}**\n"
+            f"Marked inactive: {cleaned} / {len(assets)} checked",
+            success=True,
+        )
         
         return jsonify({'success': True, 'cleaned': cleaned, 'total_checked': len(assets)})
     except Exception as e:
         log_event('error', f'DAM cleanup failed: {str(e)}')
+        _notify_dam_discord(
+            f"**DAM cleanup failed**\nTriggered by: **{username}**\nError: {e}",
+            success=False,
+        )
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()

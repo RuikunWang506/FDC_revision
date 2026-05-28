@@ -15,7 +15,7 @@ import imaplib
 import email
 from email.header import decode_header
 
-# Terminal49 configuration
+from py.search.container import _filter_system_file_line_items, _trim_blank_export_rows
 TERMINAL49_API_URL = "https://api.terminal49.com/v2/tracking_requests"
 TERMINAL49_API_KEY = "8zoazZdxmyQS1zuNSKXDuGnm"
 TERMINAL49_CUSTOMER_ID = "f7cb530a-9e60-412c-a5bc-205a2f34ba54"  # Default customer ID
@@ -47,6 +47,23 @@ def get_db_connection():
         f"PWD={password};"
     )
     return pyodbc.connect(conn_str)
+
+
+_FDC_CONTAINER_SORT_RE = re.compile(r'^([A-Za-z]+)(\d+)\s*$')
+
+
+def _fdc_container_sort_number(container_val):
+    """Numeric part of IDs like F261107 so sort order matches humans (261107 before 26199)."""
+    if pd.isna(container_val):
+        return -1
+    m = _FDC_CONTAINER_SORT_RE.match(str(container_val).strip())
+    if not m:
+        return -1
+    try:
+        return int(m.group(2))
+    except ValueError:
+        return -1
+
 
 def get_filtered_order_summary_by_skus(full_sku_list):
     """Return pending/active ROSS/BURLINGTON order summary keyed by full SKU."""
@@ -937,9 +954,11 @@ def process_container_file(file_path, container_number):
         
         # Clean column names
         df_f24213.columns = df_f24213.columns.str.replace('\n', ' ').str.strip()
-        df_f24213 = df_f24213.dropna(subset=['OMS', 'RMB'])
+        df_f24213 = _filter_system_file_line_items(df_f24213)
         df_f24213['WT/PCS (LBS)'] = df_f24213['WT/PCS (LBS)'].round(2)
-        df_f24213 = df_f24213.map(lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x)
+        df_f24213 = df_f24213.applymap(
+            lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x
+        )
 
         # Step 3 columns (styles CSV)
         step3_columns = [
@@ -1001,6 +1020,8 @@ def process_container_file(file_path, container_number):
             if col not in df_step4.columns:
                 df_step4[col] = ""
         df_step4 = df_step4[step4_columns]
+
+        df_step3, df_step4 = _trim_blank_export_rows(df_step3, df_step4)
 
         # Save CSV files
         os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -1135,8 +1156,11 @@ def boat_data():
         df_cleaned['pod_ata_at'] = df_cleaned['pod_ata_at'].apply(convert_date)
         df_cleaned['RCD'] = df_cleaned['RCD'].apply(convert_date)
 
-        # Get the last 30 rows first, then sort by 'container' in descending order
-        df_cleaned = df_cleaned.tail(30).sort_values(by='container', ascending=False)
+        # Get the last 30 rows first; sort by container number (numeric suffix), not string order —
+        # so F261107 is above F26199 (ASCII would put F26199 first).
+        df_tail = df_cleaned.tail(30).copy()
+        df_tail['_fdc_sort_num'] = df_tail['container'].map(_fdc_container_sort_number)
+        df_cleaned = df_tail.sort_values(by='_fdc_sort_num', ascending=False).drop(columns=['_fdc_sort_num'])
 
         # Store raw container values for SQL query use
         df_cleaned['container_raw'] = df_cleaned['container']

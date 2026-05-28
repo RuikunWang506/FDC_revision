@@ -24,6 +24,8 @@ opencv-python==4.8.1.78
 numpy<2.0
 rarfile==4.1  # Optional: for RAR archive support in bulk uploads
 pypdf==5.1.0
+pypdfium2>=4.30.0
+pywin32>=306; sys_platform == 'win32'
 imapclient>=3.0.1
 mail-parser>=4.1.2
 bleach>=6.1.0

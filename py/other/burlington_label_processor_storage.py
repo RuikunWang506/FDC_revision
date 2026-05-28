@@ -191,10 +191,47 @@ def _meta_from_disk(job_dir: Path) -> dict[str, Any] | None:
         return None
 
 
+def _enrich_missing_order_links(items: list[dict[str, Any]]) -> None:
+    """Fill order # / po_links when DB rows lack order_id (lookup failed at save time)."""
+    from py.order.order_search import find_order_number_by_po
+
+    for item in items:
+        if item.get("order_numbers"):
+            continue
+        po_links = list(item.get("po_links") or [])
+        if not po_links:
+            po_links = [
+                {"po": str(p), "order_id": None}
+                for p in (item.get("po_numbers") or [])
+                if p and str(p) != "(no PO)"
+            ]
+        if not po_links:
+            continue
+        order_numbers: set[str] = set()
+        enriched: list[dict[str, Any]] = []
+        cache: dict[str, str | None] = {}
+        for link in po_links:
+            po = str(link.get("po") or "").strip()
+            if not po or po == "(no PO)":
+                continue
+            order_id = link.get("order_id")
+            if not order_id:
+                if po not in cache:
+                    cache[po] = find_order_number_by_po(po)
+                order_id = cache[po]
+            if order_id:
+                order_numbers.add(str(order_id))
+            enriched.append({"po": po, "order_id": order_id})
+        if enriched:
+            item["po_links"] = enriched
+            item["order_numbers"] = sorted(order_numbers)
+
+
 def list_jobs(limit: int = 50) -> list[dict[str, Any]]:
     cleanup_old_jobs()
     db_items = blp_db.list_job_summaries(limit=limit)
     if db_items:
+        _enrich_missing_order_links(db_items)
         for item in db_items:
             job_dir = _jobs_root() / str(item.get("id") or "")
             item["pdfs_available"] = _job_has_pdfs(job_dir) if job_dir.is_dir() else False

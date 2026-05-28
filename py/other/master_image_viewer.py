@@ -17,6 +17,14 @@ from urllib.parse import quote
 from sqlalchemy.exc import IntegrityError
 from typing import Any, Dict, Optional
 
+from py.utilities.customer_purchase_access import (
+    FEATURE_MASTER_IMAGE_VIEWER,
+    customer_purchase_notice,
+    filter_skus_for_customer,
+    json_forbidden_if_customer_purchase_denied,
+)
+from py.utilities.master_image_viewer_permissions import master_image_viewer_hide_path
+
 master_image_viewer_bp = Blueprint('master_image_viewer', __name__)
 
 # TK/external user password (simple hardcoded for demo)
@@ -310,13 +318,29 @@ def master_image_viewer(sku=None):
     tk_user = session.get('tk_user', False)
     if not internal_user and not tk_user:
         # Show password popup via template logic
-        return render_template('master_image_viewer.html', initial_sku=sku)
+        return render_template(
+            'master_image_viewer.html',
+            initial_sku=sku,
+            hide_image_path=False,
+        )
     # If TK user, restrict access to only this page
     if tk_user:
         session['internal_user'] = False
     else:
         session['internal_user'] = True
-    return render_template('master_image_viewer.html', initial_sku=sku, current_user=current_user)
+    from py.other.clientview import is_client_portal_only_user
+
+    notice = customer_purchase_notice(current_user, FEATURE_MASTER_IMAGE_VIEWER)
+    show_navbar = bool(current_user) and not is_client_portal_only_user(current_user)
+    hide_path = master_image_viewer_hide_path(current_user)
+    return render_template(
+        'master_image_viewer.html',
+        initial_sku=sku,
+        current_user=current_user,
+        customer_purchase_notice=notice,
+        show_navbar=show_navbar,
+        hide_image_path=hide_path,
+    )
 # Image serving is now handled by the DAM system at /image/{asset_id}/{size}
 
 # --- ZIP download endpoint for TK/external users ---
@@ -392,9 +416,15 @@ def search_images():
     
     if not sku:
         return jsonify({'error': 'SKU parameter is required'}), 400
+
+    username = session.get('username')
+    denied = json_forbidden_if_customer_purchase_denied(
+        username, sku, FEATURE_MASTER_IMAGE_VIEWER
+    )
+    if denied:
+        return denied
     
     # Log the search - use actual username if logged in, otherwise tk_user
-    username = session.get('username')
     tk_user = session.get('tk_user', False)
     
     if username:
@@ -416,9 +446,15 @@ def fetch_china_ftp():
     
     if not sku:
         return jsonify({'error': 'SKU parameter is required'}), 400
+
+    username = session.get('username')
+    denied = json_forbidden_if_customer_purchase_denied(
+        username, sku, FEATURE_MASTER_IMAGE_VIEWER
+    )
+    if denied:
+        return denied
     
     # Log the fetch - use actual username if logged in, otherwise tk_user
-    username = session.get('username')
     tk_user = session.get('tk_user', False)
     
     if username:
@@ -738,8 +774,14 @@ def fetch_china_ftp_async():
     
     if not sku:
         return jsonify({'error': 'SKU parameter is required'}), 400
-    
+
     username = session.get('username')
+    denied = json_forbidden_if_customer_purchase_denied(
+        username, sku, FEATURE_MASTER_IMAGE_VIEWER
+    )
+    if denied:
+        return denied
+
     tk_user = session.get('tk_user', False)
     
     # Create unique task ID
@@ -1094,6 +1136,19 @@ def batch_fetch_china_ftp():
         return jsonify({'error': 'No SKUs provided'}), 400
 
     username = session.get('username')
+    allowed_skus, rejected = filter_skus_for_customer(
+        username, [str(s).strip() for s in skus if str(s).strip()],
+        FEATURE_MASTER_IMAGE_VIEWER,
+    )
+    if not allowed_skus:
+        msg = (
+            "No SKUs in this batch are in the customer's order history."
+            if rejected
+            else "No valid SKUs provided."
+        )
+        return jsonify({'error': msg, 'success': False}), 403
+    skus = allowed_skus
+
     tk_user = session.get('tk_user', False)
     task_id = str(uuid.uuid4())[:8]
     app_obj = current_app._get_current_object()

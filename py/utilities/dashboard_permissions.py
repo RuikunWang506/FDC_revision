@@ -9,6 +9,12 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 # Blueprint name -> dashboard tool id (must match DASHBOARD_TOOLS ids). Used by routes.before_request.
+# Legacy tk_user password session (master_image_viewer only); prefer client group login.
+TK_PASSWORD_BLUEPRINTS = frozenset({"master_image_viewer"})
+
+# Client portal tool ids (same access as legacy TK password users).
+CLIENT_PORTAL_TOOL_IDS = frozenset({"clientview", "master_image_viewer"})
+
 TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "item_lookup": "item_lookup",
     "invoice_lookup": "invoice_lookup",
@@ -24,6 +30,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "dam_sync": "dam",
     "image_upload": "image_upload",
     "master_image_viewer": "master_image_viewer",
+    "clientview": "clientview",
     "bag_style_viewer": "bag_style_viewer",
     "burlington_highlight": "burlington_highlight",
     "v7_listcreator": "v7_listcreator",
@@ -53,6 +60,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "dam", "title": "DAM System", "category": "Media"},
     {"id": "image_upload", "title": "Smart Image Upload", "category": "Media"},
     {"id": "master_image_viewer", "title": "Master Image Viewer", "category": "Media"},
+    {"id": "clientview", "title": "Client Portal", "category": "Media"},
     {"id": "bag_style_viewer", "title": "Bag Style Viewer", "category": "Media"},
     {"id": "burlington_highlight", "title": "Burlington-highlight", "category": "Media"},
     {"id": "v7_listcreator", "title": "List Creator V7", "category": "Utilities"},
@@ -108,6 +116,9 @@ def enforce_dashboard_tool_access():
 
     if request.method == "OPTIONS":
         return None
+    # Task Scheduler curl uses X-DAM-Cron-Secret on /dam/cron/* — no browser session.
+    if (request.path or "").startswith("/dam/cron/"):
+        return None
     ep = request.endpoint
     if ep == "static" or (ep is not None and ep.endswith(".static")):
         return None
@@ -119,6 +130,8 @@ def enforce_dashboard_tool_access():
         return None
     uname = session.get("username")
     if not uname:
+        if session.get("tk_user") and bp in TK_PASSWORD_BLUEPRINTS:
+            return None
         session["next"] = request.url
         return redirect(url_for("auth.login"))
     from py.utilities.auth import get_user_permissions

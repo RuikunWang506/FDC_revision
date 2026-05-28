@@ -147,7 +147,13 @@ def login():
             # Redirect TMX users to gpginvoice page
             if username == 'tmx':
                 return redirect(url_for("gpgtmx.gpginvoice"))
-                
+
+            from py.other.clientview import client_portal_home_url, is_client_portal_only_user
+
+            if is_client_portal_only_user(username):
+                session.pop("next", None)
+                return redirect(client_portal_home_url())
+
             # For other users, redirect to stored next page or home
             redirect_url = session.pop('next', url_for("home"))
             return redirect(redirect_url)
@@ -323,6 +329,25 @@ def manage_users():
                         mail_sel.append(int(x))
                     except (TypeError, ValueError):
                         continue
+                client_pd_restrict = request.form.get("client_pd_restrict") == "1"
+                client_pd_sections_sel = request.form.getlist(
+                    "client_product_detail_sections"
+                )
+                customer_purchase_customer_id = (
+                    request.form.get("customer_purchase_customer_id") or ""
+                ).strip()
+                master_image_viewer_customer_purchase_only = (
+                    request.form.get("master_image_viewer_customer_purchase_only")
+                    == "1"
+                )
+                client_product_detail_customer_purchase_only = (
+                    request.form.get("client_product_detail_customer_purchase_only")
+                    == "1"
+                )
+                master_image_viewer_hide_path = (
+                    request.form.get("master_image_viewer_hide_path") == "1"
+                )
+                log_viewer_allowed = request.form.get("log_viewer_allowed") == "1"
                 cur = connection.cursor(dictionary=True)
                 try:
                     cur.execute("SELECT slug FROM user_groups WHERE id = %s", (gid_int,))
@@ -351,6 +376,36 @@ def manage_users():
                         base["mail_account_ids"] = mail_sel
                     else:
                         base.pop("mail_account_ids", None)
+                    if client_pd_restrict:
+                        base["client_product_detail_restrict"] = True
+                        base["client_product_detail_sections"] = client_pd_sections_sel
+                    else:
+                        base.pop("client_product_detail_restrict", None)
+                        base.pop("client_product_detail_sections", None)
+                    if customer_purchase_customer_id:
+                        base["customer_purchase_customer_id"] = (
+                            customer_purchase_customer_id
+                        )
+                    else:
+                        base.pop("customer_purchase_customer_id", None)
+                    if master_image_viewer_customer_purchase_only:
+                        base["master_image_viewer_customer_purchase_only"] = True
+                    else:
+                        base.pop("master_image_viewer_customer_purchase_only", None)
+                    if client_product_detail_customer_purchase_only:
+                        base["client_product_detail_customer_purchase_only"] = True
+                    else:
+                        base.pop(
+                            "client_product_detail_customer_purchase_only", None
+                        )
+                    if master_image_viewer_hide_path:
+                        base["master_image_viewer_hide_path"] = True
+                    else:
+                        base.pop("master_image_viewer_hide_path", None)
+                    if log_viewer_allowed:
+                        base["log_viewer_allowed"] = True
+                    else:
+                        base.pop("log_viewer_allowed", None)
                     cur2 = connection.cursor()
                     cur2.execute(
                         "UPDATE user_groups SET permissions = %s WHERE id = %s",
@@ -395,6 +450,67 @@ def manage_users():
                 except Error as e:
                     connection.rollback()
                     flash(f"Could not create group (duplicate slug?): {e}")
+                return redirect(url_for("auth.manage_users"))
+
+            if act == "copy_group":
+                name = (request.form.get("name") or "").strip()
+                slug = slugify((request.form.get("slug") or "").strip() or name)
+                try:
+                    source_id = int(request.form.get("source_group_id") or 0)
+                except (TypeError, ValueError):
+                    flash("Invalid source group.")
+                    return redirect(url_for("auth.manage_users"))
+                if not name:
+                    flash("New group name is required.")
+                    return redirect(url_for("auth.manage_users"))
+                cur = connection.cursor(dictionary=True)
+                try:
+                    cur.execute(
+                        "SELECT name, slug, permissions FROM user_groups WHERE id = %s",
+                        (source_id,),
+                    )
+                    src = cur.fetchone()
+                    if not src:
+                        flash("Source group not found.")
+                        return redirect(url_for("auth.manage_users"))
+                    cur.execute(
+                        "SELECT id FROM user_groups WHERE slug = %s LIMIT 1", (slug,)
+                    )
+                    if cur.fetchone():
+                        flash(f'Group slug "{slug}" already exists — choose a different name.')
+                        return redirect(url_for("auth.manage_users"))
+                    perms_out = None
+                    raw_perms = src.get("permissions")
+                    if raw_perms is not None:
+                        if isinstance(raw_perms, str):
+                            perms_out = raw_perms
+                        else:
+                            perms_out = json.dumps(raw_perms)
+                    cur.execute(
+                        "SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM user_groups"
+                    )
+                    nxt = int((cur.fetchone() or {}).get("n", 0))
+                    cur2 = connection.cursor()
+                    cur2.execute(
+                        """
+                        INSERT INTO user_groups (name, slug, permissions, sort_order)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (name, slug, perms_out, nxt),
+                    )
+                    connection.commit()
+                    cur2.close()
+                    flash(
+                        f'Created group "{name}" as a copy of "{src.get("name")}".'
+                    )
+                except Error as e:
+                    connection.rollback()
+                    flash(f"Could not copy group: {e}")
+                finally:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
                 return redirect(url_for("auth.manage_users"))
 
             if act == "delete_group":
@@ -577,6 +693,9 @@ def manage_users():
                                 cursor.close()
 
         from py.utilities.dashboard_permissions import DASHBOARD_TOOLS
+        from py.utilities.client_product_detail_permissions import (
+            CLIENT_PRODUCT_DETAIL_SECTIONS,
+        )
 
         backfill_null_user_groups(connection)
 
@@ -616,6 +735,19 @@ def manage_users():
                     "mail_restrict": ui["mail_restrict"],
                     "tools_sel": ui["tools_sel"],
                     "mail_sel": ui["mail_sel"],
+                    "client_pd_restrict": ui["client_pd_restrict"],
+                    "client_pd_sections_sel": ui["client_pd_sections_sel"],
+                    "customer_purchase_customer_id": ui[
+                        "customer_purchase_customer_id"
+                    ],
+                    "master_image_viewer_customer_purchase_only": ui[
+                        "master_image_viewer_customer_purchase_only"
+                    ],
+                    "client_product_detail_customer_purchase_only": ui[
+                        "client_product_detail_customer_purchase_only"
+                    ],
+                    "master_image_viewer_hide_path": ui["master_image_viewer_hide_path"],
+                    "log_viewer_allowed": ui["log_viewer_allowed"],
                     "member_count": counts.get(g["id"], 0),
                 }
             )
@@ -638,6 +770,7 @@ def manage_users():
             current_user=session["username"],
             dashboard_tools_grouped=dashboard_tools_grouped,
             mail_accounts=mail_accounts,
+            client_product_detail_sections=CLIENT_PRODUCT_DETAIL_SECTIONS,
         )
     except Error as e:
         flash(f"Error fetching users: {e}")
@@ -928,6 +1061,9 @@ def _ensure_user_groups_schema_once() -> None:
         ensure_user_groups_schema(connection)
         seed_user_groups_if_empty(connection)
         backfill_null_user_groups(connection)
+        from py.utilities.user_groups import seed_client_portal_group
+
+        seed_client_portal_group(connection)
         _USER_GROUPS_SCHEMA_INITIALIZED = True
     except Exception as e:
         print(f"user_groups schema init: {e}")

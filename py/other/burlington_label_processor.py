@@ -346,11 +346,10 @@ def _overview_rows_for_po_grid(po_overview: list[dict]) -> list[tuple[str, ...]]
         po = entry.get("po") or ""
         if not po or po == "(no PO)":
             continue
-        if not _po_grid_is_invoice_ready(entry):
-            continue
-        notes_label = _po_grid_notes_for_label(str(entry.get("order_notes") or ""))
+        raw_notes = str(entry.get("order_notes") or "")
+        notes_label = _po_grid_notes_for_label(raw_notes)
         if not notes_label:
-            continue
+            notes_label = _po_grid_truncate(_po_grid_notes_raw(raw_notes), 36) or "—"
         rows.append(
             (
                 str(po),
@@ -493,9 +492,7 @@ def _draw_po_grid_table_page(
 def _render_po_grid_6x4_pdf_bytes(po_overview: list[dict]) -> bytes:
     rows = _overview_rows_for_po_grid(po_overview)
     if not rows:
-        raise ValueError(
-            "No invoice-ready POs to print (need (rdy) with location, e.g. after boxes or ■■)."
-        )
+        raise ValueError("No PO numbers to print.")
 
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=(PO_GRID_6X4_W_PT, PO_GRID_6X4_H_PT))

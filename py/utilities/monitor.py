@@ -1,35 +1,63 @@
+import os
 import requests
 import time
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 
 # Configuration
 HEALTH_URL = "http://fdcef.com/health"  # Adjust if different
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1383311381448757248/Ba2TYpvCOUh7Hx2tPkJUCaS_3e_zYhX1_Zfq2Crj7rScbCq9ldwYcfmPMCPnN8aKHZNW"  # Discord webhook
+DEFAULT_DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1383311381448757248/Ba2TYpvCOUh7Hx2tPkJUCaS_3e_zYhX1_Zfq2Crj7rScbCq9ldwYcfmPMCPnN8aKHZNW"
 CHECK_INTERVAL = 60  # Check every 60 seconds
 DOWN_THRESHOLD = 3  # Number of consecutive failures before alerting
 
-def send_discord_notification(message, color=0xff0000):
+
+def discord_webhook_url():
+    """Same webhook as fdcef-status health monitor; override via DISCORD_WEBHOOK_URL env."""
+    return (os.environ.get('DISCORD_WEBHOOK_URL') or DEFAULT_DISCORD_WEBHOOK_URL).strip()
+
+
+def send_discord_notification(message, color=0xff0000, title="FDC Flask App Status"):
+    """Post to the fdcef-status Discord webhook. Returns True on success."""
     data = {
+        "username": "fdcef-status",
         "embeds": [{
-            "title": "FDC Flask App Status",
+            "title": title,
             "description": message,
             "color": color,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }]
     }
+    url = discord_webhook_url()
     try:
-        response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+        response = requests.post(url, json=data, timeout=15)
         response.raise_for_status()
+        try:
+            from py.utilities.logging_setup import log_event
+            log_event('info', f'Discord notification sent: {title}')
+        except Exception:
+            pass
         print("Discord notification sent successfully!")
+        return True
     except requests.exceptions.RequestException as e:
-        print(f"Failed to send Discord notification: {e}")
-        if hasattr(e, 'response') and e.response:
-            print(f"Response status: {e.response.status_code}")
-            print(f"Response text: {e.response.text}")
+        detail = str(e)
+        if getattr(e, 'response', None) is not None:
+            detail = f"{detail} status={e.response.status_code} body={(e.response.text or '')[:500]}"
+        try:
+            from py.utilities.logging_setup import log_event
+            log_event('error', f'Discord notification failed: {detail}')
+        except Exception:
+            pass
+        print(f"Failed to send Discord notification: {detail}")
+        return False
     except Exception as e:
+        try:
+            from py.utilities.logging_setup import log_event
+            log_event('error', f'Discord notification unexpected error: {e}')
+        except Exception:
+            pass
         print(f"Unexpected error sending Discord notification: {e}")
+        return False
 
 def check_health():
     try:

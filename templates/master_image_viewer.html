@@ -3,10 +3,11 @@
 <head>
         <script>
             window.showDropbox = {{ (current_user is not none)|tojson }};
+            window.mivHidePath = {{ hide_image_path|default(false)|tojson }};
         </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Image Viewer - FDC</title>
+    <title>Master Image Viewer 主图查看器 - FDC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <style>
                 .image-card.selected {
@@ -24,11 +25,11 @@
             font-family: 'Inter', 'Segoe UI', sans-serif;
             color: #e8f4fd;
             min-height: 100vh;
-            padding-top: 70px;
+            padding-top: 0;
         }
         
-        /* Ensure this page has custom background class */
         body.has-navbar {
+            padding-top: 70px;
             background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%) !important;
         }
 
@@ -53,6 +54,168 @@
             margin-bottom: 1rem;
         }
 
+        /* Bilingual labels — high contrast on dark UI */
+        .label-zh {
+            color: #d1dae8;
+            font-size: 0.88em;
+            font-weight: 500;
+            margin-left: 0.35em;
+            -webkit-text-fill-color: #d1dae8;
+        }
+
+        .main-title .label-zh {
+            display: block;
+            margin-left: 0;
+            margin-top: 0.35rem;
+            font-size: 0.45em;
+            letter-spacing: 0.02em;
+            color: #c5d4e8 !important;
+            -webkit-text-fill-color: #c5d4e8 !important;
+            background: none;
+        }
+
+        .page-subtitle {
+            color: #c5d4e8 !important;
+            font-size: 1.1rem;
+        }
+
+        .page-subtitle .label-zh {
+            display: block;
+            margin-left: 0;
+            margin-top: 0.4rem;
+            color: #b8c9dc !important;
+            -webkit-text-fill-color: #b8c9dc !important;
+            font-size: 0.92em;
+        }
+
+        /* White modals & light banners */
+        .miv-modal-panel,
+        #batchJobBanner {
+            color: #111827;
+        }
+
+        .miv-modal-panel .label-zh,
+        #batchJobBanner .label-zh {
+            color: #374151;
+            -webkit-text-fill-color: #374151;
+            font-weight: 500;
+        }
+
+        #batchJobBanner .search-btn .label-zh {
+            color: rgba(255, 255, 255, 0.95) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+            display: block;
+            margin-left: 0;
+            margin-top: 0.1rem;
+        }
+
+        .miv-modal-panel th {
+            color: #111827;
+        }
+
+        .sync-btn .label-zh {
+            color: rgba(255, 255, 255, 0.95) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        .error .label-zh {
+            color: #fecaca;
+            -webkit-text-fill-color: #fecaca;
+            display: block;
+            margin-top: 0.35rem;
+        }
+
+        .miv-modal-panel h2 .label-zh,
+        .miv-modal-panel p .label-zh,
+        .miv-modal-panel th .label-zh,
+        #batchJobBannerTitle .label-zh {
+            display: block;
+            margin-left: 0;
+            margin-top: 0.2rem;
+            font-size: 0.88em;
+        }
+
+        .miv-modal-panel .miv-muted,
+        #batchJobBannerMeta {
+            color: #374151 !important;
+        }
+
+        .miv-modal-panel .miv-muted .label-zh {
+            color: #1f2937;
+            -webkit-text-fill-color: #1f2937;
+        }
+
+        /* Colored buttons inside white modals */
+        .miv-modal-panel .miv-btn-primary,
+        .miv-modal-panel #batchRerunBtn,
+        .miv-modal-panel #batchHistoryRefreshBtn {
+            color: #fff;
+        }
+
+        .miv-modal-panel .miv-btn-primary .label-zh,
+        .miv-modal-panel #batchRerunBtn .label-zh,
+        .miv-modal-panel #batchHistoryRefreshBtn .label-zh,
+        .miv-modal-panel #batchHistoryRefreshBtn .btn-label-zh {
+            color: rgba(255, 255, 255, 0.95) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+            display: block;
+            margin-left: 0;
+            margin-top: 0.12rem;
+        }
+
+        .miv-modal-panel .miv-btn-secondary {
+            color: #1f2937;
+        }
+
+        .miv-modal-panel .miv-btn-secondary .label-zh {
+            color: #1f2937 !important;
+            -webkit-text-fill-color: #1f2937 !important;
+            display: block;
+            margin-left: 0;
+            margin-top: 0.12rem;
+        }
+
+        #batchStatusOutcome .label-zh {
+            color: inherit;
+            -webkit-text-fill-color: inherit;
+            opacity: 0.95;
+            font-weight: 600;
+        }
+
+        /* Image popup sidebar */
+        .modal-sidebar .label-zh,
+        .modal-sidebar .detail-label .label-zh {
+            color: #d1dae8;
+            -webkit-text-fill-color: #d1dae8;
+        }
+
+        .modal-action-btn .btn-label-en,
+        .modal-action-btn .btn-label-zh {
+            color: #fff;
+            -webkit-text-fill-color: #fff;
+        }
+
+        .modal-action-btn .btn-label-zh {
+            font-size: 0.85rem;
+            opacity: 0.92;
+        }
+
+        .category-name .label-zh {
+            color: #7dd3fc;
+            -webkit-text-fill-color: #7dd3fc;
+            margin-left: 0.5em;
+        }
+
+        #tkPasswordModal .label-zh {
+            color: #c5d4e8 !important;
+            -webkit-text-fill-color: #c5d4e8 !important;
+        }
+
+        #tkPasswordModal h2 .label-zh {
+            display: block;
+            margin-top: 0.35rem;
+        }
+
         .search-section {
             background: rgba(18, 25, 38, 0.8);
             backdrop-filter: blur(20px);
@@ -65,16 +228,19 @@
 
         .search-form {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            max-width: 600px;
+            align-items: stretch;
+            gap: 0.65rem;
+            max-width: min(1100px, 100%);
+            width: 100%;
             margin: 0 auto;
         }
 
         .search-input {
-            flex: 1;
-            padding: 1rem 1.5rem;
+            flex: 1 1 220px;
+            min-width: 200px;
+            padding: 0.85rem 1.25rem;
             background: rgba(26, 35, 50, 0.8);
             border: 2px solid rgba(0, 240, 255, 0.3);
             border-radius: 15px;
@@ -90,15 +256,76 @@
         }
 
         .search-btn {
-            padding: 1rem 2rem;
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            padding: 0.65rem 0.9rem;
+            min-height: 62px;
             background: linear-gradient(135deg, #00d4ff, #1cc88a);
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             color: white;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 1.1rem;
+            font-size: 1rem;
+            line-height: 1.2;
+            white-space: normal;
+            text-align: left;
+        }
+
+        .search-form .search-btn {
+            flex: 1 1 168px;
+            max-width: 200px;
+        }
+
+        .search-form #batchFetchBtn {
+            flex: 1 1 178px;
+            max-width: 220px;
+        }
+
+        .search-form #batchFetchBtn .btn-label-en {
+            font-size: 0.9rem;
+        }
+
+        .search-btn > i:first-child {
+            flex-shrink: 0;
+            font-size: 1.2rem;
+            align-self: center;
+        }
+
+        .search-btn .btn-label {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .search-btn .btn-label-en {
+            font-weight: 600;
+            font-size: 0.95rem;
+            line-height: 1.25;
+        }
+
+        .search-btn .btn-label-zh {
+            font-size: 0.85rem;
+            font-weight: 400;
+            line-height: 1.25;
+            margin-top: 0.15rem;
+            color: rgba(255, 255, 255, 0.92);
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.92);
+        }
+
+        .search-btn .label-zh {
+            display: block;
+            margin-left: 0;
+            margin-top: 0.15rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.92);
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.92);
         }
 
         .search-btn:hover {
@@ -110,6 +337,117 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* Floating selection sidebar (download / delete) */
+        .miv-selection-dock {
+            position: fixed;
+            right: max(0.75rem, env(safe-area-inset-right));
+            top: 50%;
+            transform: translateY(-50%) translateX(120%);
+            z-index: 1050;
+            width: min(220px, calc(100vw - 1.5rem));
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.3s ease;
+        }
+        .miv-selection-dock.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(-50%) translateX(0);
+        }
+        .miv-selection-dock-inner {
+            background: rgba(18, 25, 38, 0.96);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 212, 255, 0.35);
+            border-radius: 16px;
+            padding: 1rem 0.9rem;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .miv-selection-dock-title {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #8892b0;
+            text-align: center;
+            margin: 0;
+        }
+        .miv-selection-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00d4ff;
+            text-align: center;
+            line-height: 1.2;
+            margin: 0;
+        }
+        .miv-selection-count-zh {
+            font-size: 0.88rem;
+            color: #94a3b8;
+            text-align: center;
+            margin: -0.25rem 0 0.15rem;
+        }
+        .miv-selection-sku {
+            font-size: 0.8rem;
+            color: #b8c5d6;
+            text-align: center;
+            word-break: break-all;
+            padding: 0.35rem 0.5rem;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+        }
+        .miv-selection-dock .search-btn {
+            width: 100%;
+            max-width: none;
+            min-height: 54px;
+            justify-content: center;
+            text-align: center;
+        }
+        .miv-selection-dock .search-btn .btn-label {
+            align-items: center;
+        }
+        .miv-selection-clear-btn {
+            background: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            color: #cbd5e1;
+            border-radius: 10px;
+            padding: 0.45rem 0.6rem;
+            font-size: 0.82rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        .miv-selection-clear-btn:hover {
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+        @media (max-width: 900px) {
+            .miv-selection-dock {
+                top: auto;
+                bottom: max(0.75rem, env(safe-area-inset-bottom));
+                right: 0.5rem;
+                left: 0.5rem;
+                width: auto;
+                transform: translateY(120%);
+            }
+            .miv-selection-dock.visible {
+                transform: translateY(0);
+            }
+            .miv-selection-dock-inner {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            .miv-selection-dock-meta {
+                flex: 1 1 100%;
+            }
+            .miv-selection-dock .search-btn {
+                flex: 1 1 calc(50% - 0.35rem);
+                min-width: 140px;
+            }
         }
 
         .results-section {
@@ -248,13 +586,25 @@
 
         .image-details {
             font-size: 0.8rem;
-            color: #8892b0;
+            color: #b8c5d6;
+        }
+
+        .image-details .label-zh {
+            color: #d1dae8;
+            -webkit-text-fill-color: #d1dae8;
         }
 
         .loading {
             text-align: center;
             padding: 3rem;
-            color: #8892b0;
+            color: #c5d4e8;
+        }
+
+        .loading .label-zh {
+            color: #b8c9dc;
+            -webkit-text-fill-color: #b8c9dc;
+            display: block;
+            margin-top: 0.35rem;
         }
 
         .loading i {
@@ -281,8 +631,24 @@
         .empty-category {
             text-align: center;
             padding: 2rem;
-            color: #8892b0;
+            color: #c5d4e8;
             font-style: italic;
+        }
+
+        .empty-category .label-zh {
+            color: #d1dae8;
+            -webkit-text-fill-color: #d1dae8;
+            display: block;
+            margin-top: 0.35rem;
+            font-style: normal;
+        }
+
+        .fetch-btn .label-zh {
+            display: block;
+            margin-top: 0.2rem;
+            color: rgba(255, 255, 255, 0.95);
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.95);
+            font-style: normal;
         }
 
         .fetch-btn {
@@ -458,8 +824,21 @@
         }
 
         .detail-label {
-            color: #8892b0;
+            color: #b8c5d6;
             font-size: 0.9rem;
+        }
+
+        .detail-section h4 .label-zh {
+            color: #7dd3fc;
+            -webkit-text-fill-color: #7dd3fc;
+            margin-left: 0.4em;
+        }
+
+        .results-header .label-zh {
+            color: #d1dae8;
+            -webkit-text-fill-color: #d1dae8;
+            display: block;
+            margin-top: 0.25rem;
         }
 
         .detail-value {
@@ -479,6 +858,9 @@
         }
 
         .modal-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
             padding: 0.75rem 1rem;
             background: linear-gradient(135deg, #00d4ff, #1cc88a);
             border: none;
@@ -605,6 +987,13 @@
             }
 
             .search-input {
+                width: 100%;
+                flex: 1 1 auto;
+            }
+
+            .search-form .search-btn {
+                flex: 1 1 auto;
+                max-width: none;
                 width: 100%;
             }
 
@@ -739,16 +1128,28 @@
         }
     </style>
 </head>
-<body>
-    {% if current_user %}
+<body class="{% if show_navbar|default(false) %}has-navbar{% else %}no-navbar{% endif %}">
+    {% if show_navbar|default(false) %}
         {% include 'navbar.html' %}
+    {% elif current_user %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1.25rem;border-bottom:1px solid #e2e8f0;background:#fff;">
+        <a href="{{ url_for('home') }}" style="color:#2563eb;font-weight:600;text-decoration:none;"><i class="fas fa-arrow-left"></i> Home</a>
+        <span style="color:#64748b;font-size:0.9rem;">{{ current_user }}</span>
+        <a href="{{ url_for('auth.logout') }}" style="color:#2563eb;font-weight:600;text-decoration:none;">Logout</a>
+    </div>
     {% endif %}
 
     <div class="container">
         <div class="header">
-            <h1 class="main-title">Master Image Viewer</h1>
-            <p style="color: #8892b0; font-size: 1.1rem;">Search and view all images for any SKU across all sources</p>
+            <h1 class="main-title">Master Image Viewer<span class="label-zh">主图查看器</span></h1>
+            <p class="page-subtitle">Search and view all images for any SKU across all sources<span class="label-zh">搜索并查看任意 SKU 在所有来源中的图片</span></p>
         </div>
+
+        {% if customer_purchase_notice %}
+        <div class="alert alert-warning text-dark mb-3" role="alert" style="border-radius: 8px;">
+            <i class="fas fa-lock mr-2"></i>{{ customer_purchase_notice }}
+        </div>
+        {% endif %}
 
         <div class="search-section">
             <form class="search-form" id="searchForm">
@@ -756,35 +1157,51 @@
                     type="text" 
                     class="search-input" 
                     id="skuInput" 
-                    placeholder="Enter SKU to search all image sources..."
+                    placeholder="Enter SKU to search all image sources... / 输入 SKU 搜索所有图片来源…"
                     autocomplete="off"
                     required
                 >
                 <button type="submit" class="search-btn" id="searchBtn">
-                    <i class="fas fa-search"></i> Search Images
+                    <i class="fas fa-search"></i>
+                    <span class="btn-label">
+                        <span class="btn-label-en">Search Images</span>
+                        <span class="btn-label-zh">搜索图片</span>
+                    </span>
                 </button>
-                   <button type="button" class="search-btn" id="batchFetchBtn" style="background: linear-gradient(135deg, #f6ad55, #f8b500); margin-left: 0.5rem;">
-                       <i class="fas fa-list"></i> Batch Fetch from China
-                   </button>
-                   <button type="button" class="search-btn" id="batchHistoryBtn" style="background: #4b5563; margin-left: 0.5rem;">
-                       <i class="fas fa-history"></i> Recent batches (3d)
-                   </button>
+                <button type="button" class="search-btn" id="batchFetchBtn" style="background: linear-gradient(135deg, #f6ad55, #f8b500);">
+                    <i class="fas fa-list"></i>
+                    <span class="btn-label">
+                        <span class="btn-label-en">Batch Fetch from China</span>
+                        <span class="btn-label-zh">批量从中国拉取</span>
+                    </span>
+                </button>
+                <button type="button" class="search-btn" id="batchHistoryBtn" style="background: #4b5563;">
+                    <i class="fas fa-history"></i>
+                    <span class="btn-label">
+                        <span class="btn-label-en">Recent batches (3d)</span>
+                        <span class="btn-label-zh">近期批次（3天）</span>
+                    </span>
+                </button>
             </form>
         </div>
 
         <div class="loading" id="loadingDiv" style="display: none;">
             <i class="fas fa-spinner"></i>
-            <p style="margin-top: 1rem;">Searching all image sources...</p>
+            <p style="margin-top: 1rem;">Searching all image sources...<span class="label-zh">正在搜索所有图片来源…</span></p>
         </div>
 
         <div id="batchJobBanner" style="display:none; margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.9rem 1rem;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap: 1rem;">
                 <div>
-                    <div id="batchJobBannerTitle" style="font-weight: 700; color: #1f2937;">Batch Status</div>
-                    <div id="batchJobBannerMeta" style="font-size: 0.9rem; color: #4b5563; margin-top: 0.2rem;"></div>
+                    <div id="batchJobBannerTitle" style="font-weight: 700; color: #111827;">Batch Status<span class="label-zh">批次状态</span></div>
+                    <div id="batchJobBannerMeta" class="miv-muted" style="font-size: 0.9rem; margin-top: 0.2rem;"></div>
                 </div>
                 <button id="batchJobOpenStatusBtn" type="button" class="search-btn" style="padding: 0.5rem 0.8rem; font-size: 0.85rem;">
-                    <i class="fas fa-chart-line"></i> View Details
+                    <i class="fas fa-chart-line"></i>
+                    <span class="btn-label">
+                        <span class="btn-label-en">View Details</span>
+                        <span class="btn-label-zh">查看详情</span>
+                    </span>
                 </button>
             </div>
         </div>
@@ -794,28 +1211,49 @@
             {% if not current_user and not session.tk_user %}
             <div id="tkPasswordModal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;">
                 <form method="POST" action="/tk_password" style="background:#222;padding:2rem 2.5rem;border-radius:18px;box-shadow:0 8px 32px rgba(0,212,255,0.18);display:flex;flex-direction:column;align-items:center;min-width:320px;">
-                    <h2 style="color:#00d4ff;margin-bottom:1.5rem;">Enter TK Password</h2>
-                    <input type="password" name="password" placeholder="Password" style="padding:0.8rem 1.2rem;border-radius:10px;border:1px solid #00d4ff;font-size:1.1rem;margin-bottom:1.2rem;width:100%;" autofocus required />
-                    <button type="submit" style="padding:0.8rem 2rem;background:linear-gradient(135deg,#00d4ff,#1cc88a);border:none;border-radius:10px;color:white;font-weight:600;font-size:1.1rem;cursor:pointer;">Submit</button>
+                    <h2 style="color:#00d4ff;margin-bottom:1.5rem;">Enter TK Password<span class="label-zh">输入 TK 密码</span></h2>
+                    <input type="password" name="password" placeholder="Password / 密码" style="padding:0.8rem 1.2rem;border-radius:10px;border:1px solid #00d4ff;font-size:1.1rem;margin-bottom:1.2rem;width:100%;" autofocus required />
+                    <button type="submit" style="padding:0.8rem 2rem;background:linear-gradient(135deg,#00d4ff,#1cc88a);border:none;border-radius:10px;color:white;font-weight:600;font-size:1.1rem;cursor:pointer;">Submit<span class="label-zh">提交</span></button>
                 </form>
             </div>
             {% endif %}
 
         <div class="results-section" id="resultsSection">
             <div class="results-header" id="resultsHeader"></div>
-            <div style="text-align:right;margin-bottom:1rem;">
-                <button id="downloadSelectedBtn" class="search-btn" style="display:none;">
-                    <i class="fas fa-download"></i> Download Selected
-                </button>
-                {% if current_user %}
-                <button id="deleteSelectedBtn" class="search-btn" style="display:none;background:linear-gradient(135deg,#ff3b3b,#ff6b6b);margin-left:0.5rem;">
-                    <i class="fas fa-trash-alt"></i> Delete Selected
-                </button>
-                {% endif %}
-            </div>
             <div id="resultsContainer"></div>
         </div>
     </div>
+
+    <!-- Floating selection sidebar (sticks while scrolling) -->
+    <aside id="mivSelectionDock" class="miv-selection-dock" aria-hidden="true" aria-label="Selected images actions">
+        <div class="miv-selection-dock-inner">
+            <div class="miv-selection-dock-meta">
+                <p class="miv-selection-dock-title">Selection · 已选</p>
+                <p id="mivSelectionCount" class="miv-selection-count">0</p>
+                <p id="mivSelectionCountZh" class="miv-selection-count-zh">未选择图片</p>
+                <p id="mivSelectionSku" class="miv-selection-sku" style="display:none;"></p>
+            </div>
+            <button type="button" id="downloadSelectedBtn" class="search-btn">
+                <i class="fas fa-download"></i>
+                <span class="btn-label">
+                    <span class="btn-label-en">Download Selected(avoid too many images)</span>
+                    <span class="btn-label-zh">下载已选(图多会慢)</span>
+                </span>
+            </button>
+            {% if current_user %}
+            <button type="button" id="deleteSelectedBtn" class="search-btn" style="background:linear-gradient(135deg,#ff3b3b,#ff6b6b);">
+                <i class="fas fa-trash-alt"></i>
+                <span class="btn-label">
+                    <span class="btn-label-en">Delete Selected</span>
+                    <span class="btn-label-zh">删除已选</span>
+                </span>
+            </button>
+            {% endif %}
+            <button type="button" id="mivClearSelectionBtn" class="miv-selection-clear-btn">
+                Clear selection · 清除选择
+            </button>
+        </div>
+    </aside>
 
     <!-- Enhanced Image Modal with Sidebar -->
     <div class="image-modal" id="imageModal">
@@ -850,10 +1288,18 @@
                 
                 <div class="modal-actions">
                     <button class="modal-action-btn" onclick="downloadImage()">
-                        <i class="fas fa-download"></i> Download
+                        <i class="fas fa-download"></i>
+                        <span class="btn-label">
+                            <span class="btn-label-en">Download</span>
+                            <span class="btn-label-zh">下载</span>
+                        </span>
                     </button>
                     <button class="modal-action-btn" onclick="copyImageUrl()">
-                        <i class="fas fa-link"></i> Copy URL
+                        <i class="fas fa-link"></i>
+                        <span class="btn-label">
+                            <span class="btn-label-en">Copy URL</span>
+                            <span class="btn-label-zh">复制链接</span>
+                        </span>
                     </button>
                 </div>
             </div>
@@ -862,33 +1308,33 @@
 
     <!-- Batch Fetch Modal -->
     <div id="batchFetchModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-            <h2 style="margin-top: 0; color: #1f2937;">Batch Fetch from China FTP</h2>
-            <p style="color: #666; font-size: 0.95rem;">Paste a list of SKUs (comma-separated or each on a new line)</p>
-            <textarea id="skuListInput" style="width: 100%; height: 150px; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-family: monospace; font-size: 0.9rem; resize: vertical;" placeholder="S1549&#10;M1141&#10;P2234&#10;&#10;or: S1549, M1141, P2234"></textarea>
+        <div class="miv-modal-panel" style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <h2 style="margin-top: 0; color: #111827;">Batch Fetch from China FTP<span class="label-zh">从中国 FTP 批量拉取</span></h2>
+            <p class="miv-muted" style="font-size: 0.95rem;">Paste a list of SKUs (comma-separated or each on a new line)<span class="label-zh">粘贴 SKU 列表（逗号分隔或每行一个）</span></p>
+            <textarea id="skuListInput" style="width: 100%; height: 150px; padding: 0.75rem; border: 2px solid #9ca3af; border-radius: 8px; font-family: monospace; font-size: 0.9rem; color: #111827; background: #fff; resize: vertical;" placeholder="S1549&#10;M1141&#10;P2234&#10;&#10;or: S1549, M1141, P2234"></textarea>
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <button id="batchFetchSubmitBtn" style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, #f6ad55, #f8b500); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Fetch List from China</button>
-                <button id="batchFetchCancelBtn" style="flex: 1; padding: 0.75rem 1rem; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Cancel</button>
+                <button id="batchFetchSubmitBtn" class="miv-btn-primary" style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, #ea8c0c, #d97706); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Fetch List from China<span class="label-zh">从中国拉取列表</span></button>
+                <button id="batchFetchCancelBtn" class="miv-btn-secondary" style="flex: 1; padding: 0.75rem 1rem; background: #e5e7eb; color: #111827; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Cancel<span class="label-zh">取消</span></button>
             </div>
         </div>
     </div>
 
     <!-- Batch Fetch Status Modal -->
     <div id="batchStatusModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div class="miv-modal-panel" style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 style="margin: 0; color: #1f2937;">Batch Fetch Progress</h2>
-                <button id="batchStatusCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+                <h2 style="margin: 0; color: #111827;">Batch Fetch Progress<span class="label-zh">批量拉取进度</span></h2>
+                <button id="batchStatusCloseBtn" type="button" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #374151;">&times;</button>
             </div>
             <div id="batchStatusOutcome" role="status" style="display: none; margin-bottom: 1rem; padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.9rem; line-height: 1.45; border: 1px solid transparent;"></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px;">
-                    <div style="color: #666; font-size: 0.85rem;">Elapsed Time</div>
-                    <div id="elapsedTime" style="font-size: 1.5rem; font-weight: 600; color: #1f2937;">0:00</div>
+                    <div class="miv-muted" style="font-size: 0.85rem;">Elapsed Time<span class="label-zh">已用时间</span></div>
+                    <div id="elapsedTime" style="font-size: 1.5rem; font-weight: 600; color: #111827;">0:00</div>
                 </div>
                 <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px;">
-                    <div style="color: #666; font-size: 0.85rem;">Progress</div>
-                    <div id="progressCount" style="font-size: 1.5rem; font-weight: 600; color: #1f2937;">0/0</div>
+                    <div class="miv-muted" style="font-size: 0.85rem;">Progress<span class="label-zh">进度</span></div>
+                    <div id="progressCount" style="font-size: 1.5rem; font-weight: 600; color: #111827;">0/0</div>
                 </div>
             </div>
             <div style="margin-bottom: 1rem;">
@@ -897,15 +1343,15 @@
                 </div>
             </div>
             <div style="margin-bottom: 1rem; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
-                <div id="currentStyleLabel" style="font-weight: 700; color: #1f2937; margin-bottom: 0.35rem;">Current Style: waiting</div>
-                <div id="currentStyleDetails" style="font-size: 0.9rem; color: #4b5563;">No active style yet.</div>
-                <div id="batchLastUpdated" style="font-size: 0.8rem; color: #6b7280; margin-top: 0.35rem;"></div>
+                <div id="currentStyleLabel" style="font-weight: 700; color: #111827; margin-bottom: 0.35rem;">Current Style: waiting<span class="label-zh">当前款式：等待中</span></div>
+                <div id="currentStyleDetails" class="miv-muted" style="font-size: 0.9rem;">No active style yet.<span class="label-zh">尚无进行中的款式。</span></div>
+                <div id="batchLastUpdated" class="miv-muted" style="font-size: 0.8rem; margin-top: 0.35rem;"></div>
             </div>
             <div id="batchRerunWrap" style="display: none; margin-bottom: 1rem;">
-                <button type="button" id="batchRerunBtn" class="search-btn" style="width: 100%; padding: 0.65rem 1rem; font-size: 0.95rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    Rerun batch (same SKUs)
+                <button type="button" id="batchRerunBtn" class="search-btn miv-btn-primary" style="width: 100%; padding: 0.65rem 1rem; font-size: 0.95rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Rerun batch (same SKUs)<span class="label-zh">重新运行批次（相同 SKU）</span>
                 </button>
-                <div id="batchRerunHint" style="font-size: 0.8rem; color: #6b7280; margin-top: 0.35rem;"></div>
+                <div id="batchRerunHint" class="miv-muted" style="font-size: 0.8rem; margin-top: 0.35rem;"></div>
             </div>
             <div style="border: 1px solid #e5e7eb; border-radius: 8px; height: 300px; overflow-y: auto;">
                 <div id="batchResultsList" style="padding: 1rem;"></div>
@@ -915,40 +1361,80 @@
 
     <!-- Batch job history (last 3 days) -->
     <div id="batchHistoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10002; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 760px; width: 95%; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div class="miv-modal-panel" style="background: white; padding: 2rem; border-radius: 12px; max-width: 760px; width: 95%; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-                <h2 style="margin: 0; color: #1f2937;">China batch jobs</h2>
+                <h2 style="margin: 0; color: #111827;">China batch jobs<span class="label-zh">中国批量任务</span></h2>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <button type="button" id="batchHistoryRefreshBtn" class="search-btn" style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
-                        <i class="fas fa-sync-alt"></i> Refresh
+                        <i class="fas fa-sync-alt"></i>
+                        <span class="btn-label">
+                            <span class="btn-label-en">Refresh</span>
+                            <span class="btn-label-zh">刷新</span>
+                        </span>
                     </button>
-                    <button type="button" id="batchHistoryCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; line-height: 1;">&times;</button>
+                    <button type="button" id="batchHistoryCloseBtn" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #374151; line-height: 1;">&times;</button>
                 </div>
             </div>
-            <p id="batchHistoryMeta" style="font-size: 0.85rem; color: #6b7280; margin: 0 0 1rem 0;"></p>
+            <p id="batchHistoryMeta" class="miv-muted" style="font-size: 0.85rem; margin: 0 0 1rem 0;"></p>
             <div id="batchHistoryTableWrap" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: auto; max-height: 58vh;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                     <thead style="background: #f9fafb;">
                         <tr>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Status</th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Task</th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Progress</th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Summary</th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Updated (local)</th>
-                            <th style="text-align:right; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Open</th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb; color: #111827;">Status<span class="label-zh">状态</span></th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Task<span class="label-zh">任务</span></th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Progress<span class="label-zh">进度</span></th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Summary<span class="label-zh">摘要</span></th>
+                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Updated (local)<span class="label-zh">更新时间（本地）</span></th>
+                            <th style="text-align:right; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Open<span class="label-zh">打开</span></th>
                         </tr>
                     </thead>
                     <tbody id="batchHistoryTbody"></tbody>
                 </table>
             </div>
-            <p id="batchHistoryEmpty" style="display: none; color: #6b7280; padding: 1rem 0; margin: 0;">No batch jobs in the last 3 days.</p>
+            <p id="batchHistoryEmpty" class="miv-muted" style="display: none; padding: 1rem 0; margin: 0;">No batch jobs in the last 3 days.<span class="label-zh">近 3 天无批量任务。</span></p>
         </div>
     </div>
     <script>
+        function bi(en, zh) {
+            return en + ' <span class="label-zh">' + zh + '</span>';
+        }
+
+        function btnBi(iconClass, en, zh) {
+            return '<i class="' + iconClass + '"></i><span class="btn-label"><span class="btn-label-en">' + en + '</span><span class="btn-label-zh">' + zh + '</span></span>';
+        }
+
         let allImages = [];
         let currentImageIndex = 0;
         let currentSku = '';
         let selectedImages = new Set();
+
+        function updateSelectionUI() {
+            const n = selectedImages.size;
+            const dock = document.getElementById('mivSelectionDock');
+            const countEl = document.getElementById('mivSelectionCount');
+            const countZh = document.getElementById('mivSelectionCountZh');
+            const skuEl = document.getElementById('mivSelectionSku');
+            if (dock) {
+                dock.classList.toggle('visible', n > 0);
+                dock.setAttribute('aria-hidden', n > 0 ? 'false' : 'true');
+            }
+            if (countEl) {
+                countEl.textContent = n === 1 ? '1 picture' : n + ' pictures';
+            }
+            if (countZh) {
+                countZh.textContent = n === 0
+                    ? '未选择图片'
+                    : (n === 1 ? '已选 1 张图片' : '已选 ' + n + ' 张图片');
+            }
+            if (skuEl) {
+                if (currentSku && n > 0) {
+                    skuEl.textContent = 'SKU: ' + currentSku;
+                    skuEl.style.display = 'block';
+                } else {
+                    skuEl.style.display = 'none';
+                }
+            }
+        }
 
         const searchForm = document.getElementById('searchForm');
         const skuInput = document.getElementById('skuInput');
@@ -998,7 +1484,7 @@
             loadingDiv.style.display = 'block';
             resultsSection.style.display = 'none';
             searchBtn.disabled = true;
-            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+            searchBtn.innerHTML = btnBi('fas fa-spinner fa-spin', 'Searching...', '搜索中…');
 
             try {
                 const response = await fetch(`/api/search_images?sku=${encodeURIComponent(sku)}`);
@@ -1017,7 +1503,7 @@
                 // Hide loading
                 loadingDiv.style.display = 'none';
                 searchBtn.disabled = false;
-                searchBtn.innerHTML = '<i class="fas fa-search"></i> Search Images';
+                searchBtn.innerHTML = btnBi('fas fa-search', 'Search Images', '搜索图片');
             }
         }
 
@@ -1027,13 +1513,14 @@
             // Prepare all images array for modal navigation
             allImages = [];
             selectedImages.clear();
+            updateSelectionUI();
             
             const categories = [
-                { key: 'dam_catalog', name: 'Catalog_Original Disk', icon: 'fas fa-server' },
-                { key: 'dam_dropbox', name: 'Dropbox Images', icon: 'fas fa-cloud' },
-                { key: 'dam_big_picture', name: 'Product Images (product_image)', icon: 'fas fa-images' },
-                { key: 'dam_other', name: 'Other Images', icon: 'fas fa-image' },
-                { key: 'china_ftp', name: 'China FTP', icon: 'fas fa-globe' }
+                { key: 'dam_catalog', name: 'Catalog_Original Disk', nameZh: '目录原盘', icon: 'fas fa-server' },
+                { key: 'dam_dropbox', name: 'Dropbox Images', nameZh: 'Dropbox 图片', icon: 'fas fa-cloud' },
+                { key: 'dam_big_picture', name: 'Product Images (product_image)', nameZh: '产品图 (product_image)', icon: 'fas fa-images' },
+                { key: 'dam_other', name: 'Other Images', nameZh: '其他图片', icon: 'fas fa-image' },
+                { key: 'china_ftp', name: 'China FTP', nameZh: '中国 FTP', icon: 'fas fa-globe' }
             ];
 
             // Build allImages array
@@ -1051,10 +1538,10 @@
             // Update results header
             resultsHeader.innerHTML = `
                 <h2 style="color: #00d4ff; margin-bottom: 0.5rem;">
-                    <i class="fas fa-search"></i> Results for SKU: ${data.sku}
+                    <i class="fas fa-search"></i> ${bi('Results for SKU:', 'SKU 搜索结果:')} ${data.sku}
                 </h2>
-                <p style="color: #8892b0;">
-                    Found <strong style="color: #1cc88a;">${data.total_count}</strong> images across all sources
+                <p style="color: #c5d4e8;">
+                    ${bi('Found', '共找到')} <strong style="color: #1cc88a;">${data.total_count}</strong> ${bi('images across all sources', '张图片（所有来源）')}
                 </p>
             `;
 
@@ -1072,7 +1559,7 @@
                             <div class="category-header">
                                 <i class="fas fa-chevron-down category-toggle" id="toggle-${category.key}"></i>
                                 <i class="${category.icon}"></i>
-                                <span class="category-name">${category.name}</span>
+                                <span class="category-name">${category.name}<span class="label-zh">${category.nameZh}</span></span>
                             </div>
                             <span class="category-count">${images.length}</span>
                         </div>
@@ -1081,9 +1568,9 @@
 
                             if (images.length === 0) {
                                 if (category.key === 'china_ftp') {
-                                    resultsHtml += '<div class="empty-category"><button class="fetch-btn" onclick="fetchChinaFtp()">Fetch China FTP Images</button></div>';
+                                    resultsHtml += '<div class="empty-category"><button class="fetch-btn" onclick="fetchChinaFtp()">' + bi('Fetch China FTP Images', '拉取中国 FTP 图片') + '</button></div>';
                                 } else {
-                                    resultsHtml += '<div class="empty-category">No images found in this category</div>';
+                                    resultsHtml += '<div class="empty-category">' + bi('No images found in this category', '此类别暂无图片') + '</div>';
                                 }
                             } else {
                                 resultsHtml += '<div class="images-grid">';
@@ -1107,18 +1594,18 @@
                                             <div class="image-info" data-image-index="${globalImageIndex}">
                                                 <div class="image-filename">${image.filename} 
                                                     ${image.is_canonical ? '<span style="color: #1cc88a; font-weight: bold;">[CANONICAL]</span>' : ''}
-                                                    <span style="color: #8892b0; font-size: 0.8em;">(v${image.version})</span>
+                                                    <span style="color: #b8c5d6; font-size: 0.8em;">(v${image.version})</span>
                                                 </div>
                                                 <div class="image-details">
-                                                    Source: ${image.source}<br>
-                                                    ${image.relative_path ? `Path: ${image.relative_path}<br>` : ''}
-                                                    Dimensions: ${image.width || '?'} × ${image.height || '?'}<br>
-                                                    Created: ${image.created_at ? new Date(image.created_at).toLocaleDateString() : 'Unknown'}
+                                                    ${bi('Source:', '来源:')} ${image.source}<br>
+                                                    ${!window.mivHidePath && image.relative_path ? bi('Path:', '路径:') + ' ' + image.relative_path + '<br>' : ''}
+                                                    ${bi('Dimensions:', '尺寸:')} ${image.width || '?'} × ${image.height || '?'}<br>
+                                                    ${bi('Created:', '创建:')} ${image.created_at ? new Date(image.created_at).toLocaleDateString() : bi('Unknown', '未知')}
                                                 </div>
                                             </div>
                                             ${showSyncBtn ? `
-                                                <button class="sync-btn" data-filename="${image.filename}" data-image-url="${image.url}" title="Sync to Product Images" style="position:absolute;bottom:10px;right:10px;z-index:10;background:#1cc88a;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:pointer;">
-                                                    <i class="fas fa-sync-alt"></i> Sync
+                                                <button class="sync-btn" data-filename="${image.filename}" data-image-url="${image.url}" title="Sync to Product Images / 同步到产品图" style="position:absolute;bottom:10px;right:10px;z-index:10;background:#1cc88a;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:pointer;">
+                                                    <i class="fas fa-sync-alt"></i> ${bi('Sync', '同步')}
                                                 </button>
                                             ` : ''}
                                         </div>
@@ -1154,16 +1641,21 @@
                         selectedImages.delete(idx);
                         if (card) card.classList.remove('selected');
                     }
-                    document.getElementById('downloadSelectedBtn').style.display = selectedImages.size > 0 ? 'inline-block' : 'none';
-                    // Also show/hide delete button if it exists
-                    const deleteBtn = document.getElementById('deleteSelectedBtn');
-                    if (deleteBtn) {
-                        deleteBtn.style.display = selectedImages.size > 0 ? 'inline-block' : 'none';
-                    }
+                    updateSelectionUI();
                 }
             });
+            document.getElementById('mivClearSelectionBtn')?.addEventListener('click', function() {
+                selectedImages.clear();
+                document.querySelectorAll('.image-select-checkbox:checked').forEach(function(cb) {
+                    cb.checked = false;
+                });
+                document.querySelectorAll('.image-card.selected').forEach(function(card) {
+                    card.classList.remove('selected');
+                });
+                updateSelectionUI();
+            });
             // Download selected images listener using event delegation
-            resultsSection.addEventListener('click', async function(e) {
+            document.addEventListener('click', async function(e) {
                 if (e.target.closest('#downloadSelectedBtn')) {
                     const btn = e.target.closest('#downloadSelectedBtn');
                     if (typeof selectedImages === 'undefined' || selectedImages.size === 0) return;
@@ -1179,7 +1671,7 @@
                         };
                     });
                     btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+                    btn.innerHTML = btnBi('fas fa-spinner fa-spin', 'Preparing...', '准备中…');
                     try {
                         const resp = await fetch('/download_zip', {
                             method: 'POST',
@@ -1205,12 +1697,12 @@
                         alert('Error downloading ZIP: ' + err.message);
                     } finally {
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-download"></i> Download Selected';
+                        btn.innerHTML = btnBi('fas fa-download', 'Download Selected', '下载已选');
                     }
                 }
             });
             // Delete selected images listener using event delegation
-            resultsSection.addEventListener('click', async function(e) {
+            document.addEventListener('click', async function(e) {
                 if (e.target.closest('#deleteSelectedBtn')) {
                     const btn = e.target.closest('#deleteSelectedBtn');
                     if (typeof selectedImages === 'undefined' || selectedImages.size === 0) return;
@@ -1231,7 +1723,7 @@
                     });
                     
                     btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                    btn.innerHTML = btnBi('fas fa-spinner fa-spin', 'Deleting...', '删除中…');
                     
                     try {
                         const resp = await fetch('/api/delete_images', {
@@ -1251,8 +1743,7 @@
                         
                         // Clear selection and reload images
                         selectedImages.clear();
-                        btn.style.display = 'none';
-                        document.getElementById('downloadSelectedBtn').style.display = 'none';
+                        updateSelectionUI();
                         
                         // Reload the current SKU
                         if (currentSku) {
@@ -1263,7 +1754,7 @@
                         alert('Error deleting images: ' + err.message);
                     } finally {
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Selected';
+                        btn.innerHTML = btnBi('fas fa-trash-alt', 'Delete Selected', '删除已选');
                     }
                 }
             });
@@ -1316,8 +1807,8 @@
                         // Mark as synced
                         btn.classList.add('synced');
                         btn.style.background = '#6c757d';
-                        btn.innerHTML = '<i class="fas fa-check"></i> Synced';
-                        btn.title = 'Already synced to Product Images';
+                        btn.innerHTML = '<i class="fas fa-check"></i> ' + bi('Synced', '已同步');
+                        btn.title = 'Already synced to Product Images / 已同步到产品图';
                         
                         // Show success message
                         alert(`Successfully synced ${filename} to Product Images!`);
@@ -1325,7 +1816,7 @@
                     } catch (err) {
                         alert('Error syncing image: ' + err.message);
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync';
+                        btn.innerHTML = '<i class="fas fa-sync-alt"></i> ' + bi('Sync', '同步');
                     }
                 }
             });
@@ -1393,80 +1884,80 @@
             
             let detailsHtml = `
                 <div class="detail-section">
-                    <h4>Basic Information</h4>
+                    <h4>${bi('Basic Information', '基本信息')}</h4>
                     <div class="detail-item">
                         <span class="detail-label">SKU:</span>
                         <span class="detail-value">${image.sku}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Filename:</span>
+                        <span class="detail-label">${bi('Filename:', '文件名:')}</span>
                         <span class="detail-value">${image.filename}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Source:</span>
+                        <span class="detail-label">${bi('Source:', '来源:')}</span>
                         <span class="detail-value">${image.source}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Version:</span>
+                        <span class="detail-label">${bi('Version:', '版本:')}</span>
                         <span class="detail-value">v${image.version}</span>
                     </div>
-                    ${image.is_canonical ? '<div class="detail-item"><span class="detail-label">Status:</span><span class="detail-value" style="color: #1cc88a;">Canonical</span></div>' : ''}
+                    ${image.is_canonical ? '<div class="detail-item"><span class="detail-label">' + bi('Status:', '状态:') + '</span><span class="detail-value" style="color: #1cc88a;">' + bi('Canonical', '标准图') + '</span></div>' : ''}
                 </div>
 
                 <div class="detail-section">
-                    <h4>Image Properties</h4>
+                    <h4>${bi('Image Properties', '图片属性')}</h4>
                     <div class="detail-item">
-                        <span class="detail-label">Dimensions:</span>
+                        <span class="detail-label">${bi('Dimensions:', '尺寸:')}</span>
                         <span class="detail-value">${image.width || '?'} × ${image.height || '?'}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Aspect Ratio:</span>
+                        <span class="detail-label">${bi('Aspect Ratio:', '宽高比:')}</span>
                         <span class="detail-value">${image.width && image.height ? (image.width / image.height).toFixed(2) : '?'}</span>
                     </div>
                     ${image.file_size ? `
                     <div class="detail-item">
-                        <span class="detail-label">File Size:</span>
+                        <span class="detail-label">${bi('File Size:', '文件大小:')}</span>
                         <span class="detail-value">${formatFileSize(image.file_size)}</span>
                     </div>` : ''}
                 </div>
 
-                ${image.relative_path || image.directory ? `
+                ${!window.mivHidePath && (image.relative_path || image.directory) ? `
                 <div class="detail-section">
-                    <h4>Location</h4>
+                    <h4>${bi('Location', '位置')}</h4>
                     ${image.relative_path ? `
                     <div class="detail-item">
-                        <span class="detail-label">Path:</span>
+                        <span class="detail-label">${bi('Path:', '路径:')}</span>
                         <span class="detail-value">${image.relative_path}</span>
                     </div>` : ''}
                     ${image.directory ? `
                     <div class="detail-item">
-                        <span class="detail-label">Directory:</span>
+                        <span class="detail-label">${bi('Directory:', '目录:')}</span>
                         <span class="detail-value">${image.directory.split('\\').pop()}</span>
                     </div>` : ''}
                 </div>` : ''}
 
                 <div class="detail-section">
-                    <h4>Timestamps</h4>
+                    <h4>${bi('Timestamps', '时间')}</h4>
                     <div class="detail-item">
-                        <span class="detail-label">Created:</span>
+                        <span class="detail-label">${bi('Created:', '创建:')}</span>
                         <span class="detail-value">${image.created_at ? new Date(image.created_at).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',
                             minute: '2-digit'
-                        }) : 'Unknown'}</span>
+                        }) : bi('Unknown', '未知')}</span>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <h4>URLs</h4>
                     <div class="detail-item">
-                        <span class="detail-label">Preview:</span>
+                        <span class="detail-label">${bi('Preview:', '预览:')}</span>
                         <span class="detail-value">${image.url}</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Full Size:</span>
+                        <span class="detail-label">${bi('Full Size:', '原图:')}</span>
                         <span class="detail-value">${image.full_url}</span>
                     </div>
                 </div>
@@ -1496,7 +1987,7 @@
                 // Show feedback
                 const btn = event.target.closest('.modal-action-btn');
                 const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                btn.innerHTML = '<i class="fas fa-check"></i> ' + bi('Copied!', '已复制!');
                 setTimeout(() => {
                     btn.innerHTML = originalText;
                 }, 2000);
@@ -1641,16 +2132,16 @@
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
                         <i class="fas fa-cloud-download-alt fa-spin" style="font-size: 1.3rem;"></i>
                         <div>
-                            <div style="font-weight: 600; font-size: 1rem; margin-bottom: 3px;">Fetching China FTP Images</div>
-                            <div style="font-size: 0.9rem; opacity: 0.9;">Backend is running in background...</div>
+                            <div style="font-weight: 600; font-size: 1rem; margin-bottom: 3px;">${bi('Fetching China FTP Images', '正在拉取中国 FTP 图片')}</div>
+                            <div style="font-size: 0.9rem; opacity: 0.9;">${bi('Backend is running in background...', '后台正在运行…')}</div>
                         </div>
                     </div>
-                    <div id="taskProgress" style="margin: 10px 0; font-size: 0.85rem; opacity: 0.9;">Initializing...</div>
+                    <div id="taskProgress" style="margin: 10px 0; font-size: 0.85rem; opacity: 0.9;">${bi('Initializing...', '初始化中…')}</div>
                     <div style="height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
                         <div id="taskProgressBar" style="height: 100%; background: linear-gradient(90deg, #1cc88a, #00d4ff); width: 0%; transition: width 0.3s ease;"></div>
                     </div>
                     <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 8px;">
-                        You can close this page and come back later. Images will continue downloading.
+                        ${bi('You can close this page and come back later. Images will continue downloading.', '可关闭此页面稍后返回，图片将继续下载。')}
                     </div>
                 </div>
             `;
@@ -1665,13 +2156,13 @@
             const progressBar = document.getElementById('taskProgressBar');
 
             if (status.status === 'fetching') {
-                progressDiv.textContent = `Fetching images from server... (${status.current || 0}/${status.total || '?'})`;
+                progressDiv.innerHTML = bi('Fetching images from server...', '正在从服务器拉取图片…') + ` (${status.current || 0}/${status.total || '?'})`;
                 if (status.total) {
                     const percent = Math.min(50, (status.current / status.total) * 50);
                     progressBar.style.width = percent + '%';
                 }
             } else if (status.status === 'syncing') {
-                progressDiv.textContent = `Syncing images to database... (${status.synced || 0}/${status.to_sync || '?'})`;
+                progressDiv.innerHTML = bi('Syncing images to database...', '正在同步图片到数据库…') + ` (${status.synced || 0}/${status.to_sync || '?'})`;
                 if (status.to_sync) {
                     const percent = 50 + ((status.synced / status.to_sync) * 50);
                     progressBar.style.width = percent + '%';
@@ -1685,8 +2176,8 @@
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <i class="fas fa-check-circle" style="font-size: 1.3rem;"></i>
                             <div>
-                                <div style="font-weight: 600;">Download Complete!</div>
-                                <div style="font-size: 0.9rem;">Synced: ${status.synced}, Failed: ${status.failed}, Already synced: ${status.already_synced}</div>
+                                <div style="font-weight: 600;">${bi('Download Complete!', '下载完成!')}</div>
+                                <div style="font-size: 0.9rem;">${bi('Synced:', '已同步:')} ${status.synced}, ${bi('Failed:', '失败:')} ${status.failed}, ${bi('Already synced:', '已存在:')} ${status.already_synced}</div>
                             </div>
                         </div>
                     `;
@@ -1704,7 +2195,7 @@
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <i class="fas fa-exclamation-circle" style="font-size: 1.3rem;"></i>
                             <div>
-                                <div style="font-weight: 600;">Error</div>
+                                <div style="font-weight: 600;">${bi('Error', '错误')}</div>
                                 <div style="font-size: 0.9rem;">${status.error}</div>
                             </div>
                         </div>
@@ -1740,7 +2231,7 @@
         async function fetchChinaFtp() {
             const btn = event.target;
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting background task...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + bi('Starting background task...', '正在启动后台任务…');
             btn.disabled = true;
 
             try {
@@ -1778,7 +2269,7 @@
             resultsContainer.innerHTML = `
                 <div class="error">
                     <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                    <h3>Search Error</h3>
+                    <h3>${bi('Search Error', '搜索错误')}</h3>
                     <p>${message}</p>
                 </div>
             `;
@@ -1856,8 +2347,8 @@ function applyBatchOutcomeBanner(status) {
         el.style.borderColor = '#f59e0b';
         el.style.color = '#78350f';
         el.innerHTML =
-            '<strong>Interrupted</strong> — This batch is <em>not</em> running anymore (for example after a server restart). ' +
-            'Numbers below are the last saved snapshot. Use the <strong>orange button</strong> under the status box (rerun or open Batch Fetch), or start <strong>Batch Fetch</strong> from the toolbar.';
+            '<strong>' + bi('Interrupted', '已中断') + '</strong> — ' + bi('This batch is <em>not</em> running anymore (for example after a server restart).', '此批次已不再运行（例如服务器重启后）。') + ' ' +
+            bi('Numbers below are the last saved snapshot. Use the <strong>orange button</strong> under the status box (rerun or open Batch Fetch), or start <strong>Batch Fetch</strong> from the toolbar.', '下方数字为最后保存的快照。请使用状态框下的<strong>橙色按钮</strong>（重新运行或打开批量拉取），或从工具栏开始<strong>批量拉取</strong>。');
         return;
     }
     if (status.status === 'error') {
@@ -1868,7 +2359,7 @@ function applyBatchOutcomeBanner(status) {
         const msg = status.error != null && String(status.error).length ? String(status.error) : 'The batch ended with an error.';
         el.textContent = '';
         const lead = document.createElement('strong');
-        lead.textContent = 'Failed — ';
+        lead.textContent = 'Failed — 失败 — ';
         el.appendChild(lead);
         el.appendChild(document.createTextNode(msg));
         return;
@@ -1878,7 +2369,7 @@ function applyBatchOutcomeBanner(status) {
         el.style.background = '#d1fae5';
         el.style.borderColor = '#10b981';
         el.style.color = '#065f46';
-        el.innerHTML = '<strong>Completed</strong> — All styles in this batch finished.';
+        el.innerHTML = '<strong>' + bi('Completed', '已完成') + '</strong> — ' + bi('All styles in this batch finished.', '本批次所有款式已完成。');
         return;
     }
     if (isBatchActivelyRunning(status)) {
@@ -1886,7 +2377,7 @@ function applyBatchOutcomeBanner(status) {
         el.style.background = '#eff6ff';
         el.style.borderColor = '#93c5fd';
         el.style.color = '#1e3a8a';
-        el.innerHTML = '<strong>In progress</strong> — Worker is running; this updates every second.';
+        el.innerHTML = '<strong>' + bi('In progress', '进行中') + '</strong> — ' + bi('Worker is running; this updates every second.', '任务正在运行；每秒更新。');
         return;
     }
     el.style.display = 'none';
@@ -1961,19 +2452,19 @@ function renderBatchBanner(status) {
         : '';
 
     if (status.interrupted === true) {
-        batchJobBannerTitleEl.textContent = `Batch interrupted — not running (${completedStyles}/${totalStyles} styles in snapshot)`;
-        batchJobBannerMetaEl.textContent =
-            `Saved at ${formatTimeStamp(status.updated_at || status.saved_at)} — start a new batch to continue. Task ${status.task_id || ''}${currentStyleLabel}`;
+        batchJobBannerTitleEl.innerHTML = bi(`Batch interrupted — not running (${completedStyles}/${totalStyles} styles in snapshot)`, `批次已中断 — 未在运行（快照 ${completedStyles}/${totalStyles} 款）`);
+        batchJobBannerMetaEl.innerHTML =
+            bi(`Saved at ${formatTimeStamp(status.updated_at || status.saved_at)} — start a new batch to continue.`, `保存于 ${formatTimeStamp(status.updated_at || status.saved_at)} — 请开始新批次以继续。`) + ` Task ${status.task_id || ''}${currentStyleLabel}`;
     } else if (status.status === 'error') {
-        batchJobBannerTitleEl.textContent = `Last batch failed (${completedStyles}/${totalStyles} styles)`;
-        batchJobBannerMetaEl.textContent = `${status.error || 'Error'} | Task ${status.task_id || ''}`;
+        batchJobBannerTitleEl.innerHTML = bi(`Last batch failed (${completedStyles}/${totalStyles} styles)`, `上次批次失败（${completedStyles}/${totalStyles} 款）`);
+        batchJobBannerMetaEl.textContent = `${status.error || 'Error / 错误'} | Task ${status.task_id || ''}`;
     } else if (active) {
-        const curSku = currentStyle.sku ? ` | Current: ${currentStyle.sku}` : '';
-        batchJobBannerTitleEl.textContent = `Batch running (${completedStyles}/${totalStyles} styles)`;
+        const curSku = currentStyle.sku ? ` | ${bi('Current:', '当前:')} ${currentStyle.sku}` : '';
+        batchJobBannerTitleEl.innerHTML = bi(`Batch running (${completedStyles}/${totalStyles} styles)`, `批次运行中（${completedStyles}/${totalStyles} 款）`);
         batchJobBannerMetaEl.textContent = `Task ${status.task_id || ''}${curSku}`;
     } else {
-        batchJobBannerTitleEl.textContent = `Last batch: ${completedStyles}/${totalStyles} styles completed`;
-        batchJobBannerMetaEl.textContent = `Finished: ${formatTimeStamp(status.finished_at || status.updated_at)} | Task ${status.task_id || ''}`;
+        batchJobBannerTitleEl.innerHTML = bi(`Last batch: ${completedStyles}/${totalStyles} styles completed`, `上次批次：已完成 ${completedStyles}/${totalStyles} 款`);
+        batchJobBannerMetaEl.innerHTML = bi('Finished:', '完成:') + ' ' + formatTimeStamp(status.finished_at || status.updated_at) + ` | Task ${status.task_id || ''}`;
     }
 
     batchJobBannerEl.style.display = 'block';
@@ -1989,17 +2480,17 @@ function renderCurrentStyle(status) {
     const currentStyle = status.current_style || null;
 
     if (status.interrupted === true) {
-        currentStyleLabelEl.textContent = 'Status: interrupted (no live worker)';
-        currentStyleDetailsEl.textContent =
-            'The app is showing the last saved progress. This is not actively fetching. Use Batch Fetch again to resume remaining SKUs.';
+        currentStyleLabelEl.innerHTML = bi('Status: interrupted (no live worker)', '状态：已中断（无活跃任务）');
+        currentStyleDetailsEl.innerHTML =
+            bi('The app is showing the last saved progress. This is not actively fetching. Use Batch Fetch again to resume remaining SKUs.', '显示的是最后保存的进度，未在主动拉取。请再次使用批量拉取以继续剩余 SKU。');
         const lastUpdate = status.updated_at || status.saved_at;
-        batchLastUpdatedEl.textContent = lastUpdate ? `Last saved: ${formatTimeStamp(lastUpdate)}` : '';
+        batchLastUpdatedEl.innerHTML = lastUpdate ? bi('Last saved:', '最后保存:') + ' ' + formatTimeStamp(lastUpdate) : '';
         return;
     }
 
     if (!currentStyle || !currentStyle.sku) {
-        currentStyleLabelEl.textContent = 'Current Style: waiting';
-        currentStyleDetailsEl.textContent = 'No active style yet.';
+        currentStyleLabelEl.innerHTML = bi('Current Style: waiting', '当前款式：等待中');
+        currentStyleDetailsEl.innerHTML = bi('No active style yet.', '尚无进行中的款式。');
     } else {
         const styleStatus = currentStyle.status || 'running';
         const imageStep = Number(currentStyle.current || 0);
@@ -2009,12 +2500,12 @@ function renderCurrentStyle(status) {
         const alreadySynced = Number(currentStyle.already_synced || 0);
         const currentFilename = currentStyle.current_filename ? ` | File: ${currentStyle.current_filename}` : '';
 
-        currentStyleLabelEl.textContent = `Current Style ${currentStyleIndex}/${totalStyles}: ${currentStyle.sku} (${styleStatus})`;
-        currentStyleDetailsEl.textContent = `Image progress ${imageStep}/${imageTotal} | Synced ${synced} | Failed ${failed} | Already ${alreadySynced}${currentFilename}`;
+        currentStyleLabelEl.innerHTML = `${bi('Current Style', '当前款式')} ${currentStyleIndex}/${totalStyles}: ${currentStyle.sku} (${styleStatus})`;
+        currentStyleDetailsEl.innerHTML = bi('Image progress', '图片进度') + ` ${imageStep}/${imageTotal} | ` + bi('Synced', '已同步') + ` ${synced} | ` + bi('Failed', '失败') + ` ${failed} | ` + bi('Already', '已存在') + ` ${alreadySynced}${currentFilename}`;
     }
 
     const lastUpdate = status.updated_at || status.finished_at;
-    batchLastUpdatedEl.textContent = lastUpdate ? `Last update: ${formatTimeStamp(lastUpdate)}` : '';
+    batchLastUpdatedEl.innerHTML = lastUpdate ? bi('Last update:', '最后更新:') + ' ' + formatTimeStamp(lastUpdate) : '';
 }
 
 function renderBatchResults(status) {
@@ -2024,12 +2515,12 @@ function renderBatchResults(status) {
     if (results.length === 0) {
         if (status.interrupted === true) {
             resultsContainer.innerHTML =
-                '<div style="color:#b45309;">No per-style results in this snapshot — the batch stopped before completing (for example after a restart).</div>';
+                '<div style="color:#b45309;">' + bi('No per-style results in this snapshot — the batch stopped before completing (for example after a restart).', '此快照无逐款结果 — 批次在完成前停止（例如重启后）。') + '</div>';
         } else if (status.status === 'error') {
             resultsContainer.innerHTML =
-                '<div style="color:#b91c1c;">Batch failed before any style finished, or results were not recorded.</div>';
+                '<div style="color:#b91c1c;">' + bi('Batch failed before any style finished, or results were not recorded.', '批次在任一款完成前失败，或未记录结果。') + '</div>';
         } else {
-            resultsContainer.innerHTML = '<div style="color:#6b7280;">No style result yet. Waiting for first style...</div>';
+            resultsContainer.innerHTML = '<div class="miv-muted" style="color:#374151;">' + bi('No style result yet. Waiting for first style...', '尚无款式结果，等待第一款…') + '</div>';
         }
         return;
     }
@@ -2048,7 +2539,7 @@ function renderBatchResults(status) {
                 <i class="fas fa-${style.icon}" style="color:${style.color};margin-top:2px;"></i>
                 <div style="flex:1;min-width:0;">
                     <div style="font-weight:700;color:#1f2937;">${index + 1}. ${result.sku || '(empty sku)'}</div>
-                    <div style="font-size:0.85rem;color:#4b5563;">Found ${totalFound} | To sync ${toSync} | Synced ${synced} | Failed ${failed} | Already ${already}</div>
+                    <div class="miv-muted" style="font-size:0.85rem;color:#374151;">${bi('Found', '找到')} ${totalFound} | ${bi('To sync', '待同步')} ${toSync} | ${bi('Synced', '已同步')} ${synced} | ${bi('Failed', '失败')} ${failed} | ${bi('Already', '已存在')} ${already}</div>
                     ${result.error ? `<div style="font-size:0.8rem;color:#b91c1c;">${result.error}</div>` : ''}
                 </div>
                 <div style="font-size:0.82rem;color:${style.color};font-weight:600;text-transform:capitalize;">${result.status || 'pending'}</div>
@@ -2127,25 +2618,21 @@ function updateBatchRerunUi(status) {
     wrap.style.display = 'block';
     var total = Number(status.total || 0);
     if (skus.length > 0) {
-        btn.textContent =
-            'Rerun batch (' + skus.length + ' SKU' + (skus.length === 1 ? '' : 's') + ')';
+        btn.innerHTML =
+            bi('Rerun batch', '重新运行批次') + ' (' + skus.length + ' SKU' + (skus.length === 1 ? '' : 's') + ')';
         if (hint) {
             if (total > skus.length) {
-                hint.textContent =
-                    'Recovered ' +
-                    skus.length +
-                    ' SKU(s) from this snapshot (job had ' +
-                    total +
-                    ' styles). Rerun only covers recovered SKUs — use Batch Fetch to add any missing ones.';
+                hint.innerHTML =
+                    bi('Recovered ' + skus.length + ' SKU(s) from this snapshot (job had ' + total + ' styles). Rerun only covers recovered SKUs — use Batch Fetch to add any missing ones.', '从此快照恢复 ' + skus.length + ' 个 SKU（任务共 ' + total + ' 款）。重新运行仅覆盖已恢复的 SKU — 请用批量拉取补充缺失项。');
             } else {
-                hint.textContent = 'Starts a new job with the same ' + skus.length + ' SKU(s).';
+                hint.innerHTML = bi('Starts a new job with the same ' + skus.length + ' SKU(s).', '使用相同 ' + skus.length + ' 个 SKU 开始新任务。');
             }
         }
     } else {
-        btn.textContent = 'Open Batch Fetch (paste SKUs)';
+        btn.innerHTML = bi('Open Batch Fetch (paste SKUs)', '打开批量拉取（粘贴 SKU）');
         if (hint) {
-            hint.textContent =
-                'No SKUs could be read from this snapshot. Open Batch Fetch and paste your list again.';
+            hint.innerHTML =
+                bi('No SKUs could be read from this snapshot. Open Batch Fetch and paste your list again.', '无法从此快照读取 SKU。请打开批量拉取并重新粘贴列表。');
         }
     }
 }
@@ -2269,13 +2756,13 @@ async function submitBatchFetch() {
     const inputValue = (inputEl && inputEl.value ? inputEl.value : '').trim();
 
     if (!inputValue) {
-        alert('Please enter at least one SKU');
+        alert('Please enter at least one SKU / 请至少输入一个 SKU');
         return;
     }
 
     const skus = parseSkuListInput(inputValue);
     if (skus.length === 0) {
-        alert('No valid SKUs found');
+        alert('No valid SKUs found / 未找到有效 SKU');
         return;
     }
 
@@ -2298,7 +2785,7 @@ async function submitBatchFetch() {
         });
 
         if (!response.ok) {
-            alert('Failed to start batch fetch');
+            alert('Failed to start batch fetch / 启动批量拉取失败');
             closeBatchStatusModal();
             return;
         }
@@ -2307,7 +2794,7 @@ async function submitBatchFetch() {
         batchTaskStartTime = Date.now();
         startBatchPolling(data.task_id);
     } catch (error) {
-        alert(`Failed to start batch fetch: ${error.message}`);
+        alert(`Failed to start batch fetch / 启动批量拉取失败: ${error.message}`);
         closeBatchStatusModal();
     }
 }
@@ -2315,7 +2802,7 @@ async function submitBatchFetch() {
 async function rerunInterruptedBatch() {
     const skus = window.__batchRerunSkus || [];
     if (!skus.length) {
-        alert('No saved SKU list for this batch (older snapshots may not include it). Use Batch Fetch and paste your SKUs again.');
+        alert('No saved SKU list for this batch (older snapshots may not include it). Use Batch Fetch and paste your SKUs again. / 此批次无保存的 SKU 列表。请使用批量拉取重新粘贴 SKU。');
         return;
     }
 
@@ -2379,16 +2866,16 @@ function escapeHtmlBatch(s) {
 
 function batchHistoryStatusPill(t) {
     if (t.is_running && !t.interrupted) {
-        return { text: 'Running', fg: '#1d4ed8', bg: '#dbeafe' };
+        return { text: 'Running / 运行中', fg: '#1d4ed8', bg: '#dbeafe' };
     }
     if (t.interrupted) {
-        return { text: 'Interrupted', fg: '#b45309', bg: '#fef3c7' };
+        return { text: 'Interrupted / 已中断', fg: '#b45309', bg: '#fef3c7' };
     }
     if (t.status === 'error') {
-        return { text: 'Failed', fg: '#b91c1c', bg: '#fee2e2' };
+        return { text: 'Failed / 失败', fg: '#b91c1c', bg: '#fee2e2' };
     }
     if (t.status === 'completed') {
-        return { text: 'Finished', fg: '#047857', bg: '#d1fae5' };
+        return { text: 'Finished / 已完成', fg: '#047857', bg: '#d1fae5' };
     }
     return { text: String(t.status || '—'), fg: '#374151', bg: '#f3f4f6' };
 }
@@ -2443,7 +2930,7 @@ function renderBatchHistoryTable(tasks) {
             '<td style="padding:0.5rem 0.75rem;">' +
             escapeHtmlBatch(prog) +
             '</td>' +
-            '<td style="padding:0.5rem 0.75rem;font-size:0.8rem;color:#4b5563;">' +
+            '<td style="padding:0.5rem 0.75rem;font-size:0.8rem;color:#374151;">' +
             escapeHtmlBatch(sumLine) +
             errHtml +
             '</td>' +
@@ -2456,7 +2943,7 @@ function renderBatchHistoryTable(tasks) {
         b.type = 'button';
         b.className = 'search-btn';
         b.style.cssText = 'padding:0.35rem 0.65rem;font-size:0.8rem;';
-        b.textContent = 'Details';
+        b.innerHTML = bi('Details', '详情');
         b.addEventListener('click', function () {
             openBatchFromHistory(t.task_id);
         });
@@ -2473,17 +2960,14 @@ async function refreshBatchHistory() {
         var data = await response.json();
         var days = data.days != null ? data.days : 3;
         if (meta) {
-            meta.textContent =
-                'Running and finished jobs from the last ' +
-                days +
-                ' days (by last activity). Cutoff UTC: ' +
-                (data.cutoff_utc || '') +
-                '.';
+            meta.innerHTML =
+                bi('Running and finished jobs from the last ' + days + ' days (by last activity).', '近 ' + days + ' 天内运行及已完成的任务（按最后活动）。') +
+                ' Cutoff UTC: ' + (data.cutoff_utc || '') + '.';
         }
         renderBatchHistoryTable(data.tasks || []);
     } catch (e) {
         console.error(e);
-        if (meta) meta.textContent = 'Could not load history.';
+        if (meta) meta.innerHTML = bi('Could not load history.', '无法加载历史记录。');
         renderBatchHistoryTable([]);
     }
 }

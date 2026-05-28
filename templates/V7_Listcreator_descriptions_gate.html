@@ -100,7 +100,7 @@
                                 <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
                             </td>
                             <td class="align-middle">
-                                <select name="description_{{ loop.index }}" class="form-control">
+                                <select name="description_{{ loop.index }}" class="form-control" required>
                                     <option value="">Select a description</option>
                                     {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
                                     <option value="{{ option }}">{{ option }}</option>

@@ -1,5 +1,5 @@
 from py.utilities.setting import login_required
-from flask import Blueprint, render_template, request, jsonify, current_app, send_file,send_from_directory,redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, jsonify, current_app, send_file, send_from_directory, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, PatternFill, Border, Side
@@ -1285,28 +1285,39 @@ def process_list_input(list_input, current_user, snapshot_name='', enforce_snaps
 @login_required
 def update_descriptions():
     descriptions = {}
-    original_input = session.get('original_input', '')
+    original_input = (request.form.get('list_input') or '').strip() or session.get('original_input', '')
 
     # Collect all style descriptions from form
     for key, value in request.form.items():
         if key.startswith('description_'):
             style_index = key.split('_')[1]
             style = request.form.get(f'style_{style_index}', '')
-            if style:
-                descriptions[style] = value.upper()
-                update_description_in_db(style, value.upper())
+            raw_val = (value or '').strip()
+            if style and raw_val:
+                descriptions[style] = raw_val.upper()
+                update_description_in_db(style, raw_val.upper())
 
-    if session.pop('v7_lc_staged', None):
+    # Staged gate flow, or bake HTML snapshot embedding rebuild_html_snapshot hidden fields —
+    # without this, Submit from a saved snapshot only updated DB because v7_lc_staged was popped at job queue time.
+    rebuild_from_snapshot = (
+        request.form.get('rebuild_html_snapshot') == '1' and bool((request.form.get('list_input') or '').strip())
+    )
+    staged_now = session.get('v7_lc_staged')
+    enqueue_rebuild = bool(staged_now) or rebuild_from_snapshot
+
+    if enqueue_rebuild:
         app = current_app._get_current_object()
-        snap = (
-            _sanitize_snapshot_label(request.form.get('snapshot_name', ''))
-            or session.get('v7_lc_snapshot_name')
+        snap = _sanitize_snapshot_label(
+            (request.form.get('snapshot_name') or '').strip()
+            or (session.get('v7_lc_snapshot_name') or '')
             or ''
         )
-        session.pop('v7_lc_snapshot_name', None)
         if len(snap) < 2:
             flash('Snapshot name required (use at least 2 characters).', 'warning')
             return redirect(url_for('v7_listcreator.index'))
+        session.pop('v7_lc_staged', None)
+        session.pop('v7_lc_snapshot_name', None)
+        session['original_input'] = original_input
         rid = _enqueue_listcreator_html_job(app, original_input, session.get('username', ''), snap)
         return redirect(url_for('v7_listcreator.html_job_wait', rid=rid))
 
@@ -1453,7 +1464,9 @@ def listcreator_cached_html(rid):
     if not os.path.isfile(path):
         return jsonify({'error': 'Expired or removed'}), 404
     _listcreator_html_prune_old(app, slug)
-    return send_file(path, mimetype='text/html')
+    resp = send_file(path, mimetype='text/html', max_age=0, conditional=False)
+    resp.headers.setdefault('Cache-Control', 'private, max-age=0, must-revalidate')
+    return resp
 
 
 @v7_listcreator_bp.route('/v7_listcreator/html_jobs', methods=['GET'])
@@ -1956,101 +1969,157 @@ def _build_listcreator_inventory_context(
     }
 
 
+def _listcreator_regenerate_snapshot_file(app, slug, rid, list_input, acting_username, slack_notify=False):
+    """
+    Re-render the full V7_Listcreator HTML for ``rid`` and overwrite the cached file + manifest in place.
+
+    Parameters
+    ----------
+    acting_username :
+        Passed as Flask ``session['username']`` while rendering (OMS/Dropbox session behavior).
+    slack_notify :
+        Worker sets True when a newly queued snapshot finishes; Edit-desc refresh uses False.
+    """
+    tmp_hp = None
+    hp = None
+    meta_out = {}
+    resolved_styles_full = ''
+
+    try:
+        with app.test_request_context('/'):
+            from flask import session as flask_session
+
+            flask_session.permanent = True
+            flask_session['username'] = acting_username
+
+            phase = _phase1_resolve_list_input(list_input, acting_username)
+            if phase.get('error_message'):
+                return False, phase['error_message'] or 'Invalid input'
+            style_list = phase['style_list']
+            if not style_list:
+                return False, 'No styles to process'
+            ms = list(phase['missing_styles'])
+            ctx = _build_listcreator_inventory_context(
+                list_input,
+                acting_username,
+                style_list,
+                phase['dropbox_images'],
+                phase['duplicate_items'],
+                phase['clean_list_for_memo'],
+                ms,
+                error_message=phase.get('error_message'),
+            )
+            if not ctx:
+                return False, 'No inventory data for this list'
+
+            memo = ctx.get('clean_list_for_memo')
+            if memo:
+                resolved_styles_full = str(memo).strip()
+            else:
+                resolved_styles_full = ','.join(style_list)
+
+            pst_snap = _pst_now_parts()
+            job_snap_row = _listcreator_html_load_job(app, slug, rid) or {}
+            baked_snapshot_label = _sanitize_snapshot_label(job_snap_row.get('snapshot_name') or '')
+            html = render_template(
+                'V7_Listcreator.html',
+                **ctx,
+                list_input=list_input,
+                snapshot_name=baked_snapshot_label,
+                snapshot_generated_at_pt=pst_snap['created_at_pt_display'],
+                snapshot_generated_at_iso=pst_snap['created_at_iso'],
+                html_snapshot_job_id=rid,
+            )
+            hp = _listcreator_html_snap_path(app, slug, rid)
+            tmp_hp = hp + '.tmp'
+            view_url = _listcreator_cached_html_public_url(rid, slug)
+
+        os.makedirs(os.path.dirname(hp) or '.', exist_ok=True)
+        with open(tmp_hp, 'w', encoding='utf-8') as f:
+            f.write(html)
+        os.replace(tmp_hp, hp)
+        tmp_hp = None
+
+        pst_pt = pst_snap['created_at_pt_display']
+        pst_iso = pst_snap['created_at_iso']
+        basename = os.path.basename(hp)
+        meta_out = {}
+
+        with _listcreator_html_lock:
+            meta = _listcreator_html_load_job(app, slug, rid)
+            if not meta:
+                return False, 'Snapshot job manifest not found'
+            meta_out = meta.copy()
+            meta['status'] = 'ready'
+            meta['error'] = None
+            meta['html_file'] = basename
+            meta['view_url'] = view_url
+            meta['resolved_styles_full'] = resolved_styles_full
+            meta['snapshot_generated_at_pt'] = pst_pt
+            meta['snapshot_generated_at_iso'] = pst_iso
+            p = _listcreator_html_job_manifest_path(app, slug, rid)
+            tmp_meta = p + '.tmp'
+            with open(tmp_meta, 'w', encoding='utf-8') as f:
+                json.dump(meta, f, indent=0)
+            os.replace(tmp_meta, p)
+            _listcreator_html_prune_old(app, slug)
+
+        label = 'job ready (Slack notified)' if slack_notify else 'snapshot file rewritten in place'
+        current_app.logger.info('listcreator HTML %s rid=%s user=%s', label, rid, acting_username)
+
+        if slack_notify and meta_out:
+            try:
+                from py.utilities.slack_notify import notify_v7_list_creator_optional, public_origin
+
+                origin = public_origin()
+                rel = view_url if view_url else ''
+                full = rel if rel.startswith('http') else (origin + rel if rel.startswith('/') else rel)
+                lbl = ((meta_out.get('snapshot_name') or '').strip()) or '(no label)'
+                li_raw = (list_input or '').strip()
+                styles_text = (resolved_styles_full or '').strip()
+                slack_max = 3400
+                if len(styles_text) > slack_max:
+                    styles_text = styles_text[: slack_max - 20] + '\n… (truncated)'
+
+                chunks = [
+                    '[V7 List Creator] HTML snapshot ready',
+                    f'User: {acting_username}',
+                    f'Snapshot: {lbl}',
+                    f'Job id: {rid}',
+                ]
+                if li_raw and _listcreator_input_source_looks_like_dropbox_path(li_raw):
+                    chunks.append(f'Dropbox / folder path (submitted): {li_raw}')
+                elif li_raw:
+                    chunks.append(f'Source input line: {li_raw}')
+                if styles_text:
+                    chunks.append(f'Styles (resolved): {styles_text}')
+                if full:
+                    chunks.append(f'Open snapshot: {full}')
+
+                notify_v7_list_creator_optional('\n'.join(chunks) + '\n')
+            except Exception:
+                current_app.logger.debug('slack v7 snapshot notify skipped', exc_info=True)
+
+        return True, None
+
+    except Exception as e:
+        current_app.logger.exception('listcreator snapshot rewrite failed rid=%s', rid)
+        if tmp_hp and os.path.isfile(tmp_hp):
+            try:
+                os.remove(tmp_hp)
+            except OSError:
+                pass
+        return False, str(e)
+
+
 def _listcreator_render_html_worker(app, slug, rid, list_input, current_user):
     with app.app_context():
         try:
-            with app.test_request_context('/'):
-                from flask import session
-                session.permanent = True
-                session['username'] = current_user
-                phase = _phase1_resolve_list_input(list_input, current_user)
-                if phase.get('error_message'):
-                    _listcreator_html_fail_job(app, slug, rid, phase['error_message'] or 'Invalid input')
-                    return
-                style_list = phase['style_list']
-                if not style_list:
-                    _listcreator_html_fail_job(app, slug, rid, 'No styles to process')
-                    return
-                ms = list(phase['missing_styles'])
-                ctx = _build_listcreator_inventory_context(
-                    list_input,
-                    current_user,
-                    style_list,
-                    phase['dropbox_images'],
-                    phase['duplicate_items'],
-                    phase['clean_list_for_memo'],
-                    ms,
-                    error_message=phase.get('error_message'),
-                )
-                if not ctx:
-                    _listcreator_html_fail_job(app, slug, rid, 'No inventory data for this list')
-                    return
-                memo = ctx.get('clean_list_for_memo')
-                if memo:
-                    resolved_styles_full = str(memo).strip()
-                else:
-                    resolved_styles_full = ','.join(style_list)
-                pst_snap = _pst_now_parts()
-                html = render_template(
-                    'V7_Listcreator.html',
-                    **ctx,
-                    list_input=list_input,
-                    snapshot_generated_at_pt=pst_snap['created_at_pt_display'],
-                    snapshot_generated_at_iso=pst_snap['created_at_iso'],
-                )
-                hp = _listcreator_html_snap_path(app, slug, rid)
-                with open(hp, 'w', encoding='utf-8') as f:
-                    f.write(html)
-                view_url = _listcreator_cached_html_public_url(rid, slug)
-            with _listcreator_html_lock:
-                meta = _listcreator_html_load_job(app, slug, rid)
-                if meta:
-                    meta['status'] = 'ready'
-                    meta['error'] = None
-                    meta['html_file'] = os.path.basename(hp)
-                    meta['view_url'] = view_url
-                    meta['resolved_styles_full'] = resolved_styles_full
-                    meta['snapshot_generated_at_pt'] = pst_snap['created_at_pt_display']
-                    meta['snapshot_generated_at_iso'] = pst_snap['created_at_iso']
-                    p = _listcreator_html_job_manifest_path(app, slug, rid)
-                    tmp = p + '.tmp'
-                    with open(tmp, 'w', encoding='utf-8') as f:
-                        json.dump(meta, f, indent=0)
-                    os.replace(tmp, p)
-                _listcreator_html_prune_old(app, slug)
-            current_app.logger.info('listcreator HTML job ready rid=%s user=%s', rid, current_user)
-            if meta:
-                try:
-                    from py.utilities.slack_notify import notify_v7_list_creator_optional, public_origin
-
-                    origin = public_origin()
-                    rel = view_url if view_url else ''
-                    full = rel if rel.startswith('http') else (origin + rel if rel.startswith('/') else rel)
-                    lbl = ((meta.get('snapshot_name') or '').strip()) or '(no label)'
-                    li_raw = (list_input or '').strip()
-                    styles_text = (resolved_styles_full or '').strip()
-                    slack_max = 3400
-                    if len(styles_text) > slack_max:
-                        styles_text = styles_text[: slack_max - 20] + '\n… (truncated)'
-
-                    chunks = [
-                        '[V7 List Creator] HTML snapshot ready',
-                        f'User: {current_user}',
-                        f'Snapshot: {lbl}',
-                        f'Job id: {rid}',
-                    ]
-                    if li_raw and _listcreator_input_source_looks_like_dropbox_path(li_raw):
-                        chunks.append(f'Dropbox / folder path (submitted): {li_raw}')
-                    elif li_raw:
-                        chunks.append(f'Source input line: {li_raw}')
-                    if styles_text:
-                        chunks.append(f'Styles (resolved): {styles_text}')
-                    if full:
-                        chunks.append(f'Open snapshot: {full}')
-
-                    notify_v7_list_creator_optional('\n'.join(chunks) + '\n')
-                except Exception:
-                    current_app.logger.debug('slack v7 snapshot notify skipped', exc_info=True)
+            ok, err = _listcreator_regenerate_snapshot_file(
+                app, slug, rid, list_input, current_user, slack_notify=True
+            )
+            if not ok:
+                _listcreator_html_fail_job(app, slug, rid, err or 'Render failed')
         except Exception as e:
             current_app.logger.exception('listcreator HTML job failed rid=%s', rid)
             _listcreator_html_fail_job(app, slug, rid, str(e))
@@ -2539,39 +2608,81 @@ def count_dropbox_files(dropbox_path):
 
 
 @v7_listcreator_bp.route('/update_descriptions_bulk', methods=['POST'])
+@login_required
 def update_descriptions_bulk():
-    updates = request.json.get('updates', [])
+    """Bulk-update description rows from the Edit Desc modal. Optionally rewrite the cached HTML snapshot file in place (same job id)."""
+    payload = request.get_json(silent=True) or {}
+    updates = payload.get('updates') or []
+    regenerate_rid = payload.get('regenerate_html_job_rid') or payload.get('regenerate_html_snapshot_rid')
+    if isinstance(regenerate_rid, str):
+        regenerate_rid = regenerate_rid.strip()
+
     connection = get_mysql_connection()
-    
+
     if connection:
         try:
             cursor = connection.cursor()
-            
+
             for update in updates:
-                style = update['style']
-                description = update['description'].upper()
-                
+                style = (update.get('style') or '').strip()
+                desc_raw = update.get('description') or ''
+                if not style or not str(desc_raw).strip():
+                    continue
+                description = str(desc_raw).strip().upper()
+
                 # Try update first
                 update_query = "UPDATE onlinedb.description SET description = %s WHERE style = %s"
                 cursor.execute(update_query, (description, style))
-                
+
                 # If no rows were updated, insert new record
                 if cursor.rowcount == 0:
                     insert_query = "INSERT INTO onlinedb.description (style, description) VALUES (%s, %s)"
                     cursor.execute(insert_query, (style, description))
-            
+
             connection.commit()
-            return jsonify({"success": True, "message": "Descriptions updated successfully"})
-            
+
+            snapshot_refreshed = False
+            refresh_error = None
+            current_user = session.get('username')
+            app = current_app._get_current_object()
+            slug = (_listcreator_requested_storage_slug(current_user) if current_user else '') or ''
+
+            if regenerate_rid and updates and _valid_listcreator_job_id(regenerate_rid) and current_user:
+                meta_j = _listcreator_html_load_job(app, slug, regenerate_rid)
+                if meta_j and meta_j.get('username') == current_user:
+                    li = (meta_j.get('list_input') or '').strip()
+                    if li:
+                        ok_rw, rw_err = _listcreator_regenerate_snapshot_file(
+                            app, slug, regenerate_rid, li, current_user, slack_notify=False
+                        )
+                        if ok_rw:
+                            snapshot_refreshed = True
+                        else:
+                            refresh_error = rw_err or 'Rewrite failed'
+
+            out = {
+                'success': True,
+                'message': 'Descriptions updated successfully',
+                'snapshot_refreshed': snapshot_refreshed,
+            }
+            if refresh_error:
+                out['snapshot_refresh_error'] = refresh_error
+                out['message'] = (
+                    'Descriptions saved, but rewriting the snapshot HTML file failed '
+                    '(database is up to date). You can reopen this page or retry. '
+                    f'Detail: {refresh_error}'
+                )
+            return jsonify(out)
+
         except Error as e:
             current_app.logger.error(f"Error updating descriptions: {e}")
-            return jsonify({"success": False, "message": str(e)})
-            
+            return jsonify({'success': False, 'message': str(e)})
+
         finally:
             cursor.close()
             connection.close()
-            
-    return jsonify({"success": False, "message": "Could not connect to database"})
+
+    return jsonify({'success': False, 'message': 'Could not connect to database'})
 
 @v7_listcreator_bp.route('/export_images', methods=['POST'])
 def export_images():

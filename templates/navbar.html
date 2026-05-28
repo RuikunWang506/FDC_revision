@@ -60,7 +60,7 @@
                     <i class="fas fa-qrcode fa-lg"></i>
                 </button>
             </li>
-            {% if current_user %}
+            {% if current_user and can_view_logs() %}
             <li class="nav-item d-flex align-items-center">
                 <a class="nav-link py-2 pr-2 mr-1" href="{{ url_for('display') }}" title="Log viewer">📕 Log</a>
             </li>

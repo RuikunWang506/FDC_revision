@@ -857,6 +857,12 @@
             </div>
             {% endif %}
 
+            {% if customer_purchase_notice %}
+            <div class="alert alert-warning text-dark mb-3" role="alert" style="border-radius: 8px;">
+                <i class="fas fa-lock mr-2"></i>{{ customer_purchase_notice }}
+            </div>
+            {% endif %}
+
             {% if error_message %}
             <div class="error-message">{{ error_message }}</div>
             {% endif %}
@@ -1154,7 +1160,7 @@
         {% endif %}
 
         <!-- Item History Section (LAZY-LOADED) -->
-        {% if product_data %}
+        {% if product_data and (not is_tiktok_view or pd_show_item_history|default(false)) %}
         <div class="history-section" id="itemHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-history"></i> Item History</div>
@@ -1203,7 +1209,7 @@
         {% endif %}
 
         <!-- Inventory Manual Adjustment Section (LAZY-LOADED) -->
-        {% if product_data %}
+        {% if product_data and (not is_tiktok_view or pd_show_inventory_adjustment|default(false)) %}
         <div class="history-section" id="adjustmentHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-tools"></i> Inventory Manual Adjustment</div>
@@ -1218,7 +1224,7 @@
         {% endif %}
 
         <!-- Purchase History Section (LAZY-LOADED) -->
-        {% if product_data %}
+        {% if product_data and (not is_tiktok_view or pd_show_purchase_history|default(false)) %}
         <div class="history-section" id="purchaseHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-shopping-cart"></i> Purchase History</div>
@@ -1233,7 +1239,7 @@
         {% endif %}
 
         <!-- Ocean Section (LAZY-LOADED) -->
-        {% if product_data %}
+        {% if product_data and (not is_tiktok_view or pd_show_ocean|default(false)) %}
         <div class="history-section" id="oceanSection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-ship"></i> Ocean</div>
@@ -1257,6 +1263,10 @@
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script>
         const isTikTokView = {{ 'true' if is_tiktok_view else 'false' }};
+        const pdShowItemHistory = {{ 'true' if pd_show_item_history|default(false) else 'false' }};
+        const pdShowInventoryAdjustment = {{ 'true' if pd_show_inventory_adjustment|default(false) else 'false' }};
+        const pdShowPurchaseHistory = {{ 'true' if pd_show_purchase_history|default(false) else 'false' }};
+        const pdShowOcean = {{ 'true' if pd_show_ocean|default(false) else 'false' }};
 
         /**
          * Shift trailing digits on the SKU/token used for search (e.g. M1181 → M1180 / M1182).
@@ -1912,7 +1922,7 @@
                             const customerLink = row.customer_id 
                                 ? `<a href="/customer?search_id=${row.customer_id}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.customer_id}</a>` 
                                 : '-';
-                            const productDetailBase = isTikTokView ? '/tiktok/tk_product_detail?search=' : '/product_detail?search=';
+                            const productDetailBase = isTikTokView ? '/clientview/product_detail?search=' : '/product_detail?search=';
                             html += `<tr class="history-data-row" data-color="${row.color}" data-database="${row.database}" style="border:1px solid #ddd;">
                                 <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
                                 <td style="padding:6px; border:1px solid #ddd;"><a href="${productDetailBase}${encodeURIComponent(row.product_code)}" style="color:#667eea;">${row.product_code}</a></td>
@@ -2220,16 +2230,22 @@
             <!-- Bulk Edit Panel (Hidden by default) -->
             <div id="bulkEditPanel" style="display: none; background: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ff9800; margin-bottom: 16px;">
               <strong>Apply to all SKUs:</strong>
+              <small class="text-muted d-block" style="margin-top: 4px;">New locations are added to each SKU&rsquo;s existing locations (nothing is removed).</small>
               <div style="margin-top: 10px;">
                 <!-- Location Tags Container -->
                 <div id="bulkLocTagContainer" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 30px; padding: 6px; background: white; border-radius: 3px; border: 1px solid #ddd; align-content: flex-start;">
                 </div>
                 <!-- Input Section -->
-                <div id="bulkLocInputSection" style="display: flex; gap: 6px; margin-bottom: 10px;">
-                  <input type="text" class="form-control" id="bulkLocationInput" placeholder="e.g., L12-C" style="flex: 1;">
+                <div id="bulkLocInputSection" style="display: flex; gap: 6px; margin-bottom: 6px;">
+                  <input type="text" class="form-control warehouse-loc-input" id="bulkLocationInput" placeholder="L12-E BOT (L1–L30, bay A–M)" style="flex: 1;" autocomplete="off" list="warehouseLocSuggestions">
                   <button type="button" class="btn btn-sm btn-success" title="Add location"><i class="fas fa-check"></i></button>
-                  <button type="button" class="btn btn-sm btn-secondary" title="Cancel"><i class="fas fa-times"></i></button>
+                  <button type="button" class="btn btn-sm btn-secondary" title="Clear input"><i class="fas fa-times"></i></button>
                 </div>
+                <div id="bulkLocHelper" style="display: none; margin-bottom: 10px; padding: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 4px;">
+                  <small class="text-muted d-block mb-1">Warehouse format: <strong>L</strong>[1–30]-<strong>[A–M]</strong> <strong>TOP|MID|BOT</strong> &nbsp;(e.g. L5-E BOT, L30-G MID)</small>
+                  <div id="bulkLocHelperChips" class="wh-loc-chips" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;"></div>
+                </div>
+                <datalist id="warehouseLocSuggestions"></datalist>
                 <div style="display: flex; gap: 8px;">
                   <button type="button" class="btn btn-sm btn-warning" onclick="applyBulkLocationChange()">Apply Changes</button>
                   <button type="button" class="btn btn-sm btn-secondary" onclick="closeBulkEditPanel()">Cancel</button>
@@ -2381,14 +2397,19 @@
         cellDiv.innerHTML = `
             <div id="locTagContainer_${sku}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: 100%; min-height: 40px; padding: 4px;">
                 ${tagsHTML}
-                <div id="locInputSection_${sku}" style="display: flex; align-items: center; gap: 4px;">
-                    <input type="text" id="locNewInput_${sku}" class="form-control" placeholder="Add location..." style="min-width: 100px; height: 30px; font-size: 12px;">
-                    <button type="button" class="btn btn-sm btn-success" style="padding: 4px 8px;" title="Add">
-                        <i class="fa fa-check"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-secondary" style="padding: 4px 8px;" title="Cancel input">
-                        <i class="fa fa-times"></i>
-                    </button>
+                <div id="locInputSection_${sku}" style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <input type="text" id="locNewInput_${sku}" class="form-control warehouse-loc-input" placeholder="L12-E BOT" style="min-width: 120px; height: 30px; font-size: 12px;" autocomplete="off" list="warehouseLocSuggestions">
+                        <button type="button" class="btn btn-sm btn-success" style="padding: 4px 8px;" title="Add">
+                            <i class="fa fa-check"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary" style="padding: 4px 8px;" title="Clear input">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="locHelper_${sku}" class="wh-loc-inline-helper" style="display: none; padding: 4px; background: #f8f9fa; border-radius: 3px; border: 1px solid #e9ecef;">
+                        <div id="locHelperChips_${sku}" class="wh-loc-chips" style="display: flex; flex-wrap: wrap; gap: 3px;"></div>
+                    </div>
                 </div>
             </div>
         `;
@@ -2402,15 +2423,23 @@
         
         // Show input section initially
         inputSection.style.display = 'flex';
+
+        const helperEl = document.getElementById(`locHelper_${sku}`);
+        const chipsEl = document.getElementById(`locHelperChips_${sku}`);
+        setupWarehouseLocationInput(input, helperEl, chipsEl);
         
         // Add location on Enter or check click
         const addNewLocation = () => {
-            const value = input.value.trim();
-            if (value) {
-                locationEditState[sku].items.push(value);
-                saveLocationChange(sku);
-                editLocationInline(sku, event);
+            const value = validateAndNormalizeLocationInput(input);
+            if (!value) return;
+            const exists = locationEditState[sku].items.some(l => l.toUpperCase() === value.toUpperCase());
+            if (exists) {
+                alert('This location is already assigned to this SKU');
+                return;
             }
+            locationEditState[sku].items.push(value);
+            saveLocationChange(sku);
+            editLocationInline(sku, event);
         };
         
         input.addEventListener('keydown', (e) => {
@@ -2433,6 +2462,8 @@
         cancelBtn.addEventListener('click', (e) => {
             e.preventDefault();
             input.value = '';
+            helperEl.style.display = 'none';
+            chipsEl.innerHTML = '';
             input.focus();
         });
         
@@ -2451,10 +2482,12 @@
         input.addEventListener('blur', () => {
             if (input.value === '') {
                 setTimeout(() => {
-                    if (document.activeElement !== confirmBtn && document.activeElement !== cancelBtn) {
+                    const active = document.activeElement;
+                    const clickedHelper = active && active.closest && active.closest(`#locHelper_${sku}`);
+                    if (active !== confirmBtn && active !== cancelBtn && !clickedHelper) {
                         updateLocationDisplay(sku);
                     }
-                }, 100);
+                }, 150);
             }
         });
         
@@ -2535,43 +2568,258 @@
     
     // Bulk location editing state
     let bulkLocationItems = [];
-    
+    const WAREHOUSE_LEVELS = ['TOP', 'MID', 'BOT'];
+    const WAREHOUSE_LETTERS = 'ABCDEFGHIJKLM'.split('');
+
+    function parseLocationArray(locStr) {
+        if (!locStr) return [];
+        return locStr.split(',').map(l => l.trim()).filter(l => l);
+    }
+
+    function mergeLocationLists(existing, additions) {
+        const seen = new Set(existing.map(l => l.toUpperCase()));
+        const result = [...existing];
+        additions.forEach(loc => {
+            const key = loc.toUpperCase();
+            if (!seen.has(key)) {
+                seen.add(key);
+                result.push(loc);
+            }
+        });
+        return result;
+    }
+
+    function renderLocationBadges(locations) {
+        if (!locations.length) {
+            return '<span class="text-muted">No locations</span>';
+        }
+        return locations.map(loc =>
+            `<span class="sku-detail-badge" style="display: inline-block; margin-right: 4px; margin-bottom: 4px;">${loc}</span>`
+        ).join('');
+    }
+
+    function normalizeWarehouseLocation(raw) {
+        const v = raw.trim();
+        if (!v) {
+            return { ok: false, error: 'Enter a location' };
+        }
+        if (!/^L/i.test(v)) {
+            return { ok: true, value: v };
+        }
+
+        let m = v.match(/^L\s*([1-9]|[12][0-9]|30)\s*-\s*([A-Za-z])\s*(TOP|MID|BOT)\s*$/i);
+        if (!m) {
+            m = v.match(/^L\s*([1-9]|[12][0-9]|30)\s*([A-Za-z])\s*(TOP|MID|BOT)\s*$/i);
+            if (m) {
+                return {
+                    ok: true,
+                    value: `L${parseInt(m[1], 10)}-${m[2].toUpperCase()} ${m[3].toUpperCase()}`
+                };
+            }
+            return {
+                ok: false,
+                error: 'Warehouse locations use L1–L30, bay A–M, and level TOP, MID, or BOT (e.g. L5-E BOT, L30-G MID).'
+            };
+        }
+
+        const aisle = parseInt(m[1], 10);
+        const letter = m[2].toUpperCase();
+        const level = m[3].toUpperCase();
+
+        if (aisle < 1 || aisle > 30) {
+            return { ok: false, error: 'Aisle must be L1 through L30.' };
+        }
+        if (!WAREHOUSE_LETTERS.includes(letter)) {
+            return { ok: false, error: 'Bay letter must be A through M.' };
+        }
+        if (!WAREHOUSE_LEVELS.includes(level)) {
+            return { ok: false, error: 'Level must be TOP, MID, or BOT.' };
+        }
+
+        return { ok: true, value: `L${aisle}-${letter} ${level}` };
+    }
+
+    function buildWarehouseSuggestions(partial) {
+        const suggestions = [];
+        const upper = partial.trim().toUpperCase();
+        const m = upper.match(/^L\s*([1-9]|[12][0-9]|30)?\s*-?\s*([A-M])?\s*(TOP|MID|BOT)?/i);
+        if (!m) return suggestions;
+
+        const aisle = m[1] ? parseInt(m[1], 10) : null;
+        const letter = m[2] ? m[2].toUpperCase() : null;
+        const level = m[3] ? m[3].toUpperCase() : null;
+
+        const aisles = aisle ? [aisle] : Array.from({ length: 30 }, (_, i) => i + 1);
+        const letters = letter ? [letter] : WAREHOUSE_LETTERS;
+        const levels = level ? [level] : WAREHOUSE_LEVELS;
+
+        aisles.forEach(a => {
+            letters.forEach(l => {
+                levels.forEach(lv => {
+                    suggestions.push(`L${a}-${l} ${lv}`);
+                });
+            });
+        });
+        return suggestions.slice(0, 40);
+    }
+
+    function refreshWarehouseLocationDatalist(input) {
+        const datalist = document.getElementById('warehouseLocSuggestions');
+        if (!datalist || !/^L/i.test(input.value.trim())) {
+            if (datalist) datalist.innerHTML = '';
+            return;
+        }
+        const options = buildWarehouseSuggestions(input.value);
+        datalist.innerHTML = options.map(o => `<option value="${o}"></option>`).join('');
+    }
+
+    function makeWhLocChip(label, onClick) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-xs btn-outline-secondary btn-sm';
+        btn.style.cssText = 'padding: 2px 8px; font-size: 11px;';
+        btn.textContent = label;
+        btn.addEventListener('mousedown', (e) => e.preventDefault());
+        btn.addEventListener('click', onClick);
+        return btn;
+    }
+
+    function refreshWarehouseLocationHelper(input, helperEl, chipsEl) {
+        const raw = input.value.trim();
+        if (!/^L/i.test(raw)) {
+            helperEl.style.display = 'none';
+            chipsEl.innerHTML = '';
+            return;
+        }
+        helperEl.style.display = 'block';
+        chipsEl.innerHTML = '';
+
+        const upper = raw.toUpperCase();
+        const aisleMatch = upper.match(/^L\s*([1-9]|[12][0-9]|30)\s*-?\s*([A-M])?\s*(TOP|MID|BOT)?/i);
+        const aisle = aisleMatch ? parseInt(aisleMatch[1], 10) : null;
+        const letter = aisleMatch && aisleMatch[2] ? aisleMatch[2].toUpperCase() : null;
+
+        if (!aisle) {
+            const hint = document.createElement('span');
+            hint.className = 'text-muted';
+            hint.style.fontSize = '11px';
+            hint.textContent = 'Type aisle (L1–L30), then pick bay and level:';
+            chipsEl.appendChild(hint);
+            [1, 5, 9, 12, 20, 30].forEach(n => {
+                chipsEl.appendChild(makeWhLocChip('L' + n, () => {
+                    input.value = 'L' + n + '-';
+                    input.focus();
+                    refreshWarehouseLocationHelper(input, helperEl, chipsEl);
+                    refreshWarehouseLocationDatalist(input);
+                }));
+            });
+            return;
+        }
+
+        if (!letter) {
+            const hint = document.createElement('span');
+            hint.className = 'text-muted';
+            hint.style.fontSize = '11px';
+            hint.textContent = `L${aisle}- ? `;
+            chipsEl.appendChild(hint);
+            WAREHOUSE_LETTERS.forEach(l => {
+                chipsEl.appendChild(makeWhLocChip(l, () => {
+                    input.value = `L${aisle}-${l} `;
+                    input.focus();
+                    refreshWarehouseLocationHelper(input, helperEl, chipsEl);
+                    refreshWarehouseLocationDatalist(input);
+                }));
+            });
+            return;
+        }
+
+        const hint = document.createElement('span');
+        hint.className = 'text-muted';
+        hint.style.fontSize = '11px';
+        hint.textContent = `L${aisle}-${letter} `;
+        chipsEl.appendChild(hint);
+        WAREHOUSE_LEVELS.forEach(level => {
+            chipsEl.appendChild(makeWhLocChip(level, () => {
+                input.value = `L${aisle}-${letter} ${level}`;
+                input.focus();
+                refreshWarehouseLocationHelper(input, helperEl, chipsEl);
+                refreshWarehouseLocationDatalist(input);
+            }));
+        });
+    }
+
+    function setupWarehouseLocationInput(input, helperEl, chipsEl) {
+        if (input.dataset.whLocSetup) return;
+        input.dataset.whLocSetup = '1';
+        input.classList.add('warehouse-loc-input');
+
+        input.addEventListener('input', () => {
+            refreshWarehouseLocationHelper(input, helperEl, chipsEl);
+            refreshWarehouseLocationDatalist(input);
+        });
+
+        input.addEventListener('blur', () => {
+            const parsed = normalizeWarehouseLocation(input.value);
+            if (parsed.ok && /^L/i.test(input.value.trim())) {
+                input.value = parsed.value;
+            }
+        });
+    }
+
+    function validateAndNormalizeLocationInput(input) {
+        const parsed = normalizeWarehouseLocation(input.value);
+        if (!parsed.ok) {
+            alert(parsed.error);
+            input.focus();
+            return null;
+        }
+        input.value = parsed.value;
+        return parsed.value;
+    }
+
     function openBulkEditLocations() {
         bulkLocationItems = [];
         document.getElementById('bulkEditPanel').style.display = 'block';
         updateBulkLocationDisplay();
-        
-        // Setup event listeners for input and buttons
+
         const input = document.getElementById('bulkLocationInput');
+        const helperEl = document.getElementById('bulkLocHelper');
+        const chipsEl = document.getElementById('bulkLocHelperChips');
+        setupWarehouseLocationInput(input, helperEl, chipsEl);
+
         const buttons = document.getElementById('bulkLocInputSection').querySelectorAll('button');
         const confirmBtn = buttons[0];
         const cancelBtn = buttons[1];
-        
-        // Remove old listeners by cloning and replacing
+
         confirmBtn.replaceWith(confirmBtn.cloneNode(true));
         cancelBtn.replaceWith(cancelBtn.cloneNode(true));
-        
+
         const newConfirmBtn = document.getElementById('bulkLocInputSection').querySelectorAll('button')[0];
         const newCancelBtn = document.getElementById('bulkLocInputSection').querySelectorAll('button')[1];
-        
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addBulkLocation();
-            }
-        });
-        
+
+        if (!input.dataset.bulkKeydownSetup) {
+            input.dataset.bulkKeydownSetup = '1';
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addBulkLocation();
+                }
+            });
+        }
+
         newConfirmBtn.addEventListener('click', (e) => {
             e.preventDefault();
             addBulkLocation();
         });
-        
+
         newCancelBtn.addEventListener('click', (e) => {
             e.preventDefault();
             input.value = '';
+            helperEl.style.display = 'none';
+            chipsEl.innerHTML = '';
             input.focus();
         });
-        
+
         input.focus();
     }
     
@@ -2599,14 +2847,18 @@
     
     function addBulkLocation() {
         const input = document.getElementById('bulkLocationInput');
-        const value = input.value.trim();
+        const value = validateAndNormalizeLocationInput(input);
         if (!value) return;
-        if (bulkLocationItems.includes(value)) {
-            alert('This location is already added');
+
+        const exists = bulkLocationItems.some(l => l.toUpperCase() === value.toUpperCase());
+        if (exists) {
+            alert('This location is already in the list to add');
             return;
         }
         bulkLocationItems.push(value);
         input.value = '';
+        document.getElementById('bulkLocHelper').style.display = 'none';
+        document.getElementById('bulkLocHelperChips').innerHTML = '';
         updateBulkLocationDisplay();
         input.focus();
     }
@@ -2617,22 +2869,19 @@
             return;
         }
         
-        const newLocations = bulkLocationItems.join(', ');
-        
-        // Apply to all SKUs in skuLocationMap
+        // Append new locations to each SKU's existing locations
         Object.keys(skuLocationMap).forEach(sku => {
-            skuLocationMap[sku] = newLocations;
-            // Update display
-            const uniqueLocs = bulkLocationItems;
-            const locBadges = uniqueLocs.map(loc => 
-                `<span class="sku-detail-badge" style="display: inline-block; margin-right: 4px; margin-bottom: 4px;">${loc}</span>`
-            ).join('');
-            document.getElementById(`locDisplay_${sku}`).innerHTML = locBadges;
+            const existing = parseLocationArray(skuLocationMap[sku]);
+            const merged = mergeLocationLists(existing, bulkLocationItems);
+            skuLocationMap[sku] = merged.join(', ');
+
+            const displayEl = document.getElementById(`locDisplay_${sku}`);
+            if (displayEl) {
+                displayEl.innerHTML = renderLocationBadges(merged);
+            }
         });
         
-        // Save to database
         saveLocationEdit();
-        
         closeBulkEditPanel();
     }
     

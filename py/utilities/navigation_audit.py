@@ -78,6 +78,7 @@ _POST_AUDIT_PATH_PREFIXES = (
     "/location_massive_audit",
     "/warehousemap",
     "/tiktok",
+    "/clientview",
     "/four_seller",
     "/vendor_app",
     "/delete_system_restarted",

@@ -52,6 +52,11 @@
         .mu-group-section h3 {
             font-size: 1.15rem; font-weight: 600; margin-bottom: .75rem;
             padding-bottom: .5rem; border-bottom: 1px solid var(--mu-border);
+            display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+        }
+        .mu-group-section h3 .edit-group-btn {
+            margin-left: auto;
+            flex-shrink: 0;
         }
         .mu-user-card, .mu-group-section { scroll-margin-top: 5.5rem; }
         .mu-hero { padding: 1.75rem 0 1rem; border-bottom: 1px solid var(--mu-border); margin-bottom: 1.25rem; }
@@ -170,6 +175,55 @@
             color: var(--mu-text) !important;
             text-shadow: none;
             opacity: .9;
+        }
+        /* Group permissions modal: form wraps header/body/footer — force body scroll */
+        .mu-page #editGroupModal .modal-dialog {
+            max-height: calc(100vh - 1.5rem);
+            margin: 0.75rem auto;
+        }
+        .mu-page #editGroupModal .modal-content {
+            max-height: calc(100vh - 1.5rem);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .mu-page #editGroupModal #editGroupForm {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: calc(100vh - 1.5rem);
+            overflow: hidden;
+        }
+        .mu-page #editGroupModal .modal-header,
+        .mu-page #editGroupModal .modal-footer {
+            flex-shrink: 0;
+        }
+        .mu-page #editGroupModal .modal-body {
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: none;
+        }
+        .mu-page #editGroupModal .mu-perm-section {
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--mu-border);
+        }
+        .mu-page #editGroupModal .mu-perm-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .mu-page #editGroupModal .mu-checkbox-grid {
+            max-height: none !important;
+            overflow-y: visible !important;
+        }
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0 !important;
         }
         .mu-badge-yeti {
             background: var(--mu-accent-dim); color: var(--mu-accent); font-size: .72rem; font-weight: 600;
@@ -296,6 +350,12 @@
             <h3>
                 {{ block.group_name }}
                 <span class="badge badge-secondary">{{ block.users|length }}</span>
+                {% if block.group_id %}
+                <button type="button" class="btn btn-sm btn-outline-primary edit-group-btn"
+                        data-group-id="{{ block.group_id }}" title="Edit group permissions">
+                    <i class="fas fa-sliders-h"></i> 编辑 group
+                </button>
+                {% endif %}
             </h3>
             <div class="table-responsive">
                 <table class="table table-mu table-dark table-striped table-bordered" style="border-color: var(--mu-border);">
@@ -427,10 +487,114 @@
                             <p class="small text-warning mb-0">No <code>mail_accounts</code> rows.</p>
                             {% endif %}
                         </div>
+                        <div class="mu-perm-section">
+                            <h3 class="text-uppercase small text-muted">Client product detail</h3>
+                            <p class="mu-mini-hint mb-2">Sections on <code>/clientview/product_detail</code>. When limit is on, only checked blocks are shown (and API access is enforced).</p>
+                            <div class="mu-switch-row">
+                                <label class="d-flex align-items-center mb-0">
+                                    <input type="checkbox" class="mr-2" name="client_pd_restrict" value="1" id="modal_client_pd_restrict">
+                                    Limit client product detail sections
+                                </label>
+                            </div>
+                            <div class="mu-select-links modal-cpd-links">
+                                <a href="#" class="text-primary modal-select-all-cpd">Select all</a>
+                                <a href="#" class="text-primary modal-clear-cpd">Clear</a>
+                            </div>
+                            <div class="mu-checkbox-grid modal-cpd-panel" id="modal-cpd-panel">
+                                {% for s in client_product_detail_sections %}
+                                <label>
+                                    <input type="checkbox" name="client_product_detail_sections" value="{{ s.id }}" class="modal-cpd-cb">
+                                    <span>{{ s.title }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mu-perm-section">
+                            <h3 class="text-uppercase small text-muted">Log viewer</h3>
+                            <p class="mu-mini-hint mb-2">Controls access to <code>/log</code>. When unchecked, members cannot open the log viewer (except user <code>yeti</code>). Staff groups (Yeti, Superadmin, Manager, Warehouse, Visitor) with unrestricted permissions still get log access by group slug unless you save explicit permissions here.</p>
+                            <div class="mu-switch-row mb-0">
+                                <label class="d-flex align-items-center mb-0">
+                                    <input type="checkbox" class="mr-2" name="log_viewer_allowed" value="1"
+                                           id="modal_log_viewer_allowed">
+                                    Allow log viewer (/log)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mu-perm-section">
+                            <h3 class="text-uppercase small text-muted">Customer purchase access</h3>
+                            <p class="mu-mini-hint mb-2">One customer ID for both limits below. Users may only search SKU/styles that appear in that customer's order history (<code>ord_log</code>).</p>
+                            <div class="form-group mb-2">
+                                <label for="modal_customer_purchase_customer_id" class="small mb-1">Customer ID</label>
+                                <input type="text" class="form-control form-control-sm" name="customer_purchase_customer_id"
+                                       id="modal_customer_purchase_customer_id" placeholder="e.g. MYDEPOT" autocomplete="off">
+                            </div>
+                            <div class="mu-switch-row">
+                                <label class="d-flex align-items-center mb-2">
+                                    <input type="checkbox" class="mr-2" name="master_image_viewer_customer_purchase_only" value="1"
+                                           id="modal_miv_customer_purchase_only">
+                                    Limit Master Image Viewer to purchased SKU/styles
+                                </label>
+                            </div>
+                            <div class="mu-switch-row">
+                                <label class="d-flex align-items-center mb-2">
+                                    <input type="checkbox" class="mr-2" name="master_image_viewer_hide_path" value="1"
+                                           id="modal_miv_hide_path">
+                                    Hide path (路径) in Master Image Viewer
+                                </label>
+                            </div>
+                            <div class="mu-switch-row mb-0">
+                                <label class="d-flex align-items-center mb-0">
+                                    <input type="checkbox" class="mr-2" name="client_product_detail_customer_purchase_only" value="1"
+                                           id="modal_cpd_customer_purchase_only">
+                                    Limit client product detail to purchased SKU/styles
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex flex-wrap justify-content-between align-items-center w-100">
+                        <button type="button" class="btn btn-outline-info copy-group-open-btn" id="copyGroupOpenBtn">
+                            <i class="fas fa-copy mr-1"></i> Copy group
+                        </button>
+                        <div class="d-flex flex-wrap gap-2" style="gap: .5rem;">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Save group</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy group modal -->
+    <div class="modal fade" id="copyGroupModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('auth.manage_users') }}" id="copyGroupForm">
+                    <input type="hidden" name="action" value="copy_group">
+                    <input type="hidden" name="source_group_id" id="copy_source_group_id" value="">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Copy group</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-3">
+                            Copies saved permissions from <strong id="copy_source_group_label">—</strong>
+                            (dashboard tools, mailboxes, client product detail, customer purchase access). Unsaved changes in the editor are not included.
+                        </p>
+                        <div class="form-group mb-0">
+                            <label for="copy_new_group_name">New group name</label>
+                            <input type="text" class="form-control" id="copy_new_group_name" name="name" required
+                                   placeholder="e.g. Client — TikTok" autocomplete="off">
+                        </div>
+                        <div class="form-group mt-3 mb-0">
+                            <label for="copy_new_group_slug">Slug <span class="text-muted">(optional)</span></label>
+                            <input type="text" class="form-control" id="copy_new_group_slug" name="slug"
+                                   placeholder="auto from name">
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Save group</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-copy mr-1"></i> Create copy</button>
                     </div>
                 </form>
             </div>
@@ -550,6 +714,18 @@
                 });
                 $('.modal-dash-links, .modal-dash-panel').toggle(!!g.dashboard_restrict);
                 $('.modal-mail-links, .modal-mail-panel').toggle(!!g.mail_restrict);
+                $('#modal_client_pd_restrict').prop('checked', !!g.client_pd_restrict);
+                var cpd = g.client_pd_sections_sel || [];
+                $('.modal-cpd-cb').each(function () {
+                    var v = $(this).attr('value');
+                    $(this).prop('checked', toolIdMatch(cpd, v));
+                });
+                $('.modal-cpd-links, .modal-cpd-panel').toggle(!!g.client_pd_restrict);
+                $('#modal_customer_purchase_customer_id').val(g.customer_purchase_customer_id || '');
+                $('#modal_miv_customer_purchase_only').prop('checked', !!g.master_image_viewer_customer_purchase_only);
+                $('#modal_miv_hide_path').prop('checked', !!g.master_image_viewer_hide_path);
+                $('#modal_cpd_customer_purchase_only').prop('checked', !!g.client_product_detail_customer_purchase_only);
+                $('#modal_log_viewer_allowed').prop('checked', !!g.log_viewer_allowed);
             }
 
             $('.edit-group-btn').on('click', function () {
@@ -559,11 +735,27 @@
                 $('#editGroupModal').modal('show');
             });
 
+            $('#copyGroupOpenBtn').on('click', function () {
+                var id = $('#modal_group_id').val();
+                var name = $('#modal_group_title').text() || 'group';
+                if (!id) return;
+                $('#copy_source_group_id').val(id);
+                $('#copy_source_group_label').text(name);
+                $('#copy_new_group_name').val(name + ' copy');
+                $('#copy_new_group_slug').val('');
+                $('#editGroupModal').modal('hide');
+                $('#copyGroupModal').modal('show');
+                setTimeout(function () { $('#copy_new_group_name').focus().select(); }, 400);
+            });
+
             $('#modal_dashboard_restrict').on('change', function () {
                 $('.modal-dash-links, .modal-dash-panel').toggle($(this).is(':checked'));
             });
             $('#modal_mail_restrict').on('change', function () {
                 $('.modal-mail-links, .modal-mail-panel').toggle($(this).is(':checked'));
+            });
+            $('#modal_client_pd_restrict').on('change', function () {
+                $('.modal-cpd-links, .modal-cpd-panel').toggle($(this).is(':checked'));
             });
 
             $('.modal-select-all-tools').on('click', function (e) {
@@ -581,6 +773,14 @@
             $('.modal-clear-mail').on('click', function (e) {
                 e.preventDefault();
                 $('.modal-mail-cb').prop('checked', false);
+            });
+            $('.modal-select-all-cpd').on('click', function (e) {
+                e.preventDefault();
+                $('.modal-cpd-cb').prop('checked', true);
+            });
+            $('.modal-clear-cpd').on('click', function (e) {
+                e.preventDefault();
+                $('.modal-cpd-cb').prop('checked', false);
             });
 
             $('.edit-user').on('click', function () {

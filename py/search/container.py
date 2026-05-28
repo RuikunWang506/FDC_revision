@@ -7,6 +7,62 @@ from py.utilities.setting import Config
 
 container_bp = Blueprint('container', __name__)
 
+
+def _filter_system_file_line_items(df):
+    """Remove template spacer rows: blank lines, zero OMS/RMB, or zero quantity.
+
+    Many exports alternate data with empty rows; Excel often stores 0 (not NaN) in
+    numeric columns for those lines, so dropna(subset=[...]) alone does not drop them.
+    """
+    out = df.dropna(how='all')
+    if 'STYLE NO' in out.columns:
+        sty = pd.Series(out['STYLE NO']).astype('string').str.strip()
+        keep_style = sty.notna() & (~sty.eq('')) & (~sty.str.lower().isin(('nan', 'none', 'nat')))
+        out = out.loc[keep_style]
+
+    def _to_num(col):
+        if col not in out.columns:
+            return None
+        ser = (
+            out[col]
+            .astype(str)
+            .str.replace(r'[\$,]', '', regex=True)
+            .str.strip()
+        )
+        return pd.to_numeric(ser, errors='coerce')
+
+    oms = _to_num('OMS')
+    rmb = _to_num('RMB')
+    qty = _to_num('QUANTITY')
+
+    mask = pd.Series(True, index=out.index)
+    if oms is not None:
+        mask &= oms.notna() & (oms > 0)
+    if rmb is not None:
+        mask &= rmb.notna() & (rmb > 0)
+    if qty is not None:
+        mask &= qty.notna() & (qty > 0)
+    return out.loc[mask]
+
+
+def _trim_blank_export_rows(df_styles: pd.DataFrame, df_po: pd.DataFrame):
+    """Drop spacer lines from the two export tables right before CSV write (same row index in both)."""
+    if df_styles.shape[0] != df_po.shape[0] or df_styles.empty:
+        return df_styles.copy(), df_po.copy()
+    if 'Item#' not in df_styles.columns:
+        return df_styles.copy(), df_po.copy()
+
+    it = df_styles['Item#'].astype(str).str.strip()
+    lo = it.str.lower()
+    bad = it.eq('') | lo.isin(
+        ('nan', 'none', 'nat', 'nan nan', 'nan none', 'none nan', '<na>')
+    )
+    good = ~bad
+    df_styles = df_styles.loc[good].reset_index(drop=True)
+    df_po = df_po.loc[good].reset_index(drop=True)
+    return df_styles, df_po
+
+
 @container_bp.route('/container', methods=['GET', 'POST'])
 @login_required
 def upload_container_file():
@@ -26,6 +82,10 @@ def upload_container_file():
                     df_header = pd.read_excel(file, sheet_name='System File', nrows=2, header=None)
                     container_number_raw = df_header.iloc[0, 0]
                     container_number = container_number_raw.split('-')[-1].strip().replace('FT', 'F')
+                    if hasattr(file, 'seek'):
+                        file.seek(0)
+                    elif hasattr(file, 'stream') and hasattr(file.stream, 'seek'):
+                        file.stream.seek(0)
                     step3_csv_data, step4_csv_data, df_step3, df_step4 = process_container_file(file, container_number)
 
                     # Save CSVs to disk
@@ -70,17 +130,40 @@ def upload_container_file():
     return render_template('container.html', current_user=current_user)
 
 def process_container_file(file, container_number):
+    if hasattr(file, 'seek'):
+        try:
+            file.seek(0)
+        except Exception:
+            pass
+    elif hasattr(file, 'stream') and hasattr(file.stream, 'seek'):
+        try:
+            file.stream.seek(0)
+        except Exception:
+            pass
+
     System_file_tab = pd.read_excel(file, sheet_name='System File', header=2)
     System_file_tab.columns = System_file_tab.columns.str.replace('\n', ' ').str.strip()
-    System_file_tab = System_file_tab.dropna(subset=['OMS', 'RMB'])
+    System_file_tab = _filter_system_file_line_items(System_file_tab)
     System_file_tab['WT/PCS (LBS)'] = System_file_tab['WT/PCS (LBS)'].round(2)
-    System_file_tab = System_file_tab.map(lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x)
+    System_file_tab = System_file_tab.applymap(
+        lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x
+    )
     
     # Try different sheet names for packing list
     packing_sheet = None
     PackingList = None
     
     # First, get available sheets
+    if hasattr(file, 'seek'):
+        try:
+            file.seek(0)
+        except Exception:
+            pass
+    elif hasattr(file, 'stream') and hasattr(file.stream, 'seek'):
+        try:
+            file.stream.seek(0)
+        except Exception:
+            pass
     excel_file = pd.ExcelFile(file)
     
     for sheet_name in ['Packing List', 'Placking List', 0]:
@@ -122,6 +205,8 @@ def process_container_file(file, container_number):
     
     if PackingList is None:
         raise ValueError("Could not parse packing list sheet - valid headers not found")
+
+    PackingList = PackingList.dropna(how='all')
     
     # Extract case dimensions from MEASUREMENT column (format: "L*W*H")
     case_length_list = []
@@ -300,6 +385,8 @@ def process_container_file(file, container_number):
         if col not in df_step4.columns:
             df_step4[col] = ""
     df_step4 = df_step4[step4_columns]
+
+    df_step3, df_step4 = _trim_blank_export_rows(df_step3, df_step4)
 
 
     # Generate CSV data in memory instead of saving to disk

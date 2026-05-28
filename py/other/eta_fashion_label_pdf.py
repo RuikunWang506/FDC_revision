@@ -1,4 +1,4 @@
-"""ETA Fashion (customer 00951) shipping labels: 8.5×11 sheet, 8.5×2.75 per label (4 per page)."""
+"""ETA Fashion (00951) shipping labels: US Letter 4-in-1 or portrait 4×6 one per page."""
 
 from __future__ import annotations
 
@@ -20,6 +20,10 @@ PAGE_W, PAGE_H = letter  # 8.5 × 11 portrait
 LABEL_W = PAGE_W
 LABEL_H = 2.75 * inch
 LABELS_PER_PAGE = 4
+
+# Label 4×6 printer stock: landscape 6×4 (horizontal), one label per page
+PAGE_4X6_W = 6 * inch
+PAGE_4X6_H = 4 * inch
 
 MARGIN_L = 0.28 * inch
 MARGIN_R = 0.22 * inch
@@ -225,8 +229,8 @@ def _label_origin_y(slot: int) -> float:
     return PAGE_H - (slot + 1) * LABEL_H
 
 
-def build_eta_fashion_label_pdf(total_boxes: int) -> bytes:
-    """One label per box; 4 labels per US Letter page."""
+def build_eta_fashion_label_pdf_letter(total_boxes: int) -> bytes:
+    """One label per box; four 8.5×2.75 labels per US Letter page."""
     total = int(total_boxes)
     if total < 1:
         raise ValueError("Total boxes must be at least 1.")
@@ -250,6 +254,41 @@ def build_eta_fashion_label_pdf(total_boxes: int) -> bytes:
     pdf.save()
     buf.seek(0)
     return buf.getvalue()
+
+
+def build_eta_fashion_label_pdf_4x6(total_boxes: int) -> bytes:
+    """One label per box on landscape 6×4 pages (horizontal 4×6 stock)."""
+    total = int(total_boxes)
+    if total < 1:
+        raise ValueError("Total boxes must be at least 1.")
+
+    scale = min(PAGE_4X6_W / LABEL_W, PAGE_4X6_H / LABEL_H)
+    scaled_w = LABEL_W * scale
+    scaled_h = LABEL_H * scale
+    offset_x = (PAGE_4X6_W - scaled_w) / 2
+    offset_y = (PAGE_4X6_H - scaled_h) / 2
+
+    logo_path = _eta_logo_path()
+    buf = io.BytesIO()
+    pdf = canvas.Canvas(buf, pagesize=(PAGE_4X6_W, PAGE_4X6_H))
+
+    for box_num in range(1, total + 1):
+        if box_num > 1:
+            pdf.showPage()
+        pdf.saveState()
+        pdf.translate(offset_x, offset_y)
+        pdf.scale(scale, scale)
+        _draw_eta_label(pdf, box_num, total, logo_path)
+        pdf.restoreState()
+
+    pdf.save()
+    buf.seek(0)
+    return buf.getvalue()
+
+
+def build_eta_fashion_label_pdf(total_boxes: int) -> bytes:
+    """Alias for US Letter 4-in-1 layout."""
+    return build_eta_fashion_label_pdf_letter(total_boxes)
 
 
 def ensure_eta_logo_asset() -> None:

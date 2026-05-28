@@ -1044,6 +1044,11 @@
     <div class="mt-4 container">
         <h5 class="text-center mb-4">Please select descriptions for the following styles:</h5>
         <form method="POST" action="{{ url_for('v7_listcreator.update_descriptions') }}">
+            {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
+            <input type="hidden" name="rebuild_html_snapshot" value="1">
+            <input type="hidden" name="list_input" value="{{ list_input }}">
+            <input type="hidden" name="snapshot_name" value="{{ snapshot_name if snapshot_name is defined else '' }}">
+            {% endif %}
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -1086,7 +1091,7 @@
                             <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
                         </td>
                         <td>
-                            <select name="description_{{ loop.index }}" class="form-control">
+                            <select name="description_{{ loop.index }}" class="form-control" required>
                                 <option value="">Select a description</option>
                                 {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
                                 <option value="{{ option }}">{{ option }}</option>
@@ -1169,45 +1174,78 @@
 </div>
 <!-- Edit Description Modal -->
 <div class="modal fade" id="editDescriptionModal" tabindex="-1" role="dialog" aria-labelledby="editDescriptionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editDescriptionModalLabel">Edit Descriptions</h5>
+                <h5 class="modal-title" id="editDescriptionModalLabel">Edit descriptions</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Style</th>
-                            <th>Current Description</th>
-                            <th>New Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for style_group in pivot_data %}
-                        <tr>
-                            <td>{{ style_group[0].style }}</td>
-                            <td>{{ descriptions[style_group[0].style] }}</td>
-                            <td><input type="text" class="form-control" name="new_desc_{{ style_group[0].style }}"></td>
-                            <td>
-                                <input type="hidden" name="style_{{ loop.index }}" value="{{ style }}">
-                                <select name="description_{{ loop.index }}" class="form-control">
-                                    <option value="">Select a description</option>
-                                    {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "BELT BAG", "BUCKET BAG", "CROSSBODY", "CROSSBODY 2-IN-1", "CROSSBODY SET", "FLAP BAG", "FRAME BAG", "GIFT SET", "HOBO", "JELLY BAG", "LARGE CROSSBODY", "LARGE NYLON CROSSBODY", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME BAG", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "NYLON BACKPACK", "NYLON CROSSBODY", "NYLON HOBO", "PATENT BAG", "PATENT MINI SATCHEL", "SATCHEL", "SLING", "STRAW BAG", "STRAW CROSSBODY", "TOTE", "WALLET"] %}
+                {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
+                <p id="lcEditDescIntro" class="small text-muted border rounded bg-white px-2 py-2 mb-3">
+                    Changes are saved to the database <strong>and this snapshot HTML file is rewritten on disk</strong> (same URL and job). The page reloads afterward so grouping and headings match immediately.
+                </p>
+                {% else %}
+                <p id="lcEditDescIntro" class="small text-muted border rounded bg-white px-2 py-2 mb-3">
+                    Update catalog descriptions below. Reload this tab if headings or grouping still show old labels.
+                </p>
+                {% endif %}
+                <label for="lcEditDescFilter" class="small font-weight-bold text-secondary">Search styles</label>
+                <input type="search" id="lcEditDescFilter" class="form-control form-control-sm mb-3"
+                       autocomplete="off" placeholder="Filter by SKU (substring match)" aria-describedby="lcEditDescIntro">
+                <div class="table-responsive border rounded mb-2" style="max-height: 65vh;">
+                    <table class="table table-sm table-hover table-bordered mb-0 lc-edit-desc-table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col" class="sticky-top bg-light">Style — click to sort</th>
+                                <th scope="col" class="sticky-top bg-light">Current</th>
+                                <th scope="col" class="sticky-top bg-light">New description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set lc_preset_opts = ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
+                            {% for style_group in pivot_data or [] %}
+                            {% set st = style_group[0].style %}
+                            <tr data-style="{{ st }}">
+                                <td><code>{{ st }}</code></td>
+                                <td class="text-break">{{ descriptions[st]|default('') }}</td>
+                                <td>
+                                    <div class="d-flex flex-wrap align-items-center mb-1">
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'Satchel')">SATCHEL</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'MINI SATCHEL')">MINI SATCHEL</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'BACKPACK')">BACKPACK</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'CROSSBODY')">CROSSBODY</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'TOTE')">TOTE</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'Wallet')">WALLET</button>
+                                    </div>
+                                    <select class="form-control form-control-sm lc-edit-desc-select mb-1" aria-label="Preset {{ st }}">
+                                        <option value="">Choose preset…</option>
+                                        {% for option in lc_preset_opts %}
                                         <option value="{{ option }}">{{ option }}</option>
-                                    {% endfor %}
-                                </select>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                        {% endfor %}
+                                    </select>
+                                    <label class="sr-only">Custom text {{ st }}</label>
+                                    <input type="text" class="form-control form-control-sm lc-new-desc text-uppercase" placeholder="Or type freely (stored uppercase)"
+                                           maxlength="160" autocomplete="off" spellcheck="false">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p id="lcEditDescFeedback" class="small text-danger mb-0 d-none" role="alert"></p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="submitDescriptions">Submit Changes</button>
+            <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap">
+                <span id="lcEditDescFooterHint" class="small text-muted mb-2 mb-md-0">Tip: presets fill the row; tweak the text field if needed before saving.</span>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="submitDescriptions">
+                        <span class="lc-edit-save-label">Save to database</span>
+                        <span class="lc-edit-save-spinner spinner-border spinner-border-sm align-middle ml-1 d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1256,8 +1294,34 @@
 };
 
 var V7_LC_LIST_INPUT_SNAPSHOT = {{ list_input | default('', true) | tojson }};
+var V7_LC_SNAPSHOT_JOB_ID = {% if html_snapshot_job_id is defined and html_snapshot_job_id %}{{ html_snapshot_job_id|tojson }}{% else %}null{% endif %};
+var V7_UPDATE_DESC_BULK_URL = {{ url_for('v7_listcreator.update_descriptions_bulk')|tojson }};
 window.V7_LOCAL_DROPBOX_ABS = {{ v7_local_dropbox_dir|default('')|tojson }};
 window.V7_BROWSE_DROPBOX_URL = {{ url_for('v7_listcreator.browse_dropbox')|tojson }};
+
+/** Edit-desc modal: quick preset buttons */
+function lcApplyDescPreset(btn, text) {
+    var tr = btn && btn.closest && btn.closest('tr');
+    if (!tr) return;
+    var inp = tr.querySelector('.lc-new-desc');
+    var sel = tr.querySelector('.lc-edit-desc-select');
+    if (inp) {
+        inp.value = text || '';
+    }
+    if (sel && text) {
+        var needle = String(text);
+        sel.value = needle;
+        if (sel.value !== needle) {
+            for (var i = 0; i < sel.options.length; i++) {
+                var o = sel.options[i].value || '';
+                if (o.toUpperCase() === needle.toUpperCase()) {
+                    sel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+}
 
 /** Turn a pasted full Windows path into dropbox\relative using the server’s LOCAL_DROPBOX_DIR (see V7listcreator). */
 function v7DecodeMaybeFileUrl(s) {
@@ -2442,79 +2506,150 @@ new Sortable(document.getElementById('sortableDescriptions'), {
     }
 </script>
 <script>
-// Initialize sortable table when modal opens
+// Initialize edit-description modal once (avoid duplicate listeners on reopen)
 $('#editDescriptionModal').on('shown.bs.modal', function () {
     const modal = document.getElementById('editDescriptionModal');
-    const selects = modal.querySelectorAll('select[name^="description_"]');
-    
-    selects.forEach(select => {
-        select.addEventListener('change', function() {
-            const row = this.closest('tr');
-            const style = row.cells[0].textContent.trim();
-            const newDescInput = row.querySelector(`input[name="new_desc_${style}"]`);
-            if (newDescInput) {
-                newDescInput.value = this.value;
-            }
-        });
+    if (!modal || modal.dataset.lcModalInit === '1') return;
+    modal.dataset.lcModalInit = '1';
+
+    modal.addEventListener('change', function(ev) {
+        var sel = ev.target && ev.target.closest && ev.target.closest('.lc-edit-desc-select');
+        if (!sel || !modal.contains(sel)) return;
+        var tr = sel.closest('tr');
+        var inp = tr && tr.querySelector('.lc-new-desc');
+        if (inp && sel.value) inp.value = sel.value;
     });
-    const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
-    
-    const comparer = (idx, asc) => (a, b) => {
-        const v1 = getCellValue(asc ? a : b, idx);
-        const v2 = getCellValue(asc ? b : a, idx);
-        return v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) 
-            ? v1 - v2 
-            : v1.toString().localeCompare(v2);
+
+    var getCellValue = (tr, idx) => {
+        var td = tr.children[idx];
+        if (!td) return '';
+        var c = td.querySelector('code');
+        if (c) return (c.innerText || c.textContent || '').trim();
+        return td.innerText || td.textContent || '';
     };
 
-    document.querySelectorAll('#editDescriptionModal th').forEach(th => {
-        if (th.cellIndex < 2) { // Only make Style and Current Description columns sortable
-            th.classList.add('sortable');
-            th.style.cursor = 'pointer';
-            th.addEventListener('click', () => {
-                const table = th.closest('table');
-                const tbody = table.querySelector('tbody');
-                Array.from(tbody.querySelectorAll('tr'))
-                    .sort(comparer(th.cellIndex, this.asc = !this.asc))
-                    .forEach(tr => tbody.appendChild(tr));
-            });
-        }
+    var comparer = function(idx, asc) {
+        return function(a, b) {
+            var v1 = getCellValue(asc ? a : b, idx);
+            var v2 = getCellValue(asc ? b : a, idx);
+            return !isNaN(v1) && !isNaN(v2)
+                ? (+v1) - (+v2)
+                : String(v1).localeCompare(String(v2));
+        };
+    };
+
+    modal.querySelectorAll('.lc-edit-desc-table thead th').forEach(th => {
+        if (th.cellIndex > 1) return;
+        if (th.classList.contains('sortable')) return;
+        th.classList.add('sortable');
+        th.style.cursor = 'pointer';
+        th.title = 'Click to sort';
+        th.ascToggle = false;
+        th.addEventListener('click', () => {
+            const table = th.closest('table');
+            const tbody = table && table.querySelector('tbody');
+            if (!tbody) return;
+            th.ascToggle = !th.ascToggle;
+            Array.from(tbody.querySelectorAll('tr'))
+                .sort(comparer(th.cellIndex, th.ascToggle))
+                .forEach(tr => tbody.appendChild(tr));
+        });
     });
+
+    var filterEl = document.getElementById('lcEditDescFilter');
+    if (filterEl) {
+        filterEl.addEventListener('input', function(ev) {
+            var q = (ev.target.value || '').trim().toLowerCase();
+            modal.querySelectorAll('tbody tr[data-style]').forEach(function(tr) {
+                var sk = (tr.getAttribute('data-style') || '').toLowerCase();
+                tr.style.display = (!q || sk.indexOf(q) !== -1) ? '' : 'none';
+            });
+        });
+    }
 });
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitDescriptions');
     if (!submitBtn) return;
+    const spinner = submitBtn.querySelector('.lc-edit-save-spinner');
+    const fb = document.getElementById('lcEditDescFeedback');
+
     submitBtn.addEventListener('click', function() {
+        if (fb) {
+            fb.classList.add('d-none');
+            fb.textContent = '';
+        }
         const updates = [];
-        // Get all rows from the modal table
-        const rows = document.querySelectorAll('#editDescriptionModal tbody tr');
-        
-        rows.forEach(row => {
-            const style = row.cells[0].textContent.trim();
-            const inputEl = row.querySelector('input[name="new_desc_' + style + '"]');
-            const newDesc = inputEl ? inputEl.value.trim() : '';
-            if (newDesc) {
-                updates.push({ style: style, description: newDesc });
-            }
+        document.querySelectorAll('#editDescriptionModal tbody tr[data-style]').forEach(function(row) {
+            const style = row.getAttribute('data-style');
+            const inp = row.querySelector('.lc-new-desc');
+            const newDesc = inp ? inp.value.trim() : '';
+            if (!style || !newDesc) return;
+
+            var curTd = row.children[1];
+            var prev = '';
+            if (curTd) prev = (curTd.textContent || '').trim();
+            if (newDesc.toUpperCase() === prev.toUpperCase()) return;
+
+            updates.push({ style: style, description: newDesc });
         });
 
-        if (updates.length > 0) {
-            fetch('/update_descriptions_bulk', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ updates: updates })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                }
-            });
+        if (!updates.length) {
+            alert('No new descriptions to save. Use presets or type in the \"New description\" column, then try again.');
+            return;
         }
+
+        var bodyPayload = {
+            updates: updates,
+            regenerate_html_job_rid: V7_LC_SNAPSHOT_JOB_ID ? V7_LC_SNAPSHOT_JOB_ID : undefined
+        };
+        submitBtn.disabled = true;
+        if (spinner) spinner.classList.remove('d-none');
+        fetch(V7_UPDATE_DESC_BULK_URL || '/update_descriptions_bulk', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyPayload),
+        })
+        .then(response => response.json().then(data => ({ ok: response.ok, data })))
+        .then(function(res) {
+            submitBtn.disabled = false;
+            if (spinner) spinner.classList.add('d-none');
+            var data = res.data || {};
+            if (data.success) {
+                if (window.jQuery) jQuery('#editDescriptionModal').modal('hide');
+                if (data.snapshot_refresh_error) {
+                    alert((data.message || String(data.snapshot_refresh_error)));
+                }
+                if (data.snapshot_refreshed) {
+                    try {
+                        var u = window.location.pathname + window.location.search;
+                        var sep = window.location.search ? '&' : '?';
+                        window.location.href = u + sep + '_lc=' + Date.now();
+                        return;
+                    } catch (e) { /* fall through */ }
+                }
+                window.location.reload();
+                return;
+            }
+            var msg = (data && data.message) ? String(data.message) : 'Save failed.';
+            if (fb) {
+                fb.textContent = msg;
+                fb.classList.remove('d-none');
+            }
+            alert(msg);
+        })
+        .catch(function() {
+            submitBtn.disabled = false;
+            if (spinner) spinner.classList.add('d-none');
+            var msg = 'Network error while saving.';
+            if (fb) {
+                fb.textContent = msg;
+                fb.classList.remove('d-none');
+            }
+            alert(msg);
+        });
     });
 });
 </script>

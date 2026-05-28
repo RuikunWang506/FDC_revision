@@ -622,19 +622,31 @@
             <div class="collapse show" id="pendingOrdersSection">
                 <div class="card-body">
                 <!-- Filter Controls -->
-                <div class="row mb-2">
-                    <div class="col-md-3">
-                        <input type="date" id="pending-batch-date-filter" class="form-control" placeholder="Batch Date">
+                <div class="row mb-2 g-2">
+                    <div class="col-6 col-md-2">
+                        <label for="pending-batch-date-filter" class="form-label small mb-0 text-muted">Batch Date</label>
+                        <input type="date" id="pending-batch-date-filter" class="form-control" title="Filter by email batch date">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-2">
+                        <label for="pending-po-search" class="form-label small mb-0 text-muted">PO Number</label>
                         <input type="text" id="pending-po-search" class="form-control" placeholder="Search PO Number...">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-2">
+                        <label for="pending-ship-date-after-filter" class="form-label small mb-0 text-muted">Ship After</label>
+                        <input type="date" id="pending-ship-date-after-filter" class="form-control" title="Show POs with ship-out date after this date">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label for="pending-ship-date-before-filter" class="form-label small mb-0 text-muted">Ship Before</label>
+                        <input type="date" id="pending-ship-date-before-filter" class="form-control" title="Show POs with ship-out date before this date">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
                         <button id="clear-pending-filters-btn" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-times"></i> Clear Filters
                         </button>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
                         <button id="select-ready-orders-btn" class="btn btn-success w-100">
                             <i class="fas fa-check-circle"></i> Select Ready Orders
                         </button>
@@ -650,6 +662,7 @@
                                     </th>
                                     <th class="table-header-cell">PO Number</th>
                                     <th class="table-header-cell">Batch</th>
+                                    <th class="table-header-cell">Ship Date</th>
                                     <th class="table-header-cell ship-to-address-column">Ship To Address</th>
                                     <th class="table-header-cell internal-add-column">Internal Add</th>
                                     <th class="table-header-cell">Package Info</th>
@@ -683,19 +696,31 @@
                 <!-- Control Buttons -->
 
                 <!-- Filter Controls -->
-                <div class="row mb-2">
-                    <div class="col-md-3">
-                        <input type="date" id="shipped-batch-date-filter" class="form-control" placeholder="Batch Date">
+                <div class="row mb-2 g-2">
+                    <div class="col-6 col-md-2">
+                        <label for="shipped-batch-date-filter" class="form-label small mb-0 text-muted">Batch Date</label>
+                        <input type="date" id="shipped-batch-date-filter" class="form-control" title="Filter by email batch date">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-2">
+                        <label for="shipped-po-search" class="form-label small mb-0 text-muted">PO Number</label>
                         <input type="text" id="shipped-po-search" class="form-control" placeholder="Search PO Number...">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-2">
+                        <label for="shipped-ship-date-after-filter" class="form-label small mb-0 text-muted">Ship After</label>
+                        <input type="date" id="shipped-ship-date-after-filter" class="form-control" title="Show POs with ship-out date after this date">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label for="shipped-ship-date-before-filter" class="form-label small mb-0 text-muted">Ship Before</label>
+                        <input type="date" id="shipped-ship-date-before-filter" class="form-control" title="Show POs with ship-out date before this date">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
                         <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-times"></i> Clear Filters
                         </button>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
                         <button id="upload-tracking-shipped-btn" class="btn btn-primary w-100">
                             <i class="fas fa-upload"></i> Upload Tracking
                         </button>
@@ -712,6 +737,7 @@
                                     </th>
                                     <th class="table-header-cell">PO Number</th>
                                     <th class="table-header-cell">Batch</th>
+                                    <th class="table-header-cell">Ship Date</th>
                                     <th class="table-header-cell ship-to-address-column">Ship To Address</th>
                                     <th class="table-header-cell internal-add-column">Internal Add</th>
                                     <th class="table-header-cell">Package Info</th>
@@ -1776,15 +1802,64 @@
     // All orders organized by batch for lazy loading
     let ordersByBatchCache = {};
 
+    /** Parse PO ship-out date (delivery_date from PDF) for filtering. */
+    function parseShipOutDate(value) {
+        if (value == null || value === '' || value === 'N/A') return null;
+        const s = String(value).trim();
+        let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (m) return new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]));
+        const d = new Date(s);
+        return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function toDateOnly(d) {
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    /** Apply ship-after / ship-before range on PO delivery_date (ship-out date). */
+    function matchesShipDateRangeFilter(order, afterValue, beforeValue) {
+        if (!afterValue && !beforeValue) return true;
+        const shipDate = parseShipOutDate(order.delivery_date);
+        if (!shipDate) return false;
+        const shipDay = toDateOnly(shipDate);
+        if (afterValue) {
+            const afterDate = parseShipOutDate(afterValue);
+            if (afterDate && shipDay <= toDateOnly(afterDate)) return false;
+        }
+        if (beforeValue) {
+            const beforeDate = parseShipOutDate(beforeValue);
+            if (beforeDate && shipDay >= toDateOnly(beforeDate)) return false;
+        }
+        return true;
+    }
+
+    function formatShipOutDate(order) {
+        const raw = order?.delivery_date;
+        if (!raw || raw === 'N/A') return 'N/A';
+        const parsed = parseShipOutDate(raw);
+        if (!parsed) return raw;
+        const y = parsed.getFullYear();
+        const mo = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        return `${mo}/${day}/${y}`;
+    }
+
     function renderPendingOrders() {
         const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
         const pendingPoSearch = document.getElementById('pending-po-search');
+        const pendingShipDateAfterFilter = document.getElementById('pending-ship-date-after-filter');
+        const pendingShipDateBeforeFilter = document.getElementById('pending-ship-date-before-filter');
         const batchDate = pendingBatchDateFilter?.value || '';
         const poValue = (pendingPoSearch?.value || '').toLowerCase();
+        const shipDateAfter = pendingShipDateAfterFilter?.value || '';
+        const shipDateBefore = pendingShipDateBeforeFilter?.value || '';
         const filtered = allOrders.filter(order => {
             return order.status === 'pending' &&
                 (!batchDate || order.batch_date === batchDate) &&
-                (!poValue || order.po_number.toLowerCase().includes(poValue));
+                (!poValue || order.po_number.toLowerCase().includes(poValue)) &&
+                matchesShipDateRangeFilter(order, shipDateAfter, shipDateBefore);
         });
         // Only reset to page 1 if filters changed, not on pagination navigation
         if (!paginationState['pending-orders-table-body'].pageNavigated) {
@@ -1797,12 +1872,17 @@
     function renderShippedOrders() {
         const shippedBatchDateFilter = document.getElementById('shipped-batch-date-filter');
         const shippedPoSearch = document.getElementById('shipped-po-search');
+        const shippedShipDateAfterFilter = document.getElementById('shipped-ship-date-after-filter');
+        const shippedShipDateBeforeFilter = document.getElementById('shipped-ship-date-before-filter');
         const batchDate = shippedBatchDateFilter?.value || '';
         const poValue = (shippedPoSearch?.value || '').toLowerCase();
+        const shipDateAfter = shippedShipDateAfterFilter?.value || '';
+        const shipDateBefore = shippedShipDateBeforeFilter?.value || '';
         const filtered = allOrders.filter(order => {
             return order.status === 'shipped' &&
                 (!batchDate || order.batch_date === batchDate) &&
-                (!poValue || order.po_number.toLowerCase().includes(poValue));
+                (!poValue || order.po_number.toLowerCase().includes(poValue)) &&
+                matchesShipDateRangeFilter(order, shipDateAfter, shipDateBefore);
         });
         // Only reset to page 1 if filters changed, not on pagination navigation
         if (!paginationState['shipped-orders-table-body'].pageNavigated) {
@@ -2002,7 +2082,7 @@
         container.innerHTML = '';
         
         if (orderList.length === 0) {
-            container.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No orders found</td></tr>';
+            container.innerHTML = '<tr><td colspan="11" class="text-center text-muted">No orders found</td></tr>';
             return;
         }
         
@@ -2047,7 +2127,7 @@
             batchHeaderRow.id = `batch-header-${batchId}`;
             batchHeaderRow.setAttribute('data-batch-id', batchId);
             batchHeaderRow.innerHTML = `
-                <td colspan="10" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
+                <td colspan="11" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
                     <i class="${chevronClass}" id="icon-${batchId}"></i>
                     <i class="fas fa-calendar-alt ms-2"></i> Batch Date: ${formatBatchDate(batchDate)} 
                     <button class="btn btn-sm btn-outline-primary ms-3 select-batch-btn" 
@@ -2090,6 +2170,7 @@
                     </td>
                     <td class="order-cell-bold">${order.po_number || 'N/A'}</td>
                     <td class="order-cell">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
+                    <td class="order-cell">${formatShipOutDate(order)}</td>
                     <td class="address-cell ship-to-address-column">${formattedShipToAddress}</td>
                     <td class="internal-address-cell internal-add-column"></td>
                     <td class="package-cell">
@@ -2191,8 +2272,8 @@
                 `;
                 
                 // Set the internal address content separately to handle HTML
-                const internalAddCell = row.children[4]; // 5th column (0-indexed)
-                internalAddCell.innerHTML = internalAddress;
+                const internalAddCell = row.querySelector('.internal-address-cell');
+                if (internalAddCell) internalAddCell.innerHTML = internalAddress;
                 
                 // Set initial visibility based on default collapsed state
                 if (defaultCollapsed) {
@@ -2229,7 +2310,7 @@
                 spacingRow.className = 'batch-spacing-row';
                 spacingRow.id = `batch-spacer-${batchId}`;
                 spacingRow.setAttribute('data-batch-id', batchId);
-                spacingRow.innerHTML = '<td colspan="10" class="batch-spacer"></td>';
+                spacingRow.innerHTML = '<td colspan="11" class="batch-spacer"></td>';
                 
                 // Set initial visibility based on default collapsed state
                 if (defaultCollapsed) {
@@ -2293,7 +2374,7 @@
             }
             
             paginationRow.innerHTML = `
-                <td colspan="10" class="text-center py-3">
+                <td colspan="11" class="text-center py-3">
                     <nav aria-label="Batch pagination">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item">
@@ -2423,8 +2504,9 @@
                 </td>
                 <td class="order-cell-bold">${order.po_number || 'N/A'}</td>
                 <td class="order-cell">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
+                <td class="order-cell">${formatShipOutDate(order)}</td>
                 <td class="address-cell">${formattedShipToAddress}</td>
-                <td class="internal-address-cell"></td>
+                <td class="internal-address-cell internal-add-column"></td>
                 <td class="package-cell">
                     <div class="package-info-display" data-po="${order.po_number}">
                         <small class="text-muted">Package info saved</small>
@@ -2453,8 +2535,8 @@
             `;
             
             // Set the internal address content separately to handle HTML
-            const internalAddCell = row.children[4]; // 5th column (0-indexed)
-            internalAddCell.innerHTML = internalAddress;
+            const internalAddCell = row.querySelector('.internal-address-cell');
+            if (internalAddCell) internalAddCell.innerHTML = internalAddress;
             
             tbody.appendChild(row);
             
@@ -2503,15 +2585,23 @@
         // Filter controls
         const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
         const pendingPoSearch = document.getElementById('pending-po-search');
+        const pendingShipDateAfterFilter = document.getElementById('pending-ship-date-after-filter');
+        const pendingShipDateBeforeFilter = document.getElementById('pending-ship-date-before-filter');
         const clearPendingFiltersBtn = document.getElementById('clear-pending-filters-btn');
         const shippedBatchDateFilter = document.getElementById('shipped-batch-date-filter');
         const shippedPoSearch = document.getElementById('shipped-po-search');
+        const shippedShipDateAfterFilter = document.getElementById('shipped-ship-date-after-filter');
+        const shippedShipDateBeforeFilter = document.getElementById('shipped-ship-date-before-filter');
         const clearShippedFiltersBtn = document.getElementById('clear-shipped-filters-btn');
         if (pendingBatchDateFilter) pendingBatchDateFilter.addEventListener('change', renderPendingOrders);
         if (pendingPoSearch) pendingPoSearch.addEventListener('input', renderPendingOrders);
+        if (pendingShipDateAfterFilter) pendingShipDateAfterFilter.addEventListener('change', renderPendingOrders);
+        if (pendingShipDateBeforeFilter) pendingShipDateBeforeFilter.addEventListener('change', renderPendingOrders);
         if (clearPendingFiltersBtn) clearPendingFiltersBtn.addEventListener('click', function() {
             pendingBatchDateFilter.value = '';
             pendingPoSearch.value = '';
+            if (pendingShipDateAfterFilter) pendingShipDateAfterFilter.value = '';
+            if (pendingShipDateBeforeFilter) pendingShipDateBeforeFilter.value = '';
             renderPendingOrders();
         });
         
@@ -2522,9 +2612,13 @@
         });
         if (shippedBatchDateFilter) shippedBatchDateFilter.addEventListener('change', renderShippedOrders);
         if (shippedPoSearch) shippedPoSearch.addEventListener('input', renderShippedOrders);
+        if (shippedShipDateAfterFilter) shippedShipDateAfterFilter.addEventListener('change', renderShippedOrders);
+        if (shippedShipDateBeforeFilter) shippedShipDateBeforeFilter.addEventListener('change', renderShippedOrders);
         if (clearShippedFiltersBtn) clearShippedFiltersBtn.addEventListener('click', function() {
             shippedBatchDateFilter.value = '';
             shippedPoSearch.value = '';
+            if (shippedShipDateAfterFilter) shippedShipDateAfterFilter.value = '';
+            if (shippedShipDateBeforeFilter) shippedShipDateBeforeFilter.value = '';
             renderShippedOrders();
         });
 
@@ -2679,6 +2773,7 @@
                             <table class="table table-sm table-borderless">
                                 <tr><td><strong>PO Number:</strong></td><td>${poNumber}</td></tr>
                                 <tr><td><strong>Batch Date:</strong></td><td>${formatBatchDate(order?.batch_date || 'N/A')}</td></tr>
+                                <tr><td><strong>Ship Date:</strong></td><td>${formatShipOutDate(order || {})}</td></tr>
                                 <tr><td><strong>Status:</strong></td><td><span class="badge ${order?.status === 'pending' ? 'bg-warning' : order?.status === 'shipped' ? 'bg-success' : 'bg-info'}">${order?.status || 'N/A'}</span></td></tr>
                                 <tr><td><strong>Total Quantity:</strong></td><td>${order?.total_qty || 0}</td></tr>
                                 <tr><td><strong>Total Cost:</strong></td><td>$${parseFloat(order?.total_cost || 0).toFixed(2)}</td></tr>

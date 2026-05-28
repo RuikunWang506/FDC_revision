@@ -51,7 +51,7 @@ from py.order.macy_special import macy_bp
 from py.utilities.mysql_connector import mysql_connector_bp
 from py.utilities.image_upload_routes import image_upload_bp
 from py.other.master_image_viewer import master_image_viewer_bp
-from py.other.tiktok import tiktok_bp
+from py.other.clientview import clientview_bp
 from py.dam.dam_sync_routes import dam_sync_bp
 from py.other.bag_style_viewer import bag_style_viewer_bp
 from py.Toolkits.boat import boat_service_bp
@@ -105,7 +105,12 @@ def register_routes(app):
             perms = get_user_permissions(uname)
             return tool_visible_for_user(perms, uname, tool_id)
 
-        return {"tool_allowed": tool_allowed}
+        from py.utilities.log_viewer_permissions import user_can_view_logs
+
+        def can_view_logs() -> bool:
+            return user_can_view_logs(session.get("username"))
+
+        return {"tool_allowed": tool_allowed, "can_view_logs": can_view_logs}
 
     @app.route('/delete_system_restarted', methods=['POST'])
     @login_required
@@ -146,7 +151,7 @@ def register_routes(app):
     app.register_blueprint(internal_stock_check_bp)
     app.register_blueprint(image_upload_bp)
     app.register_blueprint(master_image_viewer_bp)
-    app.register_blueprint(tiktok_bp)
+    app.register_blueprint(clientview_bp)
     app.register_blueprint(dam_sync_bp)
     app.register_blueprint(bag_style_viewer_bp)
     app.register_blueprint(location_massive_audit_bp)
@@ -166,10 +171,15 @@ def register_routes(app):
     @app.route("/", methods=["GET", "POST"])
     @login_required
     def home():
-        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-        
-        current_user = session['username']
-        return render_template("index.html", current_user=current_user)
+        from py.other.clientview import is_client_portal_only_user
+
+        current_user = session["username"]
+        portal_minimal = is_client_portal_only_user(current_user)
+        return render_template(
+            "index.html",
+            current_user=current_user,
+            portal_minimal=portal_minimal,
+        )
 
     @app.route("/robots.txt")
     def robots_txt():
@@ -199,6 +209,24 @@ def register_routes(app):
     def tk_redirect():
         """Redirect /tk to /master_image_viewer"""
         return redirect(url_for('master_image_viewer.master_image_viewer'))
+
+    @app.route("/tiktok", defaults={"subpath": ""})
+    @app.route("/tiktok/", defaults={"subpath": ""})
+    @app.route("/tiktok/<path:subpath>")
+    def legacy_tiktok_redirect(subpath=""):
+        """Old /tiktok URLs → home or client product detail."""
+        target = "/"
+        if subpath:
+            if subpath == "tk_product_detail":
+                target = "/clientview/product_detail"
+            elif subpath.startswith("tk_product_detail/"):
+                target = "/clientview/product_detail/" + subpath[len("tk_product_detail/") :]
+            elif subpath not in ("", "/"):
+                target = f"/clientview/{subpath}"
+        qs = request.query_string.decode()
+        if qs:
+            target = f"{target}?{qs}"
+        return redirect(target, code=308)
     
     
     @app.route("/notify", methods=["POST"])
@@ -222,7 +250,12 @@ def register_routes(app):
     @app.route('/log')
     @login_required
     def display():
+        from py.utilities.log_viewer_permissions import enforce_log_viewer_access
+
         current_user = session['username']
+        denied = enforce_log_viewer_access(current_user)
+        if denied:
+            return denied
         search_term = request.args.get('search', '').strip()
 
         try:
@@ -261,6 +294,11 @@ def register_routes(app):
     @app.route('/log/search', methods=['POST'])
     @login_required
     def search_logs():
+        from py.utilities.log_viewer_permissions import enforce_log_viewer_access
+
+        denied = enforce_log_viewer_access(session.get("username"))
+        if denied:
+            return denied
         search_term = request.form.get('search_term', '').strip()
         if not search_term:
             return redirect(url_for('display'))
@@ -271,6 +309,11 @@ def register_routes(app):
     @login_required
     def stream_log():
         """Server-Sent Events: tail LOG_FILE for live /log (anti-buffer headers + keepalive)."""
+        from py.utilities.log_viewer_permissions import user_can_view_logs
+        from flask import jsonify
+
+        if not user_can_view_logs(session.get("username")):
+            return jsonify({"error": "Forbidden"}), 403
         log_path = Config.LOG_FILE
         idle_sleep_s = 0.35
         keepalive_every_s = 25.0

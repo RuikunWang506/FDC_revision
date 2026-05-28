@@ -8,6 +8,7 @@ from collections import defaultdict
 from reportlab.lib import colors as rl_colors
 from reportlab.lib.colors import HexColor
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
@@ -82,6 +83,15 @@ EZ_PAGE_W = 4 * inch
 EZ_PAGE_H = 6 * inch
 EZ_FROM_LINE = "827 S LAWSON ST, CITY OF INDUSTRY, CA 91748"
 EZ_GREY = HexColor("#6e6e6e")
+EZ_ETA_FASHION_CUSTOMER_ID = "00951"
+EZ_ETA_DEFAULT_SERVICE = "BTG ACCT#EC3377"
+EZ_ETA_SHIP_TO_NAME = "ETA Fashion"
+EZ_SERVICE_MAX_LINES = 3
+EZ_SERVICE_SIDE_MARGIN = 0.20 * inch
+EZ_BOX_NUM_BASELINE = 1.05 * inch
+EZ_BOX_OF_BASELINE = 0.40 * inch
+EZ_MIDDLE_GAP_AFTER_FROM = 0.10 * inch
+EZ_MIDDLE_GAP_ABOVE_BOX = 0.12 * inch
 _LABEL_CJK_REGISTERED = False
 
 
@@ -1096,13 +1106,34 @@ def _resolve_adobe_reader_path():
     return None
 
 
+def _warehouse_label_print_rotation(pdf_landscape, printable_w, printable_h):
+    """Align 6×4 PDF with portrait 4×6 driver page (override via WAREHOUSE_LABEL_PRINT_ROTATION)."""
+    explicit = os.getenv("WAREHOUSE_LABEL_PRINT_ROTATION", "").strip()
+    if explicit.isdigit():
+        return int(explicit) % 360
+    page_landscape = printable_w >= printable_h
+    if pdf_landscape and not page_landscape:
+        return 90
+    if not pdf_landscape and page_landscape:
+        return 270
+    return 0
+
+
 def _print_pdf_via_sumatra(path, printer_name, logger):
     sumatra = _resolve_sumatra_pdf_path()
     if not sumatra:
         return False
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     subprocess.run(
-        [sumatra, "-print-to", printer_name, "-silent", path],
+        [
+            sumatra,
+            "-print-to",
+            printer_name,
+            "-silent",
+            "-print-settings",
+            "landscape,shrink",
+            path,
+        ],
         check=True,
         timeout=120,
         creationflags=flags,
@@ -1155,8 +1186,73 @@ def _print_pdf_via_shell_execute(path, printer_name, logger):
     return False
 
 
+def _print_pdf_via_win32_gdi(path, printer_name, logger):
+    """Rasterize PDF pages and print via Win32 GDI (no Sumatra/Adobe required)."""
+    try:
+        import pypdfium2 as pdfium
+        import win32ui
+        from PIL import ImageWin
+    except ImportError:
+        return False
+
+    dpi = max(72, min(600, int(os.getenv("WAREHOUSE_LABEL_PRINT_DPI", "200"))))
+    scale = dpi / 72.0
+    doc = pdfium.PdfDocument(path)
+    page_count = len(doc)
+    try:
+        if page_count < 1:
+            return False
+
+        hdc = win32ui.CreateDC()
+        hdc.CreatePrinterDC(printer_name)
+        hdc.SetMapMode(1)  # MM_TEXT — pixel coordinates match device resolution
+        printable_w = hdc.GetDeviceCaps(8)   # HORZRES
+        printable_h = hdc.GetDeviceCaps(10)  # VERTRES
+        first = doc[0]
+        pdf_landscape = float(first.get_width()) >= float(first.get_height())
+        rotation = _warehouse_label_print_rotation(
+            pdf_landscape, printable_w, printable_h
+        )
+
+        hdc.StartDoc("FDC warehouse labels")
+        try:
+            for index in range(len(doc)):
+                page = doc[index]
+                bitmap = page.render(scale=scale, rotation=rotation)
+                try:
+                    pil_image = bitmap.to_pil()
+                finally:
+                    bitmap.close()
+
+                img_w, img_h = pil_image.size
+                fit = min(printable_w / img_w, printable_h / img_h)
+                dest_w = max(1, int(img_w * fit))
+                dest_h = max(1, int(img_h * fit))
+                x0 = (printable_w - dest_w) // 2
+                y0 = (printable_h - dest_h) // 2
+
+                hdc.StartPage()
+                dib = ImageWin.Dib(pil_image)
+                dib.draw(hdc.GetHandleOutput(), (x0, y0, x0 + dest_w, y0 + dest_h))
+                hdc.EndPage()
+        finally:
+            hdc.EndDoc()
+            hdc.DeleteDC()
+    finally:
+        doc.close()
+
+    logger.info(
+        "Printed label PDF via Win32 GDI to %s (%d page(s) at %d DPI, rotation=%s)",
+        printer_name,
+        page_count,
+        dpi,
+        rotation,
+    )
+    return True
+
+
 def _print_pdf_to_windows_printer(pdf_bytes, printer_name, logger):
-    """Send a PDF to a named Windows printer (4×6 label PDF from excel_labels_to_pdf)."""
+    """Send a 6×4 in label PDF to a Windows printer queue (warehouse Zebra, etc.)."""
     if sys.platform != "win32":
         raise RuntimeError("Direct printer output is only supported on Windows.")
     try:
@@ -1185,6 +1281,7 @@ def _print_pdf_to_windows_printer(pdf_bytes, printer_name, logger):
 
         failures = []
         for label, attempt in (
+            ("Win32 GDI", lambda: _print_pdf_via_win32_gdi(abs_path, printer_name, logger)),
             ("SumatraPDF", lambda: _print_pdf_via_sumatra(abs_path, printer_name, logger)),
             ("ShellExecute", lambda: _print_pdf_via_shell_execute(abs_path, printer_name, logger)),
             ("Adobe Reader", lambda: _print_pdf_via_adobe(abs_path, printer_name, logger)),
@@ -1197,10 +1294,11 @@ def _print_pdf_to_windows_printer(pdf_bytes, printer_name, logger):
                 logger.warning("%s warehouse print attempt failed: %s", label, exc)
         else:
             hint = (
-                "Install SumatraPDF (recommended) or set SUMATRA_PDF_PATH, "
-                "assign a default app for .pdf files, and confirm the printer is online."
+                "Confirm the printer is online on this PC (Flask host, not your browser). "
+                "Install pypdfium2 and pywin32, or SumatraPDF with SUMATRA_PDF_PATH, "
+                "or set a default app for .pdf files."
             )
-            detail = "; ".join(failures) if failures else "no PDF print handler responded"
+            detail = "; ".join(failures) if failures else "no print method succeeded"
             raise RuntimeError(
                 f'Could not print 4×6 labels to "{printer_name}". {hint} ({detail})'
             )
@@ -1280,6 +1378,153 @@ def _ez_draw_centered(c, y, text, font_name, font_size, color=None):
         c.setFillColor(rl_colors.black)
 
 
+def _ez_parse_service_input(service):
+    """Up to EZ_SERVICE_MAX_LINES non-empty lines from string or list."""
+    if isinstance(service, (list, tuple)):
+        raw_parts = [str(x) for x in service]
+    else:
+        text = str(service or "").replace("\r\n", "\n").replace("\r", "\n")
+        raw_parts = text.split("\n")
+    lines = [part.strip() for part in raw_parts if part.strip()]
+    return lines[:EZ_SERVICE_MAX_LINES]
+
+
+def _ez_wrap_words(text, font_name, font_size, max_width):
+    words = str(text).split()
+    if not words:
+        return []
+    lines = []
+    current = words[0]
+    for word in words[1:]:
+        trial = f"{current} {word}"
+        if stringWidth(trial, font_name, font_size) <= max_width:
+            current = trial
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
+
+
+def _ez_service_display_lines(service, font_name, font_size, max_width, max_lines=EZ_SERVICE_MAX_LINES):
+    """User lines plus word-wrap; capped at max_lines."""
+    user_lines = _ez_parse_service_input(service)
+    if not user_lines:
+        return []
+    wrapped = []
+    for line in user_lines:
+        if stringWidth(line, font_name, font_size) <= max_width:
+            wrapped.append(line)
+        else:
+            wrapped.extend(_ez_wrap_words(line, font_name, font_size, max_width))
+        if len(wrapped) >= max_lines:
+            break
+    return wrapped[:max_lines]
+
+
+def _ez_service_block_height(lines, font_name, font_size, line_gap):
+    if not lines:
+        return 0.0
+    ascent, descent = _ez_font_metrics(font_name, font_size)
+    per_line = ascent + descent
+    return len(lines) * per_line + max(0, len(lines) - 1) * line_gap
+
+
+def _ez_fit_service_layout(service, max_width, max_height):
+    """Pick Times-Bold size and wrapped lines; prefer fewer lines, then larger type."""
+    font_name = "Times-Bold"
+    best = None
+    for size in range(46, 9, -2):
+        lines = _ez_service_display_lines(service, font_name, size, max_width)
+        if not lines:
+            continue
+        line_gap = max(3, int(size * 0.10))
+        block_h = _ez_service_block_height(lines, font_name, size, line_gap)
+        if block_h > max_height:
+            continue
+        score = (len(lines), -size)
+        if best is None or score < best[0]:
+            best = (score, size, line_gap, lines)
+    if best:
+        _, size, line_gap, lines = best
+        return font_name, size, line_gap, lines
+    lines = _ez_service_display_lines(service, font_name, 10, max_width)
+    return font_name, 10, 3, lines[:EZ_SERVICE_MAX_LINES]
+
+
+def _ez_footer_zone_top():
+    """Highest y reserved for grey box number at bottom."""
+    ascent, _ = _ez_font_metrics("Times-Roman", 28)
+    return EZ_BOX_NUM_BASELINE + ascent + EZ_MIDDLE_GAP_ABOVE_BOX
+
+
+def _ez_measure_to_block(ship_to_lines, total_boxes):
+    """Return height and draw specs for TO / ship-to / TOTAL (no service)."""
+    to_lines = _ez_ship_to_display_lines(ship_to_lines)
+    to_line_size = 12 if len(to_lines) > 3 else 14
+    specs = []
+    h = 0.0
+
+    to_label_font, to_label_size = "Times-Bold", 16
+    gap = 14
+    h += gap + _ez_font_metrics(to_label_font, to_label_size)[0] + _ez_font_metrics(to_label_font, to_label_size)[1]
+    specs.append(("to_label", "TO:", to_label_font, to_label_size, gap))
+
+    for line in to_lines:
+        font = _label_font_name(line, bold=True)
+        if not font.startswith("LabelCJK"):
+            font = "Times-Bold"
+        gap = 6
+        h += gap + _ez_font_metrics(font, to_line_size)[0] + _ez_font_metrics(font, to_line_size)[1]
+        specs.append(("ship", line, font, to_line_size, gap))
+
+    box_word = "BOX" if int(total_boxes) == 1 else "BOXES"
+    total_font, total_size = "Times-Bold", 14
+    gap = 14
+    h += gap + _ez_font_metrics(total_font, total_size)[0] + _ez_font_metrics(total_font, total_size)[1]
+    specs.append(
+        ("total", f"TOTAL {total_boxes} {box_word}", total_font, total_size, gap)
+    )
+    return h, specs
+
+
+def _ez_plan_middle_block(service, ship_to_lines, total_boxes, zone_height):
+    """Fit service and measure full centered block (service + TO + ship + TOTAL)."""
+    max_width = EZ_PAGE_W - 2 * EZ_SERVICE_SIDE_MARGIN
+    to_h, to_specs = _ez_measure_to_block(ship_to_lines, total_boxes)
+    service_max_h = max(0.35 * inch, zone_height - to_h)
+    svc_font, svc_size, svc_gap, svc_lines = _ez_fit_service_layout(
+        service, max_width, service_max_h
+    )
+    svc_h = _ez_service_block_height(svc_lines, svc_font, svc_size, svc_gap) if svc_lines else 0.0
+    if svc_lines:
+        svc_gap_before = 12
+        svc_h += svc_gap_before
+    else:
+        svc_gap_before = 0
+    return {
+        "total_height": svc_h + to_h,
+        "service": (svc_font, svc_size, svc_gap, svc_lines, svc_gap_before),
+        "to_specs": to_specs,
+    }
+
+
+def _ez_draw_middle_block(c, block_top_y, layout):
+    """Draw service + TO block top-down; block_top_y is top edge of centered zone."""
+    y_bottom = block_top_y
+    svc_font, svc_size, svc_gap, svc_lines, svc_gap_before = layout["service"]
+    for idx, line in enumerate(svc_lines):
+        gap = svc_gap_before if idx == 0 else svc_gap
+        y = _ez_baseline_below(y_bottom, svc_font, svc_size, gap_pt=gap)
+        _ez_draw_centered(c, y, line.upper(), svc_font, svc_size)
+        y_bottom = _ez_bottom_below_baseline(y, svc_font, svc_size)
+
+    for _kind, text, font, size, gap in layout["to_specs"]:
+        y = _ez_baseline_below(y_bottom, font, size, gap_pt=gap)
+        _ez_draw_centered(c, y, text, font, size)
+        y_bottom = _ez_bottom_below_baseline(y, font, size)
+
+
 def _ez_draw_label_page(c, logo_path, service, ship_to_lines, box_num, total_boxes):
     """Match Savvy/UCL 4x6 reference: logo banner, from line, service, TO block, totals."""
     cx = EZ_PAGE_W / 2
@@ -1307,38 +1552,22 @@ def _ez_draw_label_page(c, logo_path, service, ship_to_lines, box_num, total_box
     from_font, from_size = "Times-Bold", 12
     y = _ez_baseline_below(y_bottom, from_font, from_size, gap_pt=14)
     _ez_draw_centered(c, y, EZ_FROM_LINE, from_font, from_size)
-    y_bottom = _ez_bottom_below_baseline(y, from_font, from_size)
+    from_bottom = _ez_bottom_below_baseline(y, from_font, from_size)
 
-    service_text = str(service or "").strip().upper()
-    ucl_font, ucl_size = "Times-Bold", 46
-    y = _ez_baseline_below(y_bottom, ucl_font, ucl_size, gap_pt=16)
-    _ez_draw_centered(c, y, service_text, ucl_font, ucl_size)
-    y_bottom = _ez_bottom_below_baseline(y, ucl_font, ucl_size)
+    zone_top = from_bottom - EZ_MIDDLE_GAP_AFTER_FROM
+    zone_bottom = _ez_footer_zone_top()
+    zone_height = max(0.5 * inch, zone_top - zone_bottom)
 
-    to_label_font, to_label_size = "Times-Bold", 16
-    y = _ez_baseline_below(y_bottom, to_label_font, to_label_size, gap_pt=14)
-    _ez_draw_centered(c, y, "TO:", to_label_font, to_label_size)
-    y_bottom = _ez_bottom_below_baseline(y, to_label_font, to_label_size)
+    layout = _ez_plan_middle_block(service, ship_to_lines, total_boxes, zone_height)
+    block_h = layout["total_height"]
+    block_bottom = zone_bottom + (zone_height - block_h) / 2.0
+    block_top = block_bottom + block_h
+    _ez_draw_middle_block(c, block_top, layout)
 
-    to_lines = _ez_ship_to_display_lines(ship_to_lines)
-    for line in to_lines:
-        font = _label_font_name(line, bold=True)
-        if font.startswith("LabelCJK"):
-            line_size = 14
-        else:
-            font = "Times-Bold"
-            line_size = 14
-        y = _ez_baseline_below(y_bottom, font, line_size, gap_pt=6)
-        _ez_draw_centered(c, y, line, font, line_size)
-        y_bottom = _ez_bottom_below_baseline(y, font, line_size)
-
-    box_word = "BOX" if int(total_boxes) == 1 else "BOXES"
-    total_font, total_size = "Times-Bold", 14
-    y = _ez_baseline_below(y_bottom, total_font, total_size, gap_pt=14)
-    _ez_draw_centered(c, y, f"TOTAL {total_boxes} {box_word}", total_font, total_size)
-
-    _ez_draw_centered(c, 1.05 * inch, f"Box {box_num}", "Times-Roman", 28, color=EZ_GREY)
-    _ez_draw_centered(c, 0.40 * inch, f"Box {box_num} of {total_boxes}", "Times-Roman", 15, color=EZ_GREY)
+    _ez_draw_centered(c, EZ_BOX_NUM_BASELINE, f"Box {box_num}", "Times-Roman", 28, color=EZ_GREY)
+    _ez_draw_centered(
+        c, EZ_BOX_OF_BASELINE, f"Box {box_num} of {total_boxes}", "Times-Roman", 15, color=EZ_GREY
+    )
 
 
 def build_ez_sticker_pdf(ship_to_lines, service, total_boxes, order_number=None):
@@ -1529,9 +1758,23 @@ def register_label_maker_routes(app):
             return jsonify({"ok": False, "error": "Total boxes must be a positive number."}), 400
 
         try:
-            ship_to_lines, addr_error = get_order_ship_to_lines(order_number)
-            if addr_error:
-                return jsonify({"ok": False, "error": addr_error}), 400
+            from py.other.eta_fashion_label_pdf import (
+                ETA_FASHION_CUSTOMER_ID,
+                fetch_order_customer_id,
+            )
+
+            customer_id, _cust_err = fetch_order_customer_id(order_number)
+            is_eta_fashion = customer_id == ETA_FASHION_CUSTOMER_ID
+
+            if is_eta_fashion:
+                ship_to_lines = [EZ_ETA_SHIP_TO_NAME]
+            else:
+                ship_to_lines, addr_error = get_order_ship_to_lines(order_number)
+                if addr_error:
+                    return jsonify({"ok": False, "error": addr_error}), 400
+
+            if is_eta_fashion and not service:
+                service = EZ_ETA_DEFAULT_SERVICE
 
             app.logger.info(
                 "***%s***__@@@ez label@@@__ %s service=%s boxes=%s",

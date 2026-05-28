@@ -1120,6 +1120,11 @@ def api_product_search():
 @product_detail_bp.route("/api/history/<string:style>", methods=["GET"])
 def get_history_data(style):
     """Lazy-load history data for a style"""
+    from py.utilities.client_product_detail_permissions import enforce_client_pd_section_api
+
+    blocked = enforce_client_pd_section_api("item_history")
+    if blocked:
+        return blocked
     try:
         history_data = fetch_item_history(style)
         return jsonify({"success": True, "data": history_data})
@@ -1131,6 +1136,11 @@ def get_history_data(style):
 @product_detail_bp.route("/api/adjustments/<string:style>", methods=["GET"])
 def get_adjustment_data(style):
     """Lazy-load adjustment data for a style"""
+    from py.utilities.client_product_detail_permissions import enforce_client_pd_section_api
+
+    blocked = enforce_client_pd_section_api("inventory_adjustment")
+    if blocked:
+        return blocked
     try:
         adjustment_data = fetch_adjustment_history(style)
         return jsonify({"success": True, "data": adjustment_data})
@@ -1142,6 +1152,11 @@ def get_adjustment_data(style):
 @product_detail_bp.route("/api/purchases/<string:style>", methods=["GET"])
 def get_purchase_data(style):
     """Lazy-load purchase data for a style"""
+    from py.utilities.client_product_detail_permissions import enforce_client_pd_section_api
+
+    blocked = enforce_client_pd_section_api("purchase_history")
+    if blocked:
+        return blocked
     try:
         purchase_data = fetch_purchase_history(style)
         return jsonify({"success": True, "data": purchase_data})
@@ -1153,6 +1168,11 @@ def get_purchase_data(style):
 @product_detail_bp.route("/api/ocean/<string:style>", methods=["GET"])
 def get_ocean_data(style):
     """Lazy-load ocean/in-transit data for a style"""
+    from py.utilities.client_product_detail_permissions import enforce_client_pd_section_api
+
+    blocked = enforce_client_pd_section_api("ocean")
+    if blocked:
+        return blocked
     try:
         ocean_data = fetch_ocean_data(style)
         return jsonify({"success": True, "data": ocean_data})
@@ -1161,42 +1181,66 @@ def get_ocean_data(style):
         return jsonify({"success": False, "error": str(e)})
 
 
+def _normalize_sku_key(sku):
+    try:
+        return sku.replace('\u00A0', ' ').strip().lower()
+    except Exception:
+        return str(sku).strip().lower()
+
+
+def _fetch_skus_for_style(style, conn_fdc, conn_oms_ef):
+    """Collect distinct SKUs for a style from FDC and E_FAS (matches product search logic)."""
+    style_clean = style.strip().upper() if isinstance(style, str) else str(style).strip().upper()
+    if not style_clean:
+        return []
+
+    skus = set()
+    query = """
+        SELECT DISTINCT i.PROD_CD
+        FROM dbo.inv AS i
+        WHERE UPPER(LTRIM(RTRIM(i.ALT_CD))) = ?
+           OR UPPER(LTRIM(RTRIM(i.PROD_CD))) LIKE ?
+    """
+    for conn in (conn_fdc, conn_oms_ef):
+        if not conn:
+            continue
+        cursor = conn.cursor()
+        cursor.execute(query, (style_clean, f"{style_clean}%"))
+        for row in cursor.fetchall():
+            if row and row[0]:
+                skus.add(row[0])
+        cursor.close()
+
+    return sorted(skus, key=lambda s: str(s).upper())
+
+
 @product_detail_bp.route('/api/locations/<string:style>', methods=['GET'])
 @login_required
 def get_locations_for_style(style):
     """Get all locations for all SKUs of a given style"""
     try:
-        # Get SKUs from FDC database using the product search logic
         conn_fdc, conn_oms_ef = get_db_connections()
-        if not conn_fdc:
+        if not conn_fdc and not conn_oms_ef:
             return jsonify({"success": False, "error": "Database connection failed"})
-        
-        cursor = conn_fdc.cursor()
-        
-        # Query FDC database for SKUs matching this style (ALT_CD)
-        query = """
-            SELECT DISTINCT i.PROD_CD AS SKU
-            FROM dbo.inv AS i
-            WHERE i.ALT_CD = ?
-            ORDER BY i.PROD_CD
-        """
-        cursor.execute(query, style.upper())
-        skus = [row[0] for row in cursor.fetchall()]
-        cursor.close()
-        
-        if not skus:
+
+        skus = _fetch_skus_for_style(style, conn_fdc, conn_oms_ef)
+
+        if conn_fdc:
             conn_fdc.close()
-            if conn_oms_ef:
-                conn_oms_ef.close()
-            return jsonify({"success": True, "data": {}})
-        
-        # Fetch locations for all SKUs from MySQL
-        location_dict = fetch_locations(skus)
-        conn_fdc.close()
         if conn_oms_ef:
             conn_oms_ef.close()
-        
-        return jsonify({"success": True, "data": location_dict})
+
+        if not skus:
+            return jsonify({"success": True, "data": {}})
+
+        # Fetch locations from MySQL; include every SKU (empty string if none set)
+        location_dict = fetch_locations(skus)
+        result = {}
+        for sku in skus:
+            key = _normalize_sku_key(sku)
+            result[key] = location_dict.get(key, '')
+
+        return jsonify({"success": True, "data": result})
     except Exception as e:
         current_app.logger.error(f"Error fetching locations for style {style}: {e}")
         return jsonify({"success": False, "error": str(e)})

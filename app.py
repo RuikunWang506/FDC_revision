@@ -171,7 +171,7 @@ class CustomRequestHandler(WSGIRequestHandler):
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
-app.secret_key = 'FDCkey2026-may-1-turnstile-update'
+app.secret_key = 'FDCkey2026-may-27'
 app.config.from_object(Config)
 
 # Session configuration for both local and production

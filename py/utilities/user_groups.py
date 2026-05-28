@@ -16,9 +16,23 @@ DEFAULT_GROUPS: List[Tuple[str, str, int]] = [
     ("Admin", "admin", 5),
     ("Superadmin", "superadmin", 10),
     ("Manager", "manager", 20),
+    ("Client", "client", 25),
     ("Warehouse", "warehouse", 30),
     ("Visitor", "visitor", 40),
 ]
+
+# Same tools as legacy TK password (ucandoit) portal access.
+CLIENT_GROUP_PERMISSIONS: Dict[str, Any] = {
+    "tools": ["clientview", "master_image_viewer"],
+    "mail_account_ids": [],
+    "client_product_detail_restrict": True,
+    "client_product_detail_sections": [],
+}
+
+CLIENT_PORTAL_USERS: Dict[str, str] = {
+    "xingxing": "ucandoit",
+    "mydepot": "LA8888",
+}
 
 # Lowercase usernames -> slug (after groups exist)
 PRESET_USER_SLUGS: Dict[str, str] = {
@@ -36,6 +50,8 @@ PRESET_USER_SLUGS: Dict[str, str] = {
     "daniel": "warehouse",
     "kenny": "visitor",
     "erwan": "visitor",
+    "xingxing": "client",
+    "mydepot": "client",
 }
 
 PROTECTED_DELETE_SLUGS = frozenset({"yeti"})
@@ -150,6 +166,59 @@ def seed_user_groups_if_empty(connection) -> None:
         cur.close()
 
 
+def seed_client_portal_group(connection) -> None:
+    """
+    Ensure Client group + portal users exist (xingxing, mydepot).
+    Safe to run on every app start; only inserts missing rows.
+    """
+    perms_json = json.dumps(CLIENT_GROUP_PERMISSIONS)
+    cur = connection.cursor(dictionary=True)
+    ins = connection.cursor()
+    try:
+        cur.execute("SELECT id FROM user_groups WHERE slug = %s LIMIT 1", ("client",))
+        row = cur.fetchone()
+        if row:
+            gid = int(row["id"])
+            ins.execute(
+                "UPDATE user_groups SET permissions = %s WHERE id = %s",
+                (perms_json, gid),
+            )
+        else:
+            ins.execute(
+                """
+                INSERT INTO user_groups (name, slug, permissions, sort_order)
+                VALUES (%s, %s, %s, %s)
+                """,
+                ("Client", "client", perms_json, 25),
+            )
+            gid = int(ins.lastrowid)
+        connection.commit()
+
+        for username, password in CLIENT_PORTAL_USERS.items():
+            cur.execute("SELECT id, user_group_id FROM users WHERE username = %s", (username,))
+            existing = cur.fetchone()
+            if existing:
+                ins.execute(
+                    "UPDATE users SET user_group_id = %s, password = %s WHERE id = %s",
+                    (gid, password, existing["id"]),
+                )
+            else:
+                ins.execute(
+                    """
+                    INSERT INTO users (username, password, email, created_at, user_group_id)
+                    VALUES (%s, %s, NULL, NOW(), %s)
+                    """,
+                    (username, password, gid),
+                )
+        connection.commit()
+    finally:
+        try:
+            ins.close()
+        except Exception:
+            pass
+        cur.close()
+
+
 def backfill_null_user_groups(connection) -> None:
     """New column / new users: assign Visitor when group is missing."""
     cur = connection.cursor(dictionary=True)
@@ -194,12 +263,28 @@ def parse_permissions_ui(raw: Any) -> Dict[str, Any]:
         parsed = {}
     tools = parsed.get("tools")
     mail_ids = parsed.get("mail_account_ids")
+    cpd_sections = parsed.get("client_product_detail_sections")
     return {
         "raw": parsed,
         "dashboard_restrict": "tools" in parsed,
         "mail_restrict": "mail_account_ids" in parsed,
         "tools_sel": tools if isinstance(tools, list) else [],
         "mail_sel": _int_list(mail_ids),
+        "client_pd_restrict": bool(parsed.get("client_product_detail_restrict")),
+        "client_pd_sections_sel": cpd_sections if isinstance(cpd_sections, list) else [],
+        "customer_purchase_customer_id": str(
+            parsed.get("customer_purchase_customer_id") or ""
+        ).strip(),
+        "master_image_viewer_customer_purchase_only": bool(
+            parsed.get("master_image_viewer_customer_purchase_only")
+        ),
+        "client_product_detail_customer_purchase_only": bool(
+            parsed.get("client_product_detail_customer_purchase_only")
+        ),
+        "master_image_viewer_hide_path": bool(
+            parsed.get("master_image_viewer_hide_path")
+        ),
+        "log_viewer_allowed": bool(parsed.get("log_viewer_allowed")),
     }
 
 

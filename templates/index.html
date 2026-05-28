@@ -481,22 +481,173 @@
       color: #c9f6ff;
     }
 
+    /* Restricted portal users: same photo background as main home, no sidebar/navbar */
+    body.portal-minimal {
+      margin: 0;
+      min-height: 100vh;
+    }
+    body.portal-minimal .dashboard-wrapper {
+      background: url("{{ url_for('static', filename='luca-bravo-zAjdgNXsMeg-unsplash.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      padding-top: 0;
+      margin-top: 0;
+      min-height: 100vh;
+      color: #e8f4fd;
+    }
+    body.portal-minimal .portal-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.5rem;
+      font-size: 0.92rem;
+      color: #cbd5e1;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      background: rgba(18, 25, 38, 0.88);
+      backdrop-filter: blur(12px);
+    }
+    body.portal-minimal .portal-top-bar .portal-brand {
+      font-weight: 700;
+      color: #00d4ff;
+      letter-spacing: 0.02em;
+    }
+    body.portal-minimal .portal-top-bar .portal-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    body.portal-minimal .portal-top-bar a {
+      color: #7ee8ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    body.portal-minimal .dashboard-container {
+      grid-template-columns: 1fr;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+      min-height: calc(100vh - 52px);
+      align-content: center;
+      justify-items: center;
+    }
+    body.portal-minimal .main-title {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 0.35rem;
+      background: linear-gradient(45deg, #00d4ff, #1cc88a, #36b9cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.25);
+    }
+    body.portal-minimal .portal-subtitle {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      margin: 0 0 1.75rem;
+    }
+    body.portal-minimal .dashboard-grid {
+      width: 100%;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      max-width: 420px;
+    }
+    body.portal-minimal .tool-card,
+    body.portal-minimal .tool-card[data-category] {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-left: 1px solid #e2e8f0 !important;
+      border-radius: 16px !important;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
+      color: #0f172a !important;
+      height: auto !important;
+      min-height: 0 !important;
+      padding: 1.75rem 1.25rem !important;
+      filter: none !important;
+    }
+    body.portal-minimal .tool-card:hover {
+      border-color: #93c5fd !important;
+      transform: translateY(-2px);
+      box-shadow: 0 14px 36px rgba(37, 99, 235, 0.12) !important;
+    }
+    body.portal-minimal .tool-card .card-header {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      width: 100%;
+    }
+    body.portal-minimal .tool-card .card-header .portal-tool-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+    }
+    body.portal-minimal .tool-card .card-header .portal-tool-icon i {
+      display: inline-block;
+      width: auto;
+      height: auto;
+      background: none;
+      font-size: 1.65rem;
+      color: #1d4ed8;
+    }
+    body.portal-minimal .tool-card .card-header h3 {
+      color: #0f172a !important;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    body.portal-minimal .tool-card p,
+    body.portal-minimal .tool-card .card-footer {
+      display: none !important;
+    }
+    body.portal-minimal .favorite-star,
+    body.portal-minimal .fdc-photo-credit {
+      display: none !important;
+    }
+
   </style>
 </head>
-<body>
+<body class="{% if portal_minimal %}portal-minimal{% endif %}">
+  {% if portal_minimal %}
+  <div class="portal-top-bar">
+    <span class="portal-brand">FDC Client</span>
+    <div class="portal-actions">
+      <span><i class="fas fa-user"></i> {{ current_user }}</span>
+      <a href="{{ url_for('auth.logout') }}">退出 Logout</a>
+    </div>
+  </div>
+  {% else %}
   {% include 'navbar.html' %}
+  {% endif %}
 
   <!-- Dashboard Wrapper - Scoped styles to avoid navbar conflicts -->
   <div class="dashboard-wrapper">
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
    
-      <div class="main-title" style="background:none; margin-bottom:1.5rem;">
-
-    </div>
+      {% if portal_minimal %}
+      <div class="main-title">Choose a tool</div>
+      <p class="portal-subtitle">选择功能 · Select a tool</p>
+      {% else %}
+      <div class="main-title" style="background:none; margin-bottom:1.5rem;"></div>
+      {% endif %}
 
     
     <div class="dashboard-container">
+      {% if not portal_minimal %}
       <!-- Smart Navigation Panel -->
       <div class="nav-panel" id="dashboard-nav-panel">
         <div class="nav-header">
@@ -591,6 +742,7 @@
         </div>
         
       </div>
+      {% endif %}
       
       <!-- Main Dashboard Grid -->
       <div class="dashboard-grid" id="toolGrid">
@@ -788,11 +940,33 @@
         {%- if tool_allowed('master_image_viewer') %}
         <a href="/master_image_viewer" class="tool-card" data-category="media" data-tool="master_image_viewer">
           <div class="card-header">
+            {% if portal_minimal %}
+            <span class="portal-tool-icon" aria-hidden="true">⭐</span>
+            {% else %}
             <i class="fas fa-images"></i>
+            {% endif %}
             <h3>Master Image Viewer</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'master_image_viewer')"></i>
           </div>
           <p>Search and view all images for any SKU across all sources with zoom</p>
+          <div class="card-footer">
+            <span class="category">Media</span>
+          </div>
+        </a>
+        {%- endif %}
+
+        {%- if tool_allowed('clientview') %}
+        <a href="{{ url_for('clientview.clientview_product_detail') }}" class="tool-card" data-category="media" data-tool="client_product_detail">
+          <div class="card-header">
+            {% if portal_minimal %}
+            <span class="portal-tool-icon" aria-hidden="true">📦</span>
+            {% else %}
+            <i class="fas fa-box-open"></i>
+            {% endif %}
+            <h3>商品查询 / Product Lookup</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'client_product_detail')"></i>
+          </div>
+          <p>客户商品详情（无成本/客户价）· Client product detail without cost or customer price</p>
           <div class="card-footer">
             <span class="category">Media</span>
           </div>
@@ -980,11 +1154,13 @@
     </div>
   </div>
 
+  {% if not portal_minimal|default(false) %}
   <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@lucabravo?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Luca Bravo</a> on <a href="https://unsplash.com/photos/brown-house-near-body-of-water-zAjdgNXsMeg?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Unsplash</a></p>
-
   {% include 'footer.html' %}
+  {% endif %}
 
   <script>
+    const PORTAL_MINIMAL = {{ portal_minimal|default(false)|tojson }};
     let currentFilter = 'all';
     let userFavorites = [];
     
@@ -1039,6 +1215,7 @@
     }
     
     function updateFavorites() {
+      if (PORTAL_MINIMAL) return;
       document.querySelectorAll('.favorite-star').forEach(star => {
         const tool = star.parentElement.parentElement.getAttribute('data-tool');
         if (userFavorites.includes(tool)) {
@@ -1185,6 +1362,7 @@
     
     // Initialize with smooth card entrance animation
     function updateCategoryCounts() {
+      if (PORTAL_MINIMAL) return;
       const cards = document.querySelectorAll('.tool-card');
       document.getElementById('allToolsCount').textContent = cards.length;
       const slugs = ['lookup', 'orders', 'inventory', 'media', 'toolkit', 'logistics', 'admin'];
@@ -1200,6 +1378,13 @@
     }
     
     document.addEventListener('DOMContentLoaded', function() {
+      if (PORTAL_MINIMAL) {
+        document.querySelectorAll('.tool-card').forEach(function(card) {
+          card.style.display = 'flex';
+          card.style.opacity = '1';
+        });
+        return;
+      }
       loadFavorites().then(() => {
         setTimeout(() => {
           applyDashboardFilters({ animate: true });
