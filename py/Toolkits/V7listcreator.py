@@ -10,7 +10,9 @@ from io import BytesIO
 import json
 import os
 import re
+import subprocess
 import threading
+import time
 import uuid
 import pyodbc
 import pandas as pd
@@ -138,6 +140,20 @@ def _listcreator_input_source_looks_like_dropbox_path(list_input):
     return '\\' in x or bool(re.match(r'^[a-z]:\\', x)) or x.startswith('\\\\')
 
 
+def _listcreator_input_is_single_dropbox_path(list_input):
+    """True when the whole line is one Dropbox path (folder names may contain spaces)."""
+    s = (list_input or '').strip()
+    if not s or ',' in s or ';' in s:
+        return False
+    if re.match(r'^dropbox\\', s, re.IGNORECASE):
+        return True
+    if re.match(r'^[a-z]:\\', s, re.IGNORECASE) and re.search(r'\\dropbox\\', s, re.IGNORECASE):
+        return True
+    if s.startswith('\\\\') and 'dropbox' in s.lower():
+        return True
+    return False
+
+
 def _token_looks_like_style(token):
     """Catalog style code: 1–2 letters + 4 digits, optional size suffix."""
     return bool(re.match(r'^[A-Za-z]{1,2}\d{4}([-]?[smlSML]*)?$', (token or '').strip(), re.IGNORECASE))
@@ -219,6 +235,10 @@ def _expand_listcreator_mixed_input(list_input):
     """
     raw = (list_input or '').strip()
     if not raw:
+        return raw, None
+
+    # Folder names may contain spaces — never tokenize a lone dropbox\... path on whitespace.
+    if _listcreator_input_is_single_dropbox_path(raw):
         return raw, None
 
     tokens = [t.strip() for t in re.split(r'[\s,\n\r;]+', raw) if t.strip()]
@@ -377,6 +397,664 @@ def _v7_rel_path_under_dropbox(base: Path, dest: Path) -> str:
     except ValueError:
         return ''
     return str(rel).replace('/', '\\')
+
+
+def _v7_subprocess_no_window_flags():
+    return getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+
+
+_V7_DROPBOX_SERVICE_NAME = 'dropbox'
+_V7_DROPBOX_RESTART_TASK = 'FDC Restart Dropbox'
+_V7_DROPBOX_USER_START_TASK = 'FDC Start Dropbox User'
+_V7_NSSM_EXE_CANDIDATES = (
+    r'C:\nssm\nssm.exe',
+    r'C:\NSSM\nssm.exe',
+)
+
+
+def _v7_nssm_exe_path():
+    for p in _V7_NSSM_EXE_CANDIDATES:
+        if os.path.isfile(p):
+            return p
+    return ''
+
+
+def _v7_dropbox_restart_task_configured():
+    if os.name != 'nt':
+        return False
+    try:
+        r = subprocess.run(
+            ['schtasks', '/Query', '/TN', _V7_DROPBOX_RESTART_TASK],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            creationflags=_v7_subprocess_no_window_flags(),
+        )
+        return r.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return False
+
+
+def _v7_dropbox_user_start_task_configured():
+    if os.name != 'nt':
+        return False
+    try:
+        r = subprocess.run(
+            ['schtasks', '/Query', '/TN', _V7_DROPBOX_USER_START_TASK],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            creationflags=_v7_subprocess_no_window_flags(),
+        )
+        return r.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return False
+
+
+def _v7_dropbox_windows_user():
+    """Windows account that owns LOCAL_DROPBOX_DIR (tray/sync client user)."""
+    root = getattr(Config, 'LOCAL_DROPBOX_DIR', None) or ''
+    m = re.match(r'^[a-zA-Z]:\\users\\([^\\]+)\\', str(root), re.IGNORECASE)
+    if m:
+        return m.group(1)
+    return os.environ.get('DROPBOX_WINDOWS_USER', 'stream')
+
+
+def _v7_dropbox_process_rows():
+    """Dropbox.exe rows from tasklist: pid, session_id (0 = SYSTEM service)."""
+    if os.name != 'nt':
+        return []
+    try:
+        r = subprocess.run(
+            ['tasklist', '/FI', 'IMAGENAME eq Dropbox.exe', '/FO', 'CSV', '/NH'],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            creationflags=_v7_subprocess_no_window_flags(),
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return []
+    if r.returncode != 0:
+        return []
+    rows = []
+    for line in (r.stdout or '').splitlines():
+        ln = line.strip()
+        if not ln or ln.upper().startswith('INFO:'):
+            continue
+        if 'dropbox.exe' not in ln.lower():
+            continue
+        parts = [p.strip('"') for p in ln.split('","')]
+        if parts and parts[0].startswith('"'):
+            parts[0] = parts[0].lstrip('"')
+        if parts and parts[-1].endswith('"'):
+            parts[-1] = parts[-1].rstrip('"')
+        if len(parts) < 4:
+            continue
+        pid = parts[1]
+        try:
+            session_id = int(parts[3])
+        except (TypeError, ValueError):
+            session_id = 0
+        if pid.isdigit():
+            rows.append({'pid': pid, 'session_id': session_id})
+    return rows
+
+
+def _v7_dropbox_access_denied(err_text: str) -> bool:
+    t = (err_text or '').lower()
+    return (
+        'access is denied' in t
+        or "can't open service" in t
+        or 'openervice' in t
+    )
+
+
+def _v7_dropbox_restart_bat_path():
+    try:
+        root = Path(__file__).resolve().parents[2]
+    except IndexError:
+        return ''
+    p = root / 'auto_run' / 'restart_dropbox_service.bat'
+    return str(p) if p.is_file() else ''
+
+
+def _v7_process_runs_as_local_system():
+    if os.name != 'nt':
+        return False
+    if (os.environ.get('USERNAME') or '').upper() == 'SYSTEM':
+        return True
+    if str(os.environ.get('SESSIONNAME', '')).strip().lower() == 'services':
+        return True
+    for marker in ('NSSM_SERVICE_NAME', 'NSSM_APPLICATION', 'SERVICE_NAME'):
+        if os.environ.get(marker):
+            return True
+    return False
+
+
+def _v7_dropbox_run_restart_bat_direct():
+    """Run restart batch (only works when this process can control services)."""
+    bat = _v7_dropbox_restart_bat_path()
+    if not bat:
+        return 'restart_dropbox_service.bat not found.'
+    flags = _v7_subprocess_no_window_flags()
+    try:
+        r = subprocess.run(
+            ['cmd', '/c', bat],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            creationflags=flags,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+        return str(e)
+    if r.returncode != 0:
+        return (r.stderr or r.stdout or 'restart_dropbox_service.bat failed').strip()
+    return None
+
+
+def _v7_dropbox_task_already_running_message(err_text: str) -> bool:
+    t = (err_text or '').lower()
+    return 'currently running' in t
+
+
+def _v7_dropbox_wait_for_restart_task_idle(timeout_sec=120):
+    """Poll until FDC Restart Dropbox is not Running (best-effort)."""
+    flags = _v7_subprocess_no_window_flags()
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        try:
+            r = subprocess.run(
+                ['schtasks', '/Query', '/TN', _V7_DROPBOX_RESTART_TASK, '/FO', 'LIST', '/V'],
+                capture_output=True,
+                text=True,
+                timeout=20,
+                creationflags=flags,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            break
+        if r.returncode != 0:
+            break
+        text = r.stdout or ''
+        if re.search(r'^\s*Status:\s*Running\s*$', text, re.MULTILINE | re.IGNORECASE):
+            time.sleep(2)
+            continue
+        break
+
+
+def _v7_dropbox_trigger_restart_task():
+    """Run the SYSTEM scheduled task (Setup-DropboxRestartTask.ps1). Returns error str or None."""
+    flags = _v7_subprocess_no_window_flags()
+    try:
+        r = subprocess.run(
+            ['schtasks', '/Run', '/TN', _V7_DROPBOX_RESTART_TASK],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            creationflags=flags,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+        return str(e)
+    out = (r.stdout or '') + '\n' + (r.stderr or '')
+    if r.returncode != 0:
+        err = out.strip() or 'schtasks /Run failed'
+        if _v7_dropbox_task_already_running_message(err):
+            _v7_dropbox_wait_for_restart_task_idle()
+            return None
+        if _v7_dropbox_access_denied(err) and _v7_process_runs_as_local_system():
+            direct_err = _v7_dropbox_run_restart_bat_direct()
+            if not direct_err:
+                return None
+            if direct_err:
+                current_app.logger.warning('schtasks denied; direct bat: %s', direct_err)
+        return err
+    _v7_dropbox_wait_for_restart_task_idle(timeout_sec=90)
+    return None
+
+
+def _v7_run_sc_queryex(service_name: str):
+    """Parse `sc queryex` for Windows service state and PID."""
+    if os.name != 'nt':
+        return None
+    try:
+        r = subprocess.run(
+            ['sc', 'queryex', service_name],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            creationflags=_v7_subprocess_no_window_flags(),
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return None
+    if r.returncode != 0:
+        return None
+    text = r.stdout or ''
+    state = None
+    pid = None
+    for line in text.splitlines():
+        ln = line.strip()
+        if ln.startswith('STATE'):
+            # e.g. STATE : 4  RUNNING
+            m = re.search(r'\d+\s+(\S+)', ln)
+            if m:
+                state = m.group(1).upper()
+        elif ln.upper().startswith('PID'):
+            m = re.search(r':\s*(\d+)', ln)
+            if m and int(m.group(1)) > 0:
+                pid = m.group(1)
+    return {'state': state or 'UNKNOWN', 'pid': pid}
+
+
+def _v7_dropbox_service_state():
+    svc = _v7_run_sc_queryex(_V7_DROPBOX_SERVICE_NAME)
+    return svc.get('state') if svc else None
+
+
+def _v7_dropbox_wait_for_service_state(target_states, timeout_sec=90):
+    """Wait until service reaches one of target_states (e.g. STOPPED, RUNNING)."""
+    targets = {s.upper() for s in target_states}
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        state = _v7_dropbox_service_state()
+        if state and state.upper() in targets:
+            return state
+        time.sleep(1.5)
+    return _v7_dropbox_service_state()
+
+
+def _v7_dropbox_start_user_sync_client():
+    """Launch Dropbox.exe in the logged-in Windows user session."""
+    flags = _v7_subprocess_no_window_flags()
+    if _v7_dropbox_user_start_task_configured():
+        try:
+            r = subprocess.run(
+                ['schtasks', '/Run', '/TN', _V7_DROPBOX_USER_START_TASK],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                creationflags=flags,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+            return False, str(e)
+        if r.returncode != 0:
+            return False, (r.stderr or r.stdout or 'schtasks user start failed').strip()
+        return True, None
+    exes = _v7_dropbox_desktop_exe_candidates()
+    if not exes:
+        return False, 'Dropbox.exe not found and user start task is not configured.'
+    try:
+        subprocess.Popen(
+            ['cmd', '/c', 'start', '', exes[0]],
+            creationflags=flags,
+            close_fds=True,
+        )
+    except OSError as e:
+        return False, str(e)
+    return True, None
+
+
+def _v7_dropbox_controlled_service_restart():
+    """
+    Stop SYSTEM service, kill all Dropbox.exe, start user-session sync client.
+    Returns (ok: bool, error: str|None).
+    """
+    flags = _v7_subprocess_no_window_flags()
+    name = _V7_DROPBOX_SERVICE_NAME
+
+    state = _v7_dropbox_service_state()
+    if state == 'STOP_PENDING':
+        _v7_dropbox_wait_for_service_state(['STOPPED'], timeout_sec=90)
+        state = _v7_dropbox_service_state()
+    elif state == 'START_PENDING':
+        _v7_dropbox_wait_for_service_state(['RUNNING', 'STOPPED'], timeout_sec=90)
+        state = _v7_dropbox_service_state()
+
+    if state == 'RUNNING':
+        subprocess.run(
+            ['net', 'stop', name],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            creationflags=flags,
+        )
+        final = _v7_dropbox_wait_for_service_state(['STOPPED'], timeout_sec=90)
+        if final and final.upper() != 'STOPPED':
+            return False, f'Dropbox service did not stop (still {final}).'
+
+    _v7_dropbox_kill_orphan_processes()
+    time.sleep(2)
+
+    ok, err = _v7_dropbox_start_user_sync_client()
+    if not ok:
+        return False, err or 'Could not start Dropbox user sync client.'
+    time.sleep(3)
+    st = _v7_dropbox_desktop_status()
+    if st.get('sync_client_running'):
+        return True, None
+    return False, (
+        f'Dropbox sync client did not appear in {_v7_dropbox_windows_user()} session — '
+        'is that user logged in?'
+    )
+
+
+def _v7_dropbox_process_pids():
+    return [row['pid'] for row in _v7_dropbox_process_rows()]
+
+
+def _v7_dropbox_desktop_exe_candidates():
+    """Known Dropbox desktop client locations on Windows."""
+    if os.name != 'nt':
+        return []
+    candidates = []
+    pf86 = os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)')
+    pf = os.environ.get('ProgramFiles', r'C:\Program Files')
+    # NSSM dropbox service on this server uses the x86 Client path.
+    candidates.extend([
+        os.path.join(pf86, 'Dropbox', 'Client', 'Dropbox.exe'),
+        os.path.join(pf, 'Dropbox', 'Client', 'Dropbox.exe'),
+    ])
+    localappdata = os.environ.get('LOCALAPPDATA', '')
+    if localappdata:
+        candidates.append(os.path.join(localappdata, 'Dropbox', 'client', 'Dropbox.exe'))
+        inst = os.path.join(localappdata, 'Dropbox', 'instance')
+        if os.path.isdir(inst):
+            try:
+                for name in os.listdir(inst):
+                    p = os.path.join(inst, name, 'Dropbox.exe')
+                    if os.path.isfile(p):
+                        candidates.append(p)
+            except OSError:
+                pass
+    seen = set()
+    out = []
+    for p in candidates:
+        key = os.path.normcase(os.path.abspath(p))
+        if key in seen or not os.path.isfile(p):
+            continue
+        seen.add(key)
+        out.append(p)
+    return out
+
+
+def _v7_dropbox_desktop_process():
+    """Return (running: bool, pid: str|None) — prefers Windows service PID."""
+    svc = _v7_run_sc_queryex(_V7_DROPBOX_SERVICE_NAME)
+    if svc and svc.get('state') == 'RUNNING' and svc.get('pid'):
+        return True, svc['pid']
+    pids = _v7_dropbox_process_pids()
+    if pids:
+        return True, pids[0]
+    return False, None
+
+
+def _v7_dropbox_desktop_status():
+    """Status of the Dropbox sync app and configured LOCAL_DROPBOX_DIR."""
+    root = getattr(Config, 'LOCAL_DROPBOX_DIR', None) or ''
+    folder_exists = False
+    folder_readable = False
+    if root:
+        try:
+            base = Path(os.path.abspath(str(root))).resolve()
+            folder_exists = base.is_dir()
+            if folder_exists:
+                os.listdir(base)
+                folder_readable = True
+        except OSError:
+            folder_exists = bool(root and os.path.isdir(root))
+    svc = _v7_run_sc_queryex(_V7_DROPBOX_SERVICE_NAME)
+    service_configured = svc is not None
+    service_state = svc['state'] if svc else None
+    service_pid = svc['pid'] if svc else None
+    process_rows = _v7_dropbox_process_rows()
+    user_rows = [row for row in process_rows if row['session_id'] > 0]
+    system_rows = [row for row in process_rows if row['session_id'] == 0]
+    user_pids = [row['pid'] for row in user_rows]
+    system_pids = [row['pid'] for row in system_rows]
+    process_pids = [row['pid'] for row in process_rows]
+    service_running = service_state == 'RUNNING'
+    sync_client_running = bool(user_pids)
+    running = sync_client_running or service_running or bool(system_pids)
+    pid = (user_pids[0] if user_pids else None) or service_pid or (system_pids[0] if system_pids else None)
+    win_user = _v7_dropbox_windows_user()
+    exes = _v7_dropbox_desktop_exe_candidates()
+    return {
+        'platform_supported': os.name == 'nt',
+        'running': running,
+        'sync_client_running': sync_client_running,
+        'pid': pid,
+        'windows_user': win_user,
+        'service_name': _V7_DROPBOX_SERVICE_NAME,
+        'service_configured': service_configured,
+        'service_state': service_state,
+        'service_pid': service_pid,
+        'restart_task_configured': _v7_dropbox_restart_task_configured(),
+        'restart_task_name': _V7_DROPBOX_RESTART_TASK,
+        'user_start_task_configured': _v7_dropbox_user_start_task_configured(),
+        'user_start_task_name': _V7_DROPBOX_USER_START_TASK,
+        'process_count': len(process_pids),
+        'process_pids': process_pids[:12],
+        'user_session_count': len(user_pids),
+        'user_session_pids': user_pids[:12],
+        'system_session_count': len(system_pids),
+        'exe_found': bool(exes),
+        'exe_path': exes[0] if exes else '',
+        'folder_path': str(root) if root else '',
+        'folder_exists': folder_exists,
+        'folder_readable': folder_readable,
+    }
+
+
+def _v7_dropbox_kill_orphan_processes():
+    """Stop stray Dropbox.exe when the Windows service is not running."""
+    flags = _v7_subprocess_no_window_flags()
+    try:
+        subprocess.run(
+            ['taskkill', '/IM', 'Dropbox.exe', '/F'],
+            capture_output=True,
+            text=True,
+            timeout=45,
+            creationflags=flags,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+        current_app.logger.warning('taskkill Dropbox.exe failed: %s', e)
+        return False
+    return True
+
+
+def _v7_dropbox_wait_for_running(timeout_sec=25):
+    """Poll until Dropbox sync client runs in a user session (tray app), not only SYSTEM."""
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        st = _v7_dropbox_desktop_status()
+        if st.get('sync_client_running'):
+            return st
+        time.sleep(1.5)
+    return _v7_dropbox_desktop_status()
+
+
+def _v7_dropbox_service_start_or_restart(*, restart: bool):
+    """Use Windows service `dropbox` (NSSM) with stop-wait-start (no nssm restart races)."""
+    status = _v7_dropbox_desktop_status()
+    if not status.get('service_configured'):
+        return None
+    service_state = status.get('service_state')
+
+    def _finish(action, message):
+        new_status = _v7_dropbox_wait_for_running(timeout_sec=50)
+        if not new_status.get('sync_client_running'):
+            hint = (
+                f' Dropbox sync client did not start in {_v7_dropbox_windows_user()} session — '
+                'user must be logged in. Re-run Setup-DropboxRestartTask.ps1 as Admin.'
+            )
+            if new_status.get('system_session_count', 0) and not new_status.get('user_session_count'):
+                hint = (
+                    f' Only SYSTEM-session Dropbox is running (not {_v7_dropbox_windows_user()} tray sync).'
+                    + hint
+                )
+            return {
+                'ok': False,
+                'error': 'Dropbox sync client is not running in the user session.' + hint,
+                'status': new_status,
+            }
+        return {
+            'ok': True,
+            'action': action,
+            'message': message,
+            'status': new_status,
+        }
+
+    def _soft_ok(message):
+        """Restart failed but Dropbox still appears up — reload folders anyway."""
+        return {
+            'ok': True,
+            'action': 'reload_only',
+            'message': message,
+            'status': _v7_dropbox_desktop_status(),
+        }
+
+    setup_hint = (
+        ' Re-run as Admin: cd C:\\FDC_FLASK_APP\\auto_run; .\\Setup-DropboxRestartTask.ps1'
+    )
+
+    if _v7_dropbox_restart_task_configured():
+        err = _v7_dropbox_trigger_restart_task()
+        if not err:
+            action = 'restarted' if restart and status.get('running') else 'started'
+            msg = {
+                'started': f'Started Dropbox sync in {_v7_dropbox_windows_user()} Windows session.',
+                'restarted': f'Restarted Dropbox sync in {_v7_dropbox_windows_user()} session — check tray icon.',
+            }.get(action, 'Dropbox restart task triggered.')
+            result = _finish(action, msg)
+            if result.get('ok'):
+                return result
+            if _v7_dropbox_desktop_status().get('sync_client_running'):
+                return _soft_ok(
+                    'Restart task ran; Dropbox sync client still running — folder list refreshed.'
+                )
+        elif not _v7_dropbox_access_denied(err):
+            current_app.logger.warning('dropbox restart task failed: %s', err)
+
+    if not restart and service_state == 'RUNNING' and status.get('process_count', 0) > 0:
+        return _finish('already_running', 'Dropbox Windows service is already running.')
+
+    try:
+        ok, err = _v7_dropbox_controlled_service_restart()
+        if ok:
+            action = 'restarted' if restart and status.get('running') else 'started'
+            msg = {
+                'started': f'Started Dropbox sync in {_v7_dropbox_windows_user()} Windows session.',
+                'restarted': f'Restarted Dropbox sync in {_v7_dropbox_windows_user()} session — check tray icon.',
+            }.get(action, 'Dropbox service updated.')
+            return _finish(action, msg)
+
+        if err and _v7_dropbox_desktop_status().get('sync_client_running'):
+            return _soft_ok(
+                'Could not restart cleanly. Dropbox sync client still running — folder list refreshed.'
+            )
+
+        if err and _v7_dropbox_access_denied(err) and not _v7_dropbox_restart_task_configured():
+            err = err + setup_hint
+        elif err and not _v7_dropbox_restart_task_configured():
+            err = err + setup_hint
+
+        current_app.logger.warning('dropbox service control failed: %s', err)
+        return {
+            'ok': False,
+            'error': err or 'Could not restart Dropbox Windows service.',
+            'status': _v7_dropbox_desktop_status(),
+        }
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+        current_app.logger.error('dropbox service control exception: %s', e)
+        if _v7_dropbox_desktop_status().get('sync_client_running'):
+            return _soft_ok(
+                f'Restart error ({e}) but Dropbox sync client still running — folder list refreshed.'
+            )
+        return {
+            'ok': False,
+            'error': f'Could not control Dropbox service: {e}' + setup_hint,
+            'status': _v7_dropbox_desktop_status(),
+        }
+
+
+def _v7_dropbox_desktop_start_or_restart(*, restart: bool):
+    """
+    Start/restart Dropbox via Windows service (NSSM). Falls back to launching exe.
+    Returns (payload dict, http_status).
+    """
+    status = _v7_dropbox_desktop_status()
+    if os.name != 'nt':
+        return {
+            'ok': False,
+            'error': 'Dropbox desktop control is only available on Windows servers.',
+            'status': status,
+        }, 503
+
+    if status.get('service_configured'):
+        if status.get('running') and not restart:
+            return {
+                'ok': True,
+                'action': 'already_running',
+                'message': 'Dropbox Windows service is already running.',
+                'status': status,
+            }, 200
+        svc_result = _v7_dropbox_service_start_or_restart(restart=restart)
+        if svc_result is not None:
+            code = 200 if svc_result.get('ok') else 500
+            return svc_result, code
+
+    exes = _v7_dropbox_desktop_exe_candidates()
+    if not exes:
+        return {
+            'ok': False,
+            'error': 'Dropbox.exe was not found and no dropbox Windows service is configured.',
+            'status': status,
+        }, 503
+    exe = exes[0]
+    flags = _v7_subprocess_no_window_flags()
+    action = 'started'
+    if status['running']:
+        if not restart:
+            return {
+                'ok': True,
+                'action': 'already_running',
+                'message': 'Dropbox sync app is already running.',
+                'status': _v7_dropbox_desktop_status(),
+            }, 200
+        action = 'restarted'
+        _v7_dropbox_kill_orphan_processes()
+        time.sleep(3)
+    try:
+        subprocess.Popen(
+            ['cmd', '/c', 'start', '', exe],
+            creationflags=flags,
+            close_fds=True,
+        )
+    except OSError as e:
+        current_app.logger.error('Failed to launch Dropbox.exe: %s', e)
+        return {
+            'ok': False,
+            'error': f'Could not launch Dropbox: {e}',
+            'status': _v7_dropbox_desktop_status(),
+        }, 500
+    new_status = _v7_dropbox_wait_for_running()
+    if not new_status.get('sync_client_running'):
+        return {
+            'ok': False,
+            'error': (
+                f'Tried to launch Dropbox.exe but no sync client appeared in '
+                f'{_v7_dropbox_windows_user()} session.'
+            ),
+            'status': new_status,
+        }, 500
+    msg = {
+        'started': 'Started Dropbox sync app.',
+        'restarted': 'Restarted Dropbox sync app — it should fetch new files shortly.',
+    }.get(action, 'Dropbox sync app updated.')
+    return {
+        'ok': True,
+        'action': action,
+        'message': msg,
+        'status': new_status,
+    }, 200
 
 
 def _slug_for_job_id(display_label: str) -> str:
@@ -2476,6 +3154,37 @@ def serve_dropbox_image(filename):
         return send_file(dropbox_path)
 
 
+@v7_listcreator_bp.route('/v7_listcreator/dropbox_desktop_status', methods=['GET'])
+@login_required
+def dropbox_desktop_status():
+    """JSON status for the Dropbox desktop sync app on this server."""
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for('auth.login'))
+    st = _v7_dropbox_desktop_status()
+    return jsonify({'ok': True, 'status': st})
+
+
+@v7_listcreator_bp.route('/v7_listcreator/dropbox_desktop_refresh', methods=['POST'])
+@login_required
+def dropbox_desktop_refresh():
+    """Check Dropbox sync app; start if stopped, restart if requested to refresh sync."""
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for('auth.login'))
+    body = request.get_json(silent=True) or {}
+    restart = bool(body.get('restart', True))
+    payload, code = _v7_dropbox_desktop_start_or_restart(restart=restart)
+    user = session.get('username') or '?'
+    current_app.logger.info(
+        'dropbox_desktop_refresh by %s: ok=%s action=%s',
+        user,
+        payload.get('ok'),
+        payload.get('action'),
+    )
+    return jsonify(payload), code
+
+
 @v7_listcreator_bp.route('/v7_listcreator/browse_dropbox', methods=['GET'])
 @login_required
 def browse_dropbox():
@@ -2550,6 +3259,7 @@ def browse_dropbox():
         'breadcrumbs': crumbs,
         'image_count_here': image_here,
         'directories': dirs,
+        'dropbox_sync_status': _v7_dropbox_desktop_status(),
     })
 
 

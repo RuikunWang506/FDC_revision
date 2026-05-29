@@ -804,7 +804,7 @@
             <div class="form-group mb-3">
                 <label class="lc-label-muted d-block mb-1" for="list_input">Styles, container, or Dropbox path, you can mix container and style, but dropbox link by itself</label>
                 <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401,F26193 · dropbox&#92;folder" value="{{ list_input or '' }}" autocomplete="off">
-                <small class="form-text text-muted">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>dropbox\folder</code> path.</small>
+                <small class="form-text text-muted">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>dropbox\folder</code> path (spaces in folder names are OK).</small>
                 <div class="d-flex flex-wrap align-items-center mt-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-1" id="btnV7PickDropboxFolder" title="Open folders on the server’s synced Dropbox (names and image counts only)">Browse server Dropbox 在这里选dropbox的文件夹…</button>
                 </div>
@@ -1261,7 +1261,13 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-2" id="v7BrowseDropboxServerLine"></p>
+                <div class="d-flex flex-wrap align-items-start justify-content-between mb-2">
+                    <p class="small text-muted mb-1 mb-md-0 flex-grow-1" id="v7BrowseDropboxServerLine"></p>
+                    <button type="button" class="btn btn-sm btn-outline-primary ml-md-2" id="v7BrowseDropboxRefreshBtn" title="Check Dropbox sync app, restart if needed, then reload folders">
+                        ↻ Refresh sync &amp; folders
+                    </button>
+                </div>
+                <div id="v7BrowseDropboxSyncStatus" class="small mb-2 d-none"></div>
                 <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2 py-2 px-3 bg-light rounded" id="v7BrowseDropboxCrumbs" style="flex-wrap: wrap;"></ol></nav>
                 <p class="mb-2" id="v7BrowseDropboxCountLine"></p>
                 <div id="v7BrowseDropboxLoading" class="text-muted small py-3 d-none">Loading…</div>
@@ -1298,6 +1304,7 @@ var V7_LC_SNAPSHOT_JOB_ID = {% if html_snapshot_job_id is defined and html_snaps
 var V7_UPDATE_DESC_BULK_URL = {{ url_for('v7_listcreator.update_descriptions_bulk')|tojson }};
 window.V7_LOCAL_DROPBOX_ABS = {{ v7_local_dropbox_dir|default('')|tojson }};
 window.V7_BROWSE_DROPBOX_URL = {{ url_for('v7_listcreator.browse_dropbox')|tojson }};
+window.V7_DROPBOX_DESKTOP_REFRESH_URL = {{ url_for('v7_listcreator.dropbox_desktop_refresh')|tojson }};
 
 /** Edit-desc modal: quick preset buttons */
 function lcApplyDescPreset(btn, text) {
@@ -1368,6 +1375,73 @@ function v7ListInputOnBlurNormalize() {
 
 var v7BrowsePickValue = '';
 var v7BrowseCanUse = false;
+var v7BrowseCurrentRel = '';
+
+function v7BrowseDropboxSyncStatusHtml(st, msg) {
+    if (!st) return '';
+    var parts = [];
+    if (st.service_configured) {
+        var svcState = (st.service_state || 'UNKNOWN').toUpperCase();
+        var svcBadge = (svcState === 'RUNNING') ? 'badge-success'
+            : (svcState === 'STOP_PENDING' || svcState === 'START_PENDING') ? 'badge-warning text-dark'
+            : 'badge-warning text-dark';
+        parts.push('<span class="badge ' + svcBadge + '">Service ' + v7BrowseDropboxEscapeHtml(svcState) + '</span>');
+        if (st.service_pid) {
+            parts.push('<span class="text-muted">service PID ' + v7BrowseDropboxEscapeHtml(st.service_pid) + '</span>');
+        }
+    }
+    if (st.restart_task_configured) {
+        parts.push('<span class="badge badge-info">Restart task ready</span>');
+    } else if (st.service_configured) {
+        parts.push('<span class="badge badge-secondary" title="Admin: cd C:\\FDC_FLASK_APP\\auto_run; .\\Setup-DropboxRestartTask.ps1">No restart task</span>');
+    }
+    if (st.sync_client_running) {
+        parts.push('<span class="badge badge-success">Sync client running</span>');
+        if (st.user_session_count) {
+            parts.push('<span class="text-muted">' + st.user_session_count + ' in user session</span>');
+        }
+        if (st.user_session_pids && st.user_session_pids.length) {
+            parts.push('<span class="text-muted user-select-all">PIDs ' +
+                v7BrowseDropboxEscapeHtml(st.user_session_pids.join(', ')) + '</span>');
+        }
+    } else if (st.system_session_count) {
+        parts.push('<span class="badge badge-warning text-dark">SYSTEM only — tray sync not running</span>');
+        if (st.windows_user) {
+            parts.push('<span class="text-muted">' + v7BrowseDropboxEscapeHtml(st.windows_user) + ' must be logged in</span>');
+        }
+    } else if (st.exe_found || st.service_configured) {
+        parts.push('<span class="badge badge-danger">Dropbox sync not running</span>');
+    } else {
+        parts.push('<span class="badge badge-danger">Dropbox.exe not found</span>');
+    }
+    if (!st.sync_client_running && st.system_session_count) {
+        parts.push('<span class="text-muted">' + st.system_session_count + ' SYSTEM Dropbox.exe</span>');
+    }
+    if (st.folder_readable) {
+        parts.push('<span class="badge badge-light border">Folder readable</span>');
+    } else if (st.folder_exists) {
+        parts.push('<span class="badge badge-danger">Folder not readable — check Windows permissions</span>');
+    } else if (st.folder_path) {
+        parts.push('<span class="badge badge-secondary">Sync folder missing</span>');
+    }
+    var html = parts.join(' ');
+    if (msg) {
+        html += ' <span class="text-muted">' + v7BrowseDropboxEscapeHtml(msg) + '</span>';
+    }
+    return html;
+}
+
+function v7BrowseDropboxShowSyncStatus(st, msg) {
+    var el = document.getElementById('v7BrowseDropboxSyncStatus');
+    if (!el) return;
+    if (!st) {
+        el.classList.add('d-none');
+        el.innerHTML = '';
+        return;
+    }
+    el.innerHTML = v7BrowseDropboxSyncStatusHtml(st, msg);
+    el.classList.remove('d-none');
+}
 
 function v7BrowseDropboxEscapeHtml(s) {
     var d = document.createElement('div');
@@ -1384,6 +1458,7 @@ function v7BrowseFormatFolderMtime(iso) {
 }
 
 async function v7BrowseDropboxFetch(rel) {
+    v7BrowseCurrentRel = rel || '';
     var loadEl = document.getElementById('v7BrowseDropboxLoading');
     var errEl = document.getElementById('v7BrowseDropboxError');
     var rowsEl = document.getElementById('v7BrowseDropboxRows');
@@ -1422,6 +1497,7 @@ async function v7BrowseDropboxFetch(rel) {
         }
         v7BrowsePickValue = data.dropbox_input_value || '';
         v7BrowseCanUse = !!data.can_use_folder;
+        v7BrowseDropboxShowSyncStatus(data.dropbox_sync_status || null, '');
         if (serverLine) {
             serverLine.innerHTML = 'Server Dropbox root: <code class="small user-select-all">' +
                 v7BrowseDropboxEscapeHtml(data.server_root_path || '') + '</code>';
@@ -1485,6 +1561,53 @@ async function v7BrowseDropboxFetch(rel) {
         }
     } finally {
         if (loadEl) loadEl.classList.add('d-none');
+    }
+}
+
+async function v7BrowseDropboxRefreshSync() {
+    var btn = document.getElementById('v7BrowseDropboxRefreshBtn');
+    var errEl = document.getElementById('v7BrowseDropboxError');
+    if (!window.V7_DROPBOX_DESKTOP_REFRESH_URL) return;
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Refreshing…';
+    }
+    if (errEl) {
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
+    }
+    try {
+        var r = await fetch(window.V7_DROPBOX_DESKTOP_REFRESH_URL, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ restart: true })
+        });
+        var data = await r.json();
+        if (!data.ok) {
+            v7BrowseDropboxShowSyncStatus(data.status || null, data.error || 'Refresh failed.');
+            if (errEl) {
+                errEl.textContent = data.error || 'Could not refresh Dropbox sync app.';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+        v7BrowseDropboxShowSyncStatus(data.status || null, data.message || '');
+        await v7BrowseDropboxFetch(v7BrowseCurrentRel);
+    } catch (e) {
+        console.warn(e);
+        if (errEl) {
+            errEl.textContent = 'Network error refreshing Dropbox sync.';
+            errEl.classList.remove('d-none');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '↻ Refresh sync & folders';
+        }
     }
 }
 
@@ -1727,6 +1850,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnUseDrop && !btnUseDrop.dataset.lcBound) {
         btnUseDrop.dataset.lcBound = '1';
         btnUseDrop.addEventListener('click', function() { v7BrowseDropboxUseFolder(); });
+    }
+    var btnRefreshDrop = document.getElementById('v7BrowseDropboxRefreshBtn');
+    if (btnRefreshDrop && !btnRefreshDrop.dataset.lcBound) {
+        btnRefreshDrop.dataset.lcBound = '1';
+        btnRefreshDrop.addEventListener('click', function() { v7BrowseDropboxRefreshSync(); });
     }
     var listInp = document.getElementById('list_input');
     if (listInp && !listInp.dataset.v7BlurNorm) {
