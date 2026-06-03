@@ -403,7 +403,14 @@
                                     data-id="{{ user.id }}"
                                     data-username="{{ user.username }}"
                                     data-password="{{ user.password }}"
-                                    data-email="{{ user.email or '' }}">
+                                    data-email="{{ user.email or '' }}"
+                                    data-fdc-ids="{{ user.customer_purchase_fdc_ids or '' }}"
+                                    data-efashion-ids="{{ user.customer_purchase_efashion_ids or '' }}"
+                                    data-include-approved="{{ 1 if user.customer_purchase_include_approved_styles else 0 }}"
+                                    data-manual-styles="{{ (user.customer_purchase_manual_styles or '') | tojson }}"
+                                    data-miv-limit="{{ 1 if user.eff_miv_customer_purchase_only else 0 }}"
+                                    data-cpd-limit="{{ 1 if user.eff_cpd_customer_purchase_only else 0 }}"
+                                    data-hide-path="{{ 1 if user.eff_miv_hide_path else 0 }}">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 {% if user.username|lower != 'yeti' %}
@@ -520,36 +527,6 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="mu-perm-section">
-                            <h3 class="text-uppercase small text-muted">Customer purchase access</h3>
-                            <p class="mu-mini-hint mb-2">One customer ID for both limits below. Users may only search SKU/styles that appear in that customer's order history (<code>ord_log</code>).</p>
-                            <div class="form-group mb-2">
-                                <label for="modal_customer_purchase_customer_id" class="small mb-1">Customer ID</label>
-                                <input type="text" class="form-control form-control-sm" name="customer_purchase_customer_id"
-                                       id="modal_customer_purchase_customer_id" placeholder="e.g. MYDEPOT" autocomplete="off">
-                            </div>
-                            <div class="mu-switch-row">
-                                <label class="d-flex align-items-center mb-2">
-                                    <input type="checkbox" class="mr-2" name="master_image_viewer_customer_purchase_only" value="1"
-                                           id="modal_miv_customer_purchase_only">
-                                    Limit Master Image Viewer to purchased SKU/styles
-                                </label>
-                            </div>
-                            <div class="mu-switch-row">
-                                <label class="d-flex align-items-center mb-2">
-                                    <input type="checkbox" class="mr-2" name="master_image_viewer_hide_path" value="1"
-                                           id="modal_miv_hide_path">
-                                    Hide path (路径) in Master Image Viewer
-                                </label>
-                            </div>
-                            <div class="mu-switch-row mb-0">
-                                <label class="d-flex align-items-center mb-0">
-                                    <input type="checkbox" class="mr-2" name="client_product_detail_customer_purchase_only" value="1"
-                                           id="modal_cpd_customer_purchase_only">
-                                    Limit client product detail to purchased SKU/styles
-                                </label>
-                            </div>
-                        </div>
                     </div>
                     <div class="modal-footer d-flex flex-wrap justify-content-between align-items-center w-100">
                         <button type="button" class="btn btn-outline-info copy-group-open-btn" id="copyGroupOpenBtn">
@@ -579,7 +556,7 @@
                     <div class="modal-body">
                         <p class="small text-muted mb-3">
                             Copies saved permissions from <strong id="copy_source_group_label">—</strong>
-                            (dashboard tools, mailboxes, client product detail, customer purchase access). Unsaved changes in the editor are not included.
+                            (dashboard tools, mailboxes, client product detail). Unsaved changes in the editor are not included.
                         </p>
                         <div class="form-group mb-0">
                             <label for="copy_new_group_name">New group name</label>
@@ -632,7 +609,7 @@
 
     <!-- Edit user modal -->
     <div class="modal fade" id="editUserModal" tabindex="-1">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Edit user</h5>
@@ -642,7 +619,7 @@
                     <form id="editUserForm">
                         <input type="hidden" id="edit_userId" name="userId">
                         <div class="form-group">
-                            <label for="edit_username">Username</label>
+                            <label for="edit_username">loginname</label>
                             <input type="text" class="form-control" id="edit_username" name="username" readonly>
                         </div>
                         <div class="form-group">
@@ -652,6 +629,70 @@
                         <div class="form-group">
                             <label for="edit_email">Email (optional)</label>
                             <input type="email" class="form-control" id="edit_email" name="email">
+                        </div>
+                        <div class="border-top pt-3 mt-2">
+                            <h6 class="text-uppercase small text-muted mb-2">Customer purchase access</h6>
+                            <p class="small text-muted mb-3">Per-user limits and customer IDs. FDC IDs use the FDC database; e-fashion IDs use the e-fashion database. Allowed SKU/styles come from <code>ord_log</code>, optional <code>cus_invt</code>, and manual entries below.</p>
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="edit_miv_customer_purchase_only"
+                                           name="master_image_viewer_customer_purchase_only" value="1">
+                                    <label class="custom-control-label" for="edit_miv_customer_purchase_only">
+                                        Limit Master Image Viewer to allowed SKU/styles
+                                    </label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="edit_miv_hide_path"
+                                           name="master_image_viewer_hide_path" value="1">
+                                    <label class="custom-control-label" for="edit_miv_hide_path">
+                                        Hide path (路径) in Master Image Viewer
+                                    </label>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-3">
+                                    <input type="checkbox" class="custom-control-input" id="edit_cpd_customer_purchase_only"
+                                           name="client_product_detail_customer_purchase_only" value="1">
+                                    <label class="custom-control-label" for="edit_cpd_customer_purchase_only">
+                                        Limit client product detail to allowed SKU/styles
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="edit_customer_purchase_fdc_ids">FDC customer IDs</label>
+                                    <input type="text" class="form-control" id="edit_customer_purchase_fdc_ids"
+                                           name="customer_purchase_fdc_ids" placeholder="e.g. 00951, MYDEPOT" autocomplete="off">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="edit_customer_purchase_efashion_ids">e-fashion customer IDs</label>
+                                    <input type="text" class="form-control" id="edit_customer_purchase_efashion_ids"
+                                           name="customer_purchase_efashion_ids" placeholder="e.g. 01221, ACME" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="form-group mt-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="edit_customer_purchase_include_approved"
+                                           name="customer_purchase_include_approved_styles" value="1">
+                                    <label class="custom-control-label" for="edit_customer_purchase_include_approved">
+                                        Include all approved styles (<code>cus_invt</code>)
+                                    </label>
+                                </div>
+                                <p class="small text-muted mb-2 mt-1">
+                                    When enabled, all SKU/styles on the customer’s approved list in <code>cus_invt</code> are allowed
+                                    (in addition to <code>ord_log</code> purchase history). Requires at least one customer ID above.
+                                </p>
+                                <button type="button" class="btn btn-sm btn-outline-info" id="downloadApprovedStylesBtn" disabled>
+                                    <i class="fas fa-download"></i> Download approved styles (CSV)
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit_customer_purchase_manual_styles">Manual approved styles</label>
+                                <textarea class="form-control font-monospace" id="edit_customer_purchase_manual_styles"
+                                          name="customer_purchase_manual_styles" rows="6"
+                                          placeholder="One style or SKU per line, or comma-separated&#10;e.g. EN2153&#10;BT3352 BR"></textarea>
+                                <p class="small text-muted mb-0">
+                                    Extra styles/SKUs always allowed when purchase limits are on. Base styles expand to all color SKUs from <code>inv</code>.
+                                </p>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -721,10 +762,6 @@
                     $(this).prop('checked', toolIdMatch(cpd, v));
                 });
                 $('.modal-cpd-links, .modal-cpd-panel').toggle(!!g.client_pd_restrict);
-                $('#modal_customer_purchase_customer_id').val(g.customer_purchase_customer_id || '');
-                $('#modal_miv_customer_purchase_only').prop('checked', !!g.master_image_viewer_customer_purchase_only);
-                $('#modal_miv_hide_path').prop('checked', !!g.master_image_viewer_hide_path);
-                $('#modal_cpd_customer_purchase_only').prop('checked', !!g.client_product_detail_customer_purchase_only);
                 $('#modal_log_viewer_allowed').prop('checked', !!g.log_viewer_allowed);
             }
 
@@ -788,13 +825,58 @@
                 $('#edit_username').val($(this).data('username'));
                 $('#edit_password').val($(this).data('password'));
                 $('#edit_email').val($(this).data('email'));
+                $('#edit_customer_purchase_fdc_ids').val($(this).data('fdc-ids') || '');
+                $('#edit_customer_purchase_efashion_ids').val($(this).data('efashion-ids') || '');
+                $('#edit_miv_customer_purchase_only').prop(
+                    'checked', String($(this).data('miv-limit')) === '1'
+                );
+                $('#edit_miv_hide_path').prop(
+                    'checked', String($(this).data('hide-path')) === '1'
+                );
+                $('#edit_cpd_customer_purchase_only').prop(
+                    'checked', String($(this).data('cpd-limit')) === '1'
+                );
+                $('#edit_customer_purchase_include_approved').prop(
+                    'checked', String($(this).data('include-approved')) === '1'
+                );
+                var manualRaw = $(this).attr('data-manual-styles');
+                var manualVal = '';
+                if (manualRaw) {
+                    try { manualVal = JSON.parse(manualRaw); } catch (e) { manualVal = manualRaw; }
+                }
+                $('#edit_customer_purchase_manual_styles').val(manualVal || '');
+                updateDownloadApprovedBtn();
                 $('#editUserModal').modal('show');
+            });
+
+            function updateDownloadApprovedBtn() {
+                var fdc = ($('#edit_customer_purchase_fdc_ids').val() || '').trim();
+                var ef = ($('#edit_customer_purchase_efashion_ids').val() || '').trim();
+                $('#downloadApprovedStylesBtn').prop('disabled', !(fdc || ef));
+            }
+
+            $('#edit_customer_purchase_fdc_ids, #edit_customer_purchase_efashion_ids').on(
+                'input',
+                updateDownloadApprovedBtn
+            );
+
+            $('#downloadApprovedStylesBtn').on('click', function () {
+                var userId = $('#edit_userId').val();
+                if (!userId) return;
+                window.location.href = '/download_customer_approved_styles?user_id=' + encodeURIComponent(userId);
             });
 
             $('#saveUserChanges').on('click', function () {
                 var userId = $('#edit_userId').val();
                 var password = $('#edit_password').val();
                 var email = $('#edit_email').val();
+                var fdcIds = $('#edit_customer_purchase_fdc_ids').val();
+                var efashionIds = $('#edit_customer_purchase_efashion_ids').val();
+                var includeApproved = $('#edit_customer_purchase_include_approved').is(':checked');
+                var manualStyles = $('#edit_customer_purchase_manual_styles').val();
+                var mivLimit = $('#edit_miv_customer_purchase_only').is(':checked');
+                var cpdLimit = $('#edit_cpd_customer_purchase_only').is(':checked');
+                var hidePath = $('#edit_miv_hide_path').is(':checked');
                 if (!password) {
                     alert('Password is required');
                     return;
@@ -803,7 +885,18 @@
                     url: '/edit_user',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ id: userId, password: password, email: email || '' }),
+                    data: JSON.stringify({
+                        id: userId,
+                        password: password,
+                        email: email || '',
+                        customer_purchase_fdc_ids: fdcIds || '',
+                        customer_purchase_efashion_ids: efashionIds || '',
+                        customer_purchase_include_approved_styles: includeApproved,
+                        customer_purchase_manual_styles: manualStyles || '',
+                        master_image_viewer_customer_purchase_only: mivLimit,
+                        client_product_detail_customer_purchase_only: cpdLimit,
+                        master_image_viewer_hide_path: hidePath
+                    }),
                     success: function () {
                         alert('User updated successfully');
                         location.reload();

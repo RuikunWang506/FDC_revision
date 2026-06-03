@@ -18,8 +18,11 @@ from py.utilities.auth import check_credentials, get_user_permissions, update_la
 from py.utilities.client_product_detail_permissions import build_client_pd_section_flags
 from py.utilities.customer_purchase_access import (
     FEATURE_CLIENT_PRODUCT_DETAIL,
-    check_customer_purchase_search,
+    build_portal_home_context,
+    customer_purchase_limit_enabled,
+    customer_purchase_no_data_message,
     customer_purchase_notice,
+    customer_purchase_not_purchased_message,
     filter_product_data_for_customer,
 )
 from py.utilities.dashboard_permissions import CLIENT_PORTAL_TOOL_IDS, tool_visible_for_user
@@ -28,14 +31,8 @@ clientview_bp = Blueprint("clientview", __name__, url_prefix="/clientview")
 
 CLIENTVIEW_TOOL_ID = "clientview"
 
-CLIENT_PORTAL_USERNAMES = frozenset({"xingxing", "mydepot"})
-
-
 def is_client_portal_only_user(username: str) -> bool:
     """Users restricted to client portal tools only (no full dashboard)."""
-    uname = (username or "").strip().lower()
-    if uname in CLIENT_PORTAL_USERNAMES:
-        return True
     perms = get_user_permissions(username)
     tools = perms.get("tools")
     if not isinstance(tools, list) or not tools:
@@ -156,31 +153,51 @@ def clientview_product_detail(search_input=None):
     )
 
     if search_input:
-        allowed, deny_msg = check_customer_purchase_search(
-            current_user, search_input, FEATURE_CLIENT_PRODUCT_DETAIL
+        limits_on = customer_purchase_limit_enabled(
+            current_user, FEATURE_CLIENT_PRODUCT_DETAIL
         )
-        if not allowed:
-            error_message = deny_msg
-        else:
-            product_data = search_product_data_with_history(search_input)
-            product_data = filter_product_data_for_customer(
-                current_user, product_data, FEATURE_CLIENT_PRODUCT_DETAIL
-            )
-            if not product_data:
-                error_message = "No products found matching your search."
+        raw_product_data = search_product_data_with_history(search_input)
+        if limits_on:
+            if not raw_product_data:
+                error_message = customer_purchase_no_data_message()
             else:
-                for style_group in product_data:
-                    first_sku = (
-                        style_group["colors"][0]["sku"]
-                        if style_group["colors"]
-                        else None
-                    )
-                    style_group["images"] = fetch_style_images(
-                        style_group["style"], first_sku
-                    )
-                    style_group["total_colors"] = len(style_group["colors"])
+                product_data = filter_product_data_for_customer(
+                    current_user,
+                    raw_product_data,
+                    FEATURE_CLIENT_PRODUCT_DETAIL,
+                )
+                if not product_data:
+                    error_message = customer_purchase_not_purchased_message()
+                else:
+                    for style_group in product_data:
+                        first_sku = (
+                            style_group["colors"][0]["sku"]
+                            if style_group["colors"]
+                            else None
+                        )
+                        style_group["images"] = fetch_style_images(
+                            style_group["style"], first_sku
+                        )
+                        style_group["total_colors"] = len(
+                            style_group["colors"]
+                        )
+        elif not raw_product_data:
+            error_message = "No products found matching your search."
+        else:
+            product_data = raw_product_data
+            for style_group in product_data:
+                first_sku = (
+                    style_group["colors"][0]["sku"]
+                    if style_group["colors"]
+                    else None
+                )
+                style_group["images"] = fetch_style_images(
+                    style_group["style"], first_sku
+                )
+                style_group["total_colors"] = len(style_group["colors"])
 
     pd_sections = build_client_pd_section_flags(current_user)
+    portal_ctx = build_portal_home_context(current_user)
 
     return render_template(
         "product_detail.html",
@@ -192,6 +209,7 @@ def clientview_product_detail(search_input=None):
         adjustment_data=adjustment_data,
         purchase_data=purchase_data,
         show_navbar=False,
+        portal_client_nav=True,
         is_tiktok_view=True,
         pd_sections=pd_sections,
         pd_show_item_history=pd_sections.get("item_history", False),
@@ -199,4 +217,5 @@ def clientview_product_detail(search_input=None):
         pd_show_purchase_history=pd_sections.get("purchase_history", False),
         pd_show_ocean=pd_sections.get("ocean", False),
         customer_purchase_notice=customer_purchase_msg,
+        **portal_ctx,
     )

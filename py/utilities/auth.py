@@ -1,4 +1,15 @@
-from flask import Blueprint, request, render_template, jsonify, redirect, url_for, session, flash, current_app
+from flask import (
+    Blueprint,
+    request,
+    render_template,
+    jsonify,
+    redirect,
+    url_for,
+    session,
+    flash,
+    current_app,
+    make_response,
+)
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -333,20 +344,6 @@ def manage_users():
                 client_pd_sections_sel = request.form.getlist(
                     "client_product_detail_sections"
                 )
-                customer_purchase_customer_id = (
-                    request.form.get("customer_purchase_customer_id") or ""
-                ).strip()
-                master_image_viewer_customer_purchase_only = (
-                    request.form.get("master_image_viewer_customer_purchase_only")
-                    == "1"
-                )
-                client_product_detail_customer_purchase_only = (
-                    request.form.get("client_product_detail_customer_purchase_only")
-                    == "1"
-                )
-                master_image_viewer_hide_path = (
-                    request.form.get("master_image_viewer_hide_path") == "1"
-                )
                 log_viewer_allowed = request.form.get("log_viewer_allowed") == "1"
                 cur = connection.cursor(dictionary=True)
                 try:
@@ -382,26 +379,9 @@ def manage_users():
                     else:
                         base.pop("client_product_detail_restrict", None)
                         base.pop("client_product_detail_sections", None)
-                    if customer_purchase_customer_id:
-                        base["customer_purchase_customer_id"] = (
-                            customer_purchase_customer_id
-                        )
-                    else:
-                        base.pop("customer_purchase_customer_id", None)
-                    if master_image_viewer_customer_purchase_only:
-                        base["master_image_viewer_customer_purchase_only"] = True
-                    else:
-                        base.pop("master_image_viewer_customer_purchase_only", None)
-                    if client_product_detail_customer_purchase_only:
-                        base["client_product_detail_customer_purchase_only"] = True
-                    else:
-                        base.pop(
-                            "client_product_detail_customer_purchase_only", None
-                        )
-                    if master_image_viewer_hide_path:
-                        base["master_image_viewer_hide_path"] = True
-                    else:
-                        base.pop("master_image_viewer_hide_path", None)
+                    base.pop("master_image_viewer_customer_purchase_only", None)
+                    base.pop("client_product_detail_customer_purchase_only", None)
+                    base.pop("master_image_viewer_hide_path", None)
                     if log_viewer_allowed:
                         base["log_viewer_allowed"] = True
                     else:
@@ -703,7 +683,11 @@ def manage_users():
         list_cursor.execute(
             """
             SELECT u.id, u.username, u.email, u.password, u.created_at, u.last_login_at,
-                   u.user_group_id,
+                   u.user_group_id, u.customer_purchase_fdc_ids, u.customer_purchase_efashion_ids,
+                   u.customer_purchase_include_approved_styles, u.customer_purchase_manual_styles,
+                   u.master_image_viewer_customer_purchase_only,
+                   u.client_product_detail_customer_purchase_only,
+                   u.master_image_viewer_hide_path,
                    ug.name AS group_name, ug.slug AS group_slug, ug.sort_order AS group_sort
             FROM users u
             LEFT JOIN user_groups ug ON u.user_group_id = ug.id
@@ -722,9 +706,11 @@ def manage_users():
 
         groups_raw = fetch_groups_list(connection)
         counts = group_member_counts(connection)
+        group_ui_by_id: dict = {}
         groups_ui = []
         for g in groups_raw:
             ui = parse_permissions_ui(g.get("permissions"))
+            group_ui_by_id[g["id"]] = ui
             groups_ui.append(
                 {
                     "id": g["id"],
@@ -737,19 +723,33 @@ def manage_users():
                     "mail_sel": ui["mail_sel"],
                     "client_pd_restrict": ui["client_pd_restrict"],
                     "client_pd_sections_sel": ui["client_pd_sections_sel"],
-                    "customer_purchase_customer_id": ui[
-                        "customer_purchase_customer_id"
-                    ],
-                    "master_image_viewer_customer_purchase_only": ui[
-                        "master_image_viewer_customer_purchase_only"
-                    ],
-                    "client_product_detail_customer_purchase_only": ui[
-                        "client_product_detail_customer_purchase_only"
-                    ],
-                    "master_image_viewer_hide_path": ui["master_image_viewer_hide_path"],
                     "log_viewer_allowed": ui["log_viewer_allowed"],
                     "member_count": counts.get(g["id"], 0),
                 }
+            )
+
+        def _effective_user_flag(user_row, col_name: str, group_key: str) -> bool:
+            val = user_row.get(col_name)
+            if val is not None:
+                return bool(val)
+            gid = user_row.get("user_group_id")
+            if gid and gid in group_ui_by_id:
+                return bool(group_ui_by_id[gid].get(group_key))
+            return False
+
+        for u in users:
+            u["eff_miv_customer_purchase_only"] = _effective_user_flag(
+                u,
+                "master_image_viewer_customer_purchase_only",
+                "master_image_viewer_customer_purchase_only",
+            )
+            u["eff_cpd_customer_purchase_only"] = _effective_user_flag(
+                u,
+                "client_product_detail_customer_purchase_only",
+                "client_product_detail_customer_purchase_only",
+            )
+            u["eff_miv_hide_path"] = _effective_user_flag(
+                u, "master_image_viewer_hide_path", "master_image_viewer_hide_path"
             )
 
         users_by_group = _cluster_users_by_group(users)
@@ -1217,28 +1217,70 @@ def send_email(to_email, subject, body):
 @auth_bp.route("/edit_user", methods=["POST"])
 @login_required
 def edit_user():
-    # Parse the JSON data from the request
-    data = request.get_json()
-    user_id = data.get('id')
-    password = data.get('password')
-    email = data.get('email', '')  # Default to empty string if not provided
-    
+    if session.get("username") != "yeti":
+        return jsonify({"error": "Access denied"}), 403
+
+    data = request.get_json() or {}
+    user_id = data.get("id")
+    password = data.get("password")
+    email = data.get("email", "")
+    customer_purchase_fdc_ids = (data.get("customer_purchase_fdc_ids") or "").strip()
+    customer_purchase_efashion_ids = (
+        data.get("customer_purchase_efashion_ids") or ""
+    ).strip()
+    customer_purchase_include_approved_styles = bool(
+        data.get("customer_purchase_include_approved_styles")
+    )
+    customer_purchase_manual_styles = (
+        data.get("customer_purchase_manual_styles") or ""
+    ).strip()
+    master_image_viewer_customer_purchase_only = (
+        1 if data.get("master_image_viewer_customer_purchase_only") else 0
+    )
+    client_product_detail_customer_purchase_only = (
+        1 if data.get("client_product_detail_customer_purchase_only") else 0
+    )
+    master_image_viewer_hide_path = 1 if data.get("master_image_viewer_hide_path") else 0
+
     if not user_id or not password:
         return jsonify({"error": "Missing required fields"}), 400
-    
-    # Validate email format only if it's not empty
+
     if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"error": "Invalid email format"}), 400
-    
+
     connection = get_db_connection()
     if not connection:
         return jsonify({"error": "Database connection error"}), 500
-    
+
     try:
+        _ensure_user_groups_schema_once()
         cursor = connection.cursor()
         cursor.execute(
-            "UPDATE users SET password = %s, email = %s WHERE id = %s",
-            (password, email, user_id)
+            """
+            UPDATE users
+            SET password = %s,
+                email = %s,
+                customer_purchase_fdc_ids = %s,
+                customer_purchase_efashion_ids = %s,
+                customer_purchase_include_approved_styles = %s,
+                customer_purchase_manual_styles = %s,
+                master_image_viewer_customer_purchase_only = %s,
+                client_product_detail_customer_purchase_only = %s,
+                master_image_viewer_hide_path = %s
+            WHERE id = %s
+            """,
+            (
+                password,
+                email,
+                customer_purchase_fdc_ids or None,
+                customer_purchase_efashion_ids or None,
+                1 if customer_purchase_include_approved_styles else 0,
+                customer_purchase_manual_styles or None,
+                master_image_viewer_customer_purchase_only,
+                client_product_detail_customer_purchase_only,
+                master_image_viewer_hide_path,
+                user_id,
+            ),
         )
         connection.commit()
         return jsonify({"success": True, "message": "User updated successfully"})
@@ -1246,8 +1288,71 @@ def edit_user():
         connection.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
     finally:
-        if 'cursor' in locals():
+        if "cursor" in locals():
             cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+
+@auth_bp.route("/download_customer_approved_styles", methods=["GET"])
+@login_required
+def download_customer_approved_styles():
+    """CSV of cus_invt approved styles for a user's FDC / e-fashion customer IDs."""
+    if session.get("username") != "yeti":
+        return jsonify({"error": "Access denied"}), 403
+
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"error": "Database connection error"}), 500
+
+    try:
+        cur = connection.cursor(dictionary=True)
+        cur.execute(
+            """
+            SELECT username,
+                   customer_purchase_fdc_ids,
+                   customer_purchase_efashion_ids
+            FROM users WHERE id = %s
+            """,
+            (user_id,),
+        )
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            return jsonify({"error": "User not found"}), 404
+
+        from py.utilities.customer_purchase_access import (
+            fetch_approved_styles_rows,
+            get_user_customer_purchase_ids,
+        )
+
+        fdc_ids, ef_ids = get_user_customer_purchase_ids(row.get("username"))
+        if not fdc_ids and not ef_ids:
+            return jsonify({"error": "No FDC or e-fashion customer IDs configured"}), 400
+
+        approved_rows = fetch_approved_styles_rows(fdc_ids, ef_ids)
+        uname = str(row.get("username") or "user").strip()
+        lines = ["database,customer_id,prod_cd"]
+        for r in approved_rows:
+            prod = (r.get("prod_cd") or "").replace('"', '""')
+            cid = (r.get("customer_id") or "").replace('"', '""')
+            db = (r.get("database") or "").replace('"', '""')
+            lines.append(f'"{db}","{cid}","{prod}"')
+
+        body = "\n".join(lines) + "\n"
+        resp = make_response(body)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = (
+            f'attachment; filename="{uname}_approved_styles.csv"'
+        )
+        return resp
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
         if connection and connection.is_connected():
             connection.close()
 

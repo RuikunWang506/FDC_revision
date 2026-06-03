@@ -1,4 +1,4 @@
-"""Per-group Master Image Viewer display options."""
+"""Per-user Master Image Viewer display options."""
 
 from __future__ import annotations
 
@@ -10,6 +10,14 @@ def master_image_viewer_hide_path(username: Optional[str]) -> bool:
     uname = (username or "").strip()
     if not uname or uname.lower() == "yeti":
         return False
+
+    from py.utilities.customer_purchase_access import _fetch_user_purchase_fields
+
+    row = _fetch_user_purchase_fields(username)
+    col = row.get("master_image_viewer_hide_path")
+    if col is not None:
+        return bool(col)
+
     from py.utilities.auth import get_user_permissions
 
     perms = get_user_permissions(uname)

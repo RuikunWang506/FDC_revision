@@ -175,10 +175,16 @@ def register_routes(app):
 
         current_user = session["username"]
         portal_minimal = is_client_portal_only_user(current_user)
+        portal_ctx: dict = {}
+        if portal_minimal:
+            from py.utilities.customer_purchase_access import build_portal_home_context
+
+            portal_ctx = build_portal_home_context(current_user)
         return render_template(
             "index.html",
             current_user=current_user,
             portal_minimal=portal_minimal,
+            **portal_ctx,
         )
 
     @app.route("/robots.txt")

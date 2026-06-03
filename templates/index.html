@@ -10,7 +10,7 @@
   <style>
     /* Scope all styles to dashboard only - avoid navbar conflicts */
     .dashboard-wrapper {
-      background: url("{{ url_for('static', filename='luca-bravo-zAjdgNXsMeg-unsplash.jpg') }}") no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='josh-williams-NMEnVWulWLQ-unsplash.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       font-family: 'Inter', 'Segoe UI', sans-serif;
       color: #e8f4fd;
@@ -487,7 +487,7 @@
       min-height: 100vh;
     }
     body.portal-minimal .dashboard-wrapper {
-      background: url("{{ url_for('static', filename='luca-bravo-zAjdgNXsMeg-unsplash.jpg') }}") no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='josh-williams-NMEnVWulWLQ-unsplash.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       padding-top: 0;
       margin-top: 0;
@@ -521,37 +521,73 @@
       text-decoration: none;
       font-weight: 600;
     }
+    body.portal-minimal .main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 52px);
+      padding: 1.25rem 1.25rem 4.75rem;
+      box-sizing: border-box;
+    }
+    body.portal-minimal .portal-home {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1.15rem;
+    }
     body.portal-minimal .dashboard-container {
       grid-template-columns: 1fr;
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 2.5rem 1.25rem 3rem;
-      min-height: calc(100vh - 52px);
-      align-content: center;
-      justify-items: center;
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      min-height: 0;
+      align-content: start;
+      justify-items: stretch;
     }
-    body.portal-minimal .main-title {
+    body.portal-minimal .portal-greeting-panel {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 1.15rem 1.25rem 1.1rem;
       text-align: center;
-      font-size: 2rem;
+      background: rgba(12, 18, 28, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 14px;
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      box-shadow: 0 14px 42px rgba(0, 0, 0, 0.45);
+    }
+    body.portal-minimal .portal-greeting-panel .main-title {
+      text-align: center;
+      font-size: clamp(1.15rem, 4vw, 1.5rem);
       font-weight: 700;
-      margin: 0 0 0.35rem;
-      background: linear-gradient(45deg, #00d4ff, #1cc88a, #36b9cc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 0 30px rgba(0, 212, 255, 0.25);
+      margin: 0 0 0.4rem;
+      line-height: 1.35;
+      color: #f0f9ff;
+      background: none;
+      -webkit-background-clip: unset;
+      -webkit-text-fill-color: unset;
+      background-clip: unset;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
-    body.portal-minimal .portal-subtitle {
+    body.portal-minimal .portal-greeting-panel .portal-subtitle {
       text-align: center;
-      color: #94a3b8;
-      font-size: 0.95rem;
-      margin: 0 0 1.75rem;
+      color: #e2e8f0;
+      font-size: clamp(0.95rem, 3.2vw, 1.02rem);
+      font-weight: 500;
+      margin: 0;
+      line-height: 1.45;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     }
     body.portal-minimal .dashboard-grid {
       width: 100%;
       grid-template-columns: 1fr;
-      gap: 1rem;
-      max-width: 420px;
+      gap: 0.85rem;
+      max-width: none;
     }
     body.portal-minimal .tool-card,
     body.portal-minimal .tool-card[data-category] {
@@ -568,7 +604,7 @@
       color: #0f172a !important;
       height: auto !important;
       min-height: 0 !important;
-      padding: 1.75rem 1.25rem !important;
+      padding: 1.35rem 1.15rem !important;
       filter: none !important;
     }
     body.portal-minimal .tool-card:hover {
@@ -613,9 +649,21 @@
     body.portal-minimal .tool-card .card-footer {
       display: none !important;
     }
-    body.portal-minimal .favorite-star,
-    body.portal-minimal .fdc-photo-credit {
+    body.portal-minimal .favorite-star {
       display: none !important;
+    }
+    body.portal-minimal .portal-greeting-panel .portal-limit-note {
+      text-align: center;
+      color: #fde68a;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 0.85rem 0 0;
+      padding: 0.55rem 0.75rem;
+      line-height: 1.5;
+      background: rgba(120, 53, 15, 0.55);
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      border-radius: 10px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     }
 
   </style>
@@ -623,7 +671,7 @@
 <body class="{% if portal_minimal %}portal-minimal{% endif %}">
   {% if portal_minimal %}
   <div class="portal-top-bar">
-    <span class="portal-brand">FDC Client</span>
+    <span class="portal-brand">{% if portal_company_name %}{{ portal_company_name }}{% else %}FDC Client{% endif %}</span>
     <div class="portal-actions">
       <span><i class="fas fa-user"></i> {{ current_user }}</span>
       <a href="{{ url_for('auth.logout') }}">退出 Logout</a>
@@ -639,14 +687,22 @@
     <div class="main-content" id="mainContent">
    
       {% if portal_minimal %}
-      <div class="main-title">Choose a tool</div>
-      <p class="portal-subtitle">选择功能 · Select a tool</p>
+      <div class="portal-home">
+        <div class="portal-greeting-panel">
+          <div class="main-title">{{ portal_greeting_en|default('Greetings') }}</div>
+          <p class="portal-subtitle">{{ portal_greeting_zh|default('您好') }}</p>
+          {% if portal_show_limit_notice|default(false) %}
+          <p class="portal-limit-note">
+            {{ portal_limit_en|default('External User — function limited.') }}<br>
+            {{ portal_limit_zh|default('外部用户 · 部分功能受限') }}
+          </p>
+          {% endif %}
+        </div>
+        <div class="dashboard-container">
       {% else %}
       <div class="main-title" style="background:none; margin-bottom:1.5rem;"></div>
+        <div class="dashboard-container">
       {% endif %}
-
-    
-    <div class="dashboard-container">
       {% if not portal_minimal %}
       <!-- Smart Navigation Panel -->
       <div class="nav-panel" id="dashboard-nav-panel">
@@ -1152,10 +1208,13 @@
         
       </div>
     </div>
+      {% if portal_minimal %}
+      </div>
+      {% endif %}
   </div>
 
+  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@joshwi?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Josh Williams</a> on <a href="https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Unsplash</a> · June 3, 2026</p>
   {% if not portal_minimal|default(false) %}
-  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@lucabravo?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Luca Bravo</a> on <a href="https://unsplash.com/photos/brown-house-near-body-of-water-zAjdgNXsMeg?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Unsplash</a></p>
   {% include 'footer.html' %}
   {% endif %}
 

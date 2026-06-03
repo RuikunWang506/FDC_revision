@@ -98,6 +98,37 @@ def ensure_user_groups_schema(connection) -> None:
                 )
             except Error:
                 pass
+        for col_name, col_def in (
+            ("customer_purchase_fdc_ids", "VARCHAR(512) NULL DEFAULT NULL"),
+            ("customer_purchase_efashion_ids", "VARCHAR(512) NULL DEFAULT NULL"),
+            (
+                "customer_purchase_include_approved_styles",
+                "TINYINT(1) NOT NULL DEFAULT 0",
+            ),
+            ("customer_purchase_manual_styles", "TEXT NULL DEFAULT NULL"),
+            (
+                "master_image_viewer_customer_purchase_only",
+                "TINYINT(1) NULL DEFAULT NULL",
+            ),
+            (
+                "client_product_detail_customer_purchase_only",
+                "TINYINT(1) NULL DEFAULT NULL",
+            ),
+            ("master_image_viewer_hide_path", "TINYINT(1) NULL DEFAULT NULL"),
+        ):
+            cur.execute(
+                """
+                SELECT COUNT(*) FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
+                  AND COLUMN_NAME = %s
+                """,
+                (col_name,),
+            )
+            col_row = cur.fetchone()
+            if col_row and col_row[0] == 0:
+                cur.execute(
+                    f"ALTER TABLE users ADD COLUMN {col_name} {col_def}"
+                )
         connection.commit()
     finally:
         try:
@@ -195,21 +226,17 @@ def seed_client_portal_group(connection) -> None:
         connection.commit()
 
         for username, password in CLIENT_PORTAL_USERS.items():
-            cur.execute("SELECT id, user_group_id FROM users WHERE username = %s", (username,))
+            cur.execute("SELECT id FROM users WHERE username = %s", (username,))
             existing = cur.fetchone()
             if existing:
-                ins.execute(
-                    "UPDATE users SET user_group_id = %s, password = %s WHERE id = %s",
-                    (gid, password, existing["id"]),
-                )
-            else:
-                ins.execute(
-                    """
-                    INSERT INTO users (username, password, email, created_at, user_group_id)
-                    VALUES (%s, %s, NULL, NOW(), %s)
-                    """,
-                    (username, password, gid),
-                )
+                continue
+            ins.execute(
+                """
+                INSERT INTO users (username, password, email, created_at, user_group_id)
+                VALUES (%s, %s, NULL, NOW(), %s)
+                """,
+                (username, password, gid),
+            )
         connection.commit()
     finally:
         try:

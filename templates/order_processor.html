@@ -422,10 +422,15 @@
             });
         });
         
+        // Function to normalize product codes (uppercase, single spaces)
+        function normalizeProductCode(code) {
+            return String(code).trim().replace(/\s+/g, ' ').toUpperCase();
+        }
+
         // Function to parse input text into structured data
 function parseInputText(inputText) {
     const lines = inputText.split('\n').filter(line => line.trim() !== '');
-    const result = [];
+    const byCode = new Map();
     
     // Skip header line if it exists
     const startIndex = lines[0].toLowerCase().includes('item') && 
@@ -447,13 +452,13 @@ function parseInputText(inputText) {
             const quantity = parseInt(parts[parts.length - 2].trim());
             
             // Everything else is the product code
-            const productCode = parts.slice(0, parts.length - 2).join(' ');
+            const productCode = normalizeProductCode(parts.slice(0, parts.length - 2).join(' '));
             
             if (isNaN(quantity) || isNaN(price)) {
                 throw new Error(`Invalid data in line: "${line}". Ensure format is correct.`);
             }
             
-            result.push({
+            byCode.set(productCode, {
                 product_code: productCode,
                 quantity: quantity,
                 price: price
@@ -462,6 +467,8 @@ function parseInputText(inputText) {
             throw new Error(`Invalid format in line: "${line}". Expected at least 3 space-separated values.`);
         }
     }
+    
+    const result = Array.from(byCode.values());
     
     if (result.length === 0) {
         throw new Error('No valid data found. Please check the format.');
@@ -510,7 +517,7 @@ function displayConfirmationTable(orderDetails, newData) {
     // Create a map for quick lookup of new values
     const newDataMap = {};
     newData.forEach(item => {
-        newDataMap[item.product_code] = {
+        newDataMap[normalizeProductCode(item.product_code)] = {
             quantity: item.quantity,
             price: item.price
         };
@@ -525,7 +532,7 @@ function displayConfirmationTable(orderDetails, newData) {
 
     // Populate the table
     orderDetails.items.forEach(item => {
-        const newValues = newDataMap[item.product_code] || { quantity: "-", price: "-" };
+        const newValues = newDataMap[normalizeProductCode(item.product_code)] || { quantity: "-", price: "-" };
         
         // Convert current quantity to integer by using parseInt
         const currentQuantity = parseInt(item.quantity);
@@ -552,7 +559,9 @@ function displayConfirmationTable(orderDetails, newData) {
 
     // Add new items that weren't in the original order
     newData.forEach(item => {
-        const exists = orderDetails.items.some(orderItem => orderItem.product_code === item.product_code);
+        const exists = orderDetails.items.some(orderItem =>
+            normalizeProductCode(orderItem.product_code) === normalizeProductCode(item.product_code)
+        );
         if (!exists) {
             tableBody.append(`
                 <tr class="table-warning">

@@ -693,10 +693,10 @@ def fetch_adjustment_history(style_or_sku):
                 for row in rows:
                     adjustment_data.append({
                         'database': db_name,
-                        'sku': row[0],
-                        'log_number': row[1],
+                        'sku': str(row[0]).strip() if row[0] else '',
+                        'log_number': str(row[1]).strip() if row[1] else '',
                         'date': str(row[2]) if row[2] else '',
-                        'adjusted_by': row[3],
+                        'adjusted_by': str(row[3]).strip() if row[3] else '',
                         'quantity': int(row[4])
                     })
                 cursor.close()
@@ -718,6 +718,90 @@ def fetch_adjustment_history(style_or_sku):
         if conn_oms_ef:
             conn_oms_ef.close()
         return []
+
+
+def fetch_adjustment_log_detail(log_number, database):
+    """
+    Fetch all line items for an inventory adjustment log batch from one database.
+    Returns dict with log header info and items list, or None if not found.
+    """
+    log_number = str(log_number).strip() if log_number else ""
+    database = str(database).strip().upper() if database else ""
+    if not log_number or database not in ("FDC", "E_FAS"):
+        return None
+
+    conn_fdc, conn_oms_ef = get_db_connections()
+    conn = conn_fdc if database == "FDC" else conn_oms_ef
+    if not conn:
+        if conn_fdc:
+            conn_fdc.close()
+        if conn_oms_ef:
+            conn_oms_ef.close()
+        return None
+
+    detail_query = """
+        SELECT
+            RTRIM(prod_cd) AS prod_cd,
+            log_qty,
+            RTRIM(log_by) AS log_by,
+            RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', log_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+            RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', log_dt) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+            CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', log_dt) - 81088, '20230101')) AS VARCHAR) AS formatted_log_dt,
+            RTRIM(ISNULL(bin_cd, '')) AS bin_cd,
+            RTRIM(ISNULL(whs_num, '')) AS whs_num,
+            nt_num,
+            RTRIM(ISNULL(trans_type, '')) AS trans_type
+        FROM [dbo].[wm_log]
+        WHERE RTRIM(log_num) = ? AND type_cd = 'adj'
+        ORDER BY nt_num
+    """
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute(detail_query, (log_number,))
+        rows = cursor.fetchall()
+        cursor.close()
+
+        if not rows:
+            return None
+
+        items = []
+        total_qty = 0
+        for row in rows:
+            qty = int(row[1]) if row[1] is not None else 0
+            total_qty += qty
+            items.append({
+                'sku': row[0] or '',
+                'quantity': qty,
+                'adjusted_by': row[2] or '',
+                'date': str(row[3]) if row[3] else '',
+                'bin': row[4] or '',
+                'warehouse': row[5] or '',
+                'line_num': int(row[6]) if row[6] is not None else 0,
+                'trans_type': row[7] or '',
+            })
+
+        first = items[0]
+        return {
+            'log_number': log_number,
+            'database': database,
+            'date': first['date'],
+            'adjusted_by': first['adjusted_by'],
+            'trans_type': first['trans_type'],
+            'line_count': len(items),
+            'total_quantity': total_qty,
+            'items': items,
+        }
+    except Exception as e:
+        current_app.logger.error(
+            f"Error fetching adjustment log detail {log_number} ({database}): {e}"
+        )
+        return None
+    finally:
+        if conn_fdc:
+            conn_fdc.close()
+        if conn_oms_ef:
+            conn_oms_ef.close()
 
 
 def fetch_purchase_history(style_or_sku):
@@ -1146,6 +1230,26 @@ def get_adjustment_data(style):
         return jsonify({"success": True, "data": adjustment_data})
     except Exception as e:
         current_app.logger.error(f"Error fetching adjustments for {style}: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@product_detail_bp.route("/api/adjustments/log/<string:database>/<string:log_number>", methods=["GET"])
+def get_adjustment_log_detail(database, log_number):
+    """Fetch all line items for a single inventory adjustment log batch."""
+    from py.utilities.client_product_detail_permissions import enforce_client_pd_section_api
+
+    blocked = enforce_client_pd_section_api("inventory_adjustment")
+    if blocked:
+        return blocked
+    try:
+        detail = fetch_adjustment_log_detail(log_number, database)
+        if not detail:
+            return jsonify({"success": False, "error": "Adjustment log not found."}), 404
+        return jsonify({"success": True, "data": detail})
+    except Exception as e:
+        current_app.logger.error(
+            f"Error fetching adjustment log {log_number} ({database}): {e}"
+        )
         return jsonify({"success": False, "error": str(e)})
 
 

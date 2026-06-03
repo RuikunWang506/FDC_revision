@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import io
 import csv
+import re
 import openpyxl
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_sql_server_connection
@@ -22,6 +23,35 @@ def get_db_connection():
 
 def get_zhuankuan_db_connection():
     return get_sql_server_connection("omsdata_FDC")
+
+
+def parse_item_codes(user_input):
+    """Split and normalize style/item codes from pasted text."""
+    parts = re.split(r'[,\n\r\t;]+', user_input)
+    codes = []
+    seen = set()
+    for part in parts:
+        code = re.sub(r'https?://\S+', '', part).strip().upper()
+        if code and code not in seen:
+            seen.add(code)
+            codes.append(code)
+    return codes
+
+
+def normalize_product_code(code):
+    """Normalize product/style codes for case-insensitive matching."""
+    if code is None:
+        return ''
+    return re.sub(r' +', ' ', str(code).strip()).upper()
+
+
+def normalize_csv_cell(value):
+    """Trim trailing spaces and collapse repeated spaces in exported text cells."""
+    if value is None:
+        return ''
+    if isinstance(value, str):
+        return re.sub(r' +', ' ', value).rstrip()
+    return value
 
 @order_processor_bp.route('/order_processor', methods=['GET'])
 def order_processor():
@@ -68,7 +98,7 @@ def verify_order():
         all_order_items = []
         for row in cursor.fetchall():
             all_order_items.append({
-                'product_code': row[0].strip(),
+                'product_code': normalize_product_code(row[0]),
                 'quantity': row[1],
                 'price': float(row[2])
             })
@@ -114,25 +144,24 @@ def update_order():
         result_message = "Order updated successfully"
 
         for item in items:
-            product_code = item['product_code']
+            product_code = normalize_product_code(item['product_code'])
             quantity = item['quantity']
             price = item['price']
 
-            # Assuming the same logic applies to both databases
             cursor.execute("""
-                SELECT COUNT(*) FROM dbo.ord_log  
-                WHERE ord_num = ? AND PROD_CD = ?
+                SELECT PROD_CD FROM dbo.ord_log  
+                WHERE ord_num = ? AND UPPER(LTRIM(RTRIM(PROD_CD))) = ?
             """, (order_number, product_code))
-            count = cursor.fetchone()[0]
+            match = cursor.fetchone()
 
-            if count > 0:
-                query = """
+            if match:
+                db_prod_cd = match[0]
+                cursor.execute("""
                     UPDATE dbo.ord_log  
                     SET ORDER_QTY = ?, UNIT_PRS = ?
                     WHERE ord_num = ? AND PROD_CD = ?
-                """
-                cursor.execute(query, (quantity, price, order_number, product_code))
-                updated_items.append(product_code)
+                """, (quantity, price, order_number, db_prod_cd))
+                updated_items.append(db_prod_cd)
             else:
                 current_app.logger.warning(f"Item {product_code} not found in order {order_number}")
                 not_found_items.append(product_code)
@@ -149,7 +178,7 @@ def update_order():
         updated_data = []
         for row in cursor.fetchall():
             updated_data.append({
-                'product_code': row[0].strip(),
+                'product_code': normalize_product_code(row[0]),
                 'quantity': row[1],
                 'price': float(row[2])
             })
@@ -220,7 +249,8 @@ def zhuankuan():
     
     current_user = session['username']
     
-    if not user_input:
+    item_codes = parse_item_codes(user_input)
+    if not item_codes:
         return jsonify({"success": False, "message": "Item codes are required"}), 400
     
     try:
@@ -228,8 +258,9 @@ def zhuankuan():
         conn = get_zhuankuan_db_connection()
         cursor = conn.cursor()
         
-        # Process the input
-        mylist = "'," + str(user_input) + ",'"
+        # Process the input (comma-separated, no spaces — spaces break SQL LIKE matching)
+        normalized_input = ','.join(item_codes)
+        mylist = "'," + normalized_input + ",'"
         query = """\
             DECLARE @AltCDList NVARCHAR(MAX) = ?;
                 DECLARE @ProductList NVARCHAR(MAX);
@@ -372,11 +403,11 @@ def zhuankuan():
         writer = csv.writer(output)
         
         # Write headers
-        writer.writerow(column_headers)
+        writer.writerow([normalize_csv_cell(h) for h in column_headers])
         
         # Write data rows
         for row in rows:
-            writer.writerow(row)
+            writer.writerow([normalize_csv_cell(cell) for cell in row])
         
         # Convert to bytes
         mem = io.BytesIO()
@@ -388,7 +419,10 @@ def zhuankuan():
         cursor.close()
         conn.close()
         
-        current_app.logger.info(f"User {current_user} generated zhuankuan data for: {user_input}")
+        current_app.logger.info(
+            f"User {current_user} generated zhuankuan data for {len(item_codes)} codes "
+            f"({len(rows)} rows): {normalized_input}"
+        )
         
         # Return the CSV file
         return send_file(

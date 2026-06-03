@@ -19,8 +19,10 @@ from typing import Any, Dict, Optional
 
 from py.utilities.customer_purchase_access import (
     FEATURE_MASTER_IMAGE_VIEWER,
+    batch_all_skus_skipped_message,
     customer_purchase_notice,
     filter_skus_for_customer,
+    filter_skus_for_customer_detailed,
     json_forbidden_if_customer_purchase_denied,
 )
 from py.utilities.master_image_viewer_permissions import master_image_viewer_hide_path
@@ -925,17 +927,39 @@ def _sort_task_candidates(candidates):
     return sorted(candidates, key=sort_key, reverse=True)
 
 
-def background_batch_china_ftp_fetch(task_id, skus, username=None, tk_user=False, app_obj=None):
+def background_batch_china_ftp_fetch(
+    task_id, skus, username=None, tk_user=False, app_obj=None, initial_skipped=None
+):
     """Background task to fetch and sync China FTP images for multiple SKUs."""
     sku_list = _normalized_batch_sku_list(skus)
+    pre_skipped = list(initial_skipped or [])
     try:
         started_at = _utc_now_iso()
+        pre_results = []
+        for item in pre_skipped:
+            sku_key = str(item.get("sku") or "").strip().upper()
+            pre_results.append(
+                {
+                    "sku": sku_key,
+                    "count": 0,
+                    "synced": 0,
+                    "already_synced": 0,
+                    "total_found": 0,
+                    "to_sync": 0,
+                    "failed": 0,
+                    "status": "skipped",
+                    "reason": item.get("reason"),
+                    "error": item.get("message"),
+                    "finished_at": started_at,
+                }
+            )
         with batch_tasks_lock:
             batch_tasks[task_id] = {
                 'status': 'running',
-                'total': len(sku_list),
-                'completed': 0,
-                'results': [],
+                'total': len(sku_list) + len(pre_skipped),
+                'completed': len(pre_skipped),
+                'results': pre_results,
+                'skipped_prefilter': pre_skipped,
                 'error': None,
                 'current_index': 0,
                 'current_sku': None,
@@ -1136,17 +1160,19 @@ def batch_fetch_china_ftp():
         return jsonify({'error': 'No SKUs provided'}), 400
 
     username = session.get('username')
-    allowed_skus, rejected = filter_skus_for_customer(
-        username, [str(s).strip() for s in skus if str(s).strip()],
-        FEATURE_MASTER_IMAGE_VIEWER,
+    raw_skus = [str(s).strip() for s in skus if str(s).strip()]
+    allowed_skus, skipped = filter_skus_for_customer_detailed(
+        username, raw_skus, FEATURE_MASTER_IMAGE_VIEWER,
     )
     if not allowed_skus:
-        msg = (
-            "No SKUs in this batch are in the customer's order history."
-            if rejected
-            else "No valid SKUs provided."
-        )
-        return jsonify({'error': msg, 'success': False}), 403
+        msg = batch_all_skus_skipped_message(skipped)
+        return jsonify(
+            {
+                'error': msg,
+                'success': False,
+                'skipped': skipped,
+            }
+        ), 403
     skus = allowed_skus
 
     tk_user = session.get('tk_user', False)
@@ -1155,12 +1181,20 @@ def batch_fetch_china_ftp():
 
     thread = threading.Thread(
         target=background_batch_china_ftp_fetch,
-        args=(task_id, skus, username, tk_user, app_obj)
+        args=(task_id, skus, username, tk_user, app_obj, skipped)
     )
     thread.daemon = True
     thread.start()
 
-    return jsonify({'task_id': task_id, 'started_at': _utc_now_iso()})
+    return jsonify(
+        {
+            'task_id': task_id,
+            'started_at': _utc_now_iso(),
+            'skipped': skipped,
+            'started_count': len(skus),
+            'skipped_count': len(skipped),
+        }
+    )
 
 
 @master_image_viewer_bp.route('/api/batch_fetch_status')

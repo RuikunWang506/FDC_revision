@@ -24,5 +24,4 @@ SELECT 'mydepot', 'LA8888', NULL, NOW(), @client_gid
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'mydepot');
 
-UPDATE users SET user_group_id = @client_gid, password = 'ucandoit' WHERE username = 'xingxing';
-UPDATE users SET user_group_id = @client_gid, password = 'LA8888' WHERE username = 'mydepot';
+-- Do not overwrite group/password for existing users; assign via /manage_users.
