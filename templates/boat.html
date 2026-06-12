@@ -3,788 +3,1393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boat Service</title>
+    <title>Container Hub</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <!-- Full jQuery version with AJAX support -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        @media (min-width: 1600px) {
-            .container, .container-lg, .container-md, .container-sm, .container-xl {
-                max-width: 1500px !important;
-            }
+        body { background: #f4f6f9; }
+        .hub-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: #fff;
+            padding: 1.5rem 0 1rem;
+            margin-bottom: 1.5rem;
         }
-        .custom-btn {
-            padding: 5px 5px !important;
-            font-size: 20px !important;
-            border-radius: 50px !important; /* Changed from 100px to 50px to create oval shapes */
-            margin: 10px !important;
-            width: 150px !important; /* Adjust width to desired oval shape */
-            height: 150px !important; /* Adjust height to desired oval shape */
-            transition: background-color 0.3s, transform 0.3s !important;
-            align-items: center !important;
-            justify-content: center !important;
-            flex-direction: column !important;
-            line-height: 1 !important; /* Adjusted line-height to reduce space between lines */
+        .hub-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            padding: 1.25rem;
         }
-        .custom-btn:hover {
-            transform: translateY(-30px) !important;
+        .stat-pill {
+            display: inline-block;
+            padding: .35rem .75rem;
+            border-radius: 999px;
+            font-size: .85rem;
+            font-weight: 600;
+            margin-right: .5rem;
+            margin-bottom: .5rem;
+            background: #eef2f7;
+            color: #334;
+            cursor: pointer;
+            border: 2px solid transparent;
         }
-        .custom-btn img {
-            margin-right: 10px !important;
-            width: 100px !important;
-            height: 100px !important;
+        .stat-pill.active { border-color: #2d5a87; background: #dbeafe; color: #1e3a5f; }
+        .status-badge {
+            display: inline-block;
+            padding: .25rem .65rem;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
         }
-        .btn-info {
-            color: #fff !important;
-            background-color: #d57bac !important;
-            border-color: #17a2b8 !important;
-        }
-        .custom-btn h4 {
-            margin-top: 5px !important; /* Reduced margin to reduce space between lines */
-            margin-bottom: 0 !important; /* Reduced bottom margin */
-        }
-        table.editable td {
-            text-align: center; /* Horizontally center */
-            vertical-align: middle; /* Vertically center */
-        }
-        
-        /* Dennis ETA cell styling */
-        .dennis-eta-cell {
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: text;
-            transition: all 0.2s ease;
-            min-height: 20px;
-        }
-        
-        .dennis-eta-cell:hover {
-            background-color: rgba(255, 229, 153, 0.4);
-            box-shadow: inset 0 0 3px rgba(255, 193, 7, 0.5);
-        }
-        
-        .dennis-eta-cell:focus {
-            outline: none;
-            background-color: rgba(255, 235, 59, 0.5);
-            box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.8);
-            border-radius: 4px;
-        }
-        
-        .dennis-eta-cell.saving {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        table.editable th {
-            text-align: center; /* Center table headers */
+        .status-new { background: #fff3cd; color: #856404; }
+        .status-ocean { background: #cce5ff; color: #004085; }
+        .status-landed { background: #d4edda; color: #155724; }
+        .status-waiting { background: #e9ecef; color: #495057; }
+        .status-msrp-ok { background: #d4edda; color: #155724; }
+        .status-msrp-gap { background: #fff3cd; color: #856404; }
+        .status-msrp-missing { background: #f8d7da; color: #721c24; }
+        .hub-table th {
             position: sticky;
             top: 0;
-            background-color: #f8f9fa;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: #f8f9fa;
+            z-index: 2;
+            border-top: none;
+            font-size: .8rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #666;
         }
-
-        /* Styling for rows based on status */
-        .status-ocean {
-            background: linear-gradient(135deg, rgba(135, 206, 250, 0.3) 0%, rgba(100, 149, 237, 0.2) 100%) !important;
-            border-left: 4px solid #4169E1 !important;
+        .hub-table tbody tr.row-new { border-left: 4px solid #ffc107; }
+        .hub-table tbody tr.row-ocean { border-left: 4px solid #007bff; }
+        .hub-table tbody tr.row-landed { border-left: 4px solid #28a745; }
+        .hub-table tbody tr.row-waiting { border-left: 4px solid #adb5bd; }
+        .action-group .btn { margin: 2px 2px 2px 0; font-size: .78rem; padding: .25rem .5rem; }
+        .action-cell { min-width: 200px; }
+        .action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+        #importPreviewBody tr.color-changed { background: #fff3cd; }
+        .import-vendor-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: .75rem 1rem;
         }
-
-        .status-landed {
-            background: linear-gradient(135deg, rgba(152, 251, 152, 0.3) 0%, rgba(144, 238, 144, 0.2) 100%) !important;
-            border-left: 4px solid #28a745 !important;
+        .import-vendor-box label {
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #666;
+            margin-bottom: .25rem;
         }
-
-        .status-port {
-            background: linear-gradient(135deg, rgba(255, 255, 153, 0.3) 0%, rgba(255, 239, 190, 0.2) 100%) !important;
-            border-left: 4px solid #FFA500 !important;
+        .shipment-upload-panel .shipment-toggle {
+            width: 100%;
+            text-align: left;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: .75rem 1rem;
+            font-weight: 600;
+            color: #1e3a5f;
         }
-
-        .status-memo {
-            background: linear-gradient(135deg, rgba(255, 192, 203, 0.4) 0%, rgba(255, 182, 193, 0.3) 100%) !important;
-            border-left: 4px solid #DC143C !important;
+        .shipment-dropzone {
+            border: 2px dashed #b8c7d9;
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+            background: #f8fbff;
+            transition: border-color .15s, background .15s;
         }
-        
-        tr.status-ocean:hover {
-            background: linear-gradient(135deg, rgba(135, 206, 250, 0.5) 0%, rgba(100, 149, 237, 0.4) 100%) !important;
+        .shipment-dropzone.dragover {
+            border-color: #2d5a87;
+            background: #eef5ff;
         }
-        
-        tr.status-landed:hover {
-            background: linear-gradient(135deg, rgba(152, 251, 152, 0.5) 0%, rgba(144, 238, 144, 0.4) 100%) !important;
-        }
-        
-        tr.status-port:hover {
-            background: linear-gradient(135deg, rgba(255, 255, 153, 0.5) 0%, rgba(255, 239, 190, 0.4) 100%) !important;
-        }
-        
-        tr.status-memo:hover {
-            background: linear-gradient(135deg, rgba(255, 192, 203, 0.6) 0%, rgba(255, 182, 193, 0.5) 100%) !important;
-        }
-
-        /* Tracking popup styles */
-        .tracking-popup {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .tracking-popup h3 {
-            color: #333;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .tracking-info {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .tracking-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .tracking-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-        
-        .tracking-row .label {
-            font-weight: bold;
-            color: #495057;
-            flex: 0 0 140px;
-        }
-        
-        .tracking-row .value {
-            color: #212529;
-            flex: 1;
-        }
-        
-        .tracking-events {
-            margin-bottom: 20px;
-        }
-        
-        .tracking-events h4 {
-            color: #333;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 5px;
-        }
-        
-        .tracking-event {
-            background-color: #f8f9fa;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-        }
-        
-        .tracking-event .event-date {
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 5px;
-        }
-        
-        .tracking-event .event-description {
-            color: #495057;
-            margin-bottom: 3px;
-        }
-        
-        .tracking-event .event-location {
-            font-size: 0.9em;
+        .shipment-dropzone .small {
             color: #6c757d;
         }
-        
-        .tracking-note {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.9em;
+        .table-wrap { max-height: calc(100vh - 280px); overflow: auto; }
+        .hub-header-links .btn {
+            font-size: .82rem;
+            font-weight: 600;
+            margin-left: .5rem;
+            margin-bottom: .35rem;
         }
-
-        /* JSON display styles */
-        .tracking-json {
-            margin-top: 20px;
+        .written-time-cell { line-height: 1.25; white-space: nowrap; }
+        .written-time-cell .written-date { font-size: .82rem; }
+        .written-time-cell .written-clock { font-size: .75rem; color: #6c757d; }
+        .hub-table td:nth-child(4),
+        .hub-table td:nth-child(5) { white-space: nowrap; }
+        .hub-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            padding-top: .75rem;
+            border-top: 1px solid #e9ecef;
+            margin-top: .75rem;
         }
-        
-        .tracking-json h4 {
-            color: #333;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 5px;
+        .hub-pagination .page-info {
+            font-size: .85rem;
+            color: #6c757d;
         }
-        
-        .json-display {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85em;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            max-height: 400px;
-            overflow-y: auto;
+        .hub-pagination .page-link {
+            min-width: 2.25rem;
+            text-align: center;
+        }
+        .guide-modal .nav-tabs .nav-link {
+            font-weight: 600;
             color: #495057;
         }
-        
-        .dennis-eta-cell {
-            min-height: 20px;
-            padding: 4px;
-            border: 1px solid transparent;
-            border-radius: 3px;
-            cursor: text;
+        .guide-modal .nav-tabs .nav-link.active {
+            color: #1e3a5f;
         }
-        
-        .dennis-eta-cell:focus {
-            outline: none;
-            border-color: #007bff;
-            background-color: #f8f9fa;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        .guide-modal .guide-section {
+            margin-bottom: 1.25rem;
         }
-        
-        .dennis-eta-cell.saving {
-            background-color: #fff3cd;
-            border-color: #ffc107;
+        .guide-modal .guide-section h6 {
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-bottom: .5rem;
+        }
+        .guide-modal ul {
+            padding-left: 1.25rem;
+            margin-bottom: .5rem;
+        }
+        .guide-modal li {
+            margin-bottom: .35rem;
+        }
+        .guide-modal .status-legend span {
+            display: inline-block;
+            margin-right: .75rem;
+            margin-bottom: .35rem;
+            font-size: .85rem;
         }
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
-    <h1 class="text-center">Boat Service V2.2 rollback to V1.1</h1>
-    <div class="container mt-5">
-        <div class="alert alert-info text-center" role="alert">
-            <i class="bi bi-cloud-download"></i> Data is fetched live from <a href="https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/edit?gid=0#gid=0" target="_blank" class="alert-link">This 📙Google Sheets</a>
+
+    <div class="hub-header">
+        <div class="container-fluid" style="max-width: 1400px;">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                    <h1 class="h3 mb-1"><i class="bi bi-box-seam"></i> Container Hub</h1>
+                    <small class="text-white-50">Process new containers · manage ocean & landed POs</small>
+                </div>
+                <div class="text-right">
+                    <div class="hub-header-links mb-2">
+                        <button type="button" id="guideBtn" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-question-circle"></i> Instruction / 使用说明
+                        </button>
+                        <a href="/container" class="btn btn-sm btn-info">
+                            <i class="bi bi-box-arrow-in-right"></i> Manual Process Container
+                        </a>
+                        <a href="{{ google_sheet_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-table"></i> Google Sheet
+                        </a>
+                    </div>
+                    <div class="small text-white-50">Sheet updated</div>
+                    <div id="lastUpdated">Loading…</div>
+                    <button id="refreshBtn" class="btn btn-sm btn-light mt-1">Refresh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid" style="max-width: 1400px;">
+        <div class="hub-card mb-3 shipment-upload-panel">
+            <button class="shipment-toggle btn btn-link text-decoration-none collapsed" type="button"
+                    data-toggle="collapse" data-target="#shipmentUploadPanel" aria-expanded="false">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Weekly Shipment Tracking (2026 sheet)
+                <span class="float-right"><i class="bi bi-chevron-down"></i></span>
+            </button>
+            <div id="shipmentUploadPanel" class="collapse mt-3">
+                <p class="text-muted small mb-2">
+                    Upload the weekly tracking Excel file. Uses the <strong>2026</strong> worksheet only.
+                    Column A = FDC container (<code>FT261112</code> → <code>F261112</code>).
+                    Updates MySQL, Google Sheet, and local cache (vessel, container #, deliver date, ETD, ETA).
+                </p>
+                <div id="shipmentDropzone" class="shipment-dropzone mb-3">
+                    <div><i class="bi bi-cloud-upload" style="font-size:1.5rem;color:#2d5a87;"></i></div>
+                    <div class="mt-2">Drag &amp; drop the .xlsx file here</div>
+                    <div class="small">or choose a file below</div>
+                </div>
+                <div class="d-flex flex-wrap align-items-center">
+                    <input type="file" id="shipmentTrackingFile" class="d-none" accept=".xlsx,.xlsm">
+                    <button type="button" id="shipmentChooseBtn" class="btn btn-sm btn-outline-primary mr-2 mb-2">
+                        Choose file
+                    </button>
+                    <button type="button" id="shipmentUploadBtn" class="btn btn-sm btn-primary mr-2 mb-2" disabled>
+                        Upload &amp; sync
+                    </button>
+                    <button type="button" id="shipmentViewBtn" class="btn btn-sm btn-outline-secondary mb-2" disabled>
+                        View uploaded 2026 data
+                    </button>
+                    <span id="shipmentFileLabel" class="small text-muted mb-2 ml-1"></span>
+                </div>
+                <div id="shipmentUploadMeta" class="small text-muted mt-2"></div>
+            </div>
         </div>
 
-        
+        <div class="hub-card mb-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                <div id="filterPills">
+                    <span class="stat-pill active" data-filter="all">All <span id="countAll">0</span></span>
+                    <span class="stat-pill" data-filter="new">New <span id="countNew">0</span></span>
+                    <span class="stat-pill" data-filter="ocean">Ocean <span id="countOcean">0</span></span>
+                    <span class="stat-pill" data-filter="landed">Landed <span id="countLanded">0</span></span>
+                    <span class="stat-pill" data-filter="special">Australia (L) <span id="countSpecial">0</span></span>
+                </div>
+                <input type="text" id="searchBox" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Search container…">
+            </div>
 
-        <div class="mt-4">
-            <div class="row mt-4">
-                <div class="col-md-12 text-center">
-                    <h3>Last Updated: <span id="lastUpdated">{{ last_modified_date }}</span> <a href="/container" class="btn btn-info" style="padding: 5px 10px; font-size: 12px; margin-left: 10px; border-radius: 5px;"><img src="/static/icons/container.png" alt="containers" style="width: 16px; height: 16px; margin-right: 5px;">Manual Process Container</a> <button id="forcePackslipBtn" type="button" class="btn btn-outline-success" style="padding: 5px 10px; font-size: 12px; margin-left: 8px; border-radius: 5px;"><i class="bi bi-file-earmark-text"></i> Show Packslip</button></h3>
+            <div id="loadingState" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted mb-0">Loading containers…</p>
+            </div>
+
+            <div id="tableWrap" class="table-wrap" style="display:none;">
+                <table class="table table-sm table-hover hub-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Container</th>
+                            <th>BOL</th>
+                            <th>Status</th>
+                            <th>Written Time</th>
+                            <th>PO Created</th>
+                            <th>MSRP</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hubTableBody"></tbody>
+                </table>
+            </div>
+            <div id="paginationBar" class="hub-pagination" style="display:none;">
+                <div class="page-info" id="paginationInfo"></div>
+                <nav aria-label="Container pagination">
+                    <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="shipmentViewModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title">Uploaded tracking — <span id="shipmentViewSheetName"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Container</th>
+                                    <th>Container #</th>
+                                    <th>Vessel NO</th>
+                                    <th>Deliver Date</th>
+                                    <th>ETD</th>
+                                    <th>ETA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shipmentViewBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Loading spinner -->
-            <div id="loadingSpinner" class="text-center my-5">
-                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                    <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    <div class="modal fade guide-modal" id="guideModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title"><i class="bi bi-book"></i> Container Hub — Instructions</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
-                <div class="mt-4" style="max-width: 600px; margin: 20px auto; text-align: left; background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                    <h5 style="text-align: center; margin-bottom: 15px;">🔄 Loading Data...</h5>
-                    <p class="mt-2"><strong>Step 1:</strong> Scan Dropbox for available container files</p>
-                    <p class="mt-2"><strong>Step 2:</strong> Check Google Sheets for existing containers and add new ones</p>
-                    <p class="mt-2"><strong>Step 3:</strong> Fetch updated container data from Google Sheets</p>
-                    <p class="mt-2"><strong>Step 4:</strong> Clean and format data for display</p>
-                    <p class="mt-2"><strong>Step 5:</strong> Query OMS database to determine container status (ocean/landed/upload)</p>
-                    <p class="mt-2"><strong>Step 6:</strong> Update Google Sheets with received dates for landed containers</p>
-                    <p class="mt-2"><strong>Step 7:</strong> Set file processing flags and button visibility</p>
-                    <p class="mt-2"><strong>Step 8:</strong> Fetch tracking data from Terminal49 API and create tracking requests</p>
-                    <p class="mt-2"><strong>Step 9:</strong> Update Google Sheets with tracking information (ETA, shipping line, voyage)</p>
-                    <p class="mt-2"><strong>Step 10:</strong> Fetch email counts for port containers</p>
-                    <p class="mt-2"><strong>Step 11:</strong> Update Last Updated timestamps and finalize display</p>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="guideLangTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="guide-en-tab" data-toggle="tab" href="#guideEn" role="tab">English</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="guide-zh-tab" data-toggle="tab" href="#guideZh" role="tab">中文</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content pt-3" id="guideLangContent">
+                        <div class="tab-pane fade show active" id="guideEn" role="tabpanel">
+                            <div class="guide-section">
+                                <h6>Overview</h6>
+                                <p class="mb-2">Container Hub lists every container from the Google tracking sheet. Use it to import new containers into OMS, manage ocean POs, receive at 827, and download related files.</p>
+                            </div>
+                            <div class="guide-section">
+                                <h6>Status colors</h6>
+                                <div class="status-legend">
+                                    <span><span class="status-badge status-new">New</span> Dropbox file ready, not yet in OMS</span><br>
+                                    <span><span class="status-badge status-ocean">Ocean</span> PO created in OMS, not fully received</span><br>
+                                    <span><span class="status-badge status-landed">Landed</span> Received at 827 (<code>RCVD_QTY</code> &gt; 0)</span><br>
+                                    <span><span class="status-badge status-waiting">Waiting</span> On sheet but no Dropbox source file</span>
+                                </div>
+                            </div>
+                            <div class="guide-section">
+                                <h6>Columns</h6>
+                                <ul>
+                                    <li><strong>Container</strong> — click to open item lookup. <code>FT…</code> numbers display as <code>F…</code>.</li>
+                                    <li><strong>BOL</strong> — bill of lading from the sheet.</li>
+                                    <li><strong>Written Time</strong> — when the row was written on the Google sheet.</li>
+                                    <li><strong>PO Created</strong> — OMS PO date/time from FDC (<code>pur_ord</code> + <code>plog</code>). Blank if no PO exists yet.</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section">
+                                <h6>Filters, search &amp; pages</h6>
+                                <ul>
+                                    <li>Click the pills (<strong>All / New / Ocean / Landed / Australia (L)</strong>) to filter the list.</li>
+                                    <li>Use the search box to find a container # or BOL.</li>
+                                    <li>The table shows <strong>25 rows per page</strong>; use pagination at the bottom.</li>
+                                    <li><strong>Refresh</strong> reloads sheet + OMS data (bypasses cache).</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section">
+                                <h6>Actions by status</h6>
+                                <ul>
+                                    <li><strong>New → Process</strong> — reads the Dropbox container file, opens the style preview grid, then imports styles (FDC + EFAS) and PO (FDC only) after you confirm.</li>
+                                    <li><strong>New → Files</strong> — download the original source file only.</li>
+                                    <li><strong>Ocean → PackingList / Receive</strong> — opens the packing list in a new tab, then asks whether the container arrived at 827. Answer <strong>Yes</strong> to receive into OMS and update the sheet RCD column.</li>
+                                    <li><strong>Ocean / Landed → Files</strong> — download PO CSV, Styles CSV, or Original.</li>
+                                    <li><strong>Ocean / Landed → Edit</strong> — <em>Delete PO</em> removes OMS records; <em>Reprocess</em> re-runs import preview; <em>Un-landed</em> (landed only) reverses 827 receive and moves back to ocean.</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section">
+                                <h6>Import preview tips</h6>
+                                <ul>
+                                    <li>Yellow rows = color names auto-converted to abbreviations — review before confirming.</li>
+                                    <li>You can edit Style, Color, Item#, Cost, Retail, and PO Qty in the grid.</li>
+                                    <li>Click <strong>Confirm Import</strong> only after the data looks correct.</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section mb-0">
+                                <h6>Header shortcuts</h6>
+                                <ul class="mb-0">
+                                    <li><strong>Manual Process Container</strong> — alternate import path at <code>/container</code>.</li>
+                                    <li><strong>Google Sheet</strong> — open the live tracking spreadsheet.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="guideZh" role="tabpanel">
+                            <div class="guide-section">
+                                <h6>页面说明</h6>
+                                <p class="mb-2">Container Hub 显示 Google 跟踪表中的所有货柜。用于将新货柜导入 OMS、管理在途 PO、827 收货，以及下载相关文件。</p>
+                            </div>
+                            <div class="guide-section">
+                                <h6>状态颜色</h6>
+                                <div class="status-legend">
+                                    <span><span class="status-badge status-new">New 新建</span> Dropbox 有源文件，尚未导入 OMS</span><br>
+                                    <span><span class="status-badge status-ocean">Ocean 在途</span> OMS 已建 PO，尚未完全收货</span><br>
+                                    <span><span class="status-badge status-landed">Landed 已到</span> 已在 827 收货（<code>RCVD_QTY</code> &gt; 0）</span><br>
+                                    <span><span class="status-badge status-waiting">Waiting 等待</span> 表中有记录，但 Dropbox 无源文件</span>
+                                </div>
+                            </div>
+                            <div class="guide-section">
+                                <h6>列说明</h6>
+                                <ul>
+                                    <li><strong>Container 货柜号</strong> — 点击可打开货品查询。<code>FT…</code> 会显示为 <code>F…</code>。</li>
+                                    <li><strong>BOL 提单号</strong> — 来自 Google 表。</li>
+                                    <li><strong>Written Time 写入时间</strong> — Google 表上该行的写入时间。</li>
+                                    <li><strong>PO Created 建 PO 时间</strong> — FDC OMS 中 PO 的日期/时间（<code>pur_ord</code> + <code>plog</code>）。尚未建 PO 时显示空白。</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section">
+                                <h6>筛选、搜索与分页</h6>
+                                <ul>
+                                    <li>点击上方标签（<strong>All / New / Ocean / Landed / Australia (L)</strong>）筛选列表。</li>
+                                    <li>搜索框可按货柜号或 BOL 查找。</li>
+                                    <li>表格每页显示 <strong>25 条</strong>，底部可翻页。</li>
+                                    <li><strong>Refresh 刷新</strong> 重新加载表格与 OMS 数据（跳过缓存）。</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section">
+                                <h6>各状态操作</h6>
+                                <ul>
+                                    <li><strong>New → Process 处理</strong> — 读取 Dropbox 货柜文件，打开款式预览表，确认后导入款式（FDC + EFAS）和 PO（仅 FDC）。</li>
+                                    <li><strong>New → Files 文件</strong> — 仅下载原始源文件。</li>
+                                    <li><strong>Ocean → PackingList / Receive 装箱单/收货</strong> — 新窗口打开装箱单，然后询问是否已在 827 到货。选 <strong>Yes</strong> 将在 OMS 收货并更新 Google 表 RCD 列。</li>
+                                    <li><strong>Ocean / Landed → Files 文件</strong> — 下载 PO CSV、Styles CSV 或 Original 原文件。</li>
+                                    <li><strong>Ocean / Landed → Edit 编辑</strong> — <em>Delete PO 删除 PO</em> 清除 OMS 记录；<em>Reprocess 重新处理</em> 重新打开导入预览；<em>Un-landed 取消到货</em>（仅 Landed）撤销 827 收货并回到在途状态。</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section">
+                                <h6>导入预览提示</h6>
+                                <ul>
+                                    <li>黄色行 = 颜色名称已自动转换为缩写，确认前请核对。</li>
+                                    <li>可在表格中修改 Style、Color、Item#、Cost、Retail、PO Qty。</li>
+                                    <li>数据无误后再点击 <strong>Confirm Import 确认导入</strong>。</li>
+                                </ul>
+                            </div>
+                            <div class="guide-section mb-0">
+                                <h6>顶部快捷入口</h6>
+                                <ul class="mb-0">
+                                    <li><strong>Manual Process Container 手动处理</strong> — 备用导入页面 <code>/container</code>。</li>
+                                    <li><strong>Google Sheet 谷歌表格</strong> — 打开实时跟踪表。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close / 关闭</button>
                 </div>
             </div>
-            
-            <!-- Table container -->
-            <table class="table table-bordered editable" id="boat_table" style="display: none;align-items: center; width: 100%; table-layout: auto;">
-                <thead>
-                    <tr>
-                        <th>FDC container</th>
-                        <th>BOL NUM</th>
-                        <th>Dennis ETA</th>
-                        <th>internal RCD</th>
-                        <th>MEMO</th>
-                        <th>Status</th>
-                        <th>Files</th>
-                    </tr>
-                </thead>
-                <tbody id="boatTableBody">
-                    <!-- Data will be loaded here -->
-                </tbody>
-            </table>
-            
-            <!-- Processing Steps Info -->
-            <div class="mt-5" style="background: #f0f7ff; padding: 25px; border-radius: 8px; border-left: 4px solid #0066cc;">
-                <h5 style="color: #0066cc; margin-bottom: 15px;">📋 Data Processing Workflow</h5>
-                <div style="columns: 2; column-gap: 30px;">
-                    <p><strong>Step 1:</strong> Scan Dropbox for available container files</p>
-                    <p><strong>Step 2:</strong> Check Google Sheets for existing containers and add new ones</p>
-                    <p><strong>Step 3:</strong> Fetch updated container data from Google Sheets</p>
-                    <p><strong>Step 4:</strong> Clean and format data for display</p>
-                    <p><strong>Step 5:</strong> Query OMS database to determine container status (ocean/landed/upload)</p>
-                    <p><strong>Step 6:</strong> Update Google Sheets with received dates for landed containers</p>
-                    <p><strong>Step 7:</strong> Set file processing flags and button visibility</p>
-                    <p><strong>Step 8:</strong> Fetch tracking data from Terminal49 API and create tracking requests</p>
-                    <p><strong>Step 9:</strong> Update Google Sheets with tracking information (ETA, shipping line, voyage)</p>
-                    <p><strong>Step 10:</strong> Fetch email counts for port containers</p>
-                    <p><strong>Step 11:</strong> Update Last Updated timestamps and finalize display</p>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editActionsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title">Edit — <span id="editActionsContainer"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3" id="editActionsHint">Delete the OMS PO or reprocess the container file and review the style grid before re-import.</p>
+                    <button type="button" class="btn btn-outline-warning btn-block mb-2" id="editUnlandBtn" style="display:none;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Un-landed
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-block mb-2" id="editUpdateMsrpBtn" style="display:none;">
+                        <i class="bi bi-currency-dollar"></i> Update MSRP (FDC + EFAS)
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-block mb-2" id="editDeletePoBtn">
+                        <i class="bi bi-trash"></i> Delete PO
+                    </button>
+                    <button type="button" class="btn btn-primary btn-block" id="editReprocessBtn">
+                        <i class="bi bi-arrow-repeat"></i> Reprocess
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="landedConfirmModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title">Container landed?</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Has <strong id="landedConfirmContainer"></strong> arrived at 827 and been received into OMS?</p>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-success btn-sm" id="landedConfirmYesBtn">Yes, mark landed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="filesActionsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title">Files — <span id="filesActionsContainer"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" id="filesActionsLinks"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="importPreviewModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Review &amp; Import — <span id="importPreviewContainer"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">
+                        Yellow rows = auto-converted colors. Styles → FDC + EFAS. PO → FDC only.
+                    </p>
+                    <div class="import-vendor-box mb-3">
+                        <div class="form-row align-items-end">
+                            <div class="col-md-4">
+                                <label for="importVendorId">Vendor ID (PO header)</label>
+                                <input type="text" id="importVendorId" class="form-control form-control-sm" autocomplete="off">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="small text-muted mb-1">Pre-mapped from recent OMS POs (F → 50005, L → 00005). Verify before import.</div>
+                                <div id="importVendorNameHint" class="small font-weight-bold text-dark"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Style</th><th>Color</th><th>Was</th><th>Item#</th>
+                                    <th>Cost</th><th>Retail</th><th>PO Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importPreviewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmImportBtn">Confirm Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="vendorConfirmModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title">Confirm Vendor ID</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Please double-check the vendor ID before importing this PO into OMS.</p>
+                    <div id="vendorConfirmWarning" class="alert alert-warning py-2 small" style="display:none;">
+                        This vendor is <strong>not</strong> the usual <code>50005</code> / <code>00005</code> default.
+                        Confirm the vendor name below is correct before continuing.
+                    </div>
+                    <dl class="row mb-0 small">
+                        <dt class="col-sm-4">Vendor ID</dt>
+                        <dd class="col-sm-8"><strong id="vendorConfirmId"></strong></dd>
+                        <dt class="col-sm-4">Vendor name</dt>
+                        <dd class="col-sm-8"><strong id="vendorConfirmName"></strong></dd>
+                    </dl>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Go back</button>
+                    <button type="button" class="btn btn-success btn-sm" id="vendorConfirmProceedBtn">Confirm and import</button>
                 </div>
             </div>
         </div>
     </div>
 
     {% include 'footer.html' %}
-      <script>
-          var forceShowPackslip = false;
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function() {
+        var allRows = [];
+        var activeFilter = 'all';
+        var currentPage = 1;
+        var pageSize = 25;
+        var importPreviewState = { container: '', rows: [], defaultVendorId: '', pendingVendorId: '' };
+        var editActionsState = { container: '', actionMode: '', msrpStatus: '', inOms: false };
+        var landedConfirmState = { container: '' };
+        var shipmentSelectedFile = null;
 
-          function formatDate(dateString) {
-              // Return empty string for empty or invalid dates
-              if (!dateString || dateString === 'NaT' || dateString === '') {
-                  return '';
-              }
-              
-              // If already formatted, return as is
-              if (dateString.includes('/')) {
-                  return dateString;
-              }
-              
-              // Parse the date string and format it
-              const date = new Date(dateString);
-              if (isNaN(date.getTime())) {
-                  return dateString;
-              }
-              
-              return date.toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit'
-              });
-          }
+        function escapeHtml(v) {
+            return String(v == null ? '' : v)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
 
-          function applyRowStyling() {
-              $('#boat_table tbody tr').each(function() {
-                  // Remove any existing status classes
-                  $(this).removeClass('status-ocean status-landed status-port status-memo');
-                  
-                  // Get all cells in this row
-                  var cells = $(this).find('td');
-                  
-                  // Map cells to columns based on actual table structure
-                  var container = cells.eq(0).text().trim();        // Container
-                  var bolNum = cells.eq(1).text().trim();           // BOL NUM
-                  var dennisEta = cells.eq(2).text().trim();        // Dennis ETA
-                  var rcd = cells.eq(3).text().trim();              // RCD (Actual RCD)
-                  var memo = cells.eq(4).text().trim();             // MEMO
-                  
-                  // Determine status based on data
-                  var hasEta = dennisEta !== '';
-                  var hasRcd = rcd !== '';
-                  var hasMemo = memo !== '';
-                  
-                  // Priority-based status assignment
-                  var statusClass = 'status-ocean'; // Default to ocean for new containers
-                  
-                  // If has RCD and no memo, it's landed
-                  if (hasRcd && !hasMemo) {
-                      statusClass = 'status-landed';
-                  }
-                  // If has memo, mark as memo (attention needed)
-                  else if (hasMemo) {
-                      statusClass = 'status-memo';
-                  }
-                  // If has ETA but no RCD, it's in ocean
-                  else if (hasEta && !hasRcd) {
-                      statusClass = 'status-ocean';
-                  }
-                  // If no RCD, no ETA, no memo - it's still ocean (new container)
-                  else if (!hasRcd && !hasEta && !hasMemo) {
-                      statusClass = 'status-ocean';
-                  }
-                  // If no RCD but has memo about port
-                  else if (!hasRcd && !hasEta && memo.toLowerCase().includes('port')) {
-                      statusClass = 'status-port';
-                  }
-                  
-                  $(this).addClass(statusClass);
-              });
-          }
+        function loadShipmentTrackingMeta() {
+            $.getJSON('/boat/shipment_tracking/meta', function(res) {
+                if (!res.success || !res.meta) return;
+                var meta = res.meta;
+                if (meta.uploaded_at) {
+                    $('#shipmentUploadMeta').text(
+                        'Last upload: ' + meta.uploaded_at +
+                        (meta.original_filename ? ' · ' + meta.original_filename : '') +
+                        (meta.row_count ? ' · ' + meta.row_count + ' rows' : '') +
+                        (meta.matched_sheet_rows != null ? ' · ' + meta.matched_sheet_rows + ' sheet matches' : '')
+                    );
+                }
+                if (meta.has_file) {
+                    $('#shipmentViewBtn').prop('disabled', false);
+                }
+            });
+        }
 
-          function downloadPackslip(fdc_container) {
-              window.location.href = '/boat/packslip/' + fdc_container;
-          }
+        function setShipmentSelectedFile(file) {
+            shipmentSelectedFile = file || null;
+            if (shipmentSelectedFile) {
+                $('#shipmentFileLabel').text(shipmentSelectedFile.name);
+                $('#shipmentUploadBtn').prop('disabled', false);
+            } else {
+                $('#shipmentFileLabel').text('');
+                $('#shipmentUploadBtn').prop('disabled', true);
+            }
+        }
 
-          function applyForcePackslipButtons() {
-              $('#boatTableBody tr').each(function() {
-                  var container = $(this).attr('data-container') || '';
-                  if (!container) {
-                      return;
-                  }
+        function uploadShipmentTrackingFile() {
+            if (!shipmentSelectedFile) {
+                alert('Choose a tracking file first.');
+                return;
+            }
+            var formData = new FormData();
+            formData.append('file', shipmentSelectedFile);
+            var $btn = $('#shipmentUploadBtn');
+            $btn.prop('disabled', true).text('Uploading…');
+            $.ajax({
+                url: '/boat/shipment_tracking/upload',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    alert(res.message || 'Upload complete');
+                    setShipmentSelectedFile(null);
+                    $('#shipmentTrackingFile').val('');
+                    $('#shipmentViewBtn').prop('disabled', false);
+                    loadShipmentTrackingMeta();
+                    loadData(true);
+                },
+                error: function(xhr) {
+                    alert('Failed: ' + ajaxErrorMessage(xhr, 'Upload failed'));
+                },
+                complete: function() {
+                    $btn.prop('disabled', !shipmentSelectedFile).text('Upload & sync');
+                }
+            });
+        }
 
-                  var filesCell = $(this).find('td').eq(6);
-                  if (!filesCell.length || filesCell.find('.packslip-btn').length > 0) {
-                      return;
-                  }
+        function openShipmentViewModal() {
+            $.getJSON('/boat/shipment_tracking/view', function(res) {
+                if (!res.success) {
+                    alert(res.error || 'No uploaded file');
+                    return;
+                }
+                $('#shipmentViewSheetName').text(res.sheet_name || '2026');
+                var tbody = $('#shipmentViewBody');
+                tbody.empty();
+                (res.rows || []).forEach(function(row) {
+                    var tr = $('<tr></tr>');
+                    tr.append($('<td></td>').html('<strong>' + escapeHtml(row.container_id) + '</strong>'));
+                    tr.append($('<td></td>').text(row.container_no || ''));
+                    tr.append($('<td></td>').text(row.vessel_no || ''));
+                    tr.append($('<td></td>').text(row.deliver_date || ''));
+                    tr.append($('<td></td>').text(row.etd || ''));
+                    tr.append($('<td></td>').text(row.eta || ''));
+                    tbody.append(tr);
+                });
+                $('#shipmentViewModal').modal('show');
+            }).fail(function(xhr) {
+                alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not load tracking data'));
+            });
+        }
 
-                  var packslipBtn = $('<button class="btn btn-sm btn-success packslip-btn mr-1" data-container="' + container + '">Packslip</button>');
-                  var trackingBtn = filesCell.find('.tracking-btn').first();
+        function msrpBadge(row) {
+            var status = row.msrp_status || 'unknown';
+            if (status === 'ok') {
+                return '<span class="status-badge status-msrp-ok">OK</span>';
+            }
+            if (status === 'partial') {
+                return '<span class="status-badge status-msrp-gap" title="Price1 missing in original Excel">' +
+                    escapeHtml(row.msrp_label || 'Gap') + '</span>';
+            }
+            if (status === 'missing') {
+                return '<span class="status-badge status-msrp-missing" title="No Price1 in original Excel">Need Ken</span>';
+            }
+            return '<span class="text-muted">—</span>';
+        }
 
-                  if (trackingBtn.length) {
-                      trackingBtn.before(packslipBtn);
-                  } else {
-                      filesCell.append(packslipBtn);
-                  }
-              });
-          }
+        function statusBadge(row) {
+            var cls = 'status-waiting';
+            if (row.action_mode === 'new') cls = 'status-new';
+            else if (row.action_mode === 'ocean') cls = 'status-ocean';
+            else if (row.action_mode === 'landed') cls = 'status-landed';
+            return '<span class="status-badge ' + cls + '">' + escapeHtml(row.status_label) + '</span>';
+        }
 
-          function loadBoatData() {
-              $.ajax({
-                  url: '/boat/data',
-                  method: 'GET',
-                  success: function(response) {
-                      if (response.success) {
-                          // Update last modified date
-                          $('#lastUpdated').text(response.last_modified);
-                          
-                          // Build table rows
-                          var tbody = $('#boatTableBody');
-                          tbody.empty();
-                          
-                          response.data.forEach(function(row) {
-                              var tr = $('<tr></tr>').attr('data-container', row.container || '');
-                              
-                              // Container with link to item lookup
-                              var containerHtml = '';
-                              if (row.container) {
-                                  containerHtml = '<a href="/item_lookup/%25' + row.container + '%25" target="_blank">' + row.container + '</a>';
-                              }
-                              tr.append($('<td></td>').html(containerHtml));
-                              
-                              // BOL NUM (plain text, no hyperlink)
-                              tr.append($('<td></td>').text(row.link || ''));
-                              
-                              // Dennis ETA - make it editable (Est ETA)
-                              var dennisEtaHtml = '<div class="dennis-eta-cell" contenteditable="true" data-container="' + row.container + '">' + (row['Dennis ETA'] || '') + '</div>';
-                              tr.append($('<td></td>').html(dennisEtaHtml));
-                              
-                              // RCD (Actual RCD)
-                              tr.append($('<td></td>').text(row.RCD || ''));
-                              
-                              // MEMO
-                              tr.append($('<td></td>').text(row.MEMO || ''));
-                              
-                              // Status
-                              var statusHtml = row.Status || '';
-                              if (row.Status === '⚓port⚓') {
-                                  var emailCount = row.email_count || 0;
-                                  var displayText = '⚓port⚓';
-                                  if (emailCount > 0) {
-                                      displayText += ' (' + emailCount + ')';
-                                  }
-                                  statusHtml = '<button class="btn btn-info email-btn" data-bol="' + row.link + '">' + displayText + '</button>';
-                              }
-                              tr.append($('<td></td>').html(statusHtml));
-                              
-                              // Files - Process button or download buttons + tracking button
-                              var filesHtml = '';
-                              if (row.has_styles_csv && row.has_po_csv) {
-                                  // Both files exist - show original + download buttons + tracking
-                                  filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
-                                  filesHtml += '<a href="/boat/download/' + row.container + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
-                                  filesHtml += '<a href="/boat/download/' + row.container + '/po" class="btn btn-sm btn-success mr-1" download>PO CSV</a>';
-                                  filesHtml += '<button class="btn btn-sm btn-danger redo-oms-btn" data-container="' + row.container + '">redo oms</button>';
-                              } else if (row.can_process || row.Status === '🔄upload🔄') {
-                                  // Can be processed or in upload status - show original + process button + tracking
-                                  filesHtml += '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
-                                  filesHtml += '<button class="btn btn-sm btn-warning process-btn mr-1" data-container="' + row.container + '">Process</button>';
-                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
-                              } else {
-                                  // No Dropbox file or already in database - show only Original button + tracking + packslip for ocean
-                                  filesHtml = '<a href="/boat/download/' + row.container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
-                                  if (row.Status === '🚢ocean🚢') {
-                                      filesHtml += '<button class="btn btn-sm btn-success packslip-btn mr-1" data-container="' + row.container + '">Packslip</button>';
-                                  }
-                                  filesHtml += '<button class="btn btn-sm btn-secondary tracking-btn" data-container="' + row.container + '" data-bol="' + row.link + '">📍Track</button>';
-                              }
-                              tr.append($('<td></td>').html(filesHtml));
-                              
-                              tbody.append(tr);
-                          });
-                          
-                          // Hide loading spinner, show table
-                          $('#loadingSpinner').hide();
-                          $('#boat_table').show();
-                          
-                          // Apply styling
-                          applyRowStyling();
+        function datetimeCell(date, time) {
+            if (!date) {
+                return '<span class="text-muted">—</span>';
+            }
+            var html = '<div class="written-time-cell">';
+            html += '<div class="written-date">' + escapeHtml(date) + '</div>';
+            if (time) {
+                html += '<div class="written-clock">' + escapeHtml(time) + '</div>';
+            }
+            html += '</div>';
+            return html;
+        }
 
-                          if (forceShowPackslip) {
-                              applyForcePackslipButtons();
-                          }
-                      } else {
-                          $('#loadingSpinner').html('<div class="alert alert-danger">Error: ' + response.error + '</div>');
-                      }
-                  },
-                  error: function(xhr, status, error) {
-                      $('#loadingSpinner').html('<div class="alert alert-danger">Failed to load data: ' + error + '</div>');
-                  }
-              });
-          }
+        function btn(cls, label, attrs) {
+            return '<button class="btn btn-sm ' + cls + '" ' + attrs + '>' + label + '</button>';
+        }
 
-          function processContainer(fdc_container, button) {
-              // Disable button and show loading
-              $(button).prop('disabled', true).text('Processing...');
-              
-              $.ajax({
-                  url: '/boat/process/' + fdc_container,
-                  method: 'POST',
-                  success: function(response) {
-                      if (response.success) {
-                          // Replace button with original + download links
-                          var downloadHtml = '<a href="/boat/download/' + fdc_container + '/original" class="btn btn-sm btn-info mr-1" download>Original</a>';
-                          downloadHtml += '<a href="/boat/download/' + fdc_container + '/styles" class="btn btn-sm btn-primary mr-1" download>Styles CSV</a>';
-                          downloadHtml += '<a href="/boat/download/' + fdc_container + '/po" class="btn btn-sm btn-success" download>PO CSV</a>';
-                          downloadHtml += '<button class="btn btn-sm btn-danger redo-oms-btn ml-1" data-container="' + fdc_container + '">redo oms</button>';
-                          $(button).parent().html(downloadHtml);
-                          
-                          alert('Successfully processed ' + fdc_container);
-                      } else {
-                          alert('Error: ' + response.error);
-                          $(button).prop('disabled', false).text('Process');
-                      }
-                  },
-                  error: function(xhr, status, error) {
-                      alert('Failed to process container: ' + error);
-                      $(button).prop('disabled', false).text('Process');
-                  }
-              });
-          }
+        function filesButton(container, items) {
+            if (!items.length) return '';
+            var encoded = encodeURIComponent(JSON.stringify(items));
+            return btn(
+                'btn-outline-secondary files-open-btn',
+                'Files',
+                'data-container="' + escapeHtml(container) + '" data-files="' + encoded + '"'
+            );
+        }
 
-          function redoOmsContainer(fdc_container, button) {
-              $(button).prop('disabled', true).text('Resetting...');
+        function openFilesModal(container, items) {
+            $('#filesActionsContainer').text(container);
+            var html = items.map(function(item) {
+                var style = item.type === 'po' ? 'success' : (item.type === 'styles' ? 'primary' : 'secondary');
+                return (
+                    '<a href="' + escapeHtml(item.href) + '" class="btn btn-outline-' + style + ' btn-block mb-2" download>' +
+                    escapeHtml(item.label) + '</a>'
+                );
+            }).join('');
+            $('#filesActionsLinks').html(html);
+            $('#filesActionsModal').modal('show');
+        }
 
-              $.ajax({
-                  url: '/boat/redo_oms/' + fdc_container,
-                  method: 'POST',
-                  success: function(response) {
-                      if (response.success) {
-                          loadBoatData();
-                          alert('Redo OMS reset complete for ' + fdc_container + '. You can process again.');
-                      } else {
-                          alert('Error: ' + (response.error || 'Failed to reset OMS files'));
-                          $(button).prop('disabled', false).text('redo oms');
-                      }
-                  },
-                  error: function(xhr, status, error) {
-                      alert('Failed to reset OMS files: ' + error);
-                      $(button).prop('disabled', false).text('redo oms');
-                  }
-              });
-          }
+        function buildActions(row) {
+            var c = row.container;
+            var dl = function(type, label) {
+                return {
+                    type: type,
+                    href: '/boat/download/' + encodeURIComponent(c) + '/' + type,
+                    label: label
+                };
+            };
+            var html = '<div class="action-cell"><div class="action-row">';
 
-          $(document).ready(function() {
-              // Load data after page is rendered
-              setTimeout(loadBoatData, 100);
-              
-              // Handle process button clicks (delegated event)
-              $(document).on('click', '.process-btn', function() {
-                  var fdc_container = $(this).data('container');
-                  processContainer(fdc_container, this);
-              });
+            if (row.action_mode === 'new') {
+                html += btn('btn-warning process-btn', 'Process', 'data-container="' + c + '"');
+                if (row.dropbox_available) {
+                    html += filesButton(c, [dl('original', 'Original')]);
+                }
+            } else if (row.action_mode === 'ocean') {
+                html += btn('btn-info packslip-btn', 'PackingList / Receive', 'data-container="' + c + '"');
+                html += filesButton(c, [
+                    dl('po', 'PO CSV'),
+                    dl('styles', 'Styles CSV'),
+                    dl('original', 'Original')
+                ]);
+                html += btn('btn-primary edit-open-btn', 'Edit',
+                    'data-container="' + c + '" data-action-mode="ocean" data-msrp-status="' +
+                    escapeHtml(row.msrp_status || 'unknown') + '" data-in-oms="1"');
+            } else if (row.action_mode === 'landed') {
+                html += filesButton(c, [
+                    dl('po', 'PO CSV'),
+                    dl('styles', 'Styles CSV'),
+                    dl('original', 'Original')
+                ]);
+                html += btn('btn-primary edit-open-btn', 'Edit',
+                    'data-container="' + c + '" data-action-mode="landed" data-msrp-status="' +
+                    escapeHtml(row.msrp_status || 'unknown') + '" data-in-oms="1"');
+            } else {
+                html += '<span class="text-muted small">No Dropbox file</span>';
+            }
 
-              $(document).on('click', '.redo-oms-btn', function() {
-                  var fdc_container = $(this).data('container');
-                  redoOmsContainer(fdc_container, this);
-              });
-              
-              // Handle tracking button clicks (delegated event)
-              $(document).on('click', '.tracking-btn', function() {
-                  var fdc_container = $(this).data('container');
-                  var bol_num = $(this).data('bol');
-                  showTrackingPopup(fdc_container, bol_num);
-              });
-              
-              // Handle email button clicks (delegated event)
-              $(document).on('click', '.email-btn', function() {
-                  var bol_num = $(this).data('bol');
-                  showEmailPopup(bol_num);
-              });
-              
-              // Handle packslip button clicks (delegated event)
-              $(document).on('click', '.packslip-btn', function() {
-                  var fdc_container = $(this).data('container');
-                  downloadPackslip(fdc_container);
-              });
+            html += '</div></div>';
+            return html;
+        }
 
-              // Force-show packslip buttons for all rows
-              $(document).on('click', '#forcePackslipBtn', function() {
-                  forceShowPackslip = true;
-                  applyForcePackslipButtons();
-                  $(this)
-                      .prop('disabled', true)
-                      .removeClass('btn-outline-success')
-                      .addClass('btn-success')
-                      .html('<i class="bi bi-check2-circle"></i> Packslip Shown');
-              });
-              
-              // Handle Dennis ETA cell editing
-              $(document).on('blur', '.dennis-eta-cell', function() {
-                  var fdc_container = $(this).data('container');
-                  var newValue = $(this).text().trim();
-                  var originalValue = $(this).data('original-value');
-                  
-                  // Only update if value changed
-                  if (newValue !== originalValue) {
-                      updateDennisEta(fdc_container, newValue, this);
-                  }
-              });
-              
-              // Store original value when cell gains focus
-              $(document).on('focus', '.dennis-eta-cell', function() {
-                  $(this).data('original-value', $(this).text().trim());
-              });
-          });
+        function rowMatchesFilter(row) {
+            if (activeFilter === 'all') return true;
+            if (activeFilter === 'new') return row.action_mode === 'new';
+            if (activeFilter === 'ocean') return row.action_mode === 'ocean';
+            if (activeFilter === 'landed') return row.action_mode === 'landed';
+            if (activeFilter === 'special') return row.is_special;
+            return true;
+        }
 
-          function updateDennisEta(fdc_container, newValue, cellElement) {
-              // Show saving state
-              $(cellElement).addClass('saving');
-              
-              $.ajax({
-                  url: '/boat/update_dennis_eta',
-                  method: 'POST',
-                  contentType: 'application/json',
-                  data: JSON.stringify({
-                      container: fdc_container,
-                      dennis_eta: newValue
-                  }),
-                  success: function(response) {
-                      if (response.success) {
-                          $(cellElement).removeClass('saving');
-                          // Show success with animated pulse effect
-                          $(cellElement).css({
-                              'background-color': '#d4edda',
-                              'box-shadow': '0 0 0 0 rgba(40, 167, 69, 0.7)'
-                          });
-                          
-                          // Pulse animation
-                          var pulseSize = 5;
-                          var pulses = 0;
-                          var pulseInterval = setInterval(function() {
-                              pulses++;
-                              $(cellElement).css('box-shadow', '0 0 0 ' + (pulseSize * pulses) + 'px rgba(40, 167, 69, ' + (0.7 - pulses * 0.14) + ')');
-                              if (pulses >= 5) {
-                                  clearInterval(pulseInterval);
-                                  $(cellElement).css({
-                                      'background-color': '',
-                                      'box-shadow': ''
-                                  });
-                              }
-                          }, 150);
-                      } else {
-                          alert('Error updating Dennis ETA: ' + response.error);
-                          $(cellElement).removeClass('saving');
-                          // Revert the value
-                          $(cellElement).text(response.original_value || '');
-                      }
-                  },
-                  error: function(xhr, status, error) {
-                      alert('Failed to update Dennis ETA: ' + error);
-                      $(cellElement).removeClass('saving');
-                      // Revert the value on error
-                      location.reload();
-                  }
-              });
-          }
-          
-          function showTrackingPopup(fdc_container, bol_num) {
-              // Create terminal49 link
-              var terminal49Link = 'https://app.terminal49.com/shipments?q=' + encodeURIComponent(bol_num);
-              
-              // Create modal HTML
-              var modalHtml = '<div class="modal fade" id="trackingModal" tabindex="-1" role="dialog">' +
-                  '<div class="modal-dialog modal-lg" role="document">' +
-                      '<div class="modal-content">' +
-                          '<div class="modal-header">' +
-                              '<h5 class="modal-title">Tracking: ' + fdc_container + '</h5>' +
-                              '<button type="button" class="close" data-dismiss="modal">' +
-                                  '<span>&times;</span>' +
-                              '</button>' +
-                          '</div>' +
-                          '<div class="modal-body">' +
-                              '<div class="form-group">' +
-                                  '<label><strong>BOL Number:</strong></label>' +
-                                  '<p>' + bol_num + '</p>' +
-                              '</div>' +
-                              '<div class="form-group">' +
-                                  '<label><strong>Terminal49 Tracking:</strong></label>' +
-                                  '<p><a href="' + terminal49Link + '" target="_blank" class="btn btn-primary">Open Terminal49 📱</a></p>' +
-                              '</div>' +
-                          '</div>' +
-                          '<div class="modal-footer" style="flex-direction: column; align-items: flex-start;">' +
-                              '<div style="width: 100%; text-align: left; font-size: 13px; color: #666; border-top: 1px solid #ddd; padding-top: 15px;">' +
-                                  '<p style="margin: 0 0 5px 0;"><strong>need to register</strong></p>' +
-                              '</div>' +
-                              '<button type="button" class="btn btn-secondary mt-3" data-dismiss="modal">Close</button>' +
-                          '</div>' +
-                      '</div>' +
-                  '</div>' +
-              '</div>';
-              
-              // Remove existing modal if present
-              $('#trackingModal').remove();
-              
-              // Add modal to body
-              $('body').append(modalHtml);
-              
-              // Show modal
-              $('#trackingModal').modal('show');
-          }
-          
-          function showEmailPopup(bol_num) {
-              // Create modal HTML
-              var modalHtml = '<div class="modal fade" id="emailModal" tabindex="-1" role="dialog">' +
-                  '<div class="modal-dialog modal-xl" role="document">' +
-                      '<div class="modal-content">' +
-                          '<div class="modal-header">' +
-                              '<h5 class="modal-title">Emails for BOL: ' + bol_num + '</h5>' +
-                              '<button type="button" class="close" data-dismiss="modal">' +
-                                  '<span>&times;</span>' +
-                              '</button>' +
-                          '</div>' +
-                          '<div class="modal-body">' +
-                              '<div class="text-center">' +
-                                  '<div class="spinner-border" role="status">' +
-                                      '<span class="sr-only">Loading...9 seconds </span>' +
-                                  '</div>' +
-                                  '<p>Loading emails...</p>' +
-                              '</div>' +
-                          '</div>' +
-                      '</div>' +
-                  '</div>' +
-              '</div>';
-              
-              // Remove existing modal if present
-              $('#emailModal').remove();
-              
-              // Add modal to body
-              $('body').append(modalHtml);
-              
-              // Show modal
-              $('#emailModal').modal('show');
-              
-              // Load email data
-              $.ajax({
-                  url: '/boat/emails/' + bol_num,
-                  method: 'GET',
-                  success: function(response) {
-                      $('.modal-body').html(response);
-                  },
-                  error: function(xhr, status, error) {
-                      $('.modal-body').html('<div class="alert alert-danger">Failed to load emails: ' + error + '</div>');
-                  }
-              });
-          }
-      </script>
-      <!-- Bootstrap JS -->
-      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        function getFilteredRows() {
+            var q = ($('#searchBox').val() || '').trim().toUpperCase();
+            return allRows.filter(function(row) {
+                if (!rowMatchesFilter(row)) return false;
+                if (q && row.container.indexOf(q) === -1 && (row.bol || '').toUpperCase().indexOf(q) === -1) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function renderPagination(totalRows) {
+            var totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            if (totalRows === 0) {
+                $('#paginationBar').hide();
+                return;
+            }
+
+            var start = (currentPage - 1) * pageSize + 1;
+            var end = Math.min(currentPage * pageSize, totalRows);
+            $('#paginationInfo').text('Showing ' + start + '–' + end + ' of ' + totalRows);
+
+            var $controls = $('#paginationControls');
+            $controls.empty();
+
+            function pageItem(label, page, disabled, active) {
+                var li = $('<li class="page-item"></li>');
+                if (disabled) li.addClass('disabled');
+                if (active) li.addClass('active');
+                var link = $('<a class="page-link" href="#"></a>').text(label);
+                if (!disabled && !active) {
+                    link.on('click', function(e) {
+                        e.preventDefault();
+                        currentPage = page;
+                        renderTable();
+                    });
+                } else {
+                    link.on('click', function(e) { e.preventDefault(); });
+                }
+                li.append(link);
+                return li;
+            }
+
+            $controls.append(pageItem('«', currentPage - 1, currentPage <= 1, false));
+
+            var windowSize = 5;
+            var startPage = Math.max(1, currentPage - Math.floor(windowSize / 2));
+            var endPage = Math.min(totalPages, startPage + windowSize - 1);
+            startPage = Math.max(1, endPage - windowSize + 1);
+
+            if (startPage > 1) {
+                $controls.append(pageItem('1', 1, false, currentPage === 1));
+                if (startPage > 2) {
+                    $controls.append($('<li class="page-item disabled"><span class="page-link">…</span></li>'));
+                }
+            }
+
+            for (var p = startPage; p <= endPage; p++) {
+                $controls.append(pageItem(String(p), p, false, p === currentPage));
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    $controls.append($('<li class="page-item disabled"><span class="page-link">…</span></li>'));
+                }
+                $controls.append(pageItem(String(totalPages), totalPages, false, currentPage === totalPages));
+            }
+
+            $controls.append(pageItem('»', currentPage + 1, currentPage >= totalPages, false));
+            $('#paginationBar').show();
+        }
+
+        function renderTable() {
+            var filtered = getFilteredRows();
+            var totalRows = filtered.length;
+            var startIdx = (currentPage - 1) * pageSize;
+            var pageRows = filtered.slice(startIdx, startIdx + pageSize);
+
+            var tbody = $('#hubTableBody');
+            tbody.empty();
+
+            if (!pageRows.length) {
+                tbody.append(
+                    '<tr><td colspan="7" class="text-center text-muted py-4">No containers match this filter.</td></tr>'
+                );
+            }
+
+            pageRows.forEach(function(row) {
+                var tr = $('<tr></tr>').addClass('row-' + row.action_mode);
+                tr.append($('<td></td>').html(
+                    '<a href="https://www.fdcef.com/container_search?container_id=' + encodeURIComponent(row.container) +
+                    '" target="_blank" rel="noopener"><strong>' +
+                    escapeHtml(row.container) + '</strong></a>'
+                ));
+                tr.append($('<td></td>').text(row.bol || ''));
+                tr.append($('<td></td>').html(statusBadge(row)));
+                tr.append($('<td></td>').html(datetimeCell(row.written_date, row.written_time)));
+                tr.append($('<td></td>').html(datetimeCell(row.processed_date, row.processed_time)));
+                tr.append($('<td></td>').html(msrpBadge(row)));
+                tr.append($('<td></td>').html(buildActions(row)));
+                tbody.append(tr);
+            });
+
+            renderPagination(totalRows);
+        }
+
+        function updateCounts(counts) {
+            $('#countAll').text(counts.total || 0);
+            $('#countNew').text(counts.new || 0);
+            $('#countOcean').text(counts.ocean || 0);
+            $('#countLanded').text(counts.landed || 0);
+            $('#countSpecial').text(counts.special || 0);
+        }
+
+        function loadData(forceRefresh) {
+            var url = '/boat/data' + (forceRefresh ? '?refresh=1' : '');
+            $('#loadingState').show();
+            $('#tableWrap').hide();
+            $.getJSON(url, function(res) {
+                $('#loadingState').hide();
+                if (!res.success) {
+                    alert('Error: ' + (res.error || 'Failed to load'));
+                    return;
+                }
+                allRows = res.data || [];
+                currentPage = 1;
+                updateCounts(res.counts || {});
+                var label = res.last_modified || '';
+                if (res.from_cache) label += ' ⚡';
+                $('#lastUpdated').text(label);
+                renderTable();
+                $('#tableWrap').show();
+            }).fail(function(xhr) {
+                $('#loadingState').hide();
+                alert('Failed to load: ' + (xhr.responseJSON && xhr.responseJSON.error || xhr.statusText));
+            });
+        }
+
+        function rebuildItemNum(row) {
+            return (String(row.style||'').trim().toUpperCase() + ' ' + String(row.color||'').trim().toUpperCase()).trim();
+        }
+
+        function renderPreviewRows(rows) {
+            var tbody = $('#importPreviewBody');
+            tbody.empty();
+            rows.forEach(function(row, index) {
+                var tr = $('<tr></tr>').attr('data-index', index);
+                if (row.color_changed) tr.addClass('color-changed');
+                tr.append('<td><input class="form-control form-control-sm style-input" value="' + escapeHtml(row.style) + '"></td>');
+                tr.append('<td><input class="form-control form-control-sm color-input" value="' + escapeHtml(row.color) + '"></td>');
+                tr.append('<td>' + escapeHtml(row.color_original || row.color || '') + '</td>');
+                tr.append('<td><input class="form-control form-control-sm item-input" value="' + escapeHtml(row.item_num) + '"></td>');
+                tr.append('<td><input type="number" step="0.01" class="form-control form-control-sm cost-input" value="' + escapeHtml(row.sales_cost) + '"></td>');
+                tr.append('<td><input type="number" step="0.01" class="form-control form-control-sm retail-input" value="' + escapeHtml(row.retail_prs) + '"></td>');
+                tr.append('<td><input type="number" step="1" class="form-control form-control-sm qty-input" value="' + escapeHtml(row.po_qty) + '"></td>');
+                tbody.append(tr);
+            });
+        }
+
+        function collectPreviewRows() {
+            var rows = [];
+            $('#importPreviewBody tr').each(function() {
+                var index = $(this).data('index');
+                var base = importPreviewState.rows[index] || {};
+                var style = $(this).find('.style-input').val().trim().toUpperCase();
+                var color = $(this).find('.color-input').val().trim().toUpperCase();
+                var itemNum = $(this).find('.item-input').val().trim().toUpperCase();
+                if (!itemNum) itemNum = rebuildItemNum({ style: style, color: color });
+                rows.push(Object.assign({}, base, {
+                    style: style, color: color, item_num: itemNum,
+                    sales_cost: parseFloat($(this).find('.cost-input').val()) || 0,
+                    retail_prs: parseFloat($(this).find('.retail-input').val()) || 0,
+                    po_qty: parseFloat($(this).find('.qty-input').val()) || 0
+                }));
+            });
+            return rows;
+        }
+
+        function loadImportVendorDefaults(container) {
+            $('#importVendorId').val('');
+            $('#importVendorNameHint').text('Loading vendor…');
+            importPreviewState.defaultVendorId = '';
+            $.getJSON('/boat/vendor/' + encodeURIComponent(container), function(res) {
+                if (!res.success) {
+                    $('#importVendorNameHint').text(res.error || 'Could not load vendor');
+                    return;
+                }
+                importPreviewState.defaultVendorId = res.vendor_id || '';
+                $('#importVendorId').val(res.vendor_id || '');
+                updateImportVendorHint(res.vendor_id, res.vendor_name);
+            }).fail(function(xhr) {
+                $('#importVendorNameHint').text(ajaxErrorMessage(xhr, 'Could not load vendor'));
+            });
+        }
+
+        function updateImportVendorHint(vendorId, vendorName) {
+            if (!vendorId) {
+                $('#importVendorNameHint').text('');
+                return;
+            }
+            var text = vendorName ? vendorName : '';
+            $('#importVendorNameHint').text(text);
+        }
+
+        function lookupImportVendorName(vendorId, callback) {
+            $.getJSON('/boat/vendor_lookup', { vendor_id: vendorId }, function(res) {
+                callback(res);
+            }).fail(function(xhr) {
+                callback({ success: false, error: ajaxErrorMessage(xhr, 'Vendor lookup failed') });
+            });
+        }
+
+        function openPreview(container, preview) {
+            importPreviewState.container = container;
+            importPreviewState.rows = preview.slice();
+            importPreviewState.pendingVendorId = '';
+            $('#importPreviewContainer').text(container);
+            renderPreviewRows(importPreviewState.rows);
+            loadImportVendorDefaults(container);
+            $('#confirmImportBtn').prop('disabled', false).text('Confirm Import');
+            $('#importPreviewModal').modal('show');
+        }
+
+        function ajaxErrorMessage(xhr, fallback) {
+            if (xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message)) {
+                return xhr.responseJSON.error || xhr.responseJSON.message;
+            }
+            if (xhr.responseText) {
+                var text = xhr.responseText.trim();
+                if (text && text.charAt(0) !== '<') {
+                    return text.slice(0, 300);
+                }
+            }
+            return fallback || xhr.statusText || 'Request failed';
+        }
+
+        function submitImport(vendorId) {
+            var container = importPreviewState.container;
+            var rows = collectPreviewRows();
+            if (!rows.length) {
+                alert('No rows');
+                return;
+            }
+            var $btn = $('#confirmImportBtn');
+            var $proceedBtn = $('#vendorConfirmProceedBtn');
+            $btn.prop('disabled', true).text('Importing…');
+            $proceedBtn.prop('disabled', true);
+            $.ajax({
+                url: '/boat/confirm_import/' + encodeURIComponent(container),
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ rows: rows, vendor_id: vendorId }),
+                success: function(res) {
+                    if (res.success) {
+                        $('#vendorConfirmModal').modal('hide');
+                        $('#importPreviewModal').modal('hide');
+                        loadData(true);
+                        alert(res.message || 'Import complete');
+                    } else {
+                        alert('Error: ' + (res.error || res.message));
+                    }
+                    $btn.prop('disabled', false).text('Confirm Import');
+                    $proceedBtn.prop('disabled', false);
+                },
+                error: function(xhr) {
+                    alert('Failed: ' + (xhr.responseJSON && xhr.responseJSON.error || xhr.statusText));
+                    $btn.prop('disabled', false).text('Confirm Import');
+                    $proceedBtn.prop('disabled', false);
+                }
+            });
+        }
+
+        function showVendorConfirm(vendorInfo) {
+            importPreviewState.pendingVendorId = vendorInfo.vendor_id;
+            $('#vendorConfirmId').text(vendorInfo.vendor_id);
+            $('#vendorConfirmName').text(vendorInfo.vendor_name || '(unknown)');
+            var nonStandard = !vendorInfo.is_standard;
+            $('#vendorConfirmWarning').toggle(nonStandard);
+            $('#vendorConfirmProceedBtn').text(
+                nonStandard ? 'Yes, continue with this vendor' : 'Confirm and import'
+            ).prop('disabled', false);
+            $('#vendorConfirmModal').modal('show');
+        }
+
+        function openPreviewFromResponse(container, res) {
+            if (res.success && res.preview && res.preview.length) {
+                openPreview(container, res.preview);
+                return true;
+            }
+            alert('Error: ' + (res.error || res.message || 'No preview returned'));
+            return false;
+        }
+
+        function runProcess(container, btn, label) {
+            var $btn = $(btn);
+            $btn.prop('disabled', true).text('…');
+            $.ajax({
+                url: '/boat/process/' + encodeURIComponent(container),
+                method: 'POST',
+                dataType: 'json',
+                success: function(res) {
+                    $btn.prop('disabled', false).text(label);
+                    openPreviewFromResponse(container, res);
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).text(label);
+                    alert('Failed: ' + ajaxErrorMessage(xhr, 'Process failed'));
+                }
+            });
+        }
+
+        function runReprocess(container, btn) {
+            var $btn = $(btn);
+            var label = $btn.text();
+            $btn.prop('disabled', true).text('…');
+            $.ajax({
+                url: '/boat/process/' + encodeURIComponent(container),
+                method: 'POST',
+                dataType: 'json',
+                success: function(res) {
+                    $btn.prop('disabled', false).text(label);
+                    openPreviewFromResponse(container, res);
+                },
+                error: function() {
+                    $.getJSON('/boat/preview/' + encodeURIComponent(container), function(res) {
+                        $btn.prop('disabled', false).text(label);
+                        openPreviewFromResponse(container, res);
+                    }).fail(function(xhr) {
+                        $btn.prop('disabled', false).text(label);
+                        alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not load preview'));
+                    });
+                }
+            });
+        }
+
+        function openEditModal(container, actionMode, msrpStatus, inOms) {
+            editActionsState.container = container;
+            editActionsState.actionMode = actionMode || '';
+            editActionsState.msrpStatus = msrpStatus || 'unknown';
+            editActionsState.inOms = !!inOms;
+            $('#editActionsContainer').text(container);
+            $('#editDeletePoBtn, #editReprocessBtn, #editUnlandBtn, #editUpdateMsrpBtn').prop('disabled', false);
+            $('#editReprocessBtn').text('Reprocess');
+            $('#editUnlandBtn').text('Un-landed');
+            $('#editUpdateMsrpBtn').text('Update MSRP (FDC + EFAS)');
+            if (inOms && (msrpStatus === 'partial' || msrpStatus === 'missing')) {
+                $('#editUpdateMsrpBtn').show();
+            } else {
+                $('#editUpdateMsrpBtn').hide();
+            }
+            if (actionMode === 'landed') {
+                $('#editUnlandBtn').show();
+                $('#editActionsHint').text(
+                    'Un-land to move back to ocean (reverses 827 receive in OMS), or reprocess / delete PO.'
+                );
+            } else {
+                $('#editUnlandBtn').hide();
+                $('#editActionsHint').text(
+                    'Delete the OMS PO or reprocess the container file and review the style grid before re-import.'
+                );
+            }
+            $('#editActionsModal').modal('show');
+        }
+
+        function updateContainerMsrp(container) {
+            if (!confirm(
+                'Update MSRP (Price1) from the original Excel file for ' + container + '?\n\n' +
+                'This updates RETAIL_PRS in FDC and EFAS only. SKUs with no Price1 in the file are skipped.'
+            )) {
+                return;
+            }
+            var $btn = $('#editUpdateMsrpBtn');
+            $btn.prop('disabled', true).text('Updating…');
+            $.post('/boat/update_msrp/' + encodeURIComponent(container), function(res) {
+                $('#editActionsModal').modal('hide');
+                alert(res.message || (res.success ? 'MSRP updated' : 'Failed'));
+                if (res.success) {
+                    loadData(true);
+                } else {
+                    $btn.prop('disabled', false).text('Update MSRP (FDC + EFAS)');
+                }
+            }).fail(function(xhr) {
+                alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not update MSRP'));
+                $btn.prop('disabled', false).text('Update MSRP (FDC + EFAS)');
+            });
+        }
+
+        function unlandContainer(container) {
+            if (!confirm(
+                'Move ' + container + ' back to ocean?\n\n' +
+                'This zeros received qty in OMS, restores on-order stock, and clears the sheet RCD date.'
+            )) {
+                return;
+            }
+            var $btn = $('#editUnlandBtn');
+            $btn.prop('disabled', true).text('Reverting…');
+            $.post('/boat/unland/' + encodeURIComponent(container), function(res) {
+                $('#editActionsModal').modal('hide');
+                if (res.success) {
+                    loadData(true);
+                    alert(res.message || 'Moved back to ocean');
+                } else {
+                    alert('Error: ' + (res.error || res.message || 'Failed'));
+                    $btn.prop('disabled', false).text('Un-landed');
+                }
+            }).fail(function(xhr) {
+                alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not un-land'));
+                $btn.prop('disabled', false).text('Un-landed');
+            });
+        }
+
+        function openLandedConfirm(container) {
+            landedConfirmState.container = container;
+            $('#landedConfirmContainer').text(container);
+            $('#landedConfirmYesBtn').prop('disabled', false).text('Yes, mark landed');
+            $('#landedConfirmModal').modal('show');
+        }
+
+        function markLanded(container) {
+            var $btn = $('#landedConfirmYesBtn');
+            $btn.prop('disabled', true).text('Updating…');
+            $.post('/boat/mark_landed/' + encodeURIComponent(container), function(res) {
+                $('#landedConfirmModal').modal('hide');
+                if (res.success) {
+                    loadData(true);
+                    alert(res.message || 'Marked landed');
+                } else {
+                    alert('Error: ' + (res.error || res.message || 'Failed'));
+                    $btn.prop('disabled', false).text('Yes, mark landed');
+                }
+            }).fail(function(xhr) {
+                alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not mark landed'));
+                $btn.prop('disabled', false).text('Yes, mark landed');
+            });
+        }
+
+        function deletePo(container, btn, closeEditModal) {
+            if (!confirm('Delete PO ' + container + ' from OMS? This removes pur_ord, plog, and bin_pur rows.')) return;
+            var $btn = $(btn);
+            $btn.prop('disabled', true);
+            $.post('/boat/delete_po/' + encodeURIComponent(container), function(res) {
+                alert(res.message || (res.success ? 'Done' : 'Failed'));
+                if (closeEditModal) $('#editActionsModal').modal('hide');
+                loadData(true);
+            }).fail(function(xhr) {
+                alert('Failed: ' + (xhr.responseJSON && xhr.responseJSON.error || xhr.statusText));
+                $btn.prop('disabled', false);
+            });
+        }
+
+        $('#filterPills .stat-pill').on('click', function() {
+            $('#filterPills .stat-pill').removeClass('active');
+            $(this).addClass('active');
+            activeFilter = $(this).data('filter');
+            currentPage = 1;
+            renderTable();
+        });
+
+        $('#searchBox').on('input', function() {
+            currentPage = 1;
+            renderTable();
+        });
+        $('#refreshBtn').on('click', function() { loadData(true); });
+        $('#guideBtn').on('click', function() { $('#guideModal').modal('show'); });
+
+        $('#shipmentChooseBtn').on('click', function() { $('#shipmentTrackingFile').click(); });
+        $('#shipmentTrackingFile').on('change', function() {
+            setShipmentSelectedFile(this.files && this.files[0] ? this.files[0] : null);
+        });
+        $('#shipmentUploadBtn').on('click', uploadShipmentTrackingFile);
+        $('#shipmentViewBtn').on('click', openShipmentViewModal);
+
+        var $dropzone = $('#shipmentDropzone');
+        $dropzone.on('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).addClass('dragover');
+        });
+        $dropzone.on('dragleave drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('dragover');
+        });
+        $dropzone.on('drop', function(e) {
+            var files = e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files;
+            if (files && files.length) {
+                setShipmentSelectedFile(files[0]);
+            }
+        });
+        $dropzone.on('click', function() { $('#shipmentTrackingFile').click(); });
+
+        loadShipmentTrackingMeta();
+
+        $(document).on('click', '.process-btn', function() {
+            runProcess($(this).data('container'), this, 'Process');
+        });
+        $(document).on('click', '.edit-open-btn', function() {
+            openEditModal(
+                $(this).data('container'),
+                $(this).data('action-mode'),
+                $(this).data('msrp-status'),
+                $(this).data('in-oms') === 1 || $(this).data('in-oms') === '1'
+            );
+        });
+        $(document).on('click', '.files-open-btn', function() {
+            var items = [];
+            try {
+                items = JSON.parse(decodeURIComponent($(this).attr('data-files') || '%5B%5D'));
+            } catch (e) {
+                items = [];
+            }
+            openFilesModal($(this).data('container'), items);
+        });
+        $('#editUpdateMsrpBtn').on('click', function() {
+            if (!editActionsState.container) return;
+            updateContainerMsrp(editActionsState.container);
+        });
+        $('#editDeletePoBtn').on('click', function() {
+            if (!editActionsState.container) return;
+            deletePo(editActionsState.container, this, true);
+        });
+        $('#editUnlandBtn').on('click', function() {
+            if (!editActionsState.container) return;
+            unlandContainer(editActionsState.container);
+        });
+        $('#editReprocessBtn').on('click', function() {
+            if (!editActionsState.container) return;
+            var container = editActionsState.container;
+            $('#editActionsModal').modal('hide');
+            runReprocess(container, this);
+        });
+        $('#landedConfirmYesBtn').on('click', function() {
+            if (!landedConfirmState.container) return;
+            markLanded(landedConfirmState.container);
+        });
+        $(document).on('click', '.packslip-btn', function() {
+            var container = $(this).data('container');
+            window.open('/boat/packslip/' + encodeURIComponent(container), '_blank');
+            openLandedConfirm(container);
+        });
+
+        $('#importPreviewBody').on('input', '.style-input, .color-input', function() {
+            var tr = $(this).closest('tr');
+            tr.find('.item-input').val(rebuildItemNum({
+                style: tr.find('.style-input').val(),
+                color: tr.find('.color-input').val()
+            }));
+        });
+
+        $('#importVendorId').on('blur', function() {
+            var vendorId = ($(this).val() || '').trim();
+            if (!vendorId) {
+                updateImportVendorHint('', '');
+                return;
+            }
+            lookupImportVendorName(vendorId, function(res) {
+                if (res.success) {
+                    $('#importVendorId').val(res.vendor_id);
+                    updateImportVendorHint(res.vendor_id, res.vendor_name);
+                } else {
+                    updateImportVendorHint(vendorId, res.error || 'Vendor not found');
+                }
+            });
+        });
+
+        $('#confirmImportBtn').on('click', function() {
+            var rows = collectPreviewRows();
+            if (!rows.length) { alert('No rows'); return; }
+            var vendorId = ($('#importVendorId').val() || '').trim();
+            if (!vendorId) {
+                alert('Please enter a vendor ID');
+                return;
+            }
+            lookupImportVendorName(vendorId, function(res) {
+                if (!res.success) {
+                    alert(res.error || 'Vendor not found');
+                    return;
+                }
+                $('#importVendorId').val(res.vendor_id);
+                updateImportVendorHint(res.vendor_id, res.vendor_name);
+                showVendorConfirm(res);
+            });
+        });
+
+        $('#vendorConfirmProceedBtn').on('click', function() {
+            var vendorId = importPreviewState.pendingVendorId || ($('#importVendorId').val() || '').trim();
+            if (!vendorId) {
+                alert('Vendor ID is missing');
+                return;
+            }
+            submitImport(vendorId);
+        });
+
+        loadData(false);
+    })();
+    </script>
 </body>
 </html>

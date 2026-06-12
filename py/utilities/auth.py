@@ -1117,6 +1117,39 @@ def get_user_permissions(username):
                 connection.close()
     return {}
 
+
+def get_user_group_slug(username) -> str:
+    """Lowercase user_groups.slug for the user, or empty string."""
+    uname = (username or "").strip()
+    if not uname:
+        return ""
+    _ensure_user_groups_schema_once()
+    connection = get_db_connection()
+    if not connection:
+        return ""
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT ug.slug AS group_slug
+            FROM users u
+            LEFT JOIN user_groups ug ON u.user_group_id = ug.id
+            WHERE u.username = %s
+            LIMIT 1
+            """,
+            (uname,),
+        )
+        row = cursor.fetchone()
+        return str((row or {}).get("group_slug") or "").strip().lower()
+    except Error:
+        return ""
+    finally:
+        if "cursor" in locals():
+            cursor.close()
+        if connection.is_connected():
+            connection.close()
+
+
 def log_user_activity(username):
     client_ip   = request.headers.get('X-Forwarded-For', request.remote_addr)
     user_agent  = parse(request.headers.get('User-Agent'))

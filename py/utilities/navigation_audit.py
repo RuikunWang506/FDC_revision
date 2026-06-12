@@ -22,6 +22,7 @@ _last_prune_mono = 0.0
 _SKIP_ENDPOINT_SUFFIXES = frozenset(
     (
         ".boat_service",  # already logs ***user***__@@@checked boat page@@@
+        ".boat_special",  # already logs ***user***__@@@checked boat special (L) page@@@
         ".boat_data",
         ".static",
         ".logout",
@@ -48,6 +49,24 @@ _SKIP_PATH_PREFIXES_EXTRA = (
     "/image/",  # e.g. /image/<id>/800 — many parallel GETs from galleries
     "/log_viewer",
     "/api/batch_fetch",  # e.g. /api/batch_fetch_latest — polling / batch helpers
+    "/lori_automation/get_",  # JSON helpers: get_package_info, get_orders, get_store_info, …
+    "/api/search_images",  # dedicated ***user***__@@@searched images@@@ log in master_image_viewer
+    "/api/fetch_china_ftp",
+)
+
+# POSTs that emit their own ***user***__@@@search SKU@@@__ audit line
+_SKIP_POST_PATHS_EXACT = frozenset(
+    (
+        "/clientview/product_detail",
+        "/product_detail",
+        "/productdetail",
+    )
+)
+
+_PRODUCT_DETAIL_PATH_PREFIXES = (
+    "/product_detail",
+    "/productdetail",
+    "/clientview/product_detail",
 )
 
 # Dashboard / SPA helper GETs (not meaningful "opened page" audits)
@@ -64,8 +83,9 @@ _POST_AUDIT_PATH_PREFIXES = (
     "/lori_automation/",
     "/email/",
     "/boat/process",
+    "/boat/mark_landed",
+    "/boat/unland",
     "/boat/redo",
-    "/boat/update_dennis_eta",
     "/order_processor",
     "/dam",
     "/v7_listcreator",
@@ -87,8 +107,11 @@ _POST_AUDIT_PATH_PREFIXES = (
     "/wipe_location",
     "/external_stock_check",
     "/internal_stock_check",
+    "/switch_number",
     "/api/external_stock_check",
     "/api/internal_stock_check",
+    "/api/switch_number/search",
+    "/api/switch_number/transfer",
     "/bag_style_viewer",
     "/burlington_highlight",
     "/master_image_viewer",
@@ -131,6 +154,18 @@ def _is_log_viewer_path(path: str) -> bool:
     return False
 
 
+def _is_product_detail_search_get(path: str) -> bool:
+    """GET with a search term — product_detail / clientview already log the search."""
+    for prefix in _PRODUCT_DETAIL_PATH_PREFIXES:
+        if path.startswith(prefix + "/") and len(path) > len(prefix) + 1:
+            return True
+    if path not in _PRODUCT_DETAIL_PATH_PREFIXES:
+        return False
+    if request.args.get("search") or request.args.get("search_id"):
+        return True
+    return False
+
+
 def _should_skip(endpoint: str | None, path: str) -> bool:
     if endpoint == "static":
         return True
@@ -149,6 +184,8 @@ def _should_skip(endpoint: str | None, path: str) -> bool:
     for frag in _SKIP_PATH_FRAGMENTS:
         if frag in path:
             return True
+    if _is_product_detail_search_get(path):
+        return True
     if not endpoint:
         return False
     if endpoint in _SKIP_ENDPOINTS_EXACT:
@@ -187,6 +224,8 @@ def register_navigation_audit(app: Flask) -> None:
             return response
 
         if not any(path.startswith(p) for p in _POST_AUDIT_PATH_PREFIXES):
+            return response
+        if path in _SKIP_POST_PATHS_EXACT:
             return response
 
         now = time.monotonic()

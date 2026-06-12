@@ -56,6 +56,9 @@ PRESET_USER_SLUGS: Dict[str, str] = {
 
 PROTECTED_DELETE_SLUGS = frozenset({"yeti"})
 
+# Client-facing groups: hide internal navbar links (SKU lookup, pallet).
+CLIENT_NAV_GROUP_SLUGS = frozenset({"client", "super-client", "superclient"})
+
 
 def slugify(name: str) -> str:
     s = (name or "").strip().lower()

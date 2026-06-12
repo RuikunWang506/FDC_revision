@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Switch Number</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            font-size: 14px;
+            margin: 0;
+        }
+        .container-main { max-width: 1400px; margin: 12px auto; padding: 0 8px 24px; }
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 18px 20px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .page-header h1 { margin: 0 0 6px; font-size: 22px; }
+        .page-header p { margin: 0; opacity: 0.9; font-size: 13px; }
+
+        .switch-number-div {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .search-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-row input {
+            flex: 1;
+            min-width: 240px;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn {
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary { background: #667eea; color: #fff; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-success { background: #4CAF50; color: #fff; }
+        .btn-success:hover { background: #43a047; }
+        .btn-secondary { background: #6c757d; color: #fff; }
+        .btn-outline { background: #fff; color: #667eea; border: 1px solid #667eea; }
+
+        .status-msg { margin-top: 10px; font-size: 13px; }
+        .status-msg.error { color: #c62828; }
+        .status-msg.success { color: #2e7d32; }
+
+        .product-wrapper {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .product-header {
+            background: #667eea;
+            color: #fff;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .product-header h2 { margin: 0; font-size: 15px; font-weight: 700; }
+        .style-meta {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .table-responsive { overflow-x: auto; padding: 0 12px 12px; }
+        table.dataTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        table.dataTable thead th {
+            border: 1px solid #dee2e6;
+            padding: 8px 10px;
+            text-align: left;
+            background: #f1f3f5;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        table.dataTable tbody.sku-block td {
+            border: 1px solid #ced4da;
+            padding: 9px 10px;
+            text-align: left;
+            background: #fff;
+        }
+        table.dataTable td.num-col { text-align: right; }
+        .na-cell { color: #888; text-align: center !important; font-style: italic; }
+        .avail-col { background: #fffacd !important; }
+        .warehouse-col { font-weight: 600; }
+        .warehouse-col.positive { color: #2e7d32; }
+        .warehouse-col.negative { color: #c62828; }
+        .db-label { font-weight: 700; white-space: nowrap; }
+        .db-label.fdc { color: #3949ab; background: #eef2ff !important; }
+        .db-label.efas { color: #00897b; background: #e6fffa !important; }
+        .merge-cell {
+            vertical-align: middle;
+            background: #f8f9fa !important;
+            font-weight: 600;
+        }
+        /* Thick outer grid — explicit edge classes (not :first-child) */
+        td.grid-left { border-left: 3px solid #343a40 !important; }
+        td.grid-right { border-right: 3px solid #343a40 !important; }
+        td.grid-top { border-top: 3px solid #343a40 !important; }
+        td.grid-bottom { border-bottom: 3px solid #343a40 !important; }
+        tbody.sku-block tr.sku-group-fdc td.db-label,
+        tbody.sku-block tr.sku-group-fdc td.data-cell {
+            border-bottom: none !important;
+        }
+        tbody.sku-block tr.sku-group-efas td.db-label,
+        tbody.sku-block tr.sku-group-efas td.data-cell {
+            border-top: none !important;
+        }
+        tbody.sku-block.sku-block-alt tr.sku-group-fdc td.data-cell,
+        tbody.sku-block.sku-block-alt tr.sku-group-efas td.data-cell {
+            background: #fcfcfc;
+        }
+        .qty-input {
+            width: 80px;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: right;
+        }
+        .qty-fill-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+        .btn-fill-qty {
+            border: 1px solid #667eea;
+            background: #fff;
+            color: #667eea;
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-fill-qty:hover { background: #eef2ff; }
+        .btn-fill-style {
+            border: 1px solid rgba(255,255,255,0.85);
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-fill-style:hover { background: rgba(255,255,255,0.28); }
+        .product-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .submit-bar {
+            position: sticky;
+            bottom: 0;
+            background: rgba(255,255,255,0.97);
+            border-top: 1px solid #ddd;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+            margin-top: 12px;
+            border-radius: 8px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-card {
+            background: #fff;
+            border-radius: 8px;
+            max-width: 480px;
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        .modal-card h3 { margin: 0 0 10px; color: #333; }
+        .modal-card p { color: #555; margin-bottom: 16px; }
+        .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+        .modal-actions button { width: 100%; padding: 12px; font-size: 14px; }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #777;
+            background: #fff;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container-main">
+        <div class="page-header">
+            <h1><i class="fas fa-exchange-alt"></i> Switch Number</h1>
+            <p>Transfer inventory between FDC and E-Fashion using ERP manual adjustments.</p>
+        </div>
+
+        <div class="switch-number-div" id="switchNumberDiv">
+            <label for="searchInput"><strong>Search style(s) or SKU(s)</strong> — comma-separated, press Enter</label>
+            <div class="search-row" style="margin-top: 8px;">
+                <input type="text" id="searchInput" placeholder="e.g. M1141, T3305 or M1141 BK, N1555 BK" autocomplete="off">
+                <button type="button" class="btn btn-outline" id="clearBtn">Clear table</button>
+            </div>
+            <div class="status-msg" id="searchStatus"></div>
+        </div>
+
+        <div id="resultsContainer">
+            <div class="empty-state" id="emptyState">
+                <i class="fas fa-box fa-2x" style="margin-bottom: 10px; color: #bbb;"></i>
+                <div>Enter a style or SKU above to display General Info inventory rows.</div>
+            </div>
+        </div>
+
+        <div class="submit-bar" id="submitBar" style="display: none;">
+            <div id="transferSummary">Enter transfer quantities, then submit.</div>
+            <button type="button" class="btn btn-success" id="submitBtn">
+                <i class="fas fa-paper-plane"></i> Submit transfer
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="directionModal">
+        <div class="modal-card">
+            <h3>Transfer direction</h3>
+            <p id="modalSummary">Choose which database to move stock from and to.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" data-direction="fdc_to_efas">
+                    FDC → E-Fashion
+                </button>
+                <button type="button" class="btn btn-primary" data-direction="efas_to_fdc">
+                    E-Fashion → FDC
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-card">
+            <h3 id="resultTitle">Transfer complete</h3>
+            <div id="resultBody" style="font-size: 13px; line-height: 1.5;"></div>
+            <div class="modal-actions" style="margin-top: 16px;">
+                <button type="button" class="btn btn-primary" id="closeResultBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loadedGroups = new Map();
+        const searchInput = document.getElementById('searchInput');
+        const searchStatus = document.getElementById('searchStatus');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const submitBar = document.getElementById('submitBar');
+        const transferSummary = document.getElementById('transferSummary');
+        const directionModal = document.getElementById('directionModal');
+        const resultModal = document.getElementById('resultModal');
+        let pendingTransfers = [];
+
+        function esc(text) {
+            const d = document.createElement('div');
+            d.textContent = text == null ? '' : String(text);
+            return d.innerHTML;
+        }
+
+        function setStatus(msg, isError) {
+            searchStatus.textContent = msg || '';
+            searchStatus.className = 'status-msg' + (isError ? ' error' : msg ? ' success' : '');
+        }
+
+        function dbRowCells(prefix, color, rowKind) {
+            const edge = rowKind === 'fdc' ? 'grid-top' : 'grid-bottom';
+            const wrap = (html) => html.replace(/class="num-col/g, `class="num-col ${edge}`);
+            if (color[prefix + '_exists'] === false) {
+                const na = `<td class="num-col data-cell na-cell ${edge}">N/A</td>`;
+                return na + na + na;
+            }
+            const availCls = color[prefix + '_available'] > 0 ? 'positive'
+                : color[prefix + '_available'] < 0 ? 'negative' : '';
+            return `
+                <td class="num-col avail-col data-cell ${edge}">${color[prefix + '_stock']}</td>
+                <td class="num-col data-cell warehouse-col ${edge} ${availCls}">${color[prefix + '_available']}</td>
+                <td class="num-col data-cell ${edge}">${color[prefix + '_sold']}</td>
+            `;
+        }
+
+        function fmtTotal(val) {
+            return val === null || val === undefined ? 'N/A' : val;
+        }
+
+        function availQtyForColor(color) {
+            const fdc = parseInt(color.fdc_available, 10);
+            const efas = parseInt(color.efas_available, 10);
+            if (!isNaN(fdc) && fdc > 0) return fdc;
+            if (!isNaN(efas) && efas > 0) return efas;
+            return 0;
+        }
+
+        function setTransferQty(input, qty) {
+            input.value = qty > 0 ? String(qty) : '';
+            updateTransferSummary();
+        }
+
+        function fillInputFromAvail(input, color) {
+            if (!color) {
+                const fdc = parseInt(input.dataset.fdcAvail, 10);
+                const efas = parseInt(input.dataset.efasAvail, 10);
+                const qty = availQtyForColor({ fdc_available: fdc, efas_available: efas });
+                setTransferQty(input, qty);
+                return;
+            }
+            setTransferQty(input, availQtyForColor(color));
+        }
+
+        function fillStyleTransferQty(styleKey) {
+            const group = loadedGroups.get(styleKey);
+            if (!group) return;
+            const wrap = document.querySelector('.product-wrapper[data-style="' + CSS.escape(styleKey) + '"]');
+            if (!wrap) return;
+            wrap.querySelectorAll('.transfer-qty').forEach(inp => {
+                const color = (group.colors || []).find(c => c.sku === inp.dataset.sku);
+                fillInputFromAvail(inp, color);
+            });
+        }
+
+        function renderAllGroups() {
+            if (loadedGroups.size === 0) {
+                resultsContainer.innerHTML = '';
+                resultsContainer.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                submitBar.style.display = 'none';
+                return;
+            }
+            emptyState.style.display = 'none';
+            submitBar.style.display = 'flex';
+            resultsContainer.innerHTML = '';
+
+            loadedGroups.forEach(group => {
+                const wrap = document.createElement('div');
+                wrap.className = 'product-wrapper';
+                wrap.dataset.style = group.style;
+
+                const header = document.createElement('div');
+                header.className = 'product-header';
+                header.innerHTML = `
+                    <h2>General Info — ${esc(group.style)}</h2>
+                    <div class="product-header-actions">
+                        <button type="button" class="btn-fill-style fill-style-avail-btn" data-style="${esc(group.style)}">
+                            Fill all avail → qty
+                        </button>
+                        <span>${group.colors.length} color(s)</span>
+                    </div>
+                `;
+                wrap.appendChild(header);
+
+                const meta = document.createElement('div');
+                meta.className = 'style-meta';
+                const pi = group.parent_info || {};
+                meta.innerHTML = `
+                    <span><strong>Style:</strong> ${esc(pi.style)}</span>
+                    <span><strong>Container:</strong> ${esc(pi.container || 'N/A')}</span>
+                    <span><strong>Case Qty:</strong> ${esc(pi.case_qty ?? 'N/A')}</span>
+                    <span><strong>FDC avail:</strong> ${fmtTotal(group.totals.fdc_available)}</span>
+                    <span><strong>E-FAS avail:</strong> ${fmtTotal(group.totals.efas_available)}</span>
+                `;
+                wrap.appendChild(meta);
+
+                let rowsHtml = '';
+                group.colors.forEach((color, idx) => {
+                    rowsHtml += `
+                        <tbody class="sku-block${idx % 2 === 1 ? ' sku-block-alt' : ''}">
+                        <tr class="sku-group-fdc" data-sku="${esc(color.sku)}">
+                            <td class="merge-cell grid-left grid-top grid-bottom" rowspan="2">
+                                <a href="/product_detail?search=${encodeURIComponent(color.sku)}" target="_blank">${esc(color.sku)}</a>
+                            </td>
+                            <td class="merge-cell grid-top grid-bottom" rowspan="2">${esc(color.color || '-')}</td>
+                            <td class="db-label fdc grid-top">FDC</td>
+                            ${dbRowCells('fdc', color, 'fdc')}
+                            <td class="merge-cell num-col grid-right grid-top grid-bottom" rowspan="2">
+                                <div class="qty-fill-wrap">
+                                    <input type="number" min="0" step="1" class="qty-input transfer-qty"
+                                        data-sku="${esc(color.sku)}"
+                                        data-fdc-avail="${color.fdc_available ?? ''}"
+                                        data-efas-avail="${color.efas_available ?? ''}"
+                                        value="">
+                                    <button type="button" class="btn-fill-qty fill-sku-avail-btn"
+                                        data-sku="${esc(color.sku)}"
+                                        title="Fill transfer qty from avail (FDC first, else E-FAS)">Avail</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="sku-group-efas" data-sku="${esc(color.sku)}">
+                            <td class="db-label efas grid-bottom">E-FAS</td>
+                            ${dbRowCells('efas', color, 'efas')}
+                        </tr>
+                        </tbody>
+                    `;
+                });
+
+                const tableWrap = document.createElement('div');
+                tableWrap.className = 'table-responsive';
+                tableWrap.innerHTML = `
+                    <table class="dataTable">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Color</th>
+                                <th>Database</th>
+                                <th>Stock</th>
+                                <th>Avail</th>
+                                <th>Sold</th>
+                                <th>Transfer Qty</th>
+                            </tr>
+                        </thead>
+                        ${rowsHtml}
+                    </table>
+                `;
+                wrap.appendChild(tableWrap);
+                resultsContainer.appendChild(wrap);
+            });
+
+            updateTransferSummary();
+        }
+
+        function updateTransferSummary() {
+            const inputs = document.querySelectorAll('.transfer-qty');
+            let count = 0;
+            let total = 0;
+            inputs.forEach(inp => {
+                const v = parseInt(inp.value, 10);
+                if (v > 0) {
+                    count += 1;
+                    total += v;
+                }
+            });
+            transferSummary.textContent = count
+                ? `${count} SKU(s), ${total} unit(s) ready to transfer`
+                : 'Enter transfer quantities, then submit.';
+        }
+
+        async function runSearch() {
+            const q = searchInput.value.trim();
+            if (!q) return;
+            setStatus('Searching...', false);
+            try {
+                const resp = await fetch('{{ url_for("switch_number.switch_number_search") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ search_input: q })
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    setStatus(data.error || 'Search failed', true);
+                    return;
+                }
+                data.groups.forEach(g => loadedGroups.set(g.style, g));
+                renderAllGroups();
+                let msg = `Loaded ${data.groups.length} style group(s)`;
+                if (data.matched && data.matched.length) {
+                    msg += ` (${data.matched.join(', ')})`;
+                }
+                if (data.not_found && data.not_found.length) {
+                    msg += `. Not found: ${data.not_found.join(', ')}`;
+                }
+                setStatus(msg + '.', !!data.not_found?.length);
+                searchInput.value = '';
+                searchInput.focus();
+            } catch (err) {
+                setStatus(err.message || 'Search failed', true);
+            }
+        }
+
+        function collectTransfers() {
+            const transfers = [];
+            document.querySelectorAll('.transfer-qty').forEach(inp => {
+                const qty = parseInt(inp.value, 10);
+                if (qty > 0) {
+                    transfers.push({ sku: inp.dataset.sku, qty });
+                }
+            });
+            return transfers;
+        }
+
+        async function refreshLoadedGroups() {
+            const styles = Array.from(loadedGroups.keys());
+            if (!styles.length) return;
+            for (const style of styles) {
+                try {
+                    const resp = await fetch('{{ url_for("switch_number.switch_number_search") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ search_input: style })
+                    });
+                    const data = await resp.json();
+                    if (resp.ok && data.success) {
+                        data.groups.forEach(g => loadedGroups.set(g.style, g));
+                    }
+                } catch (_) { /* ignore refresh errors */ }
+            }
+            renderAllGroups();
+        }
+
+        function openDirectionModal(transfers) {
+            pendingTransfers = transfers;
+            const total = transfers.reduce((s, t) => s + t.qty, 0);
+            document.getElementById('modalSummary').textContent =
+                `Transfer ${transfers.length} SKU(s), ${total} total unit(s). Which direction?`;
+            directionModal.classList.add('show');
+        }
+
+        async function executeTransfer(direction) {
+            directionModal.classList.remove('show');
+            setStatus('Processing transfer...', false);
+            submitBtn.disabled = true;
+            try {
+                const resp = await fetch('{{ url_for("switch_number.switch_number_transfer") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        direction,
+                        transfers: pendingTransfers,
+                        adjusted_by: 'fdcef'
+                    })
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    setStatus(data.error || 'Transfer failed', true);
+                    return;
+                }
+                const r = data.result;
+                let html = `<p><strong>${esc(r.from_database)} → ${esc(r.to_database)}</strong></p>`;
+                html += `<p>Log # ${esc(r.log_num_from)} (${esc(r.from_database)}) / ${esc(r.log_num_to)} (${esc(r.to_database)})</p>`;
+                html += '<ul style="padding-left: 18px;">';
+                r.lines.forEach(line => {
+                    html += `<li>${esc(line.sku)}: ${line.qty} unit(s)</li>`;
+                });
+                html += '</ul>';
+                document.getElementById('resultBody').innerHTML = html;
+                resultModal.classList.add('show');
+                setStatus('Transfer completed.', false);
+                document.querySelectorAll('.transfer-qty').forEach(inp => { inp.value = ''; });
+                pendingTransfers = [];
+                updateTransferSummary();
+                await refreshLoadedGroups();
+            } catch (err) {
+                setStatus(err.message || 'Transfer failed', true);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+
+        searchInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                runSearch();
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            loadedGroups.clear();
+            renderAllGroups();
+            setStatus('', false);
+        });
+
+        resultsContainer.addEventListener('input', e => {
+            if (e.target.classList.contains('transfer-qty')) {
+                updateTransferSummary();
+            }
+        });
+
+        resultsContainer.addEventListener('click', e => {
+            const styleBtn = e.target.closest('.fill-style-avail-btn');
+            if (styleBtn) {
+                fillStyleTransferQty(styleBtn.dataset.style);
+                return;
+            }
+            const skuBtn = e.target.closest('.fill-sku-avail-btn');
+            if (skuBtn) {
+                const wrap = skuBtn.closest('.qty-fill-wrap');
+                const input = wrap && wrap.querySelector('.transfer-qty');
+                if (input) fillInputFromAvail(input);
+            }
+        });
+
+        submitBtn.addEventListener('click', () => {
+            const transfers = collectTransfers();
+            if (!transfers.length) {
+                setStatus('Enter at least one transfer quantity.', true);
+                return;
+            }
+            openDirectionModal(transfers);
+        });
+
+        directionModal.querySelectorAll('[data-direction]').forEach(btn => {
+            btn.addEventListener('click', () => executeTransfer(btn.dataset.direction));
+        });
+
+        document.getElementById('cancelModalBtn').addEventListener('click', () => {
+            directionModal.classList.remove('show');
+            pendingTransfers = [];
+        });
+
+        document.getElementById('closeResultBtn').addEventListener('click', () => {
+            resultModal.classList.remove('show');
+        });
+    </script>
+</body>
+</html>

@@ -390,7 +390,7 @@
                 return;
             }
             
-            fetch(`/api/search_images?sku=${style}`)
+            fetch(`/api/search_images?sku=${encodeURIComponent(style)}&input=${encodeURIComponent(style)}&via=internal_stock_check`)
                 .then(response => response.json())
                 .then(data => {
                     let imageUrl = null;

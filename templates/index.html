@@ -920,6 +920,21 @@
         </a>
         {%- endif %}
 
+        {%- if tool_allowed('switch_number') %}
+        <a href="{{ url_for('switch_number.switch_number_page') }}" class="tool-card" data-category="inventory" data-tool="switch_number">
+          <div class="card-header">
+            <i class="fas fa-exchange-alt"></i>
+            <h3>Switch Number</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'switch_number')"></i>
+          </div>
+          <p>Transfer inventory between FDC and E-Fashion with ERP manual adjustments</p>
+          <div class="card-footer">
+            <span class="category">Inventory</span>
+            <span class="badge">NEW</span>
+          </div>
+        </a>
+        {%- endif %}
+
         {%- if tool_allowed('four_seller') %}
         <a href="{{ url_for('four_seller.four_seller_page') }}" class="tool-card" data-category="inventory" data-tool="four_seller">
           <div class="card-header">
@@ -1121,10 +1136,10 @@
         <a href="/boat" class="tool-card" data-category="logistics" data-tool="boat">
           <div class="card-header">
             <i class="fas fa-ship"></i>
-            <h3>Shipping Intelligence</h3>
+            <h3>Container Hub</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'boat')"></i>
           </div>
-          <p>Real-time boat status tracking and shipping schedule optimization</p>
+          <p>View container status, process new imports, and manage ocean & landed POs</p>
           <div class="card-footer">
             <span class="category">Logistics</span>
           </div>

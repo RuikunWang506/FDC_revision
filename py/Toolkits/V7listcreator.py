@@ -32,6 +32,12 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 
+from py.other.bag_style_viewer import (
+    fetch_description_options,
+    fetch_style_codes_for_filters,
+    _normalize_description_list,
+)
+
 v7_listcreator_bp = Blueprint('v7_listcreator', __name__, template_folder='templates')
 
 
@@ -1818,16 +1824,34 @@ def index(user_input=None):
     duplicate_items = []
     clean_list_for_memo = None
     
+    bag_description_options = fetch_description_options()
+
     # Handle GET request with query parameter — prefill form only; user must add snapshot and POST
-    if request.method == 'GET' and request.args.get('list_input'):
+    if request.method == 'GET' and (
+        request.args.get('list_input')
+        or request.args.get('description')
+        or request.args.getlist('description')
+    ):
         list_input = (request.args.get('list_input') or '').strip()
+        filter_descriptions = request.args.getlist('description')
+        if not filter_descriptions:
+            filter_descriptions = _normalize_description_list(request.args.get('description'))
+        filter_stock = request.args.get('stock_filter') or None
+        filter_color = request.args.get('color_filter') or None
+        if not list_input and filter_descriptions:
+            codes = fetch_style_codes_for_filters(filter_descriptions, filter_stock, filter_color)
+            list_input = ','.join(codes)
         session['original_input'] = list_input
         pst = _pst_now_parts()
         return render_template(
             'V7_Listcreator.html',
             current_user=current_user,
             list_input=list_input,
-            snapshot_name='',
+            snapshot_name=(request.args.get('snapshot_name') or '').strip(),
+            filter_descriptions=filter_descriptions,
+            filter_stock=filter_stock or '',
+            filter_color=filter_color or '',
+            bag_description_options=bag_description_options,
             snapshot_time_hint=pst['created_at_pt_display'],
             snapshot_time_hint_iso=pst['created_at_iso'],
             error_message=None,
@@ -1845,6 +1869,10 @@ def index(user_input=None):
                 current_user=current_user,
                 list_input='',
                 snapshot_name=snapshot_name,
+                bag_description_options=bag_description_options,
+                filter_descriptions=[],
+                filter_stock='',
+                filter_color='',
                 snapshot_time_hint=pst['created_at_pt_display'],
                 snapshot_time_hint_iso=pst['created_at_iso'],
                 error_message='Enter a SKU list or Dropbox path before running.',
@@ -1856,9 +1884,35 @@ def index(user_input=None):
         'V7_Listcreator.html',
         current_user=current_user,
         error_message=error_message,
+        bag_description_options=bag_description_options,
+        filter_descriptions=[],
+        filter_stock='',
+        filter_color='',
         snapshot_time_hint=pst['created_at_pt_display'],
         snapshot_time_hint_iso=pst['created_at_iso'],
     )
+
+
+@v7_listcreator_bp.route('/v7_listcreator/quick_filter_styles', methods=['GET'])
+@login_required
+def quick_filter_styles():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': 'Login required'}), 401
+    descriptions = request.args.getlist('description')
+    if not descriptions:
+        descriptions = _normalize_description_list(request.args.get('description'))
+    stock_filter = request.args.get('stock_filter') or None
+    color_filter = request.args.get('color_filter') or None
+    if not descriptions:
+        return jsonify({'success': False, 'message': 'Choose at least one description'}), 400
+    styles = fetch_style_codes_for_filters(descriptions, stock_filter, color_filter)
+    return jsonify({
+        'success': True,
+        'styles': styles,
+        'count': len(styles),
+        'list_input': ','.join(styles),
+        'descriptions': descriptions,
+    })
 
 
 def process_list_input(list_input, current_user, snapshot_name='', enforce_snapshot_label=False):

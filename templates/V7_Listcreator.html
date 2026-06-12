@@ -156,6 +156,87 @@
         .lc-job-elapsed strong { color: #0f172a; font-weight: 800; }
         .lc-job-elapsed-running strong { color: #b45309; }
         .lc-label-muted { color: var(--lc-muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 0.35rem; }
+        .lc-bilingual-label { display: block; line-height: 1.35; margin-bottom: 0.35rem; }
+        .lc-bilingual-label .lc-zh { display: block; font-weight: 600; color: #0f172a; font-size: 0.875rem; }
+        .lc-bilingual-label .lc-en { display: block; font-weight: 500; color: var(--lc-muted); font-size: 0.8rem; }
+        .lc-bilingual-stack { display: inline-block; line-height: 1.3; vertical-align: top; }
+        .lc-bilingual-stack .lc-zh { display: block; font-weight: 500; color: #0f172a; }
+        .lc-bilingual-stack .lc-en { display: block; font-size: 0.78rem; color: var(--lc-muted); }
+        .lc-bilingual-btn { line-height: 1.25; }
+        .lc-bilingual-btn .lc-zh { display: block; font-weight: 600; }
+        .lc-bilingual-btn .lc-en { display: block; font-size: 0.72rem; font-weight: 500; opacity: 0.92; }
+        .lc-bilingual-hint .lc-zh { display: block; margin-bottom: 0.15rem; }
+        .lc-bilingual-hint .lc-en { display: block; font-size: 0.78rem; color: var(--lc-muted); }
+        .lc-quick-filters {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+        }
+        .lc-quick-filters .lc-filter-hint { font-size: 0.82rem; color: var(--lc-muted); margin-top: 0.35rem; margin-bottom: 0; }
+        .lc-desc-filter-panel {
+            border: 1px solid #ced4da;
+            border-radius: 0.2rem;
+            background: #fff;
+            overflow: hidden;
+        }
+        .lc-desc-search-wrap {
+            padding: 0.35rem 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .lc-desc-search-input {
+            font-size: 0.8125rem;
+        }
+        .lc-desc-search-meta {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--lc-muted);
+            margin-top: 0.2rem;
+        }
+        .lc-desc-checkbox-list {
+            max-height: 10.5rem;
+            overflow-y: auto;
+            padding: 0.35rem 0.5rem;
+        }
+        .lc-desc-checkbox-item.lc-desc-filter-hidden { display: none !important; }
+        .lc-desc-checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.4rem;
+            padding: 0.2rem 0;
+            margin: 0;
+            font-size: 0.875rem;
+            line-height: 1.3;
+            cursor: pointer;
+        }
+        .lc-desc-checkbox-item input { margin-top: 0.15rem; flex-shrink: 0; cursor: pointer; }
+        .lc-desc-row-body {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.5rem;
+            min-width: 0;
+        }
+        .lc-desc-name {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .lc-desc-count {
+            color: var(--lc-muted);
+            font-size: 0.78rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .lc-desc-select-all {
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 0.25rem;
+            padding-bottom: 0.35rem;
+            font-weight: 600;
+        }
         .lc-job-src-preview {
             max-height: 9rem;
             overflow: auto;
@@ -802,12 +883,84 @@
 
             {% if not lc_hide_styles %}
             <div class="form-group mb-3">
-                <label class="lc-label-muted d-block mb-1" for="list_input">Styles, container, or Dropbox path, you can mix container and style, but dropbox link by itself</label>
+                <label class="lc-bilingual-label" for="list_input">
+                    <span class="lc-zh">款式、货柜或 Dropbox 路径（可混合货柜与款式；Dropbox 链接请单独使用）</span>
+                    <span class="lc-en">Styles, container, or Dropbox path, you can mix container and style, but dropbox link by itself</span>
+                </label>
                 <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401,F26193 · dropbox&#92;folder" value="{{ list_input or '' }}" autocomplete="off">
-                <small class="form-text text-muted">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>dropbox\folder</code> path (spaces in folder names are OK).</small>
+                <small class="form-text text-muted lc-bilingual-hint">
+                    <span class="lc-zh">逗号分隔的款式、货柜 PO（如 F26193）、货柜搜索链接，或一个 <code>dropbox\folder</code> 路径（文件夹名可含空格）。</span>
+                    <span class="lc-en">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>dropbox\folder</code> path (spaces in folder names are OK).</span>
+                </small>
                 <div class="d-flex flex-wrap align-items-center mt-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-1" id="btnV7PickDropboxFolder" title="Open folders on the server’s synced Dropbox (names and image counts only)">Browse server Dropbox 在这里选dropbox的文件夹…</button>
                 </div>
+            </div>
+
+            <div class="lc-quick-filters mb-3" id="lcQuickFilters">
+                <label class="lc-bilingual-label mb-2">
+                    <span class="lc-zh">快速筛选（来自 <a href="{{ url_for('bag_style_viewer.index') }}" target="_blank" rel="noopener">包款浏览器</a> 的描述与库存）</span>
+                    <span class="lc-en">Quick filters (from <a href="{{ url_for('bag_style_viewer.index') }}" target="_blank" rel="noopener">Bag Style Viewer</a> descriptions &amp; stock)</span>
+                </label>
+                <div class="form-row align-items-start">
+                    <div class="form-group col-md-4 mb-2 mb-md-0">
+                        <label class="lc-bilingual-label small mb-1">
+                            <span class="lc-zh">描述</span>
+                            <span class="lc-en">Description</span>
+                        </label>
+                        <div class="lc-desc-filter-panel">
+                            <div class="lc-desc-search-wrap">
+                                <input type="search" class="form-control form-control-sm lc-desc-search-input" id="lcFilterDescriptionSearch"
+                                    placeholder="搜索描述 · Search descriptions…" autocomplete="off" aria-label="Search descriptions">
+                                <small class="lc-desc-search-meta" id="lcFilterDescriptionSearchMeta"></small>
+                            </div>
+                            <div class="lc-desc-checkbox-list" id="lcFilterDescriptionList">
+                                <label class="lc-desc-checkbox-item lc-desc-select-all mb-0" id="lcFilterDescriptionSelectAllRow">
+                                    <input type="checkbox" id="lcFilterDescriptionSelectAll" onchange="lcToggleAllDescriptions(this.checked)">
+                                    <span id="lcFilterDescriptionSelectAllLabel">全选 · Select all</span>
+                                </label>
+                                {% for opt in bag_description_options|default([]) %}
+                                <label class="lc-desc-checkbox-item mb-0" data-desc-search="{{ opt.description|lower }}">
+                                    <input type="checkbox" class="lc-desc-filter-cb" value="{{ opt.description }}"
+                                        {% if filter_descriptions is defined and opt.description in filter_descriptions %}checked{% endif %}
+                                        onchange="lcOnDescriptionCheckboxChange()">
+                                    <span class="lc-desc-name">{{ opt.description|lower }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3 mb-2 mb-md-0">
+                        <label class="lc-bilingual-label small mb-1" for="lcFilterStock">
+                            <span class="lc-zh">库存筛选</span>
+                            <span class="lc-en">Stock filter</span>
+                        </label>
+                        <select class="form-control form-control-sm" id="lcFilterStock">
+                            <option value="">全部 · All</option>
+                            <option value="instock" {% if filter_stock is defined and filter_stock == 'instock' %}selected{% endif %}>仅有现货 · In stock only</option>
+                            <option value="ocean" {% if filter_stock is defined and filter_stock == 'ocean' %}selected{% endif %}>仅有海运 · Ocean only</option>
+                            <option value="both" {% if filter_stock is defined and filter_stock == 'both' %}selected{% endif %}>现货或海运 · Stock and/or ocean</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3 mb-2 mb-md-0">
+                        <label class="lc-bilingual-label small mb-1" for="lcFilterColor">
+                            <span class="lc-zh">颜色包含</span>
+                            <span class="lc-en">Color contains</span>
+                        </label>
+                        <input type="text" class="form-control form-control-sm" id="lcFilterColor"
+                            placeholder="如 BK、RED · e.g. BK, RED" value="{{ filter_color if filter_color is defined else '' }}">
+                    </div>
+                    <div class="form-group col-md-2 mb-0">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-block lc-bilingual-btn" id="lcApplyFiltersBtn">
+                            <span class="lc-zh">应用</span>
+                            <span class="lc-en">Apply</span>
+                        </button>
+                    </div>
+                </div>
+                <p class="lc-filter-hint lc-bilingual-hint" id="lcFilterResultHint">
+                    <span class="lc-zh">选择一个或多个描述并点击「应用」，填入上方款式列表（会替换当前列表）。</span>
+                    <span class="lc-en">Pick one or more descriptions and Apply to fill the style list above (replaces current list).</span>
+                </p>
             </div>
             {% endif %}
             {% if lc_hide_styles %}
@@ -815,27 +968,40 @@
             {% endif %}
             {% if not list_input and not lc_hide_styles %}
             <div class="form-group mb-3">
-                <label class="lc-label-muted d-block mb-1" for="random_strings_input">Raw list (Excel paste)</label>
-                <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5" placeholder="Comma or new line separated"></textarea>
+                <label class="lc-bilingual-label" for="random_strings_input">
+                    <span class="lc-zh">原始列表（Excel 粘贴）</span>
+                    <span class="lc-en">Raw list (Excel paste)</span>
+                </label>
+                <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5" placeholder="逗号或换行分隔 · Comma or new line separated"></textarea>
             </div>
             {% endif %}
             {% if not list_input and not lc_hide_styles %}
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="convert_newlines_checkbox">
-                <label class="form-check-label" for="convert_newlines_checkbox">
-                    Convert above raw list into comma-separated format
+                <label class="form-check-label lc-bilingual-label mb-0" for="convert_newlines_checkbox">
+                    <span class="lc-zh">将上方原始列表转换为逗号分隔格式</span>
+                    <span class="lc-en">Convert above raw list into comma-separated format</span>
                 </label>
             </div>
             {% endif %}
             <div class="form-group mb-4">
-                <label class="lc-label-muted d-block mb-1" for="snapshot_name">Snapshot name <span class="text-muted font-weight-normal">(required)</span></label>
+                <label class="lc-bilingual-label" for="snapshot_name">
+                    <span class="lc-zh">快照名称 <span class="text-muted font-weight-normal">（必填）</span></span>
+                    <span class="lc-en">Snapshot name <span class="text-muted font-weight-normal">(required)</span></span>
+                </label>
                 <input type="text" class="form-control" id="snapshot_name" name="snapshot_name" maxlength="120" required minlength="2"
                     placeholder="那个谁的list做一下"
                     value="{{ snapshot_name if snapshot_name is defined else '' }}">
-                <small class="form-text text-muted">Labels your job (kept ~7 days). {% if snapshot_time_hint_iso is defined and snapshot_time_hint_iso %}Now: <span class="text-dark" data-fdc-local-iso="{{ snapshot_time_hint_iso }}">{% if snapshot_time_hint is defined and snapshot_time_hint %}{{ snapshot_time_hint }}{% endif %}</span> · {% elif snapshot_time_hint is defined and snapshot_time_hint %}<span class="text-dark">{{ snapshot_time_hint }}</span> · {% endif %}shown in your local time</small>
+                <small class="form-text text-muted lc-bilingual-hint">
+                    <span class="lc-zh">为任务添加标签（保留约 7 天）。{% if snapshot_time_hint_iso is defined and snapshot_time_hint_iso %}当前：<span class="text-dark" data-fdc-local-iso="{{ snapshot_time_hint_iso }}">{% if snapshot_time_hint is defined and snapshot_time_hint %}{{ snapshot_time_hint }}{% endif %}</span> · {% elif snapshot_time_hint is defined and snapshot_time_hint %}<span class="text-dark">{{ snapshot_time_hint }}</span> · {% endif %}以您的本地时间显示。</span>
+                    <span class="lc-en">Labels your job (kept ~7 days). {% if snapshot_time_hint_iso is defined and snapshot_time_hint_iso %}Now: <span class="text-dark" data-fdc-local-iso="{{ snapshot_time_hint_iso }}">{% if snapshot_time_hint is defined and snapshot_time_hint %}{{ snapshot_time_hint }}{% endif %}</span> · {% elif snapshot_time_hint is defined and snapshot_time_hint %}<span class="text-dark">{{ snapshot_time_hint }}</span> · {% endif %}shown in your local time</span>
+                </small>
             </div>
 
-            <button type="submit" class="btn btn-lg text-white px-4" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">Run list</button>
+            <button type="submit" class="btn btn-lg text-white px-4 lc-bilingual-btn" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
+                <span class="lc-zh">运行列表</span>
+                <span class="lc-en">Run list</span>
+            </button>
             <label class="form-check-label" for="convert_newlines_checkbox">Slack will notifiy you ! slack 信息通知已上线</label>
         </form>
         </div>
@@ -1305,6 +1471,7 @@ var V7_UPDATE_DESC_BULK_URL = {{ url_for('v7_listcreator.update_descriptions_bul
 window.V7_LOCAL_DROPBOX_ABS = {{ v7_local_dropbox_dir|default('')|tojson }};
 window.V7_BROWSE_DROPBOX_URL = {{ url_for('v7_listcreator.browse_dropbox')|tojson }};
 window.V7_DROPBOX_DESKTOP_REFRESH_URL = {{ url_for('v7_listcreator.dropbox_desktop_refresh')|tojson }};
+window.V7_QUICK_FILTER_STYLES_URL = {{ url_for('v7_listcreator.quick_filter_styles')|tojson }};
 
 /** Edit-desc modal: quick preset buttons */
 function lcApplyDescPreset(btn, text) {
@@ -2973,10 +3140,160 @@ function exportWithSelectedSize() {
                 itemCountEl.textContent = `Items count: ${itemCount}`;
             }
 
+            function lcGetDescriptionCheckboxes() {
+                return Array.from(document.querySelectorAll('.lc-desc-filter-cb'));
+            }
+
+            function lcGetDescriptionSearchQuery() {
+                var el = document.getElementById('lcFilterDescriptionSearch');
+                return el ? el.value.trim().toLowerCase() : '';
+            }
+
+            function lcGetVisibleDescriptionRows() {
+                return Array.from(document.querySelectorAll('.lc-desc-checkbox-item:not(.lc-desc-select-all)'))
+                    .filter(function(row) { return !row.classList.contains('lc-desc-filter-hidden'); });
+            }
+
+            function lcGetVisibleDescriptionCheckboxes() {
+                return lcGetVisibleDescriptionRows()
+                    .map(function(row) { return row.querySelector('.lc-desc-filter-cb'); })
+                    .filter(Boolean);
+            }
+
+            function lcGetSelectedDescriptions() {
+                return lcGetDescriptionCheckboxes()
+                    .filter(function(cb) { return cb.checked; })
+                    .map(function(cb) { return cb.value; })
+                    .filter(Boolean);
+            }
+
+            function lcUpdateDescriptionSelectAllLabel() {
+                var labelEl = document.getElementById('lcFilterDescriptionSelectAllLabel');
+                var q = lcGetDescriptionSearchQuery();
+                if (!labelEl) return;
+                labelEl.textContent = q ? '全选可见项 · Select all visible' : '全选 · Select all';
+            }
+
+            function lcUpdateDescriptionSearchMeta(visible, total) {
+                var meta = document.getElementById('lcFilterDescriptionSearchMeta');
+                if (!meta) return;
+                var q = lcGetDescriptionSearchQuery();
+                if (!q) {
+                    meta.textContent = total ? (total + ' 项描述 · ' + total + ' descriptions') : '';
+                    return;
+                }
+                meta.textContent = '显示 ' + visible + ' / ' + total + ' · ' + visible + ' of ' + total + ' shown';
+            }
+
+            function lcFilterDescriptionSearchRows() {
+                var q = lcGetDescriptionSearchQuery();
+                var rows = Array.from(document.querySelectorAll('.lc-desc-checkbox-item:not(.lc-desc-select-all)'));
+                var visible = 0;
+                rows.forEach(function(row) {
+                    var text = (row.getAttribute('data-desc-search') || '').toLowerCase();
+                    var show = !q || text.indexOf(q) !== -1;
+                    row.classList.toggle('lc-desc-filter-hidden', !show);
+                    if (show) visible++;
+                });
+                lcUpdateDescriptionSearchMeta(visible, rows.length);
+                lcUpdateDescriptionSelectAllLabel();
+                lcUpdateDescriptionSelectAllState();
+            }
+
+            function lcUpdateDescriptionSelectAllState() {
+                var selectAll = document.getElementById('lcFilterDescriptionSelectAll');
+                var boxes = lcGetVisibleDescriptionCheckboxes();
+                if (!selectAll || !boxes.length) {
+                    if (selectAll) {
+                        selectAll.checked = false;
+                        selectAll.indeterminate = false;
+                    }
+                    return;
+                }
+                var checked = boxes.filter(function(cb) { return cb.checked; }).length;
+                selectAll.checked = checked === boxes.length;
+                selectAll.indeterminate = checked > 0 && checked < boxes.length;
+            }
+
+            function lcOnDescriptionCheckboxChange() {
+                lcUpdateDescriptionSelectAllState();
+            }
+
+            function lcToggleAllDescriptions(checked) {
+                lcGetVisibleDescriptionCheckboxes().forEach(function(cb) { cb.checked = checked; });
+                lcUpdateDescriptionSelectAllState();
+            }
+
+            function lcSetBilingualHint(el, zh, en) {
+                if (!el) return;
+                el.innerHTML = '<span class="lc-zh">' + zh + '</span><span class="lc-en">' + en + '</span>';
+            }
+
             document.addEventListener('DOMContentLoaded', function() {
                 const listEl = document.getElementById('list_input');
                 if (listEl) updateItemCount(listEl.value);
+                var applyBtn = document.getElementById('lcApplyFiltersBtn');
+                if (applyBtn) applyBtn.addEventListener('click', lcApplyQuickFilters);
+                var descSearch = document.getElementById('lcFilterDescriptionSearch');
+                if (descSearch) descSearch.addEventListener('input', lcFilterDescriptionSearchRows);
+                lcFilterDescriptionSearchRows();
             });
+
+            function lcApplyQuickFilters() {
+                var listBox = document.getElementById('lcFilterDescriptionList');
+                var stockEl = document.getElementById('lcFilterStock');
+                var colorEl = document.getElementById('lcFilterColor');
+                var hintEl = document.getElementById('lcFilterResultHint');
+                var listInp = document.getElementById('list_input');
+                if (!listBox || !listInp) return;
+                var descriptions = lcGetSelectedDescriptions();
+                if (!descriptions.length) {
+                    alert('请至少选择一个描述。\nChoose at least one description.');
+                    listBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    return;
+                }
+                var params = new URLSearchParams();
+                descriptions.forEach(function(d) { params.append('description', d); });
+                if (stockEl && stockEl.value) params.set('stock_filter', stockEl.value);
+                if (colorEl && colorEl.value.trim()) params.set('color_filter', colorEl.value.trim());
+                if (hintEl) {
+                    lcSetBilingualHint(hintEl, '正在加载款式…', 'Loading styles…');
+                    hintEl.dataset.lcApplied = '1';
+                }
+                var applyBtn = document.getElementById('lcApplyFiltersBtn');
+                if (applyBtn) applyBtn.disabled = true;
+                fetch(window.V7_QUICK_FILTER_STYLES_URL + '?' + params.toString(), { credentials: 'same-origin' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data.success) {
+                            throw new Error(data.message || 'Filter failed');
+                        }
+                        listInp.value = data.list_input || '';
+                        updateItemCount(listInp.value);
+                        if (hintEl) {
+                            var label = (data.descriptions || descriptions).map(function(d) {
+                                return String(d || '').toLowerCase();
+                            }).join(', ');
+                            if (data.list_input && data.list_input.trim()) {
+                                lcSetBilingualHint(
+                                    hintEl,
+                                    '已加载：' + label + '。',
+                                    'Loaded: ' + label + '.'
+                                );
+                            } else {
+                                lcSetBilingualHint(hintEl, '没有符合这些筛选条件的款式。', 'No styles matched these filters.');
+                            }
+                        }
+                    })
+                    .catch(function(err) {
+                        if (hintEl) lcSetBilingualHint(hintEl, '无法加载款式。', 'Could not load styles.');
+                        alert('无法加载款式。\nCould not load styles.');
+                    })
+                    .finally(function() {
+                        var btn = document.getElementById('lcApplyFiltersBtn');
+                        if (btn) btn.disabled = false;
+                    });
+            }
 
             const listInputEl = document.getElementById('list_input');
             if (listInputEl) {

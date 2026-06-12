@@ -8,6 +8,7 @@ import re
 import openpyxl
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_sql_server_connection
+from py.utilities.style_efas_transfer import transfer_styles_to_efas
 
 # Define the blueprint
 order_processor_bp = Blueprint('order_processor', __name__)
@@ -434,4 +435,45 @@ def zhuankuan():
         
     except Exception as e:
         current_app.logger.error(f"Error in zhuankuan process: {str(e)}")
+        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
+
+
+@order_processor_bp.route('/zhuankuan/transfer_efas', methods=['POST'])
+def zhuankuan_transfer_efas():
+    """Transfer FDC style master rows directly into EFAS."""
+    if 'username' not in session:
+        return jsonify({"success": False, "message": "Not logged in"}), 401
+
+    data = request.get_json(force=True) if request.is_json else request.form
+    user_input = (data or {}).get('item_codes', '')
+    current_user = session['username']
+
+    item_codes = parse_item_codes(user_input)
+    if not item_codes:
+        return jsonify({"success": False, "message": "Item codes are required"}), 400
+
+    try:
+        result = transfer_styles_to_efas(item_codes, adjusted_by=current_user)
+        current_app.logger.info(
+            "User %s transferred styles to EFAS: codes=%s inserted=%s skipped=%s errors=%s",
+            current_user,
+            ",".join(item_codes),
+            result.inserted,
+            result.skipped,
+            result.errors,
+        )
+        payload = result.to_dict()
+        payload["message"] = (
+            f"Transferred {len(result.inserted)} SKU(s) to EFAS"
+            if result.success and result.inserted
+            else (
+                "All SKUs already exist in EFAS"
+                if result.success and result.skipped and not result.inserted
+                else (result.errors[0] if result.errors else "Transfer failed")
+            )
+        )
+        status = 200 if result.success else 400
+        return jsonify(payload), status
+    except Exception as e:
+        current_app.logger.error(f"Error in zhuankuan EFAS transfer: {str(e)}")
         return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500

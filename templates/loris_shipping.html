@@ -568,6 +568,9 @@
                             <button id="download-tracking-btn" class="btn btn-info btn-block w-100 mb-2">
                                 <i class="fas fa-download"></i> Download Tracking Info
                             </button>
+                            <button id="delete-batch-btn" class="btn btn-danger btn-block w-100 mb-2" style="display: none;">
+                                <i class="fas fa-trash-alt"></i> Delete Batch
+                            </button>
                         </div>
                     </div>
 
@@ -1256,20 +1259,18 @@
         showShippingPageOverlay('Loading orders…');
         console.log('Starting to load orders...');
         try {
-            // Load store information first
-            console.log('Loading store information...');
-            await loadStoreInfo();
-            console.log('Store information loaded successfully');
-            
-            console.log('Fetching orders from /lori_automation...');
-            const response = await fetch('/lori_automation', {
-                method: 'GET',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
+            console.log('Loading store info and orders in parallel...');
+            const [, response] = await Promise.all([
+                loadStoreInfo(),
+                fetch('/lori_automation', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+            ]);
             console.log('Response status:', response.status);
             
             if (!response.ok) {
@@ -1338,6 +1339,18 @@
                 }
             })
             .catch(error => console.error('Error loading package info:', error));
+    }
+
+    function applyEmbeddedPackageInfo(order) {
+        if (!order?.po_number || !order.package_box_dimensions?.length) {
+            return;
+        }
+        populatePackageInfo(order.po_number, {
+            box_dimensions: order.package_box_dimensions,
+            total_weight: order.package_total_weight,
+            fedex_service_type: order.package_fedex_service_type,
+            fedex_packaging_type: order.package_fedex_packaging_type
+        });
     }
 
     function populatePackageInfo(poNumber, data) {
@@ -2110,14 +2123,14 @@
         const batchesToShow = sortedBatchDates.slice(start, end);
         
         let overallIndex = 0;
-        batchesToShow.forEach(batchDate => {
+        batchesToShow.forEach((batchDate, batchIndex) => {
             const orders = ordersByBatch[batchDate];
             const batchId = `batch-${batchDate.replace(/[^a-zA-Z0-9]/g, '-')}-${containerId}`;
             
             // Check if batch is already marked as expanded
             const isExpanded = state.expandedBatches.has(batchId);
-            const isShippedTable = containerId === 'shipped-orders-table-body';
-            const defaultCollapsed = isShippedTable && !isExpanded;
+            const isFirstBatchOnPage = batchIndex === 0;
+            const defaultCollapsed = !isExpanded && !isFirstBatchOnPage;
             const chevronClass = defaultCollapsed ? 'fas fa-chevron-right batch-toggle-icon' : 'fas fa-chevron-down batch-toggle-icon';
             
             // Create batch header row with collapse functionality
@@ -2131,7 +2144,7 @@
                     <i class="${chevronClass}" id="icon-${batchId}"></i>
                     <i class="fas fa-calendar-alt ms-2"></i> Batch Date: ${formatBatchDate(batchDate)} 
                     <button class="btn btn-sm btn-outline-primary ms-3 select-batch-btn" 
-                            onclick="event.stopPropagation(); selectAllFromBatch('${batchId}')">
+                            onclick="event.stopPropagation(); selectAllFromBatch('${batchId}', '${batchDate}')">
                         <i class="fas fa-check-square"></i> Select all orders from this batch
                     </button>
                     <span class="badge bg-warning ms-3 batch-badge">${orders.length} orders</span>
@@ -2320,17 +2333,8 @@
                 container.appendChild(spacingRow);
             }
             
-            // Load package info for orders that are visible (not collapsed) by default
             if (!defaultCollapsed) {
-                orders.forEach(order => {
-                    const poNumber = order.po_number;
-                    if (poNumber) {
-                        // Load package info after a small delay to ensure DOM is ready
-                        setTimeout(() => {
-                            loadPackageInfo(poNumber);
-                        }, 100);
-                    }
-                });
+                orders.forEach(order => applyEmbeddedPackageInfo(order));
             }
         });
         
@@ -2540,19 +2544,13 @@
             
             tbody.appendChild(row);
             
-            // Load existing package info for this order (for shipped orders, just show status)
             const packageDisplay = row.querySelector('.package-info-display');
             if (packageDisplay) {
-                fetch(`/lori_automation/get_package_info/${order.po_number}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.exists !== false) {
-                            packageDisplay.innerHTML = `<small class="text-success">✓ Package info saved</small>`;
-                        } else {
-                            packageDisplay.innerHTML = `<small class="text-muted">No package info</small>`;
-                        }
-                    })
-                    .catch(error => console.error('Error loading package info:', error));
+                if (order.has_box_info || order.package_box_dimensions?.length) {
+                    packageDisplay.innerHTML = `<small class="text-success">✓ Package info saved</small>`;
+                } else {
+                    packageDisplay.innerHTML = `<small class="text-muted">No package info</small>`;
+                }
             }
         });
     }
@@ -3442,6 +3440,44 @@
             openAddStoreModal('', '');
         });
 
+        // Tracks batch when user clicks "Select all orders from this batch"
+        window.selectedBatchDate = null;
+        window.selectedBatchId = null;
+
+        function clearBatchSelection() {
+            window.selectedBatchDate = null;
+            window.selectedBatchId = null;
+        }
+
+        function updateDeleteBatchButton() {
+            const deleteBatchBtn = document.getElementById('delete-batch-btn');
+            if (!deleteBatchBtn) return;
+
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            if (!window.selectedBatchDate || !window.selectedBatchId || checkboxes.length === 0) {
+                deleteBatchBtn.style.display = 'none';
+                return;
+            }
+
+            const batchCheckboxes = document.querySelectorAll(
+                `tr[data-batch-id="${window.selectedBatchId}"] .order-checkbox`
+            );
+            const batchPOs = Array.from(batchCheckboxes).map(cb => cb.getAttribute('data-po'));
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.getAttribute('data-po'));
+            const allBatchSelected = batchPOs.length > 0 &&
+                batchPOs.length === selectedPOs.length &&
+                batchPOs.every(po => selectedPOs.includes(po));
+
+            if (allBatchSelected) {
+                deleteBatchBtn.style.display = '';
+                deleteBatchBtn.innerHTML =
+                    `<i class="fas fa-trash-alt"></i> Delete Batch (${formatBatchDate(window.selectedBatchDate)})`;
+            } else {
+                deleteBatchBtn.style.display = 'none';
+                clearBatchSelection();
+            }
+        }
+
         // Sidebar Functions
         function updateSelectedOrdersList() {
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
@@ -3464,7 +3500,11 @@
                     `;
                     selectedOrdersList.appendChild(listItem);
                 });
+
+                updateDeleteBatchButton();
             } else {
+                clearBatchSelection();
+                updateDeleteBatchButton();
                 // Hide sidebar if no orders selected
                 hideSidebar();
             }
@@ -3783,6 +3823,64 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
+            }
+        }
+
+        // Delete selected batch orders (orders, tracking, package info, original PDFs)
+        async function deleteBatch() {
+            if (!window.selectedBatchDate) {
+                alert('Select all orders from a batch first.');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const selectedPOs = Array.from(checkboxes).map(cb => cb.getAttribute('data-po'));
+            if (selectedPOs.length === 0) {
+                alert('Please select at least one order.');
+                return;
+            }
+
+            const batchDate = window.selectedBatchDate;
+
+            const confirmed = confirm(
+                `Delete ${selectedPOs.length} selected order(s) from batch ${formatBatchDate(batchDate)}?\n\n` +
+                `This will permanently remove:\n` +
+                `- Order entries and line items\n` +
+                `- Tracking numbers\n` +
+                `- Package info\n` +
+                `- Original PDF files for these orders only\n\n` +
+                `Other orders with the same batch date will not be affected.\n\n` +
+                `This cannot be undone.`
+            );
+            if (!confirmed) return;
+
+            const btn = document.getElementById('delete-batch-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+
+            try {
+                const response = await fetch('/lori_automation/delete_batch', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ po_numbers: selectedPOs, batch_date: batchDate })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                alert(data.message || 'Batch deleted successfully.');
+                clearBatchSelection();
+                document.querySelectorAll('.order-checkbox:checked').forEach(cb => { cb.checked = false; });
+                hideSidebar();
+                await loadAndRenderOrders();
+            } catch (err) {
+                console.error(err);
+                alert('Error deleting batch: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                updateDeleteBatchButton();
             }
         }
 
@@ -4301,6 +4399,7 @@
     console.log('Event listener attached to send-back-pending-btn');
     document.getElementById('bulk-batch-date-btn')?.addEventListener('click', bulkModifyBatchDate);
     console.log('Event listener attached to bulk-batch-date-btn');
+    document.getElementById('delete-batch-btn')?.addEventListener('click', deleteBatch);
     document.getElementById('download-30-stickers-btn')?.addEventListener('click', download30Stickers);
     console.log('Event listener attached to download-30-stickers-btn');
     document.getElementById('download-exact-stickers-btn')?.addEventListener('click', downloadExactStickers);
@@ -5126,16 +5225,19 @@
                         if (!paginationState[tableBodyId].loadedBatches.has(batchId)) {
                             paginationState[tableBodyId].loadedBatches.add(batchId);
                             
-                            // Load package info for all orders in this batch
-                            batchRows.forEach(row => {
-                                const container = row.querySelector('.package-info-container');
-                                if (container) {
-                                    const poNumber = container.getAttribute('data-po');
-                                    if (poNumber) {
-                                        loadPackageInfo(poNumber);
-                                    }
-                                }
-                            });
+                        // Populate package fields from already-loaded order data
+                        batchRows.forEach(row => {
+                            const container = row.querySelector('.package-info-container');
+                            if (!container) return;
+                            const poNumber = container.getAttribute('data-po');
+                            if (!poNumber) return;
+                            const order = allOrders.find(o => o.po_number === poNumber);
+                            if (order) {
+                                applyEmbeddedPackageInfo(order);
+                            } else {
+                                loadPackageInfo(poNumber);
+                            }
+                        });
                         }
                     } else {
                         paginationState[tableBodyId].expandedBatches.delete(batchId);
@@ -5145,7 +5247,10 @@
         };
 
         // Select all orders from a specific batch
-        window.selectAllFromBatch = function(batchId) {
+        window.selectAllFromBatch = function(batchId, batchDate) {
+            window.selectedBatchDate = batchDate || null;
+            window.selectedBatchId = batchId || null;
+
             const batchRows = document.querySelectorAll(`tr[data-batch-id="${batchId}"]`);
             let hasSelectedOrders = false;
             
@@ -5162,7 +5267,7 @@
             
             // Automatically show the sidebar if orders were selected
             if (hasSelectedOrders) {
-                showSidebar();
+                updateSelectedOrdersList();
             }
         };
 

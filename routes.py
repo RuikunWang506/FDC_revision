@@ -58,6 +58,7 @@ from py.Toolkits.boat import boat_service_bp
 from py.search.location_service import location_service_bp
 from py.other.external_stock_check import external_stock_check_bp
 from py.other.internal_stock_check import internal_stock_check_bp
+from py.other.switch_number import switch_number_bp
 from py.other.burlington_highlight import burlington_highlight_bp
 from py.other.mobile_scanner import mobile_scanner_bp
 from py.other.burlington_label_processor import burlington_label_processor_bp
@@ -110,7 +111,16 @@ def register_routes(app):
         def can_view_logs() -> bool:
             return user_can_view_logs(session.get("username"))
 
-        return {"tool_allowed": tool_allowed, "can_view_logs": can_view_logs}
+        from py.other.clientview import user_hides_staff_nav_links
+
+        def hide_staff_nav_links() -> bool:
+            return user_hides_staff_nav_links(session.get("username"))
+
+        return {
+            "tool_allowed": tool_allowed,
+            "can_view_logs": can_view_logs,
+            "hide_staff_nav_links": hide_staff_nav_links,
+        }
 
     @app.route('/delete_system_restarted', methods=['POST'])
     @login_required
@@ -149,6 +159,7 @@ def register_routes(app):
     app.register_blueprint(mysql_connector_bp)
     app.register_blueprint(external_stock_check_bp)
     app.register_blueprint(internal_stock_check_bp)
+    app.register_blueprint(switch_number_bp)
     app.register_blueprint(image_upload_bp)
     app.register_blueprint(master_image_viewer_bp)
     app.register_blueprint(clientview_bp)

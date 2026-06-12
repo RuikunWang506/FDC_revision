@@ -2099,14 +2099,142 @@
                 });
         }
 
-        function showAdjustmentLogDetail(logNumber, database, highlightSku) {
+        let adjLogState = { log: null, styleSearch: '', showFull: false, highlightSku: '' };
+
+        function filterLogItemsByStyle(items, styleSearch) {
+            const parts = (styleSearch || '').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return items;
+            return items.filter(item => {
+                const sku = (item.sku || '').toUpperCase();
+                return parts.some(part => {
+                    const token = part.replace(/%/g, '').toUpperCase();
+                    if (!token) return false;
+                    if (part.includes('%')) {
+                        const pattern = '^' + part.split('%').map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '';
+                        return new RegExp(pattern, 'i').test(item.sku || '');
+                    }
+                    return sku.startsWith(token);
+                });
+            });
+        }
+
+        function sumLogQuantities(items) {
+            return items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        }
+
+        function renderAdjustmentLogModal() {
+            const log = adjLogState.log;
+            if (!log) return;
+
             const productDetailBase = isTikTokView ? '/clientview/product_detail?search=' : '/product_detail?search=';
+            const allItems = log.items || [];
+            const styleItems = filterLogItemsByStyle(allItems, adjLogState.styleSearch);
+            const canFilterByStyle = Boolean(adjLogState.styleSearch) && styleItems.length > 0;
+            const hasMoreInFullLog = canFilterByStyle && styleItems.length < allItems.length;
+            const displayItems = (adjLogState.showFull || !canFilterByStyle) ? allItems : styleItems;
+            const displayTotal = sumLogQuantities(displayItems);
+            const totalColor = displayTotal < 0 ? 'red' : 'green';
+
+            let summaryHtml =
+                `<div><strong>Database:</strong> ${log.database}</div>` +
+                `<div><strong>Date:</strong> ${log.date}</div>` +
+                `<div><strong>Adjusted By:</strong> ${log.adjusted_by}</div>` +
+                `<div><strong>Lines:</strong> ${displayItems.length}` +
+                (canFilterByStyle && !adjLogState.showFull
+                    ? ` <span class="text-muted">of ${allItems.length}</span>`
+                    : '') +
+                `</div>` +
+                `<div><strong>Total Qty:</strong> <span style="color:${totalColor}; font-weight:bold;">${displayTotal}</span></div>`;
+
+            if (canFilterByStyle && !adjLogState.showFull) {
+                summaryHtml += `<div class="text-muted" style="width:100%;"><em>Showing lines for the current search (${adjLogState.styleSearch}). Use &ldquo;Show Full Log&rdquo; for every SKU and extra fields in this adjustment.</em></div>`;
+            } else if (adjLogState.showFull && canFilterByStyle) {
+                summaryHtml += `<div class="text-muted" style="width:100%;"><em>Full adjustment log &mdash; all ${allItems.length} line(s) in batch ${log.log_number}.</em></div>`;
+            }
+
+            document.getElementById('adjLogSummary').innerHTML = summaryHtml;
+
+            let tableHtml = '<table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0; position:sticky; top:0;">';
+            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">#</th>';
+            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
+            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Bin</th>';
+            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Warehouse</th>';
+            if (adjLogState.showFull) {
+                tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Trans</th>';
+                tableHtml += '<th style="padding:8px; border:1px solid #ddd;">In Stock</th>';
+                tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Bin Qty</th>';
+                tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Ord Qty</th>';
+                tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Updated By</th>';
+            }
+            tableHtml += '</tr></thead><tbody>';
+
+            const colSpan = adjLogState.showFull ? 10 : 5;
+            if (!displayItems.length) {
+                tableHtml += `<tr><td colspan="${colSpan}" style="padding:12px; text-align:center; color:#666;">No lines match the current style search.</td></tr>`;
+            } else {
+                displayItems.forEach(item => {
+                    const isHighlighted = adjLogState.highlightSku && item.sku === adjLogState.highlightSku;
+                    const rowStyle = isHighlighted ? 'background:#fff8e1; font-weight:bold;' : '';
+                    const qtyColor = item.quantity < 0 ? 'red' : 'green';
+                    tableHtml += `<tr style="border:1px solid #ddd; ${rowStyle}">` +
+                        `<td style="padding:6px; border:1px solid #ddd;">${item.line_num}</td>` +
+                        `<td style="padding:6px; border:1px solid #ddd;"><a href="${productDetailBase}${encodeURIComponent(item.sku)}" style="color:#667eea;">${item.sku}</a></td>` +
+                        `<td style="padding:6px; border:1px solid #ddd; text-align:right; color:${qtyColor};">${item.quantity}</td>` +
+                        `<td style="padding:6px; border:1px solid #ddd;">${item.bin || '-'}</td>` +
+                        `<td style="padding:6px; border:1px solid #ddd;">${item.warehouse || '-'}</td>`;
+                    if (adjLogState.showFull) {
+                        tableHtml +=
+                            `<td style="padding:6px; border:1px solid #ddd;">${item.trans_type || '-'}</td>` +
+                            `<td style="padding:6px; border:1px solid #ddd; text-align:right;">${item.in_stock ?? 0}</td>` +
+                            `<td style="padding:6px; border:1px solid #ddd; text-align:right;">${item.bin_qty ?? 0}</td>` +
+                            `<td style="padding:6px; border:1px solid #ddd; text-align:right;">${item.ord_qty ?? 0}</td>` +
+                            `<td style="padding:6px; border:1px solid #ddd;">${item.updated_by || '-'}</td>`;
+                    }
+                    tableHtml += `</tr>`;
+                });
+            }
+
+            tableHtml += '</tbody></table>';
+            const wrap = document.getElementById('adjLogTableWrap');
+            wrap.innerHTML = tableHtml;
+            wrap.style.display = 'block';
+
+            const fullBtn = document.getElementById('adjLogShowFullBtn');
+            if (canFilterByStyle) {
+                fullBtn.style.display = '';
+                const fullLabel = hasMoreInFullLog
+                    ? `Show Full Log (${allItems.length} lines)`
+                    : `Show Full Log (${allItems.length} lines, all fields)`;
+                fullBtn.textContent = adjLogState.showFull ? 'Show This Style Only' : fullLabel;
+            } else {
+                fullBtn.style.display = 'none';
+                adjLogState.showFull = false;
+            }
+
+            if (adjLogState.highlightSku) {
+                const highlightedRow = wrap.querySelector('tr[style*="fff8e1"]');
+                if (highlightedRow) {
+                    highlightedRow.scrollIntoView({ block: 'center' });
+                }
+            }
+        }
+
+        function toggleAdjustmentLogFullView() {
+            if (!adjLogState.log) return;
+            adjLogState.showFull = !adjLogState.showFull;
+            renderAdjustmentLogModal();
+        }
+
+        function showAdjustmentLogDetail(logNumber, database, highlightSku, styleSearch) {
             document.getElementById('adjLogNumber').textContent = logNumber;
             document.getElementById('adjLogSummary').innerHTML = '';
             document.getElementById('adjLogLoading').style.display = 'block';
             document.getElementById('adjLogLoading').textContent = 'Loading log details...';
             document.getElementById('adjLogTableWrap').style.display = 'none';
             document.getElementById('adjLogTableWrap').innerHTML = '';
+            document.getElementById('adjLogShowFullBtn').style.display = 'none';
+            adjLogState = { log: null, styleSearch: styleSearch || '', showFull: false, highlightSku: highlightSku || '' };
             $('#adjustmentLogModal').modal('show');
 
             fetch(`/api/adjustments/log/${encodeURIComponent(database)}/${encodeURIComponent(logNumber)}`)
@@ -2118,48 +2246,8 @@
                         document.getElementById('adjLogLoading').textContent = data.error || 'Unable to load log details.';
                         return;
                     }
-
-                    const log = data.data;
-                    const totalColor = log.total_quantity < 0 ? 'red' : 'green';
-                    document.getElementById('adjLogSummary').innerHTML =
-                        `<div><strong>Database:</strong> ${log.database}</div>` +
-                        `<div><strong>Date:</strong> ${log.date}</div>` +
-                        `<div><strong>Adjusted By:</strong> ${log.adjusted_by}</div>` +
-                        `<div><strong>Lines:</strong> ${log.line_count}</div>` +
-                        `<div><strong>Total Qty:</strong> <span style="color:${totalColor}; font-weight:bold;">${log.total_quantity}</span></div>`;
-
-                    let tableHtml = '<table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0; position:sticky; top:0;">';
-                    tableHtml += '<th style="padding:8px; border:1px solid #ddd;">#</th>';
-                    tableHtml += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
-                    tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
-                    tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Bin</th>';
-                    tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Warehouse</th>';
-                    tableHtml += '</tr></thead><tbody>';
-
-                    log.items.forEach(item => {
-                        const isHighlighted = highlightSku && item.sku === highlightSku;
-                        const rowStyle = isHighlighted ? 'background:#fff8e1; font-weight:bold;' : '';
-                        const qtyColor = item.quantity < 0 ? 'red' : 'green';
-                        tableHtml += `<tr style="border:1px solid #ddd; ${rowStyle}">` +
-                            `<td style="padding:6px; border:1px solid #ddd;">${item.line_num}</td>` +
-                            `<td style="padding:6px; border:1px solid #ddd;"><a href="${productDetailBase}${encodeURIComponent(item.sku)}" style="color:#667eea;">${item.sku}</a></td>` +
-                            `<td style="padding:6px; border:1px solid #ddd; text-align:right; color:${qtyColor};">${item.quantity}</td>` +
-                            `<td style="padding:6px; border:1px solid #ddd;">${item.bin || '-'}</td>` +
-                            `<td style="padding:6px; border:1px solid #ddd;">${item.warehouse || '-'}</td>` +
-                            `</tr>`;
-                    });
-
-                    tableHtml += '</tbody></table>';
-                    const wrap = document.getElementById('adjLogTableWrap');
-                    wrap.innerHTML = tableHtml;
-                    wrap.style.display = 'block';
-
-                    if (highlightSku) {
-                        const highlightedRow = wrap.querySelector('tr[style*="fff8e1"]');
-                        if (highlightedRow) {
-                            highlightedRow.scrollIntoView({ block: 'center' });
-                        }
-                    }
+                    adjLogState.log = data.data;
+                    renderAdjustmentLogModal();
                 })
                 .catch(err => {
                     document.getElementById('adjLogLoading').style.display = 'block';
@@ -2171,10 +2259,13 @@
             const link = e.target.closest('.adj-log-link');
             if (!link) return;
             e.preventDefault();
+            const section = document.getElementById('adjustmentHistorySection');
+            const styleSearch = section ? _historyStyleForSection(section) : '';
             showAdjustmentLogDetail(
                 link.dataset.log,
                 link.dataset.database,
-                link.dataset.sku || ''
+                link.dataset.sku || '',
+                styleSearch
             );
         });
         
@@ -2478,6 +2569,7 @@
             <div id="adjLogTableWrap" class="table-responsive" style="max-height:60vh; overflow-y:auto; display:none;"></div>
           </div>
           <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" id="adjLogShowFullBtn" style="display:none;" onclick="toggleAdjustmentLogFullView()">Show Full Log</button>
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           </div>
         </div>

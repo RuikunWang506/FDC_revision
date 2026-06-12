@@ -750,7 +750,12 @@ def fetch_adjustment_log_detail(log_number, database):
             RTRIM(ISNULL(bin_cd, '')) AS bin_cd,
             RTRIM(ISNULL(whs_num, '')) AS whs_num,
             nt_num,
-            RTRIM(ISNULL(trans_type, '')) AS trans_type
+            RTRIM(ISNULL(trans_type, '')) AS trans_type,
+            CAST(ISNULL(in_stock, 0) AS INT) AS in_stock,
+            RTRIM(ISNULL(ut_desc, '')) AS ut_desc,
+            RTRIM(ISNULL(updt_by, '')) AS updt_by,
+            CAST(ISNULL(bin_qty, 0) AS INT) AS bin_qty,
+            CAST(ISNULL(ord_qty, 0) AS INT) AS ord_qty
         FROM [dbo].[wm_log]
         WHERE RTRIM(log_num) = ? AND type_cd = 'adj'
         ORDER BY nt_num
@@ -779,6 +784,11 @@ def fetch_adjustment_log_detail(log_number, database):
                 'warehouse': row[5] or '',
                 'line_num': int(row[6]) if row[6] is not None else 0,
                 'trans_type': row[7] or '',
+                'in_stock': int(row[8]) if row[8] is not None else 0,
+                'ut_desc': row[9] or '',
+                'updated_by': row[10] or '',
+                'bin_qty': int(row[11]) if row[11] is not None else 0,
+                'ord_qty': int(row[12]) if row[12] is not None else 0,
             })
 
         first = items[0]
@@ -1507,13 +1517,13 @@ def container_search():
                     RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
                     RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
                     CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS po_date,
-                    CASE WHEN pl.hdl_chg > 0 THEN pl.hdl_chg ELSE pl.log_qty END as container_qty,
+                    CASE WHEN ISNULL(pl.hdl_chg, 0) > 0 THEN pl.hdl_chg ELSE pl.log_qty END as container_qty,
                     ISNULL(i.RETAIL_PRS, 0) as price,
-                    pl.hdl_chg
+                    ISNULL(pl.hdl_chg, 0) as hdl_chg
                 FROM plog pl
                 LEFT JOIN dbo.inv i ON pl.prod_cd = i.PROD_CD
-                WHERE pl.pur_num = ?
-                AND (pl.hdl_chg > 0 OR pl.log_qty > 0)
+                WHERE RTRIM(pl.pur_num) = ?
+                AND (ISNULL(pl.hdl_chg, 0) > 0 OR ISNULL(pl.log_qty, 0) > 0)
                 ORDER BY style, pl.prod_cd
             """
             cursor.execute(query, [container_id])
@@ -1530,7 +1540,7 @@ def container_search():
                 seen_skus.add(sku)
                 container_data.append(row_dict)
 
-                if row_dict.get('hdl_chg', 0) > 0:
+                if float(row_dict.get('hdl_chg') or 0) > 0:
                     is_arrived = True
 
                 qty = float(row_dict.get('container_qty', 0) or 0)

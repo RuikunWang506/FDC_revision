@@ -197,8 +197,10 @@
                 <div class="form-group">
                     <textarea id="zhuankuanInput" class="form-control" rows="5" placeholder="Enter item codes separated by commas..."></textarea>
                 </div>
+                <div id="zhuankuanTransferResult" class="alert mt-3" style="display: none;"></div>
                 <div class="text-center mt-3">
-                    <button id="processZhuankuanButton" class="btn btn-primary">Process Item Codes</button>
+                    <button id="processZhuankuanButton" class="btn btn-primary">Download CSV</button>
+                    <button id="transferEfasButton" class="btn btn-success ml-2">Transfer to EFAS</button>
                 </div>
             </div>
         </div>
@@ -419,6 +421,50 @@
                     document.body.removeChild(form);
                     hideLoading();
                 }, 2000);
+            });
+
+            $('#transferEfasButton').click(function() {
+                const itemCodes = $('#zhuankuanInput').val().trim();
+                const $result = $('#zhuankuanTransferResult');
+                if (!itemCodes) {
+                    alert('Please enter item codes first.');
+                    return;
+                }
+
+                showLoading('Transferring styles to EFAS...');
+                $result.hide();
+
+                fetch('/zhuankuan/transfer_efas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_codes: itemCodes })
+                })
+                .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                .then(({ ok, data }) => {
+                    hideLoading();
+                    $result.removeClass('alert-success alert-danger alert-warning');
+                    if (ok && data.success) {
+                        $result.addClass('alert-success');
+                        let message = data.message || 'Transfer completed.';
+                        if (data.inserted && data.inserted.length) {
+                            message += ' Inserted: ' + data.inserted.join(', ');
+                        }
+                        if (data.skipped && data.skipped.length) {
+                            message += ' Skipped (already in EFAS): ' + data.skipped.join(', ');
+                        }
+                        $result.text(message);
+                    } else {
+                        $result.addClass('alert-danger');
+                        $result.text(data.message || 'Transfer failed.');
+                    }
+                    $result.show();
+                })
+                .catch(error => {
+                    hideLoading();
+                    $result.removeClass('alert-success alert-warning').addClass('alert-danger');
+                    $result.text('Transfer failed: ' + error.message);
+                    $result.show();
+                });
             });
         });
         

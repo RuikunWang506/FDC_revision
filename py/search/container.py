@@ -144,7 +144,7 @@ def process_container_file(file, container_number):
     System_file_tab = pd.read_excel(file, sheet_name='System File', header=2)
     System_file_tab.columns = System_file_tab.columns.str.replace('\n', ' ').str.strip()
     System_file_tab = _filter_system_file_line_items(System_file_tab)
-    System_file_tab['WT/PCS (LBS)'] = System_file_tab['WT/PCS (LBS)'].round(2)
+    System_file_tab['WT/PCS (LBS)'] = pd.to_numeric(System_file_tab['WT/PCS (LBS)'], errors='coerce').round(2)
     System_file_tab = System_file_tab.applymap(
         lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x
     )

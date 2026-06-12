@@ -379,7 +379,8 @@
                 } else if (categoryMode === 'synced') {
                     categoryMatch = status === 'inactive' && fourSeller === available;
                 } else if (categoryMode === 'needs_sync') {
-                    categoryMatch = status === 'active' && fourSeller !== available;
+                    const alreadySyncedAtZero = fourSeller === 0 && available < 0;
+                    categoryMatch = status === 'active' && fourSeller !== available && !alreadySyncedAtZero;
                 }
 
                 const skuMatch = !skuTerm || stockSku.includes(skuTerm) || internalSku.includes(skuTerm);

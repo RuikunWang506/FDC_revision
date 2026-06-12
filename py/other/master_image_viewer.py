@@ -13,7 +13,7 @@ import uuid
 import hashlib
 import glob
 from datetime import datetime, timedelta
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from sqlalchemy.exc import IntegrityError
 from typing import Any, Dict, Optional
 
@@ -193,6 +193,35 @@ def _list_batch_fetch_history(*, days: int) -> list:
         )
     decorated.sort(key=lambda x: x[0], reverse=True)
     return [row for _, row in decorated]
+
+
+def _audit_image_search(query_value: str) -> None:
+    """Log image lookup with the user's actual input and caller context."""
+    raw_input = (
+        request.args.get("input")
+        or request.args.get("q")
+        or query_value
+    ).strip()
+    via = (request.args.get("via") or request.args.get("source") or "").strip()
+    if not via and request.referrer:
+        try:
+            via = urlparse(request.referrer).path or ""
+        except Exception:
+            via = ""
+    via_part = f" via={via}" if via else ""
+
+    username = session.get("username")
+    tk_user = session.get("tk_user", False)
+    if username:
+        log_event(
+            "info",
+            f"***{username.upper()}***__@@@searched images@@@ input={raw_input}{via_part}",
+        )
+    elif tk_user:
+        log_event(
+            "info",
+            f"***TK_USER***__@@@searched images@@@ input={raw_input}{via_part}",
+        )
 
 
 def find_images_by_sku(sku):
@@ -426,14 +455,8 @@ def search_images():
     if denied:
         return denied
     
-    # Log the search - use actual username if logged in, otherwise tk_user
-    tk_user = session.get('tk_user', False)
-    
-    if username:
-        log_event('info', f"***{username.upper()}***__@@@searched image for SKU@@@__ {sku}")
-    elif tk_user:
-        log_event('info', f"***TK_USER***__@@@searched image for SKU@@@__ {sku}")
-    
+    _audit_image_search(sku)
+
     try:
         results = find_images_by_sku(sku)
         return jsonify(results)

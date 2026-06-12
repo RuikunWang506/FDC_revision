@@ -535,7 +535,7 @@
             }
             
             // Fetch image asset ID from API
-            fetch(`/api/search_images?sku=${style}`)
+            fetch(`/api/search_images?sku=${encodeURIComponent(style)}&input=${encodeURIComponent(style)}&via=external_stock_check`)
                 .then(response => response.json())
                 .then(data => {
                     console.log(`API response for ${style}:`, data);

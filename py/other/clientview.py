@@ -2,6 +2,7 @@
 
 from flask import (
     Blueprint,
+    current_app,
     flash,
     redirect,
     render_template,
@@ -30,6 +31,15 @@ from py.utilities.dashboard_permissions import CLIENT_PORTAL_TOOL_IDS, tool_visi
 clientview_bp = Blueprint("clientview", __name__, url_prefix="/clientview")
 
 CLIENTVIEW_TOOL_ID = "clientview"
+
+
+def user_hides_staff_nav_links(username: str) -> bool:
+    """Client / Super Client groups should not see internal SKU or Pallet navbar links."""
+    from py.utilities.auth import get_user_group_slug
+    from py.utilities.user_groups import CLIENT_NAV_GROUP_SLUGS
+
+    return get_user_group_slug(username) in CLIENT_NAV_GROUP_SLUGS
+
 
 def is_client_portal_only_user(username: str) -> bool:
     """Users restricted to client portal tools only (no full dashboard)."""
@@ -153,6 +163,11 @@ def clientview_product_detail(search_input=None):
     )
 
     if search_input:
+        current_app.logger.info(
+            "***%s***__@@@search SKU@@@__ %s [clientview]",
+            current_user,
+            search_input.lower(),
+        )
         limits_on = customer_purchase_limit_enabled(
             current_user, FEATURE_CLIENT_PRODUCT_DETAIL
         )

@@ -2,6 +2,9 @@ import pandas as pd
 from flask import Blueprint, render_template, session, redirect, url_for, current_app, jsonify, send_file, request
 import pyodbc
 import os
+import math
+import json
+import tempfile
 from datetime import datetime
 import logging
 import re
@@ -16,6 +19,31 @@ import email
 from email.header import decode_header
 
 from py.search.container import _filter_system_file_line_items, _trim_blank_export_rows
+from py.utilities.color_abbrev import normalize_color_to_abbrev
+from py.utilities.boat_sheet_cache import (
+    build_boat_data_cache_key,
+    invalidate_boat_data_response_cache,
+    load_cached_boat_data,
+    load_sheet_dataframe,
+    save_cached_boat_data,
+)
+from py.utilities.shipment_tracking_import import (
+    LATEST_TRACKING_XLSX,
+    load_saved_tracking_rows,
+    load_tracking_meta,
+    process_shipment_tracking_upload,
+    save_tracking_meta,
+)
+from py.utilities.container_po_import import (
+    delete_container_po_from_fdc,
+    lookup_container_vendor_id,
+    lookup_vendor_info,
+    receive_container_po_at_827,
+    revert_container_to_ocean,
+    transfer_container_po_to_fdc,
+    VENDOR_FALLBACK,
+)
+from py.utilities.style_efas_transfer import transfer_container_styles_to_oms, update_retail_prices_dual
 TERMINAL49_API_URL = "https://api.terminal49.com/v2/tracking_requests"
 TERMINAL49_API_KEY = "8zoazZdxmyQS1zuNSKXDuGnm"
 TERMINAL49_CUSTOMER_ID = "f7cb530a-9e60-412c-a5bc-205a2f34ba54"  # Default customer ID
@@ -25,6 +53,7 @@ boat_service_bp = Blueprint('boat_service', __name__, template_folder='../templa
 # Google Sheets configuration
 GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/export?format=csv&gid=0"
 GOOGLE_SHEET_ID = "14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE"
+GOOGLE_SHEET_EDIT_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/edit?gid=0#gid=0"
 CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'credentials', 'service-account.json')
 DROPBOX_CONTAINER_PATH = r"C:\Users\stream\Dropbox\Pictures-China (1)\container catalog\Container\container INFO"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'container_csvs')
@@ -50,6 +79,41 @@ def get_db_connection():
 
 
 _FDC_CONTAINER_SORT_RE = re.compile(r'^([A-Za-z]+)(\d+)\s*$')
+_FT_CONTAINER_RE = re.compile(r'^FT(\d+)$', re.IGNORECASE)
+
+
+def normalize_container_id(container_val) -> str:
+    """Canonical container id: FT25141 -> F25141."""
+    text = str(container_val or "").strip().upper()
+    if not text:
+        return text
+    match = _FT_CONTAINER_RE.match(text)
+    if match:
+        return f"F{match.group(1)}"
+    return text
+
+
+def _safe_float(val, default: float = 0.0) -> float:
+    try:
+        num = float(val)
+    except (TypeError, ValueError):
+        return default
+    if math.isnan(num) or math.isinf(num):
+        return default
+    return num
+
+
+def _sanitize_for_json(value):
+    """Ensure preview payloads are valid JSON (no NaN/Inf)."""
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return value
+    if isinstance(value, dict):
+        return {k: _sanitize_for_json(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_for_json(v) for v in value]
+    return value
 
 
 def _fdc_container_sort_number(container_val):
@@ -63,6 +127,496 @@ def _fdc_container_sort_number(container_val):
         return int(m.group(2))
     except ValueError:
         return -1
+
+
+_HUB_STATUS_LABELS = {
+    "upload": "New",
+    "ocean": "Ocean",
+    "landed": "Landed",
+    "port": "Port",
+    "minimal": "Waiting",
+}
+
+
+def _hub_action_mode(row) -> str:
+    if bool(row.get("can_process", False)):
+        return "new"
+    status_key = str(row.get("status_key") or "minimal").strip()
+    if status_key in {"ocean", "landed", "port"}:
+        return status_key
+    return "waiting"
+
+
+def _written_time_column(df: pd.DataFrame) -> str | None:
+    for candidate in ("written time", "Written time", "WRITTEN TIME"):
+        if candidate in df.columns:
+            return candidate
+    if len(df.columns) >= 15:
+        return str(df.columns[14])
+    return None
+
+
+_MSRP_STATUS_CACHE = os.path.join(
+    os.path.dirname(OUTPUT_DIR), "boat_cache", "msrp_status_cache.json"
+)
+_MSRP_OK_LOCKED = os.path.join(
+    os.path.dirname(OUTPUT_DIR), "boat_cache", "msrp_ok_locked.json"
+)
+
+
+def _load_msrp_ok_locked() -> dict[str, dict]:
+    if not os.path.isfile(_MSRP_OK_LOCKED):
+        return {}
+    try:
+        with open(_MSRP_OK_LOCKED, encoding="utf-8") as handle:
+            payload = json.load(handle)
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_msrp_ok_locked(payload: dict[str, dict]) -> None:
+    os.makedirs(os.path.dirname(_MSRP_OK_LOCKED), exist_ok=True)
+    with open(_MSRP_OK_LOCKED, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+
+def _msrp_ok_locked_entry(stat: dict) -> dict:
+    return {
+        "status": "ok",
+        "missing": 0,
+        "total": int(stat.get("total") or 0),
+        "locked": True,
+    }
+
+
+def _lock_msrp_ok(container: str, stat: dict) -> None:
+    key = normalize_container_id(container)
+    locked = _load_msrp_ok_locked()
+    locked[key] = _msrp_ok_locked_entry(stat)
+    _save_msrp_ok_locked(locked)
+
+
+def _promote_cached_msrp_ok_to_locked(cache: dict[str, dict]) -> None:
+    """One-time promotion: previously scanned OK containers skip future file reads."""
+    locked = _load_msrp_ok_locked()
+    changed = False
+    for key, stat in cache.items():
+        if stat.get("status") != "ok":
+            continue
+        norm_key = normalize_container_id(key)
+        if norm_key in locked:
+            continue
+        locked[norm_key] = _msrp_ok_locked_entry(stat)
+        changed = True
+    if changed:
+        _save_msrp_ok_locked(locked)
+
+
+def _load_msrp_status_cache() -> dict[str, dict]:
+    if not os.path.isfile(_MSRP_STATUS_CACHE):
+        return {}
+    try:
+        with open(_MSRP_STATUS_CACHE, encoding="utf-8") as handle:
+            return json.load(handle)
+    except Exception:
+        return {}
+
+
+def _save_msrp_status_cache(payload: dict[str, dict]) -> None:
+    os.makedirs(os.path.dirname(_MSRP_STATUS_CACHE), exist_ok=True)
+    with open(_MSRP_STATUS_CACHE, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+
+def _scan_original_msrp_status(file_path: str) -> dict:
+    """Count Price1 gaps in the container source Excel System File tab."""
+    df = pd.read_excel(file_path, sheet_name="System File", header=2)
+    df.columns = df.columns.str.replace("\n", " ").str.strip()
+    df = _filter_system_file_line_items(df)
+    total = len(df)
+    if total == 0 or "Price1" not in df.columns:
+        return {"status": "missing", "missing": total, "total": total}
+
+    prices = pd.to_numeric(df["Price1"], errors="coerce")
+    missing = int((prices.isna() | (prices <= 0)).sum())
+    if missing == 0:
+        status = "ok"
+    elif missing >= total:
+        status = "missing"
+    else:
+        status = "partial"
+    return {"status": status, "missing": missing, "total": total}
+
+
+def _build_msrp_status_lookup(container_files: dict[str, str]) -> dict[str, dict]:
+    cache = _load_msrp_status_cache()
+    _promote_cached_msrp_ok_to_locked(cache)
+    locked = _load_msrp_ok_locked()
+    updated_cache: dict[str, dict] = {}
+    lookup: dict[str, dict] = dict(locked)
+
+    for container, file_path in container_files.items():
+        key = normalize_container_id(container)
+        if key in locked:
+            continue
+
+        try:
+            mtime = os.path.getmtime(file_path)
+        except OSError:
+            lookup[key] = {"status": "unknown", "missing": 0, "total": 0}
+            continue
+
+        cached = cache.get(key)
+        if cached and cached.get("mtime") == mtime and cached.get("status") == "ok":
+            _lock_msrp_ok(key, cached)
+            entry = _msrp_ok_locked_entry(cached)
+            lookup[key] = entry
+            updated_cache[key] = {**cached, "locked": True}
+            continue
+        if cached and cached.get("mtime") == mtime:
+            lookup[key] = cached
+            updated_cache[key] = cached
+            continue
+
+        try:
+            stat = _scan_original_msrp_status(file_path)
+        except Exception as exc:
+            current_app.logger.warning("MSRP scan failed for %s: %s", key, exc)
+            stat = {"status": "unknown", "missing": 0, "total": 0}
+        stat["mtime"] = mtime
+        if stat.get("status") == "ok":
+            _lock_msrp_ok(key, stat)
+            stat = _msrp_ok_locked_entry(stat)
+        lookup[key] = stat
+        updated_cache[key] = stat
+
+    for key, entry in locked.items():
+        lookup[key] = entry
+        if key not in updated_cache:
+            updated_cache[key] = entry
+
+    _save_msrp_status_cache(updated_cache)
+    return lookup
+
+
+def _msrp_price_map_from_original(file_path: str) -> dict[str, float]:
+    """Return SKU -> Price1 from the original container file (Price1 > 0 only)."""
+    df = pd.read_excel(file_path, sheet_name="System File", header=2)
+    df.columns = df.columns.str.replace("\n", " ").str.strip()
+    df = _filter_system_file_line_items(df)
+    mapping: dict[str, float] = {}
+    for _, row in df.iterrows():
+        style = str(row.get("STYLE NO", "")).strip()
+        if not style:
+            continue
+        color_raw = str(row.get("COLOR", "")).strip()
+        color = normalize_color_to_abbrev(color_raw)
+        sku = f"{style} {color}".strip().upper()
+        price = _safe_float(row.get("Price1"))
+        if sku and price > 0:
+            mapping[sku] = price
+    return mapping
+
+
+def _container_po_skus(cursor, container_number: str) -> set[str]:
+    cursor.execute(
+        """
+        SELECT DISTINCT RTRIM(prod_cd)
+        FROM dbo.plog
+        WHERE RTRIM(pur_num) = ?
+          AND ISNULL(log_qty, 0) > 0
+        """,
+        (container_number.strip().upper(),),
+    )
+    return {str(row[0]).strip().upper() for row in cursor.fetchall() if row[0]}
+
+
+def _sync_styles_csv_retail_prices(container_number: str, price_updates: dict[str, float]) -> int:
+    normalized = normalize_container_id(container_number)
+    csv_path = os.path.join(OUTPUT_DIR, f"{normalized}-styles.csv")
+    if not os.path.exists(csv_path) or not price_updates:
+        return 0
+
+    df = pd.read_csv(csv_path)
+    if "Item#" not in df.columns or "Price1" not in df.columns:
+        return 0
+
+    changed = 0
+    for idx, record in df.iterrows():
+        sku = str(record.get("Item#", "")).strip().upper()
+        if sku in price_updates:
+            df.at[idx, "Price1"] = price_updates[sku]
+            changed += 1
+    if changed:
+        df.to_csv(csv_path, index=False)
+    return changed
+
+
+def _run_container_msrp_update(container_number: str, current_user: str) -> dict:
+    normalized = normalize_container_id(container_number)
+    container_files = scan_dropbox_containers()
+    if normalized not in container_files:
+        return {
+            "success": False,
+            "error": f"No Dropbox source file found for {normalized}",
+        }
+
+    original_prices = _msrp_price_map_from_original(container_files[normalized])
+    if not original_prices:
+        return {
+            "success": False,
+            "error": (
+                f"No Price1 values found in the original file for {normalized}. "
+                "Add MSRP to the Excel file or use Reprocess to enter retail manually."
+            ),
+        }
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        po_skus = _container_po_skus(cursor, normalized)
+    finally:
+        conn.close()
+
+    if not po_skus:
+        return {
+            "success": False,
+            "error": f"No OMS PO lines found for {normalized}",
+        }
+
+    price_updates = {
+        sku: original_prices[sku]
+        for sku in po_skus
+        if sku in original_prices and original_prices[sku] > 0
+    }
+    if not price_updates:
+        return {
+            "success": False,
+            "error": (
+                f"Original file has no usable Price1 for SKUs on PO {normalized}. "
+                "Fix the Excel file or use Reprocess to enter retail manually."
+            ),
+        }
+
+    from decimal import Decimal
+
+    decimal_updates = {sku: Decimal(str(price)) for sku, price in price_updates.items()}
+    result = update_retail_prices_dual(decimal_updates, adjusted_by=current_user)
+    csv_changed = _sync_styles_csv_retail_prices(normalized, price_updates)
+
+    msrp_stat = _scan_original_msrp_status(container_files[normalized])
+    still_missing = msrp_stat.get("missing", 0)
+    message = (
+        f"Updated MSRP on {len(result.get('updated_fdc', []))} SKU(s) in FDC and "
+        f"{len(result.get('updated_efas', []))} SKU(s) in EFAS."
+    )
+    if csv_changed:
+        message += f" Styles CSV updated ({csv_changed} row(s))."
+    if still_missing:
+        message += (
+            f" {still_missing} line(s) still have no Price1 in the original file."
+        )
+
+    return {
+        "success": result.get("success", False),
+        "message": message,
+        "updated_count": len(price_updates),
+        "still_missing_msrp": still_missing,
+        "result": result,
+    }
+
+
+def _erp_log_time_to_display(log_time) -> str:
+    """Decode OMS plog LOG_TIME to HH:MM:SS."""
+    if log_time is None:
+        return ""
+    try:
+        total = int(log_time)
+    except (TypeError, ValueError):
+        return ""
+    if total <= 0:
+        return ""
+    seconds = total // 100
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+
+def _fetch_po_created_lookup(container_list: list[str]) -> dict[str, tuple[str, str]]:
+    """Return container -> (po_date, po_time) from pur_ord + plog."""
+    if not container_list:
+        return {}
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    lookup: dict[str, tuple[str, str]] = {}
+    try:
+        placeholders = ",".join(["?"] * len(container_list))
+        cursor.execute(
+            f"""
+            SELECT RTRIM(p.pur_num) AS pur_num,
+                   RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(p.pur_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                   RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(p.pur_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                   CAST(YEAR(DATEADD(DAY, CAST(p.pur_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS po_date,
+                   MIN(pl.log_time) AS log_time
+            FROM dbo.pur_ord p
+            LEFT JOIN dbo.plog pl ON RTRIM(pl.pur_num) = RTRIM(p.pur_num)
+            WHERE RTRIM(p.pur_num) IN ({placeholders})
+            GROUP BY RTRIM(p.pur_num), p.pur_dt
+            """,
+            container_list,
+        )
+        for pur_num, po_date, log_time in cursor.fetchall():
+            key = str(pur_num or "").strip().upper()
+            date_part = str(po_date or "").strip()
+            time_part = _erp_log_time_to_display(log_time)
+            if key and date_part:
+                lookup[key] = (date_part, time_part)
+    finally:
+        conn.close()
+    return lookup
+
+
+def _split_datetime_display(raw) -> tuple[str, str]:
+    """Return (date, time) strings for hub display."""
+    text = str(raw or "").strip()
+    if not text or text.lower() in {"written time", "nan", "none"}:
+        return "", ""
+    for fmt in (
+        "%m/%d/%Y %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
+        "%m/%d/%Y %H:%M",
+        "%Y-%m-%d %H:%M",
+        "%m/%d/%Y",
+        "%Y-%m-%d",
+    ):
+        try:
+            dt = datetime.strptime(text, fmt)
+            date_part = dt.strftime("%m/%d/%Y")
+            time_part = dt.strftime("%H:%M:%S") if "%H" in fmt else ""
+            return date_part, time_part
+        except ValueError:
+            continue
+    if " " in text:
+        date_part, time_part = text.split(None, 1)
+        return date_part.strip(), time_part.strip()
+    return text, ""
+
+
+def _msrp_status_label(status: str, missing: int, total: int) -> str:
+    if status == "ok":
+        return "OK"
+    if status == "partial" and total:
+        return f"{missing} missing"
+    if status == "missing":
+        return "Need Ken"
+    return "—"
+
+
+def _build_container_hub_rows(
+    df: pd.DataFrame,
+    container_files: dict[str, str],
+) -> list[dict]:
+    """Build simplified container rows for the hub page (OMS status only, no ETA/Memo columns)."""
+    sheet = df.copy()
+    if "FDC container" not in sheet.columns:
+        return []
+
+    msrp_lookup = _build_msrp_status_lookup(container_files)
+
+    if "BOL NUM" in sheet.columns:
+        sheet = sheet.rename(columns={"FDC container": "container", "BOL NUM": "bol"})
+    else:
+        sheet = sheet.rename(columns={"FDC container": "container"})
+        sheet["bol"] = ""
+
+    sheet["container"] = sheet["container"].astype(str).str.strip().str.upper().map(normalize_container_id)
+    sheet = sheet[
+        sheet["container"].notna()
+        & (sheet["container"] != "")
+        & (~sheet["container"].str.lower().isin({"nan", "none"}))
+    ].copy()
+    sheet["bol"] = sheet["bol"].fillna("").astype(str).str.strip()
+    sheet = sheet.drop_duplicates(subset=["container"], keep="last")
+    sheet["_fdc_sort_num"] = sheet["container"].map(_fdc_container_sort_number)
+    sheet = sheet.sort_values(by="_fdc_sort_num", ascending=False).drop(columns=["_fdc_sort_num"])
+    written_col = _written_time_column(sheet)
+
+    container_list = sheet["container"].tolist()
+    rcvd_lookup: dict[str, float] = {}
+    po_created_lookup: dict[str, tuple[str, str]] = {}
+
+    if container_list:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            placeholders = ",".join(["?"] * len(container_list))
+            cursor.execute(
+                f"""
+                SELECT PUR_NUM, SUM(RCVD_QTY) AS total_rcvd
+                FROM dbo.bin_pur
+                WHERE PUR_NUM IN ({placeholders})
+                GROUP BY PUR_NUM
+                """,
+                container_list,
+            )
+            rcvd_lookup = {str(row[0]).strip(): row[1] for row in cursor.fetchall()}
+        finally:
+            conn.close()
+        po_created_lookup = _fetch_po_created_lookup(container_list)
+
+    rows: list[dict] = []
+    for _, record in sheet.iterrows():
+        container_num = str(record["container"]).strip()
+        rcvd_qty = rcvd_lookup.get(container_num)
+        dropbox_available = container_num in container_files
+        in_oms = rcvd_qty is not None
+        can_process = dropbox_available and not in_oms
+
+        if rcvd_qty is not None and rcvd_qty > 0:
+            status_key = "landed"
+        elif rcvd_qty is not None and rcvd_qty == 0:
+            status_key = "ocean"
+        else:
+            status_key = "upload"
+
+        styles_file = os.path.join(OUTPUT_DIR, f"{container_num}-styles.csv")
+        po_file = os.path.join(OUTPUT_DIR, f"{container_num}-PO.csv")
+        written_raw = record.get(written_col) if written_col else ""
+        written_date, written_clock = _split_datetime_display(written_raw)
+        processed_date, processed_clock = po_created_lookup.get(container_num, ("", ""))
+        msrp_info = msrp_lookup.get(container_num, {})
+        msrp_status = str(msrp_info.get("status") or "unknown")
+        msrp_missing = int(msrp_info.get("missing") or 0)
+        msrp_total = int(msrp_info.get("total") or 0)
+        row = {
+            "container": container_num,
+            "bol": str(record.get("bol") or "").strip(),
+            "written_date": written_date,
+            "written_time": written_clock,
+            "processed_date": processed_date,
+            "processed_time": processed_clock,
+            "msrp_status": msrp_status,
+            "msrp_missing_count": msrp_missing,
+            "msrp_total_count": msrp_total,
+            "msrp_label": _msrp_status_label(msrp_status, msrp_missing, msrp_total),
+            "status_key": status_key,
+            "status_label": _HUB_STATUS_LABELS.get(status_key, status_key.title()),
+            "action_mode": _hub_action_mode(
+                {"can_process": can_process, "status_key": status_key}
+            ),
+            "dropbox_available": dropbox_available,
+            "in_oms": in_oms,
+            "can_process": can_process,
+            "has_styles_csv": os.path.exists(styles_file),
+            "has_po_csv": os.path.exists(po_file),
+            "is_special": container_num.startswith("L"),
+        }
+        rows.append(row)
+
+    return rows
 
 
 def get_filtered_order_summary_by_skus(full_sku_list):
@@ -220,10 +774,11 @@ def batch_update_column_o(container_numbers):
         
         # Find rows to update (Container # is in Column A now)
         updates = []
+        target_ids = {normalize_container_id(c) for c in container_numbers}
         for row_idx, row in enumerate(all_data):
             if len(row) >= 1:  # Make sure row has at least column A
-                container = row[0]  # Column A (index 0) = Container #
-                if container in container_numbers:
+                container = normalize_container_id(row[0])  # Column A = Container #
+                if container in target_ids:
                     # Row index in sheet (1-based, +1 because enumerate is 0-based)
                     sheet_row = row_idx + 1
                     # Update column O with timestamp
@@ -260,19 +815,17 @@ def update_received_dates_in_sheets(container_dates_dict):
         for row_idx, row in enumerate(all_data):
             if len(row) >= 1:  # Make sure row has at least column A
                 container = row[0]  # Column A (index 0) = Container #
-                if container in container_dates_dict:
-                    # Check if Column F (index 5) already has data
-                    existing_rcd = row[5].strip() if len(row) > 5 else ''
-                    
-                    # Only update if the cell is empty
-                    if not existing_rcd:
-                        # Row index in sheet (1-based, +1 because enumerate is 0-based)
-                        sheet_row = row_idx + 1
-                        received_date = container_dates_dict[container]
-                        updates.append({
-                            'range': f'F{sheet_row}',  # Column F = RCD
-                            'values': [[received_date]]
-                        })
+                container_key = normalize_container_id(container)
+                if container_key not in container_dates_dict:
+                    continue
+                existing_rcd = row[5].strip() if len(row) > 5 else ''
+                if not existing_rcd:
+                    sheet_row = row_idx + 1
+                    received_date = container_dates_dict[container_key]
+                    updates.append({
+                        'range': f'F{sheet_row}',  # Column F = RCD
+                        'values': [[received_date]]
+                    })
         
         # Batch update all cells at once
         if updates:
@@ -283,6 +836,37 @@ def update_received_dates_in_sheets(container_dates_dict):
         
     except Exception as e:
         current_app.logger.error(f"Error updating received dates in Google Sheets: {e}")
+        return False
+
+def clear_received_dates_in_sheets(container_numbers: list[str]) -> bool:
+    """Clear RCD (column F) for containers reverted to ocean."""
+    try:
+        client = get_sheets_client()
+        if not client:
+            return False
+
+        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
+        all_data = sheet.get_all_values()
+        target_keys = {normalize_container_id(c) for c in container_numbers if c}
+        updates = []
+        for row_idx, row in enumerate(all_data):
+            if not row or not row[0]:
+                continue
+            container_key = normalize_container_id(row[0])
+            if container_key not in target_keys:
+                continue
+            sheet_row = row_idx + 1
+            updates.append({
+                'range': f'F{sheet_row}',
+                'values': [['']],
+            })
+
+        if updates:
+            sheet.batch_update(updates)
+            return True
+        return False
+    except Exception as e:
+        current_app.logger.error(f"Error clearing received dates in Google Sheets: {e}")
         return False
 
 def update_last_updated_for_all_containers(container_list, fetch_timestamp):
@@ -322,6 +906,95 @@ def update_last_updated_for_all_containers(container_list, fetch_timestamp):
     except Exception as e:
         current_app.logger.error(f"Error updating Last Updated for all containers: {e}")
         return False
+
+def _sheet_col_letter(col_idx_1based: int) -> str:
+    letters = ""
+    while col_idx_1based > 0:
+        col_idx_1based, rem = divmod(col_idx_1based - 1, 26)
+        letters = chr(65 + rem) + letters
+    return letters
+
+
+def update_shipment_tracking_in_sheets(records: list[dict]) -> int:
+    """Write weekly tracking fields onto the container import Google Sheet."""
+    if not records:
+        return 0
+
+    by_container = {
+        normalize_container_id(rec.get("container_id")): rec
+        for rec in records
+        if normalize_container_id(rec.get("container_id"))
+    }
+    if not by_container:
+        return 0
+
+    try:
+        client = get_sheets_client()
+        if not client:
+            return 0
+
+        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
+        all_data = sheet.get_all_values()
+        if not all_data:
+            return 0
+
+        header_map = {
+            str(h).strip().lower(): idx
+            for idx, h in enumerate(all_data[0])
+            if h is not None
+        }
+
+        def find_idx(candidates: list[str], fallback: int) -> int:
+            for candidate in candidates:
+                if candidate in header_map:
+                    return header_map[candidate]
+            return fallback
+
+        container_idx = find_idx(["fdc container", "container"], 0)
+        bol_idx = find_idx(["bol num", "bol"], 2)
+        etd_idx = find_idx(["eta1", "etd"], 4)
+        rcd_idx = find_idx(["rcd", "deliver date", "delivery date"], 5)
+        eta_idx = find_idx(["eta", "auto eta", "dennis eta"], 16)
+        voyage_idx = find_idx(["voyage", "vessel no", "vesso no", "vessel"], 18)
+        updated_idx = find_idx(["last updated", "last_updated"], 19)
+
+        updates = []
+        matched = 0
+        stamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+
+        for row_idx, row in enumerate(all_data[1:], start=2):
+            container_raw = row[container_idx] if len(row) > container_idx else ""
+            container_key = normalize_container_id(container_raw)
+            if container_key not in by_container:
+                continue
+
+            rec = by_container[container_key]
+            matched += 1
+
+            def queue_update(col_idx: int, value: str) -> None:
+                if not value:
+                    return
+                updates.append(
+                    {
+                        "range": f"{_sheet_col_letter(col_idx + 1)}{row_idx}",
+                        "values": [[value]],
+                    }
+                )
+
+            queue_update(bol_idx, str(rec.get("container_no") or "").strip())
+            queue_update(etd_idx, str(rec.get("etd") or "").strip())
+            queue_update(rcd_idx, str(rec.get("deliver_date") or "").strip())
+            queue_update(eta_idx, str(rec.get("eta") or "").strip())
+            queue_update(voyage_idx, str(rec.get("vessel_no") or "").strip())
+            queue_update(updated_idx, stamp)
+
+        if updates:
+            sheet.batch_update(updates)
+        return matched
+    except Exception as e:
+        current_app.logger.error(f"Error updating shipment tracking in Google Sheets: {e}")
+        return 0
+
 
 def update_tracking_data_in_sheets(container_tracking_dict):
     """Update tracking data in Google Sheets for containers with shipment data.
@@ -437,35 +1110,19 @@ def add_multiple_containers_to_sheets(container_list):
         existing_containers = set()
         for row in all_data:
             if row and row[0]:  # Column A has container number
-                existing_containers.add(row[0])
+                existing_containers.add(normalize_container_id(row[0]))
         
-        # Specific containers mentioned by user
-        specific_containers = {'F25131', 'F25141', 'F25132', 'F25143', 'F25142'}
-        
-        # Filter containers - skip F versions if FT versions exist
         containers_to_add = []
         for container_num in container_list:
+            container_num = normalize_container_id(container_num)
             if not container_num:
-                continue
-            
-            # Ignore L-prefix containers
-            if container_num.startswith('L'):
                 continue
             
             # Check if container already exists
             if container_num in existing_containers:
                 continue
             
-            # Special logic for specific F-prefix containers: skip F versions if FT versions exist
-            if container_num in specific_containers:
-                # Check if FT version exists (F25131 -> FT25131)
-                if container_num.startswith('F') and len(container_num) > 1:
-                    ft_version = 'FT' + container_num[1:]  # F25131 -> FT25131
-                    if ft_version in existing_containers:
-                        continue
-            
             containers_to_add.append(container_num)
-        
         
         if not containers_to_add:
             return []
@@ -505,7 +1162,7 @@ def add_multiple_containers_to_sheets(container_list):
                         # Extract container number after "CONTAINER #："
                         match = re.search(r'CONTAINER\s*#[：:]\s*([A-Z0-9]+)', a6_value, re.IGNORECASE)
                         if match:
-                            actual_container_number = match.group(1)
+                            actual_container_number = normalize_container_id(match.group(1))
                             new_row[2] = actual_container_number  # Column C (index 2) = Invoice Container #
                 except Exception as e:
                     current_app.logger.error(f"Error reading Invoice for {container_num}: {e}")
@@ -539,53 +1196,53 @@ def add_multiple_containers_to_sheets(container_list):
         current_app.logger.error(f"Error adding containers to Google Sheets: {e}")
         return []
 
+def _dropbox_scan_locations():
+    """Dropbox folders to scan: catalog root plus latest *年 folder and its month subfolders."""
+    locations = [DROPBOX_CONTAINER_PATH]
+    year_folders = [
+        path for path in glob.glob(os.path.join(DROPBOX_CONTAINER_PATH, '*'))
+        if os.path.isdir(path) and re.search(r'\d+年', os.path.basename(path))
+    ]
+    if year_folders:
+        def _year_sort_key(path: str) -> int:
+            match = re.search(r'(\d+)', os.path.basename(path))
+            return int(match.group(1)) if match else 0
+
+        latest_year_folder = max(year_folders, key=_year_sort_key)
+        locations.append(latest_year_folder)
+        month_folders = glob.glob(os.path.join(latest_year_folder, '*'))
+        locations.extend(path for path in month_folders if os.path.isdir(path))
+    return locations
+
+
 def scan_dropbox_containers():
-    """Scan Dropbox folder for all container Excel files and extract container numbers"""
+    """Scan Dropbox folder for container Excel files (F, FT, and L prefixes)."""
     container_files = {}
     
     try:
-        # Only scan 2026年 folder and its subfolders (month folders)
-        year_2026_folder = os.path.join(DROPBOX_CONTAINER_PATH, '2026年')
-        
-        # Build scan locations: root + 2026年 folder + month subfolders within 2026年
-        scan_locations = [DROPBOX_CONTAINER_PATH]
-        
-        # Add 2026年 folder if it exists
-        if os.path.isdir(year_2026_folder):
-            scan_locations.append(year_2026_folder)
-            # Scan month subfolders within 2026年 (e.g., 1月, 2月, etc.)
-            month_folders = glob.glob(os.path.join(year_2026_folder, '*'))
-            scan_locations.extend([f for f in month_folders if os.path.isdir(f)])
-        
-        for location in scan_locations:
-            # Get all Excel files in this location
+        for location in _dropbox_scan_locations():
             excel_files = glob.glob(os.path.join(location, '*.xlsx'))
             
             for file_path in excel_files:
                 filename = os.path.basename(file_path)
-                # Extract container number from filename
-                # Handle both FT and F versions - store under BOTH keys
-                # Priority: F version takes precedence over FT version
-                # Ignore L-prefix containers
                 
-                # First try matching FT pattern (e.g., "FT26119 Packing List...")
-                match = re.match(r'^FT(\d+)', filename)
+                # FT25141.xlsx -> F25141 (never store FT prefix)
+                match = re.match(r'^FT(\d+)', filename, re.IGNORECASE)
                 if match:
-                    ft_number = match.group(0)  # Full FT26119
-                    f_number = 'F' + match.group(1)  # Convert to F26119
-                    # Store under both FT and F keys (only if not already present)
-                    if ft_number not in container_files:
-                        container_files[ft_number] = file_path
-                    if f_number not in container_files:
-                        container_files[f_number] = file_path
+                    f_number = 'F' + match.group(1)
+                    container_files[f_number] = file_path
                     continue
                 
-                # Then try matching F pattern (e.g., "F26119 Packing List...")
-                match = re.match(r'^F(\d+)', filename)
+                # F26119
+                match = re.match(r'^F(\d+)', filename, re.IGNORECASE)
                 if match:
-                    container_number = match.group(0)  # Get the full F25xxx or F26xxx
-                    # F versions take priority - always overwrite
-                    container_files[container_number] = file_path
+                    container_files[match.group(0).upper()] = file_path
+                    continue
+
+                # L202601 (special / EFAS containers)
+                match = re.match(r'^(L\d+)', filename, re.IGNORECASE)
+                if match:
+                    container_files[match.group(1).upper()] = file_path
         
         return container_files
     
@@ -945,101 +1602,130 @@ def create_terminal49_tracking_request(container_number, scac=None):
         current_app.logger.error(f"Error creating Terminal49 tracking request for {container_number}: {e}")
         return None
 
+def _container_step3_columns():
+    return [
+        'Item#', 'WHS#', 'Descrip', 'Unit', 'OrdSize', 'MinStk', 'Price Type', 'Price1', 'Price2', 'Price3',
+        'Price4', 'Price5', 'QtyPrice1', 'QtyPrice2', 'QtyPrice3', 'QtyPrice4', 'QtyPrice5', 'QtyPrice6',
+        'Range1', 'Range2', 'Range3', 'Range4', 'Range5', 'Range6', 'Range7', 'CreateDate', 'Note1', 'Note2',
+        'Item Def. Bin Location', 'Warehouse Bin Location', 'Product Year', 'Comp', 'Class#', 'Vend#',
+        'Vend Item#', 'Image Name', 'Unit/Case', 'Box/Case', 'Case Vol', 'Unit Vol', 'Sales Cost', 'Discount',
+        'CommRt', 'Taxable', 'Stkable', 'UPC Code', 'Updt Date', 'Updt By', 'Dept#', 'Case Wt', 'Unit Wt',
+        'OEM#', 'Alt.Item#', 'Lead Date', 'Color', 'Size', 'In Stock', 'Last Rcv Q', 'Last Rcv Dat',
+        'Base Cost', 'Duty', 'Handling fee', 'Ship Fee', 'Avg.Cost', 'Last Sale Da', 'Last Order', 'Order Date',
+        'So Qty', 'PO Qty', 'l2yrsqty', 'lyrsqty', 'ThisYrSQty', 'Descrip2', 'Descrip3', 'Notes Line 1',
+        'Notes Line 2', 'Notes Line 3', 'Notes Line 4', 'Notes Line 5', 'Notes Line 6', 'Notes Line 7',
+        'Notes Line 8', 'Case Length', 'Case Height', 'Case Width', 'Unit Length', 'Unit Height', 'Unit Width',
+        'Division', 'Case/Pallet', 'Catalog Page', 'Status', 'Default Unit', 'Release', 'Last Sale Qty',
+        'Allocate Qty', 'More Notes 1', 'More Notes 2', 'More Notes 3', 'More Notes 4', 'More Notes 5',
+        'More Notes 6', 'More Notes 7', 'More Notes 8',
+    ]
+
+
+def _preview_row_from_line(row, container_number: str) -> dict:
+    style = str(row['STYLE NO']).strip()
+    color_raw = str(row['COLOR_RAW']).strip()
+    color = normalize_color_to_abbrev(color_raw)
+    return {
+        'style': style,
+        'color': color,
+        'color_original': color_raw,
+        'color_changed': color_raw.upper() != color.upper(),
+        'item_num': f"{style} {color}",
+        'descrip': container_number,
+        'sales_cost': _safe_float(row['OMS']),
+        'retail_prs': _safe_float(row['Price1']),
+        'po_qty': _safe_float(row['QUANTITY']),
+        'class_cd': 'L1',
+        'unit_case': _safe_float(row['PCS /CTN']),
+        'box_case': 1.0,
+        'case_wt': _safe_float(row['WT/CTN (LBS)']),
+        'unit_wt': _safe_float(row['WT/PCS (LBS)']),
+        'unit_len': _safe_float(row['SIZE   (L)IN'], default=None) if pd.notna(row['SIZE   (L)IN']) else None,
+        'unit_wi': _safe_float(row['SIZE   (W)IN'], default=None) if pd.notna(row['SIZE   (W)IN']) else None,
+        'unit_hi': _safe_float(row['SIZE   (H)IN'], default=None) if pd.notna(row['SIZE   (H)IN']) else None,
+    }
+
+
+def _build_container_preview(df_f24213, container_number: str) -> list[dict]:
+    return [_preview_row_from_line(row, container_number) for _, row in df_f24213.iterrows()]
+
+
+def save_container_csvs(container_number: str, preview_rows: list[dict]) -> dict:
+    """Write styles + PO CSV files from confirmed preview rows."""
+    step3_columns = _container_step3_columns()
+    step3_data = {
+        'Item#': [r['item_num'] for r in preview_rows],
+        'WHS#': ['01'] * len(preview_rows),
+        'Descrip': [r['descrip'] for r in preview_rows],
+        'Alt.Item#': [r['style'] for r in preview_rows],
+        'Color': [r['color'] for r in preview_rows],
+        'Class#': [r.get('class_cd', 'L1') for r in preview_rows],
+        'Unit/Case': [r['unit_case'] for r in preview_rows],
+        'Box/Case': [r.get('box_case', 1) for r in preview_rows],
+        'Sales Cost': [r['sales_cost'] for r in preview_rows],
+        'Case Wt': [r['case_wt'] for r in preview_rows],
+        'Unit Wt': [r['unit_wt'] for r in preview_rows],
+        'Unit Length': [r.get('unit_len') or '' for r in preview_rows],
+        'Unit Width': [r.get('unit_wi') or '' for r in preview_rows],
+        'Unit Height': [r.get('unit_hi') or '' for r in preview_rows],
+        'Price1': [r['retail_prs'] for r in preview_rows],
+        'Base Cost': [r['sales_cost'] for r in preview_rows],
+        'Avg.Cost': [r['sales_cost'] for r in preview_rows],
+    }
+    df_step3 = pd.DataFrame(step3_data)
+    for col in step3_columns:
+        if col not in df_step3.columns:
+            df_step3[col] = ''
+    df_step3 = df_step3[step3_columns]
+
+    step4_columns = ['P/O#', 'Item#', 'W#', 'P/O Qty', 'Price', 'Receive Qty', 'Receive Price', 'UPC']
+    step4_data = {
+        'P/O#': [container_number] * len(preview_rows),
+        'Item#': [r['item_num'] for r in preview_rows],
+        'W#': ['01'] * len(preview_rows),
+        'P/O Qty': [r['po_qty'] for r in preview_rows],
+        'Price': [r['sales_cost'] for r in preview_rows],
+    }
+    df_step4 = pd.DataFrame(step4_data)
+    for col in step4_columns:
+        if col not in df_step4.columns:
+            df_step4[col] = ''
+    df_step4 = df_step4[step4_columns]
+
+    df_step3, df_step4 = _trim_blank_export_rows(df_step3, df_step4)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    step3_filename = f"{container_number}-styles.csv"
+    step4_filename = f"{container_number}-PO.csv"
+    df_step3.to_csv(os.path.join(OUTPUT_DIR, step3_filename), index=False)
+    df_step4.to_csv(os.path.join(OUTPUT_DIR, step4_filename), index=False)
+    return {'styles_file': step3_filename, 'po_file': step4_filename}
+
+
 def process_container_file(file_path, container_number):
-    """Process a container Excel file and generate CSV files"""
+    """Process a container Excel file and generate CSV files + preview rows."""
     try:
-        # Read the Excel file
         df_header = pd.read_excel(file_path, sheet_name='System File', nrows=2, header=None)
         df_f24213 = pd.read_excel(file_path, sheet_name='System File', header=2)
-        
-        # Clean column names
+
         df_f24213.columns = df_f24213.columns.str.replace('\n', ' ').str.strip()
         df_f24213 = _filter_system_file_line_items(df_f24213)
-        df_f24213['WT/PCS (LBS)'] = df_f24213['WT/PCS (LBS)'].round(2)
+        df_f24213['WT/PCS (LBS)'] = pd.to_numeric(df_f24213['WT/PCS (LBS)'], errors='coerce').round(2)
         df_f24213 = df_f24213.applymap(
             lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x
         )
+        df_f24213['COLOR_RAW'] = df_f24213['COLOR'].astype(str).str.strip()
+        df_f24213['COLOR'] = df_f24213['COLOR_RAW'].apply(normalize_color_to_abbrev)
 
-        # Step 3 columns (styles CSV)
-        step3_columns = [
-            'Item#', 'WHS#', 'Descrip', 'Unit', 'OrdSize', 'MinStk', 'Price Type', 'Price1', 'Price2', 'Price3', 
-            'Price4', 'Price5', 'QtyPrice1', 'QtyPrice2', 'QtyPrice3', 'QtyPrice4', 'QtyPrice5', 'QtyPrice6', 
-            'Range1', 'Range2', 'Range3', 'Range4', 'Range5', 'Range6', 'Range7', 'CreateDate', 'Note1', 'Note2', 
-            'Item Def. Bin Location', 'Warehouse Bin Location', 'Product Year', 'Comp', 'Class#', 'Vend#', 
-            'Vend Item#', 'Image Name', 'Unit/Case', 'Box/Case', 'Case Vol', 'Unit Vol', 'Sales Cost', 'Discount', 
-            'CommRt', 'Taxable', 'Stkable', 'UPC Code', 'Updt Date', 'Updt By', 'Dept#', 'Case Wt', 'Unit Wt', 
-            'OEM#', 'Alt.Item#', 'Lead Date', 'Color', 'Size', 'In Stock', 'Last Rcv Q', 'Last Rcv Dat', 
-            'Base Cost', 'Duty', 'Handling fee', 'Ship Fee', 'Avg.Cost', 'Last Sale Da', 'Last Order', 'Order Date', 
-            'So Qty', 'PO Qty', 'l2yrsqty', 'lyrsqty', 'ThisYrSQty', 'Descrip2', 'Descrip3', 'Notes Line 1', 
-            'Notes Line 2', 'Notes Line 3', 'Notes Line 4', 'Notes Line 5', 'Notes Line 6', 'Notes Line 7', 
-            'Notes Line 8', 'Case Length', 'Case Height', 'Case Width', 'Unit Length', 'Unit Height', 'Unit Width', 
-            'Division', 'Case/Pallet', 'Catalog Page', 'Status', 'Default Unit', 'Release', 'Last Sale Qty', 
-            'Allocate Qty', 'More Notes 1', 'More Notes 2', 'More Notes 3', 'More Notes 4', 'More Notes 5', 
-            'More Notes 6', 'More Notes 7', 'More Notes 8'
-        ]
-        
-        # Prepare step3 data
-        step3_data = {
-            'Item#': df_f24213['STYLE NO'] + ' ' + df_f24213['COLOR'],
-            'WHS#': "01",
-            'Descrip': container_number,
-            'Alt.Item#': df_f24213['STYLE NO'],
-            'Color': df_f24213['COLOR'],
-            'Class#': "L1",
-            'Unit/Case': df_f24213['PCS /CTN'],
-            'Box/Case': "01",
-            'Sales Cost': df_f24213['OMS'],
-            'Case Wt': df_f24213['WT/CTN (LBS)'],
-            'Unit Wt': df_f24213['WT/PCS (LBS)'],
-            'Unit Length': df_f24213['SIZE   (L)IN'],
-            'Unit Width': df_f24213['SIZE   (W)IN'],
-            'Unit Height': df_f24213['SIZE   (H)IN'],
-            'Price1': df_f24213['Price1'],
-            'Base Cost': df_f24213['OMS'],
-            'Avg.Cost': df_f24213['OMS']
-        }
+        preview = _build_container_preview(df_f24213, container_number)
+        file_info = save_container_csvs(container_number, preview)
 
-        df_step3 = pd.DataFrame(step3_data)
-        for col in step3_columns:
-            if col not in df_step3.columns:
-                df_step3[col] = ""
-        df_step3 = df_step3[step3_columns]
-
-        # Step 4 data (PO CSV)
-        step4_columns = ['P/O#', 'Item#', 'W#', 'P/O Qty', 'Price', 'Receive Qty', 'Receive Price', 'UPC']
-        step4_data = {
-            'P/O#': container_number,
-            'Item#': df_f24213['STYLE NO'] + ' ' + df_f24213['COLOR'],
-            'W#': "01",
-            'P/O Qty': df_f24213['QUANTITY'],
-            'Price': df_f24213['OMS'],
-        }
-
-        df_step4 = pd.DataFrame(step4_data)
-        for col in step4_columns:
-            if col not in df_step4.columns:
-                df_step4[col] = ""
-        df_step4 = df_step4[step4_columns]
-
-        df_step3, df_step4 = _trim_blank_export_rows(df_step3, df_step4)
-
-        # Save CSV files
-        os.makedirs(OUTPUT_DIR, exist_ok=True)
-        
-        step3_filename = f"{container_number}-styles.csv"
-        step4_filename = f"{container_number}-PO.csv"
-        step3_path = os.path.join(OUTPUT_DIR, step3_filename)
-        step4_path = os.path.join(OUTPUT_DIR, step4_filename)
-        
-        df_step3.to_csv(step3_path, index=False)
-        df_step4.to_csv(step4_path, index=False)
-        
         return {
             'success': True,
-            'styles_file': step3_filename,
-            'po_file': step4_filename
+            'preview': preview,
+            'styles_file': file_info['styles_file'],
+            'po_file': file_info['po_file'],
         }
-    
+
     except Exception as e:
         current_app.logger.error(f"Error processing container {container_number}: {e}")
         return {
@@ -1048,332 +1734,391 @@ def process_container_file(file_path, container_number):
         }
 
 
+def _clean_preview_import_rows(rows: list[dict], container_number: str) -> list[dict]:
+    normalized = normalize_container_id(container_number)
+    cleaned_rows = []
+    for row in rows:
+        style = str(row.get('style', '')).strip().upper()
+        color = normalize_color_to_abbrev(str(row.get('color', '')).strip())
+        item_num = str(row.get('item_num', '')).strip().upper()
+        if not item_num:
+            item_num = f"{style} {color}".strip()
+        if not style and item_num:
+            parts = item_num.split(' ', 1)
+            style = parts[0]
+            if len(parts) > 1 and not color:
+                color = normalize_color_to_abbrev(parts[1])
+        cleaned_rows.append({
+            **row,
+            'style': style,
+            'color': color,
+            'item_num': item_num,
+            'descrip': str(row.get('descrip', normalized)).strip().upper() or normalized,
+            'sales_cost': float(row.get('sales_cost', 0) or 0),
+            'retail_prs': float(row.get('retail_prs', 0) or 0),
+            'po_qty': float(row.get('po_qty', 0) or 0),
+            'class_cd': str(row.get('class_cd', 'L1')).strip() or 'L1',
+            'unit_case': float(row.get('unit_case', 0) or 0),
+            'box_case': float(row.get('box_case', 1) or 1),
+            'case_wt': float(row.get('case_wt', 0) or 0),
+            'unit_wt': float(row.get('unit_wt', 0) or 0),
+            'unit_len': row.get('unit_len'),
+            'unit_wi': row.get('unit_wi'),
+            'unit_hi': row.get('unit_hi'),
+        })
+    return cleaned_rows
+
+
+def _run_container_db_import(
+    container_number: str,
+    preview_rows: list[dict],
+    current_user: str,
+    *,
+    vendor_id: str | None = None,
+) -> dict:
+    """Import styles to FDC+EFAS, then PO to FDC only."""
+    normalized = normalize_container_id(container_number)
+    cleaned_rows = _clean_preview_import_rows(preview_rows, normalized)
+    file_info = save_container_csvs(normalized, cleaned_rows)
+    batch_update_column_o([normalized])
+    styles_result = transfer_container_styles_to_oms(normalized, adjusted_by=current_user)
+    po_result = transfer_container_po_to_fdc(normalized, vendor_id=vendor_id)
+    success = styles_result.success and po_result.success
+    if po_result.skipped:
+        po_note = "PO already in FDC (skipped)"
+    elif po_result.repaired:
+        po_note = f"PO synced {po_result.repaired_lines} row(s) in FDC"
+    elif po_result.inserted_lines:
+        po_note = f"PO {len(po_result.inserted_lines)} line(s) → FDC (vendor {po_result.vendor_id})"
+    else:
+        po_note = "PO not imported"
+    message = (
+        f"Synced {styles_result.total_skus} SKU(s): "
+        f"FDC {len(styles_result.fdc.inserted)} inserted / {len(styles_result.fdc.updated)} updated, "
+        f"EFAS {len(styles_result.efas.inserted)} inserted / {len(styles_result.efas.updated)} updated. "
+        f"{po_note}."
+    )
+    return {
+        'success': success,
+        'message': message,
+        'files': file_info,
+        'styles': styles_result.to_dict(),
+        'po': po_result.to_dict(),
+    }
+
+
 @boat_service_bp.route('/boat', methods=['GET'])
 def boat_service():
     if 'username' not in session:
         return redirect(url_for("auth.login"))
     current_user = session['username']
-    current_app.logger.info(f"***{current_user}***__@@@checked boat page@@@")
-    
-    # Render page immediately with loading state
-    last_modified_date = "Loading...takes around 9 seconds"
-    return render_template('boat.html', table_data=None, last_modified_date=last_modified_date, current_user=current_user)
+    current_app.logger.info(f"***{current_user}***__@@@checked container hub@@@")
+    return render_template(
+        'boat.html',
+        current_user=current_user,
+        page_title='Container Hub',
+        google_sheet_url=GOOGLE_SHEET_EDIT_URL,
+    )
+
 
 @boat_service_bp.route('/boat/data', methods=['GET'])
 def boat_data():
-    """API endpoint to fetch boat data asynchronously"""
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
-    
+
     try:
-        # First, scan Dropbox for container files
+        force_refresh = request.args.get('refresh', '').lower() in ('1', 'true', 'yes')
         container_files = scan_dropbox_containers()
-        
-        # Get current containers from Google Sheets to check for missing ones
+
         try:
-            df_current = pd.read_csv(GOOGLE_SHEETS_URL)
-            current_containers = set(df_current['FDC container'].dropna().tolist())
-            containers_in_dropbox = set(container_files.keys())
-            new_containers = containers_in_dropbox - current_containers
-
-            # Filter out FT-prefixed containers if F-prefixed version exists
-            filtered_new_containers = set()
-            for container in new_containers:
-                if container.startswith('FT'):
-                    # FT26132 -> F26132
-                    f_version = 'F' + container[2:]
-                    # Only add FT if F version doesn't exist in new_containers or current_containers
-                    if f_version not in new_containers and f_version not in current_containers:
-                        filtered_new_containers.add(container)
-                else:
-                    # Always add F-prefixed or other containers
-                    filtered_new_containers.add(container)
-
-            # Batch add new containers to Google Sheets first
-            if filtered_new_containers:
-                # Sort containers by container number (small to large) before adding
-                sorted_new_containers = sorted(list(filtered_new_containers))
-                added_containers = add_multiple_containers_to_sheets(sorted_new_containers)
-
+            df, sheet_info = load_sheet_dataframe(force_refresh=force_refresh)
         except Exception as e:
-            current_app.logger.error(f"Error checking/updating Google Sheets: {e}")
-            # Continue with data fetching even if update fails
-        
-        # Now fetch the updated data from Google Sheets
+            current_app.logger.error(f"Error fetching sheet for boat: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+        cache_key = build_boat_data_cache_key(
+            sheet_hash=sheet_info['content_hash'],
+            dropbox_keys=list(container_files.keys()),
+        )
+        if not force_refresh:
+            cached_payload = load_cached_boat_data(cache_key)
+            if cached_payload:
+                return jsonify(cached_payload)
+
         try:
-            df = pd.read_csv(GOOGLE_SHEETS_URL)
-            last_modified_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " (Live from Google Sheets)"
+            current_containers = {
+                normalize_container_id(c)
+                for c in df['FDC container'].dropna().astype(str).str.strip()
+            }
+            new_containers = {
+                normalize_container_id(c)
+                for c in container_files.keys()
+            } - current_containers
+            if new_containers:
+                add_multiple_containers_to_sheets(sorted(new_containers))
+                df, sheet_info = load_sheet_dataframe(force_refresh=True)
+                cache_key = build_boat_data_cache_key(
+                    sheet_hash=sheet_info['content_hash'],
+                    dropbox_keys=list(container_files.keys()),
+                )
         except Exception as e:
-            current_app.logger.error(f"Error fetching data from Google Sheets: {e}")
-            return jsonify({'error': str(e)}), 500
+            current_app.logger.error(f"Error syncing containers to sheet: {e}")
 
-        # Store the fetch timestamp for Last Updated column
-        fetch_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        # Map columns directly by name - explicitly ignore PQRS (Shipping Line, Auto ETA, Auto Arrival, Voyage)
-        # Only read: Container, BOL, Memo, Exam, Dennis ETA (Column E), Internal RCD (Column F)
-        df_cleaned = df[['FDC container', 'BOL NUM', 'Memo', 'Exam', 'ETA', 'ATA', 'RCD']].copy()
-        
-        # Combine Memo and Exam columns with "-" separator
-        def combine_memo_exam(row):
-            memo = str(row['Memo']).strip() if pd.notna(row['Memo']) and str(row['Memo']).strip() else ''
-            exam = str(row['Exam']).strip() if pd.notna(row['Exam']) and str(row['Exam']).strip() else ''
-            
-            if memo and exam:
-                return f"{memo} - {exam}"
-            elif memo:
-                return memo
-            elif exam:
-                return exam
-            else:
-                return ''
-        
-        df_cleaned['MEMO'] = df_cleaned.apply(combine_memo_exam, axis=1)
-        
-        # Rename and reorder columns
-        # NOTE: ETA = Dennis ETA (user input), ATA = Internal RCD (actual arrival)
-        df_cleaned = df_cleaned.rename(columns={'FDC container': 'container', 'BOL NUM': 'link', 'ETA': 'Dennis ETA', 'ATA': 'pod_ata_at'})
-        df_cleaned = df_cleaned[['container', 'link', 'Dennis ETA', 'pod_ata_at', 'RCD', 'MEMO']]
-        
-
-        # Convert dates - handle both Excel serial dates and date strings
-        def convert_date(date_val):
-            if pd.isnull(date_val) or date_val == '':
-                return ''
-            # Try Excel serial format first
-            if isinstance(date_val, (int, float)):
-                try:
-                    return (pd.to_datetime('1899-12-30') + pd.to_timedelta(date_val, 'D')).strftime('%m/%d/%Y')
-                except:
-                    return ''
-            # Try parsing as date string
-            try:
-                return pd.to_datetime(date_val).strftime('%m/%d/%Y')
-            except:
-                return str(date_val)
-
-        df_cleaned['Dennis ETA'] = df_cleaned['Dennis ETA'].apply(convert_date)
-        df_cleaned['pod_ata_at'] = df_cleaned['pod_ata_at'].apply(convert_date)
-        df_cleaned['RCD'] = df_cleaned['RCD'].apply(convert_date)
-
-        # Get the last 30 rows first; sort by container number (numeric suffix), not string order —
-        # so F261107 is above F26199 (ASCII would put F26199 first).
-        df_tail = df_cleaned.tail(30).copy()
-        df_tail['_fdc_sort_num'] = df_tail['container'].map(_fdc_container_sort_number)
-        df_cleaned = df_tail.sort_values(by='_fdc_sort_num', ascending=False).drop(columns=['_fdc_sort_num'])
-
-        # Store raw container values for SQL query use
-        df_cleaned['container_raw'] = df_cleaned['container']
-        
-        # Remove empty containers to avoid SQL errors
-        df_cleaned = df_cleaned[df_cleaned['container_raw'].notna() & (df_cleaned['container_raw'] != '')]
-
-        # Check which containers have CSV files already generated and which can be processed
-        df_cleaned['has_styles_csv'] = False
-        df_cleaned['has_po_csv'] = False
-        df_cleaned['can_process'] = False
-        
-        for index, row in df_cleaned.iterrows():
-            container_num = row['container_raw']
-            styles_file = os.path.join(OUTPUT_DIR, f"{container_num}-styles.csv")
-            po_file = os.path.join(OUTPUT_DIR, f"{container_num}-PO.csv")
-            
-            df_cleaned.at[index, 'has_styles_csv'] = os.path.exists(styles_file)
-            df_cleaned.at[index, 'has_po_csv'] = os.path.exists(po_file)
-            
-            # Check if container can be processed (exists in Dropbox)
-            df_cleaned.at[index, 'can_process'] = container_num in container_files
-
-        # Get database connection and optimize SQL query
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Build batch query for all containers
-        container_list = df_cleaned['container_raw'].tolist()
-        
-        if not container_list:
-            df_cleaned['Status'] = '🔄upload🔄'
+        data_rows = _build_container_hub_rows(df, container_files)
+        sheet_ts = sheet_info.get('sheet_timestamp') or sheet_info.get('cached_at') or ''
+        if sheet_info.get('source') == 'cache':
+            last_modified = f"{sheet_ts} (local cache)"
         else:
-            placeholders = ','.join(['?' for _ in container_list])
-            
-            # Query bin_pur.RCVD_QTY - DIRECT and FAST method
-            # RCVD_QTY > 0 means items have been physically received (landed)
-            # RCVD_QTY = 0 means items haven't been received yet (ocean)
-            query = f"SELECT PUR_NUM, SUM(RCVD_QTY) as total_rcvd FROM dbo.bin_pur WHERE PUR_NUM IN ({placeholders}) GROUP BY PUR_NUM"
-            cursor.execute(query, container_list)
-            results = cursor.fetchall()
-            rcvd_lookup = {row[0].strip(): row[1] for row in results}
-            
-            # Get received dates for landed containers (from inv_data.LASTRCV_DT)
-            # Use the same date format as SQL_connector.py
-            date_query = f"""
-                SELECT DESCRIP, 
-                       MAX(LASTRCV_DT) as last_rcv_dt,
-                       RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', MAX(LASTRCV_DT)) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                       RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', MAX(LASTRCV_DT)) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                       CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', MAX(LASTRCV_DT)) - 81088, '20230101')) AS VARCHAR) AS formatted_date
-                FROM dbo.inv_data 
-                WHERE DESCRIP IN ({placeholders})
-                GROUP BY DESCRIP
-            """
-            cursor.execute(date_query, container_list)
-            date_results = cursor.fetchall()
-            date_lookup = {row[0].strip(): row[2] if row[1] and row[1] > 0 else '' for row in date_results}
-            
-            # Collect landed containers with dates for Google Sheets update
-            landed_containers_with_dates = {}
-            
-            # Apply status based on RCVD_QTY
-            for index, row in df_cleaned.iterrows():
-                container_raw = row['container_raw']
-                rcvd_qty = rcvd_lookup.get(container_raw)
-                
-                if rcvd_qty is not None and rcvd_qty > 0:
-                    df_cleaned.at[index, 'Status'] = '✔️827✔️'
-                    # Hide process button and CSV buttons for landed containers
-                    df_cleaned.at[index, 'can_process'] = False
-                    df_cleaned.at[index, 'has_styles_csv'] = False
-                    df_cleaned.at[index, 'has_po_csv'] = False
-                    # Store received date for Google Sheets update
-                    received_date = date_lookup.get(container_raw, '')
-                    if received_date:
-                        landed_containers_with_dates[container_raw] = received_date
-                elif rcvd_qty is not None and rcvd_qty == 0:
-                    df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
-                    # Hide process button and CSV buttons for ocean containers
-                    df_cleaned.at[index, 'can_process'] = False
-                    df_cleaned.at[index, 'has_styles_csv'] = False
-                    df_cleaned.at[index, 'has_po_csv'] = False
-                else:
-                    df_cleaned.at[index, 'Status'] = '🔄upload🔄'
-                    # Keep can_process as set earlier (based on Dropbox file existence)
-                    # Keep has_styles_csv and has_po_csv as set earlier (based on file existence)
-        
-        # Close database connection
-        conn.close()
-        
-        # Update Google Sheets with received dates for landed containers
-        # Only update if there are new landed containers (not already updated)
-        if landed_containers_with_dates:
-            # DISABLED: This causes API writes on every page load
-            # Re-enable only if you need to sync RCD dates from OMS to Google Sheets
-            # update_received_dates_in_sheets(landed_containers_with_dates)
-            pass
+            last_modified = f"{sheet_ts} (updated)"
 
-        # Drop the 'container_raw' column before rendering (keep the other metadata columns)
-        df_cleaned = df_cleaned.drop('container_raw', axis=1)
-
-        # Replace NaN values with empty strings for JSON serialization
-        df_cleaned = df_cleaned.fillna('')
-        
-        # Set Last Updated timestamp for all containers to current fetch time
-        df_cleaned['last_updated'] = fetch_timestamp
-        
-        # Terminal49 API is write-only - we only create tracking requests, cannot read data
-        # Status determined by local Google Sheets data only
-        # IMPORTANT: Do not overwrite containers already marked as landed ('✔️827✔️')
-        for index, row in df_cleaned.iterrows():
-            current_status = str(row.get('Status', '')).strip()
-            # Preserve landed status - do not overwrite
-            if current_status == '✔️827✔️':
-                continue
-
-            # Use only local ETA from Google Sheets (Dennis ETA column)
-            internal_eta = str(row.get('Dennis ETA', '')).strip()
-            internal_rcd = str(row.get('RCD', '')).strip()      # RCD from sheet
-
-            if internal_eta and not internal_rcd:
-                # ETA present and no RCD → ocean
-                df_cleaned.at[index, 'Status'] = '🚢ocean🚢'
-            else:
-                # Keep existing status (upload, landed, etc.)
-                pass
-        
-        # Ensure process / styles / po flags only show for upload status
-        for index, row in df_cleaned.iterrows():
-            status = str(row.get('Status', '')).strip()
-            if status != '🔄upload🔄':
-                df_cleaned.at[index, 'can_process'] = False
-                df_cleaned.at[index, 'has_styles_csv'] = False
-                df_cleaned.at[index, 'has_po_csv'] = False
-            else:
-                # keep previously-determined booleans (based on file existence)
-                df_cleaned.at[index, 'can_process'] = bool(row.get('can_process', False))
-                df_cleaned.at[index, 'has_styles_csv'] = bool(row.get('has_styles_csv', False))
-                df_cleaned.at[index, 'has_po_csv'] = bool(row.get('has_po_csv', False))
-
-        # Fetch email counts for port containers
-        port_containers = df_cleaned[df_cleaned['Status'] == '⚓port⚓']
-        
-        # Initialize email_count column for all containers
-        df_cleaned['email_count'] = 0
-        
-        if not port_containers.empty:
-            try:
-                # Email credentials
-                EMAIL_USER = 'yihao@fdcus.com'
-                EMAIL_PASS = 'Fdc2640$$'
-                IMAP_SERVER = 'imap.fatcow.com'
-                IMAP_PORT = 993
-
-                # Connect to IMAP server
-                mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
-                mail.login(EMAIL_USER, EMAIL_PASS)
-                mail.select('inbox')
-
-                # Calculate date one month ago
-                one_month_ago = (datetime.now() - timedelta(days=30)).strftime('%d-%b-%Y')
-
-                # Get email counts for each port container
-                for index, row in port_containers.iterrows():
-                    bol_num = str(row.get('link', '')).strip()
-                    if bol_num and bol_num != 'nan':
-                        try:
-                            # Search for emails containing the BOL number
-                            search_criteria = f'(OR SUBJECT "{bol_num}" BODY "{bol_num}" SINCE {one_month_ago})'
-                            status, messages = mail.search(None, search_criteria)
-                            
-                            email_count = 0
-                            if status == 'OK' and messages[0]:
-                                message_nums = messages[0].split()
-                                email_count = len(message_nums)
-                            
-                            df_cleaned.at[index, 'email_count'] = int(email_count)
-                        except Exception as e:
-                            current_app.logger.error(f"Error fetching email count for BOL {bol_num}: {e}")
-                            df_cleaned.at[index, 'email_count'] = 0
-                    else:
-                        df_cleaned.at[index, 'email_count'] = 0
-
-                mail.logout()
-            except Exception as e:
-                current_app.logger.error(f"Error connecting to email server: {e}")
-                # email_count is already initialized to 0 for all containers
-        
-        # Update Last Updated column for ALL containers with the fetch timestamp
-        # DISABLED: This causes excessive API writes on every page load
-        # update_last_updated_for_all_containers(df_cleaned['container'].tolist(), fetch_timestamp)
-        
-        # Log columns being sent for debugging
-        
-        # Convert DataFrame to list of dictionaries for JSON response
-        # Don't add HTML here - it will be added in JavaScript
-        data_rows = df_cleaned.to_dict('records')
-        
-        return jsonify({
+        payload = {
             'success': True,
             'data': data_rows,
-            'last_modified': last_modified_date
-        })
-        
+            'last_modified': last_modified,
+            'from_cache': False,
+            'counts': {
+                'total': len(data_rows),
+                'new': sum(1 for r in data_rows if r['action_mode'] == 'new'),
+                'ocean': sum(1 for r in data_rows if r['action_mode'] == 'ocean'),
+                'landed': sum(1 for r in data_rows if r['action_mode'] == 'landed'),
+                'special': sum(1 for r in data_rows if r.get('is_special')),
+            },
+        }
+        save_cached_boat_data(cache_key, payload)
+        return jsonify(payload)
     except Exception as e:
-        error_msg = f"Error processing Google Sheets data: {str(e)}"
-        current_app.logger.error(error_msg)
+        current_app.logger.error(f"Error building container data: {e}")
         current_app.logger.exception("Full traceback:")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/update_msrp/<container_number>', methods=['POST'])
+def update_container_msrp(container_number):
+    """Push Price1 from the original Dropbox file to FDC + EFAS (RETAIL_PRS only)."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    normalized = normalize_container_id(container_number)
+    current_user = session.get('username', 'unknown')
+    try:
+        result = _run_container_msrp_update(normalized, current_user)
+        status = 200 if result.get('success') else 400
+        if result.get('success'):
+            current_app.logger.info(
+                "User %s updated MSRP for %s: %s",
+                current_user,
+                normalized,
+                result.get('message'),
+            )
+        return jsonify(result), status
+    except Exception as e:
+        current_app.logger.error(f"Error updating MSRP for {normalized}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/shipment_tracking/upload', methods=['POST'])
+def upload_shipment_tracking():
+    """Upload weekly shipment tracking workbook (2026 sheet) to MySQL + Google Sheet."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    upload = request.files.get('file')
+    if not upload or not upload.filename:
+        return jsonify({'success': False, 'error': 'Choose an .xlsx tracking file to upload.'}), 400
+
+    filename = upload.filename
+    if not filename.lower().endswith(('.xlsx', '.xlsm')):
+        return jsonify({'success': False, 'error': 'Only .xlsx / .xlsm files are supported.'}), 400
+
+    current_user = session.get('username', 'unknown')
+    temp_path = ""
+    try:
+        suffix = os.path.splitext(filename)[1] or ".xlsx"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            upload.save(tmp.name)
+            temp_path = tmp.name
+
+        result = process_shipment_tracking_upload(
+            temp_path,
+            original_filename=filename,
+            uploaded_by=current_user,
+        )
+        matched_rows = update_shipment_tracking_in_sheets(result["rows"])
+        meta = save_tracking_meta(
+            original_filename=filename,
+            sheet_name=result["sheet_name"],
+            row_count=len(result["rows"]),
+            uploaded_by=current_user,
+            matched_sheet_rows=matched_rows,
+        )
+        invalidate_boat_data_response_cache()
+        load_sheet_dataframe(force_refresh=True)
+
+        message = (
+            f"Imported {result['mysql_saved']} container(s) from sheet "
+            f"'{result['sheet_name']}' and updated {matched_rows} Google Sheet row(s)."
+        )
+        current_app.logger.info("User %s uploaded shipment tracking %s: %s", current_user, filename, message)
+        return jsonify(
+            {
+                "success": True,
+                "message": message,
+                "meta": meta,
+                "sheet_name": result["sheet_name"],
+                "row_count": len(result["rows"]),
+                "matched_sheet_rows": matched_rows,
+            }
+        )
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Error uploading shipment tracking file: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        if temp_path and os.path.isfile(temp_path):
+            os.remove(temp_path)
+
+
+@boat_service_bp.route('/boat/shipment_tracking/meta', methods=['GET'])
+def shipment_tracking_meta():
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    meta = load_tracking_meta()
+    meta["has_file"] = os.path.isfile(LATEST_TRACKING_XLSX)
+    return jsonify({'success': True, 'meta': meta})
+
+
+@boat_service_bp.route('/boat/shipment_tracking/view', methods=['GET'])
+def shipment_tracking_view():
+    """Return parsed 2026-sheet rows from the last uploaded tracking file."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        sheet_name, rows = load_saved_tracking_rows()
+        if not rows:
+            return jsonify({'success': False, 'error': 'No uploaded tracking file found.'}), 404
+        meta = load_tracking_meta()
+        return jsonify(
+            {
+                'success': True,
+                'sheet_name': sheet_name,
+                'rows': rows,
+                'meta': meta,
+            }
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error loading shipment tracking view: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/delete_po/<container_number>', methods=['POST'])
+def delete_container_po(container_number):
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    normalized = normalize_container_id(container_number)
+    current_user = session.get('username', 'unknown')
+    try:
+        result = delete_container_po_from_fdc(normalized)
+        if result.get('skipped'):
+            message = f"No PO found in OMS for {normalized}"
+        else:
+            message = (
+                f"Deleted PO {normalized} from OMS "
+                f"(bin_pur {result.get('bin_pur_deleted', 0)}, "
+                f"plog {result.get('plog_deleted', 0)}, "
+                f"pur_ord {result.get('pur_ord_deleted', 0)})"
+            )
+        current_app.logger.info("User %s deleted PO %s: %s", current_user, normalized, message)
+        status = 200 if result.get('success') else 400
         return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+            'success': bool(result.get('success')),
+            'message': message,
+            'result': result,
+        }), status
+    except Exception as e:
+        current_app.logger.error(f"Error deleting PO for {normalized}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/mark_landed/<container_number>', methods=['POST'])
+def mark_container_landed(container_number):
+    """Receive container PO at 827 and sync Google Sheet RCD."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    normalized = normalize_container_id(container_number)
+    current_user = session.get('username', 'unknown')
+    try:
+        result = receive_container_po_at_827(normalized)
+        if not result.get('success'):
+            message = result.get('errors', ['Failed to mark landed'])[0]
+            return jsonify({'success': False, 'error': message, 'result': result}), 400
+
+        received_date = result.get('received_date') or datetime.now().strftime("%m/%d/%Y")
+        if not result.get('already_landed'):
+            try:
+                update_received_dates_in_sheets({normalized: received_date})
+            except Exception as sheet_exc:
+                current_app.logger.warning(
+                    "Marked %s landed but sheet RCD update failed: %s",
+                    normalized,
+                    sheet_exc,
+                )
+
+        if result.get('already_landed'):
+            message = f"{normalized} is already landed in OMS."
+        else:
+            message = (
+                f"{normalized} marked landed at 827 — "
+                f"{result.get('lines_received', 0)} line(s), "
+                f"{int(result.get('qty_received', 0)):,} unit(s) received."
+            )
+        current_app.logger.info("User %s marked container %s landed: %s", current_user, normalized, message)
+        return jsonify({'success': True, 'message': message, 'result': result})
+    except Exception as e:
+        current_app.logger.error(f"Error marking {normalized} landed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/unland/<container_number>', methods=['POST'])
+def unland_container(container_number):
+    """Revert landed container to ocean (zero RCVD_QTY, restore on-order stock)."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    normalized = normalize_container_id(container_number)
+    current_user = session.get('username', 'unknown')
+    try:
+        result = revert_container_to_ocean(normalized)
+        if not result.get('success'):
+            message = result.get('errors', ['Failed to un-land'])[0]
+            return jsonify({'success': False, 'error': message, 'result': result}), 400
+
+        if not result.get('already_ocean'):
+            try:
+                clear_received_dates_in_sheets([normalized])
+            except Exception as sheet_exc:
+                current_app.logger.warning(
+                    "Un-landed %s but sheet RCD clear failed: %s",
+                    normalized,
+                    sheet_exc,
+                )
+
+        if result.get('already_ocean'):
+            message = f"{normalized} is already ocean in OMS."
+        else:
+            message = (
+                f"{normalized} moved back to ocean — "
+                f"{result.get('lines_reverted', 0)} line(s), "
+                f"{int(result.get('qty_reverted', 0)):,} unit(s) unreceived."
+            )
+        current_app.logger.info("User %s un-landed container %s: %s", current_user, normalized, message)
+        return jsonify({'success': True, 'message': message, 'result': result})
+    except Exception as e:
+        current_app.logger.error(f"Error un-landing {normalized}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @boat_service_bp.route('/boat/process/<container_number>', methods=['POST'])
 def process_container(container_number):
@@ -1383,29 +2128,28 @@ def process_container(container_number):
     current_user = session.get('username', 'unknown')
     
     try:
-        # Scan Dropbox for the container file
         container_files = scan_dropbox_containers()
-        
-        if container_number not in container_files:
-            return jsonify({'error': f'Container {container_number} not found in Dropbox'}), 404
-        
-        # Process the container
-        result = process_container_file(container_files[container_number], container_number)
+        normalized = normalize_container_id(container_number)
+
+        if normalized not in container_files:
+            return jsonify({'error': f'Container {normalized} not found in Dropbox'}), 404
+
+        result = process_container_file(container_files[normalized], normalized)
         
         if result['success']:
-            # Update Google Sheets column O
-            batch_update_column_o([container_number])
-
-            # Keep an audit log of who processed which container.
-            current_app.logger.info(f"User '{current_user}' processed container {container_number}")
-            
+            preview = _sanitize_for_json(result.get('preview') or [])
             return jsonify({
                 'success': True,
-                'message': f'Successfully processed {container_number}',
+                'message': (
+                    f'Processed {normalized} — review styles, then confirm import '
+                    '(styles → FDC + EFAS, PO → FDC only)'
+                ),
+                'container': normalized,
                 'files': {
                     'styles': result['styles_file'],
-                    'po': result['po_file']
-                }
+                    'po': result['po_file'],
+                },
+                'preview': preview,
             })
         else:
             return jsonify({
@@ -1418,32 +2162,169 @@ def process_container(container_number):
         return jsonify({'error': str(e)}), 500
 
 
-@boat_service_bp.route('/boat/redo_oms/<container_number>', methods=['POST'])
-def redo_oms(container_number):
-    """Reset generated OMS CSV files so container can be reprocessed from original Excel."""
+def _preview_from_styles_csv(container_number: str) -> list[dict]:
+    normalized = normalize_container_id(container_number)
+    csv_path = os.path.join(OUTPUT_DIR, f"{normalized}-styles.csv")
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"Styles CSV not found for {normalized}")
+
+    df = pd.read_csv(csv_path)
+    preview = []
+    for _, record in df.iterrows():
+        style = str(record.get('Alt.Item#', '')).strip()
+        color_raw = str(record.get('Color', '')).strip()
+        color = normalize_color_to_abbrev(color_raw)
+        item_num = str(record.get('Item#', '')).strip() or f"{style} {color}"
+        preview.append({
+            'style': style,
+            'color': color,
+            'color_original': color_raw,
+            'color_changed': color_raw.upper() != color.upper(),
+            'item_num': item_num,
+            'descrip': str(record.get('Descrip', container_number)).strip(),
+            'sales_cost': _safe_float(record.get('Sales Cost', 0)),
+            'retail_prs': _safe_float(record.get('Price1', 0)),
+            'po_qty': _safe_float(record.get('PO Qty', 0)) if 'PO Qty' in record else 0,
+            'class_cd': str(record.get('Class#', 'L1')).strip() or 'L1',
+            'unit_case': _safe_float(record.get('Unit/Case', 0)),
+            'box_case': _safe_float(record.get('Box/Case', 1), default=1.0),
+            'case_wt': _safe_float(record.get('Case Wt', 0)),
+            'unit_wt': _safe_float(record.get('Unit Wt', 0)),
+            'unit_len': _safe_float(record.get('Unit Length'), default=None) if pd.notna(record.get('Unit Length')) else None,
+            'unit_wi': _safe_float(record.get('Unit Width'), default=None) if pd.notna(record.get('Unit Width')) else None,
+            'unit_hi': _safe_float(record.get('Unit Height'), default=None) if pd.notna(record.get('Unit Height')) else None,
+        })
+
+    po_path = os.path.join(OUTPUT_DIR, f"{normalized}-PO.csv")
+    if os.path.exists(po_path) and preview:
+        df_po = pd.read_csv(po_path)
+        po_by_item = {
+            str(r.get('Item#', '')).strip(): float(r.get('P/O Qty', 0) or 0)
+            for _, r in df_po.iterrows()
+        }
+        for row in preview:
+            if row['item_num'] in po_by_item:
+                row['po_qty'] = _safe_float(po_by_item[row['item_num']])
+
+    return _sanitize_for_json(preview)
+
+
+@boat_service_bp.route('/boat/preview/<container_number>', methods=['GET'])
+def container_style_preview(container_number):
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    normalized_container = str(container_number).strip().upper()
+    normalized = normalize_container_id(container_number)
+    try:
+        preview = _preview_from_styles_csv(normalized)
+        return jsonify({'success': True, 'container': normalized, 'preview': preview})
+    except FileNotFoundError as exc:
+        return jsonify({'success': False, 'error': str(exc)}), 404
+    except Exception as e:
+        current_app.logger.error(f"Error loading preview for {normalized}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/vendor/<container_number>', methods=['GET'])
+def container_vendor_defaults(container_number):
+    """Return pre-mapped vendor ID/name for a container PO import."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    normalized = normalize_container_id(container_number)
+    try:
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            vendor_id = lookup_container_vendor_id(cursor, normalized)
+            info = lookup_vendor_info(cursor, vendor_id)
+            prefix = "L" if normalized.startswith("L") else "F"
+            return jsonify({
+                'success': True,
+                'container': normalized,
+                'vendor_id': info['vendor_id'],
+                'vendor_name': info['vendor_name'],
+                'is_standard': info['is_standard'],
+                'fallback_vendor_id': VENDOR_FALLBACK[prefix],
+            })
+        finally:
+            conn.close()
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Error loading vendor defaults for {normalized}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/vendor_lookup', methods=['GET'])
+def container_vendor_lookup():
+    """Resolve a vendor ID to OMS vendor name (for import confirmation)."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    raw_vendor_id = (request.args.get('vendor_id') or '').strip()
+    if not raw_vendor_id:
+        return jsonify({'success': False, 'error': 'vendor_id is required'}), 400
 
     try:
-        styles_file = os.path.join(OUTPUT_DIR, f"{normalized_container}-styles.csv")
-        po_file = os.path.join(OUTPUT_DIR, f"{normalized_container}-PO.csv")
-
-        deleted_files = []
-        for file_path in [styles_file, po_file]:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                deleted_files.append(os.path.basename(file_path))
-
-        return jsonify({
-            'success': True,
-            'message': f'Reset OMS files for {normalized_container}',
-            'deleted_files': deleted_files
-        })
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            info = lookup_vendor_info(cursor, raw_vendor_id)
+            return jsonify({'success': True, **info})
+        finally:
+            conn.close()
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:
-        current_app.logger.error(f"Error resetting OMS files for {normalized_container}: {e}")
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error looking up vendor {raw_vendor_id!r}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/confirm_import/<container_number>', methods=['POST'])
+def confirm_container_import(container_number):
+    """Save user-confirmed preview rows, then import styles into FDC and EFAS."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    current_user = session.get('username', 'unknown')
+    normalized = normalize_container_id(container_number)
+    data = request.get_json(force=True) or {}
+    rows = data.get('rows') or []
+    vendor_id = (data.get('vendor_id') or '').strip()
+
+    if not rows:
+        return jsonify({'success': False, 'error': 'No style rows provided'}), 400
+    if not vendor_id:
+        return jsonify({'success': False, 'error': 'Vendor ID is required'}), 400
+
+    try:
+        import_result = _run_container_db_import(
+            normalized,
+            rows,
+            current_user,
+            vendor_id=vendor_id,
+        )
+
+        current_app.logger.info(
+            "User '%s' confirmed import %s; %s",
+            current_user,
+            normalized,
+            import_result.get('message'),
+        )
+
+        payload = {
+            'success': import_result['success'],
+            'message': import_result['message'],
+            'styles': import_result['styles'],
+            'po': import_result['po'],
+            'files': import_result['files'],
+        }
+        status = 200 if import_result['success'] else 400
+        return jsonify(payload), status
+    except Exception as e:
+        current_app.logger.error(f"Error confirming import for {normalized}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @boat_service_bp.route('/boat/download/<container_number>/<file_type>', methods=['GET'])
@@ -1456,36 +2337,35 @@ def download_boat_file(container_number, file_type):
         return jsonify({'error': 'Unauthorized'}), 401
 
     try:
+        normalized = normalize_container_id(container_number)
         # Styles and PO files are stored in OUTPUT_DIR
         if file_type == 'styles':
-            filename = f"{container_number}-styles.csv"
+            filename = f"{normalized}-styles.csv"
             file_path = os.path.join(OUTPUT_DIR, filename)
             if os.path.exists(file_path):
                 return send_file(file_path, as_attachment=True, download_name=filename, mimetype='text/csv')
             else:
-                return (f"Styles CSV for {container_number} not found", 404)
+                return (f"Styles CSV for {normalized} not found", 404)
 
         elif file_type == 'po':
-            filename = f"{container_number}-PO.csv"
+            filename = f"{normalized}-PO.csv"
             file_path = os.path.join(OUTPUT_DIR, filename)
             if os.path.exists(file_path):
                 return send_file(file_path, as_attachment=True, download_name=filename, mimetype='text/csv')
             else:
-                return (f"PO CSV for {container_number} not found", 404)
+                return (f"PO CSV for {normalized} not found", 404)
 
         elif file_type == 'original':
-            # Try to find the original Excel file in Dropbox
             container_files = scan_dropbox_containers()
-            if container_number in container_files:
-                orig_path = container_files[container_number]
+            if normalized in container_files:
+                orig_path = container_files[normalized]
                 if os.path.exists(orig_path):
                     filename = os.path.basename(orig_path)
-                    # Serve the original file (don't force CSV mimetype)
                     return send_file(orig_path, as_attachment=True, download_name=filename)
                 else:
-                    return (f"Original file for {container_number} not found on disk", 404)
+                    return (f"Original file for {normalized} not found on disk", 404)
             else:
-                return (f"Original file for {container_number} not found in Dropbox scan", 404)
+                return (f"Original file for {normalized} not found in Dropbox scan", 404)
 
         else:
             return ("Invalid file type", 400)
@@ -1493,63 +2373,6 @@ def download_boat_file(container_number, file_type):
     except Exception as e:
         current_app.logger.error(f"Error downloading file for {container_number} type {file_type}: {e}")
         return jsonify({'error': str(e)}), 500
-
-@boat_service_bp.route('/boat/update_dennis_eta', methods=['POST'])
-def update_dennis_eta():
-    """Update Dennis ETA for a container in Google Sheets"""
-    if 'username' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    try:
-        data = request.get_json()
-        container = data.get('container')
-        dennis_eta = data.get('dennis_eta', '').strip()
-        
-        if not container:
-            return jsonify({'success': False, 'error': 'Container number is required'}), 400
-        
-        # Get current data from Google Sheets to find the original value
-        try:
-            df = pd.read_csv(GOOGLE_SHEETS_URL)
-            matching_row = df[df['FDC container'] == container]
-            if matching_row.empty:
-                return jsonify({'success': False, 'error': 'Container not found in Google Sheets'}), 404
-            
-            original_value = str(matching_row['ETA'].iloc[0]) if pd.notna(matching_row['ETA'].iloc[0]) else ''
-            
-        except Exception as e:
-            current_app.logger.error(f"Error reading Google Sheets: {e}")
-            return jsonify({'success': False, 'error': 'Failed to read current data'}), 500
-        
-        # Update Google Sheets
-        client = get_sheets_client()
-        if not client:
-            return jsonify({'success': False, 'error': 'Failed to connect to Google Sheets'}), 500
-        
-        sheet = client.open_by_key(GOOGLE_SHEET_ID).sheet1
-        
-        # Get all data at once
-        all_data = sheet.get_all_values()
-        
-        # Find the row for this container
-        for row_idx, row in enumerate(all_data):
-            if len(row) >= 1 and row[0] == container:
-                sheet_row = row_idx + 1  # 1-based indexing
-                
-                # Update column E (ETA column, 0-indexed as 4)
-                sheet.update(f'E{sheet_row}', [[dennis_eta]])
-                
-                current_app.logger.info(f"Updated Dennis ETA for container {container} from '{original_value}' to '{dennis_eta}'")
-                return jsonify({
-                    'success': True,
-                    'original_value': original_value
-                })
-        
-        return jsonify({'success': False, 'error': 'Container not found in sheet'}), 404
-        
-    except Exception as e:
-        current_app.logger.error(f"Error updating Dennis ETA: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 @boat_service_bp.route('/boat/emails/<bol_num>')
 def get_bol_emails(bol_num):
@@ -1702,23 +2525,25 @@ def boat_packslip(container_number):
         return redirect(url_for("auth.login"))
     
     try:
-        # Get BOL NUM from Google Sheets
+        normalized = normalize_container_id(container_number)
         bol_num = ''
         try:
             df_sheets = pd.read_csv(GOOGLE_SHEETS_URL)
-            matching_row = df_sheets[df_sheets['FDC container'] == container_number]
+            df_sheets['_norm_container'] = (
+                df_sheets['FDC container'].astype(str).str.strip().map(normalize_container_id)
+            )
+            matching_row = df_sheets[df_sheets['_norm_container'] == normalized]
             if not matching_row.empty:
                 bol_num = str(matching_row['BOL NUM'].iloc[0]).strip() if pd.notna(matching_row['BOL NUM'].iloc[0]) else ''
         except Exception as e:
             current_app.logger.warning(f"Could not fetch BOL NUM from Google Sheets: {e}")
         
-        # Get container files from Dropbox
         container_files = scan_dropbox_containers()
         
-        if container_number not in container_files:
-            return jsonify({'error': f'Container {container_number} not found in Dropbox'}), 404
+        if normalized not in container_files:
+            return jsonify({'error': f'Container {normalized} not found in Dropbox'}), 404
         
-        file_path = container_files[container_number]
+        file_path = container_files[normalized]
         
         # Try different sheet names and header positions for packing list (similar to container.py)
         df_packing = None

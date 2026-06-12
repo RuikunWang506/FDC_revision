@@ -1600,6 +1600,59 @@ def upload_and_process_pdfs():
     except Exception as e:
         return jsonify({'error': f'处理上传文件时出错: {str(e)}'}), 500
 
+
+def _format_order_date(date_value, format_str='%Y-%m-%d'):
+    if date_value is None:
+        return None
+    if hasattr(date_value, 'strftime'):
+        return date_value.strftime(format_str)
+    return str(date_value)
+
+
+def _fetch_orders_for_api(cursor):
+    """Load all orders in two queries (orders + package join, no per-row store lookups)."""
+    query = """
+        SELECT o.po_number, o.batch_date, o.email_date, o.order_date,
+               o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty,
+               o.total_cost, o.status, o.tracking, o.created_at, o.updated_at,
+               COUNT(oi.id) as item_count,
+               CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info,
+               p.box_dimensions as package_box_dimensions,
+               p.total_weight as package_total_weight,
+               p.fedex_service_type as package_fedex_service_type,
+               p.fedex_packaging_type as package_fedex_packaging_type
+        FROM lori_orders o
+        LEFT JOIN lori_order_items oi ON o.po_number = oi.po_number
+        LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
+        GROUP BY o.po_number
+        ORDER BY o.batch_date DESC, o.created_at DESC
+    """
+    cursor.execute(query)
+    orders = cursor.fetchall()
+
+    for order in orders:
+        raw_dims = order.pop('package_box_dimensions', None)
+        if raw_dims:
+            try:
+                order['package_box_dimensions'] = (
+                    json.loads(raw_dims) if isinstance(raw_dims, str) else raw_dims
+                )
+            except (TypeError, json.JSONDecodeError):
+                order['package_box_dimensions'] = None
+        else:
+            order['package_box_dimensions'] = None
+
+        order['batch_date'] = _format_order_date(order['batch_date'])
+        order['email_date'] = _format_order_date(order['email_date'], '%Y-%m-%d %H:%M:%S')
+        order['order_date'] = _format_order_date(order['order_date'])
+        order['delivery_date'] = _format_order_date(order['delivery_date'])
+        order['cancel_date'] = _format_order_date(order['cancel_date'])
+        order['created_at'] = _format_order_date(order['created_at'], '%Y-%m-%d %H:%M:%S')
+        order['updated_at'] = _format_order_date(order['updated_at'], '%Y-%m-%d %H:%M:%S')
+
+    return orders
+
+
 @lori_automation_bp.route("/", methods=["GET", "POST"])
 def lori_automation():
     if 'username' not in session:
@@ -1618,58 +1671,10 @@ def lori_automation():
             
             try:
                 cursor = connection.cursor(dictionary=True)
-                
-                # Get all orders with their details and package info status (same query as get_orders)
-                query = """
-                    SELECT o.po_number, o.batch_date, o.email_date, o.order_date, 
-                           o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty, 
-                           o.total_cost, o.status, o.tracking, o.created_at, o.updated_at,
-                           COUNT(oi.id) as item_count,
-                           CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info
-                    FROM lori_orders o
-                    LEFT JOIN lori_order_items oi ON o.po_number = oi.po_number
-                    LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
-                    GROUP BY o.po_number
-                    ORDER BY o.batch_date DESC, o.created_at DESC
-                """
-                cursor.execute(query)
-                orders = cursor.fetchall()
-                
-                # Process orders (same as get_orders)
-                for order in orders:
-                    store_number = order['po_number'][:4] if order['po_number'] else ''
-                    if store_number:
-                        cursor.execute("""
-                            SELECT store_number, store_name, company, phone, address1, address2, 
-                                   address3, city, state, zip_code, status, memo
-                            FROM loris_store_info 
-                            WHERE store_number = %s
-                        """, (store_number,))
-                        store_info = cursor.fetchone()
-                        order['store_info'] = store_info
-                    else:
-                        order['store_info'] = None
-                    
-                    # Format dates for JSON serialization
-                    def format_date(date_value, format_str='%Y-%m-%d'):
-                        if date_value is None:
-                            return None
-                        if hasattr(date_value, 'strftime'):
-                            return date_value.strftime(format_str)
-                        else:
-                            return str(date_value)
-                    
-                    order['batch_date'] = format_date(order['batch_date'])
-                    order['email_date'] = format_date(order['email_date'], '%Y-%m-%d %H:%M:%S')
-                    order['order_date'] = format_date(order['order_date'])
-                    order['delivery_date'] = format_date(order['delivery_date'])
-                    order['cancel_date'] = format_date(order['cancel_date'])
-                    order['created_at'] = format_date(order['created_at'], '%Y-%m-%d %H:%M:%S')
-                    order['updated_at'] = format_date(order['updated_at'], '%Y-%m-%d %H:%M:%S')
-                
+                orders = _fetch_orders_for_api(cursor)
                 cursor.close()
                 connection.close()
-                
+
                 return jsonify({
                     'success': True,
                     'orders': orders,
@@ -1752,58 +1757,9 @@ def get_orders():
     
     try:
         cursor = connection.cursor(dictionary=True)
-        
-        # Get all orders with their details and package info status
-        query = """
-            SELECT o.po_number, o.batch_date, o.email_date, o.order_date, 
-                   o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty, 
-                   o.total_cost, o.status, o.tracking, o.created_at, o.updated_at,
-                   COUNT(oi.id) as item_count,
-                   CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info
-            FROM lori_orders o
-            LEFT JOIN lori_order_items oi ON o.po_number = oi.po_number
-            LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
-            GROUP BY o.po_number
-            ORDER BY o.batch_date DESC, o.created_at DESC
-        """
-        cursor.execute(query)
-        orders = cursor.fetchall()
-        
-        # For each order, get the internal address using first 4 digits
-        for order in orders:
-            store_number = order['po_number'][:4] if order['po_number'] else ''
-            if store_number:
-                cursor.execute("""
-                    SELECT store_number, store_name, company, phone, address1, address2, 
-                           address3, city, state, zip_code, status, memo
-                    FROM loris_store_info 
-                    WHERE store_number = %s
-                """, (store_number,))
-                store_info = cursor.fetchone()
-                order['store_info'] = store_info
-            else:
-                order['store_info'] = None
-            
-            # Convert datetime objects to strings for JSON serialization (handle both datetime objects and strings)
-            def format_date(date_value, format_str='%Y-%m-%d'):
-                if date_value is None:
-                    return None
-                if hasattr(date_value, 'strftime'):
-                    return date_value.strftime(format_str)
-                else:
-                    # Already a string, return as-is
-                    return str(date_value)
-            
-            order['batch_date'] = format_date(order['batch_date'])
-            order['email_date'] = format_date(order['email_date'], '%Y-%m-%d %H:%M:%S')
-            order['order_date'] = format_date(order['order_date'])
-            order['delivery_date'] = format_date(order['delivery_date'])
-            order['cancel_date'] = format_date(order['cancel_date'])
-            order['created_at'] = format_date(order['created_at'], '%Y-%m-%d %H:%M:%S')
-            order['updated_at'] = format_date(order['updated_at'], '%Y-%m-%d %H:%M:%S')
-        
+        orders = _fetch_orders_for_api(cursor)
         cursor.close()
-        
+
         return jsonify({
             'success': True,
             'orders': orders,
@@ -2070,6 +2026,191 @@ def update_order_status():
         if connection.is_connected():
             connection.close()
 
+def _find_original_pdf_path(po_number, batch_date=None):
+    """Locate the on-disk original PDF for a PO number."""
+    base_path = email_config['download_path']
+    if not os.path.exists(base_path):
+        return None
+
+    found_file = None
+    batch_date_str = str(batch_date) if batch_date else None
+
+    if batch_date_str:
+        batch_dir = os.path.join(base_path, batch_date_str)
+        if os.path.isdir(batch_dir):
+            for filename in os.listdir(batch_dir):
+                if not filename.lower().endswith('.pdf'):
+                    continue
+                filepath = os.path.join(batch_dir, filename)
+                if po_number in filename or check_pdf_contains_po(filepath, po_number):
+                    return filepath
+
+    for item in os.listdir(base_path):
+        item_path = os.path.join(base_path, item)
+        if not os.path.isdir(item_path):
+            continue
+        for filename in os.listdir(item_path):
+            if not filename.lower().endswith('.pdf'):
+                continue
+            filepath = os.path.join(item_path, filename)
+            if po_number in filename or check_pdf_contains_po(filepath, po_number):
+                return filepath
+
+    return found_file
+
+
+def _delete_original_pdfs_for_orders(orders):
+    """Delete original PDF files for the given order rows. Returns deleted PDF count."""
+    deleted_filenames_by_batch = {}
+    deleted_count = 0
+
+    for order in orders:
+        po_number = order['po_number']
+        batch_date = order.get('batch_date')
+        pdf_path = _find_original_pdf_path(po_number, batch_date)
+        if not pdf_path or not os.path.isfile(pdf_path):
+            continue
+
+        batch_folder = os.path.basename(os.path.dirname(pdf_path))
+        filename = os.path.basename(pdf_path)
+        try:
+            os.remove(pdf_path)
+            deleted_count += 1
+            deleted_filenames_by_batch.setdefault(batch_folder, set()).add(filename)
+        except OSError as e:
+            current_app.logger.warning(
+                f"Could not delete PDF {pdf_path} for PO {po_number}: {e}"
+            )
+
+    if deleted_filenames_by_batch:
+        _prune_email_metadata_cache(email_config['download_path'], deleted_filenames_by_batch)
+
+    return deleted_count
+
+
+def _prune_email_metadata_cache(base_path, deleted_filenames_by_batch):
+    """Remove deleted PDF filenames from the email metadata cache."""
+    cache_file = os.path.join(base_path, 'email_metadata_cache.json')
+    if not os.path.exists(cache_file):
+        return
+
+    try:
+        with open(cache_file, 'r', encoding='utf-8') as f:
+            metadata_cache = json.load(f)
+
+        changed = False
+        for uid, entry in list(metadata_cache.items()):
+            batch_date = entry.get('batch_date')
+            filenames = entry.get('filenames', [])
+            deleted_names = deleted_filenames_by_batch.get(batch_date, set())
+            if not deleted_names:
+                continue
+
+            remaining = [name for name in filenames if name not in deleted_names]
+            if remaining == filenames:
+                continue
+
+            changed = True
+            if remaining:
+                entry['filenames'] = remaining
+            else:
+                del metadata_cache[uid]
+
+        if changed:
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(metadata_cache, f, indent=2)
+    except Exception as e:
+        current_app.logger.warning(f"Could not update email metadata cache: {e}")
+
+
+@lori_automation_bp.route("/delete_batch", methods=["POST"])
+def delete_batch():
+    """Delete selected orders, tracking, package info, and their original PDF files."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    raw_po_numbers = data.get('po_numbers', [])
+    if not isinstance(raw_po_numbers, list) or not raw_po_numbers:
+        return jsonify({'error': 'po_numbers required'}), 400
+
+    po_numbers = list(dict.fromkeys(
+        str(po).strip() for po in raw_po_numbers if str(po).strip()
+    ))
+    if not po_numbers:
+        return jsonify({'error': 'No valid PO numbers provided'}), 400
+
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    deleted_orders = 0
+    deleted_pkg_info = 0
+    deleted_pdfs = 0
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+
+        placeholders = ','.join(['%s'] * len(po_numbers))
+        cursor.execute(
+            f"""
+            SELECT po_number, batch_date
+            FROM lori_orders
+            WHERE po_number IN ({placeholders})
+            """,
+            po_numbers
+        )
+        found_orders = cursor.fetchall()
+
+        if not found_orders:
+            cursor.close()
+            connection.close()
+            return jsonify({'error': 'No matching orders found'}), 404
+
+        found_po_numbers = [row['po_number'] for row in found_orders]
+        po_placeholders = ','.join(['%s'] * len(found_po_numbers))
+
+        cursor.execute(
+            f"DELETE FROM loris_pkg_info WHERE po_number IN ({po_placeholders})",
+            found_po_numbers
+        )
+        deleted_pkg_info = cursor.rowcount
+
+        cursor.execute(
+            f"DELETE FROM lori_orders WHERE po_number IN ({po_placeholders})",
+            found_po_numbers
+        )
+        deleted_orders = cursor.rowcount
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        deleted_pdfs = _delete_original_pdfs_for_orders(found_orders)
+
+        batch_dates = sorted({str(row['batch_date']) for row in found_orders if row.get('batch_date')})
+        batch_label = batch_dates[0] if len(batch_dates) == 1 else ', '.join(batch_dates)
+
+        return jsonify({
+            'success': True,
+            'message': (
+                f'Deleted {deleted_orders} selected order(s) '
+                f'({batch_label}): {deleted_pkg_info} package records, '
+                f'{deleted_pdfs} PDF files'
+            ),
+            'deleted_orders': deleted_orders,
+            'deleted_pkg_info': deleted_pkg_info,
+            'deleted_pdfs': deleted_pdfs,
+            'batch_dates': batch_dates,
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
+
+
 @lori_automation_bp.route("/delete_order", methods=["POST"])
 def delete_order():
     """Delete an order and all its items"""
@@ -2114,9 +2255,44 @@ def delete_order():
         if connection.is_connected():
             connection.close()
 
+def _normalize_lori_po_number(raw_value):
+    """Normalize PO/reference values from Excel (format: 0588-005282)."""
+    if raw_value is None:
+        return None
+    po_number = str(raw_value).strip()
+    if not po_number or po_number.lower() == 'none':
+        return None
+    if '-' not in po_number:
+        return po_number
+    store_part, order_part = po_number.split('-', 1)
+    store_part = re.sub(r'\D', '', store_part).zfill(4)
+    order_part = re.sub(r'\D', '', order_part).zfill(6)
+    return f"{store_part}-{order_part}"
+
+
+def _resolve_tracking_upload_columns(headers):
+    """Map Excel headers to PO and tracking column indices (case-insensitive)."""
+    header_map = {}
+    for idx, header in enumerate(headers):
+        if header is None:
+            continue
+        header_map[str(header).strip().lower()] = idx
+
+    po_aliases = (
+        'reference', 'po number', 'ponumber', 'shipmentreference', 'reference 1',
+    )
+    tracking_aliases = (
+        'mastertrackingnumber', 'tracking number', 'trackingnumber', 'tracking',
+    )
+
+    reference_idx = next((header_map[name] for name in po_aliases if name in header_map), None)
+    tracking_idx = next((header_map[name] for name in tracking_aliases if name in header_map), None)
+    return reference_idx, tracking_idx
+
+
 @lori_automation_bp.route("/upload_tracking", methods=["POST"])
 def upload_tracking():
-    """Upload tracking numbers from Excel file and update database"""
+    """Upload tracking numbers from Excel file and replace existing values for matching POs."""
     if 'username' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
@@ -2128,19 +2304,40 @@ def upload_tracking():
         return jsonify({'error': 'Please upload an Excel (.xlsx) file'}), 400
     
     try:
-        # Read Excel file
         wb = load_workbook(file)
         ws = wb.active
         
-        # Get headers from first row
         headers = [cell.value for cell in ws[1]]
-        
-        # Find column indices
-        reference_idx = headers.index('reference') if 'reference' in headers else None
-        tracking_idx = headers.index('masterTrackingNumber') if 'masterTrackingNumber' in headers else None
+        reference_idx, tracking_idx = _resolve_tracking_upload_columns(headers)
         
         if reference_idx is None or tracking_idx is None:
-            return jsonify({'error': 'Excel file must contain "reference" and "masterTrackingNumber" columns'}), 400
+            return jsonify({
+                'error': (
+                    'Excel file must contain PO and tracking columns '
+                    '(e.g. "reference" + "masterTrackingNumber", or "PO Number" + "Tracking Number")'
+                )
+            }), 400
+        
+        # Last row wins when the same PO appears multiple times in the upload file.
+        tracking_by_po = {}
+        row_errors = []
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                reference = row[reference_idx] if reference_idx < len(row) else None
+                tracking_number = row[tracking_idx] if tracking_idx < len(row) else None
+                if not reference or not tracking_number:
+                    continue
+
+                po_number = _normalize_lori_po_number(reference)
+                if not po_number:
+                    continue
+
+                tracking_by_po[po_number] = str(tracking_number).strip()
+            except Exception as e:
+                row_errors.append(f"Row {row_idx}: {str(e)}")
+
+        if not tracking_by_po:
+            return jsonify({'error': 'No valid tracking rows found in the uploaded file'}), 400
         
         connection = get_db_connection()
         if not connection:
@@ -2148,43 +2345,42 @@ def upload_tracking():
         
         cursor = connection.cursor()
         updated_count = 0
+        replaced_count = 0
         skipped_count = 0
-        errors = []
+        errors = list(row_errors)
         
-        # Process each row (skip header)
-        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        for po_number, tracking_number in tracking_by_po.items():
             try:
-                reference = row[reference_idx]
-                tracking_number = row[tracking_idx]
-                
-                if not reference or not tracking_number:
-                    continue
-                
-                # Extract PO number from reference (format: 0588-005282)
-                po_number = str(reference).strip()
-                tracking_number = str(tracking_number).strip()
-                
-                # Update database
-                cursor.execute("""
-                    UPDATE lori_orders 
-                    SET tracking = %s 
-                    WHERE po_number = %s
-                """, (tracking_number, po_number))
-                
-                if cursor.rowcount > 0:
-                    updated_count += 1
-                else:
+                cursor.execute(
+                    "SELECT tracking FROM lori_orders WHERE po_number = %s",
+                    (po_number,)
+                )
+                existing = cursor.fetchone()
+                if not existing:
                     skipped_count += 1
                     errors.append(f"PO {po_number} not found in database")
-                
+                    continue
+
+                old_tracking = (existing[0] or '').strip()
+                cursor.execute("""
+                    UPDATE lori_orders
+                    SET tracking = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE po_number = %s
+                """, (tracking_number, po_number))
+
+                updated_count += 1
+                if old_tracking and old_tracking != tracking_number:
+                    replaced_count += 1
             except Exception as e:
-                errors.append(f"Row {row_idx}: {str(e)}")
+                errors.append(f"PO {po_number}: {str(e)}")
         
         connection.commit()
         cursor.close()
         connection.close()
         
         message = f'Successfully updated {updated_count} orders with tracking numbers'
+        if replaced_count > 0:
+            message += f' ({replaced_count} replaced existing tracking)'
         if skipped_count > 0:
             message += f', skipped {skipped_count} orders'
         
@@ -2192,8 +2388,9 @@ def upload_tracking():
             'success': True,
             'message': message,
             'updated_count': updated_count,
+            'replaced_count': replaced_count,
             'skipped_count': skipped_count,
-            'errors': errors[:10]  # Return first 10 errors
+            'errors': errors[:10]
         })
         
     except Exception as e:

@@ -1489,7 +1489,9 @@
             searchBtn.innerHTML = btnBi('fas fa-spinner fa-spin', 'Searching...', '搜索中…');
 
             try {
-                const response = await fetch(`/api/search_images?sku=${encodeURIComponent(sku)}`);
+                const response = await fetch(
+                    `/api/search_images?sku=${encodeURIComponent(sku)}&input=${encodeURIComponent(sku)}&via=master_image_viewer`
+                );
                 const data = await response.json();
 
                 if (data.error) {
