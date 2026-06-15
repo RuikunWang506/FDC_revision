@@ -5,6 +5,7 @@ import pandas as pd
 from flask import current_app as app
 import time
 from py.utilities.setting import Config
+from py.utilities.ocean_qty import apply_ocean_qty_to_rows
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
@@ -118,6 +119,7 @@ def generate_excel(user_input):
             app.logger.debug(f"With parameters: {inventory_query_params}")
             cursor.execute(query, inventory_query_params)
             rows = cursor.fetchall()
+            rows = apply_ocean_qty_to_rows(conn, rows, sku_index=0, ocean_index=6)
             rows_with_database_name = [(database_name,) + tuple(row) for row in rows]
             queries.append(rows_with_database_name)
 
@@ -722,6 +724,7 @@ def get_sold_out_skus_from_orders(orders_data):
             
             cursor.execute(query, db_order_numbers)
             rows = cursor.fetchall()
+            rows = apply_ocean_qty_to_rows(conn, rows, sku_index=1, ocean_index=7)
             
             # Add database source column
             rows_with_db = [(db_display,) + tuple(row) for row in rows]
@@ -882,6 +885,7 @@ def get_sku_inventory_from_both_databases(sku_list, user=None):
                 app.logger.debug(f"Executing inventory query on {db_display} batch {i//batch_size + 1} with {len(sku_batch)} SKUs")
                 cursor.execute(query, sku_batch)
                 rows = cursor.fetchall()
+                rows = apply_ocean_qty_to_rows(conn, rows, sku_index=0, ocean_index=6)
                 
                 # Add database source column
                 rows_with_db = [(db_display,) + tuple(row) for row in rows]

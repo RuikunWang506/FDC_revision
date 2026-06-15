@@ -15,6 +15,11 @@ TK_PASSWORD_BLUEPRINTS = frozenset({"master_image_viewer"})
 # Client portal tool ids (same access as legacy TK password users).
 CLIENT_PORTAL_TOOL_IDS = frozenset({"clientview", "master_image_viewer"})
 
+# auth blueprint routes that are not covered by TOOL_BY_BLUEPRINT (blueprint-wide).
+ENDPOINT_TOOL: Dict[str, str] = {
+    "auth.manage_users": "manage_users",
+}
+
 TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "item_lookup": "item_lookup",
     "invoice_lookup": "invoice_lookup",
@@ -125,9 +130,9 @@ def enforce_dashboard_tool_access():
     if ep == "static" or (ep is not None and ep.endswith(".static")):
         return None
     bp = request.blueprint
-    if not bp:
-        return None
-    tool_id = TOOL_BY_BLUEPRINT.get(bp)
+    tool_id = TOOL_BY_BLUEPRINT.get(bp) if bp else None
+    if not tool_id and ep:
+        tool_id = ENDPOINT_TOOL.get(ep)
     if not tool_id:
         return None
     uname = session.get("username")
@@ -136,6 +141,17 @@ def enforce_dashboard_tool_access():
             return None
         session["next"] = request.url
         return redirect(url_for("auth.login"))
+    if tool_id == "manage_users" and uname.strip().lower() != "yeti":
+        if _wants_json_forbidden_response():
+            return (
+                jsonify(
+                    error="Forbidden",
+                    message="You do not have access to user management.",
+                ),
+                403,
+            )
+        flash("Access denied. Only yeti can manage users.", "warning")
+        return redirect(url_for("home"))
     from py.utilities.auth import get_user_permissions
 
     perms = get_user_permissions(uname)

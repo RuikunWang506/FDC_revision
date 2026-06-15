@@ -10,7 +10,7 @@ import pyodbc
 from flask import current_app
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_mysql_connection, get_sql_server_connection_fdc, get_sql_server_connection_oms_ef
-from py.utilities.dam_utils import get_canonical_asset_url
+from py.utilities.ocean_qty import fetch_ocean_qty_by_skus
 
 mobile_lite_bp = Blueprint('mobile_lite', __name__, template_folder='templates')
 
@@ -197,6 +197,9 @@ def get_product_data(user_input):
                 WHERE """ + combined_condition
             cursor.execute(query, query_params)
             rows = cursor.fetchall()
+            ocean_lookup = fetch_ocean_qty_by_skus(
+                conn, [row.SKU for row in rows if row.SKU]
+            )
 
             for row in rows:
                 # Strip SKU and Style to remove leading/trailing spaces
@@ -220,7 +223,10 @@ def get_product_data(user_input):
                         'stock': int(row.Stock) if row.Stock else 0,
                         'sold': int(row.Sold) if row.Sold else 0,
                         'available': int(row.Available) if row.Available else 0,
-                        'incoming': int(row.Incoming) if row.Incoming else 0,
+                        'incoming': ocean_lookup.get(
+                            sku,
+                            int(row.Incoming) if row.Incoming else 0,
+                        ),
                         'case_qty': int(row.CaseQty) if row.CaseQty else 0,
                         'box_weight': float(row.BoxWeight) if row.BoxWeight else 0,
                         'update_date': row.UpdateDate

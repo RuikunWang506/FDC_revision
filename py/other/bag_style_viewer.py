@@ -8,7 +8,12 @@ import pyodbc
 from openpyxl import Workbook
 from openpyxl.styles import Alignment
 
-from py.utilities.database_utils import get_mysql_connection
+from py.utilities.ocean_qty import (
+    PLOG_OCEAN_JOIN,
+    apply_ocean_qty_to_rows,
+    ocean_qty_sql_scalar,
+    ocean_qty_sql_sum,
+)
 from py.utilities.dam_utils import get_canonical_asset_url, search_assets_by_sku_pattern
 from py.utilities.setting import Config
 
@@ -23,16 +28,17 @@ def get_stock_data_for_styles(styles):
     if not styles:
         return {}
     
-    query = """
+    query = f"""
     SELECT 
         i.ALT_CD AS style,
         SUM(CAST(ISNULL(id.in_stock, 0) AS INT) - CAST(ISNULL(id.ORDER_QTY, 0) AS INT)) AS total_quantity,
-        SUM(CAST(ISNULL(id.on_order_qty, 0) AS INT)) AS total_ocean
+        {ocean_qty_sql_sum()} AS total_ocean
     FROM dbo.inv AS i
     LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
-    WHERE i.ALT_CD IN ({})
+    {PLOG_OCEAN_JOIN}
+    WHERE i.ALT_CD IN ({','.join(['?' for _ in styles])})
     GROUP BY i.ALT_CD
-    """.format(','.join(['?' for _ in styles]))
+    """
     
     stock_data = {}
     try:
@@ -72,15 +78,16 @@ def get_stock_data_for_styles(styles):
 def get_detailed_stock_for_style(style):
     """Query SQL Server to get stock and ocean data by SKU (style + color) for a single style"""
     
-    query = """
+    query = f"""
     SELECT 
         i.PROD_CD AS sku,
         i.ALT_CD AS style,
         i.UNIT_COLOR AS color,
         SUM(CAST(ISNULL(id.in_stock, 0) AS INT) - CAST(ISNULL(id.ORDER_QTY, 0) AS INT)) AS quantity,
-        SUM(CAST(ISNULL(id.on_order_qty, 0) AS INT)) AS ocean
+        {ocean_qty_sql_sum()} AS ocean
     FROM dbo.inv AS i
     LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+    {PLOG_OCEAN_JOIN}
     WHERE i.ALT_CD = ?
     GROUP BY i.PROD_CD, i.ALT_CD, i.UNIT_COLOR
     ORDER BY i.PROD_CD
@@ -268,13 +275,14 @@ def fetch_descriptions_bulk(styles):
 
 def _fetch_inventory_stock_totals():
     """All ALT_CD stock/ocean totals merged across FDC + EF."""
-    query = """
+    query = f"""
     SELECT
         RTRIM(LTRIM(i.ALT_CD)) AS style,
         SUM(CAST(ISNULL(id.in_stock, 0) AS INT) - CAST(ISNULL(id.ORDER_QTY, 0) AS INT)) AS total_quantity,
-        SUM(CAST(ISNULL(id.on_order_qty, 0) AS INT)) AS total_ocean
+        {ocean_qty_sql_sum()} AS total_ocean
     FROM dbo.inv AS i
     LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+    {PLOG_OCEAN_JOIN}
     WHERE i.ALT_CD IS NOT NULL AND LTRIM(RTRIM(i.ALT_CD)) <> ''
     GROUP BY RTRIM(LTRIM(i.ALT_CD))
     """
@@ -443,16 +451,17 @@ def get_detailed_stock_for_styles_batch(styles):
     if not unique:
         return {}
 
-    query_tpl = """
+    query_tpl = f"""
     SELECT
         i.PROD_CD AS sku,
         i.ALT_CD AS style,
         i.UNIT_COLOR AS color,
         SUM(CAST(ISNULL(id.in_stock, 0) AS INT) - CAST(ISNULL(id.ORDER_QTY, 0) AS INT)) AS quantity,
-        SUM(CAST(ISNULL(id.on_order_qty, 0) AS INT)) AS ocean
+        {ocean_qty_sql_sum()} AS ocean
     FROM dbo.inv AS i
     LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
-    WHERE i.ALT_CD IN ({})
+    {PLOG_OCEAN_JOIN}
+    WHERE i.ALT_CD IN ({{}})
     GROUP BY i.PROD_CD, i.ALT_CD, i.UNIT_COLOR
     ORDER BY i.ALT_CD, i.PROD_CD
     """

@@ -117,6 +117,7 @@ def register_routes(app):
             return user_hides_staff_nav_links(session.get("username"))
 
         return {
+            "current_user": session.get("username"),
             "tool_allowed": tool_allowed,
             "can_view_logs": can_view_logs,
             "hide_staff_nav_links": hide_staff_nav_links,

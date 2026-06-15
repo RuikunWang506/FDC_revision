@@ -196,39 +196,96 @@ def _repair_bin_pur_nulls(cursor, container_number: str) -> int:
     return int(cursor.rowcount or 0)
 
 
-def _on_order_qty_out_of_sync(cursor, container_number: str) -> bool:
+def _skus_for_container(cursor, container_number: str) -> list[str]:
     cursor.execute(
         """
-        SELECT 1
-        FROM dbo.bin_pur bp
-        INNER JOIN dbo.inv i ON RTRIM(i.prod_cd) = RTRIM(bp.prod_cd)
-        INNER JOIN dbo.inv_data id ON i.prod_cd = id.prod_cd AND RTRIM(id.whs_num) = ?
-        WHERE RTRIM(bp.pur_num) = ?
-          AND ISNULL(bp.rcvd_qty, 0) = 0
-          AND ISNULL(id.on_order_qty, 0) <> ISNULL(bp.po_qty, 0)
+        SELECT DISTINCT RTRIM(prod_cd)
+        FROM dbo.bin_pur
+        WHERE RTRIM(pur_num) = ?
         """,
-        (DEFAULT_WHS, container_number.strip().upper()),
+        (container_number.strip().upper(),),
+    )
+    return [str(row[0]).strip() for row in cursor.fetchall() if row[0]]
+
+
+def _recalc_on_order_qty_for_skus(cursor, skus: list[str]) -> int:
+    """Set inv_data.on_order_qty = open ocean PO qty (sum open bin_pur, skip POs with receives)."""
+    normalized = sorted({str(s).strip() for s in skus if str(s).strip()})
+    if not normalized:
+        return 0
+    placeholders = ",".join("?" * len(normalized))
+    cursor.execute(
+        f"""
+        UPDATE id
+        SET on_order_qty = ISNULL(open_po.total_open, 0)
+        FROM dbo.inv_data id
+        INNER JOIN dbo.inv i ON i.prod_cd = id.prod_cd
+        LEFT JOIN (
+            SELECT RTRIM(bp.prod_cd) AS prod_cd,
+                   SUM(ISNULL(bp.po_qty, 0)) AS total_open
+            FROM dbo.bin_pur bp
+            WHERE ISNULL(bp.rcvd_qty, 0) = 0
+              AND ISNULL(bp.po_qty, 0) > 0
+              AND RTRIM(bp.prod_cd) IN ({placeholders})
+              AND RTRIM(bp.pur_num) NOT IN (
+                  SELECT DISTINCT RTRIM(b2.pur_num)
+                  FROM dbo.bin_pur b2
+                  WHERE RTRIM(b2.prod_cd) = RTRIM(bp.prod_cd)
+                    AND ISNULL(b2.rcvd_qty, 0) > 0
+              )
+            GROUP BY RTRIM(bp.prod_cd)
+        ) open_po ON RTRIM(i.prod_cd) = open_po.prod_cd
+        WHERE RTRIM(i.prod_cd) IN ({placeholders})
+          AND RTRIM(id.whs_num) = ?
+          AND ISNULL(id.on_order_qty, 0) <> ISNULL(open_po.total_open, 0)
+        """,
+        (*normalized, *normalized, DEFAULT_WHS),
+    )
+    return int(cursor.rowcount or 0)
+
+
+def _on_order_qty_out_of_sync(cursor, container_number: str) -> bool:
+    skus = _skus_for_container(cursor, container_number)
+    if not skus:
+        return False
+    placeholders = ",".join("?" * len(skus))
+    cursor.execute(
+        f"""
+        SELECT 1
+        FROM (
+            SELECT RTRIM(i.prod_cd) AS prod_cd,
+                   ISNULL(id.on_order_qty, 0) AS on_order,
+                   ISNULL(open_po.total_open, 0) AS expected
+            FROM dbo.inv i
+            INNER JOIN dbo.inv_data id ON i.prod_cd = id.prod_cd AND RTRIM(id.whs_num) = ?
+            LEFT JOIN (
+                SELECT RTRIM(bp.prod_cd) AS prod_cd,
+                       SUM(ISNULL(bp.po_qty, 0)) AS total_open
+                FROM dbo.bin_pur bp
+                WHERE ISNULL(bp.rcvd_qty, 0) = 0
+                  AND ISNULL(bp.po_qty, 0) > 0
+                  AND RTRIM(bp.prod_cd) IN ({placeholders})
+                  AND RTRIM(bp.pur_num) NOT IN (
+                      SELECT DISTINCT RTRIM(b2.pur_num)
+                      FROM dbo.bin_pur b2
+                      WHERE RTRIM(b2.prod_cd) = RTRIM(bp.prod_cd)
+                        AND ISNULL(b2.rcvd_qty, 0) > 0
+                  )
+                GROUP BY RTRIM(bp.prod_cd)
+            ) open_po ON RTRIM(i.prod_cd) = open_po.prod_cd
+            WHERE RTRIM(i.prod_cd) IN ({placeholders})
+        ) x
+        WHERE x.on_order <> x.expected
+        """,
+        (DEFAULT_WHS, *skus, *skus),
     )
     return cursor.fetchone() is not None
 
 
 def _sync_on_order_qty_from_po(cursor, container_number: str) -> int:
-    """Match OMS PO import: inv_data.on_order_qty = open bin_pur PO_QTY (item lookup 🚢 column)."""
-    cursor.execute(
-        """
-        UPDATE id
-        SET on_order_qty = bp.po_qty
-        FROM dbo.inv_data id
-        INNER JOIN dbo.inv i ON i.prod_cd = id.prod_cd
-        INNER JOIN dbo.bin_pur bp ON RTRIM(bp.prod_cd) = RTRIM(i.prod_cd)
-        WHERE RTRIM(bp.pur_num) = ?
-          AND RTRIM(id.whs_num) = ?
-          AND ISNULL(bp.rcvd_qty, 0) = 0
-          AND ISNULL(id.on_order_qty, 0) <> ISNULL(bp.po_qty, 0)
-        """,
-        (container_number.strip().upper(), DEFAULT_WHS),
-    )
-    return int(cursor.rowcount or 0)
+    """Recalc inv_data.on_order_qty from all open bin_pur lines (not just this container)."""
+    skus = _skus_for_container(cursor, container_number)
+    return _recalc_on_order_qty_for_skus(cursor, skus)
 
 
 def _fetch_pur_ord_template(cursor, prefix: str) -> dict | None:
@@ -445,20 +502,7 @@ def delete_container_po_from_fdc(container_number: str) -> dict[str, Any]:
             result["skipped"] = True
             return result
 
-        cursor.execute(
-            """
-            UPDATE id
-            SET on_order_qty = 0
-            FROM dbo.inv_data id
-            INNER JOIN dbo.inv i ON i.prod_cd = id.prod_cd
-            INNER JOIN dbo.bin_pur bp ON RTRIM(bp.prod_cd) = RTRIM(i.prod_cd)
-            WHERE RTRIM(bp.pur_num) = ?
-              AND RTRIM(id.whs_num) = ?
-              AND ISNULL(bp.rcvd_qty, 0) = 0
-            """,
-            (normalized, DEFAULT_WHS),
-        )
-        result["on_order_cleared"] = int(cursor.rowcount or 0)
+        affected_skus = _skus_for_container(cursor, normalized)
 
         cursor.execute(
             "DELETE FROM dbo.bin_pur WHERE RTRIM(pur_num) = ?",
@@ -477,6 +521,8 @@ def delete_container_po_from_fdc(container_number: str) -> dict[str, Any]:
             (normalized,),
         )
         result["pur_ord_deleted"] = int(cursor.rowcount or 0)
+
+        result["on_order_cleared"] = _recalc_on_order_qty_for_skus(cursor, affected_skus)
 
         conn.commit()
         result["success"] = True
@@ -533,6 +579,11 @@ def transfer_container_po_to_fdc(
                 result.repaired = True
                 result.repaired_lines = plog_fixed
                 return result
+            synced = _sync_on_order_qty_from_po(cursor, normalized)
+            if synced:
+                conn.commit()
+                result.repaired = True
+                result.repaired_lines = synced
             result.skipped = True
             return result
 
@@ -640,6 +691,7 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         erp_today = erp_date(cursor)
         lines_received = 0
         qty_received = Decimal("0")
+        affected_skus: list[str] = []
 
         for prod_cd, po_qty, rcvd_qty in lines:
             po_qty = _decimal(po_qty)
@@ -647,6 +699,9 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
             receive_delta = po_qty - rcvd_qty
             if receive_delta <= 0:
                 continue
+
+            sku = str(prod_cd).strip()
+            affected_skus.append(sku)
 
             cursor.execute(
                 """
@@ -656,17 +711,13 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
                   AND RTRIM(prod_cd) = ?
                   AND ISNULL(rcvd_qty, 0) < ISNULL(po_qty, 0)
                 """,
-                (po_qty, normalized, str(prod_cd).strip()),
+                (po_qty, normalized, sku),
             )
 
             cursor.execute(
                 """
                 UPDATE id
                 SET in_stock = ISNULL(id.in_stock, 0) + ?,
-                    on_order_qty = CASE
-                        WHEN ISNULL(id.on_order_qty, 0) >= ? THEN ISNULL(id.on_order_qty, 0) - ?
-                        ELSE 0
-                    END,
                     lastrcv_qty = ?,
                     lastrcv_dt = ?
                 FROM dbo.inv_data id
@@ -677,15 +728,15 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
                 (
                     receive_delta,
                     receive_delta,
-                    receive_delta,
-                    receive_delta,
                     erp_today,
-                    str(prod_cd).strip(),
+                    sku,
                     DEFAULT_WHS,
                 ),
             )
             lines_received += 1
             qty_received += receive_delta
+
+        _recalc_on_order_qty_for_skus(cursor, affected_skus)
 
         conn.commit()
         result["success"] = True
@@ -736,12 +787,14 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
 
         lines_reverted = 0
         qty_reverted = Decimal("0")
+        affected_skus: list[str] = []
 
         for prod_cd, po_qty, rcvd_qty in lines:
             rcvd_qty = _decimal(rcvd_qty)
             if rcvd_qty <= 0:
                 continue
-            po_qty = _decimal(po_qty)
+            sku = str(prod_cd).strip()
+            affected_skus.append(sku)
 
             cursor.execute(
                 """
@@ -751,7 +804,7 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
                   AND RTRIM(prod_cd) = ?
                   AND ISNULL(rcvd_qty, 0) > 0
                 """,
-                (normalized, str(prod_cd).strip()),
+                (normalized, sku),
             )
 
             cursor.execute(
@@ -760,8 +813,7 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
                 SET in_stock = CASE
                         WHEN ISNULL(id.in_stock, 0) >= ? THEN ISNULL(id.in_stock, 0) - ?
                         ELSE 0
-                    END,
-                    on_order_qty = ISNULL(id.on_order_qty, 0) + ?
+                    END
                 FROM dbo.inv_data id
                 INNER JOIN dbo.inv i ON i.prod_cd = id.prod_cd
                 WHERE RTRIM(i.prod_cd) = ?
@@ -770,32 +822,15 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
                 (
                     rcvd_qty,
                     rcvd_qty,
-                    rcvd_qty,
-                    str(prod_cd).strip(),
+                    sku,
                     DEFAULT_WHS,
-                ),
-            )
-
-            cursor.execute(
-                """
-                UPDATE id
-                SET on_order_qty = ?
-                FROM dbo.inv_data id
-                INNER JOIN dbo.inv i ON i.prod_cd = id.prod_cd
-                WHERE RTRIM(i.prod_cd) = ?
-                  AND RTRIM(id.whs_num) = ?
-                  AND ISNULL(id.on_order_qty, 0) < ?
-                """,
-                (
-                    po_qty,
-                    str(prod_cd).strip(),
-                    DEFAULT_WHS,
-                    po_qty,
                 ),
             )
 
             lines_reverted += 1
             qty_reverted += rcvd_qty
+
+        _recalc_on_order_qty_for_skus(cursor, affected_skus)
 
         conn.commit()
         result["success"] = True

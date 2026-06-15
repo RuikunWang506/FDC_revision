@@ -8,6 +8,7 @@ from py.utilities.database_utils import get_mysql_connection
 from datetime import datetime, timedelta
 import py.utilities.models
 from py.utilities.dam_utils import search_assets_by_sku_pattern, get_asset_url
+from py.utilities.ocean_qty import fetch_ocean_qty_by_style_prefix
 import os
 
 # Get the directory of this file
@@ -240,7 +241,6 @@ def fetch_oms_description_by_sku(sku, conn_fdc=None, conn_oms_ef=None):
         return None
 
 
-
 def search_product_data(search_input):
     """
     Search for products by SKU or Style.
@@ -321,9 +321,15 @@ def search_product_data(search_input):
             
             cursor.execute(query, params)
             rows = cursor.fetchall()
+            ocean_lookup = fetch_ocean_qty_by_style_prefix(conn, search_input_parts[0])
             
             # Add database identifier to each row
             for row in rows:
+                sku_key = str(row[0]).strip()
+                if sku_key in ocean_lookup:
+                    incoming = ocean_lookup[sku_key]
+                else:
+                    incoming = int(row[6] or 0)
                 all_results.append({
                     'db': db_name,
                     'sku': row[0],
@@ -332,7 +338,7 @@ def search_product_data(search_input):
                     'stock': row[3],
                     'sold': row[4],
                     'available': row[5],
-                    'incoming': row[6],
+                    'incoming': incoming,
                     'cost': row[7],
                     'msrp': row[8],
                     'case_qty': row[9],

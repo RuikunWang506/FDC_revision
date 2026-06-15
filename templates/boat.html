@@ -67,7 +67,7 @@
         .hub-table tbody tr.row-landed { border-left: 4px solid #28a745; }
         .hub-table tbody tr.row-waiting { border-left: 4px solid #adb5bd; }
         .action-group .btn { margin: 2px 2px 2px 0; font-size: .78rem; padding: .25rem .5rem; }
-        .action-cell { min-width: 200px; }
+        .action-cell { min-width: 280px; }
         .action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
         #importPreviewBody tr.color-changed { background: #fff3cd; }
         .import-vendor-box {
@@ -208,17 +208,19 @@
             </button>
             <div id="shipmentUploadPanel" class="collapse mt-3">
                 <p class="text-muted small mb-2">
-                    Upload the weekly tracking Excel file. Uses the <strong>2026</strong> worksheet only.
+                    Upload the weekly <strong>2026 shipment schedule</strong> Excel file (.xls or .xlsx).
+                    Must have a worksheet named <strong>2026</strong> with columns REFER NO, VESSEL NO, CONTAINTER NO, ETD, ETA.
+                    Not the FedEx <code>Shipment_Report</code> export.
                     Column A = FDC container (<code>FT261112</code> → <code>F261112</code>).
                     Updates MySQL, Google Sheet, and local cache (vessel, container #, deliver date, ETD, ETA).
                 </p>
                 <div id="shipmentDropzone" class="shipment-dropzone mb-3">
                     <div><i class="bi bi-cloud-upload" style="font-size:1.5rem;color:#2d5a87;"></i></div>
-                    <div class="mt-2">Drag &amp; drop the .xlsx file here</div>
+                    <div class="mt-2">Drag &amp; drop the Excel file here (.xls or .xlsx)</div>
                     <div class="small">or choose a file below</div>
                 </div>
                 <div class="d-flex flex-wrap align-items-center">
-                    <input type="file" id="shipmentTrackingFile" class="d-none" accept=".xlsx,.xlsm">
+                    <input type="file" id="shipmentTrackingFile" class="d-none" accept=".xls,.xlsx,.xlsm">
                     <button type="button" id="shipmentChooseBtn" class="btn btn-sm btn-outline-primary mr-2 mb-2">
                         Choose file
                     </button>
@@ -257,6 +259,7 @@
                         <tr>
                             <th>Container</th>
                             <th>BOL</th>
+                            <th>ETD / ETA</th>
                             <th>Status</th>
                             <th>Written Time</th>
                             <th>PO Created</th>
@@ -339,7 +342,8 @@
                                 <h6>Columns</h6>
                                 <ul>
                                     <li><strong>Container</strong> — click to open item lookup. <code>FT…</code> numbers display as <code>F…</code>.</li>
-                                    <li><strong>BOL</strong> — bill of lading from the sheet.</li>
+                                    <li><strong>BOL</strong> — bill of lading from weekly tracking; vessel name shown below.</li>
+                                    <li><strong>ETD / ETA</strong> — departure (ETD) on top, arrival (ETA) below from weekly tracking.</li>
                                     <li><strong>Written Time</strong> — when the row was written on the Google sheet.</li>
                                     <li><strong>PO Created</strong> — OMS PO date/time from FDC (<code>pur_ord</code> + <code>plog</code>). Blank if no PO exists yet.</li>
                                 </ul>
@@ -361,6 +365,8 @@
                                     <li><strong>Ocean → PackingList / Receive</strong> — opens the packing list in a new tab, then asks whether the container arrived at 827. Answer <strong>Yes</strong> to receive into OMS and update the sheet RCD column.</li>
                                     <li><strong>Ocean / Landed → Files</strong> — download PO CSV, Styles CSV, or Original.</li>
                                     <li><strong>Ocean / Landed → Edit</strong> — <em>Delete PO</em> removes OMS records; <em>Reprocess</em> re-runs import preview; <em>Un-landed</em> (landed only) reverses 827 receive and moves back to ocean.</li>
+                                    <li><strong>MSRP column</strong> — Excel only: <em>OK</em> (all Price1 filled) or <em>Need Ken</em> (any Price1 missing).</li>
+                                    <li><strong>Ocean / Landed → Update MSRP</strong> — next to Edit when Excel MSRP is OK and any PO SKU in OMS still has $0 retail; pushes Price1 to FDC + EFAS.</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
@@ -397,7 +403,8 @@
                                 <h6>列说明</h6>
                                 <ul>
                                     <li><strong>Container 货柜号</strong> — 点击可打开货品查询。<code>FT…</code> 会显示为 <code>F…</code>。</li>
-                                    <li><strong>BOL 提单号</strong> — 来自 Google 表。</li>
+                                    <li><strong>BOL 提单号</strong> — 来自每周跟踪表；下方显示船名。</li>
+                                    <li><strong>ETD / ETA</strong> — 上方为离港 ETD，下方为到港 ETA。</li>
                                     <li><strong>Written Time 写入时间</strong> — Google 表上该行的写入时间。</li>
                                     <li><strong>PO Created 建 PO 时间</strong> — FDC OMS 中 PO 的日期/时间（<code>pur_ord</code> + <code>plog</code>）。尚未建 PO 时显示空白。</li>
                                 </ul>
@@ -419,6 +426,8 @@
                                     <li><strong>Ocean → PackingList / Receive 装箱单/收货</strong> — 新窗口打开装箱单，然后询问是否已在 827 到货。选 <strong>Yes</strong> 将在 OMS 收货并更新 Google 表 RCD 列。</li>
                                     <li><strong>Ocean / Landed → Files 文件</strong> — 下载 PO CSV、Styles CSV 或 Original 原文件。</li>
                                     <li><strong>Ocean / Landed → Edit 编辑</strong> — <em>Delete PO 删除 PO</em> 清除 OMS 记录；<em>Reprocess 重新处理</em> 重新打开导入预览；<em>Un-landed 取消到货</em>（仅 Landed）撤销 827 收货并回到在途状态。</li>
+                                    <li><strong>MSRP 列</strong> — 仅看 Excel：<em>OK</em>（Price1 齐全）或 <em>Need Ken</em>（Price1 有缺失）。</li>
+                                    <li><strong>Update MSRP 更新零售价</strong> — 在 Edit 旁，Excel 为 OK 且该 PO 仍有 SKU 在 OMS 零售价为 $0 时显示；从 Excel Price1 写入 FDC + EFAS。</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
@@ -457,9 +466,6 @@
                     <p class="text-muted small mb-3" id="editActionsHint">Delete the OMS PO or reprocess the container file and review the style grid before re-import.</p>
                     <button type="button" class="btn btn-outline-warning btn-block mb-2" id="editUnlandBtn" style="display:none;">
                         <i class="bi bi-arrow-counterclockwise"></i> Un-landed
-                    </button>
-                    <button type="button" class="btn btn-outline-success btn-block mb-2" id="editUpdateMsrpBtn" style="display:none;">
-                        <i class="bi bi-currency-dollar"></i> Update MSRP (FDC + EFAS)
                     </button>
                     <button type="button" class="btn btn-outline-danger btn-block mb-2" id="editDeletePoBtn">
                         <i class="bi bi-trash"></i> Delete PO
@@ -682,12 +688,8 @@
             if (status === 'ok') {
                 return '<span class="status-badge status-msrp-ok">OK</span>';
             }
-            if (status === 'partial') {
-                return '<span class="status-badge status-msrp-gap" title="Price1 missing in original Excel">' +
-                    escapeHtml(row.msrp_label || 'Gap') + '</span>';
-            }
-            if (status === 'missing') {
-                return '<span class="status-badge status-msrp-missing" title="No Price1 in original Excel">Need Ken</span>';
+            if (status === 'need_ken') {
+                return '<span class="status-badge status-msrp-missing" title="Price1 missing in original Excel">Need Ken</span>';
             }
             return '<span class="text-muted">—</span>';
         }
@@ -713,6 +715,42 @@
             return html;
         }
 
+        function stackedCell(primary, secondary) {
+            if (!primary && !secondary) {
+                return '<span class="text-muted">—</span>';
+            }
+            var html = '<div class="written-time-cell">';
+            if (primary) {
+                html += '<div class="written-date">' + escapeHtml(primary) + '</div>';
+            }
+            if (secondary) {
+                html += '<div class="written-clock">' + escapeHtml(secondary) + '</div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function bolCell(row) {
+            if (!row.bol && !row.vessel_no) {
+                return '<span class="text-muted">—</span>';
+            }
+            var html = '<div class="written-time-cell">';
+            if (row.bol) {
+                html += '<div class="written-date">' + escapeHtml(row.bol) + '</div>';
+            }
+            if (row.vessel_no) {
+                var searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(row.vessel_no);
+                html += '<div class="written-clock"><a href="' + searchUrl +
+                    '" target="_blank" rel="noopener">' + escapeHtml(row.vessel_no) + '</a></div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function etdEtaCell(row) {
+            return stackedCell(row.etd || '', row.eta || '');
+        }
+
         function btn(cls, label, attrs) {
             return '<button class="btn btn-sm ' + cls + '" ' + attrs + '>' + label + '</button>';
         }
@@ -724,6 +762,14 @@
                 'btn-outline-secondary files-open-btn',
                 'Files',
                 'data-container="' + escapeHtml(container) + '" data-files="' + encoded + '"'
+            );
+        }
+
+        function updateMsrpButton(container) {
+            return btn(
+                'btn-outline-success update-msrp-btn',
+                'Update MSRP',
+                'data-container="' + escapeHtml(container) + '" title="Push Price1 from original Excel to FDC + EFAS (RETAIL_PRS)"'
             );
         }
 
@@ -766,6 +812,9 @@
                 html += btn('btn-primary edit-open-btn', 'Edit',
                     'data-container="' + c + '" data-action-mode="ocean" data-msrp-status="' +
                     escapeHtml(row.msrp_status || 'unknown') + '" data-in-oms="1"');
+                if (row.show_update_msrp) {
+                    html += updateMsrpButton(c);
+                }
             } else if (row.action_mode === 'landed') {
                 html += filesButton(c, [
                     dl('po', 'PO CSV'),
@@ -775,6 +824,9 @@
                 html += btn('btn-primary edit-open-btn', 'Edit',
                     'data-container="' + c + '" data-action-mode="landed" data-msrp-status="' +
                     escapeHtml(row.msrp_status || 'unknown') + '" data-in-oms="1"');
+                if (row.show_update_msrp) {
+                    html += updateMsrpButton(c);
+                }
             } else {
                 html += '<span class="text-muted small">No Dropbox file</span>';
             }
@@ -796,7 +848,9 @@
             var q = ($('#searchBox').val() || '').trim().toUpperCase();
             return allRows.filter(function(row) {
                 if (!rowMatchesFilter(row)) return false;
-                if (q && row.container.indexOf(q) === -1 && (row.bol || '').toUpperCase().indexOf(q) === -1) {
+                if (q && row.container.indexOf(q) === -1
+                    && (row.bol || '').toUpperCase().indexOf(q) === -1
+                    && (row.vessel_no || '').toUpperCase().indexOf(q) === -1) {
                     return false;
                 }
                 return true;
@@ -878,7 +932,7 @@
 
             if (!pageRows.length) {
                 tbody.append(
-                    '<tr><td colspan="7" class="text-center text-muted py-4">No containers match this filter.</td></tr>'
+                    '<tr><td colspan="8" class="text-center text-muted py-4">No containers match this filter.</td></tr>'
                 );
             }
 
@@ -889,7 +943,8 @@
                     '" target="_blank" rel="noopener"><strong>' +
                     escapeHtml(row.container) + '</strong></a>'
                 ));
-                tr.append($('<td></td>').text(row.bol || ''));
+                tr.append($('<td></td>').html(bolCell(row)));
+                tr.append($('<td></td>').html(etdEtaCell(row)));
                 tr.append($('<td></td>').html(statusBadge(row)));
                 tr.append($('<td></td>').html(datetimeCell(row.written_date, row.written_time)));
                 tr.append($('<td></td>').html(datetimeCell(row.processed_date, row.processed_time)));
@@ -1136,15 +1191,9 @@
             editActionsState.msrpStatus = msrpStatus || 'unknown';
             editActionsState.inOms = !!inOms;
             $('#editActionsContainer').text(container);
-            $('#editDeletePoBtn, #editReprocessBtn, #editUnlandBtn, #editUpdateMsrpBtn').prop('disabled', false);
+            $('#editDeletePoBtn, #editReprocessBtn, #editUnlandBtn').prop('disabled', false);
             $('#editReprocessBtn').text('Reprocess');
             $('#editUnlandBtn').text('Un-landed');
-            $('#editUpdateMsrpBtn').text('Update MSRP (FDC + EFAS)');
-            if (inOms && (msrpStatus === 'partial' || msrpStatus === 'missing')) {
-                $('#editUpdateMsrpBtn').show();
-            } else {
-                $('#editUpdateMsrpBtn').hide();
-            }
             if (actionMode === 'landed') {
                 $('#editUnlandBtn').show();
                 $('#editActionsHint').text(
@@ -1159,26 +1208,30 @@
             $('#editActionsModal').modal('show');
         }
 
-        function updateContainerMsrp(container) {
+        function updateContainerMsrp(container, triggerBtn) {
             if (!confirm(
                 'Update MSRP (Price1) from the original Excel file for ' + container + '?\n\n' +
                 'This updates RETAIL_PRS in FDC and EFAS only. SKUs with no Price1 in the file are skipped.'
             )) {
                 return;
             }
-            var $btn = $('#editUpdateMsrpBtn');
-            $btn.prop('disabled', true).text('Updating…');
+            var $btn = triggerBtn ? $(triggerBtn) : $();
+            var btnLabel = 'Update MSRP';
+            if ($btn.length) {
+                $btn.prop('disabled', true).text('Updating…');
+            }
             $.post('/boat/update_msrp/' + encodeURIComponent(container), function(res) {
-                $('#editActionsModal').modal('hide');
                 alert(res.message || (res.success ? 'MSRP updated' : 'Failed'));
                 if (res.success) {
                     loadData(true);
-                } else {
-                    $btn.prop('disabled', false).text('Update MSRP (FDC + EFAS)');
+                } else if ($btn.length) {
+                    $btn.prop('disabled', false).text(btnLabel);
                 }
             }).fail(function(xhr) {
                 alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not update MSRP'));
-                $btn.prop('disabled', false).text('Update MSRP (FDC + EFAS)');
+                if ($btn.length) {
+                    $btn.prop('disabled', false).text(btnLabel);
+                }
             });
         }
 
@@ -1308,9 +1361,8 @@
             }
             openFilesModal($(this).data('container'), items);
         });
-        $('#editUpdateMsrpBtn').on('click', function() {
-            if (!editActionsState.container) return;
-            updateContainerMsrp(editActionsState.container);
+        $(document).on('click', '.update-msrp-btn', function() {
+            updateContainerMsrp($(this).data('container'), this);
         });
         $('#editDeletePoBtn').on('click', function() {
             if (!editActionsState.container) return;

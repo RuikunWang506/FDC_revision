@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, current_app
 from py.utilities.database_utils import get_mysql_connection, get_sql_server_connection_fdc
+from py.utilities.ocean_qty import PLOG_OCEAN_JOIN, ocean_qty_sql_sum
 from py.utilities.setting import login_required
 import pyodbc
 
@@ -69,9 +70,10 @@ def outofstock_check():
                 SUM(CAST(ISNULL(id.in_stock, 0) AS INT)) as Stock,
                 SUM(CAST(ISNULL(id.order_qty, 0) AS INT)) as Sold,
                 SUM(CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT)) as Available,
-                SUM(CAST(ISNULL(id.on_order_qty, 0) AS INT)) as Ocean
+                {ocean_qty_sql_sum()} as Ocean
             FROM dbo.inv AS i
             LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+            {PLOG_OCEAN_JOIN}
             WHERE i.ALT_CD IN ({placeholders})
             GROUP BY i.ALT_CD
         """
@@ -191,14 +193,15 @@ def get_style_skus():
                     fdc_cursor = fdc_conn.cursor()
                     # Query PROD_CD rows that begin with the style code (covers variations like spaces/dashes)
                     like_pattern = style + '%'
-                    sku_stock_query = """
+                    sku_stock_query = f"""
                         SELECT i.PROD_CD as PROD_CD,
                             SUM(CAST(ISNULL(id.in_stock, 0) AS INT)) as Stock,
                             SUM(CAST(ISNULL(id.order_qty, 0) AS INT)) as Sold,
                             SUM(CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT)) as Available,
-                            SUM(CAST(ISNULL(id.on_order_qty, 0) AS INT)) as Ocean
+                            {ocean_qty_sql_sum()} as Ocean
                         FROM dbo.inv AS i
                         LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+                        {PLOG_OCEAN_JOIN}
                         WHERE i.PROD_CD LIKE ?
                         GROUP BY i.PROD_CD
                     """

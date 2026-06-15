@@ -28,10 +28,12 @@ from py.utilities.boat_sheet_cache import (
     save_cached_boat_data,
 )
 from py.utilities.shipment_tracking_import import (
-    LATEST_TRACKING_XLSX,
+    has_saved_tracking_file,
     load_saved_tracking_rows,
+    load_shipment_tracking_lookup,
     load_tracking_meta,
     process_shipment_tracking_upload,
+    reprocess_saved_shipment_tracking,
     save_tracking_meta,
 )
 from py.utilities.container_po_import import (
@@ -44,6 +46,7 @@ from py.utilities.container_po_import import (
     VENDOR_FALLBACK,
 )
 from py.utilities.style_efas_transfer import transfer_container_styles_to_oms, update_retail_prices_dual
+from py.utilities.setting import login_required
 TERMINAL49_API_URL = "https://api.terminal49.com/v2/tracking_requests"
 TERMINAL49_API_KEY = "8zoazZdxmyQS1zuNSKXDuGnm"
 TERMINAL49_CUSTOMER_ID = "f7cb530a-9e60-412c-a5bc-205a2f34ba54"  # Default customer ID
@@ -332,6 +335,42 @@ def _container_po_skus(cursor, container_number: str) -> set[str]:
     return {str(row[0]).strip().upper() for row in cursor.fetchall() if row[0]}
 
 
+def _fetch_retail_has_zero_lookup(container_list: list[str]) -> dict[str, bool]:
+    """
+    Return container -> True when any PO SKU still has RETAIL_PRS <= 0 in FDC inv.
+    Paired with Excel MSRP OK to decide when Update MSRP should appear.
+    """
+    if not container_list:
+        return {}
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    lookup: dict[str, bool] = {}
+    try:
+        placeholders = ",".join(["?"] * len(container_list))
+        cursor.execute(
+            f"""
+            SELECT RTRIM(p.pur_num) AS pur_num,
+                   COUNT(DISTINCT RTRIM(p.prod_cd)) AS sku_count,
+                   MIN(ISNULL(i.RETAIL_PRS, 0)) AS min_retail
+            FROM dbo.plog p
+            LEFT JOIN dbo.inv i ON RTRIM(i.PROD_CD) = RTRIM(p.prod_cd)
+            WHERE RTRIM(p.pur_num) IN ({placeholders})
+              AND ISNULL(p.log_qty, 0) > 0
+            GROUP BY RTRIM(p.pur_num)
+            """,
+            container_list,
+        )
+        for row in cursor.fetchall():
+            pur_num = str(row[0]).strip()
+            sku_count = int(row[1] or 0)
+            min_retail = float(row[2] or 0)
+            lookup[pur_num] = sku_count > 0 and min_retail <= 0
+    finally:
+        conn.close()
+    return lookup
+
+
 def _sync_styles_csv_retail_prices(container_number: str, price_updates: dict[str, float]) -> int:
     normalized = normalize_container_id(container_number)
     csv_path = os.path.join(OUTPUT_DIR, f"{normalized}-styles.csv")
@@ -506,20 +545,60 @@ def _split_datetime_display(raw) -> tuple[str, str]:
 
 
 def _msrp_status_label(status: str, missing: int, total: int) -> str:
+    """Excel-only MSRP badge: OK or Need Ken."""
     if status == "ok":
         return "OK"
-    if status == "partial" and total:
-        return f"{missing} missing"
-    if status == "missing":
+    if status == "need_ken":
         return "Need Ken"
     return "—"
+
+
+def _excel_msrp_display_status(raw_status: str, dropbox_available: bool) -> str:
+    """Normalize Excel scan result to ok | need_ken | unknown for hub display."""
+    if not dropbox_available:
+        return "unknown"
+    if raw_status == "ok":
+        return "ok"
+    return "need_ken"
+
+
+def _find_sheet_column(df: pd.DataFrame, needles: tuple[str, ...]) -> str | None:
+    for col in df.columns:
+        label = str(col).strip().lower()
+        for needle in needles:
+            if needle in label:
+                return col
+    return None
+
+
+def _find_sheet_eta_column(df: pd.DataFrame) -> str | None:
+    for col in df.columns:
+        if str(col).strip().lower() == "eta":
+            return col
+    return None
+
+
+def _tracking_date_display(raw) -> str:
+    date_part, _time_part = _split_datetime_display(raw)
+    if date_part:
+        return date_part
+    return _clean_hub_text(raw)
+
+
+def _clean_hub_text(raw) -> str:
+    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+        return ""
+    text = str(raw).strip()
+    if text.lower() in {"nan", "none", "nat"}:
+        return ""
+    return text
 
 
 def _build_container_hub_rows(
     df: pd.DataFrame,
     container_files: dict[str, str],
 ) -> list[dict]:
-    """Build simplified container rows for the hub page (OMS status only, no ETA/Memo columns)."""
+    """Build simplified container rows for the hub page."""
     sheet = df.copy()
     if "FDC container" not in sheet.columns:
         return []
@@ -543,10 +622,15 @@ def _build_container_hub_rows(
     sheet["_fdc_sort_num"] = sheet["container"].map(_fdc_container_sort_number)
     sheet = sheet.sort_values(by="_fdc_sort_num", ascending=False).drop(columns=["_fdc_sort_num"])
     written_col = _written_time_column(sheet)
+    voyage_col = _find_sheet_column(sheet, ("voyage", "vessel no", "vesso"))
+    etd_col = _find_sheet_column(sheet, ("eta1", "etd"))
+    eta_col = _find_sheet_eta_column(sheet)
 
     container_list = sheet["container"].tolist()
     rcvd_lookup: dict[str, float] = {}
     po_created_lookup: dict[str, tuple[str, str]] = {}
+    retail_has_zero_lookup: dict[str, bool] = {}
+    tracking_lookup: dict[str, dict[str, str]] = {}
 
     if container_list:
         conn = get_db_connection()
@@ -566,6 +650,11 @@ def _build_container_hub_rows(
         finally:
             conn.close()
         po_created_lookup = _fetch_po_created_lookup(container_list)
+        retail_has_zero_lookup = _fetch_retail_has_zero_lookup(container_list)
+        try:
+            tracking_lookup = load_shipment_tracking_lookup(container_list)
+        except Exception as e:
+            current_app.logger.warning(f"Could not load shipment tracking lookup: {e}")
 
     rows: list[dict] = []
     for _, record in sheet.iterrows():
@@ -588,12 +677,38 @@ def _build_container_hub_rows(
         written_date, written_clock = _split_datetime_display(written_raw)
         processed_date, processed_clock = po_created_lookup.get(container_num, ("", ""))
         msrp_info = msrp_lookup.get(container_num, {})
-        msrp_status = str(msrp_info.get("status") or "unknown")
+        raw_msrp_status = str(msrp_info.get("status") or "unknown")
         msrp_missing = int(msrp_info.get("missing") or 0)
         msrp_total = int(msrp_info.get("total") or 0)
+        msrp_status = _excel_msrp_display_status(raw_msrp_status, dropbox_available)
+        retail_has_zero = retail_has_zero_lookup.get(container_num, False)
+        show_update_msrp = (
+            in_oms
+            and dropbox_available
+            and msrp_status == "ok"
+            and retail_has_zero
+        )
+
+        tracking = tracking_lookup.get(container_num, {})
+        bol = _clean_hub_text(record.get("bol")) or _clean_hub_text(tracking.get("container_no"))
+        vessel_no = _clean_hub_text(record.get(voyage_col)) if voyage_col else ""
+        if not vessel_no:
+            vessel_no = _clean_hub_text(tracking.get("vessel_no"))
+
+        etd = _tracking_date_display(record.get(etd_col)) if etd_col else ""
+        if not etd:
+            etd = _clean_hub_text(tracking.get("etd"))
+
+        eta = _tracking_date_display(record.get(eta_col)) if eta_col else ""
+        if not eta:
+            eta = _clean_hub_text(tracking.get("eta"))
+
         row = {
             "container": container_num,
-            "bol": str(record.get("bol") or "").strip(),
+            "bol": bol,
+            "vessel_no": vessel_no,
+            "etd": etd,
+            "eta": eta,
             "written_date": written_date,
             "written_time": written_clock,
             "processed_date": processed_date,
@@ -602,6 +717,8 @@ def _build_container_hub_rows(
             "msrp_missing_count": msrp_missing,
             "msrp_total_count": msrp_total,
             "msrp_label": _msrp_status_label(msrp_status, msrp_missing, msrp_total),
+            "retail_has_zero": retail_has_zero,
+            "show_update_msrp": show_update_msrp,
             "status_key": status_key,
             "status_label": _HUB_STATUS_LABELS.get(status_key, status_key.title()),
             "action_mode": _hub_action_mode(
@@ -1717,6 +1834,14 @@ def process_container_file(file_path, container_number):
         df_f24213['COLOR'] = df_f24213['COLOR_RAW'].apply(normalize_color_to_abbrev)
 
         preview = _build_container_preview(df_f24213, container_number)
+        if not preview:
+            return {
+                'success': False,
+                'error': (
+                    f'No line items found in System File for {container_number}. '
+                    'Check STYLE NO / OMS / RMB / QUANTITY columns.'
+                ),
+            }
         file_info = save_container_csvs(container_number, preview)
 
         return {
@@ -1808,9 +1933,8 @@ def _run_container_db_import(
 
 
 @boat_service_bp.route('/boat', methods=['GET'])
+@login_required
 def boat_service():
-    if 'username' not in session:
-        return redirect(url_for("auth.login"))
     current_user = session['username']
     current_app.logger.info(f"***{current_user}***__@@@checked container hub@@@")
     return render_template(
@@ -1924,11 +2048,11 @@ def upload_shipment_tracking():
 
     upload = request.files.get('file')
     if not upload or not upload.filename:
-        return jsonify({'success': False, 'error': 'Choose an .xlsx tracking file to upload.'}), 400
+        return jsonify({'success': False, 'error': 'Choose a tracking Excel file to upload.'}), 400
 
     filename = upload.filename
-    if not filename.lower().endswith(('.xlsx', '.xlsm')):
-        return jsonify({'success': False, 'error': 'Only .xlsx / .xlsm files are supported.'}), 400
+    if not filename.lower().endswith(('.xls', '.xlsx', '.xlsm')):
+        return jsonify({'success': False, 'error': 'Only .xls, .xlsx, and .xlsm files are supported.'}), 400
 
     current_user = session.get('username', 'unknown')
     temp_path = ""
@@ -1984,7 +2108,7 @@ def shipment_tracking_meta():
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     meta = load_tracking_meta()
-    meta["has_file"] = os.path.isfile(LATEST_TRACKING_XLSX)
+    meta["has_file"] = has_saved_tracking_file()
     return jsonify({'success': True, 'meta': meta})
 
 
@@ -2008,6 +2132,46 @@ def shipment_tracking_view():
         )
     except Exception as e:
         current_app.logger.error(f"Error loading shipment tracking view: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@boat_service_bp.route('/boat/shipment_tracking/resync', methods=['POST'])
+def resync_shipment_tracking():
+    """Re-parse the last uploaded tracking file and sync MySQL + Google Sheet."""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    current_user = session.get('username', 'unknown')
+    try:
+        meta = load_tracking_meta()
+        result = reprocess_saved_shipment_tracking(uploaded_by=current_user)
+        matched_rows = update_shipment_tracking_in_sheets(result["rows"])
+        meta = save_tracking_meta(
+            original_filename=meta.get("original_filename") or "",
+            sheet_name=result["sheet_name"],
+            row_count=len(result["rows"]),
+            uploaded_by=current_user,
+            matched_sheet_rows=matched_rows,
+        )
+        invalidate_boat_data_response_cache()
+        load_sheet_dataframe(force_refresh=True)
+        message = (
+            f"Re-synced {result['mysql_saved']} container(s) from cached file "
+            f"and updated {matched_rows} Google Sheet row(s)."
+        )
+        return jsonify(
+            {
+                "success": True,
+                "message": message,
+                "meta": meta,
+                "row_count": len(result["rows"]),
+                "matched_sheet_rows": matched_rows,
+            }
+        )
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Error re-syncing shipment tracking: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

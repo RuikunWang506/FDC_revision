@@ -19,6 +19,7 @@ import pandas as pd
 from py.utilities.setting import Config
 from py.utilities.setting import resize_image
 from py.utilities.dam_utils import get_canonical_assets_for_skus, get_asset_url
+from py.utilities.ocean_qty import apply_ocean_qty_to_rows, PLOG_OCEAN_JOIN, ocean_qty_sql_scalar
 import py.utilities.models
 import datetime
 from datetime import timedelta
@@ -2407,6 +2408,13 @@ def update_description_in_db(style_index, description):
         finally:
             cursor.close()
             connection.close()
+
+
+def _apply_plog_ocean_qty(conn, rows):
+    """Replace inv_data.on_order_qty with plog-summed in-transit qty per SKU."""
+    return apply_ocean_qty_to_rows(conn, rows, sku_index=0, ocean_index=5)
+
+
 def get_sql_data(style_list):
     # Create two separate lists: one for exact base styles, one for styles with suffix
     base_styles = []
@@ -2510,6 +2518,7 @@ def get_sql_data(style_list):
           
             cursor.execute(query, suffix_list, base_list)
             rows = cursor.fetchall()
+            rows = _apply_plog_ocean_qty(conn, rows)
             
             # Strip trailing spaces from each row's data
             rows_with_database_name = [
@@ -3068,13 +3077,14 @@ def discover_styles_with_positive_inventory(style_prefix='', limit=4000):
     conn_oms_ef = pyodbc.connect(
         f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={sql_server_config["database_oms_ef"]};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
     )
-    sql_base = """
+    sql_base = f"""
         SELECT DISTINCT RTRIM(LTRIM(i.ALT_CD)) AS alt_cd
         FROM dbo.inv AS i
         INNER JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+        {PLOG_OCEAN_JOIN}
         WHERE (
             (ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0)) > 0
-            OR ISNULL(id.on_order_qty, 0) > 0
+            OR {ocean_qty_sql_scalar()} > 0
         )
     """
     try:

@@ -40,7 +40,7 @@
             </li>
             {% endif %}
 
-            {% if current_user in ['yeti'] %}
+            {% if current_user and (current_user|lower) == 'yeti' %}
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('auth.manage_users') }}">
                     <img src="/static/icons/shipping.svg" alt="User Management">Users
