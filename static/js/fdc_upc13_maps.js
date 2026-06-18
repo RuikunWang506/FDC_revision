@@ -23,6 +23,7 @@ window.FDC_UPC13 = {
     '114': { abbrev: 'BR', desc: '棕色 BROWN' },
     '115': { abbrev: 'BS', desc: 'BRASS' },
     '116': { abbrev: 'BZ', desc: '古铜 BRONZE' },
+    '120': { abbrev: 'GY', desc: 'GRAY' },
     '121': { abbrev: 'CG', desc: '棕色' },
     '122': { abbrev: 'CA', desc: '驼色' },
     '123': { abbrev: 'CB', desc: '巧克力黑' },
@@ -120,5 +121,6 @@ window.FDC_UPC13 = {
     '228': { abbrev: 'RG', desc: '玫瑰金' },
     '230': { abbrev: 'SA', desc: '' },
     '233': { abbrev: 'DR', desc: '' },
+    '959': { abbrev: 'SG', desc: 'SAGE' },
   },
 };

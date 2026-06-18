@@ -120,6 +120,32 @@ def sort_filenames(filenames):
 
     return sorted_filenames
 
+def _looks_like_hash_sku(value):
+    """True when DAM sku is a hex file id, not a product SKU."""
+    if not value:
+        return False
+    s = str(value).strip().upper()
+    return len(s) >= 16 and all(c in '0123456789ABCDEF' for c in s)
+
+def _resolve_image_search_terms(user_input, df):
+    """Wildcard searches should use result SKUs, not the raw pattern."""
+    terms = [term.split()[0].strip() for term in user_input.split(",") if term.split()[0].strip()]
+    if not any('%' in term for term in terms):
+        return terms, 'prefix'
+
+    if df is not None and 'SKU' in df.columns:
+        skus = []
+        seen = set()
+        for raw in df['SKU'].astype(str).str.strip().str.upper():
+            if not raw or raw in seen or _looks_like_hash_sku(raw):
+                continue
+            seen.add(raw)
+            skus.append(raw)
+        if skus:
+            return skus, 'exact'
+
+    return [], 'exact'
+
 @item_lookup_bp.route("/item_lookup", methods=["GET", "POST"])
 @item_lookup_bp.route("/item_lookup/<string:user_input>", methods=["GET"])
 @login_required
@@ -155,6 +181,7 @@ def item_lookup(user_input=None):
     if not excel_html and not history_html and not purchase_html and not adjustment_html:  # If no valid data is found
         return render_template("Item_lookup.html", excel_html=None, history_html=None, purchase_html=None, adjustment_html=None, current_user=current_user, user_input=user_input)
     # Process excel_html to add Location and Update_Date columns
+    df = None
     if excel_html:
         from io import StringIO
         df = pd.read_html(StringIO(excel_html))[0]  # Convert HTML to DataFrame
@@ -212,7 +239,7 @@ def item_lookup(user_input=None):
         )
 
     # Prepare image and file information - Enhanced with DAM system
-    search_terms = [term.split()[0].strip() for term in user_input.split(",")]
+    search_terms, image_match_mode = _resolve_image_search_terms(user_input, df)
     
     # Determine if we should filter to canonical only (when multiple SKUs with comma)
     has_comma = ',' in user_input
@@ -222,9 +249,9 @@ def item_lookup(user_input=None):
     try:
         db = py.utilities.models.SessionLocal()
         for term in search_terms:
-            # Build query - only filter canonical if input has comma (multiple SKUs)
+            sku_filter = ImageAsset.sku.ilike(term) if image_match_mode == 'exact' else ImageAsset.sku.ilike(f'{term}%')
             query = db.query(ImageAsset).filter(
-                ImageAsset.sku.ilike(f'{term}%'),
+                sku_filter,
                 ImageAsset.is_active == True,
                 ImageAsset.source.in_(['catalog_original', 'dropbox'])
             )
@@ -254,13 +281,11 @@ def item_lookup(user_input=None):
 
     # If DAM has assets, use them; otherwise fall back to filesystem search
     if dam_assets:
-        # Use DAM assets
-        sorted_file_names = [asset.filename for asset in dam_assets]
-        sorted_image_urls = [f'/image/{asset.id}/300' for asset in dam_assets]  # Use DAM endpoint
-        
-        # Enhanced file info with DAM metadata
         file_info = []
+        sorted_image_urls = []
         for asset in dam_assets:
+            if _looks_like_hash_sku(asset.sku):
+                continue
             file_info.append((
                 asset.filename,
                 asset.file_size,
@@ -271,11 +296,13 @@ def item_lookup(user_input=None):
                 asset.is_canonical,
                 asset.sku
             ))
+            sorted_image_urls.append(f'/image/{asset.id}/300')
         
         # Sort by canonical status (canonical first), then by version
         combined = list(zip(sorted_image_urls, file_info))
         combined.sort(key=lambda x: (-x[1][5], x[1][4]))  # canonical desc, version asc
         sorted_image_urls, file_info = zip(*combined) if combined else ([], [])
+        sorted_file_names = [info[0] for info in file_info] if file_info else []
         
     else:
         # Use DAM system to search for assets - catalog_original and dropbox sources
@@ -306,6 +333,8 @@ def item_lookup(user_input=None):
         sorted_image_urls = []
         
         for asset in canonical_assets:
+            if _looks_like_hash_sku(asset.sku):
+                continue
             file_names.append(asset.filename)
             
             # Get file size if path exists
@@ -314,9 +343,11 @@ def item_lookup(user_input=None):
                 size = os.path.getsize(asset.path)
             
             modified_date = asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown'
-            
-            # Extract SKU from filename (remove extension and convert to uppercase)
-            sku = asset.filename.split('.')[0].upper()
+            sku = asset.sku if asset.sku and not _looks_like_hash_sku(asset.sku) else ''
+            if not sku:
+                sku = asset.filename.split('.')[0].upper()
+                if _looks_like_hash_sku(sku):
+                    sku = ''
             
             file_info.append((asset.filename, size, modified_date, None, None, asset.version, asset.is_canonical, sku))
             

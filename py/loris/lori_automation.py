@@ -1609,13 +1609,43 @@ def _format_order_date(date_value, format_str='%Y-%m-%d'):
     return str(date_value)
 
 
+def _ensure_lori_order_items_actual_quantity_column(cursor):
+    """Add actual_quantity column to lori_order_items if missing."""
+    cursor.execute("""
+        SELECT COUNT(*) AS col_count FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'lori_order_items'
+          AND COLUMN_NAME = 'actual_quantity'
+    """)
+    row = cursor.fetchone()
+    col_count = row[0] if isinstance(row, (tuple, list)) else row.get('col_count', 0)
+    if col_count == 0:
+        cursor.execute(
+            "ALTER TABLE lori_order_items "
+            "ADD COLUMN actual_quantity INT NULL DEFAULT NULL AFTER quantity"
+        )
+
+
+def _effective_item_qty(item):
+    """Return actual quantity when set, otherwise invoice quantity."""
+    actual = item.get('actual_quantity')
+    if actual is not None:
+        return int(actual)
+    return int(item.get('quantity') or 0)
+
+
 def _fetch_orders_for_api(cursor):
     """Load all orders in two queries (orders + package join, no per-row store lookups)."""
+    _ensure_lori_order_items_actual_quantity_column(cursor)
     query = """
         SELECT o.po_number, o.batch_date, o.email_date, o.order_date,
                o.delivery_date, o.cancel_date, o.ship_to_address, o.total_qty,
                o.total_cost, o.status, o.tracking, o.created_at, o.updated_at,
                COUNT(oi.id) as item_count,
+               COALESCE(SUM(COALESCE(oi.actual_quantity, oi.quantity)), 0) as actual_total_qty,
+               COALESCE(SUM(
+                   COALESCE(oi.unit_price, 0) * COALESCE(oi.actual_quantity, oi.quantity)
+               ), 0) as actual_total_cost,
                CASE WHEN p.po_number IS NOT NULL THEN 1 ELSE 0 END as has_box_info,
                p.box_dimensions as package_box_dimensions,
                p.total_weight as package_total_weight,
@@ -1788,8 +1818,9 @@ def get_order_items(po_number):
     try:
         cursor = connection.cursor(dictionary=True)
         
+        _ensure_lori_order_items_actual_quantity_column(cursor)
         query = """
-            SELECT id, vendor_item, color, quantity, description, 
+            SELECT id, vendor_item, color, quantity, actual_quantity, description, 
                    unit_price, extended_cost, upc
             FROM lori_order_items 
             WHERE po_number = %s
@@ -1812,6 +1843,116 @@ def get_order_items(po_number):
         if connection.is_connected():
             cursor.close()
             connection.close()
+
+
+@lori_automation_bp.route("/update_order_actual_quantities", methods=["POST"])
+def update_order_actual_quantities():
+    """Save per-line actual quantities for an order."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    po_number = data.get('po_number')
+    items = data.get('items', [])
+
+    if not po_number:
+        return jsonify({'error': 'PO number is required'}), 400
+    if not items:
+        return jsonify({'error': 'No items provided'}), 400
+
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor(dictionary=True)
+        _ensure_lori_order_items_actual_quantity_column(cursor)
+
+        cursor.execute("SELECT po_number FROM lori_orders WHERE po_number = %s", (po_number,))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Order not found'}), 404
+
+        update_sql = """
+            UPDATE lori_order_items
+            SET actual_quantity = %s
+            WHERE id = %s AND po_number = %s
+        """
+        updated = 0
+        for item in items:
+            item_id = item.get('id')
+            if item_id is None:
+                continue
+            try:
+                actual_qty = int(item.get('actual_quantity', 0))
+            except (TypeError, ValueError):
+                return jsonify({'error': f'Invalid actual quantity for item {item_id}'}), 400
+            if actual_qty < 0:
+                return jsonify({'error': f'Actual quantity cannot be negative for item {item_id}'}), 400
+            cursor.execute(update_sql, (actual_qty, item_id, po_number))
+            updated += cursor.rowcount
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return jsonify({
+            'success': True,
+            'message': f'Updated actual quantities for {updated} item(s)',
+            'po_number': po_number,
+            'updated_count': updated
+        })
+    except Exception as e:
+        current_app.logger.error("Error updating actual quantities: %s", str(e))
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
+
+
+@lori_automation_bp.route("/set_order_perfect_quantities", methods=["POST"])
+def set_order_perfect_quantities():
+    """Set actual_quantity equal to invoice quantity for every line on an order."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    po_number = data.get('po_number')
+    if not po_number:
+        return jsonify({'error': 'PO number is required'}), 400
+
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+
+    try:
+        cursor = connection.cursor()
+        _ensure_lori_order_items_actual_quantity_column(cursor)
+        cursor.execute(
+            """
+            UPDATE lori_order_items
+            SET actual_quantity = quantity
+            WHERE po_number = %s
+            """,
+            (po_number,),
+        )
+        updated = cursor.rowcount
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return jsonify({
+            'success': True,
+            'message': f'Set perfect quantities for {updated} item(s)',
+            'po_number': po_number,
+            'updated_count': updated
+        })
+    except Exception as e:
+        current_app.logger.error("Error setting perfect quantities: %s", str(e))
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
+
 
 @lori_automation_bp.route("/download_pivot_table", methods=["POST"])
 def download_pivot_table():
@@ -4551,6 +4692,7 @@ def download_invoices():
             
         try:
             cursor = connection.cursor(dictionary=True)
+            _ensure_lori_order_items_actual_quantity_column(cursor)
             
             invoice_files = []
             processed_orders = []
@@ -4574,7 +4716,7 @@ def download_invoices():
                     
                     # Get order items
                     items_query = """
-                        SELECT vendor_item, quantity, upc, description, unit_price, extended_cost
+                        SELECT vendor_item, quantity, actual_quantity, upc, description, unit_price, extended_cost
                         FROM lori_order_items 
                         WHERE po_number = %s
                     """
@@ -4720,11 +4862,11 @@ def generate_invoice_from_data(order, items, invoice_date=None):
         
         for item in items:
             vendor_item = item.get('vendor_item', '')
-            qty = Decimal(str(item.get('quantity', 0)))
+            qty = Decimal(str(_effective_item_qty(item)))
             upc = item.get('upc', '')
             description = item.get('description', '')
             unit_price = Decimal(str(item.get('unit_price', 0)))
-            ext_cost = Decimal(str(item.get('extended_cost', 0)))
+            ext_cost = unit_price * qty
             
             # Extract color from vendor item
             if "-" in vendor_item:
@@ -4856,29 +4998,52 @@ def send_back_pending():
 def bulk_modify_batch_date():
     if 'username' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
-    data = request.get_json()
+    data = request.get_json() or {}
     po_numbers = data.get('po_numbers', [])
     new_batch_date = data.get('new_batch_date', None)
-    print(f"DEBUG: Received po_numbers: {po_numbers}, new_batch_date: {new_batch_date}")
-    if not po_numbers or not new_batch_date:
-        return jsonify({'error': 'PO numbers and new batch date required'}), 400
+    source_batch_date = data.get('source_batch_date', None)
+    status_filter = str(data.get('status', '') or '').strip() or None
+    if not new_batch_date:
+        return jsonify({'error': 'New batch date required'}), 400
+    if not po_numbers and not source_batch_date:
+        return jsonify({'error': 'PO numbers or source batch date required'}), 400
     connection = get_db_connection()
     if not connection:
         return jsonify({'error': 'Database connection failed'}), 500
     try:
         cursor = connection.cursor()
         updated = 0
-        for po in po_numbers:
-            print(f"DEBUG: Updating po {po} to {new_batch_date}")
-            cursor.execute("UPDATE lori_orders SET batch_date = %s WHERE po_number = %s", (new_batch_date, po))
-            print(f"DEBUG: Rowcount: {cursor.rowcount}")
-            if cursor.rowcount > 0:
-                updated += 1
+        if source_batch_date and not po_numbers:
+            if status_filter:
+                cursor.execute(
+                    "UPDATE lori_orders SET batch_date = %s WHERE batch_date = %s AND status = %s",
+                    (new_batch_date, source_batch_date, status_filter),
+                )
+            else:
+                cursor.execute(
+                    "UPDATE lori_orders SET batch_date = %s WHERE batch_date = %s",
+                    (new_batch_date, source_batch_date),
+                )
+            updated = cursor.rowcount
+        else:
+            for po in po_numbers:
+                cursor.execute(
+                    "UPDATE lori_orders SET batch_date = %s WHERE po_number = %s",
+                    (new_batch_date, po),
+                )
+                if cursor.rowcount > 0:
+                    updated += 1
         connection.commit()
-        print(f"DEBUG: Total updated: {updated}")
-        return jsonify({'success': True, 'message': f'Batch date updated for {updated} orders.'})
+        if source_batch_date and not po_numbers:
+            message = (
+                f'Combined {updated} order(s) from batch {source_batch_date} '
+                f'into batch {new_batch_date}.'
+            )
+        else:
+            message = f'Batch date updated for {updated} orders.'
+        return jsonify({'success': True, 'message': message, 'updated': updated})
     except Exception as e:
-        print(f"DEBUG: Error: {str(e)}")
+        current_app.logger.exception("bulk_modify_batch_date")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()

@@ -9,6 +9,8 @@ CLIENT_PRODUCT_DETAIL_SECTIONS: List[Dict[str, str]] = [
     {"id": "inventory_adjustment", "title": "Inventory Manual Adjustment"},
     {"id": "purchase_history", "title": "Purchase History"},
     {"id": "ocean", "title": "Ocean"},
+    {"id": "msrp", "title": "MSRP"},
+    {"id": "cost", "title": "Cost"},
 ]
 
 SECTION_IDS = frozenset(s["id"] for s in CLIENT_PRODUCT_DETAIL_SECTIONS)
@@ -52,6 +54,28 @@ def build_client_pd_section_flags(
         s["id"]: client_pd_section_visible(username, s["id"], perms=perms)
         for s in CLIENT_PRODUCT_DETAIL_SECTIONS
     }
+
+
+def strip_client_pd_pricing_fields(
+    product_data: Optional[List[Dict[str, Any]]],
+    username: Optional[str],
+    perms: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Remove MSRP/cost from product payloads when the client user lacks access."""
+    if not product_data:
+        return
+    show_msrp = client_pd_section_visible(username, "msrp", perms=perms)
+    show_cost = client_pd_section_visible(username, "cost", perms=perms)
+    if show_msrp and show_cost:
+        return
+    for style_group in product_data:
+        pinfo = style_group.get("parent_info")
+        if not isinstance(pinfo, dict):
+            continue
+        if not show_msrp:
+            pinfo.pop("msrp", None)
+        if not show_cost:
+            pinfo.pop("cost", None)
 
 
 def enforce_client_pd_section_api(section_id: str):

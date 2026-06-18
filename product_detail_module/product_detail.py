@@ -489,7 +489,7 @@ def fetch_sku_history(sku, db_conn):
     
     Returns:
     - history_po: Sum of quantities from plog for exact SKU (total PO received)
-    - history_sold: Sum of order quantities from ord_log for exact SKU (total quantity sold to customers)
+    - history_sold: ord_log order qty plus INVSPICK warehouse picks (not on customer orders)
     - history_fix: Sum of adjustment quantities from wm_log where type_cd='adj' for exact SKU (total adjustment qty)
     """
     try:
@@ -520,6 +520,16 @@ def fetch_sku_history(sku, db_conn):
         cursor.execute(sold_query, (sku,))
         sold_result = cursor.fetchone()
         history_sold = int(sold_result[0]) if sold_result and sold_result[0] else 0
+
+        # Inventory picks (INVSPICK) reduce stock but are not in ord_log.
+        inv_pick_query = """
+            SELECT ISNULL(SUM(ABS(log_qty)), 0) as total_qty
+            FROM wm_log
+            WHERE prod_cd = ? AND RTRIM(type_cd) = 'INVSPICK' AND log_qty < 0
+        """
+        cursor.execute(inv_pick_query, (sku,))
+        inv_pick_result = cursor.fetchone()
+        history_sold += int(inv_pick_result[0]) if inv_pick_result and inv_pick_result[0] else 0
         
         # Query 3: Get manual adjustments from wm_log - EXACT SKU match
         # history_fix = SUM(log_qty) to get total adjustment quantity

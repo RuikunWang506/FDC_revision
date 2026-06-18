@@ -48,6 +48,7 @@
         .img-container { position: relative; display: block; margin-bottom: 15px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         .img-container img { width: 100%; height: auto; transition: transform 0.3s ease; }
         .img-container:hover img { transform: scale(1.05); }
+        .image-sku-label { font-size: 0.85rem; font-weight: 600; color: #333; padding: 6px 4px; background: #f8f9fa; }
         .image-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000; }
         .image-popup img { max-width: 90%; max-height: 90%; object-fit: contain; }
         .close-btn { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -401,6 +402,11 @@
                                  data-full-url="{{ src_val }}"
                                  onclick="enlargeImage(this, this.dataset.fullUrl)"
                                  style="cursor: pointer;">
+                        {% endif %}
+
+                        {% set image_sku = info.get('sku') if info is mapping else (info[7] if info|length > 7 else '') %}
+                        {% if image_sku %}
+                            <div class="image-sku-label">{{ image_sku }}</div>
                         {% endif %}
 
                     </div>

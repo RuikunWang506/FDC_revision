@@ -16,7 +16,10 @@ from product_detail_module.product_detail import (
     search_product_data_with_history,
 )
 from py.utilities.auth import check_credentials, get_user_permissions, update_last_login
-from py.utilities.client_product_detail_permissions import build_client_pd_section_flags
+from py.utilities.client_product_detail_permissions import (
+    build_client_pd_section_flags,
+    strip_client_pd_pricing_fields,
+)
 from py.utilities.customer_purchase_access import (
     FEATURE_CLIENT_PRODUCT_DETAIL,
     build_portal_home_context,
@@ -212,6 +215,8 @@ def clientview_product_detail(search_input=None):
                 style_group["total_colors"] = len(style_group["colors"])
 
     pd_sections = build_client_pd_section_flags(current_user)
+    if product_data:
+        strip_client_pd_pricing_fields(product_data, current_user)
     portal_ctx = build_portal_home_context(current_user)
 
     return render_template(
@@ -231,6 +236,8 @@ def clientview_product_detail(search_input=None):
         pd_show_inventory_adjustment=pd_sections.get("inventory_adjustment", False),
         pd_show_purchase_history=pd_sections.get("purchase_history", False),
         pd_show_ocean=pd_sections.get("ocean", False),
+        pd_show_msrp=pd_sections.get("msrp", False),
+        pd_show_cost=pd_sections.get("cost", False),
         customer_purchase_notice=customer_purchase_msg,
         **portal_ctx,
     )

@@ -18,6 +18,37 @@
       max-height: 320px;
       border: 2px solid rgba(0, 212, 255, 0.35);
     }
+    .scan-toast {
+      position: absolute;
+      left: 50%;
+      bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%) translateY(12px);
+      z-index: 12;
+      max-width: calc(100% - 1.25rem);
+      padding: 0.55rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1.35;
+      text-align: center;
+      color: #fff;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .scan-toast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .scan-toast.toast-success { border-color: rgba(34, 197, 94, 0.55); background: rgba(22, 101, 52, 0.92); }
+    .scan-toast.toast-warn { border-color: rgba(251, 191, 36, 0.6); background: rgba(120, 53, 15, 0.92); }
+    .scan-toast.toast-error { border-color: rgba(248, 113, 113, 0.55); background: rgba(127, 29, 29, 0.92); }
+    .scan-toast.toast-info { border-color: rgba(56, 189, 248, 0.55); background: rgba(12, 74, 110, 0.92); }
     #scannerVideo {
       width: 100%;
       height: 100%;
@@ -52,19 +83,24 @@
     .scanner-compact-card .card-body { padding: 0.75rem 1rem; }
     @media (max-width: 767.98px) {
       .scanner-wrap {
-        padding: 0.5rem 0.65rem 1rem;
+        padding: max(0.5rem, env(safe-area-inset-top, 0px)) 0.65rem max(1rem, env(safe-area-inset-bottom, 0px));
       }
       .page-title {
         font-size: 1.05rem;
         margin-bottom: 0.5rem !important;
       }
-      /* Short strip for layout, but tall enough for BarcodeDetector / ZXing on real frames */
+      /* iPhone 15 Pro (~393px): taller live view + floating toast keeps scan continuous */
       .video-shell {
-        border-radius: 8px;
-        aspect-ratio: 2 / 1;
-        max-height: 200px;
-        min-height: 160px;
-        margin-bottom: 0.5rem !important;
+        border-radius: 10px;
+        aspect-ratio: 3 / 4;
+        max-height: min(48vh, 380px);
+        min-height: 220px;
+        margin-bottom: 0.35rem !important;
+      }
+      .scan-toast {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+        max-width: calc(100% - 1rem);
       }
       .perm-banner {
         padding: 0.65rem 0.75rem;
@@ -93,7 +129,12 @@
         padding: 0.5rem 0.65rem;
       }
       .scan-results-scroll {
-        max-height: min(52vh, 420px);
+        max-height: min(38vh, 320px);
+      }
+      .scan-sku-option {
+        min-height: 36px;
+        min-width: 44px;
+        font-size: 0.82rem !important;
       }
       #scanGridTable {
         font-size: 0.78rem;
@@ -155,13 +196,14 @@
     #scanGridTable th,
     #scanGridTable td {
       vertical-align: top;
+      text-align: center;
     }
     #scanGridTable th:nth-child(1),
     #scanGridTable td:nth-child(1) { width: 13%; }
     #scanGridTable th:nth-child(2),
     #scanGridTable td:nth-child(2) { width: 14%; }
     #scanGridTable th:nth-child(3),
-    #scanGridTable td:nth-child(3) { width: 9%; text-align: right; }
+    #scanGridTable td:nth-child(3) { width: 9%; }
     #scanGridTable th:nth-child(4),
     #scanGridTable td:nth-child(4) {
       width: 42%;
@@ -175,7 +217,7 @@
     #scanGridTable th:nth-child(5),
     #scanGridTable td:nth-child(5) { width: 16%; }
     #scanGridTable th:nth-child(6),
-    #scanGridTable td:nth-child(6) { width: 6%; text-align: center; }
+    #scanGridTable td:nth-child(6) { width: 6%; }
     .multi-match-cell {
       background: #fff3cd;
       border-color: #ffe69c;
@@ -184,9 +226,147 @@
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
+      justify-content: center;
+    }
+    .scanner-reader-host {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+    .scanner-reader-host video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+      display: block;
+    }
+    #scannerReader > div {
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      padding: 0 !important;
+    }
+    #scannerReader img[alt="Info icon"],
+    #scannerReader button,
+    #scannerReader select,
+    #scannerReader span,
+    #scannerReader a {
+      display: none !important;
+    }
+    .scan-frame-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      pointer-events: none;
+    }
+    .scan-frame-box {
+      position: absolute;
+      left: 50%;
+      top: 40%;
+      transform: translate(-50%, -50%);
+      width: min(82%, 300px);
+      height: min(26%, 96px);
+      border: 2px solid rgba(0, 212, 255, 0.92);
+      border-radius: 10px;
+      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.42);
+    }
+    .scan-frame-box::before,
+    .scan-frame-box::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-color: #22d3ee;
+      border-style: solid;
+    }
+    .scan-frame-box::before {
+      top: -2px;
+      left: -2px;
+      border-width: 3px 0 0 3px;
+      border-radius: 8px 0 0 0;
+    }
+    .scan-frame-box::after {
+      bottom: -2px;
+      right: -2px;
+      border-width: 0 3px 3px 0;
+      border-radius: 0 0 8px 0;
+    }
+    .scan-frame-hint {
+      position: absolute;
+      left: 50%;
+      top: calc(40% + min(13%, 52px));
+      transform: translateX(-50%);
+      margin: 0;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      text-align: center;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+      white-space: nowrap;
+    }
+    .btn-torch {
+      position: absolute;
+      top: max(0.5rem, env(safe-area-inset-top, 0px));
+      right: 0.5rem;
+      z-index: 11;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(15, 23, 42, 0.72);
+      color: #f8fafc;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .btn-torch.is-on {
+      background: rgba(250, 204, 21, 0.88);
+      color: #1e293b;
+      border-color: rgba(250, 204, 21, 0.95);
+    }
+    .video-shell.is-scanning .scan-frame-overlay { display: block; }
+    .video-shell:not(.is-scanning) .scan-frame-overlay { display: none; }
+    #upcSkuMapTable { font-size: 0.82rem; }
+    #upcSkuMapTable th,
+    #upcSkuMapTable td { vertical-align: middle; }
+    .fdc-upc-style,
+    .fdc-sku-style {
+      color: #0369a1;
+      font-weight: 700;
+      background: rgba(3, 105, 161, 0.1);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+    .fdc-upc-color,
+    .fdc-sku-color {
+      color: #c2410c;
+      font-weight: 700;
+      background: rgba(194, 65, 12, 0.12);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+    .fdc-upc-check { color: #94a3b8; }
+    .map-highlight-legend { font-size: 0.72rem; color: #64748b; }
+    .map-highlight-legend .fdc-upc-style,
+    .map-highlight-legend .fdc-upc-color,
+    .map-highlight-legend .fdc-sku-style,
+    .map-highlight-legend .fdc-sku-color {
+      font-size: 0.72rem;
+      padding: 0 3px;
+    }
+    @media (max-width: 767.98px) {
+      #upcSkuMapModal .modal-dialog { margin: 0.5rem; }
+      #upcSkuMapTable { font-size: 0.76rem; }
     }
   </style>
   <script src="{{ url_for('static', filename='js/fdc_upc13_maps.js') }}"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="bg-light">
   {% include 'navbar.html' %}
@@ -208,10 +388,22 @@
       </div>
     </div>
 
-    <div class="video-shell mb-3">
+    <div class="video-shell mb-3" id="videoShell">
       <video id="scannerVideo" playsinline muted autoplay></video>
+      <div id="scannerReader" class="scanner-reader-host"></div>
+      <div class="scan-frame-overlay" aria-hidden="true">
+        <div class="scan-frame-box"></div>
+        <p class="scan-frame-hint d-md-none">Hold 6–8 in away · center barcode in box</p>
+      </div>
+      <button type="button" class="btn-torch d-none" id="btnTorch" title="Toggle flashlight" aria-label="Toggle flashlight">
+        <i class="fas fa-lightbulb"></i>
+      </button>
+      <div id="scanToast" class="scan-toast" role="status" aria-live="polite" aria-atomic="true"></div>
     </div>
     <p class="scan-status mb-3" id="scanStatus">Camera off. Press Start to enable scanning.</p>
+    <p class="text-muted small mb-2 d-md-none scan-distance-note" id="scanDistanceNote" style="display:none;">
+      <i class="fas fa-ruler-horizontal"></i> Too close? Move the phone <strong>6–8 inches</strong> from the label. Use the flashlight in dim light.
+    </p>
 
     <button type="button" class="btn btn-outline-secondary btn-sm" id="btnToggleManualInput" aria-expanded="false" aria-controls="manualInputPanel">
       <i class="fas fa-keyboard"></i> <span id="btnToggleManualLabel">Show manual entry</span>
@@ -221,10 +413,10 @@
       <div class="card-body py-3">
         <h6 class="mb-2 d-none d-md-block"><i class="fas fa-keyboard text-primary"></i> Manual input</h6>
         <h6 class="mb-2 d-md-none"><i class="fas fa-keyboard text-primary"></i> Manual entry</h6>
-        <p class="small text-muted mb-2 d-none d-md-block">Enter one or more UPC/SKU values (separated by newline, comma, space, or semicolon), then press Enter or click Add code.</p>
-        <p class="small text-muted mb-2 d-md-none">Codes separated by space, comma, or semicolon.</p>
+        <p class="small text-muted mb-2 d-none d-md-block">Enter UPC codes or SKUs (SKUs start with a letter; use comma between multiple). SKUs with spaces stay together (e.g. M3815 GY).</p>
+        <p class="small text-muted mb-2 d-md-none">UPC or SKU (letter first). Comma between codes; spaces OK in SKU.</p>
         <div class="input-group input-group-sm">
-          <input type="text" class="form-control" id="manualCodeInput" placeholder="Type UPC / codes" autocomplete="off">
+          <input type="text" class="form-control" id="manualCodeInput" placeholder="UPC or SKU (e.g. M1234 GY)" autocomplete="off" autocapitalize="characters">
           <div class="input-group-append">
             <button type="button" class="btn btn-outline-primary" id="btnAddManualCode">
               <i class="fas fa-keyboard"></i> Add
@@ -240,6 +432,9 @@
         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
           <strong>Results</strong>
           <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btnOpenUpcSkuMap" data-toggle="modal" data-target="#upcSkuMapModal" title="Manual UPC ↔ SKU mappings">
+              <i class="fas fa-link"></i> <span class="d-none d-sm-inline">UPC↔SKU</span>
+            </button>
             <button type="button" class="btn btn-sm btn-success" id="btnExportExcel" disabled title="Upload current list as .xlsx">
               <i class="fas fa-file-excel"></i> <span class="d-none d-sm-inline">Save to </span>Excel
             </button>
@@ -290,6 +485,71 @@
         </table>
       </div>
     </details>
+  </div>
+
+  <div class="modal fade" id="upcSkuMapModal" tabindex="-1" role="dialog" aria-labelledby="upcSkuMapModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="upcSkuMapModalTitle"><i class="fas fa-link text-primary"></i> Manual UPC ↔ SKU mappings</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-3">
+            Saved mappings are shared for all users. Scans and SKU lookups use these pairs when auto-match fails or when you enter a SKU manually.
+          </p>
+          <div class="border rounded p-2 p-md-3 mb-3 bg-light">
+            <h6 class="mb-2">Add or update mapping</h6>
+            <div class="form-row">
+              <div class="form-group col-12 col-md-6 mb-2 mb-md-0">
+                <label class="small mb-1" for="mapInputUpc">UPC (13 digits)</label>
+                <input type="text" class="form-control form-control-sm" id="mapInputUpc" placeholder="1132518161115" inputmode="numeric" autocomplete="off">
+              </div>
+              <div class="form-group col-12 col-md-6 mb-2 mb-md-0">
+                <label class="small mb-1" for="mapInputSku">SKU</label>
+                <input type="text" class="form-control form-control-sm text-uppercase" id="mapInputSku" placeholder="M1816 BS" autocomplete="off" autocapitalize="characters" style="text-transform: uppercase;">
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" id="btnMapSave">
+              <i class="fas fa-save"></i> Save mapping
+            </button>
+            <p class="small text-danger mb-0 mt-2 d-none" id="mapFormError"></p>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <strong class="mr-auto">Saved mappings</strong>
+            <input type="search" class="form-control form-control-sm" id="mapSearchInput" placeholder="Search UPC or SKU" style="max-width: 220px;">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnMapRefresh" title="Refresh list">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+          <p class="map-highlight-legend mb-2">
+            UPC: <span class="fdc-upc-style">style</span> (digits 6–9) · <span class="fdc-upc-color">color</span> (digits 10–12) —
+            SKU: matching <span class="fdc-sku-style">style</span> + <span class="fdc-sku-color">color abbrev</span>
+          </p>
+          <div class="table-responsive border rounded" style="max-height: 50vh;">
+            <table class="table table-sm table-striped mb-0" id="upcSkuMapTable">
+              <thead class="thead-light sticky-top">
+                <tr>
+                  <th>UPC</th>
+                  <th>SKU</th>
+                  <th>By</th>
+                  <th>Updated</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="upcSkuMapBody"></tbody>
+            </table>
+          </div>
+          <p class="small text-muted mb-0 mt-2" id="upcSkuMapEmpty">No mappings yet.</p>
+          <p class="small text-muted mb-0 mt-2" id="upcSkuMapLoading" style="display:none;">Loading…</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="modal fade" id="colorEditModal" tabindex="-1" role="dialog" aria-labelledby="colorEditModalTitle" aria-hidden="true">
@@ -569,13 +829,321 @@
     })();
   </script>
 
+  <script>
+    (function () {
+      var mapBody = document.getElementById('upcSkuMapBody');
+      var mapEmpty = document.getElementById('upcSkuMapEmpty');
+      var mapLoading = document.getElementById('upcSkuMapLoading');
+      var mapFormError = document.getElementById('mapFormError');
+      var mapInputUpc = document.getElementById('mapInputUpc');
+      var mapInputSku = document.getElementById('mapInputSku');
+      var mapSearchInput = document.getElementById('mapSearchInput');
+      var mapSearchTimer = null;
+
+      function escapeHtml(s) {
+        return String(s || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function canonicalUpcDigits(raw) {
+        var d = String(raw || '').replace(/\D/g, '');
+        if (d.length === 12) d = '0' + d;
+        return d;
+      }
+
+      function parseUpcLayout(upc) {
+        var d = canonicalUpcDigits(upc);
+        if (d.length !== 13) return null;
+        return {
+          cleaned: d,
+          head: d.slice(0, 5),
+          style: d.slice(5, 9),
+          colorId: d.slice(9, 12),
+          check: d.slice(12),
+        };
+      }
+
+      function colorAbbrevFromId(colorId) {
+        var CM = typeof window.loadFdcColorMap === 'function'
+          ? window.loadFdcColorMap()
+          : ((window.FDC_UPC13 || {}).COLOR_MAP || {});
+        var row = CM[colorId];
+        return row && row.abbrev ? String(row.abbrev).trim() : '';
+      }
+
+      function renderHighlightedUpcHtml(upc) {
+        var p = parseUpcLayout(upc);
+        if (!p) return escapeHtml(upc);
+        return escapeHtml(p.head) +
+          '<span class="fdc-upc-style">' + escapeHtml(p.style) + '</span>' +
+          '<span class="fdc-upc-color">' + escapeHtml(p.colorId) + '</span>' +
+          '<span class="fdc-upc-check">' + escapeHtml(p.check) + '</span>';
+      }
+
+      function renderHighlightedSkuHtml(sku, upc) {
+        var text = String(sku || '').trim().toUpperCase();
+        if (!text) return '';
+        var p = parseUpcLayout(upc);
+        if (!p) return escapeHtml(text);
+
+        var abbrev = colorAbbrevFromId(p.colorId).toUpperCase();
+        var styleU = p.style.toUpperCase();
+        var marks = new Array(text.length);
+        var si = styleU ? text.indexOf(styleU) : -1;
+        if (si >= 0) {
+          for (var i = si; i < si + styleU.length; i++) marks[i] = 'style';
+        }
+        if (abbrev) {
+          var ai = -1;
+          if (si >= 0) ai = text.indexOf(abbrev, si + styleU.length);
+          if (ai < 0) {
+            var spaced = ' ' + abbrev;
+            var sp = text.indexOf(spaced);
+            if (sp >= 0) ai = sp + 1;
+          }
+          if (ai < 0 && text.endsWith(abbrev)) ai = text.length - abbrev.length;
+          if (ai < 0) ai = text.indexOf(abbrev);
+          if (ai >= 0) {
+            for (var j = ai; j < ai + abbrev.length && j < text.length; j++) {
+              if (!marks[j]) marks[j] = 'color';
+            }
+          }
+        }
+
+        var html = '';
+        var current = null;
+        var buf = '';
+        function flushMarks() {
+          if (!buf) return;
+          if (current === 'style') html += '<span class="fdc-sku-style">' + escapeHtml(buf) + '</span>';
+          else if (current === 'color') html += '<span class="fdc-sku-color">' + escapeHtml(buf) + '</span>';
+          else html += escapeHtml(buf);
+          buf = '';
+        }
+        for (var k = 0; k < text.length; k++) {
+          var mk = marks[k] || null;
+          if (mk !== current) {
+            flushMarks();
+            current = mk;
+          }
+          buf += text[k];
+        }
+        flushMarks();
+        return html;
+      }
+
+      window.fdcUpcSkuHighlight = {
+        parseUpcLayout: parseUpcLayout,
+        renderUpcHtml: renderHighlightedUpcHtml,
+        renderSkuHtml: renderHighlightedSkuHtml,
+      };
+
+      function showMapError(msg) {
+        if (!mapFormError) return;
+        if (!msg) {
+          mapFormError.textContent = '';
+          mapFormError.classList.add('d-none');
+          return;
+        }
+        mapFormError.textContent = msg;
+        mapFormError.classList.remove('d-none');
+      }
+
+      function formatMapDate(iso) {
+        if (!iso) return '';
+        try {
+          var d = new Date(iso);
+          if (isNaN(d.getTime())) return String(iso);
+          return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch (e) {
+          return String(iso);
+        }
+      }
+
+      function renderMappings(rows) {
+        if (!mapBody) return;
+        mapBody.innerHTML = '';
+        var list = Array.isArray(rows) ? rows : [];
+        if (mapEmpty) mapEmpty.style.display = list.length ? 'none' : '';
+        list.forEach(function (row) {
+          var tr = document.createElement('tr');
+
+          var tdUpc = document.createElement('td');
+          tdUpc.className = 'font-monospace small';
+          tdUpc.innerHTML = renderHighlightedUpcHtml(row.upc || '');
+
+          var tdSku = document.createElement('td');
+          tdSku.className = 'text-uppercase';
+          tdSku.innerHTML = renderHighlightedSkuHtml(row.sku || '', row.upc || '');
+
+          var tdBy = document.createElement('td');
+          tdBy.className = 'small text-muted';
+          tdBy.textContent = row.confirmed_by || '';
+
+          var tdAt = document.createElement('td');
+          tdAt.className = 'small text-muted text-nowrap';
+          tdAt.textContent = formatMapDate(row.confirmed_at);
+
+          var tdRm = document.createElement('td');
+          tdRm.className = 'text-center';
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-sm btn-outline-danger py-0 px-2 map-delete-btn';
+          btn.title = 'Delete mapping';
+          btn.setAttribute('aria-label', 'Delete mapping');
+          btn.dataset.upc = row.upc || '';
+          btn.innerHTML = '&times;';
+          tdRm.appendChild(btn);
+
+          tr.appendChild(tdUpc);
+          tr.appendChild(tdSku);
+          tr.appendChild(tdBy);
+          tr.appendChild(tdAt);
+          tr.appendChild(tdRm);
+          mapBody.appendChild(tr);
+        });
+      }
+
+      function loadMappings() {
+        if (!mapBody) return Promise.resolve();
+        var q = mapSearchInput ? mapSearchInput.value.trim() : '';
+        if (mapLoading) mapLoading.style.display = '';
+        if (mapEmpty) mapEmpty.style.display = 'none';
+        var url = '/mobile_scanner/upc-sku-mappings' + (q ? ('?q=' + encodeURIComponent(q)) : '');
+        return fetch(url, { credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.success) {
+              alert(data.error || 'Could not load mappings');
+              renderMappings([]);
+              return;
+            }
+            renderMappings(data.mappings || []);
+          })
+          .catch(function (e) {
+            alert('Could not load mappings: ' + (e && e.message ? e.message : String(e)));
+            renderMappings([]);
+          })
+          .finally(function () {
+            if (mapLoading) mapLoading.style.display = 'none';
+          });
+      }
+
+      function saveMapping() {
+        var upc = canonicalUpcDigits(mapInputUpc ? mapInputUpc.value : '');
+        var sku = mapInputSku ? mapInputSku.value.trim().toUpperCase() : '';
+        showMapError('');
+        if (upc.length !== 13) {
+          showMapError('UPC must be 13 digits (12-digit UPC-A is OK — a leading 0 is added).');
+          return;
+        }
+        if (!sku) {
+          showMapError('SKU is required.');
+          return;
+        }
+        var btn = document.getElementById('btnMapSave');
+        if (btn) btn.disabled = true;
+        fetch('/mobile_scanner/confirm-upc-sku', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ upc: upc, sku: sku, location: '' }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.success) {
+              showMapError(data.error || 'Save failed');
+              return;
+            }
+            if (mapInputUpc) mapInputUpc.value = '';
+            if (mapInputSku) mapInputSku.value = '';
+            loadMappings();
+          })
+          .catch(function (e) {
+            showMapError('Save failed: ' + (e && e.message ? e.message : String(e)));
+          })
+          .finally(function () {
+            if (btn) btn.disabled = false;
+          });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        $('#upcSkuMapModal').on('show.bs.modal', function () {
+          showMapError('');
+          loadMappings();
+        });
+
+        var btnSave = document.getElementById('btnMapSave');
+        if (btnSave) btnSave.addEventListener('click', saveMapping);
+
+        var btnRefresh = document.getElementById('btnMapRefresh');
+        if (btnRefresh) btnRefresh.addEventListener('click', function () { loadMappings(); });
+
+        if (mapSearchInput) {
+          mapSearchInput.addEventListener('input', function () {
+            if (mapSearchTimer) clearTimeout(mapSearchTimer);
+            mapSearchTimer = setTimeout(loadMappings, 300);
+          });
+          mapSearchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              loadMappings();
+            }
+          });
+        }
+
+        [mapInputUpc, mapInputSku].forEach(function (el) {
+          if (!el) return;
+          el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              saveMapping();
+            }
+          });
+        });
+
+        if (mapBody) {
+          mapBody.addEventListener('click', function (e) {
+            var btnDel = e.target.closest('.map-delete-btn');
+            if (!btnDel) return;
+            var upc = btnDel.dataset.upc || '';
+            if (!upc) return;
+            if (!confirm('Delete mapping for UPC ' + upc + '?')) return;
+            fetch('/mobile_scanner/upc-sku-mappings', {
+              method: 'DELETE',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ upc: upc }),
+            })
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                if (!data.success) {
+                  alert(data.error || 'Delete failed');
+                  return;
+                }
+                loadMappings();
+              })
+              .catch(function (err) {
+                alert('Delete failed: ' + (err && err.message ? err.message : String(err)));
+              });
+          });
+        }
+      });
+    })();
+  </script>
+
   <script type="module">
+    const CURRENT_USER = {{ (current_user or '')|tojson }};
     const video = document.getElementById('scannerVideo');
     const btnStart = document.getElementById('btnStart');
     const btnStop = document.getElementById('btnStop');
     const btnClear = document.getElementById('btnClear');
     const scanStatus = document.getElementById('scanStatus');
     const scanGridBody = document.getElementById('scanGridBody');
+    const scanToast = document.getElementById('scanToast');
     const engineNote = document.getElementById('engineNote');
     const manualCodeInput = document.getElementById('manualCodeInput');
     const btnAddManualCode = document.getElementById('btnAddManualCode');
@@ -677,18 +1245,244 @@
     }
 
     let stream = null;
+    let activeVideoTrack = null;
     let zxingControls = null;
+    let html5Qrcode = null;
     let barcodeDetectorLoopId = null;
     let scanningActive = false;
+    let torchOn = false;
+    let scanEngine = '';
     let lastRaw = '';
     let lastAt = 0;
     const DEBOUNCE_MS = 650;
+    const SCAN_FPS_MS = 100; /* ~10 fps — balances CPU and catch rate */
+    const AUTO_CAMERA_OFF_KEY = 'mobile_scanner_camera_off';
+    const AUTO_CAMERA_PREF_KEY = 'mobile_scanner_auto_camera';
+    const videoShell = document.getElementById('videoShell');
+    const scannerReader = document.getElementById('scannerReader');
+    const btnTorch = document.getElementById('btnTorch');
+    const scanDistanceNote = document.getElementById('scanDistanceNote');
+
+    function isIOSDevice() {
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+    }
+
+    function buildVideoConstraints() {
+      return {
+        facingMode: { exact: 'environment' },
+        width: { ideal: 1280, max: 1280 },
+        height: { ideal: 720, max: 720 },
+        frameRate: { ideal: 24, max: 30 },
+        focusMode: 'continuous',
+        exposureMode: 'continuous',
+        whiteBalanceMode: 'continuous',
+      };
+    }
+
+    function buildVideoConstraintsLoose() {
+      return {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280, max: 1280 },
+        height: { ideal: 720, max: 720 },
+        focusMode: 'continuous',
+      };
+    }
+
+    async function applyContinuousCameraFocus(track) {
+      if (!track || typeof track.applyConstraints !== 'function') return;
+      const attempts = [
+        { focusMode: 'continuous', exposureMode: 'continuous', whiteBalanceMode: 'continuous' },
+        { advanced: [{ focusMode: 'continuous', exposureMode: 'continuous' }] },
+        { advanced: [{ focusMode: 'continuous' }] },
+        { focusMode: 'continuous' },
+      ];
+      for (const constraints of attempts) {
+        try {
+          await track.applyConstraints(constraints);
+          return;
+        } catch (e) { /* try next shape */ }
+      }
+    }
+
+    function rememberActiveTrack(track) {
+      activeVideoTrack = track || null;
+      updateTorchButtonVisibility();
+    }
+
+    function updateTorchButtonVisibility() {
+      if (!btnTorch) return;
+      const track = activeVideoTrack;
+      const caps = track && typeof track.getCapabilities === 'function' ? track.getCapabilities() : null;
+      const supported = !!(caps && caps.torch);
+      btnTorch.classList.toggle('d-none', !supported || !scanningActive);
+      if (!supported) {
+        torchOn = false;
+        btnTorch.classList.remove('is-on');
+      }
+    }
+
+    async function toggleTorch() {
+      const track = activeVideoTrack;
+      if (!track || typeof track.applyConstraints !== 'function') return;
+      const caps = track.getCapabilities ? track.getCapabilities() : null;
+      if (!caps || !caps.torch) return;
+      torchOn = !torchOn;
+      try {
+        await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+        btnTorch.classList.toggle('is-on', torchOn);
+      } catch (e) {
+        torchOn = false;
+        btnTorch.classList.remove('is-on');
+        showScanToast('Flashlight not available', 'warn', 1800);
+      }
+    }
+
+    function setScannerUiActive(active) {
+      scanningActive = !!active;
+      if (videoShell) videoShell.classList.toggle('is-scanning', scanningActive);
+      if (scanDistanceNote) scanDistanceNote.style.display = scanningActive && MQ_MOBILE.matches ? '' : 'none';
+      updateTorchButtonVisibility();
+    }
+
+    function showNativeVideo() {
+      if (video) video.style.display = 'block';
+      if (scannerReader) scannerReader.style.display = 'none';
+    }
+
+    function showReaderHost() {
+      if (video) video.style.display = 'none';
+      if (scannerReader) scannerReader.style.display = 'block';
+    }
+
+    async function openCameraStream() {
+      const videoHi = buildVideoConstraints();
+      const videoLoose = buildVideoConstraintsLoose();
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: videoHi, audio: false });
+      } catch (e1) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: videoLoose, audio: false });
+        } catch (e2) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false,
+          });
+        }
+      }
+      const track = stream.getVideoTracks()[0];
+      await applyContinuousCameraFocus(track);
+      rememberActiveTrack(track);
+      showNativeVideo();
+      video.srcObject = stream;
+      await video.play();
+      return track;
+    }
+
+    function bindHtml5QrcodeTrack() {
+      if (!scannerReader) return;
+      const v = scannerReader.querySelector('video');
+      if (v && v.srcObject) {
+        const tracks = v.srcObject.getVideoTracks();
+        if (tracks && tracks[0]) rememberActiveTrack(tracks[0]);
+      }
+    }
 
     window.fdcMobileScannerRecords = [];
 
     const resolveQueue = [];
     let resolveActive = 0;
     const MAX_RESOLVE_PARALLEL = 2;
+    let sessionSaveTimer = null;
+    let sessionHydrated = false;
+    let scanToastTimer = null;
+    let audioCtx = null;
+
+    function playScanSuccessSound() {
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const t0 = audioCtx.currentTime;
+        gain.gain.exponentialRampToValueAtTime(0.12, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+        osc.start(t0);
+        osc.stop(t0 + 0.15);
+      } catch (e) { /* ignore */ }
+    }
+
+    function showScanToast(message, type = 'info', durationMs = 2200) {
+      if (!scanToast || !message) return;
+      scanToast.textContent = message;
+      scanToast.className = 'scan-toast is-visible toast-' + type;
+      if (scanToastTimer) clearTimeout(scanToastTimer);
+      scanToastTimer = setTimeout(() => {
+        scanToast.classList.remove('is-visible');
+      }, durationMs);
+    }
+
+    function scheduleSessionSave() {
+      if (!sessionHydrated) return;
+      if (sessionSaveTimer) clearTimeout(sessionSaveTimer);
+      sessionSaveTimer = setTimeout(() => {
+        const recs = window.fdcMobileScannerRecords || [];
+        fetch('/mobile_scanner/session', {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: recs }),
+        }).catch(() => { /* ignore */ });
+      }, 400);
+    }
+
+    async function loadUserSession() {
+      try {
+        const r = await fetch('/mobile_scanner/session', { credentials: 'same-origin' });
+        const data = await r.json();
+        if (!data.success || !Array.isArray(data.records) || !data.records.length) {
+          sessionHydrated = true;
+          return;
+        }
+        window.fdcMobileScannerRecords = data.records;
+        if (scanGridBody) scanGridBody.innerHTML = '';
+        data.records.forEach((rec) => {
+          const row = buildScanListItem(rec);
+          if (scanGridBody) scanGridBody.appendChild(row);
+          updateScanRowDOM(rec);
+          const st = rec.resolved && rec.resolved.status;
+          if (rec.is_sku_only && !rec.raw) {
+            enqueueResolveSku(rec);
+          } else if (st === 'pending') {
+            if (rec.is_sku_only) enqueueResolveSku(rec);
+            else if (rec.raw) enqueueResolveUpc(rec);
+          }
+        });
+        btnClear.disabled = data.records.length === 0;
+        updateExportButtonState();
+        if (data.records.length) {
+          scanStatus.textContent = 'Restored ' + data.records.length + ' item(s) for ' + (CURRENT_USER || 'you') + '.';
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        sessionHydrated = true;
+      }
+    }
+
+    async function clearUserSession() {
+      try {
+        await fetch('/mobile_scanner/session', { method: 'DELETE', credentials: 'same-origin' });
+      } catch (e) { /* ignore */ }
+    }
 
     function newScanId() {
       if (crypto.randomUUID) return crypto.randomUUID();
@@ -705,8 +1499,9 @@
           body: JSON.stringify({ upc: rec.raw }),
         });
         const data = await r.json();
+        const hasSkus = (Array.isArray(data.matched_skus) && data.matched_skus.length > 0) || !!(data.matched_sku);
         rec.resolved = {
-          status: data.success ? 'ok' : 'error',
+          status: (data.success !== false || hasSkus) ? 'ok' : 'error',
           matched_sku: data.matched_sku || '',
           selected_sku: data.selected_sku || '',
           matched_skus: data.matched_skus || [],
@@ -734,6 +1529,7 @@
         };
       }
       updateScanRowDOM(rec);
+      scheduleSessionSave();
       if (autoConfirmSku) {
         postConfirmUpcSku(rec, autoConfirmSku);
       }
@@ -741,18 +1537,90 @@
 
     function pumpResolveQueue() {
       while (resolveActive < MAX_RESOLVE_PARALLEL && resolveQueue.length) {
-        const rec = resolveQueue.shift();
+        const job = resolveQueue.shift();
+        const rec = job.rec;
         resolveActive++;
-        fetchResolveUpc(rec).finally(() => {
+        const done = job.kind === 'sku' ? fetchResolveSku(rec) : fetchResolveUpc(rec);
+        done.finally(() => {
           resolveActive--;
           pumpResolveQueue();
+          notifyResolveOutcome(rec);
         });
       }
     }
 
+    function notifyResolveOutcome(rec) {
+      const res = rec.resolved || {};
+      if (res.status === 'pending') return;
+      if (res.status === 'error') {
+        showScanToast(res.error || 'Lookup failed', 'error');
+        return;
+      }
+      const skus = (res.matched_skus || []).filter(Boolean);
+      if (skus.length > 1 && !res.selected_sku) {
+        showScanToast('Pick SKU: ' + skus.map((s) => String(s).toUpperCase()).join(' or '), 'warn', 3500);
+        return;
+      }
+      const chosen = (res.selected_sku || res.matched_sku || skus[0] || '').trim();
+      if (chosen) {
+        showScanToast(chosen.toUpperCase(), 'success');
+        scanStatus.textContent = 'Last scan: ' + chosen.toUpperCase();
+      } else {
+        showScanToast('No SKU match', 'warn', 2800);
+      }
+    }
+
     function enqueueResolveUpc(rec) {
-      resolveQueue.push(rec);
+      resolveQueue.push({ kind: 'upc', rec });
       pumpResolveQueue();
+    }
+
+    function enqueueResolveSku(rec) {
+      resolveQueue.push({ kind: 'sku', rec });
+      pumpResolveQueue();
+    }
+
+    async function fetchResolveSku(rec) {
+      const skuIn = (rec.sku_input || rec.resolved?.matched_sku || '').trim();
+      try {
+        const r = await fetch('/mobile_scanner/resolve-sku', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sku: skuIn }),
+        });
+        const data = await r.json();
+        const matched = data.matched_sku || data.sku || skuIn;
+        if (data.upc) rec.raw = String(data.upc).trim();
+        rec.resolved = {
+          status: data.success ? 'ok' : 'error',
+          matched_sku: matched,
+          selected_sku: matched,
+          matched_skus: matched ? [matched] : [],
+          sku_candidates: [],
+          locations: data.locations || '',
+          locations_by_sku: data.locations_by_sku || {},
+          available: data.available !== undefined && data.available !== null ? data.available : '',
+          available_by_sku: data.available_by_sku || {},
+          from_confirmed: !!data.from_confirmed,
+          error: data.error || '',
+        };
+      } catch (e) {
+        rec.resolved = {
+          status: 'error',
+          matched_sku: skuIn,
+          selected_sku: skuIn,
+          matched_skus: skuIn ? [skuIn] : [],
+          sku_candidates: [],
+          locations: '',
+          locations_by_sku: {},
+          available: '',
+          available_by_sku: {},
+          error: e && e.message ? e.message : String(e),
+        };
+      }
+      updateScanRowDOM(rec);
+      scheduleSessionSave();
     }
 
     function applySkuChoiceToRecord(rec, chosen) {
@@ -766,6 +1634,7 @@
         : {};
       res.selected_sku = chosen;
       res.matched_sku = chosen;
+      res.matched_skus = [chosen];
       res.locations = locMap[chosen] || '';
       const av = Object.prototype.hasOwnProperty.call(availMap, chosen) ? availMap[chosen] : '';
       res.available = av === 0 || av === '0' ? 0 : av;
@@ -824,6 +1693,40 @@
       return chosen;
     }
 
+    function formatUpcCellText(rec) {
+      if (rec && rec.raw) return rec.raw;
+      if (rec && rec.is_sku_only) return '—';
+      return (rec && rec.raw) ? rec.raw : '';
+    }
+
+    function upcHighlightApi() {
+      return window.fdcUpcSkuHighlight || {};
+    }
+
+    function renderUpcCellHtml(rec) {
+      const raw = rec && rec.raw ? String(rec.raw).trim() : '';
+      const hl = upcHighlightApi();
+      if (raw && hl.renderUpcHtml) return hl.renderUpcHtml(raw);
+      const plain = formatUpcCellText(rec);
+      return plain === '—' ? '—' : plain.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderSkuCellHtml(rec, skuText) {
+      const sku = String(skuText || '').trim().toUpperCase();
+      if (!sku) return '';
+      const hl = upcHighlightApi();
+      const upc = rec && rec.raw ? String(rec.raw).trim() : '';
+      if (upc && hl.renderSkuHtml) return hl.renderSkuHtml(sku, upc);
+      return sku.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function updateScanRowUpc(rec, rowEl) {
+      const li = rowEl || document.getElementById('scan-row-' + rec.id);
+      if (!li) return;
+      const upcEl = li.querySelector('.scan-upc-cell');
+      if (upcEl) upcEl.innerHTML = renderUpcCellHtml(rec);
+    }
+
     function updateScanRowDOM(rec) {
       const li = document.getElementById('scan-row-' + rec.id);
       if (!li) return;
@@ -831,9 +1734,16 @@
       const availEl = li.querySelector('.scan-avail-cell');
       const locEl = li.querySelector('.scan-loc-cell');
       const res = rec.resolved || {};
-      if (res.status === 'pending') return;
+      updateScanRowUpc(rec, li);
+      if (res.status === 'pending') {
+        if (rec.is_sku_only && skuEl) skuEl.textContent = (rec.sku_input || '…').toUpperCase();
+        return;
+      }
       if (res.status === 'error') {
-        if (skuEl) skuEl.textContent = 'LOOKUP ERROR';
+        if (skuEl) {
+          const errSku = rec.is_sku_only ? (rec.sku_input || 'LOOKUP ERROR') : 'LOOKUP ERROR';
+          skuEl.textContent = String(errSku).toUpperCase();
+        }
         if (availEl) availEl.textContent = '';
         if (locEl) locEl.textContent = '';
         if (skuEl) skuEl.classList.remove('multi-match-cell');
@@ -855,7 +1765,7 @@
             const b = document.createElement('button');
             b.type = 'button';
             b.className = 'btn btn-sm ' + (selected === s ? 'btn-primary' : 'btn-outline-primary') + ' scan-sku-option py-0 px-1';
-            b.textContent = s;
+            b.textContent = String(s).toUpperCase();
             b.dataset.sku = s;
             wrap.appendChild(b);
           });
@@ -873,7 +1783,7 @@
           }
         } else {
           const chosen = res.selected_sku && matchedSkus.includes(res.selected_sku) ? res.selected_sku : matchedSkus[0];
-          if (skuEl) skuEl.textContent = chosen || '';
+          if (skuEl) skuEl.innerHTML = renderSkuCellHtml(rec, chosen || '');
           if (locEl) locEl.textContent = locMap[chosen] || '';
           if (availEl) {
             if (Object.prototype.hasOwnProperty.call(availMap, chosen)) {
@@ -887,7 +1797,7 @@
       } else {
         const sku = res.matched_sku;
         const loc = res.locations;
-        if (skuEl) skuEl.textContent = sku || 'NO MATCH';
+        if (skuEl) skuEl.innerHTML = sku ? renderSkuCellHtml(rec, sku) : '<span class="text-muted">NO MATCH</span>';
         if (locEl) locEl.textContent = loc || '';
         const av = res.available;
         if (availEl) {
@@ -898,6 +1808,7 @@
       if (skuEl) skuEl.classList.toggle('multi-match-cell', multiple);
       if (availEl) availEl.classList.toggle('multi-match-cell', multiple);
       if (locEl) locEl.classList.toggle('multi-match-cell', multiple);
+      updateScanRowUpc(rec, li);
     }
 
     function buildScanListItem(rec) {
@@ -910,10 +1821,10 @@
 
       const tdUpc = document.createElement('td');
       tdUpc.className = 'scan-upc-cell scan-upc';
-      tdUpc.textContent = rec.raw;
+      tdUpc.innerHTML = renderUpcCellHtml(rec);
 
       const tdAvail = document.createElement('td');
-      tdAvail.className = 'scan-avail-cell text-right';
+      tdAvail.className = 'scan-avail-cell';
       tdAvail.textContent = '';
 
       const tdLoc = document.createElement('td');
@@ -992,6 +1903,59 @@
       return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
+    function canonicalSkuKey(sku) {
+      return String(sku || '').trim().toUpperCase();
+    }
+
+    function isSkuToken(token) {
+      return /^[A-Za-z]/.test(String(token || '').trim());
+    }
+
+    function recordSku(skuRaw) {
+      const sku = String(skuRaw || '').trim();
+      if (!sku) return;
+
+      const recs = window.fdcMobileScannerRecords || [];
+      const key = canonicalSkuKey(sku);
+      if (recs.some((r) => r.is_sku_only && canonicalSkuKey(r.sku_input) === key)) {
+        showScanToast('Already added: ' + sku, 'info');
+        scanStatus.textContent = 'Already added SKU: ' + sku;
+        return;
+      }
+
+      const rec = {
+        id: newScanId(),
+        time_iso: new Date().toISOString(),
+        time_display: formatTime(new Date()),
+        raw: '',
+        sku_input: sku,
+        is_sku_only: true,
+        parsed: null,
+        resolved: {
+          status: 'pending',
+          matched_sku: '',
+          selected_sku: '',
+          matched_skus: [],
+          sku_candidates: [],
+          locations: '',
+          locations_by_sku: {},
+          available: '',
+          available_by_sku: {},
+          error: '',
+        },
+      };
+
+      window.fdcMobileScannerRecords.unshift(rec);
+      updateExportButtonState();
+      const row = buildScanListItem(rec);
+      if (scanGridBody) scanGridBody.insertBefore(row, scanGridBody.firstChild);
+      btnClear.disabled = false;
+      playScanSuccessSound();
+      scanStatus.textContent = 'Looking up ' + sku.toUpperCase() + '…';
+      scheduleSessionSave();
+      enqueueResolveSku(rec);
+    }
+
     function recordCode(raw, options = {}) {
       const allowInvalidSave = !!options.allowInvalidSave;
       const rawDigits = String(raw || '').trim().replace(/\D/g, '');
@@ -1027,10 +1991,15 @@
             const row = buildScanListItem(rec);
             if (scanGridBody) scanGridBody.insertBefore(row, scanGridBody.firstChild);
             btnClear.disabled = false;
+            playScanSuccessSound();
+            scheduleSessionSave();
             if (normalizedRaw.length === 13) enqueueResolveUpc(rec);
           }
         }
-        if (rawDigits) scanStatus.textContent = 'Scanned ' + rawDigits + ' (not a valid UPC/EAN-13 for camera save).';
+        if (rawDigits) {
+          scanStatus.textContent = 'Scanned ' + rawDigits + ' (not a valid UPC/EAN-13 for camera save).';
+          showScanToast('Invalid UPC check digit', 'error', 1600);
+        }
         return;
       }
 
@@ -1044,6 +2013,7 @@
       const dedupeCanon = canonicalUpcLike(parsed.cleaned);
       if (recs.some((r) => canonicalUpcLike(r.raw) === dedupeCanon)) {
         scanStatus.textContent = 'Already scanned: ' + parsed.cleaned;
+        showScanToast('Already scanned', 'info', 1500);
         return;
       }
 
@@ -1086,26 +2056,35 @@
       const row = buildScanListItem(rec);
       if (scanGridBody) scanGridBody.insertBefore(row, scanGridBody.firstChild);
       btnClear.disabled = false;
-      scanStatus.textContent = 'Last UPC: ' + parsed.cleaned + ' (resolving SKU…)';
+      playScanSuccessSound();
+      scanStatus.textContent = 'Resolving SKU…';
+      scheduleSessionSave();
 
       enqueueResolveUpc(rec);
     }
 
     function addManualCodesFromInput() {
       const raw = manualCodeInput ? manualCodeInput.value : '';
-      const tokens = String(raw || '')
-        .split(/[\s,;]+/g)
-        .map((x) => String(x || '').trim())
-        .filter(Boolean);
-      if (!tokens.length) return;
-      tokens.forEach((token) => {
-        recordCode(token, { allowInvalidSave: true });
+      const trimmed = String(raw || '').trim();
+      if (!trimmed) return;
+      const segments = trimmed.split(/[,;]+/g).map((s) => s.trim()).filter(Boolean);
+      const parts = segments.length ? segments : [trimmed];
+      parts.forEach((part) => {
+        if (isSkuToken(part)) {
+          recordSku(part);
+        } else {
+          part.split(/[\s]+/g)
+            .map((x) => String(x || '').trim())
+            .filter(Boolean)
+            .forEach((token) => recordCode(token, { allowInvalidSave: true }));
+        }
       });
       if (manualCodeInput) manualCodeInput.value = '';
     }
 
-    function stopCamera() {
-      scanningActive = false;
+    function stopCamera(options) {
+      const userStopped = options && options.userStopped === true;
+      setScannerUiActive(false);
       if (barcodeDetectorLoopId != null) {
         cancelAnimationFrame(barcodeDetectorLoopId);
         barcodeDetectorLoopId = null;
@@ -1114,14 +2093,31 @@
         try { zxingControls.stop(); } catch (e) {}
         zxingControls = null;
       }
+      if (html5Qrcode) {
+        const stopper = html5Qrcode.isScanning
+          ? html5Qrcode.stop().catch(() => {})
+          : Promise.resolve();
+        stopper.finally(() => {
+          try { html5Qrcode.clear(); } catch (e) {}
+          html5Qrcode = null;
+        });
+      }
       if (stream) {
         stream.getTracks().forEach((tr) => tr.stop());
         stream = null;
       }
+      rememberActiveTrack(null);
+      torchOn = false;
+      if (btnTorch) btnTorch.classList.remove('is-on');
       video.srcObject = null;
+      showNativeVideo();
+      scanEngine = '';
       btnStart.classList.remove('d-none');
       btnStop.classList.add('d-none');
-      scanStatus.textContent = 'Camera stopped.';
+      scanStatus.textContent = userStopped ? 'Camera stopped.' : 'Camera off. Press Start to enable scanning.';
+      if (userStopped) {
+        sessionStorage.setItem(AUTO_CAMERA_OFF_KEY, '1');
+      }
     }
 
     async function scanBarcodeDetector() {
@@ -1132,17 +2128,16 @@
           'code_128', 'qr_code', 'data_matrix', 'code_39'
         ];
         const detector = new BarcodeDetector({ formats });
-        engineNote.innerHTML = 'Using <span class="badge badge-info badge-engine">Barcode Detection API</span>. Only <strong>valid 13-digit UPC/EAN-13</strong> codes are added to the list.';
+        engineNote.innerHTML = 'Using <span class="badge badge-info badge-engine">Barcode Detection API</span> at ~10 fps. Only <strong>valid 13-digit UPC/EAN-13</strong> codes are added.';
 
         let lastFrame = 0;
-        const intervalMs = 120;
-        scanningActive = true;
+        setScannerUiActive(true);
 
         function loop(ts) {
           if (!scanningActive) return;
           barcodeDetectorLoopId = requestAnimationFrame(loop);
           if (!stream || !video.videoWidth) return;
-          if (ts - lastFrame < intervalMs) return;
+          if (ts - lastFrame < SCAN_FPS_MS) return;
           lastFrame = ts;
           detector.detect(video).then((codes) => {
             for (const c of codes) {
@@ -1151,17 +2146,86 @@
           }).catch(() => {});
         }
         barcodeDetectorLoopId = requestAnimationFrame(loop);
+        scanEngine = 'barcode-detector';
         return true;
       } catch (e) {
         return false;
       }
     }
 
+    async function scanHtml5QrcodeFallback() {
+      if (typeof Html5Qrcode === 'undefined') {
+        return scanZxingFallback();
+      }
+      try {
+        if (stream) {
+          stream.getTracks().forEach((tr) => tr.stop());
+          stream = null;
+        }
+        video.srcObject = null;
+        showReaderHost();
+        if (scannerReader) scannerReader.innerHTML = '';
+
+        html5Qrcode = new Html5Qrcode('scannerReader', false);
+        const formats = (window.Html5QrcodeSupportedFormats)
+          ? [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.EAN_8,
+          ]
+          : undefined;
+        const config = {
+          fps: 10,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const w = Math.min(Math.floor(viewfinderWidth * 0.82), 300);
+            const h = Math.min(Math.floor(viewfinderHeight * 0.26), 96);
+            return { width: w, height: h };
+          },
+          disableFlip: false,
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        };
+        if (formats) config.formatsToSupport = formats;
+
+        const cameraConfig = {
+          facingMode: 'environment',
+          focusMode: 'continuous',
+          width: { ideal: 1280, max: 1280 },
+          height: { ideal: 720, max: 720 },
+        };
+
+        await html5Qrcode.start(
+          cameraConfig,
+          config,
+          (decodedText) => { recordCode(decodedText); },
+          () => {}
+        );
+        bindHtml5QrcodeTrack();
+        const track = activeVideoTrack;
+        if (track) await applyContinuousCameraFocus(track);
+        setScannerUiActive(true);
+        scanEngine = 'html5-qrcode';
+        engineNote.innerHTML = 'Using <span class="badge badge-success badge-engine">Html5-QRCode</span> at 10 fps with continuous focus. Only <strong>valid 13-digit UPC/EAN-13</strong> codes are added.';
+        return true;
+      } catch (e) {
+        console.warn('Html5-QRCode failed, falling back to ZXing', e);
+        if (html5Qrcode) {
+          try { await html5Qrcode.stop(); } catch (e2) {}
+          try { html5Qrcode.clear(); } catch (e3) {}
+          html5Qrcode = null;
+        }
+        showNativeVideo();
+        return scanZxingFallback();
+      }
+    }
+
     async function scanZxingFallback() {
+      await openCameraStream();
       const { BrowserMultiFormatReader } = await import('https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm');
       const reader = new BrowserMultiFormatReader();
       engineNote.innerHTML = 'Using <span class="badge badge-secondary badge-engine">ZXing</span> — accepts many formats; only valid <strong>13-digit UPC/EAN-13</strong> with correct check digit are saved.';
-
+      setScannerUiActive(true);
+      scanEngine = 'zxing';
       zxingControls = await reader.decodeFromVideoElement(video, (resultObj, err) => {
         if (resultObj && typeof resultObj.getText === 'function') {
           recordCode(resultObj.getText());
@@ -1170,44 +2234,86 @@
       return true;
     }
 
-    btnStart.addEventListener('click', async () => {
+    async function startScanEngines() {
+      const preferHtml5 = isIOSDevice();
+      if (!preferHtml5 && 'BarcodeDetector' in window) {
+        if (!stream) await openCameraStream();
+        const okNative = await scanBarcodeDetector();
+        if (okNative) return;
+      }
+      if (typeof Html5Qrcode !== 'undefined') {
+        const okHtml5 = await scanHtml5QrcodeFallback();
+        if (okHtml5) return;
+      }
+      await scanZxingFallback();
+    }
+
+    async function queryCameraPermissionState() {
+      if (!navigator.permissions || !navigator.permissions.query) return null;
+      try {
+        const status = await navigator.permissions.query({ name: 'camera' });
+        return status.state;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function shouldAutoStartCamera() {
+      if (sessionStorage.getItem(AUTO_CAMERA_OFF_KEY)) return false;
+      const permState = await queryCameraPermissionState();
+      if (permState === 'granted') return true;
+      if (permState === 'denied') return false;
+      return localStorage.getItem(AUTO_CAMERA_PREF_KEY) === '1';
+    }
+
+    async function startCamera() {
       lastRaw = '';
       engineNote.textContent = '';
+      try {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+      } catch (e) { /* ignore */ }
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         scanStatus.textContent = 'Camera API not available in this browser or context (use HTTPS).';
-        return;
+        return false;
       }
       try {
-        /* Never request a very short capture — low height breaks BarcodeDetector / ZXing. */
-        const videoHi = {
-          facingMode: { ideal: 'environment' },
-          width: { min: 640, ideal: 1280 },
-          height: { min: 480, ideal: 720 },
-        };
-        const videoLoose = { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } };
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: videoHi, audio: false });
-        } catch (e1) {
-          stream = await navigator.mediaDevices.getUserMedia({ video: videoLoose, audio: false });
-        }
-        video.srcObject = stream;
-        await video.play();
         btnStart.classList.add('d-none');
         btnStop.classList.remove('d-none');
-        scanStatus.textContent = 'Camera active — point at UPC/EAN-13 barcodes only.';
-
-        const okNative = await scanBarcodeDetector();
-        if (!okNative) {
-          await scanZxingFallback();
-        }
+        scanStatus.textContent = 'Camera active — center barcode in the box, hold 6–8 in away.';
+        await startScanEngines();
+        sessionStorage.removeItem(AUTO_CAMERA_OFF_KEY);
+        localStorage.setItem(AUTO_CAMERA_PREF_KEY, '1');
+        return true;
       } catch (err) {
+        btnStart.classList.remove('d-none');
+        btnStop.classList.add('d-none');
         scanStatus.textContent = 'Could not open camera: ' + (err && err.message ? err.message : String(err)) +
           '. Check permission settings.';
+        return false;
       }
-    });
+    }
+
+    async function maybeAutoStartCamera() {
+      try {
+        if (!await shouldAutoStartCamera()) return;
+        await startCamera();
+      } catch (e) { /* ignore */ }
+    }
+
+    btnStart.addEventListener('click', () => { startCamera(); });
+
+    if (btnTorch) {
+      btnTorch.addEventListener('click', () => {
+        toggleTorch();
+      });
+    }
 
     btnStop.addEventListener('click', () => {
-      stopCamera();
+      stopCamera({ userStopped: true });
       engineNote.textContent = '';
     });
 
@@ -1218,6 +2324,9 @@
       resolveQueue.length = 0;
       window.fdcMobileScannerRecords = [];
       updateExportButtonState();
+      clearUserSession();
+      showScanToast('Results cleared', 'info', 1500);
+      scanStatus.textContent = 'Results cleared.';
     });
 
     if (scanGridBody) {
@@ -1234,6 +2343,9 @@
           applySkuChoiceToRecord(recPick, chosen);
           postConfirmUpcSku(recPick, chosen);
           updateScanRowDOM(recPick);
+          scheduleSessionSave();
+          playScanSuccessSound();
+          showScanToast(chosen.toUpperCase(), 'success');
           return;
         }
 
@@ -1246,6 +2358,7 @@
         tr.remove();
         btnClear.disabled = (window.fdcMobileScannerRecords || []).length === 0;
         updateExportButtonState();
+        scheduleSessionSave();
       });
     }
 
@@ -1294,6 +2407,12 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       refreshExportFilesList();
+      loadUserSession();
+      maybeAutoStartCamera();
+    });
+
+    window.addEventListener('pageshow', (ev) => {
+      if (ev.persisted && !scanningActive) maybeAutoStartCamera();
     });
 
     window.addEventListener('beforeunload', () => stopCamera());

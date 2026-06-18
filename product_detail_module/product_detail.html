@@ -209,6 +209,42 @@
         
         table.dataTable { font-size: 12px; margin-bottom: 0; width: 100%; }
         table.dataTable thead th { background: rgb(127, 221, 250); color: rgb(87, 137, 230); padding: 6px 3px; text-align: center; border: 1px solid #ddd; font-weight: 600; }
+        table.dataTable thead tr.header-row-zh th {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 2px;
+            line-height: 1.2;
+            color: rgb(60, 100, 180);
+        }
+        .stock-op-col {
+            width: 16px;
+            min-width: 16px;
+            max-width: 20px;
+            padding: 0 1px !important;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            color: #555;
+            background: transparent !important;
+            vertical-align: middle;
+        }
+        table.dataTable tbody tr.summary-row .stock-op-col {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        table.dataTable .col-split-after-sold {
+            border-right: 4px solid #6b7c9e !important;
+            padding-right: 8px !important;
+        }
+        table.dataTable .col-split-before-ocean {
+            border-left: 4px solid #6b7c9e !important;
+            padding-left: 8px !important;
+        }
+        table.dataTable tbody tr.summary-row .col-split-after-sold {
+            border-right-color: rgba(255, 255, 255, 0.55) !important;
+        }
+        table.dataTable tbody tr.summary-row .col-split-before-ocean {
+            border-left-color: rgba(255, 255, 255, 0.55) !important;
+        }
         table.dataTable tbody tr { height: 26px; }
         table.dataTable tbody td { padding: 4px 3px; text-align: center; border-bottom: 1px solid #f0f0f0; }
         table.dataTable tbody tr:nth-child(even) { background-color: #fafafa; }
@@ -217,6 +253,46 @@
         table.dataTable tbody tr.summary-row td { padding: 5px 3px; border: none; text-align: center; }
 
         .num-col { text-align: center; }
+        .checker-cell { cursor: pointer; position: relative; }
+        .checker-cell:hover { outline: 1px dashed rgba(0, 0, 0, 0.35); outline-offset: -2px; }
+        table.dataTable tbody tr.checker-row-highlight {
+            background-color: #fff3cd !important;
+            box-shadow: inset 0 0 0 2px #667eea;
+        }
+        table.dataTable tbody tr.checker-row-highlight td {
+            font-weight: 600;
+        }
+        table.dataTable tbody tr.summary-row.checker-row-highlight {
+            background-color: #4a5fc7 !important;
+            box-shadow: inset 0 0 0 2px #ffe066;
+        }
+        .checker-calc-popup {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            min-width: 240px;
+            max-width: 320px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+            font-size: 12px;
+            line-height: 1.45;
+            text-align: left;
+            color: #222;
+        }
+        .checker-calc-popup.is-visible { display: block; }
+        .checker-calc-popup .checker-calc-title {
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .checker-calc-popup .checker-calc-line { font-family: Consolas, 'Courier New', monospace; white-space: nowrap; }
+        .checker-calc-popup .checker-calc-eq { margin-top: 6px; font-weight: 700; }
+        .checker-calc-popup .checker-calc-ok { color: #2e7d32; }
+        .checker-calc-popup .checker-calc-bad { color: #c62828; }
 
 
         /* Image Container */
@@ -993,7 +1069,7 @@
                                     </div>
                                     <!-- Right Column -->
                                     <div style="flex: 1;">
-                                        {% if not is_tiktok_view %}
+                                        {% if not is_tiktok_view or pd_show_msrp|default(false) %}
                                         <div style="margin-bottom: 6px;">
                                             MSRP:
                                             {% if style_group.parent_info.msrp %}
@@ -1007,6 +1083,8 @@
                                             <span class="sku-detail-badge">N/A</span>
                                             {% endif %}
                                         </div>
+                                        {% endif %}
+                                        {% if not is_tiktok_view or pd_show_cost|default(false) %}
                                         <div>
                                             Cost:
                                             {% if style_group.parent_info.cost %}
@@ -1086,15 +1164,33 @@
                                         <th>SKU</th>
                                         {% if has_multiple_descriptions %}<th>Description</th>{% endif %}
                                         <th>Color</th>
-                                        <th style="background-color: #fffacd;">Available</th>
-                                        <th>In Warehouse</th>
-                                        <th>Sold/reserved</th>
-                                        <th>Ocean</th>
+                                        <th style="background-color: #fffacd;">Stock</th>
+                                        <th class="stock-op-col">=</th>
+                                        <th>Available</th>
+                                        <th class="stock-op-col">+</th>
+                                        <th class="col-split-after-sold">Sold/reserved</th>
+                                        <th class="col-split-before-ocean">Ocean</th>
                                         <th>Hist-Received</th>
                                         <th>Hist-sold</th>
                                         <th>Hist-fix</th>
                                         <th>Checker</th>
                                         <th>Last Activity</th>
+                                    </tr>
+                                    <tr class="header-row-zh">
+                                        <th>货号</th>
+                                        {% if has_multiple_descriptions %}<th>描述</th>{% endif %}
+                                        <th>颜色</th>
+                                        <th style="background-color: #fffacd;">仓库现货</th>
+                                        <th class="stock-op-col"></th>
+                                        <th>可卖</th>
+                                        <th class="stock-op-col"></th>
+                                        <th class="col-split-after-sold">已预定</th>
+                                        <th class="col-split-before-ocean">海运</th>
+                                        <th>历史收货</th>
+                                        <th>历史已售</th>
+                                        <th>历史调整</th>
+                                        <th>核对</th>
+                                        <th>最后活动</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1106,9 +1202,11 @@
                                         {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
                                         <td class="num-col" style="background-color: #fffacd;">{{ color.fdc.stock if color.fdc else 0 }}</td>
+                                        <td class="stock-op-col">=</td>
                                         <td class="num-col" style="color: {% if (color.fdc.available if color.fdc else 0) > 0 %}green{% elif (color.fdc.available if color.fdc else 0) < 0 %}red{% endif %}">{{ color.fdc.available if color.fdc else 0 }}</td>
-                                        <td class="num-col">{{ color.fdc.sold if color.fdc else 0 }}</td>
-                                        <td class="num-col">{{ color.fdc.incoming if color.fdc else 0 }}</td>
+                                        <td class="stock-op-col">+</td>
+                                        <td class="num-col col-split-after-sold">{{ color.fdc.sold if color.fdc else 0 }}</td>
+                                        <td class="num-col col-split-before-ocean">{{ color.fdc.incoming if color.fdc else 0 }}</td>
                                         {% set fdc_po = color.history_fdc.history_po if color.history_fdc else 0 %}
                                         {% set fdc_sold = color.history_fdc.history_sold if color.history_fdc else 0 %}
                                         {% set fdc_fix = color.history_fdc.history_fix if color.history_fdc else 0 %}
@@ -1116,7 +1214,14 @@
                                         <td class="num-col">{{ fdc_sold | int }}</td>
                                         <td class="num-col">{{ fdc_fix | int }}</td>
                                         {% set checker_value = fdc_po - fdc_sold - (color.fdc.available if color.fdc else 0) + fdc_fix %}
-                                        <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                        <td class="num-col checker-cell"
+                                            data-hpo="{{ fdc_po | int }}"
+                                            data-hsold="{{ fdc_sold | int }}"
+                                            data-avail="{{ color.fdc.available if color.fdc else 0 }}"
+                                            data-hfix="{{ fdc_fix | int }}"
+                                            data-stock="{{ color.fdc.stock if color.fdc else 0 }}"
+                                            data-sold-res="{{ color.fdc.sold if color.fdc else 0 }}"
+                                            style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
                                         </td>
                                         <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
@@ -1130,9 +1235,11 @@
                                         {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
                                         <td class="num-col" style="background-color: #fffacd;">{{ color.efas.stock if color.efas else 0 }}</td>
+                                        <td class="stock-op-col">=</td>
                                         <td class="num-col" style="color: {% if (color.efas.available if color.efas else 0) > 0 %}green{% elif (color.efas.available if color.efas else 0) < 0 %}red{% endif %}">{{ color.efas.available if color.efas else 0 }}</td>
-                                        <td class="num-col">{{ color.efas.sold if color.efas else 0 }}</td>
-                                        <td class="num-col">{{ color.efas.incoming if color.efas else 0 }}</td>
+                                        <td class="stock-op-col">+</td>
+                                        <td class="num-col col-split-after-sold">{{ color.efas.sold if color.efas else 0 }}</td>
+                                        <td class="num-col col-split-before-ocean">{{ color.efas.incoming if color.efas else 0 }}</td>
                                         {% set efas_po = color.history_efas.history_po if color.history_efas else 0 %}
                                         {% set efas_sold = color.history_efas.history_sold if color.history_efas else 0 %}
                                         {% set efas_fix = color.history_efas.history_fix if color.history_efas else 0 %}
@@ -1140,7 +1247,14 @@
                                         <td class="num-col">{{ efas_sold | int }}</td>
                                         <td class="num-col">{{ efas_fix | int }}</td>
                                         {% set checker_value = efas_po - efas_sold - (color.efas.available if color.efas else 0) + efas_fix %}
-                                        <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                        <td class="num-col checker-cell"
+                                            data-hpo="{{ efas_po | int }}"
+                                            data-hsold="{{ efas_sold | int }}"
+                                            data-avail="{{ color.efas.available if color.efas else 0 }}"
+                                            data-hfix="{{ efas_fix | int }}"
+                                            data-stock="{{ color.efas.stock if color.efas else 0 }}"
+                                            data-sold-res="{{ color.efas.sold if color.efas else 0 }}"
+                                            style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
                                         </td>
                                         <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
@@ -1153,14 +1267,24 @@
                                         {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
                                         <td class="num-col" style="background-color: #fffacd;">{{ (color.fdc.stock if color.fdc else 0) + (color.efas.stock if color.efas else 0) }}</td>
+                                        <td class="stock-op-col">=</td>
                                         <td class="num-col" style="color: {% set a = (color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0) %}{% if a > 0 %}green{% elif a < 0 %}red{% endif %}">{{ a }}</td>
-                                        <td class="num-col">{{ (color.fdc.sold if color.fdc else 0) + (color.efas.sold if color.efas else 0) }}</td>
-                                        <td class="num-col">{{ (color.fdc.incoming if color.fdc else 0) + (color.efas.incoming if color.efas else 0) }}</td>
+                                        <td class="stock-op-col">+</td>
+                                        <td class="num-col col-split-after-sold">{{ (color.fdc.sold if color.fdc else 0) + (color.efas.sold if color.efas else 0) }}</td>
+                                        <td class="num-col col-split-before-ocean">{{ (color.fdc.incoming if color.fdc else 0) + (color.efas.incoming if color.efas else 0) }}</td>
                                         <td class="num-col">{{ (color.history_combined.history_po if color.history_combined else 0) | int }}</td>
                                         <td class="num-col">{{ (color.history_combined.history_sold if color.history_combined else 0) | int }}</td>
                                         <td class="num-col">{{ (color.history_combined.history_fix if color.history_combined else 0) | int }}</td>
                                         {% set checker_value = (color.history_combined.history_po if color.history_combined else 0) - (color.history_combined.history_sold if color.history_combined else 0) - ((color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0)) + (color.history_combined.history_fix if color.history_combined else 0) %}
-                                        <td class="num-col" style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                        {% set combined_avail = (color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0) %}
+                                        <td class="num-col checker-cell"
+                                            data-hpo="{{ (color.history_combined.history_po if color.history_combined else 0) | int }}"
+                                            data-hsold="{{ (color.history_combined.history_sold if color.history_combined else 0) | int }}"
+                                            data-avail="{{ combined_avail }}"
+                                            data-hfix="{{ (color.history_combined.history_fix if color.history_combined else 0) | int }}"
+                                            data-stock="{{ (color.fdc.stock if color.fdc else 0) + (color.efas.stock if color.efas else 0) }}"
+                                            data-sold-res="{{ (color.fdc.sold if color.fdc else 0) + (color.efas.sold if color.efas else 0) }}"
+                                            style="{% if checker_value == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if checker_value == 0 %}check{% else %}off by {{ checker_value | int }}{% endif %}
                                         </td>
                                         <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
@@ -1172,14 +1296,23 @@
                                         {% if has_multiple_descriptions %}<td></td>{% endif %}
                                         <td></td>
                                         <td class="num-col">{% set fdc_stock = style_group.colors | map(attribute='fdc') | selectattr('stock') | map(attribute='stock') | sum %}{{ fdc_stock | int }}</td>
+                                        <td class="stock-op-col">=</td>
                                         <td class="num-col">{% set fdc_avail = style_group.colors | map(attribute='fdc') | selectattr('available') | map(attribute='available') | sum %}{{ fdc_avail | int }}</td>
-                                        <td class="num-col">{% set fdc_sold = style_group.colors | map(attribute='fdc') | selectattr('sold') | map(attribute='sold') | sum %}{{ fdc_sold | int }}</td>
-                                        <td class="num-col">{% set fdc_incom = style_group.colors | map(attribute='fdc') | selectattr('incoming') | map(attribute='incoming') | sum %}{{ fdc_incom | int }}</td>
+                                        <td class="stock-op-col">+</td>
+                                        <td class="num-col col-split-after-sold">{% set fdc_sold = style_group.colors | map(attribute='fdc') | selectattr('sold') | map(attribute='sold') | sum %}{{ fdc_sold | int }}</td>
+                                        <td class="num-col col-split-before-ocean">{% set fdc_incom = style_group.colors | map(attribute='fdc') | selectattr('incoming') | map(attribute='incoming') | sum %}{{ fdc_incom | int }}</td>
                                         <td class="num-col">{% set total_hist_po = style_group.colors | map(attribute='history_fdc') | map(attribute='history_po') | sum %}{{ total_hist_po | int }}</td>
                                         <td class="num-col">{% set total_hist_sold = style_group.colors | map(attribute='history_fdc') | map(attribute='history_sold') | sum %}{{ total_hist_sold | int }}</td>
                                         <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_fdc') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
                                         {% set total_checker = total_hist_po - total_hist_sold - fdc_avail + total_hist_fix %}
-                                        <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                        <td class="num-col checker-cell"
+                                            data-hpo="{{ total_hist_po | int }}"
+                                            data-hsold="{{ total_hist_sold | int }}"
+                                            data-avail="{{ fdc_avail | int }}"
+                                            data-hfix="{{ total_hist_fix | int }}"
+                                            data-stock="{{ fdc_stock | int }}"
+                                            data-sold-res="{{ fdc_sold | int }}"
+                                            style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
                                         </td>
                                         <td></td>
@@ -1191,14 +1324,23 @@
                                         {% if has_multiple_descriptions %}<td></td>{% endif %}
                                         <td></td>
                                         <td class="num-col">{% set efas_stock = style_group.colors | map(attribute='efas') | selectattr('stock') | map(attribute='stock') | sum %}{{ efas_stock | int }}</td>
+                                        <td class="stock-op-col">=</td>
                                         <td class="num-col">{% set efas_avail = style_group.colors | map(attribute='efas') | selectattr('available') | map(attribute='available') | sum %}{{ efas_avail | int }}</td>
-                                        <td class="num-col">{% set efas_sold = style_group.colors | map(attribute='efas') | selectattr('sold') | map(attribute='sold') | sum %}{{ efas_sold | int }}</td>
-                                        <td class="num-col">{% set efas_incom = style_group.colors | map(attribute='efas') | selectattr('incoming') | map(attribute='incoming') | sum %}{{ efas_incom | int }}</td>
+                                        <td class="stock-op-col">+</td>
+                                        <td class="num-col col-split-after-sold">{% set efas_sold = style_group.colors | map(attribute='efas') | selectattr('sold') | map(attribute='sold') | sum %}{{ efas_sold | int }}</td>
+                                        <td class="num-col col-split-before-ocean">{% set efas_incom = style_group.colors | map(attribute='efas') | selectattr('incoming') | map(attribute='incoming') | sum %}{{ efas_incom | int }}</td>
                                         <td class="num-col">{% set total_hist_po = style_group.colors | map(attribute='history_efas') | map(attribute='history_po') | sum %}{{ total_hist_po | int }}</td>
                                         <td class="num-col">{% set total_hist_sold = style_group.colors | map(attribute='history_efas') | map(attribute='history_sold') | sum %}{{ total_hist_sold | int }}</td>
                                         <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_efas') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
                                         {% set total_checker = total_hist_po - total_hist_sold - efas_avail + total_hist_fix %}
-                                        <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                        <td class="num-col checker-cell"
+                                            data-hpo="{{ total_hist_po | int }}"
+                                            data-hsold="{{ total_hist_sold | int }}"
+                                            data-avail="{{ efas_avail | int }}"
+                                            data-hfix="{{ total_hist_fix | int }}"
+                                            data-stock="{{ efas_stock | int }}"
+                                            data-sold-res="{{ efas_sold | int }}"
+                                            style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
                                         </td>
                                         <td></td>
@@ -1210,14 +1352,23 @@
                                         {% if has_multiple_descriptions %}<td></td>{% endif %}
                                         <td></td>
                                         <td class="num-col">{{ style_group.totals.combined.stock }}</td>
+                                        <td class="stock-op-col">=</td>
                                         <td class="num-col">{{ style_group.totals.combined.available }}</td>
-                                        <td class="num-col">{{ style_group.totals.combined.sold }}</td>
-                                        <td class="num-col">{{ style_group.totals.combined.incoming }}</td>
+                                        <td class="stock-op-col">+</td>
+                                        <td class="num-col col-split-after-sold">{{ style_group.totals.combined.sold }}</td>
+                                        <td class="num-col col-split-before-ocean">{{ style_group.totals.combined.incoming }}</td>
                                         <td class="num-col">{% set total_hist_po = style_group.colors | map(attribute='history_combined') | map(attribute='history_po') | sum %}{{ total_hist_po | int }}</td>
                                         <td class="num-col">{% set total_hist_sold = style_group.colors | map(attribute='history_combined') | map(attribute='history_sold') | sum %}{{ total_hist_sold | int }}</td>
                                         <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_combined') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
                                         {% set total_checker = total_hist_po - total_hist_sold - style_group.totals.combined.available + total_hist_fix %}
-                                        <td class="num-col" style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
+                                        <td class="num-col checker-cell"
+                                            data-hpo="{{ total_hist_po | int }}"
+                                            data-hsold="{{ total_hist_sold | int }}"
+                                            data-avail="{{ style_group.totals.combined.available }}"
+                                            data-hfix="{{ total_hist_fix | int }}"
+                                            data-stock="{{ style_group.totals.combined.stock }}"
+                                            data-sold-res="{{ style_group.totals.combined.sold }}"
+                                            style="{% if total_checker == 0 %}background-color: #90EE90; color: #000; font-weight: bold;{% else %}background-color: #FFB6C1; color: #000;{% endif %}">
                                             {% if total_checker == 0 %}check{% else %}{{ total_checker | int }}{% endif %}
                                         </td>
                                         <td>{{ style_group.parent_info.last_activity or 'N/A' }}</td>
@@ -1332,6 +1483,8 @@
         <img id="popupImage" src="" alt="Enlarged Image" style="max-width: 90%; max-height: 90%; object-fit: contain;">
     </div>
 
+    <div id="checkerCalcPopup" class="checker-calc-popup" role="dialog" aria-label="Checker calculation"></div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
@@ -1341,6 +1494,82 @@
         const pdShowInventoryAdjustment = {{ 'true' if pd_show_inventory_adjustment|default(false) else 'false' }};
         const pdShowPurchaseHistory = {{ 'true' if pd_show_purchase_history|default(false) else 'false' }};
         const pdShowOcean = {{ 'true' if pd_show_ocean|default(false) else 'false' }};
+
+        let checkerHighlightedRow = null;
+
+        function clearCheckerRowHighlight() {
+            if (checkerHighlightedRow) {
+                checkerHighlightedRow.classList.remove('checker-row-highlight');
+                checkerHighlightedRow = null;
+            }
+        }
+
+        function hideCheckerCalcPopup() {
+            const popup = document.getElementById('checkerCalcPopup');
+            if (!popup) return;
+            popup.classList.remove('is-visible');
+            popup.innerHTML = '';
+            popup._anchorCell = null;
+            clearCheckerRowHighlight();
+        }
+
+        function showCheckerCalcPopup(cell) {
+            const popup = document.getElementById('checkerCalcPopup');
+            if (!popup || !cell) return;
+
+            clearCheckerRowHighlight();
+            const row = cell.closest('tr');
+            if (row) {
+                row.classList.add('checker-row-highlight');
+                checkerHighlightedRow = row;
+            }
+            popup._anchorCell = cell;
+
+            const hpo = parseInt(cell.dataset.hpo, 10) || 0;
+            const hsold = parseInt(cell.dataset.hsold, 10) || 0;
+            const avail = parseInt(cell.dataset.avail, 10) || 0;
+            const hfix = parseInt(cell.dataset.hfix, 10) || 0;
+            const stock = parseInt(cell.dataset.stock, 10);
+            const soldRes = parseInt(cell.dataset.soldRes, 10);
+            const result = hpo - hsold - avail + hfix;
+            const ok = result === 0;
+            const availNote = (!Number.isNaN(stock) && !Number.isNaN(soldRes))
+                ? 'Available = Stock − Sold/reserved (' + stock + ' − ' + soldRes + ' = ' + avail + ')'
+                : 'Available = Stock − Sold/reserved (' + avail + ')';
+
+            popup.innerHTML =
+                '<div class="checker-calc-title">Checker calculation</div>' +
+                '<div class="checker-calc-line">Hist-Received − Hist-sold − Available + Hist-fix</div>' +
+                '<div class="checker-calc-line" style="font-family:inherit;font-size:11px;color:#555;margin:4px 0;">' + availNote + '</div>' +
+                '<div class="checker-calc-line">' + hpo + ' − ' + hsold + ' − ' + avail + ' + ' + hfix + '</div>' +
+                '<div class="checker-calc-eq ' + (ok ? 'checker-calc-ok' : 'checker-calc-bad') + '">' +
+                '= ' + result + (ok ? ' ✓ check' : ' (off by ' + result + ')') +
+                '</div>';
+
+            popup.classList.add('is-visible');
+
+            const rect = cell.getBoundingClientRect();
+            const margin = 8;
+            let top = rect.bottom + margin;
+            let left = rect.left + (rect.width / 2) - 120;
+            left = Math.max(margin, Math.min(left, window.innerWidth - popup.offsetWidth - margin));
+            if (top + popup.offsetHeight > window.innerHeight - margin) {
+                top = rect.top - popup.offsetHeight - margin;
+            }
+            popup.style.top = Math.max(margin, top) + 'px';
+            popup.style.left = left + 'px';
+        }
+
+        function updateCheckerCellData(cell, totals) {
+            if (!cell) return;
+            cell.classList.add('checker-cell');
+            cell.dataset.hpo = totals.hpo;
+            cell.dataset.hsold = totals.hsold;
+            cell.dataset.avail = totals.avail;
+            cell.dataset.hfix = totals.hfix;
+            cell.dataset.stock = totals.stock;
+            cell.dataset.soldRes = totals.sold;
+        }
 
         /**
          * Shift trailing digits on the SKU/token used for search (e.g. M1181 → M1180 / M1182).
@@ -1514,41 +1743,38 @@
                     
                     rowsToSum.forEach(row => {
                         const cells = row.querySelectorAll('td');
-                        if (cells.length >= 10) {
-                            // Dynamically detect offset based on cell count
-                            // With Description column: 12 cells total (SKU, Desc, Color, Stock, Avail, Sold, Incom, HPO, Hsold, Hfix, Checker, padding)
-                            // Without Description column: 11 cells total (SKU, Color, Stock, Avail, Sold, Incom, HPO, Hsold, Hfix, Checker, padding)
-                            const hasDescriptionColumn = cells.length >= 12;
+                        if (cells.length >= 13) {
+                            const hasDescriptionColumn = cells.length >= 14;
                             const startIndex = hasDescriptionColumn ? 3 : 2;
                             
                             totals.stock += parseInt(cells[startIndex].textContent) || 0;
-                            totals.avail += parseInt(cells[startIndex + 1].textContent) || 0;
-                            totals.sold += parseInt(cells[startIndex + 2].textContent) || 0;
-                            totals.incom += parseInt(cells[startIndex + 3].textContent) || 0;
-                            totals.hpo += parseInt(cells[startIndex + 4].textContent) || 0;
-                            totals.hsold += parseInt(cells[startIndex + 5].textContent) || 0;
-                            totals.hfix += parseInt(cells[startIndex + 6].textContent) || 0;
+                            totals.avail += parseInt(cells[startIndex + 2].textContent) || 0;
+                            totals.sold += parseInt(cells[startIndex + 4].textContent) || 0;
+                            totals.incom += parseInt(cells[startIndex + 5].textContent) || 0;
+                            totals.hpo += parseInt(cells[startIndex + 6].textContent) || 0;
+                            totals.hsold += parseInt(cells[startIndex + 7].textContent) || 0;
+                            totals.hfix += parseInt(cells[startIndex + 8].textContent) || 0;
                         }
                     });
                     
                     // Update summary row cells
                     const summaryCells = summaryRow.querySelectorAll('td');
-                    if (summaryCells.length >= 9) {
-                        // Dynamically detect offset for summary row as well
-                        const hasDescriptionColumn = summaryCells.length >= 12;
+                    if (summaryCells.length >= 11) {
+                        const hasDescriptionColumn = summaryCells.length >= 14;
                         const startIndex = hasDescriptionColumn ? 3 : 2;
                         
-                        summaryCells[startIndex].textContent = totals.stock;           // Stock
-                        summaryCells[startIndex + 1].textContent = totals.avail;           // Avail
-                        summaryCells[startIndex + 2].textContent = totals.sold;            // Sold
-                        summaryCells[startIndex + 3].textContent = totals.incom;           // Incom
-                        summaryCells[startIndex + 4].textContent = totals.hpo;             // H-PO
-                        summaryCells[startIndex + 5].textContent = totals.hsold;           // H-sold
-                        summaryCells[startIndex + 6].textContent = totals.hfix;            // H-fix
+                        summaryCells[startIndex].textContent = totals.stock;
+                        summaryCells[startIndex + 2].textContent = totals.avail;
+                        summaryCells[startIndex + 4].textContent = totals.sold;
+                        summaryCells[startIndex + 5].textContent = totals.incom;
+                        summaryCells[startIndex + 6].textContent = totals.hpo;
+                        summaryCells[startIndex + 7].textContent = totals.hsold;
+                        summaryCells[startIndex + 8].textContent = totals.hfix;
                         
                         // Update checker
                         const checkerValue = totals.hpo - totals.hsold - totals.avail + totals.hfix;
-                        const checkerCell = summaryCells[startIndex + 7];
+                        const checkerCell = summaryCells[startIndex + 9];
+                        updateCheckerCellData(checkerCell, totals);
                         
                         if (checkerValue === 0) {
                             checkerCell.textContent = 'check';
@@ -1738,6 +1964,23 @@
             });
             updateSkuNavButtons();
             handleProductDetailDeepLinks();
+
+            document.addEventListener('click', function(e) {
+                const checkerCell = e.target.closest('.checker-cell');
+                if (checkerCell) {
+                    e.stopPropagation();
+                    const popup = document.getElementById('checkerCalcPopup');
+                    if (popup && popup.classList.contains('is-visible') && popup._anchorCell === checkerCell) {
+                        hideCheckerCalcPopup();
+                        popup._anchorCell = null;
+                    } else {
+                        if (popup) popup._anchorCell = checkerCell;
+                        showCheckerCalcPopup(checkerCell);
+                    }
+                    return;
+                }
+                hideCheckerCalcPopup();
+            });
         });
 
         function setSidebarToggleButtonState(isOpen) {

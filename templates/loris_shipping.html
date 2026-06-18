@@ -15,6 +15,110 @@
         .card-body {
             background-color: #efdca391;    
         }
+
+        body {
+            background: #f1f5f9;
+        }
+
+        .main-container {
+            max-width: 98%;
+        }
+
+        .page-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .shipping-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+            margin-top: 0.5rem !important;
+        }
+
+        .shipping-card .card-header {
+            padding: 0.45rem 0.85rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .shipping-card .card-body {
+            padding: 0.65rem 0.85rem;
+            background: #fff !important;
+        }
+
+        .shipping-card .card-header .btn-link {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .orders-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.4rem 0.65rem;
+            padding: 0.45rem 0.6rem;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 0 1 auto;
+        }
+
+        .filter-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            line-height: 1;
+        }
+
+        .orders-filter-bar .form-control-sm {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.45rem;
+            height: calc(1.5em + 0.45rem);
+            border-color: #cbd5e1;
+            border-radius: 6px;
+            min-width: 110px;
+        }
+
+        .orders-filter-bar .form-control-sm:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+        }
+
+        .filter-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-left: auto;
+            align-items: flex-end;
+        }
+
+        .filter-actions .btn {
+            font-size: 0.75rem;
+            padding: 0.28rem 0.6rem;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
         .navbar {
             background-color: #343a40;
         }
@@ -144,11 +248,7 @@
             font-size: 0.7rem;
         }
         
-        /* CM Conversion Styles */
-        .cm-checkbox {
-            transform: scale(0.8);
-        }
-        
+        /* CM conversion display */
         .conversion-display {
             color: #6c757d;
             font-style: italic;
@@ -200,81 +300,187 @@
             font-size: 16px;
         }
         
-        /* Compact Grid Styles for Box Dimensions */
-        .compact-box-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 3px;
-            padding: 6px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            max-width: 140px;
+        /* Package box row — L × W × H + weight */
+        .package-box-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.5rem 0.65rem;
+            padding: 0.5rem 0.6rem;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.35rem;
         }
-        
-        .compact-dimension-input {
-            border: none;
-            background: white;
-            text-align: center;
-            font-size: 14px;
+
+        .pkg-box-num {
+            flex: 0 0 26px;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            align-self: center;
+        }
+
+        .pkg-fields-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .pkg-dims-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            min-width: 0;
+        }
+
+        .pkg-dims-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.2rem;
+        }
+
+        .pkg-field {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .pkg-field-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #64748b;
+            line-height: 1;
+        }
+
+        .pkg-dim-sep {
+            color: #94a3b8;
             font-weight: 600;
-            padding: 6px 4px;
-            width: 100%;
-            border-radius: 2px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            padding-bottom: 0.4rem;
+            user-select: none;
         }
-        
-        .compact-dimension-input:focus {
-            outline: none;
-            background-color: #e3f2fd;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+
+        .pkg-weight-field {
+            padding-left: 0.35rem;
+            border-left: 1px solid #e2e8f0;
         }
-        
-        .compact-dimension-input::placeholder {
-            font-size: 10px;
-            color: #9ca3af;
-            font-weight: normal;
-        }
-        
+
+        .compact-dimension-input,
         .compact-weight-input {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
             text-align: center;
-            font-size: 14px;
+            font-size: 0.85rem;
             font-weight: 600;
-            padding: 8px 6px;
-            width: 100%;
-            max-width: 90px;
-            min-width: 60px;
-            transition: all 0.2s ease;
+            padding: 0.35rem 0.2rem;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
         }
-        
+
+        .compact-dimension-input {
+            width: 48px;
+            min-width: 48px;
+        }
+
+        .compact-weight-input {
+            width: 58px;
+            min-width: 58px;
+        }
+
+        .compact-dimension-input:focus,
         .compact-weight-input:focus {
             outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            background: #fff;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
-        
-        .dimension-labels {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 2px;
-            font-size: 11px;
-            color: #6c757d;
-            text-align: center;
-            margin-bottom: 3px;
+
+        .compact-dimension-input::placeholder,
+        .compact-weight-input::placeholder {
+            font-size: 0.65rem;
+            color: #94a3b8;
             font-weight: 500;
         }
-        
-        .compact-conversion-display {
-            font-size: 12px;
-            color: #6c757d;
-            text-align: center;
-            margin-top: 2px;
-            font-style: italic;
+
+        .pkg-options {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex: 0 1 auto;
+        }
+
+        .pkg-cm-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin: 0;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #475569;
+            white-space: nowrap;
+            cursor: pointer;
+            padding-bottom: 0.35rem;
+            flex-shrink: 0;
+        }
+
+        .pkg-cm-toggle .form-check-input,
+        .pkg-cm-toggle .cm-checkbox {
+            margin: 0;
+            float: none;
+            position: static;
+            flex-shrink: 0;
+            width: 0.95rem;
+            height: 0.95rem;
+            transform: none;
+        }
+
+        .pkg-cm-toggle-text {
             line-height: 1;
+            user-select: none;
+        }
+
+        .pkg-options .preset-dimensions {
+            font-size: 0.72rem;
+            padding: 0.28rem 0.45rem;
+            min-width: 96px;
+            max-width: 110px;
+            height: 30px;
+        }
+
+        .pkg-row-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex: 0 1 auto;
+            padding-bottom: 0.15rem;
+        }
+
+        .pkg-row-actions .btn {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.45rem;
+            white-space: nowrap;
+        }
+
+        .compact-conversion-display {
+            font-size: 0.68rem;
+            color: #64748b;
+            text-align: left;
+            font-style: italic;
+            line-height: 1.2;
+            white-space: nowrap;
         }
         
         /* Hide number input spinners */
@@ -299,20 +505,12 @@
         }
         
         /* Layout and Container Styles */
-        .main-container {
-            max-width: 95%;
-        }
-        
-        .page-title {
-            font-size: 1.8rem;
-        }
-        
         .table-section {
             background: #fff;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            border-top: 2px solid #e9ecef;
-            margin: 0 -15px;
+            padding: 0.35rem 0 0;
+            box-shadow: none;
+            border-top: none;
+            margin: 0;
         }
         
         .store-info-section {
@@ -349,7 +547,12 @@
         }
         
         .orders-table-header {
-            font-size: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .orders-table-header th {
+            background: #334155 !important;
+            border-color: #475569 !important;
         }
         
         .table-header-cell {
@@ -420,16 +623,188 @@
             padding: 8px;
         }
         
-        .view-items-btn, .delete-order-btn, .download-pdf-btn {
-            font-size: 1rem;
-            padding: 8px 12px;
+        .view-items-btn, .delete-order-btn, .download-pdf-btn, .edit-store-from-po-btn {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+        .order-actions-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 108px;
         }
         
-        .save-pkg-btn, .add-row-btn, .delete-pkg-btn {
+        .save-pkg-btn, .save-perfect-btn, .save-missing-btn, .add-row-btn, .delete-pkg-btn {
             font-size: 0.75rem;
             padding: 6px 10px;
             position: relative;
             z-index: 1;
+        }
+
+        .qty-cost-cell {
+            text-align: center;
+            vertical-align: middle;
+            line-height: 1.3;
+            min-width: 72px;
+        }
+
+        .qty-cost-cell .qty-cost-qty {
+            font-weight: 600;
+            display: block;
+        }
+
+        .qty-cost-cell .qty-cost-amount {
+            font-size: 0.85rem;
+            color: #6c757d;
+            display: block;
+        }
+
+        .qty-cost-cell.qty-mismatch {
+            background-color: #f8d7da !important;
+        }
+
+        .qty-cost-cell.qty-mismatch .qty-cost-qty,
+        .qty-cost-cell.qty-mismatch .qty-cost-amount {
+            color: #721c24;
+            font-weight: 700;
+        }
+
+        .package-readonly {
+            background-color: #f1f3f5;
+        }
+
+        .shipped-package-display {
+            text-align: left;
+            padding: 4px 2px;
+        }
+
+        .shipped-pkg-box {
+            padding: 4px 6px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .order-info-cell {
+            vertical-align: middle;
+            line-height: 1.35;
+            min-width: 130px;
+        }
+
+        .order-info-po {
+            font-weight: 700;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .order-info-highlight {
+            display: block;
+            width: fit-content;
+            max-width: 100%;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .order-info-batch {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .order-info-ship {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .addresses-combined-cell {
+            vertical-align: top;
+            min-width: 180px;
+        }
+
+        .address-block {
+            margin-top: 6px;
+        }
+
+        .address-block:first-of-type {
+            margin-top: 0;
+        }
+
+        .address-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 2px;
+        }
+
+        .address-text {
+            font-size: 0.9rem;
+            line-height: 1.35;
+            white-space: pre-wrap;
+        }
+
+        .address-cell-with-footer {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .address-cell-with-footer .address-text {
+            flex: 1 1 auto;
+        }
+
+        .address-cell-footer {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .zip-check-indicator {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            display: block;
+            text-align: center;
+            width: 100%;
+        }
+
+        .zip-check-ok {
+            color: #155724;
+            background: #d4edda;
+        }
+
+        .zip-check-warn {
+            color: #721c24;
+            background: #f8d7da;
+        }
+
+        .zip-check-unknown {
+            color: #856404;
+            background: #fff3cd;
+        }
+
+        .qty-stepper {
+            gap: 4px;
+        }
+
+        .qty-stepper .save-missing-actual-qty {
+            width: 64px;
+            padding: 2px 4px;
+        }
+
+        .qty-stepper .btn {
+            min-width: 32px;
+            padding: 2px 8px;
+            font-weight: 700;
+            line-height: 1.2;
         }
         
         /* Compact form controls */
@@ -469,30 +844,46 @@
         }
 
         /* Responsive design for smaller screens */
+        @media (max-width: 768px) {
+            .orders-filter-bar {
+                gap: 0.35rem;
+            }
+            .filter-field {
+                flex: 1 1 calc(50% - 0.35rem);
+            }
+            .filter-field .form-control-sm {
+                width: 100%;
+                min-width: 0;
+            }
+            .filter-actions {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
         @media (max-width: 1334px) {
             .ship-to-address-column,
             .internal-add-column {
                 display: none;
             }
             
+            .package-box-row {
+                gap: 0.35rem;
+            }
+
             .compact-dimension-input {
-                max-width: 60px;
-                font-size: 12px;
-                padding: 4px 2px;
+                width: 42px;
+                min-width: 42px;
+                font-size: 0.78rem;
             }
-            
-            .compact-box-grid {
-                grid-template-columns: 1fr; /* Stack vertically */
-                max-width: none; /* Allow full width */
-                gap: 2px;
+
+            .compact-weight-input {
+                width: 50px;
+                min-width: 50px;
             }
-            
-            .dimension-labels {
-                grid-template-columns: 1fr; /* Stack labels vertically */
-                font-size: 10px;
-            }
-            
-            .preset-dimensions {
+
+            .pkg-options .preset-dimensions {
                 display: none;
             }
         }
@@ -598,23 +989,19 @@
     <!-- Sidebar overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay" style="display: none;"></div>
 
-    <div class="container-fluid mt-3 main-container">
-        <div class="row mb-2">
-            <div class="col-12">
-                <h1 class="text-center mb-2 page-title">
-                    <i class="fas fa-shipping-fast"></i> 洛瑞丝庄园 - Loris Shipping Management
-                    <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-arrow-left" style="padding-left: 5px;"></i> Back to Main Page
-                    </a>
-                </h1>
-
-                
-            </div>
+    <div class="container-fluid mt-2 main-container">
+        <div class="page-header-bar">
+            <h1 class="page-title">
+                <i class="fas fa-shipping-fast text-primary"></i> Loris Shipping
+            </h1>
+            <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
         </div>
 
         <!-- Orders Management Section - Pending -->
-        <div class="card mt-2">
-            <div class="card-header bg-warning text-dark py-2">
+        <div class="card shipping-card">
+            <div class="card-header bg-warning text-dark py-1">
                 <h6 class="mb-0">
                     <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#pendingOrdersSection" aria-expanded="true" aria-controls="pendingOrdersSection">
                         <i class="fas fa-shopping-cart"></i> Pending Orders
@@ -624,35 +1011,27 @@
             </div>
             <div class="collapse show" id="pendingOrdersSection">
                 <div class="card-body">
-                <!-- Filter Controls -->
-                <div class="row mb-2 g-2">
-                    <div class="col-6 col-md-2">
-                        <label for="pending-batch-date-filter" class="form-label small mb-0 text-muted">Batch Date</label>
-                        <input type="date" id="pending-batch-date-filter" class="form-control" title="Filter by email batch date">
+                <div class="orders-filter-bar">
+                    <div class="filter-field">
+                        <span class="filter-label">Batch</span>
+                        <input type="date" id="pending-batch-date-filter" class="form-control form-control-sm" title="Filter by email batch date">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label for="pending-po-search" class="form-label small mb-0 text-muted">PO Number</label>
-                        <input type="text" id="pending-po-search" class="form-control" placeholder="Search PO Number...">
+                    <div class="filter-field">
+                        <span class="filter-label">PO</span>
+                        <input type="text" id="pending-po-search" class="form-control form-control-sm" placeholder="PO number">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label for="pending-ship-date-after-filter" class="form-label small mb-0 text-muted">Ship After</label>
-                        <input type="date" id="pending-ship-date-after-filter" class="form-control" title="Show POs with ship-out date after this date">
+                    <div class="filter-field">
+                        <span class="filter-label">Ship After</span>
+                        <input type="date" id="pending-ship-date-after-filter" class="form-control form-control-sm" title="Ship-out after">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label for="pending-ship-date-before-filter" class="form-label small mb-0 text-muted">Ship Before</label>
-                        <input type="date" id="pending-ship-date-before-filter" class="form-control" title="Show POs with ship-out date before this date">
+                    <div class="filter-field">
+                        <span class="filter-label">Ship Before</span>
+                        <input type="date" id="pending-ship-date-before-filter" class="form-control form-control-sm" title="Ship-out before">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
-                        <button id="clear-pending-filters-btn" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-times"></i> Clear Filters
-                        </button>
-                    </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
-                        <button id="select-ready-orders-btn" class="btn btn-success w-100">
-                            <i class="fas fa-check-circle"></i> Select Ready Orders
-                        </button>
+                    <div class="filter-actions">
+                        <button id="clear-pending-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">Clear</button>
+                        <button id="select-ready-orders-btn" class="btn btn-success btn-sm" type="button">Select Ready</button>
+                        <button type="button" id="combine-batches-open-btn" class="btn btn-info btn-sm">Combine Batches</button>
                     </div>
                 </div>
                 <div id="pending-orders-table-section" class="table-section">
@@ -663,14 +1042,12 @@
                                     <th class="table-header-cell">
                                         <input type="checkbox" id="select-all-pending" title="Select All">
                                     </th>
-                                    <th class="table-header-cell">PO Number</th>
-                                    <th class="table-header-cell">Batch</th>
-                                    <th class="table-header-cell">Ship Date</th>
+                                    <th class="table-header-cell">Order Info</th>
                                     <th class="table-header-cell ship-to-address-column">Ship To Address</th>
                                     <th class="table-header-cell internal-add-column">Internal Add</th>
                                     <th class="table-header-cell">Package Info</th>
-                                    <th class="table-header-cell">Total Qty</th>
-                                    <th class="table-header-cell">Total Cost</th>
+                                    <th class="table-header-cell">Invoice Qty</th>
+                                    <th class="table-header-cell">Actual Qty</th>
                                     <th class="table-header-cell">Status</th>                                            
                                     <th class="table-header-cell">Actions</th>
                                 </tr>
@@ -685,8 +1062,8 @@
         </div>
         
         <!-- Orders Management Section - Shipped -->
-        <div class="card mt-2">
-            <div class="card-header bg-info text-white py-2">
+        <div class="card shipping-card">
+            <div class="card-header bg-info text-white py-1">
                 <h6 class="mb-0">
                     <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#shippedOrdersSection" aria-expanded="false" aria-controls="shippedOrdersSection">
                         <i class="fas fa-truck"></i> Shipped Orders
@@ -696,37 +1073,26 @@
             </div>
             <div class="collapse" id="shippedOrdersSection">
                 <div class="card-body">
-                <!-- Control Buttons -->
-
-                <!-- Filter Controls -->
-                <div class="row mb-2 g-2">
-                    <div class="col-6 col-md-2">
-                        <label for="shipped-batch-date-filter" class="form-label small mb-0 text-muted">Batch Date</label>
-                        <input type="date" id="shipped-batch-date-filter" class="form-control" title="Filter by email batch date">
+                <div class="orders-filter-bar">
+                    <div class="filter-field">
+                        <span class="filter-label">Batch</span>
+                        <input type="date" id="shipped-batch-date-filter" class="form-control form-control-sm" title="Filter by email batch date">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label for="shipped-po-search" class="form-label small mb-0 text-muted">PO Number</label>
-                        <input type="text" id="shipped-po-search" class="form-control" placeholder="Search PO Number...">
+                    <div class="filter-field">
+                        <span class="filter-label">PO</span>
+                        <input type="text" id="shipped-po-search" class="form-control form-control-sm" placeholder="PO number">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label for="shipped-ship-date-after-filter" class="form-label small mb-0 text-muted">Ship After</label>
-                        <input type="date" id="shipped-ship-date-after-filter" class="form-control" title="Show POs with ship-out date after this date">
+                    <div class="filter-field">
+                        <span class="filter-label">Ship After</span>
+                        <input type="date" id="shipped-ship-date-after-filter" class="form-control form-control-sm" title="Ship-out after">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label for="shipped-ship-date-before-filter" class="form-label small mb-0 text-muted">Ship Before</label>
-                        <input type="date" id="shipped-ship-date-before-filter" class="form-control" title="Show POs with ship-out date before this date">
+                    <div class="filter-field">
+                        <span class="filter-label">Ship Before</span>
+                        <input type="date" id="shipped-ship-date-before-filter" class="form-control form-control-sm" title="Ship-out before">
                     </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
-                        <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-times"></i> Clear Filters
-                        </button>
-                    </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small mb-0 text-muted d-block">&nbsp;</label>
-                        <button id="upload-tracking-shipped-btn" class="btn btn-primary w-100">
-                            <i class="fas fa-upload"></i> Upload Tracking
-                        </button>
+                    <div class="filter-actions">
+                        <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">Clear</button>
+                        <button id="upload-tracking-shipped-btn" class="btn btn-primary btn-sm" type="button">Upload Tracking</button>
                     </div>
                 </div>
                 <input type="file" id="tracking-file-input" accept=".xlsx" style="display: none;">
@@ -738,14 +1104,12 @@
                                     <th class="table-header-cell">
                                         <input type="checkbox" id="select-all-shipped" title="Select All">
                                     </th>
-                                    <th class="table-header-cell">PO Number</th>
-                                    <th class="table-header-cell">Batch</th>
-                                    <th class="table-header-cell">Ship Date</th>
+                                    <th class="table-header-cell">Order Info</th>
                                     <th class="table-header-cell ship-to-address-column">Ship To Address</th>
                                     <th class="table-header-cell internal-add-column">Internal Add</th>
                                     <th class="table-header-cell">Package Info</th>
-                                    <th class="table-header-cell">Total Qty</th>
-                                    <th class="table-header-cell">Total Cost</th>
+                                    <th class="table-header-cell">Invoice Qty</th>
+                                    <th class="table-header-cell">Actual Qty</th>
                                     <th class="table-header-cell">Status</th>                                            
                                     <th class="table-header-cell">Actions</th>
                                 </tr>
@@ -760,8 +1124,8 @@
         </div>
 
         <!-- Store Info Section -->
-        <div class="card mb-4 card-padding">
-            <div class="card-header bg-success text-white py-2">
+        <div class="card mb-3 shipping-card card-padding">
+            <div class="card-header bg-success text-white py-1">
                 <h6 class="mb-0">
                     <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#storeInfoSection" aria-expanded="false" aria-controls="storeInfoSection">
                         <i class="fas fa-store"></i> Store Information
@@ -1005,6 +1369,100 @@
             </div>
         </div>
 
+        <!-- Combine Batches Modal -->
+        <div class="modal fade" id="combineBatchesModal" tabindex="-1" aria-labelledby="combineBatchesModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title" id="combineBatchesModalLabel">
+                            <i class="fas fa-object-group"></i> Combine Batches
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">Select one or more batch dates and/or individual orders, then merge them into a single new batch date.</p>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-semibold mb-0">Batch dates</label>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="combine-select-all-batches">
+                                        <label class="form-check-label small" for="combine-select-all-batches">All</label>
+                                    </div>
+                                </div>
+                                <div id="combine-batch-dates-list" class="border rounded p-2" style="max-height: 320px; overflow-y: auto;">
+                                    <div class="text-muted small text-center py-3">Loading batches…</div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-semibold mb-0">Orders <span id="combine-orders-count" class="text-muted fw-normal small"></span></label>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="checkbox" id="combine-select-all-orders">
+                                        <label class="form-check-label small" for="combine-select-all-orders">All visible</label>
+                                    </div>
+                                </div>
+                                <div id="combine-orders-list" class="border rounded p-2" style="max-height: 320px; overflow-y: auto;">
+                                    <div class="text-muted small text-center py-3">Select batch dates or orders</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3 align-items-end">
+                            <div class="col-md-4">
+                                <label for="combine-new-batch-date" class="form-label fw-semibold">New batch date</label>
+                                <input type="date" class="form-control" id="combine-new-batch-date" required>
+                            </div>
+                            <div class="col-md-8">
+                                <div id="combine-selection-summary" class="small text-muted"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-info" id="combine-batches-merge-btn">
+                            <i class="fas fa-object-group"></i> Merge into new batch
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Missing Modal -->
+        <div class="modal fade" id="saveMissingModal" tabindex="-1" aria-labelledby="saveMissingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title" id="saveMissingModalLabel">
+                            <i class="fas fa-exclamation-triangle"></i> Save Missing Quantities
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">PO: <strong id="save-missing-po-display"></strong> — adjust actual received quantities per SKU.</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Vendor Item</th>
+                                        <th>Color</th>
+                                        <th class="text-center">Invoice Qty</th>
+                                        <th class="text-center" style="min-width: 140px;">Actual Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="save-missing-items-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-warning" id="confirm-save-missing-btn">
+                            <i class="fas fa-save"></i> Save Missing
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Order Details Modal -->
         <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl">
@@ -1021,6 +1479,9 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="save-order-actual-qty-btn" style="display: none;">
+                            <i class="fas fa-save"></i> Save Actual Quantities
+                        </button>
                         <button type="button" class="btn btn-outline-primary" onclick="printOrderDetails()">
                             <i class="fas fa-print"></i> Print
                         </button>
@@ -1116,6 +1577,465 @@
         }, duration);
     }
 
+    function cleanupOrphanedModalBackdrops() {
+        const visibleModals = document.querySelectorAll('.modal.show');
+        if (visibleModals.length > 0) return;
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    }
+
+    function showBootstrapModal(modalId) {
+        const el = document.getElementById(modalId);
+        if (!el) return null;
+        const modal = bootstrap.Modal.getOrCreateInstance(el);
+        modal.show();
+        return modal;
+    }
+
+    function hideBootstrapModal(modalId) {
+        const el = document.getElementById(modalId);
+        if (!el) return;
+        const modal = bootstrap.Modal.getInstance(el);
+        if (modal) {
+            modal.hide();
+        }
+        setTimeout(cleanupOrphanedModalBackdrops, 150);
+    }
+
+    function formatQtyCostCell(qty, cost) {
+        const q = parseInt(qty || 0, 10);
+        const c = parseFloat(cost || 0);
+        return `<span class="qty-cost-qty">${q}</span><span class="qty-cost-amount">$${c.toFixed(2)}</span>`;
+    }
+
+    function orderHasQtyMismatch(order) {
+        const invoiceQty = parseInt(order.total_qty || 0, 10);
+        const actualQty = parseInt(order.actual_total_qty ?? order.total_qty ?? 0, 10);
+        return invoiceQty !== actualQty;
+    }
+
+    function buildSaveQtyButtonsHtml(poNumber) {
+        return `
+            <button class="btn btn-success btn-sm flex-fill save-perfect-btn" data-po="${poNumber}">
+                <i class="fas fa-check"></i> SAVE PERFECT
+            </button>
+            <button class="btn btn-warning btn-sm flex-fill save-missing-btn" data-po="${poNumber}">
+                <i class="fas fa-exclamation-triangle"></i> SAVE MISSING
+            </button>
+        `;
+    }
+
+    function formatReadOnlyPackageBoxes(boxes) {
+        if (!boxes || boxes.length === 0) {
+            return '<small class="text-muted">No package info saved</small>';
+        }
+        return boxes.map((box, index) => {
+            const length = box.length ? parseFloat(box.length).toFixed(1) : '0';
+            const width = box.width ? parseFloat(box.width).toFixed(1) : '0';
+            const height = box.height ? parseFloat(box.height).toFixed(1) : '0';
+            const weight = box.weight ? parseFloat(box.weight).toFixed(1) : '0';
+            return `<div class="shipped-pkg-box"><strong>Box ${index + 1}:</strong> ${length} × ${width} × ${height} in, ${weight} lbs</div>`;
+        }).join('');
+    }
+
+    function renderReadOnlyPackageDisplay(container, data) {
+        const display = container.querySelector('.shipped-package-display');
+        if (!display) return;
+        const boxes = data?.package_box_dimensions || data?.box_dimensions || [];
+        display.innerHTML = formatReadOnlyPackageBoxes(boxes);
+        const statusIndicator = container.querySelector('.pkg-status-indicator');
+        if (statusIndicator) {
+            if (boxes.length > 0) {
+                statusIndicator.textContent = '✓ Saved';
+                statusIndicator.className = 'pkg-status-indicator success';
+            } else {
+                statusIndicator.textContent = '';
+                statusIndicator.className = 'pkg-status-indicator';
+            }
+        }
+    }
+
+    function buildReadonlyPackageCellHtml(order) {
+        const boxes = order.package_box_dimensions || [];
+        const statusClass = boxes.length > 0 ? 'pkg-status-indicator success' : 'pkg-status-indicator';
+        const statusText = boxes.length > 0 ? '✓ Saved' : '';
+        return `
+            <div class="package-info-container package-readonly" id="pkg-container-${order.po_number}" data-po="${order.po_number}" data-readonly="true">
+                <div class="shipped-package-display">${formatReadOnlyPackageBoxes(boxes)}</div>
+                <small class="text-muted d-block mt-1">Set status to Pending to edit package dimensions.</small>
+                <div class="${statusClass} mt-1">${statusText}</div>
+            </div>
+        `;
+    }
+
+    const PRESET_DIMENSIONS_OPTIONS = `
+        <option value="">Presets</option>
+        <option value="26x19x16">26×19×16</option>
+        <option value="22x16x16">22×16×16</option>
+        <option value="20x20x20">20×20×20</option>
+        <option value="26x20x16">26×20×16</option>
+        <option value="26x21x16">26×21×16</option>
+        <option value="24x18x16">24×18×16</option>
+        <option value="22x16x10">22×16×10</option>
+        <option value="22x19x16">22×19×16</option>
+    `;
+
+    function buildPackageBoxRowHtml(boxNumber, boxData, isMain) {
+        const length = boxData?.length ? parseFloat(boxData.length).toFixed(1) : '';
+        const width = boxData?.width ? parseFloat(boxData.width).toFixed(1) : '';
+        const height = boxData?.height ? parseFloat(boxData.height).toFixed(1) : '';
+        const weight = boxData?.weight ? parseFloat(boxData.weight).toFixed(1) : '';
+        const rowClass = isMain ? 'package-box-row main-box-row' : 'package-box-row package-row';
+        const cmId = isMain ? `cm-check-main-${boxNumber}` : `cm-check-${boxNumber}`;
+        const actionsHtml = isMain
+            ? `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">Duplicate</button>`
+            : `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">Duplicate</button>
+               <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn remove-box-btn" title="Delete this row">Remove</button>`;
+
+        return `
+            <div class="${rowClass}" data-box="${boxNumber}">
+                <div class="pkg-box-num box-id box-id-label">${boxNumber}</div>
+                <div class="pkg-fields-group">
+                    <div class="pkg-dims-wrap">
+                        <div class="pkg-dims-group">
+                            <div class="pkg-field">
+                                <span class="pkg-field-label">L</span>
+                                <input type="number" class="compact-dimension-input box-length box-input" placeholder="in" min="0.1" step="0.1" value="${length}">
+                            </div>
+                            <span class="pkg-dim-sep">×</span>
+                            <div class="pkg-field">
+                                <span class="pkg-field-label">W</span>
+                                <input type="number" class="compact-dimension-input box-width box-input" placeholder="in" min="0.1" step="0.1" value="${width}">
+                            </div>
+                            <span class="pkg-dim-sep">×</span>
+                            <div class="pkg-field">
+                                <span class="pkg-field-label">H</span>
+                                <input type="number" class="compact-dimension-input box-height box-input" placeholder="in" min="0.1" step="0.1" value="${height}">
+                            </div>
+                        </div>
+                        <div class="compact-conversion-display conversion-display pkg-dim-conversion" style="display: none;"></div>
+                    </div>
+                    <div class="pkg-field pkg-weight-field">
+                        <span class="pkg-field-label">Wt (lbs)</span>
+                        <input type="number" class="compact-weight-input box-weight box-input" placeholder="lbs" min="0.1" step="0.1" value="${weight}"
+                               data-placeholder-metric="lb" data-placeholder-imperial="lbs">
+                    </div>
+                </div>
+                <div class="pkg-options">
+                    <label class="pkg-cm-toggle" for="${cmId}">
+                        <input class="form-check-input cm-checkbox" type="checkbox" id="${cmId}" data-box="${boxNumber}">
+                        <span class="pkg-cm-toggle-text">CM</span>
+                    </label>
+                    <select class="form-select form-select-sm preset-dimensions" data-box="${boxNumber}">${PRESET_DIMENSIONS_OPTIONS}</select>
+                </div>
+                <div class="pkg-row-actions">${actionsHtml}</div>
+            </div>
+        `;
+    }
+
+    function buildEditablePackageCellHtml(order) {
+        const saveButtonsHtml = buildSaveQtyButtonsHtml(order.po_number);
+        return `
+            <div class="package-info-container" id="pkg-container-${order.po_number}" data-po="${order.po_number}">
+                ${buildPackageBoxRowHtml(1, null, true)}
+                <div class="d-flex flex-wrap justify-content-between gap-2 mt-3 pt-2 package-actions-border">
+                    ${saveButtonsHtml}
+                    <button class="btn btn-primary btn-sm flex-fill add-row-btn" data-po="${order.po_number}">
+                        <i class="fas fa-plus"></i> ADD ROW
+                    </button>
+                    <button class="btn btn-danger btn-sm flex-fill delete-pkg-btn" data-po="${order.po_number}">
+                        <i class="fas fa-trash"></i> REMOVE PKG
+                    </button>
+                </div>
+                <div class="pkg-status-indicator mt-1"></div>
+            </div>
+        `;
+    }
+
+    function isPackageReadonly(poNumber) {
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        return container?.dataset.readonly === 'true';
+    }
+
+    function getEffectiveActualQty(item) {
+        if (item.actual_quantity !== null && item.actual_quantity !== undefined && item.actual_quantity !== '') {
+            return parseInt(item.actual_quantity, 10);
+        }
+        return parseInt(item.quantity || 0, 10);
+    }
+
+    function collectPackageBoxDimensions(poNumber) {
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        if (!container) {
+            return { error: 'Package container not found', boxDimensions: [] };
+        }
+
+        const allRows = [];
+        const mainRow = container.querySelector('.main-box-row');
+        const mainCmCheckbox = mainRow ? mainRow.querySelector('.cm-checkbox') : null;
+        const isCmMode = mainCmCheckbox && mainCmCheckbox.checked;
+
+        const lengthInput = container.querySelector('.box-length');
+        const widthInput = container.querySelector('.box-width');
+        const heightInput = container.querySelector('.box-height');
+        const weightInput = container.querySelector('.box-weight');
+
+        const mainLength = lengthInput ? lengthInput.value : '';
+        const mainWidth = widthInput ? widthInput.value : '';
+        const mainHeight = heightInput ? heightInput.value : '';
+        const mainWeight = weightInput ? weightInput.value : '';
+
+        if (mainLength && mainWidth && mainHeight && mainWeight) {
+            const length = isCmMode ? parseFloat(mainLength) / 2.54 : parseFloat(mainLength);
+            const width = isCmMode ? parseFloat(mainWidth) / 2.54 : parseFloat(mainWidth);
+            const height = isCmMode ? parseFloat(mainHeight) / 2.54 : parseFloat(mainHeight);
+            const weight = parseFloat(mainWeight);
+            allRows.push({
+                length: Math.round(length * 100) / 100,
+                width: Math.round(width * 100) / 100,
+                height: Math.round(height * 100) / 100,
+                weight: Math.round(weight * 100) / 100
+            });
+        }
+
+        container.querySelectorAll('.package-row').forEach(row => {
+            const rowCmCheckbox = row.querySelector('.cm-checkbox');
+            const isRowCmMode = rowCmCheckbox && rowCmCheckbox.checked;
+            const rowLength = row.querySelector('.box-length')?.value || '';
+            const rowWidth = row.querySelector('.box-width')?.value || '';
+            const rowHeight = row.querySelector('.box-height')?.value || '';
+            const rowWeight = row.querySelector('.box-weight')?.value || '';
+            if (rowLength && rowWidth && rowHeight && rowWeight) {
+                const length = isRowCmMode ? parseFloat(rowLength) / 2.54 : parseFloat(rowLength);
+                const width = isRowCmMode ? parseFloat(rowWidth) / 2.54 : parseFloat(rowWidth);
+                const height = isRowCmMode ? parseFloat(rowHeight) / 2.54 : parseFloat(rowHeight);
+                const weight = parseFloat(rowWeight);
+                allRows.push({
+                    length: Math.round(length * 100) / 100,
+                    width: Math.round(width * 100) / 100,
+                    height: Math.round(height * 100) / 100,
+                    weight: Math.round(weight * 100) / 100
+                });
+            }
+        });
+
+        if (allRows.length === 0) {
+            return { error: 'Please fill in at least one complete package information set', boxDimensions: [] };
+        }
+
+        return {
+            boxDimensions: allRows.map(row => ({
+                length: row.length,
+                width: row.width,
+                height: row.height,
+                weight: row.weight
+            }))
+        };
+    }
+
+    async function postPackageInfo(poNumber, boxDimensions) {
+        const response = await fetch('/lori_automation/save_package_info', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                poNumber: poNumber,
+                boxDimensions: boxDimensions,
+                fedexServiceType: 'FEDEX_GROUND',
+                fedexPackagingType: 'YOUR_PACKAGING',
+                specialInstructions: ''
+            })
+        });
+        return response.json();
+    }
+
+    function updatePackageSaveStatus(poNumber, success) {
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        const statusIndicator = container?.querySelector('.pkg-status-indicator');
+        if (!statusIndicator) return;
+        if (success) {
+            statusIndicator.textContent = '✓ Saved';
+            statusIndicator.className = 'pkg-status-indicator success';
+        } else {
+            statusIndicator.textContent = '✗ Error';
+            statusIndicator.className = 'pkg-status-indicator error';
+        }
+    }
+
+    async function savePackagePerfect(poNumber) {
+        const readonly = isPackageReadonly(poNumber);
+
+        if (!readonly) {
+            const collected = collectPackageBoxDimensions(poNumber);
+            if (collected.error) {
+                alert(collected.error);
+                return;
+            }
+
+            try {
+                const result = await postPackageInfo(poNumber, collected.boxDimensions);
+                if (!result.success) {
+                    showToast(`Failed to save package info for PO ${poNumber}: ${result.error || 'Unknown error'}`, 'error', 5000);
+                    updatePackageSaveStatus(poNumber, false);
+                    return;
+                }
+            } catch (error) {
+                console.error('Error saving perfect package info:', error);
+                showToast(`Network error saving PO ${poNumber}: ${error.message}`, 'error', 5000);
+                updatePackageSaveStatus(poNumber, false);
+                return;
+            }
+        }
+
+        try {
+            const perfectResponse = await fetch('/lori_automation/set_order_perfect_quantities', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ po_number: poNumber })
+            });
+            const perfectResult = await perfectResponse.json();
+            if (!perfectResult.success) {
+                showToast(`Failed to set perfect quantities: ${perfectResult.error || 'Unknown error'}`, 'error', 5000);
+                updatePackageSaveStatus(poNumber, false);
+                return;
+            }
+
+            showToast(`Perfect save completed for PO ${poNumber}`, 'success', 3000);
+            updatePackageSaveStatus(poNumber, true);
+            await loadAndRenderOrders();
+            setTimeout(() => refreshOrderRow(poNumber), 500);
+        } catch (error) {
+            console.error('Error setting perfect quantities:', error);
+            showToast(`Network error saving PO ${poNumber}: ${error.message}`, 'error', 5000);
+            updatePackageSaveStatus(poNumber, false);
+        }
+    }
+
+    function adjustSaveMissingQty(button, delta) {
+        const row = button.closest('tr');
+        const input = row?.querySelector('.save-missing-actual-qty');
+        if (!input) return;
+        const current = parseInt(input.value || '0', 10);
+        const next = Math.max(0, (Number.isNaN(current) ? 0 : current) + delta);
+        input.value = next;
+    }
+
+    async function openSaveMissingModal(poNumber) {
+        const readonly = isPackageReadonly(poNumber);
+        let boxDimensions = null;
+
+        if (!readonly) {
+            const collected = collectPackageBoxDimensions(poNumber);
+            if (collected.error) {
+                alert(collected.error);
+                return;
+            }
+            boxDimensions = collected.boxDimensions;
+        }
+
+        try {
+            const response = await fetch(`/lori_automation/get_order_items/${poNumber}`, { credentials: 'same-origin' });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            if (!data.items || data.items.length === 0) {
+                alert('No order items found for this PO.');
+                return;
+            }
+
+            window.saveMissingContext = {
+                poNumber,
+                boxDimensions,
+                skipPackage: readonly
+            };
+
+            document.getElementById('save-missing-po-display').textContent = poNumber;
+            const tbody = document.getElementById('save-missing-items-body');
+            tbody.innerHTML = data.items.map(item => {
+                const invoiceQty = parseInt(item.quantity || 0, 10);
+                const actualQty = getEffectiveActualQty(item);
+                return `
+                    <tr data-item-id="${item.id}">
+                        <td><strong>${item.vendor_item || 'N/A'}</strong></td>
+                        <td>${item.color || '-'}</td>
+                        <td class="text-center">${invoiceQty}</td>
+                        <td class="text-center">
+                            <div class="qty-stepper d-inline-flex align-items-center justify-content-center">
+                                <button type="button" class="btn btn-outline-secondary btn-sm save-missing-qty-minus" data-item-id="${item.id}" title="Decrease" aria-label="Decrease quantity">−</button>
+                                <input type="number" class="form-control form-control-sm save-missing-actual-qty text-center"
+                                       min="0" step="1" value="${actualQty}" data-item-id="${item.id}">
+                                <button type="button" class="btn btn-outline-secondary btn-sm save-missing-qty-plus" data-item-id="${item.id}" title="Increase" aria-label="Increase quantity">+</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            const modal = showBootstrapModal('saveMissingModal');
+            if (!modal) return;
+        } catch (error) {
+            console.error('Error opening save missing modal:', error);
+            alert('Error loading order items: ' + error.message);
+        }
+    }
+
+    async function confirmSaveMissing() {
+        const context = window.saveMissingContext;
+        if (!context?.poNumber) return;
+
+        const poNumber = context.poNumber;
+        const items = Array.from(document.querySelectorAll('#save-missing-items-body .save-missing-actual-qty')).map(input => ({
+            id: parseInt(input.getAttribute('data-item-id'), 10),
+            actual_quantity: parseInt(input.value || '0', 10)
+        }));
+
+        if (items.some(item => Number.isNaN(item.actual_quantity) || item.actual_quantity < 0)) {
+            showToast('Please enter valid actual quantities (0 or greater)', 'error');
+            return;
+        }
+
+        const confirmBtn = document.getElementById('confirm-save-missing-btn');
+        const originalBtnHtml = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        try {
+            if (!context.skipPackage && context.boxDimensions) {
+                const packageResult = await postPackageInfo(poNumber, context.boxDimensions);
+                if (!packageResult.success) {
+                    throw new Error(packageResult.error || 'Failed to save package info');
+                }
+            }
+
+            const qtyResponse = await fetch('/lori_automation/update_order_actual_quantities', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ po_number: poNumber, items })
+            });
+            const qtyResult = await qtyResponse.json();
+            if (!qtyResult.success) {
+                throw new Error(qtyResult.error || 'Failed to save actual quantities');
+            }
+
+            hideBootstrapModal('saveMissingModal');
+            showToast(`Missing quantities saved for PO ${poNumber}`, 'success', 3000);
+            updatePackageSaveStatus(poNumber, true);
+            window.saveMissingContext = null;
+            await loadAndRenderOrders();
+            setTimeout(() => refreshOrderRow(poNumber), 500);
+        } catch (error) {
+            console.error('Error saving missing quantities:', error);
+            showToast(error.message, 'error', 5000);
+            updatePackageSaveStatus(poNumber, false);
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
     // Function to refresh a specific order row
     function refreshOrderRow(poNumber) {
         console.log('Refreshing row for PO:', poNumber);
@@ -1152,8 +2072,9 @@
 
     // Tracking number functions
     function openAddTrackingModal(poNumber, currentTracking) {
-        const modal = new bootstrap.Modal(document.getElementById('addTrackingModal'));
         const isEdit = !!currentTracking;
+        const modal = showBootstrapModal('addTrackingModal');
+        if (!modal) return;
 
         // Toggle modal labels between Add and Edit modes
         const titleEl = document.getElementById('addTrackingModalLabel');
@@ -1171,7 +2092,6 @@
 
         document.getElementById('tracking-po-display').value = poNumber;
         document.getElementById('tracking-input').value = currentTracking || '';
-        modal.show();
 
         // Focus input after modal is shown so it works reliably
         setTimeout(() => {
@@ -1226,11 +2146,7 @@
             // Refresh the order row
             refreshOrderRow(poNumber);
             
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addTrackingModal'));
-            if (modal) {
-                modal.hide();
-            }
+            hideBootstrapModal('addTrackingModal');
         } catch (error) {
             console.error('Error submitting tracking number:', error);
             showToast('An error occurred while saving the tracking number', 'error');
@@ -1320,29 +2236,53 @@
             console.log('Showing sample orders due to API error:', error.message);
         } finally {
             hideShippingPageOverlay();
+            setTimeout(cleanupOrphanedModalBackdrops, 200);
         }
     };
 
     // Package management functions
     function loadPackageInfo(poNumber) {
+        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
+        const isReadonly = container?.dataset.readonly === 'true';
+
         fetch(`/lori_automation/get_package_info/${poNumber}`, {
             credentials: 'same-origin'
         })
             .then(response => response.json())
             .then(data => {
-                if (data.exists !== false) {
-                    try {
-                        populatePackageInfo(poNumber, data);
-                    } catch (error) {
-                        console.error('Error in populatePackageInfo for PO:', poNumber, error);
+                if (data.exists === false) {
+                    if (isReadonly && container) {
+                        renderReadOnlyPackageDisplay(container, { box_dimensions: [] });
                     }
+                    return;
+                }
+                if (isReadonly && container) {
+                    renderReadOnlyPackageDisplay(container, data);
+                    return;
+                }
+                try {
+                    populatePackageInfo(poNumber, data);
+                } catch (error) {
+                    console.error('Error in populatePackageInfo for PO:', poNumber, error);
                 }
             })
             .catch(error => console.error('Error loading package info:', error));
     }
 
     function applyEmbeddedPackageInfo(order) {
-        if (!order?.po_number || !order.package_box_dimensions?.length) {
+        if (!order?.po_number) {
+            return;
+        }
+        const container = document.querySelector(`.package-info-container[data-po="${order.po_number}"]`);
+        if (container?.dataset.readonly === 'true') {
+            if (order.package_box_dimensions?.length) {
+                renderReadOnlyPackageDisplay(container, order);
+            } else {
+                loadPackageInfo(order.po_number);
+            }
+            return;
+        }
+        if (!order.package_box_dimensions?.length) {
             return;
         }
         populatePackageInfo(order.po_number, {
@@ -1412,151 +2352,28 @@
         }
     }
 
-    function savePackageInfo(poNumber) {
-        console.log('savePackageInfo called with PO:', poNumber);
-        const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
-        if (!container) {
-            console.log('Container not found for PO:', poNumber);
-            return;
-        }
-        console.log('Container found:', container);
-
-        // Check if status indicator exists
-        const statusIndicator = container.querySelector('.pkg-status-indicator');
-        console.log('Status indicator found:', !!statusIndicator);
-
-        // Collect data from all package rows (main + additional rows)
-        const allRows = [];
-        
-        // Main row (original package inputs)
-        const mainRow = container.querySelector('.main-box-row');
-        const mainCmCheckbox = mainRow ? mainRow.querySelector('.cm-checkbox') : null;
-        const isCmMode = mainCmCheckbox && mainCmCheckbox.checked;
-        
-        const lengthInput = container.querySelector('.box-length');
-        const widthInput = container.querySelector('.box-width');
-        const heightInput = container.querySelector('.box-height');
-        const weightInput = container.querySelector('.box-weight');
-        
-        const mainLength = lengthInput ? lengthInput.value : '';
-        const mainWidth = widthInput ? widthInput.value : '';
-        const mainHeight = heightInput ? heightInput.value : '';
-        const mainWeight = weightInput ? weightInput.value : '';
-        
-        if (mainLength && mainWidth && mainHeight && mainWeight) {
-            // Convert dimensions to inches if in CM mode, weight is always in lbs
-            const length = isCmMode ? parseFloat(mainLength) / 2.54 : parseFloat(mainLength);
-            const width = isCmMode ? parseFloat(mainWidth) / 2.54 : parseFloat(mainWidth);
-            const height = isCmMode ? parseFloat(mainHeight) / 2.54 : parseFloat(mainHeight);
-            const weight = parseFloat(mainWeight); // Weight is always in lbs
-            
-            allRows.push({
-                length: Math.round(length * 100) / 100, // Round to 2 decimal places
-                width: Math.round(width * 100) / 100,
-                height: Math.round(height * 100) / 100,
-                weight: Math.round(weight * 100) / 100
-            });
-        }
-        
-        // Additional rows
-        const additionalRows = container.querySelectorAll('.package-row');
-        additionalRows.forEach(row => {
-            const rowCmCheckbox = row.querySelector('.cm-checkbox');
-            const isRowCmMode = rowCmCheckbox && rowCmCheckbox.checked;
-            
-            const lengthInput = row.querySelector('.box-length');
-            const widthInput = row.querySelector('.box-width');
-            const heightInput = row.querySelector('.box-height');
-            const weightInput = row.querySelector('.box-weight');
-            
-            const length = lengthInput ? lengthInput.value : '';
-            const width = widthInput ? widthInput.value : '';
-            const height = heightInput ? heightInput.value : '';
-            const weight = weightInput ? weightInput.value : '';
-            
-            if (length && width && height && weight) {
-                // Convert dimensions to inches if in CM mode, weight is always in lbs
-                const convertedLength = isRowCmMode ? parseFloat(length) / 2.54 : parseFloat(length);
-                const convertedWidth = isRowCmMode ? parseFloat(width) / 2.54 : parseFloat(width);
-                const convertedHeight = isRowCmMode ? parseFloat(height) / 2.54 : parseFloat(height);
-                const convertedWeight = parseFloat(weight); // Weight is always in lbs
-                
-                allRows.push({
-                    length: Math.round(convertedLength * 100) / 100,
-                    width: Math.round(convertedWidth * 100) / 100,
-                    height: Math.round(convertedHeight * 100) / 100,
-                    weight: Math.round(convertedWeight * 100) / 100
-                });
-            }
-        });
-
-        if (allRows.length === 0) {
-            alert('Please fill in at least one complete package information set');
+    async function savePackageInfo(poNumber) {
+        const collected = collectPackageBoxDimensions(poNumber);
+        if (collected.error) {
+            alert(collected.error);
             return;
         }
 
-        // Create box dimensions array
-        const boxDimensions = allRows.map(row => ({
-            length: row.length,
-            width: row.width,
-            height: row.height,
-            weight: row.weight
-        }));
-
-        const data = {
-            poNumber: poNumber,
-            boxDimensions: boxDimensions,
-            fedexServiceType: 'FEDEX_GROUND',
-            fedexPackagingType: 'YOUR_PACKAGING',
-            specialInstructions: ''
-        };
-
-        fetch('/lori_automation/save_package_info', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => {
-            const statusIndicator = container.querySelector('.pkg-status-indicator');
+        try {
+            const result = await postPackageInfo(poNumber, collected.boxDimensions);
             if (result.success) {
-                // Show success toast
                 showToast(`Package info saved successfully for PO ${poNumber}`, 'success', 3000);
-                
-                // Update status indicator
-                if (statusIndicator) {
-                    statusIndicator.textContent = '✓ Saved';
-                    statusIndicator.className = 'pkg-status-indicator success';
-                }
-                
-                // Refresh the row to show updated data
+                updatePackageSaveStatus(poNumber, true);
                 setTimeout(() => refreshOrderRow(poNumber), 500);
-                
             } else {
-                // Show error toast
                 showToast(`Failed to save package info for PO ${poNumber}: ${result.error || 'Unknown error'}`, 'error', 5000);
-                
-                // Update status indicator
-                if (statusIndicator) {
-                    statusIndicator.textContent = '✗ Error';
-                    statusIndicator.className = 'pkg-status-indicator error';
-                }
+                updatePackageSaveStatus(poNumber, false);
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error saving package info:', error);
-            
-            // Show network error toast
             showToast(`Network error saving package info for PO ${poNumber}: ${error.message}`, 'error', 5000);
-            
-            // Update status indicator
-            const statusIndicator = container.querySelector('.pkg-status-indicator');
-            if (statusIndicator) {
-                statusIndicator.textContent = '✗ Error';
-                statusIndicator.className = 'pkg-status-indicator error';
-            }
-        });
+            updatePackageSaveStatus(poNumber, false);
+        }
     }
 
     function addPackageRow(poNumber) {
@@ -1579,84 +2396,25 @@
         const container = document.querySelector(`.package-info-container[data-po="${poNumber}"]`);
         if (!container) return;
 
-        // Create a new package row with same styling as main row
-        const newRow = document.createElement('div');
-        newRow.className = 'package-row mb-2';
-        newRow.innerHTML = `
-            <div class="row g-1 mb-2 align-items-center">
-                <div class="col-1 text-center">
-                    <div class="box-id text-muted small box-id-label">${boxNumber}</div>
-                </div>
-                <div class="col-3">
-                    <div class="dimension-labels">
-                        <div>L</div>
-                        <div>W</div>
-                        <div>H</div>
-                    </div>
-                    <div class="compact-box-grid">
-                        <input type="number" class="compact-dimension-input box-length box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.length).toFixed(1) : ''}">
-                        <input type="number" class="compact-dimension-input box-width box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.width).toFixed(1) : ''}">
-                        <input type="number" class="compact-dimension-input box-height box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.height).toFixed(1) : ''}">
-                    </div>
-                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
-                </div>
-                <div class="col-2">
-                    <div style="font-size: 10px; color: #6c757d; text-align: center; margin-bottom: 2px;">Weight</div>
-                    <input type="number" class="compact-weight-input box-weight box-input" placeholder="0" min="0.1" step="0.1" value="${boxData ? parseFloat(boxData.weight).toFixed(1) : ''}" style="width: 100%; max-width: 80px;"
-                           data-placeholder-metric="kg" data-placeholder-imperial="lbs">
-                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
-                </div>
-                <div class="col-1 text-center">
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input cm-checkbox" type="checkbox" id="cm-check-${boxNumber}" data-box="${boxNumber}" style="transform: scale(1.3);">
-                        <label class="form-check-label" for="cm-check-${boxNumber}" style="font-size: 0.9rem; font-weight: 600;">CM</label>
-                    </div>
-                </div>
-                <div class="col-2">
-                    <select class="form-select preset-dimensions" data-box="${boxNumber}" style="font-size: 13px; padding: 6px 8px;">
-                        <option value="">Presets</option>
-                        <option value="26x19x16">26×19×16</option>
-                        <option value="22x16x16">22×16×16</option>
-                        <option value="20x20x20">20×20×20</option>
-                        <option value="26x20x16">26×20×16</option>
-                        <option value="26x21x16">26×21×16</option>
-                        <option value="24x18x16">24×18×16</option>
-                        <option value="22x16x10">22×16×10</option>
-                        <option value="22x19x16">22×19×16</option>
-                    </select>
-                </div>
-                <div class="col-2 text-center">
-                    <button class="btn btn-info duplicate-row-btn me-2" title="Duplicate this row" style="font-size: 12px; padding: 6px 10px;">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                    <button class="btn btn-danger remove-row-btn remove-box-btn" title="Delete this row" style="font-size: 12px; padding: 6px 10px;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = buildPackageBoxRowHtml(boxNumber, boxData, false);
+        const newRow = wrapper.firstElementChild;
 
-            </div>
-        `;
-
-        // Find the buttons container and insert the new row before it
         const buttonsContainer = container.querySelector('.d-flex.justify-content-between.gap-2.mt-3');
         
-        // Insert the new row before the buttons
         if (buttonsContainer) {
             container.insertBefore(newRow, buttonsContainer);
         } else {
-            // If buttons container not found, just append to the main container
             container.appendChild(newRow);
         }
 
-        // Add event listener for the remove button
         const removeBtn = newRow.querySelector('.remove-row-btn');
-        removeBtn.addEventListener('click', function() {
-            newRow.remove();
-            // Update box numbers after removal
-            updateBoxNumbers(poNumber);
-        });
-        
-        // Duplicate button is handled by global event handler
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                newRow.remove();
+                updateBoxNumbers(poNumber);
+            });
+        }
     }
 
     function updateBoxNumbers(poNumber) {
@@ -1970,12 +2728,27 @@
             out.zip = csz[3].trim();
             lines.pop();
         } else {
+            const cityZipOnly = last.match(/^([^,]+),\s*(\d{5}(?:-\d{4})?)\s*$/);
+            if (cityZipOnly) {
+                out.city = cityZipOnly[1].trim();
+                out.zip = cityZipOnly[2].trim();
+                lines.pop();
+            } else {
             const stZipOnly = last.match(/^([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/);
             if (stZipOnly && lines.length >= 2) {
                 out.state = stZipOnly[1].toUpperCase();
                 out.zip = stZipOnly[2];
                 lines.pop();
                 out.city = lines.pop().trim();
+            } else {
+                const cityStZipInline = last.match(/^(.+?)\s+([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/);
+                if (cityStZipInline) {
+                    out.city = cityStZipInline[1].trim();
+                    out.state = cityStZipInline[2].toUpperCase();
+                    out.zip = cityStZipInline[3].trim();
+                    lines.pop();
+                }
+            }
             }
         }
 
@@ -1997,13 +2770,165 @@
         return out;
     }
 
+    function getStoreCacheEntry(storeNumber) {
+        if (!storeNumber) return null;
+        const digits = String(storeNumber).replace(/\D/g, '');
+        const candidates = [
+            storeNumber,
+            digits,
+            digits ? digits.padStart(4, '0') : '',
+            digits ? String(parseInt(digits, 10)) : ''
+        ].filter(Boolean);
+        const seen = new Set();
+        for (const key of candidates) {
+            if (seen.has(key)) continue;
+            seen.add(key);
+            const entry = storeInfoCache[key];
+            if (!entry) continue;
+            if (typeof entry === 'string') {
+                return { display: entry, zip: extractZipFromInternalAddress(entry) };
+            }
+            return entry;
+        }
+        return null;
+    }
+
+    function hasStoreInCache(storeNumber) {
+        const entry = getStoreCacheEntry(storeNumber);
+        const display = entry?.display || '';
+        return display.trim() !== '' && display !== 'N/A';
+    }
+
+    function normalizeZip(zip) {
+        if (!zip) return '';
+        const match = String(zip).match(/(\d{5})(?:-\d{4})?/);
+        return match ? match[1] : '';
+    }
+
+    function extractZipFromAddressLines(raw) {
+        if (!raw) return '';
+        const normalized = String(raw).replace(/<br\s*\/?>/gi, '\n');
+        const lines = normalized.split('\n').map(l => l.trim()).filter(Boolean);
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const line = lines[i];
+            if (/^phone\s*:/i.test(line)) continue;
+
+            const cityStZip = line.match(/^([^,]+),\s*([A-Za-z]{2})\s+(\d{5})(?:-\d{4})?\s*$/);
+            if (cityStZip) return cityStZip[3];
+
+            const cityZipOnly = line.match(/^([^,]+),\s*(\d{5})(?:-\d{4})?\s*$/);
+            if (cityZipOnly) return cityZipOnly[2];
+
+            const cityStZipInline = line.match(/^(.+?)\s+([A-Za-z]{2})\s+(\d{5})(?:-\d{4})?\s*$/);
+            if (cityStZipInline) return cityStZipInline[3];
+
+            const stZipOnly = line.match(/^([A-Za-z]{2})\s+(\d{5})(?:-\d{4})?\s*$/);
+            if (stZipOnly) return stZipOnly[2];
+
+            const zip = normalizeZip(line);
+            if (zip && !/\(\d{3}\)/.test(line)) return zip;
+        }
+        return '';
+    }
+
+    function extractZipFromShipTo(raw) {
+        const parsedZip = normalizeZip(parseShipToAddressForStore(raw).zip);
+        return parsedZip || extractZipFromAddressLines(raw);
+    }
+
+    function extractZipFromInternalAddress(text) {
+        return extractZipFromAddressLines(text);
+    }
+
+    function formatAddressTextHtml(raw) {
+        if (!raw || raw === 'N/A') return 'N/A';
+        const lines = String(raw).split('\n').filter(line => line.trim());
+        if (!lines.length) return 'N/A';
+        return lines.map(line => {
+            const div = document.createElement('div');
+            div.textContent = line;
+            return div.innerHTML;
+        }).join('<br>');
+    }
+
+    function buildZipCheckIndicator(shipToRaw, storeNumber) {
+        const shipZip = extractZipFromShipTo(shipToRaw);
+        const storeEntry = getStoreCacheEntry(storeNumber);
+        const internalZip = storeEntry ? normalizeZip(storeEntry.zip || extractZipFromInternalAddress(storeEntry.display)) : '';
+
+        if (!storeEntry) {
+            return '<div class="zip-check-indicator zip-check-warn"><i class="fas fa-exclamation-triangle"></i> No internal store</div>';
+        }
+        if (!shipZip || !internalZip) {
+            return '<div class="zip-check-indicator zip-check-unknown"><i class="fas fa-question-circle"></i> Zip unknown</div>';
+        }
+        if (shipZip === internalZip) {
+            return '<div class="zip-check-indicator zip-check-ok"><i class="fas fa-check-circle"></i> Zip checked</div>';
+        }
+        return `<div class="zip-check-indicator zip-check-warn"><i class="fas fa-exclamation-triangle"></i> Zip mismatch (${shipZip} vs ${internalZip})</div>`;
+    }
+
+    function buildOrderInfoCellHtml(order) {
+        const po = order.po_number || 'N/A';
+        const batch = formatBatchDate(order.batch_date || 'N/A');
+        const shipDate = formatShipOutDate(order);
+        return `
+            <span class="order-info-po">${po}</span>
+            <span class="order-info-highlight order-info-batch">Batch: ${batch}</span>
+            <span class="order-info-highlight order-info-ship">Ship: ${shipDate}</span>
+        `;
+    }
+
+    function buildOrderActionsCellHtml(order, isPendingTable, editStoreNumberFromPo) {
+        return `
+            <div class="order-actions-stack">
+                ${isPendingTable && editStoreNumberFromPo ? `
+                <button type="button" class="btn btn-outline-secondary btn-sm edit-store-from-po-btn" data-store-number="${editStoreNumberFromPo}" title="Edit store ${editStoreNumberFromPo}">Edit Store</button>` : ''}
+                <button class="btn btn-success btn-sm download-pdf-btn" data-po="${order.po_number}" title="Download Original PDF">Download PDF</button>
+                <button class="btn btn-info btn-sm view-items-btn" data-po="${order.po_number}" title="View Items">View Items</button>
+                <button class="btn btn-danger btn-sm delete-order-btn" data-po="${order.po_number}" title="Delete Order">Delete</button>
+            </div>
+        `;
+    }
+
+    function buildZipCheckFooterHtml(order, storeNumber) {
+        const shipToRaw = order.ship_to_address || '';
+        const internalContent = getStoreInfo(storeNumber, shipToRaw);
+        const zipIndicator = internalContent.includes('add-store-btn')
+            ? '<div class="zip-check-indicator zip-check-warn"><i class="fas fa-exclamation-triangle"></i> No internal store</div>'
+            : buildZipCheckIndicator(shipToRaw, storeNumber);
+        return `<div class="address-cell-footer">${zipIndicator}</div>`;
+    }
+
+    function buildShipToCellHtml(order, storeNumber) {
+        const shipToRaw = order.ship_to_address || '';
+        return `
+            <div class="address-cell-with-footer">
+                <div class="address-text">${formatAddressTextHtml(shipToRaw || 'N/A')}</div>
+                ${buildZipCheckFooterHtml(order, storeNumber)}
+            </div>
+        `;
+    }
+
+    function buildInternalAddCellHtml(order, storeNumber) {
+        const shipToRaw = order.ship_to_address || '';
+        const internalContent = getStoreInfo(storeNumber, shipToRaw);
+        return `
+            <div class="address-cell-with-footer">
+                <div class="address-text internal-address-content">${internalContent}</div>
+                ${buildZipCheckFooterHtml(order, storeNumber)}
+            </div>
+        `;
+    }
+
     // Function to get store information by store number (optional ship_to_address from order row)
     function getStoreInfo(storeNumber, shipToRaw) {
         if (!storeNumber) return 'N/A';
         const shipStr = shipToRaw != null ? String(shipToRaw) : '';
         const shipB64 = encodeShipToForDataAttr(shipStr);
-        if (storeInfoCache[storeNumber]) {
-            return storeInfoCache[storeNumber];
+        const cached = getStoreCacheEntry(storeNumber);
+        if (cached?.display) {
+            return cached.display;
         }
         const shipAttr = shipB64 ? ` data-ship-to-b64="${shipB64}"` : '';
         return `<button type="button" class="btn btn-sm btn-success add-store-btn" data-store-number="${storeNumber}"${shipAttr} title="Add New Store ${storeNumber} (prefill from Ship To)">
@@ -2060,7 +2985,10 @@
                             internalAddress.push('Phone: ' + phone);
                         }
                         
-                        storeInfoCache[storeNum] = internalAddress.join('\n');
+                        storeInfoCache[storeNum] = {
+                            display: internalAddress.join('\n'),
+                            zip: (store.zip_code || '').trim()
+                        };
                     }
                 });
                 console.log('Store cache loaded with', Object.keys(storeInfoCache).length, 'stores');
@@ -2095,7 +3023,7 @@
         container.innerHTML = '';
         
         if (orderList.length === 0) {
-            container.innerHTML = '<tr><td colspan="11" class="text-center text-muted">No orders found</td></tr>';
+            container.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No orders found</td></tr>';
             return;
         }
         
@@ -2140,7 +3068,7 @@
             batchHeaderRow.id = `batch-header-${batchId}`;
             batchHeaderRow.setAttribute('data-batch-id', batchId);
             batchHeaderRow.innerHTML = `
-                <td colspan="11" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
+                <td colspan="9" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
                     <i class="${chevronClass}" id="icon-${batchId}"></i>
                     <i class="fas fa-calendar-alt ms-2"></i> Batch Date: ${formatBatchDate(batchDate)} 
                     <button class="btn btn-sm btn-outline-primary ms-3 select-batch-btn" 
@@ -2160,17 +3088,21 @@
                 const storeNumber = order.po_number ? order.po_number.substring(0, 4) : '';
                 const storePrefixDigits = (order.po_number || '').substring(0, 4).replace(/\D/g, '').slice(0, 4);
                 const editStoreNumberFromPo = storePrefixDigits.length ? storePrefixDigits.padStart(4, '0') : '';
-                const internalAddress = getStoreInfo(storeNumber, order.ship_to_address || '');
-                
-                // Format ship-to address for better display
-                let formattedShipToAddress = order.ship_to_address || 'N/A';
-                if (order.ship_to_address && order.ship_to_address !== 'N/A') {
-                    const addressLines = order.ship_to_address.split('\n').filter(line => line.trim());
-                    if (addressLines.length > 0) {
-                        formattedShipToAddress = addressLines.join('\n');
-                    }
-                }
-                
+                const shipToCellHtml = buildShipToCellHtml(order, storeNumber);
+                const internalAddCellHtml = buildInternalAddCellHtml(order, storeNumber);
+
+                const isPendingTable = containerId === 'pending-orders-table-body';
+                const isShippedTable = containerId === 'shipped-orders-table-body';
+                const invoiceQtyCell = formatQtyCostCell(order.total_qty, order.total_cost);
+                const actualQtyCell = formatQtyCostCell(
+                    order.actual_total_qty ?? order.total_qty,
+                    order.actual_total_cost ?? order.total_cost
+                );
+                const qtyMismatchClass = orderHasQtyMismatch(order) ? ' qty-mismatch' : '';
+                const packageCellHtml = isShippedTable
+                    ? buildReadonlyPackageCellHtml(order)
+                    : buildEditablePackageCellHtml(order);
+
                 const row = document.createElement('tr');
                 row.className = 'batch-order-row';
                 row.setAttribute('data-batch-id', batchId);
@@ -2181,85 +3113,12 @@
                     <td class="order-cell">
                         <input type="checkbox" class="order-checkbox" value="${order.po_number}" data-po="${order.po_number}">
                     </td>
-                    <td class="order-cell-bold">${order.po_number || 'N/A'}</td>
-                    <td class="order-cell">${formatBatchDate(order.batch_date || '2025-09-18')}</td>
-                    <td class="order-cell">${formatShipOutDate(order)}</td>
-                    <td class="address-cell ship-to-address-column">${formattedShipToAddress}</td>
-                    <td class="internal-address-cell internal-add-column"></td>
-                    <td class="package-cell">
-                        <div class="package-info-container" id="pkg-container-${order.po_number}" data-po="${order.po_number}">
-                            <!-- Main Box Row -->
-                            <div class="row g-1 mb-2 align-items-center main-box-row">
-                                <div class="col-1 text-center">
-                                    <div class="box-id text-muted small box-id-label">1</div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="dimension-labels">
-                                        <div>L</div>
-                                        <div>W</div>
-                                        <div>H</div>
-                                    </div>
-                                    <div class="compact-box-grid">
-                                        <input type="number" class="compact-dimension-input box-length box-input" placeholder="0" min="0.1" step="0.1" value="">
-                                        <input type="number" class="compact-dimension-input box-width box-input" placeholder="0" min="0.1" step="0.1" value="">
-                                        <input type="number" class="compact-dimension-input box-height box-input" placeholder="0" min="0.1" step="0.1" value="">
-                                    </div>
-                                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
-                                </div>
-                                <div class="col-2">
-                                    <div style="font-size: 10px; color: #6c757d; text-align: center; margin-bottom: 2px;">Weight</div>
-                                    <input type="number" class="compact-weight-input box-weight box-input" placeholder="0" min="0.1" step="0.1" style="width: 100%; max-width: 80px;"
-                                           data-placeholder-metric="lb" data-placeholder-imperial="lbs">
-                                    <div class="compact-conversion-display conversion-display" style="display: none;"></div>
-                                </div>
-                                <div class="col-1 text-center">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input cm-checkbox" type="checkbox" id="cm-check-1" data-box="1" style="transform: scale(1.3);">
-                                        <label class="form-check-label" for="cm-check-1" style="font-size: 0.9rem; font-weight: 600;">CM</label>
-                                    </div>
-                                </div>
-                                <div class="col-2">
-                                    <select class="form-select preset-dimensions" data-box="1" style="font-size: 13px; padding: 6px 8px;">
-                                        <option value="">Presets</option>
-                                        <option value="26x19x16">26×19×16</option>
-                                        <option value="22x16x16">22×16×16</option>
-                                        <option value="20x20x20">20×20×20</option>
-                                        <option value="26x20x16">26×20×16</option>
-                                        <option value="26x21x16">26×21×16</option>
-                                        <option value="24x18x16">24×18×16</option>
-                                        <option value="22x16x10">22×16×10</option>
-                                        <option value="22x19x16">22×19×16</option>
-                                    </select>
-                                </div>
-                                <div class="col-2 text-center">
-                                    <button class="btn btn-info duplicate-row-btn" title="Duplicate this row" style="font-size: 12px; padding: 6px 10px;">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                                <div class="col-1">
-                                    <!-- No remove button for main row -->
-                                </div>
-                            </div>
-                            
-                            <!-- Additional boxes will be inserted here -->
-                            
-                            <!-- Action Buttons at Bottom -->
-                            <div class="d-flex justify-content-between gap-2 mt-3 pt-2 package-actions-border">
-                                <button class="btn btn-success btn-sm flex-fill save-pkg-btn" data-po="${order.po_number}">
-                                    <i class="fas fa-save"></i> SAVE
-                                </button>
-                                <button class="btn btn-primary btn-sm flex-fill add-row-btn" data-po="${order.po_number}">
-                                    <i class="fas fa-plus"></i> ADD ROW
-                                </button>
-                                <button class="btn btn-danger btn-sm flex-fill delete-pkg-btn" data-po="${order.po_number}">
-                                    <i class="fas fa-trash"></i> REMOVE PKG
-                                </button>
-                            </div>
-                            <div class="pkg-status-indicator mt-1"></div>
-                        </div>
-                    </td>
-                    <td class="order-cell">${parseInt(order.total_qty || 0)}</td>
-                    <td class="order-cell-bold">$${parseFloat(order.total_cost || 0).toFixed(2)}</td>
+                    <td class="order-cell order-info-cell">${buildOrderInfoCellHtml(order)}</td>
+                    <td class="address-cell ship-to-address-column">${shipToCellHtml}</td>
+                    <td class="internal-address-cell internal-add-column">${internalAddCellHtml}</td>
+                    <td class="package-cell">${packageCellHtml}</td>
+                    <td class="order-cell qty-cost-cell${qtyMismatchClass}">${invoiceQtyCell}</td>
+                    <td class="order-cell qty-cost-cell${qtyMismatchClass}">${actualQtyCell}</td>
                     <td class="order-cell">
                         <select class="form-select status-select" data-po="${order.po_number}">
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
@@ -2268,25 +3127,9 @@
                         ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div><button class="btn btn-outline-secondary btn-sm mt-1 w-100 edit-tracking-btn" data-po="${order.po_number}" data-tracking="${order.tracking}"><i class="fas fa-pen"></i> Edit Tracking</button>` : `<button class="btn btn-outline-primary btn-sm mt-2 w-100 add-tracking-btn" data-po="${order.po_number}"><i class="fas fa-plus"></i> Add Tracking</button>`}
                     </td>
                     <td class="order-cell">
-                        ${containerId !== 'shipped-orders-table-body' && editStoreNumberFromPo ? `
-                        <button type="button" class="btn btn-outline-secondary edit-store-from-po-btn me-2" data-store-number="${editStoreNumberFromPo}" title="Edit store ${editStoreNumberFromPo} (from PO)">
-                            <i class="fas fa-store"></i>
-                        </button>` : ''}
-                        <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
-                            <i class="fas fa-file-pdf"></i>
-                        </button>
-                        <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        ${buildOrderActionsCellHtml(order, isPendingTable, editStoreNumberFromPo)}
                     </td>
                 `;
-                
-                // Set the internal address content separately to handle HTML
-                const internalAddCell = row.querySelector('.internal-address-cell');
-                if (internalAddCell) internalAddCell.innerHTML = internalAddress;
                 
                 // Set initial visibility based on default collapsed state
                 if (defaultCollapsed) {
@@ -2323,7 +3166,7 @@
                 spacingRow.className = 'batch-spacing-row';
                 spacingRow.id = `batch-spacer-${batchId}`;
                 spacingRow.setAttribute('data-batch-id', batchId);
-                spacingRow.innerHTML = '<td colspan="11" class="batch-spacer"></td>';
+                spacingRow.innerHTML = '<td colspan="9" class="batch-spacer"></td>';
                 
                 // Set initial visibility based on default collapsed state
                 if (defaultCollapsed) {
@@ -2378,7 +3221,7 @@
             }
             
             paginationRow.innerHTML = `
-                <td colspan="11" class="text-center py-3">
+                <td colspan="9" class="text-center py-3">
                     <nav aria-label="Batch pagination">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item">
@@ -2526,15 +3369,7 @@
                     ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div><button class="btn btn-outline-secondary btn-sm mt-1 w-100 edit-tracking-btn" data-po="${order.po_number}" data-tracking="${order.tracking}"><i class="fas fa-pen"></i> Edit Tracking</button>` : ''}
                 </td>
                 <td class="order-cell">
-                    <button class="btn btn-success download-pdf-btn me-2" data-po="${order.po_number}" title="Download Original PDF">
-                        <i class="fas fa-file-pdf"></i>
-                    </button>
-                    <button class="btn btn-info view-items-btn me-2" data-po="${order.po_number}" title="View Items">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-danger delete-order-btn" data-po="${order.po_number}" title="Delete Order">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    ${buildOrderActionsCellHtml(order, false, '')}
                 </td>
             `;
             
@@ -2557,6 +3392,10 @@
 
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('hidden.bs.modal', function() {
+            setTimeout(cleanupOrphanedModalBackdrops, 100);
+        });
+
         // Load data immediately since pending section is expanded by default
         loadAndRenderOrders();
         
@@ -2607,6 +3446,27 @@
         const selectReadyOrdersBtn = document.getElementById('select-ready-orders-btn');
         if (selectReadyOrdersBtn) selectReadyOrdersBtn.addEventListener('click', function() {
             selectReadyOrders();
+        });
+        const combineBatchesOpenBtn = document.getElementById('combine-batches-open-btn');
+        if (combineBatchesOpenBtn) combineBatchesOpenBtn.addEventListener('click', openCombineBatchesModal);
+        const combineBatchesMergeBtn = document.getElementById('combine-batches-merge-btn');
+        if (combineBatchesMergeBtn) combineBatchesMergeBtn.addEventListener('click', submitCombineBatchesMerge);
+        const combineSelectAllBatches = document.getElementById('combine-select-all-batches');
+        if (combineSelectAllBatches) combineSelectAllBatches.addEventListener('change', function() {
+            document.querySelectorAll('.combine-batch-cb').forEach(cb => {
+                cb.checked = combineSelectAllBatches.checked;
+                toggleCombineBatchOrders(cb.dataset.batchDate, cb.checked);
+            });
+            updateCombineBatchCheckboxes();
+            updateCombineSelectionSummary();
+        });
+        const combineSelectAllOrders = document.getElementById('combine-select-all-orders');
+        if (combineSelectAllOrders) combineSelectAllOrders.addEventListener('change', function() {
+            document.querySelectorAll('.combine-order-cb:not(:disabled)').forEach(cb => {
+                cb.checked = combineSelectAllOrders.checked;
+            });
+            updateCombineBatchCheckboxes();
+            updateCombineSelectionSummary();
         });
         if (shippedBatchDateFilter) shippedBatchDateFilter.addEventListener('change', renderShippedOrders);
         if (shippedPoSearch) shippedPoSearch.addEventListener('input', renderShippedOrders);
@@ -2748,7 +3608,11 @@
             });
         }
 
-        // Add helper functions for order management
+        const confirmSaveMissingBtn = document.getElementById('confirm-save-missing-btn');
+        if (confirmSaveMissingBtn) {
+            confirmSaveMissingBtn.addEventListener('click', confirmSaveMissing);
+        }
+
         window.viewOrderDetails = async function(poNumber) {
             try {
                 const response = await fetch(`/lori_automation/get_order_items/${poNumber}`, {
@@ -2773,8 +3637,8 @@
                                 <tr><td><strong>Batch Date:</strong></td><td>${formatBatchDate(order?.batch_date || 'N/A')}</td></tr>
                                 <tr><td><strong>Ship Date:</strong></td><td>${formatShipOutDate(order || {})}</td></tr>
                                 <tr><td><strong>Status:</strong></td><td><span class="badge ${order?.status === 'pending' ? 'bg-warning' : order?.status === 'shipped' ? 'bg-success' : 'bg-info'}">${order?.status || 'N/A'}</span></td></tr>
-                                <tr><td><strong>Total Quantity:</strong></td><td>${order?.total_qty || 0}</td></tr>
-                                <tr><td><strong>Total Cost:</strong></td><td>$${parseFloat(order?.total_cost || 0).toFixed(2)}</td></tr>
+                                <tr><td><strong>Invoice Qty / Cost:</strong></td><td>${order?.total_qty || 0} / $${parseFloat(order?.total_cost || 0).toFixed(2)}</td></tr>
+                                <tr><td><strong>Actual Qty / Cost:</strong></td><td>${order?.actual_total_qty ?? order?.total_qty ?? 0} / $${parseFloat(order?.actual_total_cost ?? order?.total_cost ?? 0).toFixed(2)}</td></tr>
                             </table>
                         </div>
                         <div class="col-md-6">
@@ -2800,6 +3664,7 @@
                                                 <th>Vendor Item</th>
                                                 <th>Color</th>
                                                 <th>Quantity</th>
+                                                <th>Actual Quantity</th>
                                                 <th>Description</th>
                                                 <th>Unit Price</th>
                                                 <th>Extended Cost</th>
@@ -2810,20 +3675,27 @@
                     `;
                     
                     let totalQty = 0;
+                    let totalActualQty = 0;
                     let totalCost = 0;
                     
                     data.items.forEach((item, index) => {
                         const qty = parseFloat(item.quantity || 0);
+                        const actualQty = getEffectiveActualQty(item);
                         const extCost = parseFloat(item.extended_cost || 0);
                         totalQty += qty;
+                        totalActualQty += actualQty;
                         totalCost += extCost;
                         
                         orderDetailsHTML += `
-                            <tr>
+                            <tr data-item-id="${item.id}">
                                 <td>${index + 1}</td>
                                 <td><strong>${item.vendor_item || 'N/A'}</strong></td>
                                 <td>${item.color || '-'}</td>
                                 <td class="text-center">${qty}</td>
+                                <td class="text-center" style="min-width: 90px;">
+                                    <input type="number" class="form-control form-control-sm order-detail-actual-qty text-center"
+                                           min="0" step="1" value="${actualQty}" data-item-id="${item.id}">
+                                </td>
                                 <td>${item.description || 'N/A'}</td>
                                 <td class="text-end">$${parseFloat(item.unit_price || 0).toFixed(2)}</td>
                                 <td class="text-end">$${extCost.toFixed(2)}</td>
@@ -2837,6 +3709,7 @@
                             <tr class="table-info fw-bold">
                                 <td colspan="3"><strong>TOTALS</strong></td>
                                 <td class="text-center"><strong>${totalQty}</strong></td>
+                                <td class="text-center"><strong>${totalActualQty}</strong></td>
                                 <td></td>
                                 <td></td>
                                 <td class="text-end"><strong>$${totalCost.toFixed(2)}</strong></td>
@@ -2862,13 +3735,75 @@
                 }
                 
                 document.getElementById('order-details-content').innerHTML = orderDetailsHTML;
-                const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-                modal.show();
+                window.currentOrderDetailsPO = poNumber;
+                const saveActualBtn = document.getElementById('save-order-actual-qty-btn');
+                if (saveActualBtn) {
+                    saveActualBtn.style.display = (data.items && data.items.length > 0) ? 'inline-block' : 'none';
+                }
+                showBootstrapModal('orderDetailsModal');
                 
             } catch (error) {
                 console.error('Error loading order details:', error);
                 alert('Error loading order details: ' + error.message);
             }
+        }
+
+        window.saveOrderDetailActualQuantities = async function() {
+            const poNumber = window.currentOrderDetailsPO;
+            if (!poNumber) return;
+
+            const items = Array.from(document.querySelectorAll('#order-details-content .order-detail-actual-qty')).map(input => ({
+                id: parseInt(input.getAttribute('data-item-id'), 10),
+                actual_quantity: parseInt(input.value || '0', 10)
+            }));
+
+            if (items.length === 0) {
+                showToast('No items to save', 'error');
+                return;
+            }
+            if (items.some(item => Number.isNaN(item.actual_quantity) || item.actual_quantity < 0)) {
+                showToast('Please enter valid actual quantities (0 or greater)', 'error');
+                return;
+            }
+
+            const saveBtn = document.getElementById('save-order-actual-qty-btn');
+            const originalHtml = saveBtn?.innerHTML;
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            }
+
+            try {
+                const response = await fetch('/lori_automation/update_order_actual_quantities', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ po_number: poNumber, items })
+                });
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to save actual quantities');
+                }
+
+                showToast(`Actual quantities saved for PO ${poNumber}`, 'success', 3000);
+                await loadAndRenderOrders();
+                await viewOrderDetails(poNumber);
+            } catch (error) {
+                console.error('Error saving order detail actual quantities:', error);
+                showToast(error.message, 'error', 5000);
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        const saveOrderActualQtyBtn = document.getElementById('save-order-actual-qty-btn');
+        if (saveOrderActualQtyBtn) {
+            saveOrderActualQtyBtn.addEventListener('click', function() {
+                window.saveOrderDetailActualQuantities();
+            });
         }
 
         window.downloadOriginalPDF = async function(poNumber) {
@@ -2877,7 +3812,7 @@
                 const button = document.querySelector(`.download-pdf-btn[data-po="${poNumber}"]`);
                 if (button) {
                     const originalText = button.innerHTML;
-                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    button.innerHTML = 'Loading...';
                     button.disabled = true;
                     
                     // Restore button after a short delay
@@ -3019,6 +3954,20 @@
                 console.log('PO Number:', poNumber);
                 savePackageInfo(poNumber);
             }
+            if (e.target.closest('.save-perfect-btn')) {
+                const poNumber = e.target.closest('.save-perfect-btn').getAttribute('data-po');
+                savePackagePerfect(poNumber);
+            }
+            if (e.target.closest('.save-missing-btn')) {
+                const poNumber = e.target.closest('.save-missing-btn').getAttribute('data-po');
+                openSaveMissingModal(poNumber);
+            }
+            if (e.target.closest('.save-missing-qty-minus')) {
+                adjustSaveMissingQty(e.target.closest('.save-missing-qty-minus'), -1);
+            }
+            if (e.target.closest('.save-missing-qty-plus')) {
+                adjustSaveMissingQty(e.target.closest('.save-missing-qty-plus'), 1);
+            }
             
             // Handle Add Row button clicks
             if (e.target.closest('.add-row-btn')) {
@@ -3032,7 +3981,7 @@
             if (e.target.closest('.duplicate-row-btn')) {
                 console.log('Duplicate Row button clicked!');
                 const duplicateBtn = e.target.closest('.duplicate-row-btn');
-                const currentRow = duplicateBtn.closest('.row, .main-box-row, .package-row');
+                const currentRow = duplicateBtn.closest('.package-box-row, .main-box-row, .package-row');
                 const poNumber = currentRow.closest('.package-info-container').getAttribute('data-po');
                 
                 // Get the current row's values
@@ -3130,7 +4079,7 @@
         document.addEventListener('change', function(e) {
             // Handle CM checkbox changes
             if (e.target.classList.contains('cm-checkbox')) {
-                const boxRow = e.target.closest('.row, .main-box-row');
+                const boxRow = e.target.closest('.package-box-row, .main-box-row');
                 const isChecked = e.target.checked;
                 const conversionDisplays = boxRow.querySelectorAll('.conversion-display');
                 const dimensionInputs = boxRow.querySelectorAll('.box-length, .box-width, .box-height');
@@ -3164,7 +4113,7 @@
             // Handle dimension input changes for conversion
             if (e.target.classList.contains('box-length') || e.target.classList.contains('box-width') || 
                 e.target.classList.contains('box-height')) {
-                const boxRow = e.target.closest('.row, .main-box-row');
+                const boxRow = e.target.closest('.package-box-row, .main-box-row');
                 const cmCheckbox = boxRow.querySelector('.cm-checkbox');
                 
                 if (cmCheckbox && cmCheckbox.checked) {
@@ -3179,7 +4128,7 @@
             if (e.target.classList.contains('preset-dimensions')) {
                 const selectedValue = e.target.value;
                 if (selectedValue && selectedValue !== '') {
-                    const boxRow = e.target.closest('.row, .main-box-row');
+                    const boxRow = e.target.closest('.package-box-row, .main-box-row');
                     const lengthInput = boxRow.querySelector('.box-length');
                     const widthInput = boxRow.querySelector('.box-width');
                     const heightInput = boxRow.querySelector('.box-height');
@@ -3209,7 +4158,7 @@
         document.addEventListener('input', function(e) {
             if (e.target.classList.contains('box-length') || e.target.classList.contains('box-width') || 
                 e.target.classList.contains('box-height')) {
-                const boxRow = e.target.closest('.row, .main-box-row');
+                const boxRow = e.target.closest('.package-box-row, .main-box-row');
                 const cmCheckbox = boxRow.querySelector('.cm-checkbox');
                 
                 if (cmCheckbox && cmCheckbox.checked) {
@@ -3221,44 +4170,37 @@
 
         // Function to update dimension display
         function updateDimensionDisplay(boxRow) {
-            const dimensionsColumn = boxRow.querySelector('.col-3');
-            const conversionDisplay = dimensionsColumn ? dimensionsColumn.querySelector('.conversion-display') : null;
-            
+            const conversionDisplay = boxRow.querySelector('.pkg-dim-conversion') || boxRow.querySelector('.conversion-display');
+
             if (!conversionDisplay) return;
-            
+
             const lengthInput = boxRow.querySelector('.box-length');
             const widthInput = boxRow.querySelector('.box-width');
             const heightInput = boxRow.querySelector('.box-height');
-            
+
             const length = lengthInput ? parseFloat(lengthInput.value) : null;
             const width = widthInput ? parseFloat(widthInput.value) : null;
             const height = heightInput ? parseFloat(heightInput.value) : null;
-            
-            // Show conversion with ? for missing values
+
             const lengthDisplay = (length && length > 0) ? (length / 2.54).toFixed(1) : '?';
             const widthDisplay = (width && width > 0) ? (width / 2.54).toFixed(1) : '?';
             const heightDisplay = (height && height > 0) ? (height / 2.54).toFixed(1) : '?';
-            
+
             conversionDisplay.textContent = `≈ ${lengthDisplay} × ${widthDisplay} × ${heightDisplay} in`;
         }
 
         // Conversion function
         function updateConversion(input) {
             const value = parseFloat(input.value);
-            const boxRow = input.closest('.row, .main-box-row');
+            const boxRow = input.closest('.package-box-row, .main-box-row');
             
             if (!boxRow) return;
             
-            // Find the appropriate conversion display
             let conversionDisplay;
             if (input.classList.contains('box-weight')) {
-                // For weight, find the conversion display in the weight column
-                const weightColumn = input.closest('.col-1');
-                conversionDisplay = weightColumn ? weightColumn.querySelector('.conversion-display') : null;
+                conversionDisplay = boxRow.querySelector('.pkg-weight-conversion');
             } else {
-                // For dimensions, find the conversion display in the dimensions column
-                const dimensionsColumn = boxRow.querySelector('.col-3');
-                conversionDisplay = dimensionsColumn ? dimensionsColumn.querySelector('.conversion-display') : null;
+                conversionDisplay = boxRow.querySelector('.pkg-dim-conversion') || boxRow.querySelector('.conversion-display');
             }
             
             if (!conversionDisplay) return;
@@ -3432,8 +4374,7 @@
             document.getElementById('add-status').value = 'Active';
             document.getElementById('add-memo').value = '';
 
-            const modal = new bootstrap.Modal(document.getElementById('addStoreModal'));
-            modal.show();
+            showBootstrapModal('addStoreModal');
         }
 
         document.getElementById('manual-add-store-btn')?.addEventListener('click', function () {
@@ -3884,7 +4825,7 @@
             }
         }
 
-        // Bulk modify batch date
+        // Bulk modify batch date (selected checkboxes in sidebar)
         async function bulkModifyBatchDate() {
             console.log('bulkModifyBatchDate called');
             const checkboxes = document.querySelectorAll('.order-checkbox:checked');
@@ -3919,6 +4860,212 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
+            }
+        }
+
+        function getPendingOrdersForCombine() {
+            return (allOrders || []).filter(o => o.status === 'pending');
+        }
+
+        function groupPendingOrdersByBatch() {
+            const grouped = {};
+            getPendingOrdersForCombine().forEach(order => {
+                const batchDate = String(order.batch_date || '').slice(0, 10) || 'unknown';
+                if (!grouped[batchDate]) grouped[batchDate] = [];
+                grouped[batchDate].push(order);
+            });
+            return Object.keys(grouped).sort().reverse().map(date => ({
+                batchDate: date,
+                orders: grouped[date].sort((a, b) => String(a.po_number).localeCompare(String(b.po_number))),
+            }));
+        }
+
+        function openCombineBatchesModal() {
+            const modalEl = document.getElementById('combineBatchesModal');
+            if (!modalEl) return;
+            populateCombineBatchesModal();
+            const newDateInput = document.getElementById('combine-new-batch-date');
+            if (newDateInput) newDateInput.value = '';
+            const selectAllBatches = document.getElementById('combine-select-all-batches');
+            const selectAllOrders = document.getElementById('combine-select-all-orders');
+            if (selectAllBatches) { selectAllBatches.checked = false; selectAllBatches.indeterminate = false; }
+            if (selectAllOrders) { selectAllOrders.checked = false; selectAllOrders.indeterminate = false; }
+            updateCombineSelectionSummary();
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+
+        function populateCombineBatchesModal() {
+            const batches = groupPendingOrdersByBatch();
+            const batchListEl = document.getElementById('combine-batch-dates-list');
+            const ordersListEl = document.getElementById('combine-orders-list');
+            if (!batchListEl || !ordersListEl) return;
+
+            if (!batches.length) {
+                batchListEl.innerHTML = '<div class="text-muted small text-center py-3">No pending orders</div>';
+                ordersListEl.innerHTML = '<div class="text-muted small text-center py-3">No pending orders</div>';
+                return;
+            }
+
+            batchListEl.innerHTML = batches.map(({ batchDate, orders }) => `
+                <div class="form-check mb-1">
+                    <input class="form-check-input combine-batch-cb" type="checkbox"
+                           id="combine-batch-${batchDate.replace(/[^a-zA-Z0-9]/g, '_')}"
+                           data-batch-date="${batchDate}">
+                    <label class="form-check-label" for="combine-batch-${batchDate.replace(/[^a-zA-Z0-9]/g, '_')}">
+                        ${formatBatchDate(batchDate)} <span class="text-muted">(${orders.length})</span>
+                    </label>
+                </div>
+            `).join('');
+
+            ordersListEl.innerHTML = batches.map(({ batchDate, orders }) => `
+                <div class="mb-2 combine-orders-group" data-batch-date="${batchDate}">
+                    <div class="small fw-semibold text-secondary border-bottom pb-1 mb-1">${formatBatchDate(batchDate)}</div>
+                    ${orders.map(order => `
+                        <div class="form-check mb-1 ms-2">
+                            <input class="form-check-input combine-order-cb" type="checkbox"
+                                   id="combine-order-${order.po_number}"
+                                   data-po="${order.po_number}"
+                                   data-batch-date="${batchDate}">
+                            <label class="form-check-label" for="combine-order-${order.po_number}">
+                                ${order.po_number}
+                                <span class="text-muted small">· qty ${order.total_qty ?? '—'}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+
+            batchListEl.querySelectorAll('.combine-batch-cb').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    toggleCombineBatchOrders(cb.dataset.batchDate, cb.checked);
+                    updateCombineBatchCheckboxes();
+                    updateCombineSelectionSummary();
+                });
+            });
+            ordersListEl.querySelectorAll('.combine-order-cb').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    updateCombineBatchCheckboxes();
+                    updateCombineSelectionSummary();
+                });
+            });
+            updateCombineSelectionSummary();
+        }
+
+        function toggleCombineBatchOrders(batchDate, checked) {
+            document.querySelectorAll(`.combine-order-cb[data-batch-date="${batchDate}"]`).forEach(cb => {
+                cb.checked = checked;
+            });
+        }
+
+        function updateCombineBatchCheckboxes() {
+            const selectAllBatches = document.getElementById('combine-select-all-batches');
+            const selectAllOrders = document.getElementById('combine-select-all-orders');
+            const batchCbs = Array.from(document.querySelectorAll('.combine-batch-cb'));
+            const orderCbs = Array.from(document.querySelectorAll('.combine-order-cb'));
+
+            batchCbs.forEach(batchCb => {
+                const batchDate = batchCb.dataset.batchDate;
+                const inBatch = orderCbs.filter(cb => cb.dataset.batchDate === batchDate);
+                const checkedCount = inBatch.filter(cb => cb.checked).length;
+                batchCb.checked = checkedCount > 0 && checkedCount === inBatch.length;
+                batchCb.indeterminate = checkedCount > 0 && checkedCount < inBatch.length;
+            });
+
+            if (selectAllBatches) {
+                const fullyChecked = batchCbs.length > 0 && batchCbs.every(cb => cb.checked);
+                const anyChecked = batchCbs.some(cb => cb.checked || cb.indeterminate);
+                selectAllBatches.checked = fullyChecked;
+                selectAllBatches.indeterminate = !fullyChecked && anyChecked;
+            }
+            if (selectAllOrders) {
+                const checkedOrders = orderCbs.filter(cb => cb.checked);
+                selectAllOrders.checked = orderCbs.length > 0 && checkedOrders.length === orderCbs.length;
+                selectAllOrders.indeterminate = checkedOrders.length > 0 && checkedOrders.length < orderCbs.length;
+            }
+
+            const countEl = document.getElementById('combine-orders-count');
+            if (countEl) {
+                const n = orderCbs.filter(cb => cb.checked).length;
+                countEl.textContent = n ? `(${n} selected)` : '';
+            }
+        }
+
+        function getCombineSelectedPoNumbers() {
+            return Array.from(document.querySelectorAll('.combine-order-cb:checked')).map(cb => cb.dataset.po);
+        }
+
+        function updateCombineSelectionSummary() {
+            const summaryEl = document.getElementById('combine-selection-summary');
+            if (!summaryEl) return;
+            const selectedPos = getCombineSelectedPoNumbers();
+            if (!selectedPos.length) {
+                summaryEl.textContent = 'No orders selected.';
+                return;
+            }
+            const batchDates = new Set();
+            document.querySelectorAll('.combine-order-cb:checked').forEach(cb => {
+                batchDates.add(cb.dataset.batchDate);
+            });
+            const batchesLabel = Array.from(batchDates).map(formatBatchDate).join(', ');
+            summaryEl.textContent = `${selectedPos.length} order(s) from batch(es): ${batchesLabel}`;
+        }
+
+        async function submitCombineBatchesMerge() {
+            const selectedPOs = getCombineSelectedPoNumbers();
+            const newDate = (document.getElementById('combine-new-batch-date')?.value || '').trim();
+            if (!selectedPOs.length) {
+                alert('Select at least one batch date or order to merge.');
+                return;
+            }
+            if (!newDate) {
+                alert('Enter the new batch date.');
+                return;
+            }
+            const sourceBatches = new Set();
+            document.querySelectorAll('.combine-order-cb:checked').forEach(cb => {
+                sourceBatches.add(cb.dataset.batchDate);
+            });
+            const onlySameBatch = sourceBatches.size === 1 && sourceBatches.has(newDate);
+            if (onlySameBatch && selectedPOs.length === document.querySelectorAll(`.combine-order-cb[data-batch-date="${newDate}"]`).length) {
+                alert('Selected orders are already in that batch date.');
+                return;
+            }
+            const batchesLabel = Array.from(sourceBatches).map(formatBatchDate).join(', ');
+            const confirmed = confirm(
+                `Merge ${selectedPOs.length} order(s) from batch(es) ${batchesLabel} into batch ${formatBatchDate(newDate)}?`
+            );
+            if (!confirmed) return;
+
+            const btn = document.getElementById('combine-batches-merge-btn');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging…';
+            }
+            try {
+                const response = await fetch('/lori_automation/bulk_modify_batch_date', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ po_numbers: selectedPOs, new_batch_date: newDate }),
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                alert(data.message || 'Batches merged successfully.');
+                const modalEl = document.getElementById('combineBatchesModal');
+                if (modalEl) hideBootstrapModal('combineBatchesModal');
+                clearBatchSelection();
+                document.querySelectorAll('.order-checkbox:checked').forEach(cb => { cb.checked = false; });
+                hideSidebar();
+                await loadAndRenderOrders();
+            } catch (err) {
+                console.error(err);
+                alert('Error merging batches: ' + err.message);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
             }
         }
 
@@ -4557,8 +5704,7 @@
             })();
 
             // Show modal
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
+            showBootstrapModal('applyToModal');
         };
 
         // Perform apply to selected targets
@@ -4674,9 +5820,7 @@
             }
 
             // Auto-hide modal after short delay
-            setTimeout(()=>{
-                try { const m = bootstrap.Modal.getInstance(document.getElementById('applyToModal')); if (m) m.hide(); } catch(e){}
-            }, 900);
+            setTimeout(() => hideBootstrapModal('applyToModal'), 900);
         }
 
         document.getElementById('apply-to-confirm-btn').addEventListener('click', function(){
@@ -4778,6 +5922,7 @@
         // Function to inject an 'Apply To' button into package-info containers when they are created
         function addApplyButtonToContainer(container) {
             if (!container) return;
+            if (container.dataset.readonly === 'true') return;
             if (container.querySelector('.apply-to-btn')) return; // already added
 
             // Find buttons container used by existing code
@@ -4787,7 +5932,7 @@
             btn.type = 'button';
             // Match other package action buttons: use small, fillable buttons for consistent layout
             btn.className = 'btn btn-secondary btn-sm flex-fill apply-to-btn';
-            btn.textContent = 'Apply To/复制到其他店🧠';
+            btn.textContent = 'Apply To Other Stores';
             btn.addEventListener('click', function(){
                 openApplyToModalFromPO(po);
             });
@@ -4964,8 +6109,7 @@
                 document.getElementById('edit-status').value = store.status || '';
                 document.getElementById('edit-memo').value = store.memo || '';
                 
-                const modal = new bootstrap.Modal(document.getElementById('editStoreModal'));
-                modal.show();
+                showBootstrapModal('editStoreModal');
                 
             } catch (error) {
                 console.error('Error loading store for edit:', error);
@@ -5010,8 +6154,7 @@
                 
                 alert('店铺信息更新成功！');
                 
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editStoreModal'));
-                modal.hide();
+                hideBootstrapModal('editStoreModal');
                 
                 loadStoreInfoForManagement();
                 
@@ -5124,8 +6267,7 @@
                 
                 alert('店铺添加成功！');
                 
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addStoreModal'));
-                modal.hide();
+                hideBootstrapModal('addStoreModal');
                 
                 // Clear form
                 document.getElementById('addStoreModal').querySelectorAll('input, select, textarea').forEach(input => {
@@ -5308,9 +6450,7 @@
                 
                 // Check if internal address is filled (check storeInfoCache directly)
                 const storeNumber = poNumber.substring(0, 4);
-                const hasInternalAddress = storeInfoCache[storeNumber] && 
-                    storeInfoCache[storeNumber].trim() !== '' && 
-                    storeInfoCache[storeNumber] !== 'N/A';
+                const hasInternalAddress = hasStoreInCache(storeNumber);
                 
                 // Check if box dimensions are filled (any of the box inputs have values)
                 const packageContainer = row.querySelector(`.package-info-container[data-po="${poNumber}"]`);

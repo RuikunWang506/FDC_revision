@@ -14,6 +14,8 @@ from py.utilities.inventory_adjustment import erp_date, erp_log_time, pad_char
 from py.utilities.style_efas_transfer import CONTAINER_CSV_DIR, _decimal
 
 DEFAULT_WHS = "01"
+# PUR_CD=1 lines are container PO imports; PUR_CD=2 are OMS bin allocations on receive.
+PO_LINE_PUR_CD = 1
 VENDOR_FALLBACK = {"F": "50005", "L": "00005"}
 STANDARD_VENDOR_IDS = frozenset(VENDOR_FALLBACK.values())
 
@@ -224,13 +226,15 @@ def _recalc_on_order_qty_for_skus(cursor, skus: list[str]) -> int:
             SELECT RTRIM(bp.prod_cd) AS prod_cd,
                    SUM(ISNULL(bp.po_qty, 0)) AS total_open
             FROM dbo.bin_pur bp
-            WHERE ISNULL(bp.rcvd_qty, 0) = 0
+            WHERE bp.pur_cd = {PO_LINE_PUR_CD}
+              AND ISNULL(bp.rcvd_qty, 0) = 0
               AND ISNULL(bp.po_qty, 0) > 0
               AND RTRIM(bp.prod_cd) IN ({placeholders})
               AND RTRIM(bp.pur_num) NOT IN (
                   SELECT DISTINCT RTRIM(b2.pur_num)
                   FROM dbo.bin_pur b2
-                  WHERE RTRIM(b2.prod_cd) = RTRIM(bp.prod_cd)
+                  WHERE b2.pur_cd = {PO_LINE_PUR_CD}
+                    AND RTRIM(b2.prod_cd) = RTRIM(bp.prod_cd)
                     AND ISNULL(b2.rcvd_qty, 0) > 0
               )
             GROUP BY RTRIM(bp.prod_cd)
@@ -262,13 +266,15 @@ def _on_order_qty_out_of_sync(cursor, container_number: str) -> bool:
                 SELECT RTRIM(bp.prod_cd) AS prod_cd,
                        SUM(ISNULL(bp.po_qty, 0)) AS total_open
                 FROM dbo.bin_pur bp
-                WHERE ISNULL(bp.rcvd_qty, 0) = 0
+                WHERE bp.pur_cd = {PO_LINE_PUR_CD}
+                  AND ISNULL(bp.rcvd_qty, 0) = 0
                   AND ISNULL(bp.po_qty, 0) > 0
                   AND RTRIM(bp.prod_cd) IN ({placeholders})
                   AND RTRIM(bp.pur_num) NOT IN (
                       SELECT DISTINCT RTRIM(b2.pur_num)
                       FROM dbo.bin_pur b2
-                      WHERE RTRIM(b2.prod_cd) = RTRIM(bp.prod_cd)
+                      WHERE b2.pur_cd = {PO_LINE_PUR_CD}
+                        AND RTRIM(b2.prod_cd) = RTRIM(bp.prod_cd)
                         AND ISNULL(b2.rcvd_qty, 0) > 0
                   )
                 GROUP BY RTRIM(bp.prod_cd)
@@ -675,12 +681,16 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
 
         cursor.execute(
             """
-            SELECT RTRIM(prod_cd), PO_QTY, RCVD_QTY
+            SELECT RTRIM(prod_cd),
+                   SUM(ISNULL(po_qty, 0)) AS po_qty,
+                   SUM(ISNULL(rcvd_qty, 0)) AS rcvd_qty
             FROM dbo.bin_pur
             WHERE RTRIM(pur_num) = ?
-              AND ISNULL(po_qty, 0) > ISNULL(rcvd_qty, 0)
+              AND pur_cd = ?
+            GROUP BY RTRIM(prod_cd)
+            HAVING SUM(ISNULL(po_qty, 0)) > SUM(ISNULL(rcvd_qty, 0))
             """,
-            (normalized,),
+            (normalized, PO_LINE_PUR_CD),
         )
         lines = cursor.fetchall()
         if not lines:
@@ -706,12 +716,12 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
             cursor.execute(
                 """
                 UPDATE dbo.bin_pur
-                SET rcvd_qty = ?
+                SET rcvd_qty = po_qty
                 WHERE RTRIM(pur_num) = ?
                   AND RTRIM(prod_cd) = ?
                   AND ISNULL(rcvd_qty, 0) < ISNULL(po_qty, 0)
                 """,
-                (po_qty, normalized, sku),
+                (normalized, sku),
             )
 
             cursor.execute(
@@ -772,12 +782,14 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
 
         cursor.execute(
             """
-            SELECT RTRIM(prod_cd), PO_QTY, RCVD_QTY
+            SELECT RTRIM(prod_cd), SUM(ISNULL(rcvd_qty, 0)) AS rcvd_qty
             FROM dbo.bin_pur
             WHERE RTRIM(pur_num) = ?
-              AND ISNULL(rcvd_qty, 0) > 0
+              AND pur_cd = ?
+            GROUP BY RTRIM(prod_cd)
+            HAVING SUM(ISNULL(rcvd_qty, 0)) > 0
             """,
-            (normalized,),
+            (normalized, PO_LINE_PUR_CD),
         )
         lines = cursor.fetchall()
         if not lines:
@@ -789,7 +801,7 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
         qty_reverted = Decimal("0")
         affected_skus: list[str] = []
 
-        for prod_cd, po_qty, rcvd_qty in lines:
+        for prod_cd, rcvd_qty in lines:
             rcvd_qty = _decimal(rcvd_qty)
             if rcvd_qty <= 0:
                 continue
@@ -836,6 +848,118 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
         result["success"] = True
         result["lines_reverted"] = lines_reverted
         result["qty_reverted"] = float(qty_reverted)
+        return result
+    except Exception as exc:
+        conn.rollback()
+        result["errors"].append(str(exc))
+        return result
+    finally:
+        conn.close()
+
+
+def repair_doubled_receive_stock(container_number: str) -> dict[str, Any]:
+    """Undo duplicate stock from PUR_CD=2 bin_pur rows created alongside PO import lines."""
+    normalized = str(container_number).strip().upper()
+    result: dict[str, Any] = {
+        "success": False,
+        "container": normalized,
+        "skus_repaired": 0,
+        "qty_corrected": 0.0,
+        "bin_pur_deleted": 0,
+        "errors": [],
+    }
+
+    conn = get_sql_server_connection_fdc()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT RTRIM(prod_cd), SUM(ISNULL(rcvd_qty, 0)) AS excess_qty
+            FROM dbo.bin_pur
+            WHERE RTRIM(pur_num) = ?
+              AND pur_cd <> ?
+              AND ISNULL(rcvd_qty, 0) > 0
+            GROUP BY RTRIM(prod_cd)
+            """,
+            (normalized, PO_LINE_PUR_CD),
+        )
+        excess_rows = cursor.fetchall()
+        if not excess_rows:
+            result["success"] = True
+            return result
+
+        qty_corrected = Decimal("0")
+        for prod_cd, excess_qty in excess_rows:
+            excess_qty = _decimal(excess_qty)
+            if excess_qty <= 0:
+                continue
+            sku = str(prod_cd).strip()
+
+            cursor.execute(
+                """
+                UPDATE id
+                SET in_stock = CASE
+                        WHEN ISNULL(id.in_stock, 0) >= ? THEN ISNULL(id.in_stock, 0) - ?
+                        ELSE 0
+                    END
+                FROM dbo.inv_data id
+                INNER JOIN dbo.inv i ON i.prod_cd = id.prod_cd
+                WHERE RTRIM(i.prod_cd) = ?
+                  AND RTRIM(id.whs_num) = ?
+                """,
+                (excess_qty, excess_qty, sku, DEFAULT_WHS),
+            )
+            qty_corrected += excess_qty
+            result["skus_repaired"] += 1
+
+        cursor.execute(
+            """
+            DELETE FROM dbo.bin_pur
+            WHERE RTRIM(pur_num) = ?
+              AND pur_cd <> ?
+              AND ISNULL(rcvd_qty, 0) > 0
+            """,
+            (normalized, PO_LINE_PUR_CD),
+        )
+        result["bin_pur_deleted"] = int(cursor.rowcount or 0)
+
+        conn.commit()
+        result["success"] = True
+        result["qty_corrected"] = float(qty_corrected)
+        return result
+    except Exception as exc:
+        conn.rollback()
+        result["errors"].append(str(exc))
+        return result
+    finally:
+        conn.close()
+
+
+def cleanup_orphan_bin_pur_rows(container_number: str) -> dict[str, Any]:
+    """Remove PUR_CD<>1 bin_pur allocation stubs (rcvd=0) left by OMS native receive."""
+    normalized = str(container_number).strip().upper()
+    result: dict[str, Any] = {
+        "success": False,
+        "container": normalized,
+        "bin_pur_deleted": 0,
+        "errors": [],
+    }
+
+    conn = get_sql_server_connection_fdc()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            DELETE FROM dbo.bin_pur
+            WHERE RTRIM(pur_num) = ?
+              AND pur_cd <> ?
+              AND ISNULL(rcvd_qty, 0) = 0
+            """,
+            (normalized, PO_LINE_PUR_CD),
+        )
+        result["bin_pur_deleted"] = int(cursor.rowcount or 0)
+        conn.commit()
+        result["success"] = True
         return result
     except Exception as exc:
         conn.rollback()
