@@ -259,6 +259,30 @@
             border-bottom: 1px solid #eee;
         }
 
+        #items_table tbody td:nth-child(7) {
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        #items_table .order-boxes-cell {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.15;
+            min-height: 2.3em;
+        }
+
+        #items_table .order-boxes-full {
+            font-weight: 700;
+        }
+
+        #items_table .order-boxes-loose {
+            font-size: 0.82em;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
         #items_table tbody tr:hover {
             background-color: #f8f9fa;
             transform: scale(1.01);
@@ -403,6 +427,23 @@
             min-height: 4.5rem;
             font-family: inherit;
             line-height: 1.35;
+        }
+
+        #ezLabelModal .ez-shipper-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        #ezLabelModal .ez-shipper-toolbar select {
+            flex: 1 1 160px;
+            min-width: 0;
+        }
+
+        #ezLabelModal .ez-shipper-toolbar .btn {
+            white-space: nowrap;
         }
 
         #etaFashionLabelModal .modal-content {
@@ -2200,8 +2241,109 @@
             }
 
             const EZ_ETA_DEFAULT_SERVICE = 'BTG ACCT#EC3377';
+            const EZ_SHIPPERS_STORAGE_KEY = 'ezLabelShippingShippers';
+            const EZ_SHIPPERS_LAST_KEY = 'ezLabelShippingLastId';
+            let ezShipperIsNew = false;
+
+            function ezDefaultShippers() {
+                const defaults = [{ id: 'ucl', name: 'UCL', service: 'UCL' }];
+                const btn = document.getElementById('ezLabelBtn');
+                if (btn && btn.dataset.etaFashion === '1') {
+                    defaults.push({
+                        id: 'btg',
+                        name: 'BTG',
+                        service: EZ_ETA_DEFAULT_SERVICE,
+                    });
+                }
+                return defaults;
+            }
+
+            function ezShipperSlug(name) {
+                return String(name || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '') || ('shipper-' + Date.now());
+            }
+
+            function ezShipperNameFromService(service) {
+                return String(service || '').split(/\r?\n/)[0].trim();
+            }
+
+            function ezShipperDisplayName(shipper) {
+                return ezShipperNameFromService(shipper.service) || String(shipper.name || '').trim();
+            }
+
+            function loadEzShippers() {
+                try {
+                    const raw = localStorage.getItem(EZ_SHIPPERS_STORAGE_KEY);
+                    if (!raw) return ezDefaultShippers();
+                    const parsed = JSON.parse(raw);
+                    if (!Array.isArray(parsed) || !parsed.length) return ezDefaultShippers();
+                    return parsed.filter(function(s) {
+                        return s && s.id && typeof s.service === 'string' && ezShipperNameFromService(s.service);
+                    }).map(function(s) {
+                        return Object.assign({}, s, {
+                            name: ezShipperNameFromService(s.service) || s.name,
+                        });
+                    });
+                } catch (e) {
+                    return ezDefaultShippers();
+                }
+            }
+
+            function saveEzShippers(shippers) {
+                localStorage.setItem(EZ_SHIPPERS_STORAGE_KEY, JSON.stringify(shippers));
+            }
+
+            function renderEzShipperDropdown(selectedId) {
+                const shippers = loadEzShippers();
+                const $select = $('#ezShipperSelect');
+                const lastId = selectedId || localStorage.getItem(EZ_SHIPPERS_LAST_KEY) || '';
+                $select.empty();
+                shippers.forEach(function(shipper) {
+                    $select.append($('<option>', {
+                        value: shipper.id,
+                        text: ezShipperDisplayName(shipper),
+                    }));
+                });
+
+                let pickId = lastId;
+                const btn = document.getElementById('ezLabelBtn');
+                if (btn && btn.dataset.etaFashion === '1' && (!pickId || pickId === 'ucl')) {
+                    pickId = shippers.some(function(s) { return s.id === 'btg'; }) ? 'btg' : pickId;
+                }
+                if (!pickId || !shippers.some(function(s) { return s.id === pickId; })) {
+                    pickId = shippers[0] ? shippers[0].id : '';
+                }
+                if (pickId) {
+                    $select.val(pickId);
+                    if (!ezShipperIsNew) {
+                        applyEzShipperSelection(pickId);
+                    }
+                } else {
+                    $('#ezShippingService').val('');
+                }
+                return shippers;
+            }
+
+            function applyEzShipperSelection(shipperId) {
+                ezShipperIsNew = false;
+                const shipper = loadEzShippers().find(function(s) { return s.id === shipperId; });
+                if (shipper) {
+                    $('#ezShippingService').val(shipper.service);
+                    localStorage.setItem(EZ_SHIPPERS_LAST_KEY, shipper.id);
+                }
+            }
+
+            function startEzNewShipper() {
+                ezShipperIsNew = true;
+                $('#ezShippingService').val('');
+                $('#ezShippingService').focus();
+            }
 
             function prefillEzLabelModal() {
+                ezShipperIsNew = false;
                 let boxes = null;
                 const notesEl = document.getElementById('order_notes');
                 if (notesEl && notesEl.value) {
@@ -2217,14 +2359,54 @@
                 } else {
                     $('#ezTotalBoxes').val('');
                 }
-                if (btn && btn.dataset.etaFashion === '1') {
-                    const $svc = $('#ezShippingService');
-                    const cur = ($svc.val() || '').trim();
-                    if (!cur || cur.toUpperCase() === 'UCL') {
-                        $svc.val(EZ_ETA_DEFAULT_SERVICE);
-                    }
-                }
+                renderEzShipperDropdown();
             }
+
+            $('#ezShipperSelect').on('change', function() {
+                applyEzShipperSelection($(this).val());
+            });
+
+            $('#ezShipperAddBtn').on('click', function() {
+                startEzNewShipper();
+            });
+
+            $('#ezShipperSaveBtn').on('click', function() {
+                const service = ($('#ezShippingService').val() || '').trim();
+                const name = ezShipperNameFromService(service);
+                if (!service || !name) {
+                    alert('Enter shipping service text (first line becomes the shipper name).');
+                    $('#ezShippingService').focus();
+                    return;
+                }
+                const selectedId = $('#ezShipperSelect').val();
+                const shippers = loadEzShippers();
+                let savedId = selectedId;
+
+                if (!ezShipperIsNew && selectedId) {
+                    const idx = shippers.findIndex(function(s) { return s.id === selectedId; });
+                    if (idx === -1) {
+                        alert('Selected shipper was not found. Pick another shipper or click New.');
+                        return;
+                    }
+                    shippers[idx] = Object.assign({}, shippers[idx], { name: name, service: service });
+                } else {
+                    let baseId = ezShipperSlug(name);
+                    let id = baseId;
+                    let n = 2;
+                    while (shippers.some(function(s) { return s.id === id; })) {
+                        id = baseId + '-' + n;
+                        n += 1;
+                    }
+                    shippers.push({ id: id, name: name, service: service });
+                    savedId = id;
+                }
+
+                ezShipperIsNew = false;
+                saveEzShippers(shippers);
+                localStorage.setItem(EZ_SHIPPERS_LAST_KEY, savedId);
+                renderEzShipperDropdown(savedId);
+                alert('Shipper saved.');
+            });
 
             $('#ezLabelModal, #etaFashionLabelModal').on('show.bs.modal', function() {
                 clearStuckModalBackdrop();
@@ -2368,8 +2550,12 @@
             $('#ezLabelSubmitBtn').on('click', async function() {
                 const service = ($('#ezShippingService').val() || '').trim();
                 const totalBoxes = parseInt($('#ezTotalBoxes').val(), 10);
+                const selectedId = $('#ezShipperSelect').val();
+                if (selectedId && !ezShipperIsNew) {
+                    localStorage.setItem(EZ_SHIPPERS_LAST_KEY, selectedId);
+                }
                 if (!service) {
-                    alert('Please enter a shipping service (e.g. UCL).');
+                    alert('Please select or enter a shipping service (e.g. UCL).');
                     return;
                 }
                 if (!totalBoxes || totalBoxes < 1) {
@@ -2539,8 +2725,18 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="ezShippingService"><strong>Shipping service</strong> (up to 3 lines; auto-fits on label)</label>
-                        <textarea class="form-control" id="ezShippingService" rows="3" placeholder="UCL" autocomplete="off">{% if header_info.customer_id|string == '00951' %}BTG ACCT#EC3377{% else %}UCL{% endif %}</textarea>
+                        <label for="ezShipperSelect"><strong>Shipping service</strong> (up to 3 lines; auto-fits on label)</label>
+                        <div class="ez-shipper-toolbar">
+                            <select class="form-control" id="ezShipperSelect" aria-label="Saved shippers"></select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="ezShipperAddBtn" title="Create new shipper">
+                                <i class="fas fa-plus mr-1"></i>New
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" id="ezShipperSaveBtn" title="Save shipper to this browser">
+                                <i class="fas fa-save mr-1"></i>Save
+                            </button>
+                        </div>
+                        <textarea class="form-control" id="ezShippingService" rows="3" placeholder="UCL&#10;line 2&#10;line 3" autocomplete="off"></textarea>
+                        <small class="text-muted d-block mt-1">First line is the shipper name in the dropdown; up to 3 lines print on the label.</small>
                     </div>
                     <div class="form-group mb-0">
                         <label for="ezTotalBoxes"><strong>Total boxes</strong></label>
@@ -2549,9 +2745,9 @@
                     <small class="text-muted d-block mt-2">
                         Portrait 4×6 labels: FDC logo, 827 address, service (up to 3 lines, sized to fit), ship-to, box count.
                         {% if header_info.customer_id|string == '00951' %}
-                        ETA Fashion: service defaults to BTG ACCT#EC3377; ship-to prints as ETA Fashion only.
+                        ETA Fashion: saved shippers include BTG; ship-to prints as ETA Fashion only.
                         {% else %}
-                        Total boxes is prefilled from order notes (e.g. <em>1 box</em> or <em>30 boxes</em>).
+                        Shippers are saved in this browser (default UCL). Total boxes prefills from order notes (e.g. <em>1 box</em> or <em>30 boxes</em>).
                         {% endif %}
                     </small>
                 </div>

@@ -293,6 +293,19 @@
         .checker-calc-popup .checker-calc-eq { margin-top: 6px; font-weight: 700; }
         .checker-calc-popup .checker-calc-ok { color: #2e7d32; }
         .checker-calc-popup .checker-calc-bad { color: #c62828; }
+        .checker-calc-popup .checker-calc-actions {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e8e8e8;
+        }
+        .checker-calc-popup .checker-calc-actions a {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .checker-calc-popup .checker-calc-actions a:hover {
+            text-decoration: underline;
+        }
 
 
         /* Image Container */
@@ -492,6 +505,16 @@
             color: white;
             border-color: #667eea;
             box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .sku-color-filter {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .sku-color-filter:hover {
+            text-decoration: underline;
         }
 
         .sidebar-database-section {
@@ -1198,7 +1221,7 @@
                                     <!-- FDC Row -->
                                     {% if color.fdc %}
                                     <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="FDC" style="display: none;" class="fdc-row">
-                                        <td style="font-weight: 600;"><a href="https://www.fdcef.com/product_detail?search={{ color.sku | trim }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ color.sku | trim }}</a></td>
+                                        <td style="font-weight: 600;"><span class="sku-color-filter" role="button" tabindex="0">{{ color.sku | trim }}</span></td>
                                         {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
                                         <td class="num-col" style="background-color: #fffacd;">{{ color.fdc.stock if color.fdc else 0 }}</td>
@@ -1215,6 +1238,7 @@
                                         <td class="num-col">{{ fdc_fix | int }}</td>
                                         {% set checker_value = fdc_po - fdc_sold - (color.fdc.available if color.fdc else 0) + fdc_fix %}
                                         <td class="num-col checker-cell"
+                                            data-sku="{{ color.sku | trim }}"
                                             data-hpo="{{ fdc_po | int }}"
                                             data-hsold="{{ fdc_sold | int }}"
                                             data-avail="{{ color.fdc.available if color.fdc else 0 }}"
@@ -1231,7 +1255,7 @@
                                     <!-- E_FAS Row -->
                                     {% if color.efas %}
                                     <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="E_FAS" style="display: none;" class="efas-row">
-                                        <td style="font-weight: 600;"><a href="https://www.fdcef.com/product_detail?search={{ color.sku | trim }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ color.sku | trim }}</a></td>
+                                        <td style="font-weight: 600;"><span class="sku-color-filter" role="button" tabindex="0">{{ color.sku | trim }}</span></td>
                                         {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
                                         <td class="num-col" style="background-color: #fffacd;">{{ color.efas.stock if color.efas else 0 }}</td>
@@ -1248,6 +1272,7 @@
                                         <td class="num-col">{{ efas_fix | int }}</td>
                                         {% set checker_value = efas_po - efas_sold - (color.efas.available if color.efas else 0) + efas_fix %}
                                         <td class="num-col checker-cell"
+                                            data-sku="{{ color.sku | trim }}"
                                             data-hpo="{{ efas_po | int }}"
                                             data-hsold="{{ efas_sold | int }}"
                                             data-avail="{{ color.efas.available if color.efas else 0 }}"
@@ -1263,7 +1288,7 @@
                                     
                                     <!-- Combined Row (Both) -->
                                     <tr class="data-row" data-style="{{ style_group.style | trim }}" data-color="{{ (color.color or '?') | trim }}" data-database="Both" class="combined-row">
-                                        <td style="font-weight: 600;"><a href="https://www.fdcef.com/product_detail?search={{ color.sku | trim }}" target="_blank" style="color: #667eea; text-decoration: none;">{{ color.sku | trim }}</a></td>
+                                        <td style="font-weight: 600;"><span class="sku-color-filter" role="button" tabindex="0">{{ color.sku | trim }}</span></td>
                                         {% if has_multiple_descriptions %}<td>{% if color.oms_description and color.oms_description != 'N/A' %}{% if color.oms_description is string %}{{ color.oms_description }}{% else %}{{ color.oms_description[0]|trim if color.oms_description|length > 0 else '-' }}{% endif %}{% else %}-{% endif %}</td>{% endif %}
                                         <td>{{ (color.color or '-') | trim }}</td>
                                         <td class="num-col" style="background-color: #fffacd;">{{ (color.fdc.stock if color.fdc else 0) + (color.efas.stock if color.efas else 0) }}</td>
@@ -1278,6 +1303,7 @@
                                         {% set checker_value = (color.history_combined.history_po if color.history_combined else 0) - (color.history_combined.history_sold if color.history_combined else 0) - ((color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0)) + (color.history_combined.history_fix if color.history_combined else 0) %}
                                         {% set combined_avail = (color.fdc.available if color.fdc else 0) + (color.efas.available if color.efas else 0) %}
                                         <td class="num-col checker-cell"
+                                            data-sku="{{ color.sku | trim }}"
                                             data-hpo="{{ (color.history_combined.history_po if color.history_combined else 0) | int }}"
                                             data-hsold="{{ (color.history_combined.history_sold if color.history_combined else 0) | int }}"
                                             data-avail="{{ combined_avail }}"
@@ -1306,6 +1332,7 @@
                                         <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_fdc') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
                                         {% set total_checker = total_hist_po - total_hist_sold - fdc_avail + total_hist_fix %}
                                         <td class="num-col checker-cell"
+                                            data-sku="{{ style_group.style | trim }}"
                                             data-hpo="{{ total_hist_po | int }}"
                                             data-hsold="{{ total_hist_sold | int }}"
                                             data-avail="{{ fdc_avail | int }}"
@@ -1334,6 +1361,7 @@
                                         <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_efas') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
                                         {% set total_checker = total_hist_po - total_hist_sold - efas_avail + total_hist_fix %}
                                         <td class="num-col checker-cell"
+                                            data-sku="{{ style_group.style | trim }}"
                                             data-hpo="{{ total_hist_po | int }}"
                                             data-hsold="{{ total_hist_sold | int }}"
                                             data-avail="{{ efas_avail | int }}"
@@ -1362,6 +1390,7 @@
                                         <td class="num-col">{% set total_hist_fix = style_group.colors | map(attribute='history_combined') | map(attribute='history_fix') | sum %}{{ total_hist_fix | int }}</td>
                                         {% set total_checker = total_hist_po - total_hist_sold - style_group.totals.combined.available + total_hist_fix %}
                                         <td class="num-col checker-cell"
+                                            data-sku="{{ style_group.style | trim }}"
                                             data-hpo="{{ total_hist_po | int }}"
                                             data-hsold="{{ total_hist_sold | int }}"
                                             data-avail="{{ style_group.totals.combined.available }}"
@@ -1494,6 +1523,7 @@
         const pdShowInventoryAdjustment = {{ 'true' if pd_show_inventory_adjustment|default(false) else 'false' }};
         const pdShowPurchaseHistory = {{ 'true' if pd_show_purchase_history|default(false) else 'false' }};
         const pdShowOcean = {{ 'true' if pd_show_ocean|default(false) else 'false' }};
+        const inventoryManualAdjusterUrl = {{ url_for('inventory_manual_adjuster.inventory_manual_adjuster_page') | tojson }};
 
         let checkerHighlightedRow = null;
 
@@ -1536,6 +1566,19 @@
             const availNote = (!Number.isNaN(stock) && !Number.isNaN(soldRes))
                 ? 'Available = Stock − Sold/reserved (' + stock + ' − ' + soldRes + ' = ' + avail + ')'
                 : 'Available = Stock − Sold/reserved (' + avail + ')';
+            const sku = (cell.dataset.sku || '').trim();
+            const rowDb = row ? (row.dataset.database || '').trim() : '';
+            const adjusterParams = new URLSearchParams();
+            adjusterParams.set('mode', 'adjust');
+            if (sku) adjusterParams.set('search', sku);
+            if (rowDb === 'FDC' || rowDb === 'E_FAS') {
+                adjusterParams.set('db', rowDb);
+            }
+            const adjusterLink = sku
+                ? '<div class="checker-calc-actions"><a href="' + inventoryManualAdjusterUrl +
+                  '?' + adjusterParams.toString() + '" target="_blank" rel="noopener">' +
+                  'Add / Remove → ' + sku + '</a></div>'
+                : '';
 
             popup.innerHTML =
                 '<div class="checker-calc-title">Checker calculation</div>' +
@@ -1544,7 +1587,8 @@
                 '<div class="checker-calc-line">' + hpo + ' − ' + hsold + ' − ' + avail + ' + ' + hfix + '</div>' +
                 '<div class="checker-calc-eq ' + (ok ? 'checker-calc-ok' : 'checker-calc-bad') + '">' +
                 '= ' + result + (ok ? ' ✓ check' : ' (off by ' + result + ')') +
-                '</div>';
+                '</div>' +
+                adjusterLink;
 
             popup.classList.add('is-visible');
 
@@ -1659,6 +1703,19 @@
             }
         }
         
+        function toggleColorFilter(color) {
+            const normalized = (color || '').trim().toLowerCase();
+            if (!normalized) return;
+
+            document.querySelectorAll('.sidebar-color-btn').forEach(btn => {
+                const btnColor = (btn.getAttribute('data-color') || '').trim().toLowerCase();
+                if (btnColor === normalized) {
+                    btn.classList.toggle('active');
+                }
+            });
+            debouncedApplyFilters();
+        }
+
         function applyFilters() {
             // Get active color filters - normalize to lowercase and trim
             const activeColorButtons = document.querySelectorAll('.sidebar-color-btn.active');
@@ -1966,6 +2023,15 @@
             handleProductDetailDeepLinks();
 
             document.addEventListener('click', function(e) {
+                const skuFilter = e.target.closest('.sku-color-filter');
+                if (skuFilter) {
+                    e.preventDefault();
+                    const row = skuFilter.closest('tr');
+                    const color = row ? row.getAttribute('data-color') : null;
+                    if (color) toggleColorFilter(color);
+                    return;
+                }
+
                 const checkerCell = e.target.closest('.checker-cell');
                 if (checkerCell) {
                     e.stopPropagation();

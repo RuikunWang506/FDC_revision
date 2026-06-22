@@ -29,7 +29,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "order_processor": "order_processor",
     "external_stock_check": "external_stock_check",
     "internal_stock_check": "internal_stock_check",
-    "switch_number": "switch_number",
+    "inventory_manual_adjuster": "inventory_manual_adjuster",
     "four_seller": "four_seller",
     "location_massive_audit": "location_massive_update",
     "outofstock_check": "oosc",
@@ -60,7 +60,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "order_processor", "title": "Order Processor", "category": "Orders"},
     {"id": "external_stock_check", "title": "External Stock Check", "category": "Inventory"},
     {"id": "internal_stock_check", "title": "Internal Stock Check", "category": "Inventory"},
-    {"id": "switch_number", "title": "Switch Number", "category": "Inventory"},
+    {"id": "inventory_manual_adjuster", "title": "Inventory Manual Adjuster", "category": "Inventory"},
     {"id": "four_seller", "title": "4Seller Stock Sync", "category": "Inventory"},
     {"id": "location_massive_update", "title": "Massive Location Update", "category": "Inventory"},
     {"id": "oosc", "title": "Out of Stock Check", "category": "Inventory"},
@@ -94,7 +94,15 @@ def tool_visible_for_user(perms: Optional[Dict[str, Any]], username: str, tool_i
         return True
     if not isinstance(tools, list):
         return True
-    return tool_id in tools
+    if tool_id in tools:
+        return True
+    # Legacy permission id after rename from switch_number
+    aliases = {
+        "inventory_manual_adjuster": "switch_number",
+        "switch_number": "inventory_manual_adjuster",
+    }
+    legacy = aliases.get(tool_id)
+    return legacy in tools if legacy else False
 
 
 def _wants_json_forbidden_response() -> bool:

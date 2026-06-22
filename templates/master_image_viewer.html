@@ -20,6 +20,16 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --miv-dock-top: 0.75rem;
+            --miv-dock-bottom: 0.75rem;
+        }
+
+        /* +2 steps for main UI; left batch sidebar reset below */
+        html {
+            font-size: 112.5%;
+        }
+
         body {
             background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
             font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -29,29 +39,40 @@
         }
         
         body.has-navbar {
-            padding-top: 70px;
+            padding-top: 50px;
+            --miv-dock-top: calc(50px + 0.75rem);
             background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%) !important;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: min(1400px, calc(100vw - 280px));
             margin: 0 auto;
-            padding: 2rem;
+            margin-left: max(265px, calc(255px + 0.75rem));
+            padding: 0.65rem 0.85rem 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                margin-left: auto;
+                max-width: 100%;
+                padding: 0.5rem 0.65rem 0.85rem;
+            }
         }
 
         .header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 0.65rem;
         }
 
         .main-title {
-            font-size: 2.5rem;
+            font-size: 1.55rem;
             font-weight: 700;
             background: linear-gradient(45deg, #00d4ff, #1cc88a, #36b9cc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 1rem;
+            margin-bottom: 0.15rem;
+            line-height: 1.2;
         }
 
         /* Bilingual labels — high contrast on dark UI */
@@ -64,10 +85,10 @@
         }
 
         .main-title .label-zh {
-            display: block;
-            margin-left: 0;
-            margin-top: 0.35rem;
-            font-size: 0.45em;
+            display: inline;
+            margin-left: 0.35em;
+            margin-top: 0;
+            font-size: 0.72em;
             letter-spacing: 0.02em;
             color: #c5d4e8 !important;
             -webkit-text-fill-color: #c5d4e8 !important;
@@ -76,37 +97,29 @@
 
         .page-subtitle {
             color: #c5d4e8 !important;
-            font-size: 1.1rem;
+            font-size: 0.82rem;
+            line-height: 1.35;
+            margin: 0;
         }
 
         .page-subtitle .label-zh {
-            display: block;
-            margin-left: 0;
-            margin-top: 0.4rem;
+            display: inline;
+            margin-left: 0.35em;
+            margin-top: 0;
             color: #b8c9dc !important;
             -webkit-text-fill-color: #b8c9dc !important;
-            font-size: 0.92em;
+            font-size: 0.95em;
         }
 
-        /* White modals & light banners */
-        .miv-modal-panel,
-        #batchJobBanner {
+        /* White modals */
+        .miv-modal-panel {
             color: #111827;
         }
 
-        .miv-modal-panel .label-zh,
-        #batchJobBanner .label-zh {
+        .miv-modal-panel .label-zh {
             color: #374151;
             -webkit-text-fill-color: #374151;
             font-weight: 500;
-        }
-
-        #batchJobBanner .search-btn .label-zh {
-            color: rgba(255, 255, 255, 0.95) !important;
-            -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
-            display: block;
-            margin-left: 0;
-            margin-top: 0.1rem;
         }
 
         .miv-modal-panel th {
@@ -127,16 +140,14 @@
 
         .miv-modal-panel h2 .label-zh,
         .miv-modal-panel p .label-zh,
-        .miv-modal-panel th .label-zh,
-        #batchJobBannerTitle .label-zh {
+        .miv-modal-panel th .label-zh {
             display: block;
             margin-left: 0;
             margin-top: 0.2rem;
             font-size: 0.88em;
         }
 
-        .miv-modal-panel .miv-muted,
-        #batchJobBannerMeta {
+        .miv-modal-panel .miv-muted {
             color: #374151 !important;
         }
 
@@ -220,9 +231,9 @@
             background: rgba(18, 25, 38, 0.8);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(0, 240, 255, 0.2);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            border-radius: 12px;
+            padding: 0.65rem 0.75rem;
+            margin-bottom: 0.65rem;
             text-align: center;
         }
 
@@ -231,21 +242,21 @@
             flex-wrap: wrap;
             justify-content: center;
             align-items: stretch;
-            gap: 0.65rem;
+            gap: 0.45rem;
             max-width: min(1100px, 100%);
             width: 100%;
             margin: 0 auto;
         }
 
         .search-input {
-            flex: 1 1 220px;
-            min-width: 200px;
-            padding: 0.85rem 1.25rem;
+            flex: 1 1 200px;
+            min-width: 160px;
+            padding: 0.5rem 0.85rem;
             background: rgba(26, 35, 50, 0.8);
-            border: 2px solid rgba(0, 240, 255, 0.3);
-            border-radius: 15px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 10px;
             color: #e8f4fd;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             transition: all 0.3s ease;
         }
 
@@ -260,39 +271,44 @@
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 0.55rem;
-            padding: 0.65rem 0.9rem;
-            min-height: 62px;
+            gap: 0.4rem;
+            padding: 0.4rem 0.65rem;
+            min-height: 46px;
             background: linear-gradient(135deg, #00d4ff, #1cc88a);
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             color: white;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 1rem;
-            line-height: 1.2;
+            font-size: 0.95rem;
+            line-height: 1.15;
             white-space: normal;
             text-align: left;
         }
 
         .search-form .search-btn {
-            flex: 1 1 168px;
-            max-width: 200px;
+            flex: 1 1 140px;
+            max-width: 175px;
         }
 
         .search-form #batchFetchBtn {
-            flex: 1 1 178px;
-            max-width: 220px;
+            flex: 1 1 150px;
+            max-width: 190px;
+        }
+
+        .search-form #fetchThisSkuBtn {
+            flex: 1 1 155px;
+            max-width: 200px;
         }
 
         .search-form #batchFetchBtn .btn-label-en {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         .search-btn > i:first-child {
             flex-shrink: 0;
-            font-size: 1.2rem;
+            font-size: 1rem;
             align-self: center;
         }
 
@@ -306,15 +322,15 @@
 
         .search-btn .btn-label-en {
             font-weight: 600;
-            font-size: 0.95rem;
-            line-height: 1.25;
+            font-size: 0.82rem;
+            line-height: 1.15;
         }
 
         .search-btn .btn-label-zh {
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             font-weight: 400;
-            line-height: 1.25;
-            margin-top: 0.15rem;
+            line-height: 1.1;
+            margin-top: 0.05rem;
             color: rgba(255, 255, 255, 0.92);
             -webkit-text-fill-color: rgba(255, 255, 255, 0.92);
         }
@@ -342,11 +358,13 @@
         /* Floating selection sidebar (download / delete) */
         .miv-selection-dock {
             position: fixed;
-            right: max(0.75rem, env(safe-area-inset-right));
-            top: 50%;
-            transform: translateY(-50%) translateX(120%);
-            z-index: 1050;
-            width: min(220px, calc(100vw - 1.5rem));
+            right: max(0.5rem, env(safe-area-inset-right));
+            top: var(--miv-dock-top);
+            bottom: var(--miv-dock-bottom);
+            transform: translateX(120%);
+            z-index: 1020;
+            width: min(190px, calc(100vw - 1.5rem));
+            max-height: calc(100vh - var(--miv-dock-top) - var(--miv-dock-bottom));
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
@@ -356,18 +374,25 @@
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
-            transform: translateY(-50%) translateX(0);
+            transform: translateX(0);
         }
         .miv-selection-dock-inner {
             background: rgba(18, 25, 38, 0.96);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 212, 255, 0.35);
-            border-radius: 16px;
-            padding: 1rem 0.9rem;
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+            border-radius: 12px;
+            padding: 0.65rem 0.7rem;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
             display: flex;
             flex-direction: column;
-            gap: 0.65rem;
+            gap: 0.45rem;
+            max-height: calc(100vh - var(--miv-dock-top) - var(--miv-dock-bottom));
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .miv-selection-dock-inner::-webkit-scrollbar {
+            display: none;
         }
         .miv-selection-dock-title {
             font-size: 0.72rem;
@@ -378,7 +403,7 @@
             margin: 0;
         }
         .miv-selection-count {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #00d4ff;
             text-align: center;
@@ -403,7 +428,7 @@
         .miv-selection-dock .search-btn {
             width: 100%;
             max-width: none;
-            min-height: 54px;
+            min-height: 42px;
             justify-content: center;
             text-align: center;
         }
@@ -423,6 +448,221 @@
         .miv-selection-clear-btn:hover {
             border-color: #00d4ff;
             color: #00d4ff;
+        }
+
+        /* Left batch status sidebar — keep prior visual size when html is scaled up */
+        .miv-batch-dock {
+            position: fixed;
+            left: max(0.5rem, env(safe-area-inset-left));
+            top: var(--miv-dock-top);
+            transform: none;
+            z-index: 1020;
+            width: min(255px, calc(100vw - 1.5rem));
+            display: block;
+            zoom: 0.8888888889;
+        }
+        .miv-batch-dock-inner {
+            background: rgba(18, 25, 38, 0.96);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(246, 173, 85, 0.45);
+            border-radius: 12px;
+            padding: 0.75rem 0.8rem;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            max-height: calc(100vh - var(--miv-dock-top) - var(--miv-dock-bottom));
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .miv-batch-dock-inner::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+        .miv-batch-dock-title {
+            font-size: 0.88rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #b8c5d6;
+            text-align: center;
+            margin: 0 0 0.2rem;
+            font-weight: 600;
+        }
+        .miv-batch-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            padding: 0.45rem 0.55rem;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+        }
+        .miv-batch-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .miv-batch-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            word-break: break-all;
+            line-height: 1.35;
+        }
+        .miv-batch-value.mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.9rem;
+            color: #fbbf24;
+        }
+        .miv-batch-status-pill {
+            display: inline-block;
+            align-self: center;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.35;
+        }
+        .miv-batch-dock .search-btn {
+            width: 100%;
+            max-width: none;
+            min-height: 44px;
+            justify-content: center;
+            text-align: center;
+            margin-top: 0.15rem;
+            padding: 0.45rem 0.6rem;
+            font-size: 0.88rem;
+        }
+        .miv-batch-dock .search-btn .btn-label-en {
+            font-size: 0.88rem;
+        }
+        .miv-batch-dock .search-btn .btn-label-zh {
+            font-size: 0.8rem;
+        }
+        .miv-batch-dock .label-zh {
+            color: #d1dae8 !important;
+            -webkit-text-fill-color: #d1dae8 !important;
+            font-weight: 500;
+        }
+        .miv-batch-dock .search-btn .btn-label {
+            align-items: center;
+        }
+        .miv-batch-dock .search-btn .label-zh {
+            color: rgba(255, 255, 255, 0.95) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+            display: block;
+            margin-left: 0;
+            margin-top: 0.1rem;
+        }
+        .miv-batch-dock-divider {
+            height: 1px;
+            background: rgba(148, 163, 184, 0.25);
+            margin: 0.15rem 0;
+        }
+        .miv-batch-history-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.35rem;
+        }
+        .miv-batch-history-title {
+            font-size: 0.88rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #b8c5d6;
+            margin: 0;
+            font-weight: 600;
+        }
+        .miv-batch-history-refresh {
+            background: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 0.3rem 0.55rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            line-height: 1.2;
+        }
+        .miv-batch-history-refresh:hover {
+            border-color: #f6ad55;
+            color: #f6ad55;
+        }
+        .miv-batch-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .miv-batch-history-item {
+            padding: 0.5rem 0.55rem;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-align: left;
+        }
+        .miv-batch-history-item:hover {
+            border-color: rgba(246, 173, 85, 0.45);
+        }
+        .miv-batch-history-item.active {
+            border-color: #f6ad55;
+            background: rgba(246, 173, 85, 0.12);
+        }
+        .miv-batch-history-item-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.35rem;
+            margin-bottom: 0.2rem;
+        }
+        .miv-batch-history-id {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.88rem;
+            color: #fbbf24;
+            font-weight: 700;
+        }
+        .miv-batch-history-pill {
+            display: inline-block;
+            padding: 0.15rem 0.45rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .miv-batch-history-style {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            line-height: 1.35;
+        }
+        .miv-batch-history-meta {
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            line-height: 1.4;
+            margin-top: 0.2rem;
+        }
+        .miv-batch-history-empty {
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            text-align: center;
+            padding: 0.65rem 0.35rem;
+            margin: 0;
+        }
+        @media (max-width: 900px) {
+            .miv-batch-dock {
+                top: auto;
+                bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 4.5rem));
+                left: 0.5rem;
+                transform: none;
+                width: min(250px, calc(55vw - 0.75rem));
+            }
+            .miv-batch-dock-inner {
+                max-height: min(52vh, 420px);
+            }
         }
         @media (max-width: 900px) {
             .miv-selection-dock {
@@ -457,14 +697,58 @@
         .results-header {
             background: rgba(18, 25, 38, 0.6);
             border: 1px solid rgba(0, 240, 255, 0.2);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            text-align: center;
+            border-radius: 8px;
+            padding: 0.4rem 0.7rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .miv-results-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.45rem 0.65rem;
+        }
+
+        .miv-results-sku {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.28), rgba(28, 200, 138, 0.22));
+            border: 1px solid rgba(0, 212, 255, 0.65);
+            box-shadow: 0 0 14px rgba(0, 212, 255, 0.2);
+            padding: 0.15rem 0.7rem;
+            border-radius: 8px;
+            letter-spacing: 0.05em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            line-height: 1.3;
+        }
+
+        .miv-results-meta {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.25rem 0.45rem;
+            font-size: 0.82rem;
+            color: #c5d4e8;
+            line-height: 1.3;
+        }
+
+        .miv-results-count {
+            font-weight: 700;
+            color: #1cc88a;
+            font-size: 0.9rem;
+        }
+
+        .miv-results-meta .label-zh {
+            color: #b8c9dc;
+            -webkit-text-fill-color: #b8c9dc;
+            font-size: 0.82rem;
+            margin-left: 0;
         }
 
         .category-section {
-            margin-bottom: 3rem;
+            margin-bottom: 1rem;
         }
 
         .category-title {
@@ -472,10 +756,10 @@
             align-items: center;
             justify-content: space-between;
             background: rgba(0, 212, 255, 0.1);
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            border-left: 4px solid #00d4ff;
+            padding: 0.45rem 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.45rem;
+            border-left: 3px solid #00d4ff;
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
@@ -489,12 +773,12 @@
         .category-header {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
         }
 
         .category-toggle {
             color: #00d4ff;
-            font-size: 1.2rem;
+            font-size: 1rem;
             transition: transform 0.3s ease;
         }
 
@@ -516,7 +800,7 @@
         }
 
         .category-name {
-            font-size: 1.3rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #00d4ff;
         }
@@ -524,44 +808,96 @@
         .category-count {
             background: rgba(0, 212, 255, 0.2);
             color: #00d4ff;
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
-            font-size: 0.9rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.78rem;
             font-weight: 600;
+        }
+
+        .miv-product-filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.65rem 0.85rem;
+            margin-bottom: 0.65rem;
+            padding: 0.55rem 0.65rem;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(0, 212, 255, 0.18);
+            border-radius: 8px;
+        }
+
+        .miv-filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 9rem;
+            flex: 1 1 9rem;
+            max-width: 14rem;
+        }
+
+        .miv-filter-field label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .miv-filter-select {
+            width: 100%;
+            padding: 0.35rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            background: rgba(26, 35, 50, 0.95);
+            color: #f1f5f9;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+
+        .miv-filter-select:focus {
+            outline: none;
+            border-color: rgba(0, 212, 255, 0.55);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.15);
+        }
+
+        .miv-filter-select option {
+            background: #1a2332;
+            color: #f1f5f9;
         }
 
         .images-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.55rem;
         }
 
         .image-card {
             background: rgba(18, 25, 38, 0.6);
             border: 1px solid rgba(0, 240, 255, 0.15);
-            border-radius: 15px;
-            overflow: visible;
+            border-radius: 10px;
+            overflow: hidden;
             transition: all 0.3s ease;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             position: relative;
+            min-width: 0;
         }
 
         .image-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
             border-color: rgba(0, 240, 255, 0.4);
-            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.15);
         }
 
         .image-container {
-            height: 160px;
+            height: 110px;
             background: rgba(26, 35, 50, 0.8);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
-            border-radius: 15px 15px 0 0;
+            padding: 6px;
+            border-radius: 10px 10px 0 0;
         }
 
         .image-preview {
@@ -573,30 +909,93 @@
         }
 
         .image-info {
-            padding: 1rem;
+            padding: 0.5rem 0.6rem 0.55rem;
         }
 
         .image-filename {
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             font-weight: 600;
-            color: #e8f4fd;
-            margin-bottom: 0.5rem;
-            word-break: break-all;
+            color: #f1f5f9;
+            margin-bottom: 0.35rem;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .image-filename-version {
+            color: #94a3b8;
+            font-size: 0.85em;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .image-filename-canonical {
+            color: #34d399;
+            font-weight: 700;
+            font-size: 0.75em;
+            margin-left: 0.15rem;
         }
 
         .image-details {
-            font-size: 0.8rem;
-            color: #b8c5d6;
+            display: flex;
+            flex-direction: column;
+            gap: 0.28rem;
+            font-size: 0.78rem;
         }
 
-        .image-details .label-zh {
-            color: #d1dae8;
-            -webkit-text-fill-color: #d1dae8;
+        .image-detail-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 0.35rem;
+            line-height: 1.25;
+            min-width: 0;
+        }
+
+        .image-detail-label {
+            color: #8899b0;
+            font-size: 0.72rem;
+            font-weight: 500;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .image-detail-value {
+            color: #e2e8f0;
+            flex: 1 1 auto;
+            min-width: 0;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 1400px) {
+            .images-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .images-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        .image-select-checkbox {
+            transform: scale(1.05) !important;
+        }
+
+        @media (max-width: 600px) {
+            .page-subtitle {
+                display: none;
+            }
         }
 
         .loading {
             text-align: center;
-            padding: 3rem;
+            padding: 1.25rem;
             color: #c5d4e8;
         }
 
@@ -608,7 +1007,7 @@
         }
 
         .loading i {
-            font-size: 2rem;
+            font-size: 1.5rem;
             animation: spin 1s linear infinite;
             color: #00d4ff;
         }
@@ -621,18 +1020,19 @@
         .error {
             background: rgba(255, 107, 107, 0.1);
             border: 1px solid rgba(255, 107, 107, 0.3);
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 10px;
+            padding: 0.85rem;
             text-align: center;
             color: #ff6b6b;
-            margin: 2rem 0;
+            margin: 0.75rem 0;
         }
 
         .empty-category {
             text-align: center;
-            padding: 2rem;
+            padding: 0.75rem;
             color: #c5d4e8;
             font-style: italic;
+            font-size: 0.85rem;
         }
 
         .empty-category .label-zh {
@@ -652,12 +1052,13 @@
         }
 
         .fetch-btn {
-            padding: 0.75rem 1.5rem;
+            padding: 0.45rem 0.85rem;
             background: linear-gradient(135deg, #00d4ff, #1cc88a);
             border: none;
             border-radius: 8px;
             color: white;
             font-weight: 600;
+            font-size: 0.82rem;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -792,9 +1193,86 @@
         }
 
         .modal-header {
-            margin-bottom: 2rem;
+            margin-bottom: 1.25rem;
             padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .modal-header-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.65rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .modal-counter {
+            display: inline-flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.2rem;
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        .modal-counter-num {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+
+        .modal-counter-sep,
+        .modal-counter-of {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #94a3b8 !important;
+            -webkit-text-fill-color: #94a3b8 !important;
+        }
+
+        .modal-counter-total {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #00d4ff !important;
+            -webkit-text-fill-color: #00d4ff !important;
+        }
+
+        .modal-category-pill {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #e0f2fe !important;
+            -webkit-text-fill-color: #e0f2fe !important;
+            background: rgba(0, 212, 255, 0.14);
+            border: 1px solid rgba(125, 211, 252, 0.45);
+            padding: 0.25rem 0.55rem;
+            border-radius: 9999px;
+            line-height: 1.25;
+            text-align: right;
+            max-width: 58%;
+            word-break: break-word;
+        }
+
+        .modal-filename {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #f8fafc !important;
+            -webkit-text-fill-color: #f8fafc !important;
+            line-height: 1.4;
+            word-break: break-all;
+            margin-bottom: 0.35rem;
+        }
+
+        .modal-filename-meta {
+            font-size: 0.88rem;
+            color: #cbd5e1 !important;
+            -webkit-text-fill-color: #cbd5e1 !important;
+            line-height: 1.35;
+        }
+
+        .modal-filename-meta .canonical-badge {
+            color: #34d399 !important;
+            -webkit-text-fill-color: #34d399 !important;
+            font-weight: 700;
         }
 
         .modal-details {
@@ -818,14 +1296,27 @@
         .detail-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 0.75rem;
             padding: 0.5rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .detail-item-stacked {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.3rem;
+        }
+
+        .detail-item-stacked .detail-value {
+            text-align: left;
+            max-width: none;
         }
 
         .detail-label {
-            color: #b8c5d6;
+            color: #cbd5e1;
             font-size: 0.9rem;
+            flex-shrink: 0;
         }
 
         .detail-section h4 .label-zh {
@@ -835,19 +1326,20 @@
         }
 
         .results-header .label-zh {
-            color: #d1dae8;
-            -webkit-text-fill-color: #d1dae8;
-            display: block;
-            margin-top: 0.25rem;
+            display: inline;
+            color: #b8c9dc;
+            -webkit-text-fill-color: #b8c9dc;
+            margin-top: 0;
+            margin-left: 0.3em;
         }
 
         .detail-value {
-            color: #e6f1ff;
+            color: #f8fafc;
             font-size: 0.9rem;
             font-weight: 500;
             text-align: right;
-            max-width: 200px;
-            word-break: break-all;
+            max-width: 210px;
+            word-break: break-word;
         }
 
         .modal-actions {
@@ -944,31 +1436,6 @@
             z-index: 10002;
         }
 
-        .modal-info {
-            position: absolute;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
-            border-radius: 25px;
-            color: white;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .modal-counter {
-            font-size: 0.9rem;
-            color: #00d4ff;
-            margin-bottom: 0.5rem;
-        }
-
-        .modal-filename {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
         @media (min-width: 769px) {
             /* Desktop styles - ensure navigation doesn't conflict with sidebar */
             .modal-prev {
@@ -998,8 +1465,8 @@
             }
 
             .images-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 1rem;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.45rem;
             }
 
             .modal-content {
@@ -1095,22 +1562,22 @@
 
         .sync-btn {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
+            bottom: 6px;
+            right: 6px;
             background: linear-gradient(135deg, #1cc88a, #36b9cc);
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.75rem;
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.68rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.2rem;
             transition: all 0.3s ease;
             z-index: 3;
-            box-shadow: 0 4px 8px rgba(28, 200, 138, 0.2);
+            box-shadow: 0 2px 6px rgba(28, 200, 138, 0.2);
         }
 
         .sync-btn:hover {
@@ -1142,7 +1609,7 @@
     <div class="container">
         <div class="header">
             <h1 class="main-title">Master Image Viewer<span class="label-zh">主图查看器</span></h1>
-            <p class="page-subtitle">Search and view all images for any SKU across all sources<span class="label-zh">搜索并查看任意 SKU 在所有来源中的图片</span></p>
+            <p class="page-subtitle">Search SKU images across all sources<span class="label-zh">搜索 SKU 全来源图片</span></p>
         </div>
 
         {% if customer_purchase_notice %}
@@ -1159,7 +1626,7 @@
                     type="text" 
                     class="search-input" 
                     id="skuInput" 
-                    placeholder="Enter SKU to search all image sources... / 输入 SKU 搜索所有图片来源…"
+                    placeholder="SKU search / 输入 SKU…"
                     autocomplete="off"
                     required
                 >
@@ -1170,6 +1637,13 @@
                         <span class="btn-label-zh">搜索图片</span>
                     </span>
                 </button>
+                <button type="button" class="search-btn" id="fetchThisSkuBtn" style="background: linear-gradient(135deg, #ea8c0c, #d97706);">
+                    <i class="fas fa-cloud-download-alt"></i>
+                    <span class="btn-label">
+                        <span class="btn-label-en">Fetch this SKU from China</span>
+                        <span class="btn-label-zh">从中国拉取此 SKU</span>
+                    </span>
+                </button>
                 <button type="button" class="search-btn" id="batchFetchBtn" style="background: linear-gradient(135deg, #f6ad55, #f8b500);">
                     <i class="fas fa-list"></i>
                     <span class="btn-label">
@@ -1177,37 +1651,22 @@
                         <span class="btn-label-zh">批量从中国拉取</span>
                     </span>
                 </button>
-                <button type="button" class="search-btn" id="batchHistoryBtn" style="background: #4b5563;">
-                    <i class="fas fa-history"></i>
+                {% if current_user and (current_user|lower) == 'yeti' %}
+                <a href="/master_image_viewer/chinadirectory" class="search-btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); text-decoration: none; display: inline-flex; align-items: center;">
+                    <i class="fas fa-folder-tree"></i>
                     <span class="btn-label">
-                        <span class="btn-label-en">Recent batches (3d)</span>
-                        <span class="btn-label-zh">近期批次（3天）</span>
+                        <span class="btn-label-en">China FTP Directory</span>
+                        <span class="btn-label-zh">中国 FTP 目录</span>
                     </span>
-                </button>
+                </a>
+                {% endif %}
             </form>
         </div>
 
         <div class="loading" id="loadingDiv" style="display: none;">
             <i class="fas fa-spinner"></i>
-            <p style="margin-top: 1rem;">Searching all image sources...<span class="label-zh">正在搜索所有图片来源…</span></p>
+            <p style="margin-top: 0.5rem; font-size: 0.85rem;">Searching…<span class="label-zh">搜索中…</span></p>
         </div>
-
-        <div id="batchJobBanner" style="display:none; margin-top: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.9rem 1rem;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap: 1rem;">
-                <div>
-                    <div id="batchJobBannerTitle" style="font-weight: 700; color: #111827;">Batch Status<span class="label-zh">批次状态</span></div>
-                    <div id="batchJobBannerMeta" class="miv-muted" style="font-size: 0.9rem; margin-top: 0.2rem;"></div>
-                </div>
-                <button id="batchJobOpenStatusBtn" type="button" class="search-btn" style="padding: 0.5rem 0.8rem; font-size: 0.85rem;">
-                    <i class="fas fa-chart-line"></i>
-                    <span class="btn-label">
-                        <span class="btn-label-en">View Details</span>
-                        <span class="btn-label-zh">查看详情</span>
-                    </span>
-                </button>
-            </div>
-        </div>
-
 
             <!-- TK Password Modal -->
             {% if not current_user and not session.tk_user %}
@@ -1225,6 +1684,20 @@
             <div id="resultsContainer"></div>
         </div>
     </div>
+
+    <!-- Left batch history sidebar -->
+    <aside id="mivBatchStatusDock" class="miv-batch-dock" aria-label="Recent batch jobs">
+        <div class="miv-batch-dock-inner">
+            <div class="miv-batch-history-head">
+                <p class="miv-batch-history-title">Recent Batches · 最近批次</p>
+                <button type="button" id="batchHistoryRefreshBtn" class="miv-batch-history-refresh" title="Refresh / 刷新">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div id="batchDockHistoryList" class="miv-batch-history-list"></div>
+            <p id="batchDockHistoryEmpty" class="miv-batch-history-empty" style="display:none;">No recent batches.<span class="label-zh">暂无最近批次。</span></p>
+        </div>
+    </aside>
 
     <!-- Floating selection sidebar (sticks while scrolling) -->
     <aside id="mivSelectionDock" class="miv-selection-dock" aria-hidden="true" aria-label="Selected images actions">
@@ -1280,8 +1753,12 @@
             
             <div class="modal-sidebar">
                 <div class="modal-header">
-                    <div class="modal-counter" id="modalCounter"></div>
+                    <div class="modal-header-top">
+                        <div class="modal-counter" id="modalCounter"></div>
+                        <div class="modal-category-pill" id="modalCategory"></div>
+                    </div>
                     <div class="modal-filename" id="modalFilename"></div>
+                    <div class="modal-filename-meta" id="modalFilenameMeta"></div>
                 </div>
                 
                 <div class="modal-details" id="modalDetails">
@@ -1361,41 +1838,6 @@
         </div>
     </div>
 
-    <!-- Batch job history (last 3 days) -->
-    <div id="batchHistoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10002; align-items: center; justify-content: center;">
-        <div class="miv-modal-panel" style="background: white; padding: 2rem; border-radius: 12px; max-width: 760px; width: 95%; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-                <h2 style="margin: 0; color: #111827;">China batch jobs<span class="label-zh">中国批量任务</span></h2>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <button type="button" id="batchHistoryRefreshBtn" class="search-btn" style="padding: 0.45rem 0.85rem; font-size: 0.85rem;">
-                        <i class="fas fa-sync-alt"></i>
-                        <span class="btn-label">
-                            <span class="btn-label-en">Refresh</span>
-                            <span class="btn-label-zh">刷新</span>
-                        </span>
-                    </button>
-                    <button type="button" id="batchHistoryCloseBtn" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #374151; line-height: 1;">&times;</button>
-                </div>
-            </div>
-            <p id="batchHistoryMeta" class="miv-muted" style="font-size: 0.85rem; margin: 0 0 1rem 0;"></p>
-            <div id="batchHistoryTableWrap" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: auto; max-height: 58vh;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-                    <thead style="background: #f9fafb;">
-                        <tr>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb; color: #111827;">Status<span class="label-zh">状态</span></th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Task<span class="label-zh">任务</span></th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Progress<span class="label-zh">进度</span></th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Summary<span class="label-zh">摘要</span></th>
-                            <th style="text-align:left; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Updated (local)<span class="label-zh">更新时间（本地）</span></th>
-                            <th style="text-align:right; padding: 0.55rem 0.75rem; border-bottom: 1px solid #e5e7eb;">Open<span class="label-zh">打开</span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="batchHistoryTbody"></tbody>
-                </table>
-            </div>
-            <p id="batchHistoryEmpty" class="miv-muted" style="display: none; padding: 1rem 0; margin: 0;">No batch jobs in the last 3 days.<span class="label-zh">近 3 天无批量任务。</span></p>
-        </div>
-    </div>
     <script>
         function bi(en, zh) {
             return en + ' <span class="label-zh">' + zh + '</span>';
@@ -1453,7 +1895,9 @@
         const modalPrev = document.getElementById('modalPrev');
         const modalNext = document.getElementById('modalNext');
         const modalCounter = document.getElementById('modalCounter');
+        const modalCategory = document.getElementById('modalCategory');
         const modalFilename = document.getElementById('modalFilename');
+        const modalFilenameMeta = document.getElementById('modalFilenameMeta');
 
         // Search form submission
         searchForm.addEventListener('submit', function(e) {
@@ -1511,26 +1955,207 @@
             }
         }
 
+        window.mivProductImageFilters = { path: '', created: '', size: '' };
+        window.mivLastDisplayedSku = '';
+
+        function mivEscapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        const MIV_RESULT_CATEGORIES = [
+            { key: 'dam_catalog', name: 'Catalog_Original Disk', nameZh: '目录原盘', icon: 'fas fa-server' },
+            { key: 'dam_dropbox', name: 'Dropbox Images', nameZh: 'Dropbox 图片', icon: 'fas fa-cloud' },
+            { key: 'dam_big_picture', name: 'Product Images (product_image)', nameZh: '产品图 (product_image)', icon: 'fas fa-images' },
+            { key: 'dam_other', name: 'Other Images', nameZh: '其他图片', icon: 'fas fa-image' }
+        ];
+
+        function mivFormatCreatedDate(createdAt) {
+            if (!createdAt) return 'Unknown';
+            return new Date(createdAt).toLocaleDateString();
+        }
+
+        function mivFormatSizeKey(image) {
+            const w = Number(image.width);
+            const h = Number(image.height);
+            if (!w || !h) return 'Unknown';
+            return '1  :  ' + (h / w).toFixed(1);
+        }
+
+        function mivParseRatioKey(key) {
+            if (key === 'Unknown') return 0;
+            const match = String(key).match(/1\s*:\s*([\d.]+)/);
+            return match ? parseFloat(match[1]) : 0;
+        }
+
+        function mivCompareRatioKeys(a, b) {
+            return mivParseRatioKey(a) - mivParseRatioKey(b);
+        }
+
+        function mivGetPathKey(image) {
+            return image.relative_path || 'Unknown';
+        }
+
+        function mivBuildProductImageFilterOptions(images) {
+            const paths = new Set();
+            const dates = new Set();
+            const sizes = new Set();
+            images.forEach(function(image) {
+                paths.add(mivGetPathKey(image));
+                dates.add(mivFormatCreatedDate(image.created_at));
+                sizes.add(mivFormatSizeKey(image));
+            });
+            return {
+                paths: Array.from(paths).sort(function(a, b) { return a.localeCompare(b); }),
+                dates: Array.from(dates).sort(function(a, b) { return new Date(a) - new Date(b); }),
+                sizes: Array.from(sizes).sort(mivCompareRatioKeys)
+            };
+        }
+
+        function mivFilterProductImages(images, filters) {
+            filters = filters || window.mivProductImageFilters || { path: '', created: '', size: '' };
+            return images.filter(function(image) {
+                if (filters.path && mivGetPathKey(image) !== filters.path) return false;
+                if (filters.created && mivFormatCreatedDate(image.created_at) !== filters.created) return false;
+                if (filters.size && mivFormatSizeKey(image) !== filters.size) return false;
+                return true;
+            });
+        }
+
+        function mivGetCategoryImages(categoryKey, data) {
+            const images = data[categoryKey] || [];
+            if (categoryKey === 'dam_big_picture') {
+                return mivFilterProductImages(images, window.mivProductImageFilters);
+            }
+            return images;
+        }
+
+        function mivBuildFilterSelect(id, label, values, selectedValue) {
+            let html = '<div class="miv-filter-field">';
+            html += '<label for="' + id + '">' + label + '</label>';
+            html += '<select id="' + id + '" class="miv-filter-select" data-miv-filter="1">';
+            html += '<option value="">All</option>';
+            values.forEach(function(value) {
+                html += '<option value="' + mivEscapeHtml(value) + '"' +
+                    (selectedValue === value ? ' selected' : '') + '>' +
+                    mivEscapeHtml(value) + '</option>';
+            });
+            html += '</select></div>';
+            return html;
+        }
+
+        function mivBuildProductImageFiltersHtml(categoryKey, allImages, filters) {
+            const options = mivBuildProductImageFilterOptions(allImages);
+            return '<div class="miv-product-filters" id="filters-' + categoryKey + '">' +
+                mivBuildFilterSelect('filter-path-' + categoryKey, 'Path', options.paths, filters.path) +
+                mivBuildFilterSelect('filter-created-' + categoryKey, 'Created', options.dates, filters.created) +
+                mivBuildFilterSelect('filter-size-' + categoryKey, 'Ratio', options.sizes, filters.size) +
+                '</div>';
+        }
+
+        function mivBuildImageCardHtml(image, globalImageIndex) {
+            const createdLabel = mivFormatCreatedDate(image.created_at);
+            const sizeLabel = mivFormatSizeKey(image);
+            return `
+                <div class="image-card" data-image-index="${globalImageIndex}">
+                    <div style="position:absolute;top:10px;left:10px;z-index:2;">
+                        <input type="checkbox" class="image-select-checkbox" data-image-index="${globalImageIndex}" style="transform:scale(1.3);" />
+                    </div>
+                    <div class="image-container" onclick="openModal(${globalImageIndex})">
+                        <img class="image-preview"
+                             src="${image.url}"
+                             loading="lazy"
+                             decoding="async"
+                             alt="${image.filename}"
+                             onload="console.log('Image loaded: ${image.filename}')"
+                             onerror="this.closest('.image-card').style.display='none';">
+                    </div>
+                    <div class="image-info" data-image-index="${globalImageIndex}">
+                        <div class="image-filename" title="${mivEscapeHtml(image.filename)}">${image.filename}${image.is_canonical ? '<span class="image-filename-canonical">CANONICAL</span>' : ''} <span class="image-filename-version">v${image.version}</span></div>
+                        <div class="image-details">
+                            <div class="image-detail-row">
+                                <span class="image-detail-label">Source</span>
+                                <span class="image-detail-value" title="${mivEscapeHtml(image.source || '—')}">${image.source || '—'}</span>
+                            </div>
+                            ${!window.mivHidePath && image.relative_path ? `
+                            <div class="image-detail-row">
+                                <span class="image-detail-label">Path</span>
+                                <span class="image-detail-value" title="${mivEscapeHtml(image.relative_path)}">${image.relative_path}</span>
+                            </div>` : ''}
+                            <div class="image-detail-row">
+                                <span class="image-detail-label">Ratio</span>
+                                <span class="image-detail-value" title="${mivEscapeHtml(sizeLabel)}">${sizeLabel}</span>
+                            </div>
+                            <div class="image-detail-row">
+                                <span class="image-detail-label">Created</span>
+                                <span class="image-detail-value" title="${mivEscapeHtml(createdLabel)}">${createdLabel}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function mivBuildImagesGridHtml(images, startIndex) {
+            if (!images.length) {
+                return {
+                    html: '<div class="empty-category">No images match the selected filters.</div>',
+                    nextIndex: startIndex
+                };
+            }
+            let html = '<div class="images-grid">';
+            let index = startIndex;
+            images.forEach(function(image) {
+                html += mivBuildImageCardHtml(image, index);
+                index++;
+            });
+            html += '</div>';
+            return { html: html, nextIndex: index };
+        }
+
+        function mivCategoryCountLabel(categoryKey, allCount, visibleCount) {
+            if (categoryKey === 'dam_big_picture' && visibleCount !== allCount) {
+                return visibleCount + ' / ' + allCount;
+            }
+            return String(visibleCount);
+        }
+
+        function applyProductImageFilters() {
+            if (!window.mivLastSearchData) return;
+            window.mivProductImageFilters = {
+                path: (document.getElementById('filter-path-dam_big_picture') || {}).value || '',
+                created: (document.getElementById('filter-created-dam_big_picture') || {}).value || '',
+                size: (document.getElementById('filter-size-dam_big_picture') || {}).value || ''
+            };
+            displayResults(window.mivLastSearchData);
+        }
+
         function displayResults(data) {
             console.log('displayResults called with data:', data);
-            
+
+            window.mivLastSearchData = data;
+            if (!window.mivProductImageFilters) {
+                window.mivProductImageFilters = { path: '', created: '', size: '' };
+            }
+            if (window.mivLastDisplayedSku !== data.sku) {
+                window.mivProductImageFilters = { path: '', created: '', size: '' };
+                window.mivLastDisplayedSku = data.sku;
+            }
+
             // Prepare all images array for modal navigation
             allImages = [];
             selectedImages.clear();
             updateSelectionUI();
-            
-            const categories = [
-                { key: 'dam_catalog', name: 'Catalog_Original Disk', nameZh: '目录原盘', icon: 'fas fa-server' },
-                { key: 'dam_dropbox', name: 'Dropbox Images', nameZh: 'Dropbox 图片', icon: 'fas fa-cloud' },
-                { key: 'dam_big_picture', name: 'Product Images (product_image)', nameZh: '产品图 (product_image)', icon: 'fas fa-images' },
-                { key: 'dam_other', name: 'Other Images', nameZh: '其他图片', icon: 'fas fa-image' },
-                { key: 'china_ftp', name: 'China FTP', nameZh: '中国 FTP', icon: 'fas fa-globe' }
-            ];
 
-            // Build allImages array
-            categories.forEach(category => {
-                const images = data[category.key] || [];
-                images.forEach(image => {
+            const categories = MIV_RESULT_CATEGORIES;
+
+            // Build allImages array (respect Product Images filters)
+            categories.forEach(function(category) {
+                const images = mivGetCategoryImages(category.key, data);
+                images.forEach(function(image) {
                     allImages.push({
                         ...image,
                         category: category.name,
@@ -1541,86 +2166,69 @@
 
             // Update results header
             resultsHeader.innerHTML = `
-                <h2 style="color: #00d4ff; margin-bottom: 0.5rem;">
-                    <i class="fas fa-search"></i> ${bi('Results for SKU:', 'SKU 搜索结果:')} ${data.sku}
-                </h2>
-                <p style="color: #c5d4e8;">
-                    ${bi('Found', '共找到')} <strong style="color: #1cc88a;">${data.total_count}</strong> ${bi('images across all sources', '张图片（所有来源）')}
-                </p>
+                <div class="miv-results-bar">
+                    <span class="miv-results-sku">${data.sku}</span>
+                    <div class="miv-results-meta">
+                        <span class="miv-results-count">${data.total_count}</span>
+                        <span>${bi('images', '张图片')}</span>
+                        <span class="miv-muted" style="color:#8892b0;">· ${bi('all sources', '所有来源')}</span>
+                    </div>
+                </div>
             `;
 
             // Generate results HTML
             let resultsHtml = '';
             let globalImageIndex = 0;
-            
-            categories.forEach(category => {
-                const images = data[category.key] || [];
+
+            categories.forEach(function(category) {
+                const allInCategory = data[category.key] || [];
+                const images = mivGetCategoryImages(category.key, data);
                 console.log(`Category ${category.key}: ${images.length} images`);
-                
+
                 resultsHtml += `
-                    <div class="category-section">
+                    <div class="category-section" id="category-section-${category.key}">
                         <div class="category-title" onclick="toggleCategory('${category.key}')">
                             <div class="category-header">
                                 <i class="fas fa-chevron-down category-toggle" id="toggle-${category.key}"></i>
                                 <i class="${category.icon}"></i>
                                 <span class="category-name">${category.name}<span class="label-zh">${category.nameZh}</span></span>
                             </div>
-                            <span class="category-count">${images.length}</span>
+                            <span class="category-count">${mivCategoryCountLabel(category.key, allInCategory.length, images.length)}</span>
                         </div>
                         <div class="category-content" id="content-${category.key}">
                 `;
 
-                            if (images.length === 0) {
-                                if (category.key === 'china_ftp') {
-                                    resultsHtml += '<div class="empty-category"><button class="fetch-btn" onclick="fetchChinaFtp()">' + bi('Fetch China FTP Images', '拉取中国 FTP 图片') + '</button></div>';
-                                } else {
-                                    resultsHtml += '<div class="empty-category">' + bi('No images found in this category', '此类别暂无图片') + '</div>';
-                                }
-                            } else {
-                                resultsHtml += '<div class="images-grid">';
-                                images.forEach((image, index) => {
-                                    const showSyncBtn = category.key === 'china_ftp';
-                                    console.log(`Image ${image.filename}: category=${category.key}, showSync=${showSyncBtn}`);
-                                    resultsHtml += `
-                                        <div class="image-card" data-image-index="${globalImageIndex}">
-                                            <div style="position:absolute;top:10px;left:10px;z-index:2;">
-                                                <input type="checkbox" class="image-select-checkbox" data-image-index="${globalImageIndex}" style="transform:scale(1.3);" />
-                                            </div>
-                                            <div class="image-container" onclick="openModal(${globalImageIndex})">
-                                                <img class="image-preview" 
-                                                     src="${image.url}" 
-                                                       loading="lazy"
-                                                       decoding="async"
-                                                     alt="${image.filename}"
-                                                     onload="console.log('Image loaded: ${image.filename}')"
-                                                     onerror="this.closest('.image-card').style.display='none';">
-                                            </div>
-                                            <div class="image-info" data-image-index="${globalImageIndex}">
-                                                <div class="image-filename">${image.filename} 
-                                                    ${image.is_canonical ? '<span style="color: #1cc88a; font-weight: bold;">[CANONICAL]</span>' : ''}
-                                                    <span style="color: #b8c5d6; font-size: 0.8em;">(v${image.version})</span>
-                                                </div>
-                                                <div class="image-details">
-                                                    ${bi('Source:', '来源:')} ${image.source}<br>
-                                                    ${!window.mivHidePath && image.relative_path ? bi('Path:', '路径:') + ' ' + image.relative_path + '<br>' : ''}
-                                                    ${bi('Dimensions:', '尺寸:')} ${image.width || '?'} × ${image.height || '?'}<br>
-                                                    ${bi('Created:', '创建:')} ${image.created_at ? new Date(image.created_at).toLocaleDateString() : bi('Unknown', '未知')}
-                                                </div>
-                                            </div>
-                                            ${showSyncBtn ? `
-                                                <button class="sync-btn" data-filename="${image.filename}" data-image-url="${image.url}" title="Sync to Product Images / 同步到产品图" style="position:absolute;bottom:10px;right:10px;z-index:10;background:#1cc88a;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.75rem;cursor:pointer;">
-                                                    <i class="fas fa-sync-alt"></i> ${bi('Sync', '同步')}
-                                                </button>
-                                            ` : ''}
-                                        </div>
-                                    `;
-                                            // ...existing code...
-                                    globalImageIndex++;
-                                });
-                                resultsHtml += '</div>';
-                                    // ...existing code...
+                if (category.key === 'dam_big_picture' && allInCategory.length > 0) {
+                    resultsHtml += mivBuildProductImageFiltersHtml(
+                        category.key,
+                        allInCategory,
+                        window.mivProductImageFilters
+                    );
+                }
+
+                if (allInCategory.length === 0) {
+                    resultsHtml += '<div class="empty-category">' + bi('No images found in this category', '此类别暂无图片') + '</div>';
+                } else {
+                    const gridResult = mivBuildImagesGridHtml(images, globalImageIndex);
+                    resultsHtml += gridResult.html;
+                    globalImageIndex = gridResult.nextIndex;
+                }
+
+                resultsHtml += '</div></div>';
+            });
+
+            resultsContainer.innerHTML = resultsHtml;
+            resultsSection.style.display = 'block';
+            setTimeout(restoreCategoryStates, 100);
+        }
+
         // Attach global event listeners ONCE to prevent duplicate backend calls
         if (!window._imageViewerListenersAttached) {
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.classList && e.target.classList.contains('miv-filter-select')) {
+                    applyProductImageFilters();
+                }
+            });
             // Make clicking .image-info toggle selection
             document.addEventListener('click', function(e) {
                 if (e.target.classList.contains('image-info') || e.target.closest('.image-info')) {
@@ -1827,16 +2435,41 @@
 
             window._imageViewerListenersAttached = true;
         }
-                            }
-                        resultsHtml += '</div>'; // Close category-content
-                        resultsHtml += '</div>'; // Close category-section
-            });
 
-            resultsContainer.innerHTML = resultsHtml;
-            resultsSection.style.display = 'block';
-            
-            // Restore previous collapse states
-            setTimeout(restoreCategoryStates, 100);
+        function categoryLabelForModal(image) {
+            const labels = {
+                dam_big_picture: 'Product Images · 产品图',
+                dam_dropbox: 'Dropbox · Dropbox',
+                dam_catalog: 'Catalog · 目录原盘',
+                dam_other: 'Other · 其他',
+                china_ftp: 'China FTP · 中国 FTP'
+            };
+            if (image.categoryKey && labels[image.categoryKey]) {
+                return labels[image.categoryKey];
+            }
+            return image.category || 'Unknown';
+        }
+
+        function updateModalHeader(image, imageIndex) {
+            if (modalCounter) {
+                modalCounter.innerHTML =
+                    '<span class="modal-counter-num">' + (imageIndex + 1) + '</span>' +
+                    '<span class="modal-counter-of"> of </span>' +
+                    '<span class="modal-counter-total">' + allImages.length + '</span>';
+            }
+            if (modalCategory) {
+                modalCategory.textContent = categoryLabelForModal(image);
+            }
+            if (modalFilename) {
+                modalFilename.textContent = image.filename || '';
+            }
+            if (modalFilenameMeta) {
+                let metaHtml = 'v' + (image.version != null ? image.version : '?');
+                if (image.is_canonical) {
+                    metaHtml = '<span class="canonical-badge">CANONICAL · 标准图</span> · ' + metaHtml;
+                }
+                modalFilenameMeta.innerHTML = metaHtml;
+            }
         }
 
         function openModal(imageIndex) {
@@ -1846,8 +2479,7 @@
             const image = allImages[imageIndex];
             
             modalImage.src = image.full_url;
-            modalCounter.textContent = `${imageIndex + 1} of ${allImages.length}`;
-            modalFilename.textContent = `${image.category}: ${image.filename} ${image.is_canonical ? '[CANONICAL]' : ''} (v${image.version})`;
+            updateModalHeader(image, imageIndex);
             
             // Populate detailed sidebar
             populateModalDetails(image);
@@ -1893,7 +2525,7 @@
                         <span class="detail-label">SKU:</span>
                         <span class="detail-value">${image.sku}</span>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item-stacked">
                         <span class="detail-label">${bi('Filename:', '文件名:')}</span>
                         <span class="detail-value">${image.filename}</span>
                     </div>
@@ -2073,8 +2705,7 @@
                 
                 // Update image and sidebar content
                 modalImage.src = image.full_url;
-                modalCounter.textContent = `${newIndex + 1} of ${allImages.length}`;
-                modalFilename.textContent = `${image.category}: ${image.filename} ${image.is_canonical ? '[CANONICAL]' : ''} (v${image.version})`;
+                updateModalHeader(image, newIndex);
                 
                 // Update sidebar details
                 populateModalDetails(image);
@@ -2232,42 +2863,41 @@
             }, 1000);  // Poll every second
         }
 
-        async function fetchChinaFtp() {
-            const btn = event.target;
+        async function fetchThisSku() {
+            const btn = document.getElementById('fetchThisSkuBtn');
+            if (!btn) return;
+
+            const sku = (currentSku || skuInput.value.trim().toUpperCase());
+            if (!sku) {
+                alert(bi('Enter or search for a SKU first.', '请先输入或搜索 SKU。'));
+                return;
+            }
+            currentSku = sku;
+
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + bi('Starting background task...', '正在启动后台任务…');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + bi('Starting…', '启动中…');
             btn.disabled = true;
 
             try {
-                // Start background task on backend
-                const response = await fetch(`/api/fetch_china_ftp_async?sku=${encodeURIComponent(currentSku)}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-
-                if (data.error) {
-                    alert('Error starting background fetch: ' + data.error);
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    return;
+                if (typeof window.startBatchFetchForSkus === 'function') {
+                    await window.startBatchFetchForSkus([sku], { openModal: true });
+                } else {
+                    alert(bi('Batch fetch is not ready — please refresh the page.', '批量拉取未就绪 — 请刷新页面。'));
                 }
-
-                backgroundTaskId = data.task_id;
-                
-                // Show notification and start polling
-                showBackgroundNotification(backgroundTaskId);
-                pollTaskStatus(backgroundTaskId);
-                
-                // Reset button
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-
             } catch (error) {
-                alert('Failed to initiate background fetch: ' + error.message);
+                alert(bi('Failed to start fetch: ', '启动拉取失败：') + error.message);
+            } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         }
+
+        const fetchThisSkuBtn = document.getElementById('fetchThisSkuBtn');
+        if (fetchThisSkuBtn) {
+            fetchThisSkuBtn.addEventListener('click', fetchThisSku);
+        }
+
+        window.fetchThisSku = fetchThisSku;
 
         function showError(message) {
             resultsContainer.innerHTML = `
@@ -2309,6 +2939,12 @@
             searchImages(initialSku);
         }
         {% endif %}
+
+        window.mivRefreshSearchResults = function () {
+            if (currentSku && resultsSection.style.display !== 'none') {
+                searchImages(currentSku);
+            }
+        };
     </script>
 <script>
 let batchTaskId = null;
@@ -2322,10 +2958,6 @@ const batchFetchSubmitBtnEl = document.getElementById('batchFetchSubmitBtn');
 const batchStatusCloseBtnEl = document.getElementById('batchStatusCloseBtn');
 const batchFetchModalEl = document.getElementById('batchFetchModal');
 const batchStatusModalEl = document.getElementById('batchStatusModal');
-const batchJobBannerEl = document.getElementById('batchJobBanner');
-const batchJobBannerTitleEl = document.getElementById('batchJobBannerTitle');
-const batchJobBannerMetaEl = document.getElementById('batchJobBannerMeta');
-const batchJobOpenStatusBtnEl = document.getElementById('batchJobOpenStatusBtn');
 
 function isRunningStatus(statusValue) {
     return statusValue === 'running' || statusValue === 'fetching' || statusValue === 'syncing';
@@ -2474,42 +3106,6 @@ function getResultStyle(statusValue) {
     return { color: '#f8b500', icon: 'spinner fa-spin' };
 }
 
-function renderBatchBanner(status) {
-    if (!batchJobBannerEl || !status || status.status === 'none') {
-        if (batchJobBannerEl) {
-            batchJobBannerEl.style.display = 'none';
-        }
-        return;
-    }
-
-    const totalStyles = Number(status.total || 0);
-    const completedStyles = Number(status.completed || 0);
-    const active = isBatchActivelyRunning(status);
-
-    const currentStyle = status.current_style || {};
-    const currentStyleLabel = currentStyle.sku
-        ? ` | Last style shown: ${currentStyle.sku} (${status.current_index || 0}/${totalStyles || '?'})`
-        : '';
-
-    if (status.interrupted === true) {
-        batchJobBannerTitleEl.innerHTML = bi(`Batch interrupted — not running (${completedStyles}/${totalStyles} styles in snapshot)`, `批次已中断 — 未在运行（快照 ${completedStyles}/${totalStyles} 款）`);
-        batchJobBannerMetaEl.innerHTML =
-            bi(`Saved at ${formatTimeStamp(status.updated_at || status.saved_at)} — start a new batch to continue.`, `保存于 ${formatTimeStamp(status.updated_at || status.saved_at)} — 请开始新批次以继续。`) + ` Task ${status.task_id || ''}${currentStyleLabel}`;
-    } else if (status.status === 'error') {
-        batchJobBannerTitleEl.innerHTML = bi(`Last batch failed (${completedStyles}/${totalStyles} styles)`, `上次批次失败（${completedStyles}/${totalStyles} 款）`);
-        batchJobBannerMetaEl.textContent = `${status.error || 'Error / 错误'} | Task ${status.task_id || ''}`;
-    } else if (active) {
-        const curSku = currentStyle.sku ? ` | ${bi('Current:', '当前:')} ${currentStyle.sku}` : '';
-        batchJobBannerTitleEl.innerHTML = bi(`Batch running (${completedStyles}/${totalStyles} styles)`, `批次运行中（${completedStyles}/${totalStyles} 款）`);
-        batchJobBannerMetaEl.textContent = `Task ${status.task_id || ''}${curSku}`;
-    } else {
-        batchJobBannerTitleEl.innerHTML = bi(`Last batch: ${completedStyles}/${totalStyles} styles completed`, `上次批次：已完成 ${completedStyles}/${totalStyles} 款`);
-        batchJobBannerMetaEl.innerHTML = bi('Finished:', '完成:') + ' ' + formatTimeStamp(status.finished_at || status.updated_at) + ` | Task ${status.task_id || ''}`;
-    }
-
-    batchJobBannerEl.style.display = 'block';
-}
-
 function renderCurrentStyle(status) {
     const currentStyleLabelEl = document.getElementById('currentStyleLabel');
     const currentStyleDetailsEl = document.getElementById('currentStyleDetails');
@@ -2538,30 +3134,99 @@ function renderCurrentStyle(status) {
         const synced = Number(currentStyle.synced || 0);
         const failed = Number(currentStyle.failed || 0);
         const alreadySynced = Number(currentStyle.already_synced || 0);
-        const currentFilename = currentStyle.current_filename ? ` | File: ${currentStyle.current_filename}` : '';
+        const syncPhase = (currentStyle.sync_phase || '').toLowerCase();
+        const fileName = currentStyle.current_filename || '';
 
         currentStyleLabelEl.innerHTML = `${bi('Current Style', '当前款式')} ${currentStyleIndex}/${totalStyles}: ${currentStyle.sku} (${styleStatus})`;
-        currentStyleDetailsEl.innerHTML = bi('Image progress', '图片进度') + ` ${imageStep}/${imageTotal} | ` + bi('Synced', '已同步') + ` ${synced} | ` + bi('Failed', '失败') + ` ${failed} | ` + bi('Already', '已存在') + ` ${alreadySynced}${currentFilename}`;
+        if (syncPhase === 'downloading' && fileName) {
+            const elapsed = Number(currentStyle.download_elapsed_sec || 0);
+            const elapsedLabel = elapsed > 0 ? ` (${elapsed}s)` : '';
+            const inFlight = Number(currentStyle.download_in_flight || 0);
+            const workers = Number(currentStyle.download_workers || 0);
+            const parallelLabel = inFlight > 1
+                ? ` · ${inFlight} parallel`
+                : (workers > 1 ? ` · up to ${workers} workers` : '');
+            currentStyleDetailsEl.innerHTML =
+                bi('Downloading', '下载中') + ` ${imageStep}/${imageTotal}: ${fileName}${elapsedLabel}${parallelLabel} | ` +
+                bi('Synced', '已同步') + ` ${synced} | ` + bi('Failed', '失败') + ` ${failed} | ` +
+                bi('Already', '已存在') + ` ${alreadySynced}`;
+        } else {
+            const currentFilename = fileName ? ` | File: ${fileName}` : '';
+            currentStyleDetailsEl.innerHTML = bi('Image progress', '图片进度') + ` ${imageStep}/${imageTotal} | ` + bi('Synced', '已同步') + ` ${synced} | ` + bi('Failed', '失败') + ` ${failed} | ` + bi('Already', '已存在') + ` ${alreadySynced}${currentFilename}`;
+        }
     }
 
     const lastUpdate = status.updated_at || status.finished_at;
     batchLastUpdatedEl.innerHTML = lastUpdate ? bi('Last update:', '最后更新:') + ' ' + formatTimeStamp(lastUpdate) : '';
 }
 
+function renderBatchLiveLog(status) {
+    const log = Array.isArray(status.live_log) ? status.live_log : [];
+    if (log.length === 0) {
+        return '';
+    }
+    const lines = log.slice(-100).map(function (entry) {
+        const tsRaw = entry.ts || '';
+        let tsShort = tsRaw;
+        if (tsRaw) {
+            const d = new Date(tsRaw.replace('Z', '+00:00'));
+            if (!isNaN(d.getTime())) {
+                tsShort = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+        }
+        const level = (entry.level || 'info').toLowerCase();
+        const color = level === 'error' ? '#b91c1c' : (level === 'warn' ? '#b45309' : '#1f2937');
+        return (
+            '<div style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; color: ' + color + '; padding: 0.2rem 0; border-bottom: 1px solid #f3f4f6; line-height: 1.35;">' +
+            '<span style="color:#9ca3af; margin-right: 0.45rem;">' + escapeHtmlBatch(tsShort) + '</span>' +
+            escapeHtmlBatch(entry.message || '') +
+            '</div>'
+        );
+    }).join('');
+    return (
+        '<div class="batch-live-log" style="margin-bottom: 0.75rem;">' +
+        '<div style="font-weight: 700; font-size: 0.85rem; color: #111827; margin-bottom: 0.35rem;">' +
+        bi('Live log', '实时日志') +
+        '</div>' +
+        '<div id="batchLiveLogLines">' + lines + '</div>' +
+        '</div>'
+    );
+}
+
+function scrollBatchResultsToBottom() {
+    const panel = document.getElementById('batchResultsList');
+    if (!panel || !panel.parentElement) return;
+    panel.parentElement.scrollTop = panel.parentElement.scrollHeight;
+}
+
 function renderBatchResults(status) {
     const results = Array.isArray(status.results) ? status.results : [];
     const resultsContainer = document.getElementById('batchResultsList');
+    if (!resultsContainer) return;
+    const isActive = isBatchActivelyRunning(status);
+    const liveLogHtml = renderBatchLiveLog(status);
 
     if (results.length === 0) {
+        if (isActive && liveLogHtml) {
+            resultsContainer.innerHTML = liveLogHtml;
+            scrollBatchResultsToBottom();
+            return;
+        }
         if (status.interrupted === true) {
             resultsContainer.innerHTML =
-                '<div style="color:#b45309;">' + bi('No per-style results in this snapshot — the batch stopped before completing (for example after a restart).', '此快照无逐款结果 — 批次在完成前停止（例如重启后）。') + '</div>';
+                '<div style="color:#b45309;">' + bi('No per-style results in this snapshot — the batch stopped before completing (for example after a restart).', '此快照无逐款结果 — 批次在完成前停止（例如重启后）。') + '</div>' +
+                liveLogHtml;
         } else if (status.status === 'error') {
             resultsContainer.innerHTML =
-                '<div style="color:#b91c1c;">' + bi('Batch failed before any style finished, or results were not recorded.', '批次在任一款完成前失败，或未记录结果。') + '</div>';
+                '<div style="color:#b91c1c;">' + bi('Batch failed before any style finished, or results were not recorded.', '批次在任一款完成前失败，或未记录结果。') + '</div>' +
+                liveLogHtml;
         } else {
-            resultsContainer.innerHTML = '<div class="miv-muted" style="color:#374151;">' + bi('No style result yet. Waiting for first style...', '尚无款式结果，等待第一款…') + '</div>';
+            resultsContainer.innerHTML =
+                '<div class="miv-muted" style="color:#374151; margin-bottom: 0.5rem;">' +
+                bi('No style result yet. Waiting for first style…', '尚无款式结果，等待第一款…') +
+                '</div>' + liveLogHtml;
         }
+        scrollBatchResultsToBottom();
         return;
     }
 
@@ -2591,7 +3256,10 @@ function renderBatchResults(status) {
         `;
     }).join('');
 
-    resultsContainer.innerHTML = html;
+    resultsContainer.innerHTML = (isActive ? liveLogHtml : '') + html;
+    if (isActive) {
+        scrollBatchResultsToBottom();
+    }
 }
 
 function updateBatchProgress(status) {
@@ -2602,22 +3270,29 @@ function updateBatchProgress(status) {
     const progressPercent = totalStyles > 0 ? (completedStyles / totalStyles) * 100 : 0;
 
     const bar = document.getElementById('progressBar');
-    bar.style.width = `${progressPercent}%`;
-    if (status.interrupted === true) {
-        bar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
-    } else if (status.status === 'error') {
-        bar.style.background = 'linear-gradient(90deg, #ef4444, #b91c1c)';
-    } else {
-        bar.style.background = 'linear-gradient(90deg, #f6ad55, #f8b500)';
+    if (bar) {
+        bar.style.width = `${progressPercent}%`;
+        if (status.interrupted === true) {
+            bar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+        } else if (status.status === 'error') {
+            bar.style.background = 'linear-gradient(90deg, #ef4444, #b91c1c)';
+        } else {
+            bar.style.background = 'linear-gradient(90deg, #f6ad55, #f8b500)';
+        }
     }
 
-    document.getElementById('progressCount').textContent = `${completedStyles}/${totalStyles}`;
+    const progressCountEl = document.getElementById('progressCount');
+    if (progressCountEl) {
+        progressCountEl.textContent = `${completedStyles}/${totalStyles}`;
+    }
 
     applyBatchOutcomeBanner(status);
     renderCurrentStyle(status);
     renderBatchResults(status);
-    renderBatchBanner(status);
     updateBatchRerunUi(status);
+    if (window.__batchHistoryTasks && window.__batchHistoryTasks.length) {
+        renderBatchDockHistory(window.__batchHistoryTasks);
+    }
 }
 
 /**
@@ -2759,13 +3434,14 @@ async function pollBatchTaskStatusOnce() {
         status.task_id = status.task_id || batchTaskId;
         updateBatchProgress(status);
 
-        if (
-            wasRunning &&
-            !isBatchActivelyRunning(status) &&
-            status.status === 'completed' &&
-            status.interrupted !== true
-        ) {
-            maybeDesktopNotifyBatchComplete(status);
+        if (wasRunning && !isBatchActivelyRunning(status)) {
+            if (status.status === 'completed' && status.interrupted !== true) {
+                maybeDesktopNotifyBatchComplete(status);
+                if (typeof window.mivRefreshSearchResults === 'function') {
+                    window.mivRefreshSearchResults();
+                }
+            }
+            refreshBatchHistory();
         }
 
         previousBatchWorkerRunning = isBatchActivelyRunning(status);
@@ -2795,6 +3471,77 @@ function startBatchPolling(taskId) {
     batchTaskInterval = setInterval(pollBatchTaskStatusOnce, 1000);
 }
 
+async function startBatchFetchForSkus(skus, options) {
+    options = options || {};
+    const skuList = (Array.isArray(skus) ? skus : [])
+        .map(function (s) { return String(s || '').trim().toUpperCase(); })
+        .filter(Boolean);
+    if (skuList.length === 0) {
+        alert('No valid SKUs found / 未找到有效 SKU');
+        return null;
+    }
+
+    if (
+        options.requestNotification !== false &&
+        typeof Notification !== 'undefined' &&
+        Notification.permission === 'default'
+    ) {
+        try {
+            Notification.requestPermission();
+        } catch (e) {
+            /* ignore */
+        }
+    }
+
+    if (options.closeFetchModal) {
+        closeBatchFetchModal();
+    }
+
+    const outcomeEl = document.getElementById('batchStatusOutcome');
+    if (outcomeEl && options.clearOutcome !== false) {
+        outcomeEl.style.display = 'none';
+        outcomeEl.textContent = '';
+    }
+
+    if (options.openModal !== false) {
+        openBatchStatusModal();
+    }
+
+    try {
+        const response = await fetch('/api/batch_fetch_china_ftp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skus: skuList })
+        });
+
+        const { ok, data } = await readBatchFetchResponse(response);
+        if (!ok) {
+            showBatchStartError(data);
+            if (options.openModal !== false) {
+                closeBatchStatusModal();
+            }
+            return null;
+        }
+
+        if (data.skipped && data.skipped.length) {
+            showBatchSkippedPrefilter(data.skipped);
+        }
+
+        batchTaskStartTime = Date.now();
+        startBatchPolling(data.task_id);
+        refreshBatchHistory();
+        return data;
+    } catch (error) {
+        alert(bi('Failed to start batch fetch: ', '启动批量拉取失败：') + error.message);
+        if (options.openModal !== false) {
+            closeBatchStatusModal();
+        }
+        return null;
+    }
+}
+
+window.startBatchFetchForSkus = startBatchFetchForSkus;
+
 async function submitBatchFetch() {
     const inputEl = document.getElementById('skuListInput');
     const inputValue = (inputEl && inputEl.value ? inputEl.value : '').trim();
@@ -2810,46 +3557,7 @@ async function submitBatchFetch() {
         return;
     }
 
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        try {
-            Notification.requestPermission();
-        } catch (e) {
-            /* ignore */
-        }
-    }
-
-    closeBatchFetchModal();
-    const outcomeEl = document.getElementById('batchStatusOutcome');
-    if (outcomeEl) {
-        outcomeEl.style.display = 'none';
-        outcomeEl.textContent = '';
-    }
-    openBatchStatusModal();
-
-    try {
-        const response = await fetch('/api/batch_fetch_china_ftp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ skus: skus })
-        });
-
-        const { ok, data } = await readBatchFetchResponse(response);
-        if (!ok) {
-            showBatchStartError(data);
-            closeBatchStatusModal();
-            return;
-        }
-
-        if (data.skipped && data.skipped.length) {
-            showBatchSkippedPrefilter(data.skipped);
-        }
-
-        batchTaskStartTime = Date.now();
-        startBatchPolling(data.task_id);
-    } catch (error) {
-        alert(bi('Failed to start batch fetch: ', '启动批量拉取失败：') + error.message);
-        closeBatchStatusModal();
-    }
+    await startBatchFetchForSkus(skus, { closeFetchModal: true, openModal: true });
 }
 
 async function rerunInterruptedBatch() {
@@ -2859,42 +3567,20 @@ async function rerunInterruptedBatch() {
         return;
     }
 
-    openBatchStatusModal();
-
-    try {
-        const response = await fetch('/api/batch_fetch_china_ftp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ skus: skus })
-        });
-
-        const { ok, data } = await readBatchFetchResponse(response);
-        if (!ok) {
-            showBatchStartError(data);
-            closeBatchStatusModal();
-            return;
-        }
-
-        if (data.skipped && data.skipped.length) {
-            showBatchSkippedPrefilter(data.skipped);
-        }
-
-        batchTaskStartTime = Date.now();
-        startBatchPolling(data.task_id);
-    } catch (error) {
-        alert(bi('Failed to start batch fetch: ', '启动批量拉取失败：') + error.message);
-        closeBatchStatusModal();
-    }
+    await startBatchFetchForSkus(skus, { openModal: true });
 }
 
 async function restoreLatestBatchStatus() {
     try {
         const response = await fetch('/api/batch_fetch_latest');
-        if (!response.ok) return;
+        if (!response.ok) {
+            await refreshBatchHistory();
+            return;
+        }
 
         const latest = await response.json();
         if (!latest || latest.status === 'none') {
-            renderBatchBanner(null);
+            await refreshBatchHistory();
             return;
         }
 
@@ -2910,8 +3596,11 @@ async function restoreLatestBatchStatus() {
             clearInterval(batchTaskInterval);
             batchTaskInterval = null;
         }
+
+        await refreshBatchHistory();
     } catch (error) {
         console.error('Failed to restore latest batch status:', error);
+        await refreshBatchHistory();
     }
 }
 
@@ -2939,117 +3628,91 @@ function batchHistoryStatusPill(t) {
     return { text: String(t.status || '—'), fg: '#374151', bg: '#f3f4f6' };
 }
 
-function renderBatchHistoryTable(tasks) {
-    const tbody = document.getElementById('batchHistoryTbody');
-    const emptyEl = document.getElementById('batchHistoryEmpty');
-    const wrap = document.getElementById('batchHistoryTableWrap');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+function batchHistoryCompletionLine(t) {
+    const completed = t.completed != null ? t.completed : '?';
+    const total = t.total != null ? t.total : '?';
+    if (t.interrupted) {
+        return bi(completed + '/' + total + ' · interrupted', completed + '/' + total + ' · 已中断');
+    }
+    if (t.status === 'error') {
+        return bi(completed + '/' + total + ' · failed', completed + '/' + total + ' · 失败');
+    }
+    if (t.is_running && !t.interrupted) {
+        return bi(completed + '/' + total + ' · running', completed + '/' + total + ' · 运行中');
+    }
+    if (t.status === 'completed') {
+        return bi(completed + '/' + total + ' · completed', completed + '/' + total + ' · 已完成');
+    }
+    return completed + '/' + total;
+}
+
+function renderBatchDockHistory(tasks) {
+    const listEl = document.getElementById('batchDockHistoryList');
+    const emptyEl = document.getElementById('batchDockHistoryEmpty');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
     if (!tasks || tasks.length === 0) {
         if (emptyEl) emptyEl.style.display = 'block';
-        if (wrap) wrap.style.display = 'none';
         return;
     }
     if (emptyEl) emptyEl.style.display = 'none';
-    if (wrap) wrap.style.display = 'block';
 
     tasks.forEach(function (t) {
         const pill = batchHistoryStatusPill(t);
         const summ = t.summary || {};
-        var prog =
-            (t.completed != null ? t.completed : '?') + '/' + (t.total != null ? t.total : '?');
-        var sumLine =
-            'sync ' +
-            (summ.synced != null ? summ.synced : '-') +
-            ' / fail ' +
-            (summ.failed != null ? summ.failed : '-') +
-            ' / have ' +
-            (summ.already_synced != null ? summ.already_synced : '-');
-        var ts = t.updated_at || t.finished_at || t.started_at || '';
-        var errHtml = '';
-        if (t.error) {
-            errHtml =
-                '<div style="color:#b91c1c;margin-top:0.25rem;">' +
-                escapeHtmlBatch(String(t.error).slice(0, 160)) +
-                '</div>';
+        const styleText = t.style_label ? escapeHtmlBatch(t.style_label) : '—';
+        const sumLine =
+            'sync ' + (summ.synced != null ? summ.synced : '-') +
+            ' · fail ' + (summ.failed != null ? summ.failed : '-');
+        const ts = t.updated_at || t.finished_at || t.started_at || '';
+        const tsShort = ts ? formatTimeStamp(ts) : '—';
+
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'miv-batch-history-item';
+        if (batchTaskId && t.task_id === batchTaskId) {
+            item.classList.add('active');
         }
-        var tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid #f3f4f6';
-        tr.innerHTML =
-            '<td style="padding:0.5rem 0.75rem;"><span style="display:inline-block;padding:0.15rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:600;color:' +
-            pill.fg +
-            ';background:' +
-            pill.bg +
-            '">' +
+        item.innerHTML =
+            '<div class="miv-batch-history-item-top">' +
+            '<span class="miv-batch-history-id">' + escapeHtmlBatch(t.task_id || '—') + '</span>' +
+            '<span class="miv-batch-history-pill" style="color:' + pill.fg + ';background:' + pill.bg + '">' +
             escapeHtmlBatch(pill.text) +
-            '</span></td>' +
-            '<td style="padding:0.5rem 0.75rem;font-family:monospace;">' +
-            escapeHtmlBatch(t.task_id) +
-            '</td>' +
-            '<td style="padding:0.5rem 0.75rem;">' +
-            escapeHtmlBatch(prog) +
-            '</td>' +
-            '<td style="padding:0.5rem 0.75rem;font-size:0.8rem;color:#374151;">' +
-            escapeHtmlBatch(sumLine) +
-            errHtml +
-            '</td>' +
-            '<td style="padding:0.5rem 0.75rem;white-space:nowrap;font-size:0.8rem;">' +
-            escapeHtmlBatch(ts ? formatTimeStamp(ts) : '—') +
-            '</td>' +
-            '<td style="padding:0.5rem 0.75rem;text-align:right;"></td>';
-        var tdBtn = tr.querySelector('td:last-child');
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'search-btn';
-        b.style.cssText = 'padding:0.35rem 0.65rem;font-size:0.8rem;';
-        b.innerHTML = bi('Details', '详情');
-        b.addEventListener('click', function () {
+            '</span></div>' +
+            '<div class="miv-batch-history-style">' + styleText + '</div>' +
+            '<div class="miv-batch-history-meta">' +
+            batchHistoryCompletionLine(t) + '<br>' +
+            escapeHtmlBatch(sumLine) + ' · ' + escapeHtmlBatch(tsShort) +
+            '</div>';
+
+        item.addEventListener('click', function () {
             openBatchFromHistory(t.task_id);
         });
-        if (tdBtn) tdBtn.appendChild(b);
-        tbody.appendChild(tr);
+        listEl.appendChild(item);
     });
 }
 
 async function refreshBatchHistory() {
-    var meta = document.getElementById('batchHistoryMeta');
     try {
-        var response = await fetch('/api/batch_fetch_history?days=3');
+        var response = await fetch('/api/batch_fetch_history?days=30&limit=10');
         if (!response.ok) throw new Error('HTTP ' + response.status);
         var data = await response.json();
-        var days = data.days != null ? data.days : 3;
-        if (meta) {
-            meta.innerHTML =
-                bi('Running and finished jobs from the last ' + days + ' days (by last activity).', '近 ' + days + ' 天内运行及已完成的任务（按最后活动）。') +
-                ' Cutoff UTC: ' + (data.cutoff_utc || '') + '.';
-        }
-        renderBatchHistoryTable(data.tasks || []);
+        window.__batchHistoryTasks = data.tasks || [];
+        renderBatchDockHistory(window.__batchHistoryTasks);
     } catch (e) {
         console.error(e);
-        if (meta) meta.innerHTML = bi('Could not load history.', '无法加载历史记录。');
-        renderBatchHistoryTable([]);
+        window.__batchHistoryTasks = [];
+        renderBatchDockHistory([]);
     }
-}
-
-function openBatchHistoryModal() {
-    var el = document.getElementById('batchHistoryModal');
-    if (el) {
-        el.style.display = 'flex';
-        refreshBatchHistory();
-    }
-}
-
-function closeBatchHistoryModal() {
-    var el = document.getElementById('batchHistoryModal');
-    if (el) el.style.display = 'none';
 }
 
 function openBatchFromHistory(taskId) {
     if (!taskId) return;
-    closeBatchHistoryModal();
     batchTaskId = taskId;
     openBatchStatusModal();
     startBatchPolling(taskId);
+    refreshBatchHistory();
 }
 
 if (batchFetchBtnEl) batchFetchBtnEl.addEventListener('click', openBatchFetchModal);
@@ -3058,7 +3721,6 @@ if (batchFetchSubmitBtnEl) batchFetchSubmitBtnEl.addEventListener('click', submi
 if (batchStatusCloseBtnEl) batchStatusCloseBtnEl.addEventListener('click', closeBatchStatusModal);
 const batchRerunBtnEl = document.getElementById('batchRerunBtn');
 if (batchRerunBtnEl) batchRerunBtnEl.addEventListener('click', handleBatchRerunOrOpenFetch);
-if (batchJobOpenStatusBtnEl) batchJobOpenStatusBtnEl.addEventListener('click', openBatchStatusModal);
 
 if (batchFetchModalEl) {
     batchFetchModalEl.addEventListener('click', function(e) {
@@ -3076,20 +3738,8 @@ if (batchStatusModalEl) {
     });
 }
 
-var batchHistoryModalEl = document.getElementById('batchHistoryModal');
-var batchHistoryBtnEl = document.getElementById('batchHistoryBtn');
-var batchHistoryCloseBtnEl = document.getElementById('batchHistoryCloseBtn');
 var batchHistoryRefreshBtnEl = document.getElementById('batchHistoryRefreshBtn');
-if (batchHistoryBtnEl) batchHistoryBtnEl.addEventListener('click', openBatchHistoryModal);
-if (batchHistoryCloseBtnEl) batchHistoryCloseBtnEl.addEventListener('click', closeBatchHistoryModal);
 if (batchHistoryRefreshBtnEl) batchHistoryRefreshBtnEl.addEventListener('click', refreshBatchHistory);
-if (batchHistoryModalEl) {
-    batchHistoryModalEl.addEventListener('click', function (e) {
-        if (e.target.id === 'batchHistoryModal') {
-            closeBatchHistoryModal();
-        }
-    });
-}
 
 restoreLatestBatchStatus();
 </script>

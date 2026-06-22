@@ -73,6 +73,7 @@ _PRODUCT_DETAIL_PATH_PREFIXES = (
 _SKIP_GET_PATHS_EXACT = frozenset(
     (
         "/get_favorites",
+        "/api/china_directory/index_status",
     )
 )
 
@@ -107,14 +108,21 @@ _POST_AUDIT_PATH_PREFIXES = (
     "/wipe_location",
     "/external_stock_check",
     "/internal_stock_check",
+    "/inventory_manual_adjuster",
     "/switch_number",
     "/api/external_stock_check",
     "/api/internal_stock_check",
+    "/api/inventory_manual_adjuster/search",
+    "/api/inventory_manual_adjuster/transfer",
+    "/api/inventory_manual_adjuster/adjust",
     "/api/switch_number/search",
     "/api/switch_number/transfer",
     "/bag_style_viewer",
     "/burlington_highlight",
     "/master_image_viewer",
+    "/master_image_viewer/chinadirectory",
+    "/api/china_directory/browse",
+    "/api/china_directory/search",
 )
 
 _last_post_ts: Dict[Tuple[str, str, str], float] = {}

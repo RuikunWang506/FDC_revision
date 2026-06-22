@@ -437,3 +437,89 @@ def execute_inventory_transfer(
         cur_to.close()
         conn_fdc.close()
         conn_ef.close()
+
+
+def execute_inventory_adjustments(
+    adjustments: list[dict[str, Any]],
+    database: str,
+    adjusted_by: str | None = None,
+    whs_num: str = "01",
+) -> dict[str, Any]:
+    """
+    Apply manual inventory adjustments to a single database.
+
+    adjustments: [{"sku": "M1141 BK", "qty": -6}, ...]  (+ add, - remove)
+    database: "FDC" | "E_FAS"
+    """
+    database = (database or "").strip().upper().replace("-", "_")
+    if database == "EFAS":
+        database = "E_FAS"
+    if database not in ("FDC", "E_FAS"):
+        raise ValueError("database must be FDC or E_FAS")
+
+    cleaned: list[tuple[str, int]] = []
+    for item in adjustments:
+        sku = str(item.get("sku", "")).strip()
+        try:
+            qty = int(item.get("qty", 0))
+        except (TypeError, ValueError):
+            qty = 0
+        if not sku or qty == 0:
+            continue
+        cleaned.append((sku, qty))
+
+    if not cleaned:
+        raise ValueError("No adjustment quantities entered")
+
+    adjusted_by = normalize_adjusted_by(adjusted_by)
+    conn_fdc, conn_ef = get_db_connections()
+    conn = conn_fdc if database == "FDC" else conn_ef
+    if not conn:
+        raise RuntimeError("Database connection failed")
+
+    cursor = conn.cursor()
+    try:
+        for sku, qty in cleaned:
+            ctx = lookup_sku_context(cursor, sku, whs_num=whs_num)
+            in_stock = int(ctx["in_stock_before"])
+            if qty < 0 and in_stock < abs(qty):
+                raise ValueError(
+                    f"{sku}: insufficient stock in {database} "
+                    f"(in_stock={in_stock}, requested removal={abs(qty)})"
+                )
+
+        log_num = next_log_num(cursor)
+        results = []
+        nt_num = 1
+        for sku, qty in cleaned:
+            plan = apply_adjustment(
+                conn,
+                sku=sku,
+                qty=qty,
+                adjusted_by=adjusted_by,
+                whs_num=whs_num,
+                log_num=log_num,
+                nt_num=nt_num,
+                dry_run=False,
+                auto_commit=False,
+                database_label=database,
+            )
+            results.append(plan)
+            nt_num += 1
+
+        conn.commit()
+        return {
+            "database": database,
+            "log_num": log_num,
+            "adjusted_by": adjusted_by.strip(),
+            "lines": results,
+        }
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        if conn_fdc:
+            conn_fdc.close()
+        if conn_ef:
+            conn_ef.close()

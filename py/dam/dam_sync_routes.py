@@ -204,7 +204,7 @@ def _notify_dam_discord(message: str, *, success=None):
     Thread(target=_send, daemon=True).start()
 
 
-def _format_dam_run_options(force_rebuild_index, include_fetch, include_cleanup, fetch_full) -> str:
+def _format_dam_run_options(force_rebuild_index, include_fetch, include_cleanup, fetch_full, include_china_ftp_index=False) -> str:
     parts = []
     if include_fetch:
         parts.append('fetch: full scan' if fetch_full else 'fetch: incremental')
@@ -212,12 +212,15 @@ def _format_dam_run_options(force_rebuild_index, include_fetch, include_cleanup,
         parts.append('fetch: off')
     parts.append('rebuild index: yes' if force_rebuild_index else 'rebuild index: no')
     parts.append('cleanup: yes' if include_cleanup else 'cleanup: no')
+    parts.append('china ftp index: yes' if include_china_ftp_index else 'china ftp index: no')
     return ' | '.join(parts)
 
 
-def _notify_dam_started(triggered_by, force_rebuild_index, include_fetch, include_cleanup, fetch_full):
+def _notify_dam_started(triggered_by, force_rebuild_index, include_fetch, include_cleanup, fetch_full, include_china_ftp_index=False):
     kind = _run_kind_label(force_rebuild_index, fetch_full)
-    opts = _format_dam_run_options(force_rebuild_index, include_fetch, include_cleanup, fetch_full)
+    opts = _format_dam_run_options(
+        force_rebuild_index, include_fetch, include_cleanup, fetch_full, include_china_ftp_index,
+    )
     _notify_dam_discord(
         f"**DAM sync started** ({kind})\n"
         f"Triggered by: **{triggered_by}**\n"
@@ -266,6 +269,7 @@ def run_sync_background(
     include_cleanup=False,
     log_source='manual',
     fetch_full=False,
+    include_china_ftp_index=False,
 ):
     """Run sync in background thread.
 
@@ -293,6 +297,7 @@ def run_sync_background(
             include_fetch,
             include_cleanup,
             fetch_full,
+            include_china_ftp_index,
         )
 
         if log_source == 'cron':
@@ -300,7 +305,8 @@ def run_sync_background(
                 log_event(
                     'info',
                     f'🟢 INFO DAM scheduled sync START (cron) fetch={include_fetch} '
-                    f'fetch_full={fetch_full} rebuild_index={force_rebuild_index} cleanup={include_cleanup}',
+                    f'fetch_full={fetch_full} rebuild_index={force_rebuild_index} cleanup={include_cleanup} '
+                    f'china_ftp_index={include_china_ftp_index}',
                 )
             except Exception:
                 pass
@@ -443,6 +449,27 @@ def run_sync_background(
                     capture_print(f"⚠️ Cleanup error: {cleanup_err}")
                     log_event('error', f'DAM cleanup failed during sync: {str(cleanup_err)}')
 
+            if include_china_ftp_index:
+                capture_print("\n=== Building China FTP directory index ===")
+                china_index_result = None
+                try:
+                    from py.utilities import china_ftp_cache
+                    china_index_result = china_ftp_cache.build_full_index(capture_print)
+                    capture_print(
+                        f"✅ China FTP index complete: {china_index_result.get('entry_count')} entries, "
+                        f"{china_index_result.get('folder_count')} folders "
+                        f"({china_index_result.get('duration_seconds')}s)"
+                    )
+                    log_event(
+                        'info',
+                        f"China FTP index rebuilt: entries={china_index_result.get('entry_count')} "
+                        f"folders={china_index_result.get('folder_count')} "
+                        f"built_at={china_index_result.get('built_at')}",
+                    )
+                except Exception as idx_err:
+                    capture_print(f"⚠️ China FTP index error: {idx_err}")
+                    log_event('error', f'China FTP index failed during sync: {idx_err}')
+
             if log_source == 'cron':
                 try:
                     st = sync_status.get('last_stats') or {}
@@ -451,7 +478,8 @@ def run_sync_background(
                         '🟢 SUCCESS DAM scheduled sync DONE (cron) '
                         f"processed={st.get('total_processed')} added={st.get('total_added')} "
                         f"updated={st.get('total_updated')} skipped={st.get('total_skipped')} "
-                        f"errors={st.get('total_errors')} last_run={sync_status.get('last_run')}",
+                        f"errors={st.get('total_errors')} last_run={sync_status.get('last_run')} "
+                        f"china_ftp_index={include_china_ftp_index}",
                     )
                     dam_cron_audit(
                         'cron_background_finished_ok',
@@ -511,6 +539,7 @@ def run_sync_background(
                     'include_fetch': include_fetch,
                     'include_cleanup': include_cleanup,
                     'fetch_full': fetch_full,
+                    'include_china_ftp_index': include_china_ftp_index,
                 },
                 stats=sync_status.get('last_stats'),
                 added=(sync_service.recent_added if sync_service else None),
@@ -622,7 +651,7 @@ def dam_cron_start():
     Requires header: X-DAM-Cron-Secret: <same value as server env DAM_CRON_SECRET>.
 
     POST JSON body matches /dam/start:
-      force_rebuild_index, include_fetch, include_cleanup (all optional booleans).
+      force_rebuild_index, include_fetch, include_cleanup, include_china_ftp_index (optional booleans).
     """
     client = _cron_request_client()
 
@@ -645,6 +674,7 @@ def dam_cron_start():
     include_fetch = data.get('include_fetch', True)
     include_cleanup = data.get('include_cleanup', True)
     fetch_full = data.get('fetch_full', False)
+    include_china_ftp_index = data.get('include_china_ftp_index', True)
 
     dam_cron_audit(
         'cron_start_accepted',
@@ -652,16 +682,24 @@ def dam_cron_start():
         fetch_full=fetch_full,
         rebuild_index=force_rebuild_index,
         cleanup=include_cleanup,
+        china_ftp_index=include_china_ftp_index,
         **client,
     )
 
     try:
         current_app.logger.info(
-            '***cron*** scheduled DAM sync start (fetch=%s fetch_full=%s rebuild=%s cleanup=%s)',
+            '***cron*** scheduled DAM sync start (fetch=%s fetch_full=%s rebuild=%s cleanup=%s china_ftp_index=%s)',
             include_fetch,
             fetch_full,
             force_rebuild_index,
             include_cleanup,
+            include_china_ftp_index,
+        )
+        log_event(
+            'info',
+            f'CRON scheduled DAM sync start (fetch={include_fetch} fetch_full={fetch_full} '
+            f'rebuild={force_rebuild_index} cleanup={include_cleanup} '
+            f'china_ftp_index={include_china_ftp_index})',
         )
     except Exception:
         pass
@@ -673,6 +711,7 @@ def dam_cron_start():
             include_cleanup,
             log_source='cron',
             fetch_full=fetch_full,
+            include_china_ftp_index=include_china_ftp_index,
         ),
         daemon=True,
     )

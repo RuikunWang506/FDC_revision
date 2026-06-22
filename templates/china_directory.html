@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>China FTP Directory 中国FTP目录 - FDC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <style>
+        /* Scoped page — navbar loads Bootstrap which overrides global body/table styles */
+        .china-dir-page {
+            --cd-bg: #eef2f7;
+            --cd-surface: #ffffff;
+            --cd-border: #cbd5e1;
+            --cd-text: #0f172a;
+            --cd-muted: #475569;
+            --cd-link: #1d4ed8;
+            --cd-folder-bg: #dbeafe;
+            --cd-folder-text: #1e3a8a;
+            --cd-folder-hover: #bfdbfe;
+            --cd-file-hover: #f1f5f9;
+            --cd-header-bg: #1e293b;
+            --cd-header-text: #f8fafc;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: var(--cd-text);
+            background: var(--cd-bg);
+            min-height: calc(100vh - 70px);
+            padding: 1.5rem;
+        }
+        body.has-navbar .china-dir-page { min-height: calc(100vh - 70px); }
+
+        .china-dir-page .cd-inner { max-width: 1400px; margin: 0 auto; }
+        .china-dir-page .main-title {
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: var(--cd-text);
+            margin-bottom: 0.25rem;
+        }
+        .china-dir-page .label-zh { color: var(--cd-muted); font-size: 0.88em; font-weight: 500; }
+        .china-dir-page .subtitle { color: var(--cd-muted); line-height: 1.55; margin-bottom: 1.25rem; }
+        .china-dir-page .top-links { margin-bottom: 1rem; }
+        .china-dir-page .top-links a {
+            color: var(--cd-link);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .china-dir-page .top-links a:hover { text-decoration: underline; }
+
+        .china-dir-page .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            background: var(--cd-surface);
+            border: 1px solid var(--cd-border);
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+        }
+        .china-dir-page .search-input {
+            flex: 1;
+            min-width: 220px;
+            padding: 0.65rem 0.9rem;
+            border-radius: 8px;
+            border: 1px solid var(--cd-border);
+            background: #fff;
+            color: var(--cd-text);
+            font-size: 1rem;
+        }
+        .china-dir-page .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .china-dir-page .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 0.65rem 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .china-dir-page .btn-primary { background: #2563eb; }
+        .china-dir-page .btn-primary:hover { background: #1d4ed8; }
+        .china-dir-page .btn-secondary { background: #64748b; }
+        .china-dir-page .btn-secondary:hover { background: #475569; }
+        .china-dir-page .btn-refresh { background: #0d9488; }
+        .china-dir-page .btn-refresh:hover { background: #0f766e; }
+        .china-dir-page .btn-rebuild { background: #d97706; }
+        .china-dir-page .btn-rebuild:hover { background: #b45309; }
+        .china-dir-page .btn-rebuild:disabled { background: #94a3b8; cursor: not-allowed; }
+        .china-dir-page .rebuild-status {
+            font-size: 0.9rem;
+            color: var(--cd-muted);
+            margin-bottom: 0.75rem;
+        }
+        .china-dir-page .rebuild-status strong { color: var(--cd-text); }
+        .china-dir-page .btn-toggle { background: #fff; color: var(--cd-text); border: 1px solid var(--cd-border); }
+        .china-dir-page .btn-toggle:hover { background: #f8fafc; }
+        .china-dir-page .btn-toggle.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+        .china-dir-page .breadcrumbs {
+            margin-bottom: 0.75rem;
+            padding: 0;
+            background: transparent;
+            border: none;
+        }
+        .china-dir-page .current-folder-panel {
+            background: var(--cd-surface);
+            border: 1px solid var(--cd-border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+        .china-dir-page .current-folder-row {
+            padding: 0.65rem 1rem;
+        }
+        .china-dir-page .current-folder-row + .current-folder-row {
+            border-top: 1px solid var(--cd-border);
+        }
+        .china-dir-page .current-folder-sublabel {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--cd-muted);
+            margin-bottom: 0.35rem;
+        }
+        .china-dir-page .current-folder-path {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.65;
+            word-break: break-word;
+        }
+        .china-dir-page .current-folder-path-mono {
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 0.84rem;
+            font-weight: 500;
+        }
+        .china-dir-page .current-folder-search {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--cd-text);
+        }
+        .china-dir-page .crumb { color: var(--cd-link); cursor: pointer; font-weight: 600; }
+        .china-dir-page .crumb:hover { text-decoration: underline; }
+        .china-dir-page .crumb-sep { color: var(--cd-muted); }
+
+        .china-dir-page .stats {
+            color: var(--cd-text);
+            font-size: 0.92rem;
+            margin-bottom: 0.75rem;
+            padding: 0.6rem 0.9rem;
+            background: var(--cd-surface);
+            border: 1px solid var(--cd-border);
+            border-left: 4px solid #2563eb;
+            border-radius: 6px;
+        }
+        .china-dir-page .stats code {
+            color: #b45309;
+            background: #fffbeb;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-size: 0.86rem;
+        }
+        .china-dir-page .stats strong { color: var(--cd-text); }
+
+        .china-dir-page .panel {
+            background: var(--cd-surface);
+            border: 1px solid var(--cd-border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+        }
+        .china-dir-page .section-label {
+            padding: 0.5rem 1rem;
+            background: #f8fafc;
+            color: var(--cd-muted);
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--cd-border);
+        }
+
+        /* Bootstrap table overrides */
+        .china-dir-page table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+            margin-bottom: 0 !important;
+            color: var(--cd-text) !important;
+            background: var(--cd-surface) !important;
+        }
+        .china-dir-page table th,
+        .china-dir-page table td {
+            padding: 0.7rem 1rem !important;
+            border-bottom: 1px solid var(--cd-border) !important;
+            vertical-align: middle !important;
+            color: inherit !important;
+        }
+        .china-dir-page table thead th {
+            background: var(--cd-header-bg) !important;
+            color: var(--cd-header-text) !important;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 2px solid #0f172a !important;
+        }
+        .china-dir-page table thead th .label-zh {
+            color: #cbd5e1 !important;
+        }
+        .china-dir-page tr.row-folder td {
+            background: var(--cd-folder-bg) !important;
+            color: var(--cd-folder-text) !important;
+        }
+        .china-dir-page tr.row-folder:hover td {
+            background: var(--cd-folder-hover) !important;
+        }
+        .china-dir-page tr.row-file td {
+            background: #fff !important;
+            color: var(--cd-text) !important;
+        }
+        .china-dir-page tr.row-file:hover td {
+            background: var(--cd-file-hover) !important;
+        }
+
+        .china-dir-page .name-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .china-dir-page .icon-folder { color: #d97706; font-size: 1.05rem; width: 1.2rem; text-align: center; }
+        .china-dir-page .icon-file { color: #64748b; width: 1.2rem; text-align: center; }
+        .china-dir-page .link-name {
+            cursor: pointer;
+            word-break: break-all;
+            font-weight: 600;
+            color: inherit !important;
+        }
+        .china-dir-page tr.row-folder .link-name { color: var(--cd-folder-text) !important; }
+        .china-dir-page tr.row-file .link-name { color: var(--cd-text) !important; }
+        .china-dir-page .link-name:hover { text-decoration: underline; color: var(--cd-link) !important; }
+
+        .china-dir-page .type-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.22rem 0.55rem;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .china-dir-page .type-folder { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .china-dir-page .type-file { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+
+        .china-dir-page .path-cell { color: var(--cd-muted) !important; font-size: 0.82rem; word-break: break-all; }
+        .china-dir-page .path-link {
+            color: var(--cd-link) !important;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline;
+            white-space: nowrap;
+        }
+        .china-dir-page .path-link:hover { text-decoration: underline; }
+        .china-dir-page .path-static {
+            color: var(--cd-muted);
+            display: inline;
+            white-space: nowrap;
+        }
+        .china-dir-page .path-sep {
+            color: #64748b;
+            display: inline;
+            padding: 0 0.2rem;
+            font-weight: 700;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .china-dir-page .path-filename { color: var(--cd-muted); font-weight: 500; }
+        .china-dir-page .size-cell { color: var(--cd-muted) !important; font-variant-numeric: tabular-nums; }
+
+        .china-dir-page .tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 0.12rem 0.45rem;
+            border-radius: 999px;
+            margin-left: 0.35rem;
+            font-weight: 600;
+        }
+        .china-dir-page .tag-white { background: #e2e8f0; color: #0f172a; }
+        .china-dir-page .tag-scene { background: #ffedd5; color: #9a3412; }
+        .china-dir-page .tag-prenatal { background: #dbeafe; color: #1e40af; }
+        .china-dir-page .tag-presale { background: #ede9fe; color: #5b21b6; }
+
+        .china-dir-page .sku-link {
+            color: var(--cd-link) !important;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .china-dir-page .sku-link:hover { text-decoration: underline; }
+        .china-dir-page .btn-open-folder {
+            margin-left: 0.45rem;
+            padding: 0.22rem 0.5rem;
+            font-size: 0.72rem;
+            border-radius: 6px;
+            border: 1px solid var(--cd-border);
+            background: #fff;
+            color: var(--cd-text);
+            cursor: pointer;
+        }
+        .china-dir-page .btn-open-folder:hover { background: #f1f5f9; }
+
+        .china-dir-page .preview-cell { width: 72px; text-align: center; }
+        .china-dir-page .preview-thumb {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            background: #f8fafc;
+            border: 1px solid var(--cd-border);
+            border-radius: 6px;
+            display: block;
+            margin: 0 auto;
+        }
+        .china-dir-page .preview-empty { color: #94a3b8; font-size: 0.85rem; }
+        .china-dir-page .saved-badge {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.35rem;
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+            vertical-align: middle;
+        }
+
+        .china-dir-page .loading,
+        .china-dir-page .error-box,
+        .china-dir-page .empty-box {
+            padding: 2rem;
+            text-align: center;
+            color: var(--cd-muted);
+        }
+        .china-dir-page .error-box { color: #b91c1c; }
+    </style>
+</head>
+<body class="{% if show_navbar|default(false) %}has-navbar{% endif %}">
+{% if show_navbar|default(false) %}
+    {% include 'navbar.html' %}
+{% endif %}
+
+<div class="china-dir-page">
+    <div class="cd-inner">
+        <div class="top-links">
+            <a href="/master_image_viewer"><i class="fas fa-arrow-left"></i> Master Image Viewer / 主图查看器</a>
+        </div>
+
+        <h1 class="main-title">China FTP Directory <span class="label-zh">中国 FTP 目录</span></h1>
+        <p class="subtitle">Browse folder structure on China FTP — folders listed first<br>浏览中国 FTP 目录结构 — 文件夹优先显示</p>
+
+        <div class="toolbar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search SKU or filename… e.g. N2640 / 搜索 SKU 或文件名…" value="{{ initial_query|default('') }}">
+            <button type="button" class="btn btn-primary" id="searchBtn"><i class="fas fa-search"></i> Search / 搜索</button>
+            <button type="button" class="btn btn-secondary" id="browseRootBtn"><i class="fas fa-home"></i> Root / 根目录</button>
+            <button type="button" class="btn btn-refresh" id="refreshBtn" title="Bypass cache and reload from China FTP">
+                <i class="fas fa-sync-alt"></i> Refresh / 刷新
+            </button>
+            <button type="button" class="btn btn-rebuild" id="rebuildIndexBtn" title="Walk China FTP and rebuild local search index">
+                <i class="fas fa-database"></i> Rebuild index / 重建索引
+            </button>
+            <button type="button" class="btn btn-toggle" id="previewToggleBtn" title="Show thumbnails for files already saved locally">
+                <i class="fas fa-image"></i> Preview saved / 已下载预览
+            </button>
+        </div>
+        <div class="rebuild-status" id="rebuildStatus"></div>
+        <div class="current-folder-panel" id="currentFolderBar">
+            <div class="current-folder-row">
+                <div class="current-folder-sublabel">Relative path 相对路径</div>
+                <div class="current-folder-path" id="currentFolderRel">—</div>
+            </div>
+            <div class="current-folder-row">
+                <div class="current-folder-sublabel">Full path 完整路径</div>
+                <div class="current-folder-path current-folder-path-mono" id="currentFolderFull">—</div>
+            </div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="panel" id="contentPanel">
+            <div class="loading" id="loadingState"><i class="fas fa-spinner fa-spin"></i> Loading… / 加载中…</div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const browseRootBtn = document.getElementById('browseRootBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const rebuildIndexBtn = document.getElementById('rebuildIndexBtn');
+    const rebuildStatusEl = document.getElementById('rebuildStatus');
+    const previewToggleBtn = document.getElementById('previewToggleBtn');
+    const currentFolderBar = document.getElementById('currentFolderBar');
+    const currentFolderRel = document.getElementById('currentFolderRel');
+    const currentFolderFull = document.getElementById('currentFolderFull');
+    const statsEl = document.getElementById('stats');
+    const contentPanel = document.getElementById('contentPanel');
+
+    let currentPath = '';
+    let rebuildPollTimer = null;
+    let latestIndexStatus = {{ index_status|default({})|tojson }};
+    let latestRebuildStatus = {{ rebuild_status|default({})|tojson }};
+
+    function formatIndexLine(indexStatus) {
+        const idx = indexStatus || {};
+        if (idx.built_at) {
+            return 'Search index 搜索索引: <strong>' + idx.entry_count + '</strong> entries, built '
+                + idx.built_at.replace('T', ' ').replace('Z', ' UTC');
+        }
+        return 'Search index 搜索索引: <strong>none yet</strong> 尚无索引';
+    }
+
+    function renderRebuildStatus(status) {
+        latestRebuildStatus = status || {};
+        if (status && status.index) latestIndexStatus = status.index;
+
+        let html = formatIndexLine(latestIndexStatus);
+        if (status && status.running) {
+            html += ' · <strong>Rebuilding… 重建中</strong>';
+            const prog = status.progress || {};
+            if (prog.folder_count) {
+                html += ' — <strong>' + prog.folder_count + '</strong> folders scanned 已扫描文件夹';
+                if (prog.entry_count) {
+                    html += ', <strong>' + prog.entry_count + '</strong> entries 条目';
+                }
+            } else if (prog.phase === 'scanning') {
+                html += ' — remote scan running 远程扫描中…';
+            } else if (prog.phase === 'parsing') {
+                html += ' — parsing results 解析结果…';
+            } else if (prog.phase === 'saving') {
+                html += ' — saving index 保存索引…';
+            } else {
+                html += ' — starting 启动中…';
+            }
+            if (prog.method === 'sftp' && prog.folder_count > 500) {
+                html += ' <span class="label-zh">(large tree — may take 30–60+ min)</span>';
+            }
+            if (status.started_at) {
+                html += ' (since ' + status.started_at.replace('T', ' ').replace('Z', ' UTC') + ')';
+            }
+            rebuildIndexBtn.disabled = true;
+            rebuildIndexBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rebuilding… / 重建中';
+        } else {
+            rebuildIndexBtn.disabled = false;
+            rebuildIndexBtn.innerHTML = '<i class="fas fa-database"></i> Rebuild index / 重建索引';
+            if (status && status.error) {
+                html += ' · <span style="color:#b91c1c">Last rebuild failed 上次失败: ' + status.error + '</span>';
+            } else if (status && status.result && status.finished_at) {
+                html += ' · Last rebuild 上次重建: '
+                    + status.result.entry_count + ' entries at '
+                    + status.finished_at.replace('T', ' ').replace('Z', ' UTC');
+            }
+        }
+        rebuildStatusEl.innerHTML = html;
+    }
+
+    function formatCacheHint(data) {
+        const parts = [];
+        if (data.from_cache) {
+            parts.push('cached listing 缓存');
+        }
+        if (data.source) {
+            parts.push('search: ' + data.source + (data.source === 'index' ? ' 索引' : ' 实时'));
+        }
+        const idx = data.index_status || latestIndexStatus || {};
+        if (idx.built_at) {
+            parts.push('index ' + idx.built_at.replace('T', ' ').replace('Z', ' UTC'));
+        } else if (idx.entry_count === 0) {
+            parts.push('no index yet 尚无索引');
+        }
+        return parts.length ? ' · ' + parts.join(' · ') : '';
+    }
+
+    function renderStatsBrowse(data) {
+        statsEl.innerHTML =
+            '<strong>' + data.directory_count + '</strong> folders 文件夹, '
+            + '<strong>' + data.file_count + '</strong> files 文件'
+            + (data.downloaded_count ? ', <strong>' + data.downloaded_count + '</strong> saved locally 已下载' : '')
+            + formatCacheHint(data);
+    }
+
+    function renderStatsSearch(data) {
+        statsEl.innerHTML = data.count + ' matches 匹配'
+            + (data.downloaded_count ? ', <strong>' + data.downloaded_count + '</strong> saved locally 已下载' : '')
+            + (data.truncated ? ' (truncated 已截断)' : '')
+            + formatCacheHint(data);
+    }
+    let showPreviewColumn = localStorage.getItem('chinaDirShowPreview') === '1';
+    let lastTableState = null;
+
+    function updatePreviewToggleBtn() {
+        previewToggleBtn.classList.toggle('active', showPreviewColumn);
+        previewToggleBtn.innerHTML = showPreviewColumn
+            ? '<i class="fas fa-image"></i> Preview on / 预览开'
+            : '<i class="fas fa-image"></i> Preview off / 预览关';
+    }
+    updatePreviewToggleBtn();
+
+    function bi(en, zh) { return en + ' <span class="label-zh">' + zh + '</span>'; }
+
+    function formatSize(bytes) {
+        if (bytes == null) return '—';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function tagHtml(tags) {
+        if (!tags || !tags.length) return '';
+        return tags.map(t => {
+            let cls = 'tag';
+            if (t.id === 'white_folder') cls += ' tag-white';
+            else if (t.id === 'scene_folder') cls += ' tag-scene';
+            else if (t.id === 'prenatal') cls += ' tag-prenatal';
+            else if (t.id === 'presale') cls += ' tag-presale';
+            return '<span class="' + cls + '">' + t.label + '</span>';
+        }).join('');
+    }
+
+    function foldersFirst(items) {
+        return (items || []).slice().sort((a, b) => {
+            const aDir = a.type === 'directory' ? 0 : 1;
+            const bDir = b.type === 'directory' ? 0 : 1;
+            if (aDir !== bDir) return aDir - bDir;
+            return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+        });
+    }
+
+    function previewCell(item) {
+        if (!showPreviewColumn) return '';
+        if (item.downloaded && item.preview_url) {
+            return '<td class="preview-cell"><img class="preview-thumb" src="' + item.preview_url + '" alt="" loading="lazy"></td>';
+        }
+        return '<td class="preview-cell preview-empty">—</td>';
+    }
+
+    function bindPathLinks(container) {
+        (container || document).querySelectorAll('.path-link[data-dir]').forEach(el => {
+            el.addEventListener('click', () => browse(el.getAttribute('data-dir') || ''));
+        });
+    }
+
+    function renderFolderPathSegments(relPath, sep) {
+        sep = sep || '/';
+        const rel = (relPath || '').replace(/\\/g, '/');
+        let html = '<span class="path-link" data-dir="">梁佳怡 (root)</span>';
+        if (!rel) return html;
+        const parts = rel.split('/').filter(Boolean);
+        parts.forEach((part, i) => {
+            html += '<span class="path-sep">' + sep + '</span>';
+            const built = parts.slice(0, i + 1).join('/');
+            html += '<span class="path-link" data-dir="' + built + '">' + part + '</span>';
+        });
+        return html;
+    }
+
+    function renderFullPathSegments(fullPath) {
+        if (!fullPath) return '—';
+        const parts = fullPath.replace(/\//g, '\\').split('\\').filter(p => p !== '');
+        const liangIdx = parts.findIndex(p => p === '梁佳怡');
+        let html = '';
+        parts.forEach((part, i) => {
+            if (i > 0) html += '<span class="path-sep">\\</span>';
+            if (liangIdx >= 0 && i >= liangIdx) {
+                const relBuilt = i === liangIdx ? '' : parts.slice(liangIdx + 1, i + 1).join('/');
+                html += '<span class="path-link" data-dir="' + relBuilt + '">' + part + '</span>';
+            } else {
+                html += '<span class="path-static">' + part + '</span>';
+            }
+        });
+        return html || '<span class="path-static">' + fullPath + '</span>';
+    }
+
+    function renderCurrentFolderBar(mode, data) {
+        const relRow = currentFolderBar.children[0];
+        const fullRow = currentFolderBar.children[1];
+        if (mode === 'search') {
+            relRow.querySelector('.current-folder-sublabel').textContent = 'Search 搜索';
+            currentFolderRel.innerHTML = '<span class="current-folder-search">“' + (data.query || '') + '”</span>';
+            if (currentPath) {
+                fullRow.style.display = '';
+                fullRow.querySelector('.current-folder-sublabel').textContent = 'Browse folder 浏览目录';
+                currentFolderFull.innerHTML = renderFolderPathSegments(currentPath, '/');
+                bindPathLinks(currentFolderFull);
+            } else {
+                fullRow.style.display = 'none';
+            }
+            return;
+        }
+        fullRow.style.display = '';
+        relRow.querySelector('.current-folder-sublabel').textContent = 'Relative path 相对路径';
+        fullRow.querySelector('.current-folder-sublabel').textContent = 'Full path 完整路径';
+        currentPath = data.rel_path || '';
+        currentFolderRel.innerHTML = renderFolderPathSegments(currentPath, '/');
+        currentFolderFull.innerHTML = renderFullPathSegments(data.full_path || '');
+        bindPathLinks(currentFolderRel);
+        bindPathLinks(currentFolderFull);
+    }
+
+    function pathSegmentsHtml(item) {
+        const rel = (item.rel_path || '').replace(/\\/g, '/');
+        if (!rel) return '';
+        const parts = rel.split('/').filter(Boolean);
+        if (!parts.length) return '';
+
+        const folderParts = item.type === 'directory' ? parts : parts.slice(0, -1);
+        const filenamePart = item.type === 'directory' ? null : parts[parts.length - 1];
+
+        let html = '';
+        folderParts.forEach((part, i) => {
+            if (i > 0) html += '<span class="path-sep">/</span>';
+            const built = folderParts.slice(0, i + 1).join('/');
+            html += '<span class="path-link" data-dir="' + built + '" title="Open folder 打开文件夹">' + part + '</span>';
+        });
+
+        if (filenamePart) {
+            if (folderParts.length) html += '<span class="path-sep">/</span>';
+            html += '<span class="path-filename">' + filenamePart + '</span>';
+        }
+
+        return html;
+    }
+
+    function pathCellHtml(item, showPath) {
+        if (!showPath) return '';
+        const inner = pathSegmentsHtml(item);
+        if (!inner) return '<td class="path-cell"></td>';
+        return '<td class="path-cell">' + inner + '</td>';
+    }
+
+    function rowHtml(item, options) {
+        const isDir = item.type === 'directory';
+        const rowClass = isDir ? 'row-folder' : 'row-file';
+        const icon = isDir
+            ? '<i class="fas fa-folder icon-folder"></i>'
+            : '<i class="fas fa-file icon-file"></i>';
+        const savedBadge = item.downloaded ? '<span class="saved-badge">Saved 已存</span>' : '';
+        const typeBadge = isDir
+            ? '<span class="type-badge type-folder">Folder 文件夹</span>'
+            : '<span class="type-badge type-file">File 文件</span>';
+        const nameAction = isDir ? 'data-dir="' + (item.rel_path || '') + '"' : '';
+        const skuLink = item.sku_guess
+            ? '<a class="sku-link" href="/master_image_viewer/' + encodeURIComponent(item.sku_guess) + '">' + item.sku_guess + '</a>'
+            : '—';
+        const pathCell = pathCellHtml(item, options.showPath);
+        const extraCell = options.showPath
+            ? '<td>' + skuLink
+                + (item.rel_path && !isDir
+                    ? ' <button type="button" class="btn-open-folder" data-open-parent="' + item.rel_path.split('/').slice(0, -1).join('/') + '">Open folder 打开</button>'
+                    : (isDir ? ' <button type="button" class="btn-open-folder" data-open-parent="' + (item.rel_path || '') + '">Open 打开</button>' : ''))
+              + '</td>'
+            : '<td>' + skuLink + '</td>';
+        const previewHeaderCell = showPreviewColumn ? previewCell(item) : '';
+
+        return '<tr class="' + rowClass + '">'
+            + previewHeaderCell
+            + '<td class="name-cell">' + icon
+            + '<span class="link-name" ' + nameAction + '>' + item.name + '</span>'
+            + savedBadge + tagHtml(item.tags) + '</td>'
+            + '<td>' + typeBadge + '</td>'
+            + pathCell
+            + '<td class="size-cell">' + formatSize(item.size) + '</td>'
+            + extraCell
+            + '</tr>';
+    }
+
+    function bindTableEvents() {
+        bindPathLinks(contentPanel);
+        contentPanel.querySelectorAll('.link-name[data-dir]').forEach(el => {
+            el.addEventListener('click', () => browse(el.getAttribute('data-dir') || ''));
+        });
+        contentPanel.querySelectorAll('[data-open-parent]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                browse(el.getAttribute('data-open-parent'));
+            });
+        });
+    }
+
+    function renderTable(items, options) {
+        lastTableState = { items: items, showPath: !!options.showPath };
+        const sorted = foldersFirst(items);
+        const folders = sorted.filter(i => i.type === 'directory');
+        const files = sorted.filter(i => i.type !== 'directory');
+
+        let html = '';
+        if (folders.length) {
+            html += '<div class="section-label">Folders 文件夹 (' + folders.length + ')</div>';
+        }
+        if (files.length) {
+            html += '<div class="section-label">Files 文件 (' + files.length + ')</div>';
+        }
+
+        const previewHeader = showPreviewColumn
+            ? '<th>Preview <span class="label-zh">预览</span></th>'
+            : '';
+        const pathHeader = options.showPath ? '<th>Relative path <span class="label-zh">相对路径</span></th>' : '';
+        const lastHeader = options.showPath
+            ? '<th>SKU / Actions <span class="label-zh">操作</span></th>'
+            : '<th>SKU</th>';
+
+        html += '<table class="table"><thead><tr>'
+            + previewHeader
+            + '<th>Name <span class="label-zh">名称</span></th>'
+            + '<th>Type <span class="label-zh">类型</span></th>'
+            + pathHeader
+            + '<th>Size <span class="label-zh">大小</span></th>'
+            + lastHeader
+            + '</tr></thead><tbody>'
+            + sorted.map(item => rowHtml(item, options)).join('')
+            + '</tbody></table>';
+
+        contentPanel.innerHTML = html;
+        bindTableEvents();
+    }
+
+    function rerenderTable() {
+        if (lastTableState) {
+            renderTable(lastTableState.items, { showPath: lastTableState.showPath });
+        }
+    }
+
+    function renderBrowse(data) {
+        renderCurrentFolderBar('browse', data);
+        renderStatsBrowse(data);
+
+        const items = data.items || [];
+        if (!items.length) {
+            contentPanel.innerHTML = '<div class="empty-box">This folder is empty. 此文件夹为空。</div>';
+            return;
+        }
+        renderTable(items, { showPath: false });
+    }
+
+    function renderSearch(data) {
+        renderCurrentFolderBar('search', data);
+        renderStatsSearch(data);
+
+        const items = data.items || [];
+        if (!items.length) {
+            contentPanel.innerHTML = '<div class="empty-box">No matches. 无匹配结果。</div>';
+            return;
+        }
+        renderTable(items, { showPath: true });
+    }
+
+    function setLoading() {
+        contentPanel.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading… 加载中…</div>';
+    }
+
+    function showError(msg) {
+        contentPanel.innerHTML = '<div class="error-box">' + msg + '</div>';
+    }
+
+    function isRetryableChinaError(msg) {
+        return /ssh|banner|connection|forcibly closed|10054|timed out/i.test(msg || '');
+    }
+
+    async function fetchChinaApi(url, attempt) {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (!resp.ok) {
+            const err = new Error(data.error || 'Request failed');
+            err.retryable = isRetryableChinaError(err.message);
+            throw err;
+        }
+        return data;
+    }
+
+    async function fetchChinaApiWithRetry(url, maxAttempts) {
+        let lastErr;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                return await fetchChinaApi(url, attempt);
+            } catch (err) {
+                lastErr = err;
+                if (!err.retryable || attempt >= maxAttempts) throw err;
+                setLoading();
+                contentPanel.querySelector('.loading').innerHTML =
+                    '<i class="fas fa-spinner fa-spin"></i> China FTP busy, retrying… 连接重试 ' + attempt + '/' + maxAttempts;
+                await new Promise(r => setTimeout(r, 1500 * attempt));
+            }
+        }
+        throw lastErr;
+    }
+
+    async function browse(path, forceRefresh) {
+        if (!path) searchInput.value = '';
+        currentPath = path || '';
+        setLoading();
+        try {
+            let url = '/api/china_directory/browse?path=' + encodeURIComponent(path || '');
+            if (forceRefresh) url += '&refresh=1';
+            const data = await fetchChinaApiWithRetry(url, 3);
+            renderBrowse(data);
+        } catch (err) {
+            const msg = isRetryableChinaError(err.message)
+                ? 'China FTP connection failed after retries. Wait a moment and try again. 中国 FTP 连接失败，请稍后再试。'
+                : err.message;
+            showError(msg);
+        }
+    }
+
+    async function search() {
+        const q = searchInput.value.trim();
+        if (!q) {
+            browse(currentPath || '');
+            return;
+        }
+        setLoading();
+        try {
+            const data = await fetchChinaApiWithRetry(
+                '/api/china_directory/search?q=' + encodeURIComponent(q),
+                3
+            );
+            renderSearch(data);
+        } catch (err) {
+            const msg = isRetryableChinaError(err.message)
+                ? 'China FTP connection failed after retries. Wait a moment and try again. 中国 FTP 连接失败，请稍后再试。'
+                : err.message;
+            showError(msg);
+        }
+    }
+
+    async function pollRebuildStatus() {
+        try {
+            const resp = await fetch('/api/china_directory/index_status');
+            const data = await resp.json();
+            if (!resp.ok) return;
+            renderRebuildStatus(data);
+            if (data.running) {
+                rebuildPollTimer = setTimeout(pollRebuildStatus, 3000);
+            } else {
+                rebuildPollTimer = null;
+            }
+        } catch (err) {
+            rebuildPollTimer = setTimeout(pollRebuildStatus, 5000);
+        }
+    }
+
+    async function startRebuildIndex() {
+        if (rebuildIndexBtn.disabled) return;
+        if (!confirm('Rebuild the full China FTP search index? This may take several minutes.\n重建完整搜索索引？可能需要几分钟。')) {
+            return;
+        }
+        rebuildIndexBtn.disabled = true;
+        rebuildIndexBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting… / 启动中';
+        try {
+            const resp = await fetch('/api/china_directory/rebuild_index', { method: 'POST' });
+            const data = await resp.json();
+            if (!resp.ok && resp.status !== 409) {
+                throw new Error(data.error || data.message || 'Rebuild failed');
+            }
+            renderRebuildStatus(data);
+            if (rebuildPollTimer) clearTimeout(rebuildPollTimer);
+            rebuildPollTimer = setTimeout(pollRebuildStatus, 2000);
+        } catch (err) {
+            rebuildIndexBtn.disabled = false;
+            rebuildIndexBtn.innerHTML = '<i class="fas fa-database"></i> Rebuild index / 重建索引';
+            alert(err.message || 'Failed to start rebuild');
+        }
+    }
+
+    searchBtn.addEventListener('click', search);
+    browseRootBtn.addEventListener('click', () => browse(''));
+    refreshBtn.addEventListener('click', () => browse(currentPath, true));
+    rebuildIndexBtn.addEventListener('click', startRebuildIndex);
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+    previewToggleBtn.addEventListener('click', () => {
+        showPreviewColumn = !showPreviewColumn;
+        localStorage.setItem('chinaDirShowPreview', showPreviewColumn ? '1' : '0');
+        updatePreviewToggleBtn();
+        rerenderTable();
+    });
+
+    renderRebuildStatus(latestRebuildStatus);
+    if (latestRebuildStatus && latestRebuildStatus.running) {
+        rebuildPollTimer = setTimeout(pollRebuildStatus, 2000);
+    }
+
+    const initialQ = {{ initial_query|default('')|tojson }};
+    if (initialQ) {
+        searchInput.value = initialQ;
+        search();
+    } else {
+        browse('');
+    }
+})();
+</script>
+</body>
+</html>

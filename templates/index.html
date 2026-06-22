@@ -920,14 +920,14 @@
         </a>
         {%- endif %}
 
-        {%- if tool_allowed('switch_number') %}
-        <a href="{{ url_for('switch_number.switch_number_page') }}" class="tool-card" data-category="inventory" data-tool="switch_number">
+        {%- if tool_allowed('inventory_manual_adjuster') %}
+        <a href="{{ url_for('inventory_manual_adjuster.inventory_manual_adjuster_page') }}" class="tool-card" data-category="inventory" data-tool="inventory_manual_adjuster">
           <div class="card-header">
-            <i class="fas fa-exchange-alt"></i>
-            <h3>Switch Number</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'switch_number')"></i>
+            <i class="fas fa-tools"></i>
+            <h3>Inventory Manual Adjuster</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'inventory_manual_adjuster')"></i>
           </div>
-          <p>Transfer inventory between FDC and E-Fashion with ERP manual adjustments</p>
+          <p>Transfer inventory between FDC and E-Fashion, or add/remove stock on one database</p>
           <div class="card-footer">
             <span class="category">Inventory</span>
             <span class="badge">NEW</span>

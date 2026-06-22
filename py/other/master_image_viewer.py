@@ -9,9 +9,12 @@ import json
 import copy
 import zipfile
 import threading
+import time
 import uuid
 import hashlib
 import glob
+import stat
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from urllib.parse import quote, urlparse
 from sqlalchemy.exc import IntegrityError
@@ -36,10 +39,104 @@ TK_PASSWORD = 'ucandoit'
 background_tasks = {}
 background_tasks_lock = threading.Lock()
 
+_china_sku_fetch_locks = {}
+_china_sku_fetch_guard = threading.Lock()
+_china_sku_active_tasks = {}
+
 BATCH_TASK_LOG_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'china_batch_logs')
 )
 os.makedirs(BATCH_TASK_LOG_DIR, exist_ok=True)
+
+from py.utilities import china_ftp_cache as _china_ftp_cache
+
+CHINA_DIR_SEARCH_MAX = _china_ftp_cache.CHINA_DIR_SEARCH_MAX
+
+
+def _china_directory_is_yeti() -> bool:
+    return (session.get('username') or '').strip().lower() == 'yeti'
+
+
+def _china_directory_json_forbidden():
+    if not _china_directory_is_yeti():
+        return jsonify({'error': 'Access denied. Only yeti can use China FTP directory.'}), 403
+    return None
+
+
+def _miv_session_ok() -> bool:
+    return bool(session.get('username')) or bool(session.get('tk_user'))
+
+
+def _miv_json_unauthorized():
+    if not _miv_session_ok():
+        return jsonify({'error': 'Unauthorized'}), 403
+    return None
+
+
+def _china_dir_lookup_saved_images(filenames: list) -> dict:
+    """Map filename -> preview info for files saved in big_picture (DB + disk)."""
+    names = list({n for n in filenames if n})
+    if not names:
+        return {}
+
+    from py.utilities.models import ImageAsset
+
+    db = py.utilities.models.SessionLocal()
+    try:
+        rows = (
+            db.query(ImageAsset.id, ImageAsset.filename, ImageAsset.path)
+            .filter(
+                ImageAsset.filename.in_(names),
+                ImageAsset.source == 'big_picture',
+                ImageAsset.is_active == True,
+            )
+            .all()
+        )
+    finally:
+        db.close()
+
+    out = {}
+    for row in rows:
+        path = row.path or ''
+        if path and os.path.isfile(path) and os.path.getsize(path) > 0:
+            out[row.filename] = {
+                'asset_id': row.id,
+                'preview_url': f'/image/{row.id}/200',
+            }
+    return out
+
+
+def _china_dir_enrich_downloaded(items: list) -> int:
+    """Mark items whose filename exists in local big_picture storage."""
+    image_names = [i['name'] for i in items if i.get('is_image') and i.get('name')]
+    saved = _china_dir_lookup_saved_images(image_names)
+    downloaded_count = 0
+    for item in items:
+        if not item.get('is_image'):
+            continue
+        hit = saved.get(item['name'])
+        if hit:
+            item['downloaded'] = True
+            item['preview_url'] = hit['preview_url']
+            item['asset_id'] = hit['asset_id']
+            downloaded_count += 1
+        else:
+            item['downloaded'] = False
+    return downloaded_count
+
+
+def _china_ftp_list_directory(rel_path: str = '', force_refresh: bool = False) -> dict:
+    payload = _china_ftp_cache.list_directory(rel_path, force_refresh=force_refresh)
+    payload['downloaded_count'] = _china_dir_enrich_downloaded(payload['items'])
+    payload['index_status'] = _china_ftp_cache.index_status()
+    return payload
+
+
+def _china_ftp_search(query: str, limit: int = CHINA_DIR_SEARCH_MAX) -> dict:
+    payload = _china_ftp_cache.search(query, limit=limit)
+    payload['downloaded_count'] = _china_dir_enrich_downloaded(payload.get('items') or [])
+    payload['index_status'] = _china_ftp_cache.index_status()
+    return payload
 
 
 def _utc_now_iso():
@@ -125,7 +222,32 @@ def _batch_snapshot_newest_ts(
     return file_mtime_fallback
 
 
-def _list_batch_fetch_history(*, days: int) -> list:
+def _batch_history_style_label(full: dict) -> str:
+    """Short style label for batch history sidebar rows."""
+    current_style = full.get("current_style") or {}
+    sku = str(current_style.get("sku") or full.get("current_sku") or "").strip().upper()
+    total = int(full.get("total") or 0)
+    current_index = int(full.get("current_index") or 0)
+    if sku:
+        if total > 0 and current_index > 0:
+            return f"{sku} ({current_index}/{total})"
+        return sku
+    skus = full.get("skus") or []
+    if len(skus) == 1:
+        return str(skus[0]).strip().upper()
+    results = full.get("results") or []
+    if len(results) == 1:
+        only_sku = str((results[0] or {}).get("sku") or "").strip().upper()
+        if only_sku:
+            return only_sku
+    if total == 1 and skus:
+        return str(skus[0]).strip().upper()
+    if total > 1:
+        return f"{total} styles"
+    return ""
+
+
+def _list_batch_fetch_history(*, days: int, limit: Optional[int] = None) -> list:
     """Running + finished batch jobs from disk snapshots (recent) merged with in-memory tasks."""
     cutoff = datetime.utcnow() - timedelta(days=max(1, min(int(days), 90)))
     by_id: Dict[str, Dict[str, Any]] = {}
@@ -188,11 +310,15 @@ def _list_batch_fetch_history(*, days: int) -> list:
                         "already_synced": summ.get("already_synced"),
                     },
                     "error": ((full.get("error") or "")[:500] if full.get("status") == "error" else None),
+                    "style_label": _batch_history_style_label(full),
                 },
             )
         )
     decorated.sort(key=lambda x: x[0], reverse=True)
-    return [row for _, row in decorated]
+    rows = [row for _, row in decorated]
+    if limit is not None:
+        rows = rows[: max(1, min(int(limit), 50))]
+    return rows
 
 
 def _audit_image_search(query_value: str) -> None:
@@ -251,6 +377,7 @@ def find_images_by_sku(sku):
         }
         
         import os
+        dimensions_updated = False
         for asset in assets:
             # Skip if file does not exist (only for local paths, not remote China FTP paths)
             if hasattr(asset, 'path') and asset.path:
@@ -259,6 +386,23 @@ def find_images_by_sku(sku):
                 is_remote = asset.path.startswith('\\\\') or (len(asset.path) > 1 and asset.path[1] == ':' and asset.source == 'big_picture')
                 if not is_remote and not os.path.exists(asset.path):
                     continue
+
+            if (
+                getattr(asset, 'source', None) == 'big_picture'
+                and (asset.width is None or asset.height is None)
+                and asset.path
+                and os.path.exists(asset.path)
+            ):
+                w, h = _read_local_image_dimensions(asset.path)
+                if w and h:
+                    asset.width = w
+                    asset.height = h
+                    dimensions_updated = True
+                    if not getattr(asset, 'file_size', None):
+                        try:
+                            asset.file_size = os.path.getsize(asset.path)
+                        except OSError:
+                            pass
             # Extract directory information for better organization
             directory = None
             relative_path = None
@@ -312,6 +456,9 @@ def find_images_by_sku(sku):
                 grouped_images['dam_big_picture'].append(asset_info)
             else:
                 grouped_images['dam_other'].append(asset_info)
+
+        if dimensions_updated:
+            db.commit()
         
         # Calculate totals
         total_count = len(assets)
@@ -337,6 +484,170 @@ def tk_password():
     else:
         flash('Incorrect password. Please try again.', 'danger')
         return redirect(url_for('master_image_viewer.master_image_viewer'))
+
+
+def _china_directory_page_context():
+    from py.other.clientview import is_client_portal_only_user
+
+    current_user = session.get('username')
+    show_navbar = bool(current_user) and not is_client_portal_only_user(current_user)
+    return {
+        'authenticated': True,
+        'current_user': current_user,
+        'show_navbar': show_navbar,
+        'initial_query': request.args.get('q', ''),
+        'index_status': _china_ftp_cache.index_status(),
+        'rebuild_status': _china_index_rebuild_status(),
+    }
+
+
+@master_image_viewer_bp.route('/master_image_viewer/chinadirectory', methods=['GET'])
+@login_required
+def china_directory():
+    if not _china_directory_is_yeti():
+        flash('Access denied. Only yeti can view China FTP directory.', 'warning')
+        return redirect(url_for('master_image_viewer.master_image_viewer'))
+    ctx = _china_directory_page_context()
+    return render_template('china_directory.html', **ctx)
+
+
+@master_image_viewer_bp.route('/api/china_directory/browse')
+@login_required
+def api_china_directory_browse():
+    denied = _china_directory_json_forbidden()
+    if denied:
+        return denied
+    rel_path = request.args.get('path', '')
+    force_refresh = request.args.get('refresh', '').lower() in ('1', 'true', 'yes')
+    try:
+        payload = _china_ftp_list_directory(rel_path, force_refresh=force_refresh)
+        return jsonify(payload)
+    except ValueError:
+        return jsonify({'error': 'Invalid path'}), 400
+    except Exception as e:
+        log_event('error', f"China directory browse error: {str(e)}")
+        return jsonify({'error': f'Browse failed: {str(e)}'}), 500
+
+
+_china_index_rebuild_lock = threading.Lock()
+_china_index_rebuild_state = {
+    'running': False,
+    'started_at': None,
+    'finished_at': None,
+    'result': None,
+    'error': None,
+    'progress': None,
+}
+
+
+def _china_index_rebuild_progress_update(progress: dict) -> None:
+    with _china_index_rebuild_lock:
+        _china_index_rebuild_state['progress'] = dict(progress)
+
+
+def _china_index_rebuild_status() -> dict:
+    with _china_index_rebuild_lock:
+        status = dict(_china_index_rebuild_state)
+    status['index'] = _china_ftp_cache.index_status()
+    if status.get('running') and not status.get('progress') and status.get('started_at'):
+        estimated = _china_ftp_cache.estimate_walk_progress(status['started_at'])
+        if estimated:
+            status['progress'] = estimated
+    return status
+
+
+def _background_rebuild_china_index(triggered_by: str = 'unknown'):
+    global _china_index_rebuild_state
+    try:
+        year_label = _china_ftp_cache.current_year_label()
+        log_event('info', f'China FTP index rebuild started by {triggered_by} (scope: {year_label})')
+
+        def _log(msg: str) -> None:
+            log_event('info', f'China FTP index: {msg}')
+
+        result = _china_ftp_cache.build_full_index(_log, _china_index_rebuild_progress_update)
+        with _china_index_rebuild_lock:
+            _china_index_rebuild_state['result'] = result
+            _china_index_rebuild_state['error'] = None
+        log_event(
+            'info',
+            f"China FTP index rebuild done: entries={result.get('entry_count')} "
+            f"folders={result.get('folder_count')} built_at={result.get('built_at')}",
+        )
+    except Exception as exc:
+        with _china_index_rebuild_lock:
+            _china_index_rebuild_state['error'] = str(exc)
+            _china_index_rebuild_state['result'] = None
+        log_event('error', f'China FTP index rebuild failed: {exc}')
+    finally:
+        with _china_index_rebuild_lock:
+            _china_index_rebuild_state['running'] = False
+            _china_index_rebuild_state['finished_at'] = datetime.utcnow().isoformat() + 'Z'
+            _china_index_rebuild_state['progress'] = None
+
+
+@master_image_viewer_bp.route('/api/china_directory/index_status')
+@login_required
+def api_china_directory_index_status():
+    denied = _china_directory_json_forbidden()
+    if denied:
+        return denied
+    return jsonify(_china_index_rebuild_status())
+
+
+@master_image_viewer_bp.route('/api/china_directory/rebuild_index', methods=['POST'])
+@login_required
+def api_china_directory_rebuild_index():
+    denied = _china_directory_json_forbidden()
+    if denied:
+        return denied
+
+    with _china_index_rebuild_lock:
+        if _china_index_rebuild_state['running']:
+            return jsonify({
+                'success': False,
+                'message': 'Index rebuild already in progress',
+                **_china_index_rebuild_status(),
+            }), 409
+
+        _china_index_rebuild_state['running'] = True
+        _china_index_rebuild_state['started_at'] = datetime.utcnow().isoformat() + 'Z'
+        _china_index_rebuild_state['finished_at'] = None
+        _china_index_rebuild_state['result'] = None
+        _china_index_rebuild_state['error'] = None
+        _china_index_rebuild_state['progress'] = None
+
+    triggered_by = (session.get('username') or 'unknown').strip()
+    thread = threading.Thread(
+        target=_background_rebuild_china_index,
+        kwargs={'triggered_by': triggered_by},
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify({
+        'success': True,
+        'message': 'Index rebuild started in background',
+        **_china_index_rebuild_status(),
+    })
+
+
+@master_image_viewer_bp.route('/api/china_directory/search')
+@login_required
+def api_china_directory_search():
+    denied = _china_directory_json_forbidden()
+    if denied:
+        return denied
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({'error': 'Query parameter q is required'}), 400
+    try:
+        payload = _china_ftp_search(query)
+        return jsonify(payload)
+    except Exception as e:
+        log_event('error', f"China directory search error for {query}: {str(e)}")
+        return jsonify({'error': f'Search failed: {str(e)}'}), 500
+
 
 # Main page for master image viewer
 @master_image_viewer_bp.route("/master_image_viewer/<string:sku>", methods=["GET"])
@@ -490,83 +801,367 @@ def fetch_china_ftp():
     sku_upper = sku.upper()
     
     try:
-        # Fetch images from remote China FTP via SSH
-        china_ftp_images = []
-        try:
-            # SSH connection details
-            ssh_host = '219.135.198.130'
-            ssh_user = 'fdc'
-            ssh_password = 'Bst@93109310'
-            
-            ssh_client = paramiko.SSHClient()
-            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh_client.connect(ssh_host, username=ssh_user, password=ssh_password)
-            
-            # Run PowerShell command to list files
-            remote_base_path = 'D:\\BST\\BST_PIC\\BSTpic2\\梁佳怡'
-            command = f"powershell -command \"Get-ChildItem -Path '{remote_base_path}' -Recurse -File -Filter '{sku_upper}*' | Select-Object FullName\""
-            stdin, stdout, stderr = ssh_client.exec_command(command)
-            output = stdout.read().decode('gbk', errors='ignore')
-            error = stderr.read().decode('gbk', errors='ignore')
-            if error:
-                log_event('error', f"SSH Error for SKU {sku_upper}: {error}")
-            
-            # Get all existing big_picture images for this SKU to check for duplicates
-            db = py.utilities.models.SessionLocal()
-            existing_big_picture = {}
-            try:
-                existing_assets = db.query(py.utilities.models.ImageAsset).filter(
-                    py.utilities.models.ImageAsset.sku == sku_upper,
-                    py.utilities.models.ImageAsset.source == 'big_picture',
-                    py.utilities.models.ImageAsset.is_active == True
-                ).all()
-                for asset in existing_assets:
-                    existing_big_picture[asset.filename] = True
-            finally:
-                db.close()
-            
-            # Parse output (skip header, split lines)
-            lines = output.strip().split('\n')[2:]  # Skip "FullName" and "--------"
-            for line in lines:
-                if line.strip():
-                    remote_path = line.strip()
-                    filename = os.path.basename(remote_path)
-                    # Convert Windows path to URL-encoded format
-                    from urllib.parse import quote
-                    encoded_path = quote(remote_path)
-                    # Check if already synced
-                    already_synced = filename in existing_big_picture
-                    # Create asset_info-like dict
-                    asset_info = {
-                        'id': None,  # No DB ID
-                        'sku': sku_upper,
-                        'version': None,
-                        'filename': filename,
-                        'source': 'china_ftp',
-                        'width': None,
-                        'height': None,
-                        'is_canonical': False,
-                        'created_at': None,
-                        'url': f'/china_ftp_image?path={encoded_path}&size=800',  # Thumbnail
-                        'full_url': f'/china_ftp_image?path={encoded_path}&size=2000',  # Full
-                        'original_url': f'/china_ftp_image?path={encoded_path}&size=0',  # Original
-                        'directory': os.path.dirname(remote_path),
-                        'relative_path': remote_path.replace(remote_base_path, '').lstrip('\\'),
-                        'file_path': remote_path,
-                        'file_size': None,
-                        'already_synced': already_synced
-                    }
-                    china_ftp_images.append(asset_info)
-            
-            ssh_client.close()
-        except Exception as e:
-            log_event('error', f"China FTP fetch error for SKU {sku_upper}: {str(e)}")
-            return jsonify({'error': f'Failed to fetch China FTP images: {str(e)}'}), 500
-        
-        return jsonify({'china_ftp': china_ftp_images})
+        china_ftp_images, source = _list_china_ftp_images_for_sku(sku_upper)
+        for asset_info in china_ftp_images:
+            from urllib.parse import quote
+            encoded_path = quote(asset_info['file_path'])
+            asset_info['url'] = f'/china_ftp_image?path={encoded_path}&size=800'
+            asset_info['full_url'] = f'/china_ftp_image?path={encoded_path}&size=2000'
+            asset_info['original_url'] = f'/china_ftp_image?path={encoded_path}&size=0'
+        return jsonify({
+            'china_ftp': china_ftp_images,
+            'source': source,
+            'year': _china_ftp_cache.current_year_label(),
+            'sync_filter': _china_ftp_cache.sync_fetch_filter_info(),
+        })
     except Exception as e:
         log_event('error', f"Fetch China FTP API Error for SKU {sku}: {str(e)}")
         return jsonify({'error': f'Fetch failed: {str(e)}'}), 500
+
+
+CHINA_FTP_SYNC_WORKERS = _china_ftp_cache.CHINA_FTP_DOWNLOAD_WORKERS
+CHINA_FTP_CONNECT_FAILURE_ABORT = _china_ftp_cache.CHINA_FTP_CONNECT_FAILURE_ABORT
+
+
+def _acquire_china_sku_fetch_lock(sku_upper: str):
+    """Return a held lock for this SKU, or None if a fetch is already running."""
+    with _china_sku_fetch_guard:
+        lock = _china_sku_fetch_locks.get(sku_upper)
+        if lock is None:
+            lock = threading.Lock()
+            _china_sku_fetch_locks[sku_upper] = lock
+        if not lock.acquire(blocking=False):
+            return None
+        return lock
+
+
+def _release_china_sku_fetch_lock(sku_upper: str, lock) -> None:
+    if lock is None:
+        return
+    with _china_sku_fetch_guard:
+        _china_sku_active_tasks.pop(sku_upper, None)
+    try:
+        lock.release()
+    except RuntimeError:
+        pass
+
+
+def _load_existing_big_picture_filenames(sku_upper: str) -> dict:
+    db = py.utilities.models.SessionLocal()
+    try:
+        existing_assets = db.query(py.utilities.models.ImageAsset).filter(
+            py.utilities.models.ImageAsset.sku == sku_upper,
+            py.utilities.models.ImageAsset.source == 'big_picture',
+            py.utilities.models.ImageAsset.is_active == True
+        ).all()
+        return {asset.filename: True for asset in existing_assets}
+    finally:
+        db.close()
+
+
+def _list_china_ftp_images_for_sku(sku_upper: str) -> tuple:
+    """List China FTP images for fetch/sync: current year, white-bg folders only."""
+    entries, source = _china_ftp_cache.find_sku_files(
+        sku_upper,
+        year_only=True,
+        sync_only=True,
+    )
+    existing_big_picture = _load_existing_big_picture_filenames(sku_upper)
+    images = []
+    for entry in entries:
+        filename = entry.get('name') or os.path.basename(entry.get('full_path') or '')
+        asset_info = _china_ftp_cache.sku_entry_to_asset_info(
+            entry,
+            sku_upper,
+            already_synced=filename in existing_big_picture,
+        )
+        images.append(asset_info)
+    return images, source
+
+
+def _read_local_image_dimensions(local_path):
+    """Return (width, height) from a local image file, or (None, None) on failure."""
+    try:
+        from PIL import Image
+        with Image.open(local_path) as img:
+            return img.size
+    except Exception as e:
+        log_event('warning', f"Could not read image dimensions for {local_path}: {e}")
+        return None, None
+
+
+def _china_ftp_sftp_get(remote_path, local_path):
+    _china_ftp_cache.download_file(remote_path, local_path)
+
+
+def _sync_one_china_ftp_image(image, sku_folder):
+    """Download one China FTP file and register it in big_picture. Returns (filename, status, conn_error)."""
+    from py.utilities.models import ImageAsset
+
+    filename = image['filename']
+    remote_path = image.get('file_path')
+    local_path = os.path.join(sku_folder, filename)
+
+    if not _china_ftp_cache.is_sync_fetch_file(filename):
+        return filename, 'skipped', False
+
+    try:
+        _china_ftp_sftp_get(remote_path, local_path)
+
+        if not os.path.exists(local_path) or os.path.getsize(local_path) == 0:
+            if os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                except Exception:
+                    pass
+            log_event('error', f"Failed to download China FTP image {filename} - file missing or empty after download")
+            return filename, 'failed', False
+
+        width, height = _read_local_image_dimensions(local_path)
+        file_size = os.path.getsize(local_path)
+
+        db_session = py.utilities.models.SessionLocal()
+        try:
+            existing = db_session.query(ImageAsset).filter(
+                ImageAsset.sku == image['sku'],
+                ImageAsset.filename == image['filename'],
+                ImageAsset.source == 'big_picture'
+            ).first()
+
+            if not existing:
+                sha256_hash = hashlib.sha256()
+                with open(local_path, 'rb') as f:
+                    for chunk in iter(lambda: f.read(1024 * 1024), b''):
+                        sha256_hash.update(chunk)
+
+                new_asset = ImageAsset(
+                    sku=image['sku'],
+                    source='big_picture',
+                    filename=image['filename'],
+                    path=local_path,
+                    sha256=sha256_hash.hexdigest(),
+                    version=1,
+                    width=width,
+                    height=height,
+                    file_size=file_size,
+                    is_canonical=False,
+                    is_active=True
+                )
+                db_session.add(new_asset)
+                db_session.commit()
+            else:
+                updated = False
+                if 'china_ftp_downloads' in (existing.path or '').replace('/', '\\'):
+                    existing.path = local_path
+                    updated = True
+                if width and height and (not existing.width or not existing.height):
+                    existing.width = width
+                    existing.height = height
+                    updated = True
+                if file_size and not existing.file_size:
+                    existing.file_size = file_size
+                    updated = True
+                if updated:
+                    db_session.commit()
+            return filename, 'synced', False
+        except IntegrityError:
+            db_session.rollback()
+            return filename, 'synced', False
+        except Exception as e:
+            log_event('error', f"Failed to sync image {filename} to database: {str(e)}")
+            if os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                except Exception:
+                    pass
+            return filename, 'failed', False
+        finally:
+            db_session.close()
+    except Exception as e:
+        conn_error = _china_ftp_cache.is_connection_error(e)
+        log_event('error', f"Failed to download China FTP image {filename}: {str(e)}")
+        return filename, 'failed', conn_error
+
+
+def _china_ftp_sync_images(images_to_sync, sku_folder, task_updater=None):
+    """Download and register China FTP images with pooled parallel SFTP workers."""
+    workers = max(1, int(_china_ftp_cache.CHINA_FTP_DOWNLOAD_WORKERS or 1))
+    total = len(images_to_sync)
+    if total == 0:
+        return 0, 0, False, None
+
+    state_lock = threading.Lock()
+    synced_count = 0
+    failed_count = 0
+    consecutive_conn_failures = 0
+    aborted = False
+    abort_reason = None
+    completed_count = 0
+    in_flight: Dict[int, str] = {}
+    in_flight_started: Dict[int, float] = {}
+    stop_heartbeat = threading.Event()
+
+    def _pulse_progress(force_elapsed=None):
+        if not callable(task_updater):
+            return
+        with state_lock:
+            active = list(in_flight.items())
+            synced = synced_count
+            failed = failed_count
+            done = completed_count
+            is_aborted = aborted
+            reason = abort_reason
+        if active:
+            active.sort(key=lambda item: item[0])
+            primary_idx, primary_name = active[0]
+            started_at = in_flight_started.get(primary_idx, time.time())
+            elapsed = force_elapsed if force_elapsed is not None else int(time.time() - started_at)
+            extra = len(active) - 1
+            filename = primary_name
+            if extra > 0:
+                filename = f"{primary_name} (+{extra} more)"
+            sync_index = done
+        else:
+            elapsed = force_elapsed or 0
+            filename = None
+            sync_index = done
+
+        payload = {
+            'status': 'syncing',
+            'current_sync_index': sync_index,
+            'current_filename': filename,
+            'sync_phase': 'downloading' if active else 'done',
+            'synced': synced,
+            'failed': failed,
+            'download_workers': workers,
+            'download_in_flight': len(active),
+        }
+        if elapsed:
+            payload['download_elapsed_sec'] = elapsed
+        if is_aborted:
+            payload['aborted'] = True
+            payload['abort_reason'] = reason
+        task_updater(payload)
+
+    def _heartbeat():
+        while not stop_heartbeat.wait(5):
+            with state_lock:
+                if not in_flight or aborted:
+                    continue
+            _pulse_progress()
+
+    def _record_result(idx, filename, result, conn_error, elapsed_sec):
+        nonlocal synced_count, failed_count, consecutive_conn_failures
+        nonlocal aborted, abort_reason, completed_count
+        with state_lock:
+            completed_count += 1
+            if result == 'synced':
+                synced_count += 1
+                consecutive_conn_failures = 0
+            elif result == 'skipped':
+                pass
+            else:
+                failed_count += 1
+                if conn_error:
+                    consecutive_conn_failures += 1
+                    if consecutive_conn_failures >= CHINA_FTP_CONNECT_FAILURE_ABORT:
+                        aborted = True
+                        abort_reason = (
+                            f'Aborted after {consecutive_conn_failures} consecutive connection failures'
+                        )
+                        log_event('error', f'China FTP sync aborting: {abort_reason}')
+                else:
+                    consecutive_conn_failures = 0
+            done = completed_count
+            synced = synced_count
+            failed = failed_count
+            is_aborted = aborted
+            reason = abort_reason
+
+        if callable(task_updater):
+            task_updater({
+                'current_sync_index': done,
+                'current_filename': filename,
+                'sync_phase': 'done' if result == 'synced' else 'failed',
+                'synced': synced,
+                'failed': failed,
+                'aborted': is_aborted,
+                'abort_reason': reason,
+                'download_elapsed_sec': elapsed_sec,
+                'download_workers': workers,
+            })
+
+    def _process_one(idx, image):
+        with state_lock:
+            if aborted:
+                return idx, image.get('filename', 'unknown'), 'failed', True, 0
+        filename = image.get('filename', 'unknown')
+        with state_lock:
+            in_flight[idx] = filename
+            in_flight_started[idx] = time.time()
+        started = time.time()
+        try:
+            filename, result, conn_error = _sync_one_china_ftp_image(image, sku_folder)
+            elapsed = int(time.time() - started)
+            return idx, filename, result, conn_error, elapsed
+        except Exception as exc:
+            elapsed = int(time.time() - started)
+            conn_error = _china_ftp_cache.is_connection_error(exc)
+            log_event('error', f'China FTP sync error for {filename}: {exc}')
+            return idx, filename, 'failed', conn_error, elapsed
+        finally:
+            with state_lock:
+                in_flight.pop(idx, None)
+                in_flight_started.pop(idx, None)
+
+    heartbeat = threading.Thread(target=_heartbeat, daemon=True)
+    heartbeat.start()
+    _pulse_progress(0)
+
+    try:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(_process_one, idx, image): idx
+                for idx, image in enumerate(images_to_sync, start=1)
+            }
+            for future in as_completed(futures):
+                with state_lock:
+                    if aborted and completed_count >= synced_count + failed_count:
+                        pass
+                try:
+                    idx, filename, result, conn_error, elapsed = future.result()
+                except Exception as exc:
+                    idx = futures[future]
+                    filename = images_to_sync[idx - 1].get('filename', 'unknown')
+                    result = 'failed'
+                    conn_error = _china_ftp_cache.is_connection_error(exc)
+                    elapsed = 0
+                    log_event('error', f'China FTP worker failed for {filename}: {exc}')
+
+                _record_result(idx, filename, result, conn_error, elapsed)
+
+                with state_lock:
+                    should_abort = aborted
+                if should_abort:
+                    for pending in futures:
+                        if not pending.done():
+                            pending.cancel()
+                    break
+    finally:
+        stop_heartbeat.set()
+        heartbeat.join(timeout=1)
+
+    with state_lock:
+        if aborted:
+            remaining = total - completed_count
+            if remaining > 0:
+                failed_count += remaining
+        synced = synced_count
+        failed = failed_count
+        is_aborted = aborted
+        reason = abort_reason
+
+    return synced, failed, is_aborted, reason
 
 
 def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progress_callback=None):
@@ -606,186 +1201,87 @@ def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progr
         })
 
         sku_upper = sku.upper()
-
-        # Fetch images from China FTP
-        china_ftp_images = []
-        try:
-            ssh_host = '219.135.198.130'
-            ssh_user = 'fdc'
-            ssh_password = 'Bst@93109310'
-
-            ssh_client = paramiko.SSHClient()
-            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh_client.connect(ssh_host, username=ssh_user, password=ssh_password)
-
-            remote_base_path = 'D:\\\\BST\\\\BST_PIC\\\\BSTpic2\\\\梁佳怡'
-            command = f"powershell -command \"Get-ChildItem -Path '{remote_base_path}' -Recurse -File -Filter '{sku_upper}*' | Select-Object FullName\""
-            stdin, stdout, stderr = ssh_client.exec_command(command)
-            output = stdout.read().decode('gbk', errors='ignore')
-
-            # Parse output
-            lines = output.strip().split('\n')[2:]
-
-            db = py.utilities.models.SessionLocal()
-            try:
-                existing_big_picture = {}
-                existing_assets = db.query(py.utilities.models.ImageAsset).filter(
-                    py.utilities.models.ImageAsset.sku == sku_upper,
-                    py.utilities.models.ImageAsset.source == 'big_picture',
-                    py.utilities.models.ImageAsset.is_active == True
-                ).all()
-                for asset in existing_assets:
-                    existing_big_picture[asset.filename] = True
-            finally:
-                db.close()
-
-            for line in lines:
-                if line.strip():
-                    remote_path = line.strip()
-                    filename = os.path.basename(remote_path)
-                    already_synced = filename in existing_big_picture
-
-                    asset_info = {
-                        'id': None,
-                        'sku': sku_upper,
-                        'version': None,
-                        'filename': filename,
-                        'source': 'china_ftp',
-                        'width': None,
-                        'height': None,
-                        'is_canonical': False,
-                        'created_at': None,
-                        'directory': os.path.dirname(remote_path),
-                        'relative_path': remote_path.replace(remote_base_path, '').lstrip('\\\\'),
-                        'file_path': remote_path,
-                        'file_size': None,
-                        'already_synced': already_synced
-                    }
-                    china_ftp_images.append(asset_info)
-
-            ssh_client.close()
-        except Exception as e:
-            log_event('error', f"China FTP fetch error for SKU {sku_upper}: {str(e)}")
-            _update_task({'status': 'error', 'error': str(e), 'finished_at': _utc_now_iso()})
+        sku_lock = _acquire_china_sku_fetch_lock(sku_upper)
+        if sku_lock is None:
+            with _china_sku_fetch_guard:
+                existing_task_id = _china_sku_active_tasks.get(sku_upper)
+            _update_task({
+                'status': 'skipped',
+                'error': f'Fetch already running for SKU {sku_upper}',
+                'existing_task_id': existing_task_id,
+                'finished_at': _utc_now_iso(),
+            })
             return
 
-        # Update fetching progress
-        _update_task({'total': len(china_ftp_images), 'current': len(china_ftp_images)})
+        with _china_sku_fetch_guard:
+            _china_sku_active_tasks[sku_upper] = task_id
 
-        # Start syncing phase
-        images_to_sync = [img for img in china_ftp_images if not img['already_synced']]
-        already_synced_count = len(china_ftp_images) - len(images_to_sync)
-
-        _update_task({
-            'status': 'syncing',
-            'to_sync': len(images_to_sync),
-            'already_synced': already_synced_count,
-            'synced': 0,
-            'failed': 0,
-            'current_sync_index': 0,
-            'current_filename': None
-        })
-
-        # Sync images one by one
-        synced_count = 0
-        failed_count = 0
-        big_picture_base = Config.IMAGE_DAM_BIG_PICTURE_DIR
-        sku_folder = os.path.join(big_picture_base, sku_upper)
-        os.makedirs(sku_folder, exist_ok=True)
-
-        for idx, image in enumerate(images_to_sync, start=1):
-            filename = image['filename']
-            _update_task({'current_sync_index': idx, 'current_filename': filename})
-
+        try:
+            year_label = _china_ftp_cache.current_year_label()
             try:
-                remote_path = image.get('file_path')
-                local_path = os.path.join(sku_folder, filename)
+                china_ftp_images, list_source = _list_china_ftp_images_for_sku(sku_upper)
+            except Exception as e:
+                log_event('error', f"China FTP fetch error for SKU {sku_upper}: {str(e)}")
+                _update_task({'status': 'error', 'error': str(e), 'finished_at': _utc_now_iso()})
+                return
 
-                try:
-                    # Download from SFTP directly into big_picture folder
-                    transport = paramiko.Transport(('219.135.198.130', 22))
-                    transport.connect(username='fdc', password='Bst@93109310')
-                    sftp = paramiko.SFTPClient.from_transport(transport)
+            _update_task({
+                'total': len(china_ftp_images),
+                'current': len(china_ftp_images),
+                'list_source': list_source,
+                'year_scope': year_label,
+                'sync_filter': _china_ftp_cache.sync_fetch_filter_info(),
+            })
 
-                    sftp.get(remote_path, local_path)
-                    sftp.close()
-                    transport.close()
+            images_to_sync = [img for img in china_ftp_images if not img['already_synced']]
+            already_synced_count = len(china_ftp_images) - len(images_to_sync)
 
-                    if not os.path.exists(local_path):
-                        failed_count += 1
-                        log_event('error', f"Failed to download China FTP image {filename} - file not found after download")
-                        _update_task({'synced': synced_count, 'failed': failed_count})
-                        continue
+            _update_task({
+                'status': 'syncing',
+                'to_sync': len(images_to_sync),
+                'already_synced': already_synced_count,
+                'synced': 0,
+                'failed': 0,
+                'current_sync_index': 0,
+                'current_filename': None,
+            })
 
-                    try:
-                        from py.utilities.models import ImageAsset
-                        db_session = py.utilities.models.SessionLocal()
+            big_picture_base = Config.IMAGE_DAM_BIG_PICTURE_DIR
+            sku_folder = os.path.join(big_picture_base, sku_upper)
+            os.makedirs(sku_folder, exist_ok=True)
 
-                        existing = db_session.query(ImageAsset).filter(
-                            ImageAsset.sku == image['sku'],
-                            ImageAsset.filename == image['filename'],
-                            ImageAsset.source == 'big_picture'
-                        ).first()
+            synced_count, failed_count, aborted, abort_reason = _china_ftp_sync_images(
+                images_to_sync,
+                sku_folder,
+                task_updater=_update_task,
+            )
 
-                        if not existing:
-                            with open(local_path, 'rb') as f:
-                                sha256_hash = hashlib.sha256(f.read()).hexdigest()
+            final_status = 'completed'
+            if aborted:
+                final_status = 'error'
+            _update_task({
+                'status': final_status,
+                'synced': synced_count,
+                'failed': failed_count,
+                'aborted': aborted,
+                'abort_reason': abort_reason,
+                'finished_at': _utc_now_iso(),
+            })
 
-                            new_asset = ImageAsset(
-                                sku=image['sku'],
-                                source='big_picture',
-                                filename=image['filename'],
-                                path=local_path,
-                                sha256=sha256_hash,
-                                version=1,
-                                width=image.get('width'),
-                                height=image.get('height'),
-                                is_canonical=False,
-                                is_active=True
-                            )
-                            db_session.add(new_asset)
-                            db_session.commit()
-                        elif 'china_ftp_downloads' in (existing.path or '').replace('/', '\\'):
-                            existing.path = local_path
-                            db_session.commit()
-
-                        db_session.close()
-                        synced_count += 1
-                    except IntegrityError:
-                        db_session.rollback()
-                        db_session.close()
-                        synced_count += 1
-                    except Exception as e:
-                        failed_count += 1
-                        log_event('error', f"Failed to sync image {filename} to database: {str(e)}")
-                        if os.path.exists(local_path):
-                            try:
-                                os.remove(local_path)
-                            except Exception:
-                                pass
-
-                except Exception as e:
-                    failed_count += 1
-                    log_event('error', f"Failed to download China FTP image {filename}: {str(e)}")
-
-            except Exception:
-                failed_count += 1
-
-            _update_task({'synced': synced_count, 'failed': failed_count})
-
-        # Mark as completed
-        _update_task({
-            'status': 'completed',
-            'synced': synced_count,
-            'failed': failed_count,
-            'finished_at': _utc_now_iso()
-        })
-
-        # Log completion
-        if username:
-            log_event('info', f"***{username.upper()}***__@@@completed background China FTP fetch for SKU@@@__ {sku_upper} (Synced: {synced_count}, Failed: {failed_count})")
-        elif tk_user:
-            log_event('info', f"***TK_USER***__@@@completed background China FTP fetch for SKU@@@__ {sku_upper} (Synced: {synced_count}, Failed: {failed_count})")
+            if username:
+                log_event(
+                    'info',
+                    f"***{username.upper()}***__@@@completed background China FTP fetch for SKU@@@__ "
+                    f"{sku_upper} ({year_label}: Synced: {synced_count}, Failed: {failed_count})",
+                )
+            elif tk_user:
+                log_event(
+                    'info',
+                    f"***TK_USER***__@@@completed background China FTP fetch for SKU@@@__ "
+                    f"{sku_upper} ({year_label}: Synced: {synced_count}, Failed: {failed_count})",
+                )
+        finally:
+            _release_china_sku_fetch_lock(sku_upper, sku_lock)
 
     except Exception as e:
         _update_task({'status': 'error', 'error': str(e), 'finished_at': _utc_now_iso()})
@@ -794,33 +1290,49 @@ def background_china_ftp_fetch(task_id, sku, username=None, tk_user=False, progr
 
 @master_image_viewer_bp.route('/api/fetch_china_ftp_async', methods=['POST'])
 def fetch_china_ftp_async():
-    """Start a background task to fetch and sync China FTP images"""
+    """Start a single-SKU China FTP fetch tracked as a batch job."""
     sku = request.args.get('sku', '').strip()
-    
+
     if not sku:
         return jsonify({'error': 'SKU parameter is required'}), 400
 
     username = session.get('username')
-    denied = json_forbidden_if_customer_purchase_denied(
-        username, sku, FEATURE_MASTER_IMAGE_VIEWER
+    raw_skus = [sku.strip()]
+    allowed_skus, skipped = filter_skus_for_customer_detailed(
+        username, raw_skus, FEATURE_MASTER_IMAGE_VIEWER,
     )
-    if denied:
-        return denied
+    if not allowed_skus:
+        msg = batch_all_skus_skipped_message(skipped)
+        return jsonify(
+            {
+                'error': msg,
+                'success': False,
+                'skipped': skipped,
+            }
+        ), 403
 
     tk_user = session.get('tk_user', False)
-    
-    # Create unique task ID
     task_id = str(uuid.uuid4())[:8]
-    
-    # Start background thread
+    app_obj = current_app._get_current_object()
+
     thread = threading.Thread(
-        target=background_china_ftp_fetch,
-        args=(task_id, sku, username, tk_user)
+        target=background_batch_china_ftp_fetch,
+        args=(task_id, allowed_skus, username, tk_user, app_obj, skipped),
     )
     thread.daemon = True
     thread.start()
-    
-    return jsonify({'task_id': task_id, 'sku': sku})
+
+    return jsonify(
+        {
+            'task_id': task_id,
+            'sku': allowed_skus[0],
+            'batch': True,
+            'started_at': _utc_now_iso(),
+            'skipped': skipped,
+            'started_count': len(allowed_skus),
+            'skipped_count': len(skipped),
+        }
+    )
 
 
 @master_image_viewer_bp.route('/api/china_ftp_task_status')
@@ -843,6 +1355,51 @@ def china_ftp_task_status():
 # Global storage for batch tasks
 batch_tasks = {}
 batch_tasks_lock = threading.Lock()
+BATCH_LIVE_LOG_MAX = 150
+_batch_persist_last_at: Dict[str, float] = {}
+
+
+def _persist_batch_task_throttled(task_id: str, *, force: bool = False) -> None:
+    """Persist batch snapshot at most every 2s unless forced."""
+    if not task_id:
+        return
+    now = time.time()
+    if not force:
+        last = _batch_persist_last_at.get(task_id, 0.0)
+        if (now - last) < 2.0:
+            return
+    _batch_persist_last_at[task_id] = now
+    _persist_batch_task_by_id(task_id)
+
+
+def _append_batch_live_log(
+    task_id: str,
+    message: str,
+    *,
+    level: str = 'info',
+    key: Optional[str] = None,
+) -> None:
+    """Append a timestamped line to the batch task live log (deduped by optional key)."""
+    if not task_id or not message:
+        return
+    entry = {
+        'ts': _utc_now_iso(),
+        'level': level,
+        'message': message,
+    }
+    with batch_tasks_lock:
+        task = batch_tasks.get(task_id)
+        if not task:
+            return
+        if key and task.get('_live_log_last_key') == key:
+            return
+        if key:
+            task['_live_log_last_key'] = key
+        log = task.setdefault('live_log', [])
+        log.append(entry)
+        if len(log) > BATCH_LIVE_LOG_MAX:
+            task['live_log'] = log[-BATCH_LIVE_LOG_MAX:]
+        task['updated_at'] = _utc_now_iso()
 
 
 def _normalized_batch_sku_list(skus) -> list:
@@ -988,6 +1545,7 @@ def background_batch_china_ftp_fetch(
                 'current_sku': None,
                 'current_stage': 'starting',
                 'current_style': None,
+                'live_log': [],
                 'started_at': started_at,
                 'updated_at': started_at,
                 'finished_at': None,
@@ -999,6 +1557,11 @@ def background_batch_china_ftp_fetch(
                 }
             }
         _persist_batch_task_by_id(task_id)
+        _append_batch_live_log(
+            task_id,
+            f"Batch started — {len(sku_list)} style(s) to fetch",
+            key='batch-start',
+        )
 
         for idx, sku in enumerate(sku_list, start=1):
             sku_upper = str(sku).strip().upper()
@@ -1019,6 +1582,11 @@ def background_batch_china_ftp_fetch(
                     'already_synced': 0
                 }
                 task['updated_at'] = _utc_now_iso()
+            _append_batch_live_log(
+                task_id,
+                f"[{idx}/{len(sku_list)}] Starting {sku_upper}…",
+                key=f'style-start-{sku_upper}',
+            )
             _persist_batch_task_by_id(task_id)
 
             if not sku_upper:
@@ -1059,13 +1627,69 @@ def background_batch_china_ftp_fetch(
                         'synced': int(single_status.get('synced', 0) or 0),
                         'failed': int(single_status.get('failed', 0) or 0),
                         'already_synced': int(single_status.get('already_synced', 0) or 0),
-                        'current_filename': single_status.get('current_filename')
+                        'current_filename': single_status.get('current_filename'),
+                        'sync_phase': single_status.get('sync_phase'),
+                        'download_elapsed_sec': single_status.get('download_elapsed_sec'),
+                        'download_workers': single_status.get('download_workers'),
+                        'download_in_flight': single_status.get('download_in_flight'),
                     }
                     task['updated_at'] = _utc_now_iso()
-                _persist_batch_task_by_id(task_id)
+
+                st = (single_status.get('status') or '').lower()
+                total_found = int(single_status.get('total', 0) or 0)
+                to_sync = int(single_status.get('to_sync', 0) or 0)
+                already = int(single_status.get('already_synced', 0) or 0)
+                step = int(single_status.get('current_sync_index', 0) or 0)
+                synced = int(single_status.get('synced', 0) or 0)
+                failed = int(single_status.get('failed', 0) or 0)
+                filename = single_status.get('current_filename') or ''
+                sync_phase = (single_status.get('sync_phase') or '').lower()
+
+                if st == 'fetching':
+                    _append_batch_live_log(
+                        task_id,
+                        f"{sku_upper} — scanning China FTP ({single_status.get('year_scope') or '2026'} white-bg)…",
+                        key=f'{sku_upper}-fetching',
+                    )
+                elif st == 'syncing' and to_sync >= 0 and step == 0 and not filename and not sync_phase:
+                    src = single_status.get('list_source') or 'index'
+                    _append_batch_live_log(
+                        task_id,
+                        (
+                            f"{sku_upper} — found {total_found} image(s) via {src}; "
+                            f"{to_sync} to sync, {already} already on disk"
+                        ),
+                        key=f'{sku_upper}-sync-start',
+                    )
+                elif sync_phase == 'downloading' and filename:
+                    elapsed = int(single_status.get('download_elapsed_sec') or 0)
+                    if elapsed <= 0:
+                        msg = f"{sku_upper} — downloading {step + 1}/{to_sync}: {filename}"
+                        key = f'{sku_upper}-dl-{step + 1}-{filename}'
+                    else:
+                        msg = f"{sku_upper} — still downloading ({elapsed}s): {filename}"
+                        key = f'{sku_upper}-dl-wait-{step + 1}-{elapsed // 10}'
+                    _append_batch_live_log(task_id, msg, key=key)
+                elif filename and sync_phase in ('done', 'failed'):
+                    _append_batch_live_log(
+                        task_id,
+                        (
+                            f"{sku_upper} — {step}/{to_sync} | "
+                            f"synced {synced}, failed {failed} | {filename}"
+                        ),
+                        key=f'{sku_upper}-file-{step}-{filename}',
+                    )
+                elif single_status.get('aborted'):
+                    _append_batch_live_log(
+                        task_id,
+                        f"{sku_upper} — aborted: {single_status.get('abort_reason') or 'connection errors'}",
+                        level='error',
+                        key=f'{sku_upper}-aborted',
+                    )
+
+                _persist_batch_task_throttled(task_id)
 
             try:
-                # Reuse the existing single-SKU background fetch/sync implementation.
                 background_china_ftp_fetch(
                     single_task_id,
                     sku_upper,
@@ -1105,7 +1729,16 @@ def background_batch_china_ftp_fetch(
                     task['summary']['already_synced'] += already_synced
                     task['current_stage'] = display_status
                     task['updated_at'] = _utc_now_iso()
-                _persist_batch_task_by_id(task_id)
+                _append_batch_live_log(
+                    task_id,
+                    (
+                        f"{sku_upper} — done ({display_status}): synced {synced}, "
+                        f"failed {failed}, already {already_synced}"
+                    ),
+                    level='error' if display_status != 'completed' else 'info',
+                    key=f'{sku_upper}-done',
+                )
+                _persist_batch_task_throttled(task_id, force=True)
             except Exception as e:
                 with batch_tasks_lock:
                     task = batch_tasks[task_id]
@@ -1121,7 +1754,7 @@ def background_batch_china_ftp_fetch(
                     task['completed'] += 1
                     task['current_stage'] = 'failed'
                     task['updated_at'] = _utc_now_iso()
-                _persist_batch_task_by_id(task_id)
+                _persist_batch_task_throttled(task_id, force=True)
             finally:
                 with background_tasks_lock:
                     background_tasks.pop(single_task_id, None)
@@ -1131,7 +1764,17 @@ def background_batch_china_ftp_fetch(
             batch_tasks[task_id]['current_stage'] = 'completed'
             batch_tasks[task_id]['finished_at'] = _utc_now_iso()
             batch_tasks[task_id]['updated_at'] = _utc_now_iso()
-        _persist_batch_task_by_id(task_id)
+            summ = dict((batch_tasks.get(task_id) or {}).get('summary') or {})
+        _append_batch_live_log(
+            task_id,
+            (
+                f"Batch complete — synced {int(summ.get('synced') or 0)}, "
+                f"failed {int(summ.get('failed') or 0)}, "
+                f"already {int(summ.get('already_synced') or 0)}"
+            ),
+            key='batch-complete',
+        )
+        _persist_batch_task_throttled(task_id, force=True)
 
         snap_for_slack: Optional[Dict[str, Any]] = None
         with batch_tasks_lock:
@@ -1276,18 +1919,26 @@ def batch_fetch_latest():
 
 @master_image_viewer_bp.route('/api/batch_fetch_history')
 def batch_fetch_history():
-    """List China batch FTP jobs from the last N days (disk + in-memory)."""
+    """List China batch FTP jobs from disk + in-memory (optional day window and limit)."""
     try:
-        days = int(request.args.get('days', 3))
+        days = int(request.args.get('days', 30))
     except (TypeError, ValueError):
-        days = 3
+        days = 30
     days = max(1, min(days, 90))
+    limit_raw = request.args.get('limit')
+    limit = None
+    if limit_raw is not None and str(limit_raw).strip() != '':
+        try:
+            limit = max(1, min(int(limit_raw), 50))
+        except (TypeError, ValueError):
+            limit = 10
     cutoff = datetime.utcnow() - timedelta(days=days)
-    tasks = _list_batch_fetch_history(days=days)
+    tasks = _list_batch_fetch_history(days=days, limit=limit)
     return jsonify(
         {
             "ok": True,
             "days": days,
+            "limit": limit,
             "cutoff_utc": cutoff.isoformat() + "Z",
             "tasks": tasks,
         }
@@ -1536,25 +2187,10 @@ def sync_china_image():
         remote_path = urllib.parse.unquote(remote_path)
         
         # Download image from China FTP
-        transport = paramiko.Transport(('219.135.198.130', 22))
-        transport.connect(username='fdc', password='Bst@93109310')
-        sftp = paramiko.SFTPClient.from_transport(transport)
-        
-        # Download to memory
-        buffer = io.BytesIO()
-        sftp.getfo(remote_path, buffer)
-        buffer.seek(0)
-        sftp.close()
-        transport.close()
-        
-        big_picture_base = Config.IMAGE_DAM_BIG_PICTURE_DIR
-        sku_folder = os.path.join(big_picture_base, sku)
+        sku_folder = os.path.join(Config.IMAGE_DAM_BIG_PICTURE_DIR, sku)
         os.makedirs(sku_folder, exist_ok=True)
-        
-        # Save file
         local_path = os.path.join(sku_folder, filename)
-        with open(local_path, 'wb') as f:
-            f.write(buffer.getvalue())
+        _china_ftp_cache.download_file(remote_path, local_path)
         
         current_app.logger.info(f"Synced China FTP image {filename} to {local_path}")
         

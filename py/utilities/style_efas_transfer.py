@@ -212,6 +212,133 @@ def fetch_style_rows_from_fdc(style_codes: list[str]) -> list[StyleRow]:
         conn.close()
 
 
+def fetch_style_rows_from_efas(style_codes: list[str]) -> list[StyleRow]:
+    if not style_codes:
+        return []
+
+    conn = get_sql_server_connection_oms_ef()
+    try:
+        cursor = conn.cursor()
+        query = """
+            DECLARE @AltCDList NVARCHAR(MAX) = ?;
+            SET @AltCDList = REPLACE(@AltCDList, ',', '%,') + '%';
+
+            WITH SplitAltCD AS (
+                SELECT value
+                FROM dbo.SplitString(@AltCDList, ',')
+            )
+            SELECT
+                RTRIM(i.PROD_CD),
+                RTRIM(i.DESCRIP),
+                i.RETAIL_PRS,
+                RTRIM(i.Class_CD),
+                i.PC_CASE,
+                i.BOX_Case,
+                i.Sales_Cost,
+                i.CASE_WT,
+                i.UT_WT,
+                RTRIM(i.ALT_CD),
+                RTRIM(i.UNIT_COLOR),
+                idt.ut_len,
+                idt.ut_wi,
+                idt.UT_hi
+            FROM dbo.inv AS i
+            LEFT JOIN dbo.inv_detl AS idt ON i.PROD_CD = idt.prod_cd
+            WHERE EXISTS (
+                SELECT 1 FROM SplitAltCD WHERE i.alt_CD LIKE value AND LEN(RTRIM(value)) > 0
+            )
+            ORDER BY i.PROD_CD
+        """
+        cursor.execute(query, (_build_alt_cd_param(style_codes),))
+        return _style_rows_from_cursor(cursor)
+    finally:
+        conn.close()
+
+
+def fetch_style_rows_by_skus_from_efas(skus: list[str]) -> list[StyleRow]:
+    skus = [str(sku).strip() for sku in skus if str(sku).strip()]
+    if not skus:
+        return []
+
+    conn = get_sql_server_connection_oms_ef()
+    try:
+        cursor = conn.cursor()
+        placeholders = ",".join("?" for _ in skus)
+        query = f"""
+            SELECT
+                RTRIM(i.PROD_CD),
+                RTRIM(i.DESCRIP),
+                i.RETAIL_PRS,
+                RTRIM(i.Class_CD),
+                i.PC_CASE,
+                i.BOX_Case,
+                i.Sales_Cost,
+                i.CASE_WT,
+                i.UT_WT,
+                RTRIM(i.ALT_CD),
+                RTRIM(i.UNIT_COLOR),
+                idt.ut_len,
+                idt.ut_wi,
+                idt.UT_hi
+            FROM dbo.inv AS i
+            LEFT JOIN dbo.inv_detl AS idt ON i.PROD_CD = idt.prod_cd
+            WHERE RTRIM(i.PROD_CD) IN ({placeholders})
+            ORDER BY i.PROD_CD
+        """
+        cursor.execute(query, skus)
+        return _style_rows_from_cursor(cursor)
+    finally:
+        conn.close()
+
+
+def _style_rows_from_cursor(cursor) -> list[StyleRow]:
+    rows: list[StyleRow] = []
+    for row in cursor.fetchall():
+        rows.append(
+            StyleRow(
+                prod_cd=str(row[0]).strip(),
+                descrip=str(row[1] or "").strip(),
+                retail_prs=_decimal(row[2]),
+                class_cd=str(row[3] or "").strip(),
+                pc_case=_decimal(row[4]),
+                box_case=_decimal(row[5]),
+                sales_cost=_decimal(row[6]),
+                case_wt=_decimal(row[7]),
+                ut_wt=_decimal(row[8]),
+                alt_cd=str(row[9] or "").strip(),
+                unit_color=str(row[10] or "").strip(),
+                ut_len=_decimal(row[11]) if row[11] is not None else None,
+                ut_wi=_decimal(row[12]) if row[12] is not None else None,
+                ut_hi=_decimal(row[13]) if row[13] is not None else None,
+            )
+        )
+    return rows
+
+
+def copy_skus_from_efas_to_fdc(
+    skus: list[str],
+    *,
+    dry_run: bool = False,
+    adjusted_by: str = "fdcef",
+    update_existing: bool = False,
+) -> TransferResult:
+    """Copy product master from EFAS to FDC; inventory quantities start at zero."""
+    rows = fetch_style_rows_by_skus_from_efas(skus)
+    if not rows:
+        return TransferResult(
+            success=False,
+            errors=[f"No EFAS products found for SKUs: {', '.join(skus)}"],
+            dry_run=dry_run,
+            target="fdc",
+        )
+    return transfer_style_rows_to_fdc(
+        rows,
+        dry_run=dry_run,
+        adjusted_by=adjusted_by,
+        update_existing=update_existing,
+    )
+
+
 def _existing_skus(cursor, skus: list[str]) -> set[str]:
     if not skus:
         return set()

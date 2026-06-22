@@ -176,12 +176,15 @@ def loose_piece_count(qty, per_box) -> int:
 
 
 def format_boxes_display(qty, per_box) -> str:
-    """e.g. '2' or '1 (loose 19)' for order lookup Boxes column."""
+    """Two-line Boxes cell: full count, then (loose N) for order lookup."""
     full = full_box_count(qty, per_box)
     loose = loose_piece_count(qty, per_box)
-    if loose > 0:
-        return f"{full} (loose {loose})"
-    return str(full)
+    return (
+        '<span class="order-boxes-cell">'
+        f'<span class="order-boxes-full">{full}</span>'
+        f'<span class="order-boxes-loose">(loose {loose})</span>'
+        '</span>'
+    )
 
 
 def fetch_order_notes(order_number: str | int) -> str:

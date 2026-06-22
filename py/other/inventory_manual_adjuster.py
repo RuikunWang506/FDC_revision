@@ -1,16 +1,20 @@
-"""Switch Number — transfer inventory between FDC and E-Fashion."""
+"""Inventory Manual Adjuster — transfer between DBs or add/remove on one DB."""
 from __future__ import annotations
 
 import re
 from decimal import Decimal
 
-from flask import Blueprint, current_app, jsonify, render_template, request, session
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
 
 from product_detail_module.product_detail import search_product_data_with_history
-from py.utilities.inventory_adjustment import DEFAULT_ADJUSTED_BY, execute_inventory_transfer
+from py.utilities.inventory_adjustment import (
+    DEFAULT_ADJUSTED_BY,
+    execute_inventory_adjustments,
+    execute_inventory_transfer,
+)
 from py.utilities.setting import login_required
 
-switch_number_bp = Blueprint("switch_number", __name__)
+inventory_manual_adjuster_bp = Blueprint("inventory_manual_adjuster", __name__)
 
 
 def parse_search_terms(search_input: str) -> list[str]:
@@ -143,56 +147,71 @@ def serialize_style_group(style_group: dict) -> dict:
     }
 
 
-@switch_number_bp.route("/switch_number", methods=["GET"])
+def _search_response(search_input: str):
+    current_user = session.get("username", "User")
+    current_app.logger.info(
+        "***%s*** inventory_manual_adjuster search: %s",
+        current_user,
+        search_input.lower(),
+    )
+
+    product_groups, matched, not_found = search_product_data_multi(search_input)
+    if not product_groups:
+        msg = "No products found"
+        if not_found:
+            msg = f"No products found for: {', '.join(not_found)}"
+        return jsonify({"success": False, "error": msg, "not_found": not_found}), 404
+
+    groups = [serialize_style_group(group) for group in product_groups]
+    return jsonify(
+        {
+            "success": True,
+            "groups": groups,
+            "search": search_input,
+            "matched": matched,
+            "not_found": not_found,
+        }
+    )
+
+
+@inventory_manual_adjuster_bp.route("/inventory_manual_adjuster", methods=["GET"])
 @login_required
-def switch_number_page():
+def inventory_manual_adjuster_page():
     return render_template(
-        "switch_number.html",
+        "inventory_manual_adjuster.html",
         current_user=session.get("username", "User"),
     )
 
 
-@switch_number_bp.route("/api/switch_number/search", methods=["POST"])
+@inventory_manual_adjuster_bp.route("/switch_number", methods=["GET"])
 @login_required
-def switch_number_search():
+def switch_number_redirect():
+    return redirect(url_for("inventory_manual_adjuster.inventory_manual_adjuster_page"))
+
+
+@inventory_manual_adjuster_bp.route("/api/inventory_manual_adjuster/search", methods=["POST"])
+@login_required
+def inventory_manual_adjuster_search():
     try:
         payload = request.get_json(silent=True) or {}
         search_input = str(payload.get("search_input", "")).strip()
         if not search_input:
             return jsonify({"success": False, "error": "Enter a style or SKU"}), 400
-
-        current_user = session.get("username", "User")
-        current_app.logger.info(
-            "***%s*** switch_number search: %s",
-            current_user,
-            search_input.lower(),
-        )
-
-        product_groups, matched, not_found = search_product_data_multi(search_input)
-        if not product_groups:
-            msg = "No products found"
-            if not_found:
-                msg = f"No products found for: {', '.join(not_found)}"
-            return jsonify({"success": False, "error": msg, "not_found": not_found}), 404
-
-        groups = [serialize_style_group(group) for group in product_groups]
-        return jsonify(
-            {
-                "success": True,
-                "groups": groups,
-                "search": search_input,
-                "matched": matched,
-                "not_found": not_found,
-            }
-        )
+        return _search_response(search_input)
     except Exception as exc:
-        current_app.logger.error("switch_number search error: %s", exc, exc_info=True)
+        current_app.logger.error("inventory_manual_adjuster search error: %s", exc, exc_info=True)
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
-@switch_number_bp.route("/api/switch_number/transfer", methods=["POST"])
+@inventory_manual_adjuster_bp.route("/api/switch_number/search", methods=["POST"])
 @login_required
-def switch_number_transfer():
+def switch_number_search_redirect():
+    return inventory_manual_adjuster_search()
+
+
+@inventory_manual_adjuster_bp.route("/api/inventory_manual_adjuster/transfer", methods=["POST"])
+@login_required
+def inventory_manual_adjuster_transfer():
     try:
         payload = request.get_json(silent=True) or {}
         direction = str(payload.get("direction", "")).strip().lower()
@@ -208,7 +227,7 @@ def switch_number_transfer():
         result = execute_inventory_transfer(transfers, direction, adjusted_by=adjusted_by)
 
         current_app.logger.info(
-            "***%s*** switch_number transfer %s: %s line(s), log %s -> %s",
+            "***%s*** inventory_manual_adjuster transfer %s: %s line(s), log %s -> %s",
             current_user,
             direction,
             len(result["lines"]),
@@ -220,5 +239,50 @@ def switch_number_transfer():
     except ValueError as exc:
         return jsonify({"success": False, "error": str(exc)}), 400
     except Exception as exc:
-        current_app.logger.error("switch_number transfer error: %s", exc, exc_info=True)
+        current_app.logger.error("inventory_manual_adjuster transfer error: %s", exc, exc_info=True)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@inventory_manual_adjuster_bp.route("/api/switch_number/transfer", methods=["POST"])
+@login_required
+def switch_number_transfer_redirect():
+    return inventory_manual_adjuster_transfer()
+
+
+@inventory_manual_adjuster_bp.route("/api/inventory_manual_adjuster/adjust", methods=["POST"])
+@login_required
+def inventory_manual_adjuster_adjust():
+    try:
+        payload = request.get_json(silent=True) or {}
+        database = str(payload.get("database", "")).strip().upper()
+        adjustments = payload.get("adjustments") or []
+        adjusted_by = str(payload.get("adjusted_by", "")).strip() or DEFAULT_ADJUSTED_BY
+
+        if database in ("EFAS", "E-FAS"):
+            database = "E_FAS"
+        if database not in ("FDC", "E_FAS"):
+            return jsonify({"success": False, "error": "database must be FDC or E_FAS"}), 400
+        if not isinstance(adjustments, list):
+            return jsonify({"success": False, "error": "Invalid adjustments payload"}), 400
+
+        current_user = session.get("username", "User")
+        result = execute_inventory_adjustments(
+            adjustments,
+            database,
+            adjusted_by=adjusted_by,
+        )
+
+        current_app.logger.info(
+            "***%s*** inventory_manual_adjuster adjust %s: %s line(s), log %s",
+            current_user,
+            database,
+            len(result["lines"]),
+            result["log_num"],
+        )
+
+        return jsonify({"success": True, "result": result})
+    except ValueError as exc:
+        return jsonify({"success": False, "error": str(exc)}), 400
+    except Exception as exc:
+        current_app.logger.error("inventory_manual_adjuster adjust error: %s", exc, exc_info=True)
         return jsonify({"success": False, "error": str(exc)}), 500

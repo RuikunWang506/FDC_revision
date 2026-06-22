@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Switch Number</title>
+    <title>Inventory Manual Adjuster</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -27,7 +27,43 @@
         .page-header h1 { margin: 0 0 6px; font-size: 22px; }
         .page-header p { margin: 0; opacity: 0.9; font-size: 13px; }
 
-        .switch-number-div {
+        .mode-bar {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .mode-bar label { font-weight: 700; margin-right: 8px; }
+        .mode-btn {
+            border: 2px solid #667eea;
+            background: #fff;
+            color: #667eea;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .mode-btn.active {
+            background: #667eea;
+            color: #fff;
+        }
+        .adjust-db-row {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+        .adjust-db-row.show { display: flex; }
+        .adjust-db-row label { font-weight: 600; font-size: 13px; }
+        .adjust-db-row input[type="radio"] { margin-right: 4px; }
+
+        .search-panel {
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.1);
@@ -125,7 +161,6 @@
             background: #f8f9fa !important;
             font-weight: 600;
         }
-        /* Thick outer grid — explicit edge classes (not :first-child) */
         td.grid-left { border-left: 3px solid #343a40 !important; }
         td.grid-right { border-right: 3px solid #343a40 !important; }
         td.grid-top { border-top: 3px solid #343a40 !important; }
@@ -143,7 +178,7 @@
             background: #fcfcfc;
         }
         .qty-input {
-            width: 80px;
+            width: 88px;
             padding: 6px 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -229,6 +264,7 @@
             background: #fff;
             border-radius: 8px;
         }
+        .hint-negative { font-size: 12px; color: #666; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -236,11 +272,27 @@
 
     <div class="container-main">
         <div class="page-header">
-            <h1><i class="fas fa-exchange-alt"></i> Switch Number</h1>
-            <p>Transfer inventory between FDC and E-Fashion using ERP manual adjustments.</p>
+            <h1><i class="fas fa-tools"></i> Inventory Manual Adjuster</h1>
+            <p>Transfer inventory between FDC and E-Fashion, or add/remove stock on one database.</p>
         </div>
 
-        <div class="switch-number-div" id="switchNumberDiv">
+        <div class="mode-bar">
+            <label>Mode:</label>
+            <button type="button" class="mode-btn active" id="modeTransferBtn" data-mode="transfer">
+                <i class="fas fa-exchange-alt"></i> Transfer Style
+            </button>
+            <button type="button" class="mode-btn" id="modeAdjustBtn" data-mode="adjust">
+                <i class="fas fa-plus-minus"></i> Add / Remove Style
+            </button>
+            <div class="adjust-db-row" id="adjustDbRow">
+                <label>Database:</label>
+                <label><input type="radio" name="adjustDb" value="FDC" checked> FDC</label>
+                <label><input type="radio" name="adjustDb" value="E_FAS"> E-Fashion</label>
+                <span class="hint-negative">Use negative qty to remove stock</span>
+            </div>
+        </div>
+
+        <div class="search-panel" id="searchPanel">
             <label for="searchInput"><strong>Search style(s) or SKU(s)</strong> — comma-separated, press Enter</label>
             <div class="search-row" style="margin-top: 8px;">
                 <input type="text" id="searchInput" placeholder="e.g. M1141, T3305 or M1141 BK, N1555 BK" autocomplete="off">
@@ -252,14 +304,14 @@
         <div id="resultsContainer">
             <div class="empty-state" id="emptyState">
                 <i class="fas fa-box fa-2x" style="margin-bottom: 10px; color: #bbb;"></i>
-                <div>Enter a style or SKU above to display General Info inventory rows.</div>
+                <div>Choose a mode above, then enter a style or SKU to load inventory rows.</div>
             </div>
         </div>
 
         <div class="submit-bar" id="submitBar" style="display: none;">
-            <div id="transferSummary">Enter transfer quantities, then submit.</div>
+            <div id="actionSummary">Enter quantities, then submit.</div>
             <button type="button" class="btn btn-success" id="submitBtn">
-                <i class="fas fa-paper-plane"></i> Submit transfer
+                <i class="fas fa-paper-plane"></i> Submit
             </button>
         </div>
     </div>
@@ -282,7 +334,7 @@
 
     <div class="modal-overlay" id="resultModal">
         <div class="modal-card">
-            <h3 id="resultTitle">Transfer complete</h3>
+            <h3 id="resultTitle">Complete</h3>
             <div id="resultBody" style="font-size: 13px; line-height: 1.5;"></div>
             <div class="modal-actions" style="margin-top: 16px;">
                 <button type="button" class="btn btn-primary" id="closeResultBtn">OK</button>
@@ -292,15 +344,20 @@
 
     <script>
         const loadedGroups = new Map();
+        let currentMode = 'transfer';
+        let pendingTransfers = [];
+        let pendingAdjustments = [];
+
         const searchInput = document.getElementById('searchInput');
         const searchStatus = document.getElementById('searchStatus');
         const resultsContainer = document.getElementById('resultsContainer');
         const emptyState = document.getElementById('emptyState');
         const submitBar = document.getElementById('submitBar');
-        const transferSummary = document.getElementById('transferSummary');
+        const actionSummary = document.getElementById('actionSummary');
         const directionModal = document.getElementById('directionModal');
         const resultModal = document.getElementById('resultModal');
-        let pendingTransfers = [];
+        const submitBtn = document.getElementById('submitBtn');
+        const adjustDbRow = document.getElementById('adjustDbRow');
 
         function esc(text) {
             const d = document.createElement('div');
@@ -313,9 +370,24 @@
             searchStatus.className = 'status-msg' + (isError ? ' error' : msg ? ' success' : '');
         }
 
+        function selectedAdjustDatabase() {
+            const checked = document.querySelector('input[name="adjustDb"]:checked');
+            return checked ? checked.value : 'FDC';
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeTransferBtn').classList.toggle('active', mode === 'transfer');
+            document.getElementById('modeAdjustBtn').classList.toggle('active', mode === 'adjust');
+            adjustDbRow.classList.toggle('show', mode === 'adjust');
+            submitBtn.innerHTML = mode === 'transfer'
+                ? '<i class="fas fa-paper-plane"></i> Submit transfer'
+                : '<i class="fas fa-paper-plane"></i> Submit adjustments';
+            renderAllGroups();
+        }
+
         function dbRowCells(prefix, color, rowKind) {
             const edge = rowKind === 'fdc' ? 'grid-top' : 'grid-bottom';
-            const wrap = (html) => html.replace(/class="num-col/g, `class="num-col ${edge}`);
             if (color[prefix + '_exists'] === false) {
                 const na = `<td class="num-col data-cell na-cell ${edge}">N/A</td>`;
                 return na + na + na;
@@ -341,9 +413,18 @@
             return 0;
         }
 
+        function adjustDbPrefix() {
+            return selectedAdjustDatabase() === 'E_FAS' ? 'efas' : 'fdc';
+        }
+
         function setTransferQty(input, qty) {
             input.value = qty > 0 ? String(qty) : '';
-            updateTransferSummary();
+            updateActionSummary();
+        }
+
+        function setAdjustQty(input, qty) {
+            input.value = qty !== 0 ? String(qty) : '';
+            updateActionSummary();
         }
 
         function fillInputFromAvail(input, color) {
@@ -368,7 +449,7 @@
             });
         }
 
-        function renderAllGroups() {
+        function renderTransferGroups() {
             if (loadedGroups.size === 0) {
                 resultsContainer.innerHTML = '';
                 resultsContainer.appendChild(emptyState);
@@ -388,7 +469,7 @@
                 const header = document.createElement('div');
                 header.className = 'product-header';
                 header.innerHTML = `
-                    <h2>General Info — ${esc(group.style)}</h2>
+                    <h2>Transfer — ${esc(group.style)}</h2>
                     <div class="product-header-actions">
                         <button type="button" class="btn-fill-style fill-style-avail-btn" data-style="${esc(group.style)}">
                             Fill all avail → qty
@@ -404,7 +485,6 @@
                 meta.innerHTML = `
                     <span><strong>Style:</strong> ${esc(pi.style)}</span>
                     <span><strong>Container:</strong> ${esc(pi.container || 'N/A')}</span>
-                    <span><strong>Case Qty:</strong> ${esc(pi.case_qty ?? 'N/A')}</span>
                     <span><strong>FDC avail:</strong> ${fmtTotal(group.totals.fdc_available)}</span>
                     <span><strong>E-FAS avail:</strong> ${fmtTotal(group.totals.efas_available)}</span>
                 `;
@@ -430,7 +510,7 @@
                                         value="">
                                     <button type="button" class="btn-fill-qty fill-sku-avail-btn"
                                         data-sku="${esc(color.sku)}"
-                                        title="Fill transfer qty from avail (FDC first, else E-FAS)">Avail</button>
+                                        title="Fill transfer qty from avail">Avail</button>
                                 </div>
                             </td>
                         </tr>
@@ -464,31 +544,147 @@
                 resultsContainer.appendChild(wrap);
             });
 
-            updateTransferSummary();
+            updateActionSummary();
         }
 
-        function updateTransferSummary() {
-            const inputs = document.querySelectorAll('.transfer-qty');
-            let count = 0;
-            let total = 0;
-            inputs.forEach(inp => {
-                const v = parseInt(inp.value, 10);
-                if (v > 0) {
-                    count += 1;
-                    total += v;
-                }
+        function renderAdjustGroups() {
+            if (loadedGroups.size === 0) {
+                resultsContainer.innerHTML = '';
+                resultsContainer.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                submitBar.style.display = 'none';
+                return;
+            }
+            emptyState.style.display = 'none';
+            submitBar.style.display = 'flex';
+            resultsContainer.innerHTML = '';
+
+            const dbLabel = selectedAdjustDatabase() === 'E_FAS' ? 'E-FAS' : 'FDC';
+            const prefix = adjustDbPrefix();
+
+            loadedGroups.forEach(group => {
+                const wrap = document.createElement('div');
+                wrap.className = 'product-wrapper';
+                wrap.dataset.style = group.style;
+
+                const header = document.createElement('div');
+                header.className = 'product-header';
+                header.innerHTML = `
+                    <h2>Add / Remove — ${esc(group.style)} (${esc(dbLabel)})</h2>
+                    <span>${group.colors.length} SKU(s)</span>
+                `;
+                wrap.appendChild(header);
+
+                const meta = document.createElement('div');
+                meta.className = 'style-meta';
+                meta.innerHTML = `<span><strong>Database:</strong> ${esc(dbLabel)}</span>`;
+                wrap.appendChild(meta);
+
+                let rowsHtml = '';
+                group.colors.forEach((color, idx) => {
+                    const exists = color[prefix + '_exists'] !== false;
+                    const stock = exists ? color[prefix + '_stock'] : 'N/A';
+                    const avail = exists ? color[prefix + '_available'] : 'N/A';
+                    const sold = exists ? color[prefix + '_sold'] : 'N/A';
+                    const availCls = exists && color[prefix + '_available'] > 0 ? 'positive'
+                        : exists && color[prefix + '_available'] < 0 ? 'negative' : '';
+                    rowsHtml += `
+                        <tr data-sku="${esc(color.sku)}" class="${idx % 2 === 1 ? 'sku-block-alt' : ''}">
+                            <td><a href="/product_detail?search=${encodeURIComponent(color.sku)}" target="_blank">${esc(color.sku)}</a></td>
+                            <td>${esc(color.color || '-')}</td>
+                            <td class="num-col ${exists ? '' : 'na-cell'}">${stock}</td>
+                            <td class="num-col avail-col warehouse-col ${availCls}">${avail}</td>
+                            <td class="num-col">${sold}</td>
+                            <td class="num-col">
+                                <input type="number" step="1" class="qty-input adjust-qty"
+                                    data-sku="${esc(color.sku)}"
+                                    data-db-prefix="${prefix}"
+                                    placeholder="0"
+                                    value="">
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                const tableWrap = document.createElement('div');
+                tableWrap.className = 'table-responsive';
+                tableWrap.innerHTML = `
+                    <table class="dataTable">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Color</th>
+                                <th>Stock</th>
+                                <th>Avail</th>
+                                <th>Sold</th>
+                                <th>Adjust Qty (+/−)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                `;
+                wrap.appendChild(tableWrap);
+                resultsContainer.appendChild(wrap);
             });
-            transferSummary.textContent = count
-                ? `${count} SKU(s), ${total} unit(s) ready to transfer`
-                : 'Enter transfer quantities, then submit.';
+
+            updateActionSummary();
         }
 
-        async function runSearch() {
+        function renderAllGroups() {
+            if (currentMode === 'adjust') {
+                renderAdjustGroups();
+            } else {
+                renderTransferGroups();
+            }
+        }
+
+        function updateActionSummary() {
+            if (currentMode === 'transfer') {
+                const inputs = document.querySelectorAll('.transfer-qty');
+                let count = 0;
+                let total = 0;
+                inputs.forEach(inp => {
+                    const v = parseInt(inp.value, 10);
+                    if (v > 0) {
+                        count += 1;
+                        total += v;
+                    }
+                });
+                actionSummary.textContent = count
+                    ? `${count} SKU(s), ${total} unit(s) ready to transfer`
+                    : 'Enter transfer quantities, then submit.';
+            } else {
+                const inputs = document.querySelectorAll('.adjust-qty');
+                let count = 0;
+                let totalAdd = 0;
+                let totalRemove = 0;
+                inputs.forEach(inp => {
+                    const v = parseInt(inp.value, 10);
+                    if (!isNaN(v) && v !== 0) {
+                        count += 1;
+                        if (v > 0) totalAdd += v;
+                        else totalRemove += Math.abs(v);
+                    }
+                });
+                const db = selectedAdjustDatabase();
+                let msg = 'Enter adjustment quantities (+ add, − remove), then submit.';
+                if (count) {
+                    msg = `${count} SKU(s) on ${db}`;
+                    if (totalAdd) msg += `, +${totalAdd} add`;
+                    if (totalRemove) msg += `, −${totalRemove} remove`;
+                }
+                actionSummary.textContent = msg;
+            }
+        }
+
+        async function runSearch(options) {
+            options = options || {};
+            const clearInput = options.clearInput !== false;
             const q = searchInput.value.trim();
             if (!q) return;
             setStatus('Searching...', false);
             try {
-                const resp = await fetch('{{ url_for("switch_number.switch_number_search") }}', {
+                const resp = await fetch('{{ url_for("inventory_manual_adjuster.inventory_manual_adjuster_search") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ search_input: q })
@@ -508,7 +704,9 @@
                     msg += `. Not found: ${data.not_found.join(', ')}`;
                 }
                 setStatus(msg + '.', !!data.not_found?.length);
-                searchInput.value = '';
+                if (clearInput) {
+                    searchInput.value = '';
+                }
                 searchInput.focus();
             } catch (err) {
                 setStatus(err.message || 'Search failed', true);
@@ -526,12 +724,23 @@
             return transfers;
         }
 
+        function collectAdjustments() {
+            const adjustments = [];
+            document.querySelectorAll('.adjust-qty').forEach(inp => {
+                const qty = parseInt(inp.value, 10);
+                if (!isNaN(qty) && qty !== 0) {
+                    adjustments.push({ sku: inp.dataset.sku, qty });
+                }
+            });
+            return adjustments;
+        }
+
         async function refreshLoadedGroups() {
             const styles = Array.from(loadedGroups.keys());
             if (!styles.length) return;
             for (const style of styles) {
                 try {
-                    const resp = await fetch('{{ url_for("switch_number.switch_number_search") }}', {
+                    const resp = await fetch('{{ url_for("inventory_manual_adjuster.inventory_manual_adjuster_search") }}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ search_input: style })
@@ -558,7 +767,7 @@
             setStatus('Processing transfer...', false);
             submitBtn.disabled = true;
             try {
-                const resp = await fetch('{{ url_for("switch_number.switch_number_transfer") }}', {
+                const resp = await fetch('{{ url_for("inventory_manual_adjuster.inventory_manual_adjuster_transfer") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -574,18 +783,19 @@
                 }
                 const r = data.result;
                 let html = `<p><strong>${esc(r.from_database)} → ${esc(r.to_database)}</strong></p>`;
-                html += `<p>Log # ${esc(r.log_num_from)} (${esc(r.from_database)}) / ${esc(r.log_num_to)} (${esc(r.to_database)})</p>`;
+                html += `<p>Log # ${esc(r.log_num_from)} / ${esc(r.log_num_to)}</p>`;
                 html += '<ul style="padding-left: 18px;">';
                 r.lines.forEach(line => {
                     html += `<li>${esc(line.sku)}: ${line.qty} unit(s)</li>`;
                 });
                 html += '</ul>';
+                document.getElementById('resultTitle').textContent = 'Transfer complete';
                 document.getElementById('resultBody').innerHTML = html;
                 resultModal.classList.add('show');
                 setStatus('Transfer completed.', false);
                 document.querySelectorAll('.transfer-qty').forEach(inp => { inp.value = ''; });
                 pendingTransfers = [];
-                updateTransferSummary();
+                updateActionSummary();
                 await refreshLoadedGroups();
             } catch (err) {
                 setStatus(err.message || 'Transfer failed', true);
@@ -594,7 +804,61 @@
             }
         }
 
-        const submitBtn = document.getElementById('submitBtn');
+        async function executeAdjustments() {
+            const adjustments = collectAdjustments();
+            if (!adjustments.length) {
+                setStatus('Enter at least one non-zero adjustment quantity.', true);
+                return;
+            }
+            const database = selectedAdjustDatabase();
+            pendingAdjustments = adjustments;
+            setStatus('Processing adjustments...', false);
+            submitBtn.disabled = true;
+            try {
+                const resp = await fetch('{{ url_for("inventory_manual_adjuster.inventory_manual_adjuster_adjust") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        database,
+                        adjustments,
+                        adjusted_by: 'fdcef'
+                    })
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    setStatus(data.error || 'Adjustment failed', true);
+                    return;
+                }
+                const r = data.result;
+                let html = `<p><strong>${esc(r.database)}</strong> — Log # ${esc(r.log_num)}</p>`;
+                html += '<ul style="padding-left: 18px;">';
+                r.lines.forEach(line => {
+                    html += `<li>${esc(line.sku)}: ${line.qty > 0 ? '+' : ''}${line.qty}</li>`;
+                });
+                html += '</ul>';
+                document.getElementById('resultTitle').textContent = 'Adjustments complete';
+                document.getElementById('resultBody').innerHTML = html;
+                resultModal.classList.add('show');
+                setStatus('Adjustments completed.', false);
+                document.querySelectorAll('.adjust-qty').forEach(inp => { inp.value = ''; });
+                pendingAdjustments = [];
+                updateActionSummary();
+                await refreshLoadedGroups();
+            } catch (err) {
+                setStatus(err.message || 'Adjustment failed', true);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('modeTransferBtn').addEventListener('click', () => setMode('transfer'));
+        document.getElementById('modeAdjustBtn').addEventListener('click', () => setMode('adjust'));
+
+        document.querySelectorAll('input[name="adjustDb"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (currentMode === 'adjust') renderAllGroups();
+            });
+        });
 
         searchInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
@@ -610,8 +874,8 @@
         });
 
         resultsContainer.addEventListener('input', e => {
-            if (e.target.classList.contains('transfer-qty')) {
-                updateTransferSummary();
+            if (e.target.classList.contains('transfer-qty') || e.target.classList.contains('adjust-qty')) {
+                updateActionSummary();
             }
         });
 
@@ -630,12 +894,16 @@
         });
 
         submitBtn.addEventListener('click', () => {
-            const transfers = collectTransfers();
-            if (!transfers.length) {
-                setStatus('Enter at least one transfer quantity.', true);
-                return;
+            if (currentMode === 'transfer') {
+                const transfers = collectTransfers();
+                if (!transfers.length) {
+                    setStatus('Enter at least one transfer quantity.', true);
+                    return;
+                }
+                openDirectionModal(transfers);
+            } else {
+                executeAdjustments();
             }
-            openDirectionModal(transfers);
         });
 
         directionModal.querySelectorAll('[data-direction]').forEach(btn => {
@@ -650,6 +918,22 @@
         document.getElementById('closeResultBtn').addEventListener('click', () => {
             resultModal.classList.remove('show');
         });
+
+        const initialParams = new URLSearchParams(window.location.search);
+        const initialMode = (initialParams.get('mode') || '').trim().toLowerCase();
+        if (initialMode === 'adjust' || initialMode === 'add' || initialMode === 'add_remove') {
+            setMode('adjust');
+        }
+        const initialDb = (initialParams.get('db') || '').trim().toUpperCase();
+        if (initialDb === 'FDC' || initialDb === 'E_FAS') {
+            const dbRadio = document.querySelector('input[name="adjustDb"][value="' + initialDb + '"]');
+            if (dbRadio) dbRadio.checked = true;
+        }
+        const initialSearch = initialParams.get('search');
+        if (initialSearch && initialSearch.trim()) {
+            searchInput.value = initialSearch.trim();
+            runSearch({ clearInput: false });
+        }
     </script>
 </body>
 </html>
