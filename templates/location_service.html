@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
-    <title>Location Service</title>
+    <title>{{ _('page.location_service.title') }}</title>
     <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Font Awesome 6.4.0 -->
@@ -60,7 +60,7 @@
                                 {% endif %}
                                 {{ message }}
                             </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="{{ te('Close') }}"></button>
                         </div>
                     </div>
                 {% endfor %}
@@ -101,15 +101,15 @@
             <!-- Section 1: Search / Update Products -->
             <div class="tab-pane fade {% if action != 'viewall' and action != 'add' and action != 'import_export' %}show active{% endif %}" id="search-update" role="tabpanel" aria-labelledby="search-update-tab">
                 <div class="card form-section">
-                    <h5 class="card-header bg-secondary text-white">Search for Products</h5>
+                    <h5 class="card-header bg-secondary text-white">{{ te('Search for Products') }}</h5>
                     <div class="card-body">
                         <form method="POST" action="{{ url_for('location_service.location_service') }}" class="row g-3">
                             <input type="hidden" name="action" value="search">
                             <input type="hidden" id="hidden_search_input" name="search_input[]">
                             <div class="col-md-8 position-relative">
-                                <label for="search_input" class="form-label">SKU or Style (auto match existed)(allow multiple)</label>
+                                <label for="search_input" class="form-label">{{ te('SKU or Style (auto match existed)(allow multiple)') }}</label>
                                 <div id="input-container" class="form-control" style="height: auto;">
-                                    <input type="text" id="search_input" placeholder="Enter SKU or Style" autocomplete="off">
+                                    <input type="text" id="search_input" placeholder="{{ te('Enter SKU or Style') }}" autocomplete="off">
                                 </div>
                                 <!-- Dropdown for suggestions -->
                                 <ul class="list-group position-absolute w-100" id="suggestions" style="z-index: 1000; display: none;"></ul>
@@ -123,7 +123,7 @@
 
                 {% if search_results %}
                     <div class="card form-section">
-                        <h5 class="card-header bg-info text-white">Product Details</h5>
+                        <h5 class="card-header bg-info text-white">{{ te('Product Details') }}</h5>
                         <div class="card-body table-responsive">
                             <!-- Update Multiple Form -->
                             <form method="POST" action="{{ url_for('location_service.location_service') }}">
@@ -133,8 +133,8 @@
                                 <div class="row mb-3">
                                     <!-- Bulk Update Input and Button -->
                                     <div class="col-md-6 d-flex align-items-center">
-                                        <input type="text" id="bulk-location-input" class="form-control" placeholder="Enter bulk location">
-                                        <button type="button" class="btn btn-primary ms-2" id="bulk-update-button" style="white-space: nowrap;">Bulk Update</button>
+                                        <input type="text" id="bulk-location-input" class="form-control" placeholder="{{ te('Enter bulk location') }}">
+                                        <button type="button" class="btn btn-primary ms-2" id="bulk-update-button" style="white-space: nowrap;">{{ te('Bulk Update') }}</button>
                                     </div>
                                     
                                     <!-- Submit Button -->
@@ -149,12 +149,12 @@
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr>
-                                            <th>Style</th>
-                                            <th>SKU</th>
-                                            <th>Update Date</th>
-                                            <th>Location</th>
-                                            <th>New Location</th>
-                                            <th>Delete</th> <!-- New Delete Column -->
+                                            <th>{{ te('Style') }}</th>
+                                            <th>{{ te('SKU') }}</th>
+                                            <th>{{ te('Update Date') }}</th>
+                                            <th>{{ te('Location') }}</th>
+                                            <th>{{ te('New Location') }}</th>
+                                            <th>{{ te('Delete') }}</th> <!-- New Delete Column -->
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -167,7 +167,7 @@
                                             <td>
                                                 <input type="hidden" name="original_sku_{{ loop.index }}" value="{{ product.SKU }}">
                                                 <input type="hidden" name="original_style_{{ loop.index }}" value="{{ product.Style }}">
-                                                <input type="text" class="form-control" name="new_location_{{ loop.index }}" placeholder="Enter new location">
+                                                <input type="text" class="form-control" name="new_location_{{ loop.index }}" placeholder="{{ te('Enter new location') }}">
                                             </td>
                                             <td class="text-center">
                                                 <button type="button" class="btn btn-danger btn-sm delete-button" data-sku="{{ product.SKU }}" data-style="{{ product.Style }}">
@@ -187,16 +187,16 @@
             <!-- Section 2: View All Products -->
             <div class="tab-pane fade {% if action == 'viewall' %}show active{% endif %}" id="view-all" role="tabpanel" aria-labelledby="view-all-tab">
                 <div class="card form-section">
-                    <h5 class="card-header bg-secondary text-white">All Products</h5>
+                    <h5 class="card-header bg-secondary text-white">{{ te('All Products') }}</h5>
                     <div class="card-body table-responsive">
                         {% if all_products %}
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Style</th>
-                                        <th>SKU</th>
-                                        <th>Location</th>
-                                        <th>Update Date</th>
+                                        <th>{{ te('Style') }}</th>
+                                        <th>{{ te('SKU') }}</th>
+                                        <th>{{ te('Location') }}</th>
+                                        <th>{{ te('Update Date') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -217,7 +217,7 @@
                                 </tbody>
                             </table>
                         {% else %}
-                            <p>No products available to display.</p>
+                            <p>{{ te('No products available to display.') }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -226,29 +226,29 @@
             <!-- Section 3: Add New Product -->
             <div class="tab-pane fade {% if action == 'add' %}show active{% endif %}" id="add-product" role="tabpanel" aria-labelledby="add-product-tab">
                 <div class="card form-section">
-                    <h5 class="card-header bg-secondary text-white">Add New Product(s)</h5>
+                    <h5 class="card-header bg-secondary text-white">{{ te('Add New Product(s)') }}</h5>
                     <div class="card-body">
                         <form method="POST" action="{{ url_for('location_service.location_service') }}" class="row g-3" id="add-product-form">
                             <input type="hidden" name="action" value="add">
                             <table class="table table-bordered" id="add-product-table">
                                 <thead>
                                     <tr>
-                                        <th>SKU</th>
-                                        <th>Style</th>
-                                        <th>Location</th>
-                                        <th>Action</th>
+                                        <th>{{ te('SKU') }}</th>
+                                        <th>{{ te('Style') }}</th>
+                                        <th>{{ te('Location') }}</th>
+                                        <th>{{ te('Action') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td>
-                                            <input type="text" class="form-control" name="new_sku" placeholder="Enter SKU" required>
+                                            <input type="text" class="form-control" name="new_sku" placeholder="{{ te('Enter SKU') }}" required>
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" name="new_style" placeholder="Enter Style" required>
+                                            <input type="text" class="form-control" name="new_style" placeholder="{{ te('Enter Style') }}" required>
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" name="new_location" placeholder="Enter Location" required>
+                                            <input type="text" class="form-control" name="new_location" placeholder="{{ te('Enter Location') }}" required>
                                         </td>
                                         <td class="text-center">
                                             <button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-times"></i></button>
@@ -265,11 +265,11 @@
             <!-- Section 4: Import/Export -->
             <div class="tab-pane fade {% if action == 'import_export' %}show active{% endif %}" id="import-export" role="tabpanel" aria-labelledby="import-export-tab">
                 <div class="card form-section">
-                    <h5 class="card-header bg-secondary text-white">Import/Export Products</h5>
+                    <h5 class="card-header bg-secondary text-white">{{ te('Import/Export Products') }}</h5>
                     <div class="card-body">
                         <!-- Export Section -->
                         <div class="mb-4">
-                            <h6>Export Products</h6>
+                            <h6>{{ te('Export Products') }}</h6>
                             <form method="POST" action="{{ url_for('location_service.location_service') }}">
                                 <input type="hidden" name="action" value="import_export">
                                 <input type="hidden" name="import_export_action" value="export">
@@ -277,19 +277,19 @@
                                     <i class="fas fa-file-download"></i> Download Products as Excel
                                 </button>
                             </form>
-                            <button class="btn btn-primary" id="sync-oms">Sync Over to OMS</button>
+                            <button class="btn btn-primary" id="sync-oms">{{ te('Sync Over to OMS') }}</button>
                         </div>
 
                         <hr>
 
                         <!-- Import Section -->
                         <div>
-                            <h6>Import Products</h6>
+                            <h6>{{ te('Import Products') }}</h6>
                             <form method="POST" action="{{ url_for('location_service.location_service') }}" enctype="multipart/form-data">
                                 <input type="hidden" name="action" value="import_export">
                                 <input type="hidden" name="import_export_action" value="import">
                                 <div class="mb-3">
-                                    <label for="import_file" class="form-label">Upload Excel File</label>
+                                    <label for="import_file" class="form-label">{{ te('Upload Excel File') }}</label>
                                     <input class="form-control" type="file" id="import_file" name="import_file" accept=".xlsx, .xls" required>
                                 </div>
                                 <button type="submit" class="btn btn-success">
@@ -435,9 +435,9 @@
     function addNewRow() {
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
-            <td><input type="text" class="form-control" name="new_sku" placeholder="Enter SKU" required></td>
-            <td><input type="text" class="form-control" name="new_style" placeholder="Enter Style" required></td>
-            <td><input type="text" class="form-control" name="new_location" placeholder="Enter Location" required></td>
+            <td><input type="text" class="form-control" name="new_sku" placeholder="{{ te('Enter SKU') }}" required></td>
+            <td><input type="text" class="form-control" name="new_style" placeholder="{{ te('Enter Style') }}" required></td>
+            <td><input type="text" class="form-control" name="new_location" placeholder="{{ te('Enter Location') }}" required></td>
             <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-times"></i></button></td>
         `;
         addProductTable.appendChild(newRow);
@@ -523,7 +523,7 @@
         toast.innerHTML = `
             <div class="d-flex">
                 <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="{{ te('Close') }}"></button>
             </div>
         `;
         toastContainer.appendChild(toast);

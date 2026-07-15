@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -365,12 +365,12 @@
             {% endif %}
             
             <div class="location-selector">
-                <label for="palletInput" style="font-weight: bold; white-space: nowrap;">Pallet Name:</label>
+                <label for="palletInput" style="font-weight: bold; white-space: nowrap;">{{ te('Pallet Name:') }}</label>
                 <input type="text" 
                        id="palletInput" 
                        class="form-control" 
                        value="{{ location_suffix }}" 
-                       placeholder="Enter pallet identifier..."
+                       placeholder="{{ te('Enter pallet identifier...') }}"
                        style="max-width: 300px; display: inline-block;">
                 <button class="btn btn-primary" onclick="goToPallet()">
                     <i class="fas fa-arrow-right"></i> Go
@@ -401,11 +401,11 @@
         <div class="stats-section">
             <div class="stat-card">
                 <h3 id="itemCount">{{ pallet_items|length }}</h3>
-                <p>Total Items</p>
+                <p>{{ te('Total Items') }}</p>
             </div>
             <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                 <h3 id="totalQuantity">0</h3>
-                <p>Total Quantity</p>
+                <p>{{ te('Total Quantity') }}</p>
             </div>
         </div>
 
@@ -413,10 +413,10 @@
         <div class="grid-section">
             <div class="grid-header">
                 <div>#</div>
-                <div>Item Description</div>
-                <div>Quantity</div>
-                <div>Memo</div>
-                <div>Action</div>
+                <div>{{ te('Item Description') }}</div>
+                <div>{{ te('Quantity') }}</div>
+                <div>{{ te('Memo') }}</div>
+                <div>{{ te('Action') }}</div>
             </div>
 
             <div id="gridContainer">
@@ -424,9 +424,9 @@
                     {% for item in pallet_items %}
                         <div class="grid-row" data-id="{{ item.id }}">
                             <div class="row-number">{{ loop.index }}</div>
-                            <div><input type="text" class="grid-input item-text" value="{{ item.item_text }}" placeholder="Enter item description"></div>
+                            <div><input type="text" class="grid-input item-text" value="{{ item.item_text }}" placeholder="{{ te('Enter item description') }}"></div>
                             <div><input type="number" class="grid-input item-quantity" value="{{ item.item_quantity }}" placeholder="0" min="0"></div>
-                            <div><input type="text" class="grid-input item-memo" value="{{ item.item_memo }}" placeholder="Enter memo"></div>
+                            <div><input type="text" class="grid-input item-memo" value="{{ item.item_memo }}" placeholder="{{ te('Enter memo') }}"></div>
                             <div>
                                 <button class="btn-delete" onclick="deleteRow(this)">
                                     <i class="fas fa-trash"></i> Delete
@@ -437,7 +437,7 @@
                 {% else %}
                     <div class="empty-state">
                         <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 10px;"></i>
-                        <p>No items yet. Click "Add Row" to start adding items.</p>
+                        <p>{{ te('No items yet. Click "Add Row" to start adding items.') }}</p>
                     </div>
                 {% endif %}
             </div>
@@ -468,7 +468,7 @@
             <h3><i class="fas fa-qrcode"></i> QR Code for this Location</h3>
             <canvas id="qrCanvas"></canvas>
             <p style="color: #7f8c8d; font-size: 12px; word-break: break-all;">{{ short_url }}</p>
-            <button class="btn btn-primary" onclick="closeQRCode()">Close</button>
+            <button class="btn btn-primary" onclick="closeQRCode()">{{ te('Close') }}</button>
         </div>
     </div>
 
@@ -512,9 +512,9 @@
             newRow.className = 'grid-row';
             newRow.innerHTML = `
                 <div class="row-number">${rowCounter}</div>
-                <div><input type="text" class="grid-input item-text" placeholder="Enter item description"></div>
+                <div><input type="text" class="grid-input item-text" placeholder="{{ te('Enter item description') }}"></div>
                 <div><input type="number" class="grid-input item-quantity" placeholder="0" min="0" value="0"></div>
-                <div><input type="text" class="grid-input item-memo" placeholder="Enter memo"></div>
+                <div><input type="text" class="grid-input item-memo" placeholder="{{ te('Enter memo') }}"></div>
                 <div>
                     <button class="btn-delete" onclick="deleteRow(this)">
                         <i class="fas fa-trash"></i> Delete
@@ -543,7 +543,7 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 10px;"></i>
-                            <p>No items yet. Click "Add Row" to start adding items.</p>
+                            <p>{{ te('No items yet. Click "Add Row" to start adding items.') }}</p>
                         </div>
                     `;
                 }

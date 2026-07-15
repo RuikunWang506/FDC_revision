@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="{{ locale }}" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Massive Location Update</title>
+    <title>{{ _('page.location_massive_update.title') }}</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <style>
         .location-row { margin-bottom: 10px; }
@@ -308,8 +308,8 @@
     {% include 'navbar.html' %}
     
     <!-- Action Buttons in Navbar -->
-    <a href="/palletdetail/L1-A BOT" class="btn btn-success" id="pallet-btn-navbar">📦 Pallet Details</a>
-    <button type="button" class="btn btn-info" id="map-btn-navbar">🗺️ View Map</button>
+    <a href="/palletdetail/L1-A BOT" class="btn btn-success" id="pallet-btn-navbar">{{ te('📦 Pallet Details') }}</a>
+    <button type="button" class="btn btn-info" id="map-btn-navbar">{{ te('🗺️ View Map') }}</button>
     
     <div id="notification" class="alert alert-success" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999; text-align:center; font-size:1.5em; font-weight:bold; margin:0;"></div>
     
@@ -320,23 +320,23 @@
         {% endfor %}
         <hr style="margin: 10px 0; border-color: #dee2e6;">
         <div class="sidebar-controls">
-            <button type="button" class="sidebar-btn" id="showEmptyBtn" style="margin-bottom: 8px; background: #dc3545; color: white; border-color: #dc3545;">Showing all Loc</button>
-            <button type="button" class="sidebar-btn" id="expandAllBtn">Expand</button>
-            <button type="button" class="sidebar-btn" id="collapseAllBtn">Collapse</button>
+            <button type="button" class="sidebar-btn" id="showEmptyBtn" style="margin-bottom: 8px; background: #dc3545; color: white; border-color: #dc3545;">{{ te('Showing all Loc') }}</button>
+            <button type="button" class="sidebar-btn" id="expandAllBtn">{{ te('Expand') }}</button>
+            <button type="button" class="sidebar-btn" id="collapseAllBtn">{{ te('Collapse') }}</button>
         </div>
     </div>
     
     <div class="container-fluid main-content">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Massive Location Update</h2>
+        <h2>{{ te('Massive Location Update') }}</h2>
         <span id="map-close-btn" style="display:none; cursor:pointer; font-size:1.5em; position:fixed; top:10px; right:10px; z-index:2200; background:#fff; border-radius:50%; padding:0 10px; border:1px solid #ccc;">&times;</span>
     </div>
     
     <div class="filter-controls">
         <div class="row align-items-center">
             <div class="col-md-12 text-end">
-                <span class="stats-badge" id="totalLocations">0 Locations</span>
-                <span class="stats-badge" id="occupiedLocations">0 Occupied</span>
+                <span class="stats-badge" id="totalLocations">{{ te('0 Locations') }}</span>
+                <span class="stats-badge" id="occupiedLocations">{{ te('0 Occupied') }}</span>
             </div>
         </div>
     </div>

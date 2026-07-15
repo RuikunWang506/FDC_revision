@@ -560,7 +560,7 @@ def fetch_sku_history(sku, db_conn):
 def fetch_item_history(style_or_sku):
     """
     Fetches order history for a style or SKU from both databases.
-    Returns list of dicts with: database, product_code, order_number, order_date, customer_id, order_quantity, unit_price, color
+    Returns list of dicts with: database, product_code, order_number, order_date, customer_id, order_quantity, unit_price, color, invoice_number, invoice_status
     """
     # Clean up the input - remove extra spaces
     style_or_sku = style_or_sku.strip() if style_or_sku else ""
@@ -591,10 +591,15 @@ def fetch_item_history(style_or_sku):
                     c.cus_nm AS cus_id,
                     ol.order_qty,
                     ISNULL(ol.unit_prs, 0.00) as unit_price,
-                    ISNULL(i.UNIT_COLOR, '') as color
+                    ISNULL(i.UNIT_COLOR, '') as color,
+                    CASE
+                        WHEN o.INVS_NUM IS NULL OR o.INVS_NUM = 0 THEN 'not invoiced'
+                        ELSE CAST(o.INVS_NUM AS VARCHAR)
+                    END AS invoice_number
                 FROM ord_log ol
                 LEFT JOIN customer c ON ol.cus_id = c.cus_id
                 LEFT JOIN dbo.inv i ON ol.prod_cd = i.PROD_CD
+                LEFT JOIN dbo.orders o ON ol.ord_num = o.ord_num
                 WHERE ol.prod_cd LIKE ?
                 ORDER BY ol.olg_dt DESC
             """
@@ -617,6 +622,12 @@ def fetch_item_history(style_or_sku):
                     # Final normalization: remove any special characters and extra spaces
                     color = color.strip().lower()
                     
+                    raw_invoice = str(row[7]).strip() if row[7] is not None else ''
+                    invoice_number = (
+                        raw_invoice
+                        if raw_invoice and raw_invoice not in ('0', 'not invoiced')
+                        else 'not invoiced'
+                    )
                     history_data.append({
                         'database': db_name,
                         'product_code': row[0],
@@ -625,7 +636,9 @@ def fetch_item_history(style_or_sku):
                         'customer_id': row[3],
                         'order_quantity': int(row[4]),
                         'unit_price': float(row[5]),
-                        'color': color
+                        'color': color,
+                        'invoice_number': invoice_number,
+                        'invoice_status': 'Invoiced' if invoice_number != 'not invoiced' else 'Not Invoiced',
                     })
             except Exception as e:
                 pass
@@ -1080,12 +1093,25 @@ def fetch_style_images(style, first_sku=None):
 
 
 
+@product_detail_bp.before_request
+def _redirect_client_users_from_internal_product_detail():
+    from py.other.clientview import redirect_client_user_to_product_detail
+
+    return redirect_client_user_to_product_detail()
+
+
 @product_detail_bp.route("/productdetail", methods=["GET", "POST"])
 @product_detail_bp.route("/productdetail/<string:search_input>", methods=["GET"])
 @product_detail_bp.route("/product_detail", methods=["GET", "POST"])
 @login_required
 def product_detail(search_input=None):
     """Main route for product detail page"""
+    from py.other.clientview import redirect_client_user_to_product_detail
+
+    blocked = redirect_client_user_to_product_detail()
+    if blocked:
+        return blocked
+
     current_user = session.get('username', 'User')
     product_data = None
     error_message = None
@@ -1206,6 +1232,12 @@ def update_description():
 @login_required
 def api_product_search():
     """API endpoint for AJAX searches"""
+    from py.other.clientview import redirect_client_user_to_product_detail
+
+    blocked = redirect_client_user_to_product_detail()
+    if blocked:
+        return blocked
+
     try:
         search_input = request.json.get("search_input", "").strip()
         current_user = session.get('username', 'User')

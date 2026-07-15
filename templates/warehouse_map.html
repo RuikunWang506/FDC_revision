@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Warehouse Map</title>
+    <title>{{ _('page.warehouse_map.title') }}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Add this line -->
 
     <style>
@@ -186,6 +186,24 @@ th, td {
         
         button:hover {
             background-color: #45a049;
+        }
+
+        .download-link-btn {
+            padding: 6px 12px;
+            background-color: #1f4db8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: none;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .download-link-btn:hover {
+            background-color: #183d94;
+            color: white;
         }
         
         .toggle-btn {
@@ -487,26 +505,27 @@ th, td {
                     <div style="flex: 2; display: flex; gap: 10px;">
                         <div style="flex: 1;">
                             <form id="singleStyleForm" method="POST" style="display: flex; gap: 10px; align-items: center;">
-                                <input type="text" id="singleStyleInput" name="single_style" placeholder="Enter Style" style="flex: 1;">
-                                <button type="submit" id="addStyleBtn">Add</button>
+                                <input type="text" id="singleStyleInput" name="single_style" placeholder="{{ te('Enter Style') }}" style="flex: 1;">
+                                <button type="submit" id="addStyleBtn">{{ te('Add') }}</button>
                             </form>
 
                         </div>
-                        <div style="flex: 1;">
-                            <form method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+                        <div style="flex: 1; display: flex; gap: 10px; align-items: center;">
+                            <form method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; flex: 1;">
                                 <input type="file" name="file" accept=".xlsx,.csv" style="flex: 1;">
-                                <button type="submit">Upload</button>
+                                <button type="submit">{{ te('Upload') }}</button>
                             </form>
+                            <a href="{{ url_for('whmap.download_4seller_extension') }}" class="download-link-btn" title="{{ te('Download Chrome extension to add warehouse locations to 4Seller picklist PDFs') }}">{{ te('4Seller Extension') }}</a>
                         </div>
                     </div>
                     
                     <!-- Right side: Control buttons -->
                     <div style="flex: 1; display: flex; gap: 10px; justify-content: flex-end;">
-                        <button id="toggleAllBtn" class="toggle-all-btn" onclick="toggleAllMarkers(true)">Show All</button>
-                        <button id="hideAllBtn" class="toggle-all-btn" onclick="toggleAllMarkers(false)">Hide All</button>
+                        <button id="toggleAllBtn" class="toggle-all-btn" onclick="toggleAllMarkers(true)">{{ te('Show All') }}</button>
+                        <button id="hideAllBtn" class="toggle-all-btn" onclick="toggleAllMarkers(false)">{{ te('Hide All') }}</button>
                         <form method="POST" style="display: inline;">
                             <input type="hidden" name="clear" value="1">
-                            <button type="submit" class="clear-btn">Clear Data</button>
+                            <button type="submit" class="clear-btn">{{ te('Clear Data') }}</button>
                         </form>
                     </div>
                 </div>
@@ -535,7 +554,7 @@ th, td {
             {% if not items %}
     <!-- No items message -->
     <div class="note" style="margin-top: 20px;">
-        <p><strong>No items to display.</strong> Add items by entering Styles or uploading a file.</p>
+        <p><strong>{{ te('No items to display.') }}</strong> Add items by entering Styles or uploading a file.</p>
     </div>
 {% else %}
 <div id="map-container"></div>
@@ -548,18 +567,18 @@ th, td {
         <!-- Right section (30%) - Inventory list -->
         <div class="sidebar">
             <div style="display: flex; align-items: center; justify-content: space-between;">
-                <h2 style="margin: 0;">Inventory Items</h2>
-                <button id="exportExcelBtn" style="margin-left: 5px; font-size: 0.9em;">Export to Excel</button>
+                <h2 style="margin: 0;">{{ te('Inventory Items') }}</h2>
+                <button id="exportExcelBtn" style="margin-left: 5px; font-size: 0.9em;">{{ te('Export to Excel') }}</button>
             </div>
             {% if items %}
                 <div class="item-list">
                     <table>
                         <thead>
                             <tr>
-                                <th class="sortable" data-column="style">Style</th>
-                                <th class="sortable" data-column="qty">Qty</th>
-                                <th class="sortable" data-column="loc">Loc</th>
-                                <th>Show</th>
+                                <th class="sortable" data-column="style">{{ te('Style') }}</th>
+                                <th class="sortable" data-column="qty">{{ te('Qty') }}</th>
+                                <th class="sortable" data-column="loc">{{ te('Loc') }}</th>
+                                <th>{{ te('Show') }}</th>
                             </tr>
                         </thead>
                         <tbody id="itemsTableBody">
@@ -568,7 +587,7 @@ th, td {
                     </table>
                 </div>
             {% else %}
-                <p>No items to display.</p>
+                <p>{{ te('No items to display.') }}</p>
             {% endif %}
         </div>
     </div>
@@ -787,7 +806,7 @@ function placeItemsOnMap(tooltip) {
             function buildTooltipContent() {
             let tooltipContent = `<div class="tooltip-count">${totalItems} item(s) at location ${location}</div>`;
             for (const [style, data] of Object.entries(styleData)) {
-                tooltipContent += `<div class="tooltip-item"><strong>Style:</strong> ${style}<br><strong>Quantity:</strong> ${data.qty}</div>`;
+                tooltipContent += `<div class="tooltip-item"><strong>{{ te('Style:') }}</strong> ${style}<br><strong>{{ te('Quantity:') }}</strong> ${data.qty}</div>`;
             }
             return tooltipContent;
         }

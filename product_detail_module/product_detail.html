@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Product Detail</title>
+    <title>{{ _('page.product_detail.title') }}</title>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
@@ -908,9 +908,10 @@
             {% if portal_company_name %}{{ portal_company_name }}{% else %}FDC Client{% endif %}
         </a>
         <div class="portal-actions">
-            <a href="{{ url_for('home') }}"><i class="fas fa-th-large"></i> Home / 首页</a>
+            {% include '_lang_switch.html' %}
+            <a href="{{ url_for('home') }}"><i class="fas fa-th-large"></i> {{ _('nav.home') }}</a>
             <span><i class="fas fa-user"></i> {{ current_user }}</span>
-            <a href="{{ url_for('auth.logout') }}">退出 Logout</a>
+            <a href="{{ url_for('auth.logout') }}">{{ _('portal.logout') }}</a>
         </div>
     </header>
     {% elif show_navbar is not defined or show_navbar %}
@@ -926,15 +927,15 @@
         <!-- Search Section in Sidebar -->
         <div class="search-section">
             <h1><i class="fas fa-search"></i> Search</h1>
-            <p>By SKU or Style</p>
+            <p>{{ te('By SKU or Style') }}</p>
             <form method="POST" class="search-form">
-                <input type="text" name="search_input" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
-                <button type="submit">Search</button>
+                <input type="text" name="search_input" placeholder="{{ te('e.g., M1141') }}" value="{{ search_input }}" autocomplete="off">
+                <button type="submit">{{ te('Search') }}</button>
             </form>
             {% if not is_tiktok_view %}
             <label style="display: flex; align-items: center; font-size: 12px; color: #555; cursor: pointer; margin-top: 12px; justify-content: center;">
                 <input type="checkbox" id="containerSearchCheckbox" style="margin-right: 8px; cursor: pointer;">
-                <span>Search by Container</span>
+                <span>{{ te('Search by Container') }}</span>
             </label>
             {% endif %}
         </div>
@@ -982,25 +983,25 @@
             <div class="sidebar-sku-nav" id="sidebarSkuNav" data-current-search={{ search_input | tojson }}>
                 <button type="button" class="sidebar-sku-nav-btn" id="skuNavLastSku"
                         onclick="navigateAdjacentSku(-1)"
-                        title="Decrease trailing digits by 1 (e.g. M1181 → M1180)">
+                        title="{{ te('Decrease trailing digits by 1 (e.g. M1181 → M1180)') }}">
                     <i class="fas fa-step-backward"></i> Last SKU
                 </button>
                 <button type="button" class="sidebar-sku-nav-btn" id="skuNavNextSku"
                         onclick="navigateAdjacentSku(1)"
-                        title="Increase trailing digits by 1 (e.g. M1181 → M1182)">
+                        title="{{ te('Increase trailing digits by 1 (e.g. M1181 → M1182)') }}">
                     Next SKU <i class="fas fa-step-forward"></i>
                 </button>
             </div>
-            <p class="sidebar-sku-nav-help mb-0">Moves ±1 on the trailing number (same as editing <code>?search=</code>).</p>
+            <p class="sidebar-sku-nav-help mb-0">Moves ±1 on the trailing number (same as editing <code>{{ te('?search=') }}</code>).</p>
         </div>
         {% endif %}
         
         
     </aside>
 
-    <button id="sidebarToggleBtn" type="button" aria-label="Toggle filters sidebar" onclick="toggleMobileSidebar()">
+    <button id="sidebarToggleBtn" type="button" aria-label="{{ te('Toggle filters sidebar') }}" onclick="toggleMobileSidebar()">
         <i class="fas fa-sliders-h"></i>
-        <span>Filters</span>
+        <span>{{ te('Filters') }}</span>
     </button>
     {% endif %}
 
@@ -1011,18 +1012,18 @@
             {% if not product_data and not search_input %}
             <div class="search-section" style="max-width: 600px; margin: 60px auto 0; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 <h1><i class="fas fa-search"></i> Product Detail</h1>
-                <p style="margin-bottom: 15px;">Search by single SKU or Style (e.g., M1141 or M1141 BK)</p>
+                <p style="margin-bottom: 15px;">{{ te('Search by single SKU or Style (e.g., M1141 or M1141 BK)') }}</p>
                 <form method="POST" class="search-form">
-                    <input type="text" name="search_input" id="productSearchInput" placeholder="e.g., M1141" value="{{ search_input }}" autocomplete="off">
-                    <button type="submit" id="productSearchBtn">Search</button>
+                    <input type="text" name="search_input" id="productSearchInput" placeholder="{{ te('e.g., M1141') }}" value="{{ search_input }}" autocomplete="off">
+                    <button type="submit" id="productSearchBtn">{{ te('Search') }}</button>
                 </form>
                 {% if not is_tiktok_view %}
                 <div style="margin-top: 15px; border-top: 1px solid #e0e0e0; padding-top: 15px;">
                     <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 10px;">
                         <input type="checkbox" id="containerModeCheckbox" name="container_mode" style="margin-right: 8px; cursor: pointer;">
-                        <span style="font-weight: 500; color: #333;">🔍 Search by Container #</span>
+                        <span style="font-weight: 500; color: #333;">{{ te('🔍 Search by Container #') }}</span>
                     </label>
-                    <p style="font-size: 12px; color: #666; margin: 0;">When enabled, search by container number instead (e.g., F26117)</p>
+                    <p style="font-size: 12px; color: #666; margin: 0;">{{ te('When enabled, search by container number instead (e.g., F26117)') }}</p>
                 </div>
                 {% endif %}
             </div>
@@ -1041,9 +1042,9 @@
             {% endif %}
 
             {% if not product_data and search_input %}
-            <div class="empty-state"><i class="fas fa-search"></i><h3>No Results Found</h3></div>
+            <div class="empty-state"><i class="fas fa-search"></i><h3>{{ te('No Results Found') }}</h3></div>
             {% elif not product_data %}
-            <div class="empty-state"><i class="fas fa-box"></i><h3>Enter a search to get started</h3></div>
+            <div class="empty-state"><i class="fas fa-box"></i><h3>{{ te('Enter a search to get started') }}</h3></div>
             {% endif %}
 
             <!-- Product Data Display -->
@@ -1079,11 +1080,11 @@
                         {% endif %}
                     
                         
-                        <h3>Style Info</h3>
+                        <h3>{{ te('Style Info') }}</h3>
                         <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 13px;">
                             <!-- BASIC Section -->
                             <div style="margin-bottom: 12px;">
-                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">BASIC</div>
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">{{ te('BASIC') }}</div>
                                 <div style="display: flex; gap: 15px;">
                                     <!-- Left Column -->
                                     <div style="flex: 1;">
@@ -1101,9 +1102,9 @@
                                                 data-hidden-text="Click"
                                                 data-value="${{ "%.2f" | format(style_group.parent_info.msrp) }}"
                                                 data-visible="false"
-                                                onclick="toggleCostDisplay(this)">Click</span>
+                                                onclick="toggleCostDisplay(this)">{{ te('Click') }}</span>
                                             {% else %}
-                                            <span class="sku-detail-badge">N/A</span>
+                                            <span class="sku-detail-badge">{{ te('N/A') }}</span>
                                             {% endif %}
                                         </div>
                                         {% endif %}
@@ -1116,9 +1117,9 @@
                                                 data-hidden-text="Click"
                                                 data-value="${{ "%.2f" | format(style_group.parent_info.cost) }}"
                                                 data-visible="false"
-                                                onclick="toggleCostDisplay(this)">Click</span>
+                                                onclick="toggleCostDisplay(this)">{{ te('Click') }}</span>
                                             {% else %}
-                                            <span class="sku-detail-badge">N/A</span>
+                                            <span class="sku-detail-badge">{{ te('N/A') }}</span>
                                             {% endif %}
                                         </div>
                                         {% endif %}
@@ -1128,7 +1129,7 @@
 
                             <!-- Masterbox Section -->
                             <div style="margin-bottom: 12px;">
-                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">Masterbox</div>
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">{{ te('Masterbox') }}</div>
                                 <div style="margin-bottom: 6px;">Case Qty: <span class="sku-detail-badge">{{ style_group.parent_info.case_qty or 'N/A' }}</span></div>
                                 <div style="margin-bottom: 6px;">Box Wt: <span class="sku-detail-badge">{% if style_group.parent_info.box_wt %}{{ "%.1f" | format(style_group.parent_info.box_wt) }} lb{% else %}N/A{% endif %}</span></div>
                                 <div>Dimensions: <span class="sku-detail-badge">{% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}</span></div>
@@ -1136,16 +1137,16 @@
 
                             <!-- Bag_Size Section -->
                             <div style="margin-bottom: 12px;">
-                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">Bag_Size</div>
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">{{ te('Bag_Size') }}</div>
                                 <div style="margin-bottom: 6px;">Dimensions: <span class="sku-detail-badge">{% if style_group.parent_info.len %}{{ "%.1f" | format(style_group.parent_info.len) }}×{{ "%.1f" | format(style_group.parent_info.wid) }}×{{ "%.1f" | format(style_group.parent_info.hei) }}"{% else %}N/A{% endif %}</span></div>
                                 <div>Piece Wt: <span class="sku-detail-badge">{% if style_group.parent_info.pc_wt %}{{ "%.2f" | format(style_group.parent_info.pc_wt) }} lb{% else %}N/A{% endif %}</span></div>
                             </div>
 
                             <!-- Location Section -->
                             <div>
-                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">INFO</div>
+                                <div style="border-bottom: 2px solid #333; font-weight: bold; margin-bottom: 8px; padding-bottom: 6px;">{{ te('INFO') }}</div>
                                 <div style="margin-bottom: 6px;">
-                                    <span class="editable-container" onclick="openLocationPopup('{{ style_group.parent_info.style }}', event)" style="cursor: pointer; padding: 4px 8px; border: 2px dashed #ddd; border-radius: 4px; display: inline-block; background: #fff3cd;">Location: ✎</span>
+                                    <span class="editable-container" onclick="openLocationPopup('{{ style_group.parent_info.style }}', event)" style="cursor: pointer; padding: 4px 8px; border: 2px dashed #ddd; border-radius: 4px; display: inline-block; background: #fff3cd;">{{ te('Location: ✎') }}</span>
                                     <span onclick="openLocationPopup('{{ style_group.parent_info.style }}', event)" style="cursor: pointer;">
                                     {% if style_group.location %}
                                         {% set locations = style_group.location.split(',') %}
@@ -1153,7 +1154,7 @@
                                         <span class="sku-detail-badge" style="display: inline-block; margin-right: 4px; margin-bottom: 4px; margin-left: 4px;">{{ loc.strip() }}</span>
                                         {% endfor %}
                                     {% else %}
-                                        <span class="sku-detail-badge" style="margin-left: 4px;">N/A</span>
+                                        <span class="sku-detail-badge" style="margin-left: 4px;">{{ te('N/A') }}</span>
                                     {% endif %}
                                     </span>
                                 </div>
@@ -1184,20 +1185,20 @@
                             <table class="dataTable">
                                 <thead>
                                     <tr>
-                                        <th>SKU</th>
-                                        {% if has_multiple_descriptions %}<th>Description</th>{% endif %}
-                                        <th>Color</th>
-                                        <th style="background-color: #fffacd;">Stock</th>
+                                        <th>{{ te('SKU') }}</th>
+                                        {% if has_multiple_descriptions %}<th>{{ te('Description') }}</th>{% endif %}
+                                        <th>{{ te('Color') }}</th>
+                                        <th style="background-color: #fffacd;">{{ te('Stock') }}</th>
                                         <th class="stock-op-col">=</th>
-                                        <th>Available</th>
+                                        <th>{{ te('Available') }}</th>
                                         <th class="stock-op-col">+</th>
-                                        <th class="col-split-after-sold">Sold/reserved</th>
-                                        <th class="col-split-before-ocean">Ocean</th>
-                                        <th>Hist-Received</th>
-                                        <th>Hist-sold</th>
-                                        <th>Hist-fix</th>
-                                        <th>Checker</th>
-                                        <th>Last Activity</th>
+                                        <th class="col-split-after-sold">{{ te('Sold/reserved') }}</th>
+                                        <th class="col-split-before-ocean">{{ te('Ocean') }}</th>
+                                        <th>{{ te('Hist-Received') }}</th>
+                                        <th>{{ te('Hist-sold') }}</th>
+                                        <th>{{ te('Hist-fix') }}</th>
+                                        <th>{{ te('Checker') }}</th>
+                                        <th>{{ te('Last Activity') }}</th>
                                     </tr>
                                     <tr class="header-row-zh">
                                         <th>货号</th>
@@ -1318,7 +1319,7 @@
                                     {% endfor %}
                                     <!-- FDC Summary Row -->
                                     <tr class="summary-row" data-database="FDC" style="display: none;">
-                                        <td>TOTAL</td>
+                                        <td>{{ te('TOTAL') }}</td>
                                         {% if has_multiple_descriptions %}<td></td>{% endif %}
                                         <td></td>
                                         <td class="num-col">{% set fdc_stock = style_group.colors | map(attribute='fdc') | selectattr('stock') | map(attribute='stock') | sum %}{{ fdc_stock | int }}</td>
@@ -1347,7 +1348,7 @@
                                     
                                     <!-- E-FAS Summary Row -->
                                     <tr class="summary-row" data-database="E_FAS" style="display: none;">
-                                        <td>TOTAL</td>
+                                        <td>{{ te('TOTAL') }}</td>
                                         {% if has_multiple_descriptions %}<td></td>{% endif %}
                                         <td></td>
                                         <td class="num-col">{% set efas_stock = style_group.colors | map(attribute='efas') | selectattr('stock') | map(attribute='stock') | sum %}{{ efas_stock | int }}</td>
@@ -1376,7 +1377,7 @@
                                     
                                     <!-- Combined Summary Row -->
                                     <tr class="summary-row" data-database="Both">
-                                        <td>TOTAL</td>
+                                        <td>{{ te('TOTAL') }}</td>
                                         {% if has_multiple_descriptions %}<td></td>{% endif %}
                                         <td></td>
                                         <td class="num-col">{{ style_group.totals.combined.stock }}</td>
@@ -1418,34 +1419,34 @@
         <div class="history-section" id="itemHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-history"></i> Item History</div>
-                <span id="history-total-qty" style="font-size: 13px;">Click to Load</span>
+                <span id="history-total-qty" style="font-size: 13px;">{{ te('Click to Load') }}</span>
             </div>
             <div class="history-content" style="display: none;">
                 <div class="history-modules-container">
                     <!-- Left Module: General Info -->
                     <div class="history-left-module">
-                        <h4>Order Summary</h4>
+                        <h4>{{ te('Order Summary') }}</h4>
                         
                         {% if not is_tiktok_view %}
                         <div class="info-item">
-                            <div class="info-label">Unique Prices:</div>
+                            <div class="info-label">{{ te('Unique Prices:') }}</div>
                             <div class="unique-prices-container" id="uniquePricesContainer">
                                 <!-- Dynamically populated -->
                             </div>
                         </div>
                         
                         <div class="info-item">
-                            <div class="info-label">Average Price:</div>
+                            <div class="info-label">{{ te('Average Price:') }}</div>
                             <div class="info-value" id="averagePrice">-</div>
                         </div>
                         
                         <div class="info-item">
-                            <div class="info-label">Total Price:</div>
+                            <div class="info-label">{{ te('Total Price:') }}</div>
                             <div class="info-value" id="totalPrice">-</div>
                         </div>
                         {% else %}
                         <div class="info-item">
-                            <div class="info-label">Summary:</div>
+                            <div class="info-label">{{ te('Summary:') }}</div>
                             <div class="info-value">TK特供有阉割一些功能哈~</div>
                         </div>
                         {% endif %}
@@ -1454,7 +1455,7 @@
                     <!-- Right Module: Data Table -->
                     <div class="history-right-module">
                         <div id="historyTableContainer" style="min-height: 100px;">
-                            <div style="text-align: center; padding: 20px; color: #666;">Loading history data...</div>
+                            <div style="text-align: center; padding: 20px; color: #666;">{{ te('Loading history data...') }}</div>
                         </div>
                     </div>
                 </div>
@@ -1467,11 +1468,11 @@
         <div class="history-section" id="adjustmentHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-tools"></i> Inventory Manual Adjustment</div>
-                <span id="adjustment-total-qty" style="font-size: 13px;">Click to Load</span>
+                <span id="adjustment-total-qty" style="font-size: 13px;">{{ te('Click to Load') }}</span>
             </div>
             <div class="history-content" style="display: none;">
                 <div id="adjustmentTableContainer" style="min-height: 100px;">
-                    <div style="text-align: center; padding: 20px; color: #666;">Loading adjustment data...</div>
+                    <div style="text-align: center; padding: 20px; color: #666;">{{ te('Loading adjustment data...') }}</div>
                 </div>
             </div>
         </div>
@@ -1482,11 +1483,11 @@
         <div class="history-section" id="purchaseHistorySection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-shopping-cart"></i> Purchase History</div>
-                <span id="purchase-total-qty" style="font-size: 13px;">Click to Load</span>
+                <span id="purchase-total-qty" style="font-size: 13px;">{{ te('Click to Load') }}</span>
             </div>
             <div class="history-content" style="display: none;">
                 <div id="purchaseTableContainer" style="min-height: 100px;">
-                    <div style="text-align: center; padding: 20px; color: #666;">Loading purchase data...</div>
+                    <div style="text-align: center; padding: 20px; color: #666;">{{ te('Loading purchase data...') }}</div>
                 </div>
             </div>
         </div>
@@ -1497,11 +1498,11 @@
         <div class="history-section" id="oceanSection" data-search="{{ search_input }}">
             <div class="history-header" onclick="toggleHistory(this)">
                 <div><i class="fas fa-chevron-down"></i><i class="fas fa-ship"></i> Ocean</div>
-                <span id="ocean-total-qty" style="font-size: 13px;">Click to Load</span>
+                <span id="ocean-total-qty" style="font-size: 13px;">{{ te('Click to Load') }}</span>
             </div>
             <div class="history-content" style="display: none;">
                 <div id="oceanTableContainer" style="min-height: 100px;">
-                    <div style="text-align: center; padding: 20px; color: #666;">Loading ocean data...</div>
+                    <div style="text-align: center; padding: 20px; color: #666;">{{ te('Loading ocean data...') }}</div>
                 </div>
             </div>
         </div>
@@ -1509,10 +1510,10 @@
 
     <div id="imagePopup" class="image-popup" onclick="closePopup(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;">
         <span class="close-btn" style="position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer;">&times;</span>
-        <img id="popupImage" src="" alt="Enlarged Image" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+        <img id="popupImage" src="" alt="{{ te('Enlarged Image') }}" style="max-width: 90%; max-height: 90%; object-fit: contain;">
     </div>
 
-    <div id="checkerCalcPopup" class="checker-calc-popup" role="dialog" aria-label="Checker calculation"></div>
+    <div id="checkerCalcPopup" class="checker-calc-popup" role="dialog" aria-label="{{ te('Checker calculation') }}"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -1581,7 +1582,7 @@
                 : '';
 
             popup.innerHTML =
-                '<div class="checker-calc-title">Checker calculation</div>' +
+                '<div class="checker-calc-title">{{ te('Checker calculation') }}</div>' +
                 '<div class="checker-calc-line">Hist-Received − Hist-sold − Available + Hist-fix</div>' +
                 '<div class="checker-calc-line" style="font-family:inherit;font-size:11px;color:#555;margin:4px 0;">' + availNote + '</div>' +
                 '<div class="checker-calc-line">' + hpo + ' − ' + hsold + ' − ' + avail + ' + ' + hfix + '</div>' +
@@ -2055,10 +2056,10 @@
 
             if (isOpen) {
                 toggleBtn.classList.add('active');
-                toggleBtn.innerHTML = '<i class="fas fa-times"></i><span>Close</span>';
+                toggleBtn.innerHTML = '<i class="fas fa-times"></i><span>{{ te('Close') }}</span>';
             } else {
                 toggleBtn.classList.remove('active');
-                toggleBtn.innerHTML = '<i class="fas fa-sliders-h"></i><span>Filters</span>';
+                toggleBtn.innerHTML = '<i class="fas fa-sliders-h"></i><span>{{ te('Filters') }}</span>';
             }
         }
 
@@ -2275,13 +2276,15 @@
                     if (data.success && data.data && data.data.length > 0) {
                         let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Order #</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Date</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('SKU') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Order #') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Invoice #') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Invoice Status') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Date') }}</th>';
                         if (!isTikTokView) {
                             html += '<th style="padding:8px; border:1px solid #ddd;">Customer</th>';
                         }
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Qty') }}</th>';
                         if (!isTikTokView) {
                             html += '<th style="padding:8px; border:1px solid #ddd;">Unit Price</th>';
                         }
@@ -2302,6 +2305,13 @@
                             const orderLink = row.order_number 
                                 ? `<a href="/order_lookup/${row.order_number}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.order_number}</a>` 
                                 : '-';
+                            const invoiceNumber = row.invoice_number && row.invoice_number !== 'not invoiced' ? row.invoice_number : '';
+                            const invoiceLink = invoiceNumber
+                                ? `<a href="/invoice_lookup/${invoiceNumber}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${invoiceNumber}</a>`
+                                : '-';
+                            const invoiceStatus = row.invoice_status === 'Invoiced'
+                                ? '<span style="color:#28a745; font-weight:600;">Invoiced</span>'
+                                : '<span style="color:#dc3545; font-weight:600;">Not Invoiced</span>';
                             const customerLink = row.customer_id 
                                 ? `<a href="/customer?search_id=${row.customer_id}" target="_blank" style="color:#667eea; text-decoration:none; font-weight:bold;">${row.customer_id}</a>` 
                                 : '-';
@@ -2310,6 +2320,8 @@
                                 <td style="padding:6px; border:1px solid #ddd;">${row.database}</td>
                                 <td style="padding:6px; border:1px solid #ddd;"><a href="${productDetailBase}${encodeURIComponent(row.product_code)}" style="color:#667eea;">${row.product_code}</a></td>
                                 <td style="padding:6px; border:1px solid #ddd;">${orderLink}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${invoiceLink}</td>
+                                <td style="padding:6px; border:1px solid #ddd;">${invoiceStatus}</td>
                                 <td style="padding:6px; border:1px solid #ddd;">${row.order_date}</td>
                                 ${!isTikTokView ? `<td style="padding:6px; border:1px solid #ddd;">${customerLink}</td>` : ''}
                                 <td style="padding:6px; border:1px solid #ddd; text-align:right;">${row.order_quantity}</td>
@@ -2361,11 +2373,11 @@
                     if (data.success && data.data && data.data.length > 0) {
                         let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('SKU') }}</th>';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Log #</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Date</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Date') }}</th>';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Adjusted By</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Qty') }}</th>';
                         html += '</tr></thead><tbody>';
                         
                         let totalAdj = 0;
@@ -2445,8 +2457,8 @@
             const totalColor = displayTotal < 0 ? 'red' : 'green';
 
             let summaryHtml =
-                `<div><strong>Database:</strong> ${log.database}</div>` +
-                `<div><strong>Date:</strong> ${log.date}</div>` +
+                `<div><strong>{{ te('Database:') }}</strong> ${log.database}</div>` +
+                `<div><strong>{{ te('Date:') }}</strong> ${log.date}</div>` +
                 `<div><strong>Adjusted By:</strong> ${log.adjusted_by}</div>` +
                 `<div><strong>Lines:</strong> ${displayItems.length}` +
                 (canFilterByStyle && !adjLogState.showFull
@@ -2465,8 +2477,8 @@
 
             let tableHtml = '<table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0; position:sticky; top:0;">';
             tableHtml += '<th style="padding:8px; border:1px solid #ddd;">#</th>';
-            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
-            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">{{ te('SKU') }}</th>';
+            tableHtml += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Qty') }}</th>';
             tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Bin</th>';
             tableHtml += '<th style="padding:8px; border:1px solid #ddd;">Warehouse</th>';
             if (adjLogState.showFull) {
@@ -2595,10 +2607,10 @@
                     if (data.success && data.data && data.data.length > 0) {
                         let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">PO #</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">PO Date</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Qty</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('SKU') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('PO #') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('PO Date') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Qty') }}</th>';
                         html += '</tr></thead><tbody>';
                         
                         let totalPurch = 0;
@@ -2657,10 +2669,10 @@
                     if (data.success && data.data && data.data.length > 0) {
                         let html = '<div class="table-responsive"><table style="width:100%; font-size:12px; border-collapse:collapse;"><thead><tr style="background:#f0f0f0;">';
                         html += '<th style="padding:8px; border:1px solid #ddd;">Database</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">SKU</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">PO #</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">PO Date</th>';
-                        html += '<th style="padding:8px; border:1px solid #ddd;">Quantity</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('SKU') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('PO #') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('PO Date') }}</th>';
+                        html += '<th style="padding:8px; border:1px solid #ddd;">{{ te('Quantity') }}</th>';
                         html += '</tr></thead><tbody>';
                         
                         let totalOcean = 0;
@@ -2744,14 +2756,14 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Manage Locations for Style: <span id="locationStyle" style="color: #667eea; font-weight: bold;"></span></h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
               <span aria-hidden="true">×</span>
             </button>
           </div>
           <div class="modal-body">
             <!-- Bulk Operations Panel -->
             <div style="background: #f0f7ff; padding: 12px; border-radius: 4px; border-left: 4px solid #667eea; margin-bottom: 16px;">
-              <strong style="color: #667eea;">📋 Bulk Operations</strong>
+              <strong style="color: #667eea;">{{ te('📋 Bulk Operations') }}</strong>
               <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
                 <button type="button" class="btn btn-sm btn-outline-info" onclick="openBulkEditLocations()">
                   ✏️ Bulk Modify All Locations
@@ -2764,14 +2776,14 @@
 
             <!-- SKU Location Table -->
             <div style="margin-bottom: 16px;">
-              <strong>Individual Location Updates:</strong>
+              <strong>{{ te('Individual Location Updates:') }}</strong>
               <div style="max-height: 400px; overflow-y: auto; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
                 <table class="table table-sm table-hover" style="margin-bottom: 0; font-size: 14px;">
                   <thead style="position: sticky; top: 0; background: #f9f9f9;">
                     <tr>
-                      <th style="width: 20%; padding: 8px;">SKU</th>
-                      <th style="width: 20%; padding: 8px;">Style</th>
-                      <th style="width: 55%; padding: 8px;">Current Location(s)</th>
+                      <th style="width: 20%; padding: 8px;">{{ te('SKU') }}</th>
+                      <th style="width: 20%; padding: 8px;">{{ te('Style') }}</th>
+                      <th style="width: 55%; padding: 8px;">{{ te('Current Location(s)') }}</th>
                     </tr>
                   </thead>
                   <tbody id="skuLocationTableBody">
@@ -2783,32 +2795,32 @@
 
             <!-- Bulk Edit Panel (Hidden by default) -->
             <div id="bulkEditPanel" style="display: none; background: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ff9800; margin-bottom: 16px;">
-              <strong>Apply to all SKUs:</strong>
-              <small class="text-muted d-block" style="margin-top: 4px;">New locations are added to each SKU&rsquo;s existing locations (nothing is removed).</small>
+              <strong>{{ te('Apply to all SKUs:') }}</strong>
+              <small class="text-muted d-block" style="margin-top: 4px;">{{ te('New locations are added to each SKU&rsquo;s existing locations (nothing is removed).') }}</small>
               <div style="margin-top: 10px;">
                 <!-- Location Tags Container -->
                 <div id="bulkLocTagContainer" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 30px; padding: 6px; background: white; border-radius: 3px; border: 1px solid #ddd; align-content: flex-start;">
                 </div>
                 <!-- Input Section -->
                 <div id="bulkLocInputSection" style="display: flex; gap: 6px; margin-bottom: 6px;">
-                  <input type="text" class="form-control warehouse-loc-input" id="bulkLocationInput" placeholder="L12-E BOT or L14 Wall" style="flex: 1;" autocomplete="off" list="warehouseLocSuggestions">
-                  <button type="button" class="btn btn-sm btn-success" title="Add location"><i class="fas fa-check"></i></button>
-                  <button type="button" class="btn btn-sm btn-secondary" title="Clear input"><i class="fas fa-times"></i></button>
+                  <input type="text" class="form-control warehouse-loc-input" id="bulkLocationInput" placeholder="{{ te('L12-E BOT or L14 Wall') }}" style="flex: 1;" autocomplete="off" list="warehouseLocSuggestions">
+                  <button type="button" class="btn btn-sm btn-success" title="{{ te('Add location') }}"><i class="fas fa-check"></i></button>
+                  <button type="button" class="btn btn-sm btn-secondary" title="{{ te('Clear input') }}"><i class="fas fa-times"></i></button>
                 </div>
                 <div id="bulkLocHelper" style="display: none; margin-bottom: 10px; padding: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 4px;">
-                  <small class="text-muted d-block mb-1">Warehouse format: <strong>L</strong>[1–30]-<strong>[A–M]</strong> <strong>TOP|MID|BOT</strong> or <strong>L</strong>[1–30]-<strong>Wall</strong> &nbsp;(e.g. L5-E BOT, L14 Wall, L14-Wall)</small>
+                  <small class="text-muted d-block mb-1">Warehouse format: <strong>L</strong>[1–30]-<strong>{{ te('[A–M]') }}</strong> <strong>{{ te('TOP|MID|BOT') }}</strong> or <strong>L</strong>[1–30]-<strong>{{ te('Wall') }}</strong> &nbsp;(e.g. L5-E BOT, L14 Wall, L14-Wall)</small>
                   <div id="bulkLocHelperChips" class="wh-loc-chips" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;"></div>
                 </div>
                 <datalist id="warehouseLocSuggestions"></datalist>
                 <div style="display: flex; gap: 8px;">
-                  <button type="button" class="btn btn-sm btn-warning" onclick="applyBulkLocationChange()">Apply Changes</button>
-                  <button type="button" class="btn btn-sm btn-secondary" onclick="closeBulkEditPanel()">Cancel</button>
+                  <button type="button" class="btn btn-sm btn-warning" onclick="applyBulkLocationChange()">{{ te('Apply Changes') }}</button>
+                  <button type="button" class="btn btn-sm btn-secondary" onclick="closeBulkEditPanel()">{{ te('Cancel') }}</button>
                 </div>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
           </div>
         </div>
       </div>
@@ -2819,19 +2831,19 @@
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">OMS Description Details</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <h5 class="modal-title">{{ te('OMS Description Details') }}</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
               <span aria-hidden="true">×</span>
             </button>
           </div>
           <div class="modal-body">
-            <div><strong>Style:</strong> <span id="infoStyle"></span></div>
+            <div><strong>{{ te('Style:') }}</strong> <span id="infoStyle"></span></div>
             <div class="mt-3" style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 4px; border: 1px solid #ddd;">
                 <div id="infoContent" style="word-break: break-word; white-space: normal;"></div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
           </div>
         </div>
       </div>
@@ -2841,22 +2853,22 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Modify Description</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <h5 class="modal-title">{{ te('Modify Description') }}</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
               <span aria-hidden="true">×</span>
             </button>
           </div>
           <div class="modal-body">
-            <div><strong>Style:</strong> <span id="editDescStyle"></span></div>
-            <label class="mt-3">Select Description</label>
+            <div><strong>{{ te('Style:') }}</strong> <span id="editDescStyle"></span></div>
+            <label class="mt-3">{{ te('Select Description') }}</label>
             <select id="editDescSelect" class="form-control">
-                <option value="">-- Loading descriptions --</option>
+                <option value="">{{ te('-- Loading descriptions --') }}</option>
             </select>
-            <div id="loadingMsg" class="mt-2 text-muted">Loading available descriptions...</div>
+            <div id="loadingMsg" class="mt-2 text-muted">{{ te('Loading available descriptions...') }}</div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" onclick="saveDescriptionEdit()">Save</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
+            <button type="button" class="btn btn-primary" onclick="saveDescriptionEdit()">{{ te('Save') }}</button>
           </div>
         </div>
       </div>
@@ -2868,18 +2880,18 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Adjustment Log <span id="adjLogNumber" style="color:#667eea; font-weight:bold;"></span></h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
               <span aria-hidden="true">×</span>
             </button>
           </div>
           <div class="modal-body">
             <div id="adjLogSummary" class="mb-3" style="display:flex; flex-wrap:wrap; gap:16px; font-size:13px;"></div>
-            <div id="adjLogLoading" style="text-align:center; padding:20px; color:#666;">Loading log details...</div>
+            <div id="adjLogLoading" style="text-align:center; padding:20px; color:#666;">{{ te('Loading log details...') }}</div>
             <div id="adjLogTableWrap" class="table-responsive" style="max-height:60vh; overflow-y:auto; display:none;"></div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-outline-primary" id="adjLogShowFullBtn" style="display:none;" onclick="toggleAdjustmentLogFullView()">Show Full Log</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-outline-primary" id="adjLogShowFullBtn" style="display:none;" onclick="toggleAdjustmentLogFullView()">{{ te('Show Full Log') }}</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
           </div>
         </div>
       </div>
@@ -2976,11 +2988,11 @@
                 ${tagsHTML}
                 <div id="locInputSection_${sku}" style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
                     <div style="display: flex; align-items: center; gap: 4px;">
-                        <input type="text" id="locNewInput_${sku}" class="form-control warehouse-loc-input" placeholder="L12-E BOT or L14 Wall" style="min-width: 120px; height: 30px; font-size: 12px;" autocomplete="off" list="warehouseLocSuggestions">
-                        <button type="button" class="btn btn-sm btn-success" style="padding: 4px 8px;" title="Add">
+                        <input type="text" id="locNewInput_${sku}" class="form-control warehouse-loc-input" placeholder="{{ te('L12-E BOT or L14 Wall') }}" style="min-width: 120px; height: 30px; font-size: 12px;" autocomplete="off" list="warehouseLocSuggestions">
+                        <button type="button" class="btn btn-sm btn-success" style="padding: 4px 8px;" title="{{ te('Add') }}">
                             <i class="fa fa-check"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-secondary" style="padding: 4px 8px;" title="Clear input">
+                        <button type="button" class="btn btn-sm btn-secondary" style="padding: 4px 8px;" title="{{ te('Clear input') }}">
                             <i class="fa fa-times"></i>
                         </button>
                     </div>

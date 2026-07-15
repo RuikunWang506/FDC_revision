@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import socket
 import stat
 import threading
@@ -122,6 +123,135 @@ def sync_fetch_filter_info() -> dict:
 
 def filter_entries_for_sync(entries: List[dict]) -> List[dict]:
     return [e for e in entries if is_sync_fetch_entry(e)]
+
+
+_SKU_TOKEN_RE = re.compile(r'^([A-Z]+\d+)', re.I)
+
+
+def _path_segment_matches_sku(segment: str, sku_upper: str) -> bool:
+    """True when a single path segment is the SKU or starts with SKU + separator (not T36960 for T3696)."""
+    seg_upper = (segment or '').strip().upper()
+    if not seg_upper or not sku_upper:
+        return False
+    if seg_upper == sku_upper:
+        return True
+    if not seg_upper.startswith(sku_upper):
+        return False
+    suffix = seg_upper[len(sku_upper):]
+    if not suffix:
+        return True
+    return suffix[0] in ' _-.' or not suffix[0].isalnum()
+
+
+def path_contains_sku(rel_path: str, sku_upper: str) -> bool:
+    """True when any folder segment in rel_path matches the SKU (trace-by-folder fallback)."""
+    rel = _norm_rel(rel_path)
+    if not rel:
+        return False
+    return any(_path_segment_matches_sku(part, sku_upper) for part in rel.split('/'))
+
+
+def guess_sku_from_path(rel_path: str) -> Optional[str]:
+    """Best-effort SKU token from path segments (deepest folder first)."""
+    rel = _norm_rel(rel_path)
+    if not rel:
+        return None
+    for segment in reversed(rel.split('/')):
+        match = _SKU_TOKEN_RE.match((segment or '').strip())
+        if match:
+            return match.group(1).upper()
+    return None
+
+
+def _slug_path_token(text: str, *, max_len: int = 40) -> str:
+    slug = re.sub(r'[^\w\-]+', '_', (text or '').strip())
+    slug = re.sub(r'_+', '_', slug).strip('_')
+    if not slug:
+        return 'img'
+    return slug[:max_len]
+
+
+def is_generic_sync_filename(name: str, sku_upper: str) -> bool:
+    """True when remote filename is not a reliable SKU-based name (unnamed / numeric only)."""
+    original = (name or '').strip()
+    if not original or original in ('.', '..'):
+        return True
+    stem = os.path.splitext(original)[0].strip()
+    if not stem:
+        return True
+    stem_upper = stem.upper()
+    if stem_upper.startswith(sku_upper):
+        suffix = stem_upper[len(sku_upper):]
+        if not suffix or suffix[0] in ' _-.':
+            return False
+    if stem.isdigit() or len(stem) <= 2:
+        return True
+    if sku_upper in stem_upper:
+        return False
+    if _SKU_TOKEN_RE.match(stem_upper):
+        return False
+    return True
+
+
+def derive_sync_filename(entry: dict, sku: str) -> str:
+    """Local big_picture filename; derives from folder path when remote file has no SKU name."""
+    sku_upper = (sku or '').strip().upper()
+    full_path = entry.get('full_path') or ''
+    original = (entry.get('name') or os.path.basename(full_path) or '').strip()
+    rel = entry.get('rel_path') or china_ftp_abs_to_rel(full_path)
+    ext = os.path.splitext(original)[1].lower()
+    if ext not in CHINA_FTP_IMAGE_EXTS:
+        ext = '.jpg'
+
+    if sku_upper and not is_generic_sync_filename(original, sku_upper):
+        return original
+
+    folder_seg = ''
+    for segment in reversed(_norm_rel(rel).split('/')):
+        if sku_upper and _path_segment_matches_sku(segment, sku_upper):
+            folder_seg = segment
+            break
+    if not folder_seg:
+        folder_seg = guess_sku_from_path(rel) or sku_upper or 'folder'
+
+    folder_slug = _slug_path_token(folder_seg)
+    orig_stem = os.path.splitext(original)[0].strip() or 'img'
+    orig_slug = _slug_path_token(orig_stem, max_len=20)
+    path_hash = hashlib.sha256(full_path.encode('utf-8')).hexdigest()[:8]
+    prefix = sku_upper or guess_sku_from_path(rel) or 'SKU'
+    return f'{prefix}_{folder_slug}_{orig_slug}_{path_hash}{ext}'
+
+
+def _entry_matches_sku(entry: dict, sku_upper: str, *, match_mode: str) -> bool:
+    name = entry.get('name') or os.path.basename(entry.get('full_path') or '')
+    rel = entry.get('rel_path') or ''
+    if match_mode == 'folder':
+        return path_contains_sku(rel, sku_upper)
+    return name.upper().startswith(sku_upper)
+
+
+def _entry_passes_sku_file_filters(
+    entry: dict,
+    sku_upper: str,
+    *,
+    year_only: bool,
+    sync_only: bool,
+    match_mode: str,
+) -> bool:
+    if entry.get('type') != 'file':
+        return False
+    name = entry.get('name') or os.path.basename(entry.get('full_path') or '')
+    rel = entry.get('rel_path') or ''
+    if not _entry_matches_sku(entry, sku_upper, match_mode=match_mode):
+        return False
+    if year_only:
+        year_label = current_year_label()
+        year_prefix = f'{year_label}/'
+        if not (rel == year_label or rel.startswith(year_prefix)):
+            return False
+    if sync_only:
+        return is_sync_fetch_entry(entry)
+    return bool(entry.get('is_image')) or is_sync_fetch_file(name)
 
 
 def is_connection_error(exc: BaseException) -> bool:
@@ -592,6 +722,7 @@ def find_sku_files_from_index(
     *,
     year_only: bool = True,
     sync_only: bool = False,
+    match_mode: str = 'filename',
 ) -> List[dict]:
     sku_upper = (sku or '').strip().upper()
     if not sku_upper:
@@ -601,24 +732,16 @@ def find_sku_files_from_index(
     if not data:
         return []
 
-    year_label = current_year_label() if year_only else None
-    year_prefix = f'{year_label}/' if year_label else None
     matches = []
     for entry in data.get('entries') or []:
-        if entry.get('type') != 'file':
-            continue
-        name = entry.get('name') or ''
-        if not name.upper().startswith(sku_upper):
-            continue
-        rel = entry.get('rel_path') or ''
-        if year_only and not (rel == year_label or rel.startswith(year_prefix)):
-            continue
-        if sync_only:
-            if not is_sync_fetch_entry(entry):
-                continue
-        elif not entry.get('is_image') and not is_sync_fetch_file(name):
-            continue
-        matches.append(entry)
+        if _entry_passes_sku_file_filters(
+            entry,
+            sku_upper,
+            year_only=year_only,
+            sync_only=sync_only,
+            match_mode=match_mode,
+        ):
+            matches.append(entry)
     return matches
 
 
@@ -627,6 +750,7 @@ def _find_sku_files_live(
     *,
     year_only: bool = True,
     sync_only: bool = False,
+    match_mode: str = 'filename',
 ) -> List[dict]:
     sku_upper = (sku or '').strip().upper()
     if not sku_upper:
@@ -638,18 +762,36 @@ def _find_sku_files_live(
         search_abs = _china_ftp_base_norm()
 
     skip_exts = ','.join(f"'{ext}'" for ext in sorted(CHINA_FTP_SYNC_SKIP_EXTS))
-    ps = (
-        f"$p = '{search_abs}'; "
-        f"$skip = @({skip_exts}); "
-        f"Get-ChildItem -LiteralPath $p -Recurse -File -Filter '{sku_upper}*' "
-        f"-ErrorAction SilentlyContinue | "
-        f"Where-Object {{ $skip -notcontains $_.Extension.ToLower() }} | "
-        f"Select-Object "
-        "@{N='FullName';E={$_.FullName}}, @{N='Name';E={$_.Name}}, "
-        "@{N='Length';E={$_.Length}}, @{N='IsDirectory';E={$_.PSIsContainer}}, "
-        "@{N='LastWriteTime';E={$_.LastWriteTime.ToString('o')}} | "
-        f"ConvertTo-Json -Compress"
-    )
+    img_exts = ','.join(f"'{ext}'" for ext in sorted(CHINA_FTP_IMAGE_EXTS))
+    safe_sku = sku_upper.replace("'", "''")
+    if match_mode == 'folder':
+        ps = (
+            f"$p = '{search_abs}'; "
+            f"$sku = '{safe_sku}'; "
+            f"$skip = @({skip_exts}); "
+            f"$img = @({img_exts}); "
+            f"Get-ChildItem -LiteralPath $p -Recurse -File -ErrorAction SilentlyContinue | "
+            f"Where-Object {{ $skip -notcontains $_.Extension.ToLower() -and $img -contains $_.Extension.ToLower() }} | "
+            f"Where-Object {{ $_.FullName -match ('[\\\\/]' + [regex]::Escape($sku) + '([\\\\/]|$|[^0-9A-Za-z])') }} | "
+            f"Select-Object "
+            "@{N='FullName';E={$_.FullName}}, @{N='Name';E={$_.Name}}, "
+            "@{N='Length';E={$_.Length}}, @{N='IsDirectory';E={$_.PSIsContainer}}, "
+            "@{N='LastWriteTime';E={$_.LastWriteTime.ToString('o')}} | "
+            f"ConvertTo-Json -Compress"
+        )
+    else:
+        ps = (
+            f"$p = '{search_abs}'; "
+            f"$skip = @({skip_exts}); "
+            f"Get-ChildItem -LiteralPath $p -Recurse -File -Filter '{safe_sku}*' "
+            f"-ErrorAction SilentlyContinue | "
+            f"Where-Object {{ $skip -notcontains $_.Extension.ToLower() }} | "
+            f"Select-Object "
+            "@{N='FullName';E={$_.FullName}}, @{N='Name';E={$_.Name}}, "
+            "@{N='Length';E={$_.Length}}, @{N='IsDirectory';E={$_.PSIsContainer}}, "
+            "@{N='LastWriteTime';E={$_.LastWriteTime.ToString('o')}} | "
+            f"ConvertTo-Json -Compress"
+        )
     with _pool_lock:
         raw = _run_ssh_command(f'powershell -command "{ps}"', exec_timeout=300)
 
@@ -659,6 +801,11 @@ def _find_sku_files_live(
     entries = [_powershell_row_to_entry(row) for row in parsed]
     if sync_only:
         entries = filter_entries_for_sync(entries)
+    elif match_mode == 'folder':
+        entries = [
+            e for e in entries
+            if e.get('is_image') or is_sync_fetch_file(e.get('name') or '')
+        ]
     return entries
 
 
@@ -669,22 +816,65 @@ def find_sku_files(
     sync_only: bool = False,
 ) -> Tuple[List[dict], str]:
     """Return image file entries for a SKU. Uses local index first, then scoped live search."""
-    indexed = find_sku_files_from_index(sku, year_only=year_only, sync_only=sync_only)
-    if indexed:
-        return indexed, 'index'
-    live = _find_sku_files_live(sku, year_only=year_only, sync_only=sync_only)
-    return live, 'live'
+    sku_upper = (sku or '').strip().upper()
+    if not sku_upper:
+        return [], 'none'
+
+    def _strategies_for(sync_flag: bool):
+        items = [
+            ('filename', sync_flag),
+            ('folder', sync_flag),
+        ]
+        if sync_flag:
+            items.append(('folder', False))
+        return items
+
+    year_scopes = [True, False] if year_only else [False]
+
+    for use_year_only in year_scopes:
+        for match_mode, use_sync_only in _strategies_for(sync_only):
+            indexed = find_sku_files_from_index(
+                sku_upper,
+                year_only=use_year_only,
+                sync_only=use_sync_only,
+                match_mode=match_mode,
+            )
+            if indexed:
+                parts = [f'index_{match_mode}']
+                if not use_sync_only:
+                    parts.append('relaxed')
+                if not use_year_only:
+                    parts.append('all_years')
+                return indexed, '_'.join(parts)
+
+            live = _find_sku_files_live(
+                sku_upper,
+                year_only=use_year_only,
+                sync_only=use_sync_only,
+                match_mode=match_mode,
+            )
+            if live:
+                parts = [f'live_{match_mode}']
+                if not use_sync_only:
+                    parts.append('relaxed')
+                if not use_year_only:
+                    parts.append('all_years')
+                return live, '_'.join(parts)
+
+    return [], 'none'
 
 
 def sku_entry_to_asset_info(entry: dict, sku: str, *, already_synced: bool = False) -> dict:
     full_path = entry.get('full_path') or ''
-    filename = entry.get('name') or os.path.basename(full_path)
+    original_name = entry.get('name') or os.path.basename(full_path)
+    filename = derive_sync_filename(entry, sku)
     rel = entry.get('rel_path') or china_ftp_abs_to_rel(full_path)
     return {
         'id': None,
         'sku': sku.upper(),
         'version': None,
         'filename': filename,
+        'remote_filename': original_name,
         'source': 'china_ftp',
         'width': None,
         'height': None,

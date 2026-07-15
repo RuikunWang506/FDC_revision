@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bag Style Viewer</title>
+    <title>{{ _('page.bag_style_viewer.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
@@ -220,25 +220,25 @@
     {% include 'navbar.html' %}
     <div class="container-fluid bsv-page">
         <div class="bsv-hero">
-            <h1>Bag Style Viewer</h1>
-            <p>Browse bag styles by description, filter stock and colors, switch between picture grid and detailed list view.</p>
+            <h1>{{ te('Bag Style Viewer') }}</h1>
+            <p>{{ te('Browse bag styles by description, filter stock and colors, switch between picture grid and detailed list view.') }}</p>
         </div>
 
         <div class="bsv-filter-card">
-            <h6>Filters</h6>
+            <h6>{{ te('Filters') }}</h6>
             <form method="get" action="{{ url_for('bag_style_viewer.index') }}" id="mainForm">
                 <input type="hidden" name="view" id="viewModeInput" value="{{ view_mode }}">
                 <div class="form-row">
                     <div class="form-group col-lg-3 col-md-6 mb-2">
-                        <div class="bsv-label">Description <span class="text-muted font-weight-normal">(multi-select)</span></div>
+                        <div class="bsv-label">Description <span class="text-muted font-weight-normal">{{ te('(multi-select)') }}</span></div>
                         <div class="bsv-desc-search-wrap">
                             <div class="bsv-pick-list-head">
                                 <input type="search" class="form-control form-control-sm" id="descSearch"
-                                    placeholder="Search descriptions…" autocomplete="off">
+                                    placeholder="{{ te('Search descriptions…') }}" autocomplete="off">
                             </div>
                             <label class="bsv-desc-item mb-0 small font-weight-bold" style="border-bottom:1px solid #e2e8f0;padding-bottom:0.25rem;">
                                 <input type="checkbox" id="descSelectAll" onchange="toggleAllDescriptions(this.checked)">
-                                <span>Select all visible</span>
+                                <span>{{ te('Select all visible') }}</span>
                             </label>
                             <div class="bsv-desc-list" id="descList">
                                 {% for d in descriptions %}
@@ -252,14 +252,14 @@
                         </div>
                     </div>
                     <div class="form-group col-lg-3 col-md-6 mb-2">
-                        <div class="bsv-label">Container <span class="text-muted font-weight-normal">(multi-select)</span></div>
+                        <div class="bsv-label">Container <span class="text-muted font-weight-normal">{{ te('(multi-select)') }}</span></div>
                         <div class="bsv-desc-search-wrap">
                             <input type="text" class="form-control form-control-sm mb-1" name="container_q" id="containerQ"
-                                placeholder="Search container e.g. F261106" value="{{ container_q or '' }}" autocomplete="off">
-                            <div class="small text-muted mb-1">Latest 10 containers</div>
+                                placeholder="{{ te('Search container e.g. F261106') }}" value="{{ container_q or '' }}" autocomplete="off">
+                            <div class="small text-muted mb-1">{{ te('Latest 10 containers') }}</div>
                             <label class="bsv-desc-item mb-0 small font-weight-bold" style="border-bottom:1px solid #e2e8f0;padding-bottom:0.25rem;">
                                 <input type="checkbox" id="containerSelectAll" onchange="toggleAllContainers(this.checked)">
-                                <span>Select all visible</span>
+                                <span>{{ te('Select all visible') }}</span>
                             </label>
                             <div class="bsv-desc-list" id="containerList">
                                 {% for c in latest_containers|default([]) %}
@@ -273,45 +273,45 @@
                         </div>
                     </div>
                     <div class="form-group col-lg-2 col-md-3 mb-2">
-                        <label class="bsv-label" for="stockFilter">Stock</label>
+                        <label class="bsv-label" for="stockFilter">{{ te('Stock') }}</label>
                         <select name="stock_filter" id="stockFilter" class="form-control form-control-sm">
-                            <option value="">All</option>
-                            <option value="instock" {% if stock_filter == 'instock' %}selected{% endif %}>In stock only</option>
-                            <option value="ocean" {% if stock_filter == 'ocean' %}selected{% endif %}>Ocean only</option>
-                            <option value="both" {% if stock_filter == 'both' %}selected{% endif %}>Stock and/or ocean</option>
+                            <option value="">{{ te('All') }}</option>
+                            <option value="instock" {% if stock_filter == 'instock' %}selected{% endif %}>{{ te('In stock only') }}</option>
+                            <option value="ocean" {% if stock_filter == 'ocean' %}selected{% endif %}>{{ te('Ocean only') }}</option>
+                            <option value="both" {% if stock_filter == 'both' %}selected{% endif %}>{{ te('Stock and/or ocean') }}</option>
                         </select>
                     </div>
                     <div class="form-group col-lg-2 col-md-3 mb-2">
-                        <label class="bsv-label" for="descFilter">Style description</label>
+                        <label class="bsv-label" for="descFilter">{{ te('Style description') }}</label>
                         <select name="desc_filter" id="descFilter" class="form-control form-control-sm">
-                            <option value="">All</option>
-                            <option value="has" {% if desc_filter == 'has' %}selected{% endif %}>Has description</option>
-                            <option value="missing" {% if desc_filter == 'missing' %}selected{% endif %}>Missing description</option>
+                            <option value="">{{ te('All') }}</option>
+                            <option value="has" {% if desc_filter == 'has' %}selected{% endif %}>{{ te('Has description') }}</option>
+                            <option value="missing" {% if desc_filter == 'missing' %}selected{% endif %}>{{ te('Missing description') }}</option>
                         </select>
                     </div>
                     <div class="form-group col-lg-2 col-md-3 mb-2">
-                        <label class="bsv-label" for="colorFilter">Color contains</label>
+                        <label class="bsv-label" for="colorFilter">{{ te('Color contains') }}</label>
                         <input type="text" name="color_filter" id="colorFilter" class="form-control form-control-sm"
-                            placeholder="e.g. BK" value="{{ color_filter or '' }}">
+                            placeholder="{{ te('e.g. BK') }}" value="{{ color_filter or '' }}">
                     </div>
                     <div class="form-group col-lg-2 col-md-3 mb-2">
-                        <label class="bsv-label" for="styleQ">Style / SKU contains</label>
+                        <label class="bsv-label" for="styleQ">{{ te('Style / SKU contains') }}</label>
                         <input type="text" name="style_q" id="styleQ" class="form-control form-control-sm"
-                            placeholder="e.g. L1790 or L1343M" value="{{ style_q or '' }}">
+                            placeholder="{{ te('e.g. L1790 or L1343M') }}" value="{{ style_q or '' }}">
                     </div>
                 </div>
                 <div class="d-flex flex-wrap align-items-center justify-content-between mt-1">
                     <div class="custom-control custom-checkbox">
                         <input type="checkbox" class="custom-control-input" id="hideZero" name="hide_zero" value="1"
                             {% if hide_zero_skus %}checked{% endif %}>
-                        <label class="custom-control-label small" for="hideZero">Hide zero-qty SKU rows (list view)</label>
+                        <label class="custom-control-label small" for="hideZero">{{ te('Hide zero-qty SKU rows (list view)') }}</label>
                     </div>
                     <div class="bsv-actions-row">
-                        <button type="submit" class="btn btn-primary btn-sm px-4">Apply filters</button>
-                        <a href="{{ url_for('bag_style_viewer.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
-                        <button type="button" class="btn btn-success btn-sm" onclick="window.location='{{ url_for('bag_style_viewer.export_template') }}'">Download template</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4">{{ te('Apply filters') }}</button>
+                        <a href="{{ url_for('bag_style_viewer.index') }}" class="btn btn-outline-secondary btn-sm">{{ te('Reset') }}</a>
+                        <button type="button" class="btn btn-success btn-sm" onclick="window.location='{{ url_for('bag_style_viewer.export_template') }}'">{{ te('Download template') }}</button>
                         <input type="file" id="uploadFile" class="d-none" accept=".xlsx,.xls" onchange="uploadTemplate()">
-                        <button type="button" class="btn btn-warning btn-sm" onclick="document.getElementById('uploadFile').click()">Upload template</button>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="document.getElementById('uploadFile').click()">{{ te('Upload template') }}</button>
                     </div>
                 </div>
             </form>
@@ -324,11 +324,11 @@
         {% if search_result %}
         <div class="alert alert-info">
             <div class="d-flex align-items-center">
-                <img src="{{ search_result.image }}" class="bsv-thumb mr-3" alt="image"
+                <img src="{{ search_result.image }}" class="bsv-thumb mr-3" alt="{{ te('image') }}"
                     onclick="openImageModal('{{ search_result.style }}', '{{ search_result.image }}', '{{ search_result.description }}')">
                 <div>
-                    <div><strong>Style / SKU:</strong> {{ search_result.style }}</div>
-                    <div><strong>Description:</strong> {{ search_result.description }}</div>
+                    <div><strong>{{ te('Style / SKU:') }}</strong> {{ search_result.style }}</div>
+                    <div><strong>{{ te('Description:') }}</strong> {{ search_result.description }}</div>
                 </div>
             </div>
         </div>
@@ -338,24 +338,24 @@
         <div class="bsv-toolbar">
             <div>
                 {% if selected_descriptions %}
-                <div><strong>Descriptions:</strong> <span class="text-muted">{{ selected_descriptions|join(', ') }}</span></div>
+                <div><strong>{{ te('Descriptions:') }}</strong> <span class="text-muted">{{ selected_descriptions|join(', ') }}</span></div>
                 {% endif %}
                 {% if selected_containers %}
-                <div><strong>Containers:</strong> <span class="text-muted">{{ selected_containers|join(', ') }}</span></div>
+                <div><strong>{{ te('Containers:') }}</strong> <span class="text-muted">{{ selected_containers|join(', ') }}</span></div>
                 {% endif %}
                 {% if desc_filter == 'has' %}
-                <div><strong>Description:</strong> <span class="text-muted">Has description only</span></div>
+                <div><strong>{{ te('Description:') }}</strong> <span class="text-muted">{{ te('Has description only') }}</span></div>
                 {% elif desc_filter == 'missing' %}
-                <div><strong>Description:</strong> <span class="text-muted">Missing description only</span></div>
+                <div><strong>{{ te('Description:') }}</strong> <span class="text-muted">{{ te('Missing description only') }}</span></div>
                 {% endif %}
                 <span class="text-muted small">{{ styles|length }} style(s)</span>
             </div>
             <div class="d-flex flex-wrap align-items-center" style="gap:10px;">
                 <div class="btn-group bsv-view-toggle" role="group">
                     <button type="button" class="btn btn-outline-primary btn-sm {% if view_mode == 'grid' %}active{% endif %}"
-                        onclick="setViewMode('grid')">Pictures</button>
+                        onclick="setViewMode('grid')">{{ te('Pictures') }}</button>
                     <button type="button" class="btn btn-outline-primary btn-sm {% if view_mode == 'list' %}active{% endif %}"
-                        onclick="setViewMode('list')">List</button>
+                        onclick="setViewMode('list')">{{ te('List') }}</button>
                 </div>
                 <label class="mb-0 small">
                     <input type="checkbox" id="selectAllStyles" checked onchange="toggleSelectAllStyles(this.checked)"> Select all
@@ -372,7 +372,7 @@
                 <div class="style-card selected" data-style="{{ s.style }}">
                     <div class="style-select-row">
                         <input type="checkbox" class="style-select-cb" value="{{ s.style }}" checked onchange="onStyleSelectChange()">
-                        <span class="small text-muted">Include in export</span>
+                        <span class="small text-muted">{{ te('Include in export') }}</span>
                     </div>
                     <div class="text-center">
                         <img src="{{ s.image }}" class="style-img" alt="{{ s.style }}"
@@ -380,7 +380,7 @@
                             onclick="openImageModal(this.dataset.style, this.dataset.image, this.dataset.description)">
                     </div>
                     <div class="mt-2"><strong>{{ s.style }}</strong></div>
-                    <div class="text-muted small style-desc-text">{% if s.description %}{{ s.description }}{% else %}<em>(missing)</em>{% endif %}</div>
+                    <div class="text-muted small style-desc-text">{% if s.description %}{{ s.description }}{% else %}<em>{{ te('(missing)') }}</em>{% endif %}</div>
                 </div>
                 {% endfor %}
             </div>
@@ -391,15 +391,15 @@
                 <table class="table table-sm table-hover bsv-list-table mb-0">
                     <thead>
                         <tr>
-                            <th>Select</th>
-                            <th>Style</th>
-                            <th>Image</th>
-                            <th>Description</th>
-                            <th>Color</th>
-                            <th>SKU</th>
-                            <th class="bsv-num">In stock</th>
-                            <th class="bsv-num">Ocean</th>
-                            <th class="bsv-num">Total</th>
+                            <th>{{ te('Select') }}</th>
+                            <th>{{ te('Style') }}</th>
+                            <th>{{ te('Image') }}</th>
+                            <th>{{ te('Description') }}</th>
+                            <th>{{ te('Color') }}</th>
+                            <th>{{ te('SKU') }}</th>
+                            <th class="bsv-num">{{ te('In stock') }}</th>
+                            <th class="bsv-num">{{ te('Ocean') }}</th>
+                            <th class="bsv-num">{{ te('Total') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -422,7 +422,7 @@
                                 <td rowspan="{{ row_count }}">
                                     <select class="form-control form-control-sm bsv-desc-select" data-style="{{ s.style }}"
                                         onchange="saveInlineDescription(this)">
-                                        <option value="" disabled {% if not s.description %}selected{% endif %}>(missing)</option>
+                                        <option value="" disabled {% if not s.description %}selected{% endif %}>{{ te('(missing)') }}</option>
                                         {% for d in descriptions %}
                                         <option value="{{ d }}" {% if s.description == d %}selected{% endif %}>{{ d }}</option>
                                         {% endfor %}
@@ -448,13 +448,13 @@
                                 <td>
                                     <select class="form-control form-control-sm bsv-desc-select" data-style="{{ s.style }}"
                                         onchange="saveInlineDescription(this)">
-                                        <option value="" disabled {% if not s.description %}selected{% endif %}>(missing)</option>
+                                        <option value="" disabled {% if not s.description %}selected{% endif %}>{{ te('(missing)') }}</option>
                                         {% for d in descriptions %}
                                         <option value="{{ d }}" {% if s.description == d %}selected{% endif %}>{{ d }}</option>
                                         {% endfor %}
                                     </select>
                                 </td>
-                                <td colspan="5" class="text-muted">No SKU rows for current filters</td>
+                                <td colspan="5" class="text-muted">{{ te('No SKU rows for current filters') }}</td>
                             </tr>
                         {% endif %}
                         {% endfor %}
@@ -463,7 +463,7 @@
             </div>
         </div>
         {% elif not search_result %}
-        <div class="alert alert-light border">Choose descriptions and/or containers, or set <strong>Style description</strong> to missing/has with stock filters, then click <strong>Apply filters</strong>.</div>
+        <div class="alert alert-light border">Choose descriptions and/or containers, or set <strong>{{ te('Style description') }}</strong> to missing/has with stock filters, then click <strong>{{ te('Apply filters') }}</strong>.</div>
         {% endif %}
     </div>
 
@@ -480,7 +480,7 @@
                     <div class="modal-filename-custom" id="modalFilename"></div>
                 </div>
                 <div class="modal-details-custom" id="modalDetails">
-                    <div class="text-center">Loading stock info…</div>
+                    <div class="text-center">{{ te('Loading stock info…') }}</div>
                 </div>
             </div>
         </div>
@@ -490,18 +490,18 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Export to List Creator V7</h5>
+                    <h5 class="modal-title">{{ te('Export to List Creator V7') }}</h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted mb-2"><span id="exportV7StyleCount">0</span> style(s) selected.</p>
                     <label for="exportV7SnapshotName">Snapshot name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="exportV7SnapshotName" maxlength="120" minlength="2"
-                        placeholder="e.g. 3-IN-1 SET instock list">
+                        placeholder="{{ te('e.g. 3-IN-1 SET instock list') }}">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="submitExportToV7()">Export &amp; open V7</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Cancel') }}</button>
+                    <button type="button" class="btn btn-primary" onclick="submitExportToV7()">{{ te('Export &amp; open V7') }}</button>
                 </div>
             </div>
         </div>
@@ -745,7 +745,7 @@ function loadModalContent(index) {
     var styleData = modalStylesData[index];
     document.getElementById('modalImage').src = styleData.image;
     document.getElementById('modalFilename').textContent = styleData.style + ' - ' + styleData.description;
-    document.getElementById('modalDetails').innerHTML = '<div class="text-center" style="padding:2rem;">Loading stock info…</div>';
+    document.getElementById('modalDetails').innerHTML = '<div class="text-center" style="padding:2rem;">{{ te('Loading stock info…') }}</div>';
     fetch('/bag_style_viewer/stock/' + encodeURIComponent(styleData.style))
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -761,17 +761,17 @@ function loadModalContent(index) {
             if (!rows) rows = '<tr><td colspan="4" style="padding:1rem;text-align:center;">No stock data</td></tr>';
             document.getElementById('modalDetails').innerHTML =
                 '<div class="detail-section"><h4>Stock Summary</h4>' +
-                '<div class="detail-item"><span class="detail-label">Style</span><span class="detail-value">' + data.style + '</span></div>' +
+                '<div class="detail-item"><span class="detail-label">{{ te('Style') }}</span><span class="detail-value">' + data.style + '</span></div>' +
                 '<div class="detail-item"><span class="detail-label">In Stock</span><span class="detail-value">' + data.total_quantity + '</span></div>' +
-                '<div class="detail-item"><span class="detail-label">Ocean</span><span class="detail-value">' + data.total_ocean + '</span></div>' +
-                '<div class="detail-item"><span class="detail-label">Total</span><span class="detail-value">' + data.total + '</span></div></div>' +
+                '<div class="detail-item"><span class="detail-label">{{ te('Ocean') }}</span><span class="detail-value">' + data.total_ocean + '</span></div>' +
+                '<div class="detail-item"><span class="detail-label">{{ te('Total') }}</span><span class="detail-value">' + data.total + '</span></div></div>' +
                 '<div class="detail-section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
                 '<h4 style="margin:0;">Stock by SKU</h4><label style="font-size:0.85rem;"><input type="checkbox" id="toggleZeroStock" onchange="toggleZeroStockRows()"> Show 0</label></div>' +
                 '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><thead><tr style="border-bottom:2px solid rgba(255,255,255,0.2);">' +
-                '<th style="padding:8px;text-align:left;color:#00d4ff;">SKU</th>' +
+                '<th style="padding:8px;text-align:left;color:#00d4ff;">{{ te('SKU') }}</th>' +
                 '<th style="padding:8px;text-align:right;color:#00d4ff;">In Stock</th>' +
-                '<th style="padding:8px;text-align:right;color:#00d4ff;">Ocean</th>' +
-                '<th style="padding:8px;text-align:right;color:#00d4ff;">Total</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+                '<th style="padding:8px;text-align:right;color:#00d4ff;">{{ te('Ocean') }}</th>' +
+                '<th style="padding:8px;text-align:right;color:#00d4ff;">{{ te('Total') }}</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
             toggleZeroStockRows();
         })
         .catch(function() {

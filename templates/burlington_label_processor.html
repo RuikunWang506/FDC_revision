@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Burlington Label Processor — FDC</title>
+  <title>{{ _('page.burlington_label_processor.title') }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -210,25 +210,25 @@
   {% include 'navbar.html' %}
   <div class="container-fluid burlington-label-processor-page py-4">
     <div class="hero-card">
-      <h1 class="h4 mb-2"><i class="fas fa-cut me-2"></i>Burlington Label Processor</h1>
-      <p class="mb-0 opacity-90">Upload a US Letter PDF (8.5×11 in). Each page is center-cropped to <strong>4×6 in</strong>. Original and 4×6 PDFs are kept for <strong>5 days</strong>; PO tables and BOL data are stored in the database for traceability. A <strong>black separator page</strong> is inserted before each new PO. Matched orders show <strong>BOL</strong> on Order Lookup.</p>
+      <h1 class="h4 mb-2"><i class="fas fa-cut me-2"></i>{{ te('Burlington Label Processor') }}</h1>
+      <p class="mb-0 opacity-90">Upload a US Letter PDF (8.5×11 in). Each page is center-cropped to <strong>{{ te('4×6 in') }}</strong>. Original and 4×6 PDFs are kept for <strong>{{ te('5 days') }}</strong>; PO tables and BOL data are stored in the database for traceability. A <strong>{{ te('black separator page') }}</strong> is inserted before each new PO. Matched orders show <strong>{{ te('BOL') }}</strong> on Order Lookup.</p>
     </div>
 
     <div class="row layout-row g-4">
     <div class="col-12 col-lg-9 col-xl-9 burlington-label-processor-main" id="burlingtonLabelProcessorMain">
       <div id="historyLoadingOverlay" class="burlington-label-processor-loading" role="status" aria-live="polite" aria-busy="false">
         <div class="spinner-border" aria-hidden="true"></div>
-        <p id="loadingOverlayMessage">Loading…</p>
+        <p id="loadingOverlayMessage">{{ te('Loading…') }}</p>
       </div>
     <div class="card shadow-sm">
       <div class="card-body p-4">
         <form id="uploadForm">
-          <div class="upload-zone" id="dropZone" tabindex="0" role="button" aria-label="Choose PDF file">
+          <div class="upload-zone" id="dropZone" tabindex="0" role="button" aria-label="{{ te('Choose PDF file') }}">
             <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-            <p class="mb-2"><strong>Drop a PDF here</strong> or click to browse</p>
-            <p class="hint mb-3">PDF only · max 25 MB · all pages processed</p>
+            <p class="mb-2"><strong>{{ te('Drop a PDF here') }}</strong> or click to browse</p>
+            <p class="hint mb-3">{{ te('PDF only · max 25 MB · all pages processed') }}</p>
             <input type="file" name="file" id="fileInput" accept=".pdf,application/pdf" class="d-none">
-            <span class="badge bg-secondary" id="fileName">No file chosen</span>
+            <span class="badge bg-secondary" id="fileName">{{ te('No file chosen') }}</span>
           </div>
           <button type="submit" class="btn btn-primary w-100 mt-3" id="submitBtn" disabled>
             <i class="fas fa-download me-2"></i>Crop, parse &amp; download 4×6 PDF
@@ -242,9 +242,9 @@
       <div class="card shadow-sm mb-3">
         <div class="card-body">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-            <h2 class="h6 mb-0"><i class="fas fa-hashtag me-1"></i>All PO numbers</h2>
+            <h2 class="h6 mb-0"><i class="fas fa-hashtag me-1"></i>{{ te('All PO numbers') }}</h2>
             <h2 class="h6 mb-0">stock qty and ocean qty include other colors not in po </h2>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="printPoGridBtn" disabled title="Open 6×4 PDF grid in a new tab for printing">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="printPoGridBtn" disabled title="{{ te('Open 6×4 PDF grid in a new tab for printing') }}">
               <i class="fas fa-print me-1"></i>Print PO grid (6×4)
             </button>
           </div>
@@ -252,15 +252,15 @@
             <table class="table table-sm table-bordered table-parse mb-0" id="poOverviewTable">
               <thead class="table-light">
                 <tr>
-                  <th>PO #</th>
-                  <th>Order</th>
-                  <th>Invoice Status</th>
-                  <th>Boxes</th>
-                  <th>Order Notes</th>
-                  <th>Styles</th>
-                  <th>Stock Qty</th>
-                  <th>Ocean Qty</th>
-                  <th>Total Qty</th>
+                  <th>{{ te('PO #') }}</th>
+                  <th>{{ te('Order') }}</th>
+                  <th>{{ te('Invoice Status') }}</th>
+                  <th>{{ te('Boxes') }}</th>
+                  <th>{{ te('Order Notes') }}</th>
+                  <th>{{ te('Styles') }}</th>
+                  <th>{{ te('Stock Qty') }}</th>
+                  <th>{{ te('Ocean Qty') }}</th>
+                  <th>{{ te('Total Qty') }}</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -271,18 +271,18 @@
 
       <div class="card shadow-sm mb-3">
         <div class="card-body">
-          <h2 class="h6"><i class="fas fa-list me-1"></i>Summary by PO</h2>
-          <p class="text-muted small mb-2">Unique style + color per PO, page count, and total quantity.</p>
+          <h2 class="h6"><i class="fas fa-list me-1"></i>{{ te('Summary by PO') }}</h2>
+          <p class="text-muted small mb-2">{{ te('Unique style + color per PO, page count, and total quantity.') }}</p>
           <div class="table-responsive">
             <table class="table table-sm table-striped table-bordered table-parse mb-0" id="poDetailTable">
               <thead class="table-light">
                 <tr>
-                  <th>PO #</th>
-                  <th>Order</th>
-                  <th>Pages</th>
-                  <th>Bill of Lading</th>
-                  <th>SKUs (style-color)</th>
-                  <th>Total Qty</th>
+                  <th>{{ te('PO #') }}</th>
+                  <th>{{ te('Order') }}</th>
+                  <th>{{ te('Pages') }}</th>
+                  <th>{{ te('Bill of Lading') }}</th>
+                  <th>{{ te('SKUs (style-color)') }}</th>
+                  <th>{{ te('Total Qty') }}</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -293,19 +293,19 @@
 
       <div class="card shadow-sm mb-3">
         <div class="card-body">
-          <h2 class="h6 text-success"><i class="fas fa-check-circle me-1"></i>Successfully parsed pages</h2>
+          <h2 class="h6 text-success"><i class="fas fa-check-circle me-1"></i>{{ te('Successfully parsed pages') }}</h2>
           <p class="text-muted small mb-2" id="parseSummary"></p>
           <div class="table-responsive">
             <table class="table table-sm table-striped table-bordered table-parse mb-0" id="pagesTable">
               <thead class="table-light">
                 <tr>
-                  <th>Page</th>
-                  <th>PO #</th>
-                  <th>Bill of Lading</th>
-                  <th>Style</th>
-                  <th>Color</th>
-                  <th>SKU</th>
-                  <th>Qty</th>
+                  <th>{{ te('Page') }}</th>
+                  <th>{{ te('PO #') }}</th>
+                  <th>{{ te('Bill of Lading') }}</th>
+                  <th>{{ te('Style') }}</th>
+                  <th>{{ te('Color') }}</th>
+                  <th>{{ te('SKU') }}</th>
+                  <th>{{ te('Qty') }}</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -322,25 +322,25 @@
     <div class="col-12 col-lg-3 col-xl-3 history-col">
       <div class="card shadow-sm history-sidebar">
         <div class="card-header d-flex justify-content-between align-items-center py-2">
-          <span><i class="fas fa-history me-1"></i>Processed history</span>
-          <button type="button" class="btn btn-sm btn-outline-light" id="refreshHistoryBtn" title="Refresh">
+          <span><i class="fas fa-history me-1"></i>{{ te('Processed history') }}</span>
+          <button type="button" class="btn btn-sm btn-outline-light" id="refreshHistoryBtn" title="{{ te('Refresh') }}">
             <i class="fas fa-sync-alt"></i>
           </button>
         </div>
         <div class="history-search-wrap">
-          <label class="visually-hidden" for="historySearchInput">Search history</label>
+          <label class="visually-hidden" for="historySearchInput">{{ te('Search history') }}</label>
           <div class="input-group input-group-sm">
             <input type="search" class="form-control" id="historySearchInput"
-                   placeholder="Order, PO, or BOL…" autocomplete="off"
-                   aria-label="Search processed history by order, PO, or BOL">
-            <button type="button" class="btn btn-primary" id="historySearchBtn" title="Find and open tables">
+                   placeholder="{{ te('Order, PO, or BOL…') }}" autocomplete="off"
+                   aria-label="{{ te('Search processed history by order, PO, or BOL') }}">
+            <button type="button" class="btn btn-primary" id="historySearchBtn" title="{{ te('Find and open tables') }}">
               <i class="fas fa-search"></i>
             </button>
           </div>
-          <p class="text-muted mb-0 mt-1" style="font-size: 0.68rem;">Opens matching job tables</p>
+          <p class="text-muted mb-0 mt-1" style="font-size: 0.68rem;">{{ te('Opens matching job tables') }}</p>
         </div>
         <div class="card-body p-2" id="historyList">
-          <p class="text-muted small mb-0 px-1">Loading…</p>
+          <p class="text-muted small mb-0 px-1">{{ te('Loading…') }}</p>
         </div>
         <div class="card-footer py-2 text-muted" style="font-size: 0.72rem;">
           Stored locally up to 5 days
@@ -474,7 +474,7 @@
     function renderHistPoSection(poLinks, poNumbers) {
       return (
         '<div class="hist-section">' +
-        '<div class="hist-section-label">PO #</div>' +
+        '<div class="hist-section-label">{{ te('PO #') }}</div>' +
         renderHistPoChips(poLinks, poNumbers) +
         '</div>'
       );
@@ -483,7 +483,7 @@
     function renderHistOrderSection(orderNumbers) {
       return (
         '<div class="hist-section">' +
-        '<div class="hist-section-label">Order #</div>' +
+        '<div class="hist-section-label">{{ te('Order #') }}</div>' +
         renderHistOrderChips(orderNumbers) +
         '</div>'
       );
@@ -587,7 +587,7 @@
     }
 
     async function loadHistory() {
-      historyListEl.innerHTML = '<p class="text-muted small mb-0 px-1">Loading…</p>';
+      historyListEl.innerHTML = '<p class="text-muted small mb-0 px-1">{{ te('Loading…') }}</p>';
       try {
         const res = await fetch(historyUrl);
         const data = await res.json();
@@ -944,7 +944,7 @@
           skuHtml =
             '<table class="table table-sm table-bordered sku-nested-table mb-0">' +
             '<thead class="table-light"><tr>' +
-            '<th>SKU</th><th>Container</th><th class="num">Qty</th><th class="num">In Warehouse</th><th class="num">Sold/Reserved</th>' +
+            '<th>{{ te('SKU') }}</th><th>{{ te('Container') }}</th><th class="num">{{ te('Qty') }}</th><th class="num">{{ te('In Warehouse') }}</th><th class="num">{{ te('Sold/Reserved') }}</th>' +
             '</tr></thead><tbody>' + bodyRows + '</tbody></table>';
         }
         const tr = document.createElement('tr');

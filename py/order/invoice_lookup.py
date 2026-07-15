@@ -15,6 +15,23 @@ invoice_lookup_bp = Blueprint('invoice_lookup', __name__)
 sql_server_config = Config.SQL_SERVER_CONFIG
 
 
+def _erp_time_display(log_time) -> str:
+    """Decode ERP time (centiseconds since midnight) to HH:MM:SS."""
+    if log_time is None:
+        return ""
+    try:
+        total = int(log_time)
+    except (TypeError, ValueError):
+        return ""
+    if total <= 0:
+        return ""
+    seconds = total // 100
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+
 def generate_invoice(invoice_number):
     """Query invoice data from the database"""
     try:
@@ -66,7 +83,8 @@ def generate_invoice(invoice_number):
                 RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(i.PROC_DT AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
                 RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(i.PROC_DT AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
                 CAST(YEAR(DATEADD(DAY, CAST(i.PROC_DT AS INT) - 81088, '20230101')) AS VARCHAR) AS process_date,
-                o.ord_num
+                o.ord_num,
+                i.INVS_TM
             FROM invoice i
             INNER JOIN CUSTOMER c ON i.CUS_ID = c.CUS_ID
             LEFT JOIN orders o ON i.INVS_NUM = o.INVS_NUM
@@ -80,6 +98,11 @@ def generate_invoice(invoice_number):
             cursor.close()
             conn.close()
             return None, None
+
+        invoice_date = invoice_row[25] or ""
+        invoice_time = _erp_time_display(invoice_row[28])
+        if invoice_date and invoice_time:
+            invoice_date = f"{invoice_date} {invoice_time}"
 
         # Extract header information
         header_info = {
@@ -108,7 +131,7 @@ def generate_invoice(invoice_number):
             'salesman3': invoice_row[22] or 'N/A',
             'salesman4': invoice_row[23] or 'N/A',
             'business_type': str(invoice_row[24]) if invoice_row[24] else 'N/A',
-            'invoice_date': invoice_row[25],
+            'invoice_date': invoice_date or 'N/A',
             'process_date': invoice_row[26],
             'order_number': str(invoice_row[27]) if invoice_row[27] else 'N/A'
         }

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Internal Stock Check</title>
+    <title>{{ _('page.internal_stock_check.title') }}</title>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
@@ -289,7 +289,7 @@
         <!-- Header -->
         <div class="page-header">
             <h1><i class="fas fa-box"></i> Internal Stock Check</h1>
-            <p>Monitor and manage internal inventory</p>
+            <p>{{ te('Monitor and manage internal inventory') }}</p>
         </div>
         
         <!-- Alerts -->
@@ -307,7 +307,7 @@
         
         <!-- Stats Section -->
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
-            <strong>📊 Data Statistics:</strong> 
+            <strong>{{ te('📊 Data Statistics:') }}</strong> 
             <span id="statsInfo" style="color: #666; margin-left: 10px;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
         </div>
         
@@ -316,17 +316,17 @@
             <table class="dataTable" id="inventoryTable">
                 <thead>
                     <tr>
-                        <th>Style</th>
-                        <th>SKU</th>
-                        <th>Available</th>
-                        <th>Last Updated</th>
+                        <th>{{ te('Style') }}</th>
+                        <th>{{ te('SKU') }}</th>
+                        <th>{{ te('Available') }}</th>
+                        <th>{{ te('Last Updated') }}</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     <tr>
                         <td colspan="4" class="empty-state">
                             <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading inventory data...</p>
+                            <p>{{ te('Loading inventory data...') }}</p>
                         </td>
                     </tr>
                 </tbody>
@@ -335,7 +335,7 @@
         
         <!-- Image Preview Tooltip -->
         <div class="image-preview-tooltip" id="imagePreview">
-            <img id="previewImage" src="" alt="Style preview">
+            <img id="previewImage" src="" alt="{{ te('Style preview') }}">
         </div>
         
         <!-- Manual Styles Modal -->
@@ -343,13 +343,13 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="manualStylesTitle">Manual Styles Editor</h5>
-                        <button type="button" class="close" onclick="closeManualStylesModal()" aria-label="Close">
+                        <h5 class="modal-title" id="manualStylesTitle">{{ te('Manual Styles Editor') }}</h5>
+                        <button type="button" class="close" onclick="closeManualStylesModal()" aria-label="{{ te('Close') }}">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p style="color: #666; margin-bottom: 15px;"><em>Edit styles below (one per line). Styles already in internal inventory will be excluded automatically.</em></p>
+                        <p style="color: #666; margin-bottom: 15px;"><em>{{ te('Edit styles below (one per line). Styles already in internal inventory will be excluded automatically.') }}</em></p>
                         <textarea id="manualStylesTextarea" style="width: 100%; height: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 14px;"></textarea>
                     </div>
                     <div class="modal-footer">

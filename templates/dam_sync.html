@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAM Sync Control Panel</title>
+    <title>{{ _('page.dam_sync.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <style>
@@ -78,8 +78,8 @@
 <div class="container mt-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <h2><i class="fas fa-database text-primary me-2"></i>DAM Sync Control</h2>
-            <p class="text-muted mb-0">Manage your Digital Asset Management system</p>
+            <h2><i class="fas fa-database text-primary me-2"></i>{{ te('DAM Sync Control') }}</h2>
+            <p class="text-muted mb-0">{{ te('Manage your Digital Asset Management system') }}</p>
         </div>
         <div>
             <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">
@@ -91,25 +91,25 @@
     <!-- Status Card -->
     <div class="card mt-3">
         <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Sync Status</h5>
+            <h5 class="mb-0">{{ te('Sync Status') }}</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <p><strong>Status:</strong> 
+                    <p><strong>{{ te('Status:') }}</strong> 
                         <span id="sync-status" class="badge">
                             {% if status and status.is_running %}
-                                <span class="badge bg-warning">Running</span>
+                                <span class="badge bg-warning">{{ te('Running') }}</span>
                             {% else %}
-                                <span class="badge bg-success">Idle</span>
+                                <span class="badge bg-success">{{ te('Idle') }}</span>
                             {% endif %}
                         </span>
                     </p>
-                    <p><strong>Last Run:</strong> <span id="last-run">{{ (status.last_run if status else None) or 'Never' }}</span></p>
+                    <p><strong>{{ te('Last Run:') }}</strong> <span id="last-run">{{ (status.last_run if status else None) or 'Never' }}</span></p>
                 </div>
                 <div class="col-md-6">
                     {% if status and status.last_stats %}
-                    <p><strong>Last Sync Stats:</strong></p>
+                    <p><strong>{{ te('Last Sync Stats:') }}</strong></p>
                     <ul>
                         <li>Processed: {{ status.last_stats.total_processed }}</li>
                         <li>Added: {{ status.last_stats.total_added }}</li>
@@ -123,25 +123,25 @@
             
             {% if status and status.error %}
             <div class="alert alert-danger mt-3">
-                <strong>Error:</strong> {{ status.error }}
+                <strong>{{ te('Error:') }}</strong> {{ status.error }}
             </div>
             {% endif %}
 
             <div class="alert alert-light border mt-3 mb-0" id="scheduler-next-banner">
                 <div class="row">
                     <div class="col-md-6 mb-2 mb-md-0">
-                        <strong><i class="fas fa-clock text-primary me-1"></i>Next daily sync (24h)</strong>
-                        <span id="next-daily-countdown" class="font-monospace ms-2">Loading…</span>
+                        <strong><i class="fas fa-clock text-primary me-1"></i>{{ te('Next daily sync (24h)') }}</strong>
+                        <span id="next-daily-countdown" class="font-monospace ms-2">{{ te('Loading…') }}</span>
                         <div class="small text-muted mt-1" id="next-daily-detail"></div>
                     </div>
                     <div class="col-md-6">
-                        <strong><i class="fas fa-calendar-week text-primary me-1"></i>Next weekly rebuild</strong>
-                        <span id="next-weekly-countdown" class="font-monospace ms-2">Loading…</span>
+                        <strong><i class="fas fa-calendar-week text-primary me-1"></i>{{ te('Next weekly rebuild') }}</strong>
+                        <span id="next-weekly-countdown" class="font-monospace ms-2">{{ te('Loading…') }}</span>
                         <div class="small text-muted mt-1" id="next-weekly-detail"></div>
                     </div>
                 </div>
                 <div class="small text-muted mt-2 mb-0" id="scheduler-next-footnote">
-                    Times come from Windows Task Scheduler on this server (tasks <code>FDC DAM Daily Sync</code> every 24h + <code>FDC DAM Weekly Rebuild</code>). Re-register with <code>auto_run\Setup-DamCron.ps1 -RegisterScheduledTasks</code>.
+                    Times come from Windows Task Scheduler on this server (tasks <code>{{ te('FDC DAM Daily Sync') }}</code> every 24h + <code>{{ te('FDC DAM Weekly Rebuild') }}</code>). Re-register with <code>{{ te('auto_run\\Setup-DamCron.ps1 -RegisterScheduledTasks') }}</code>.
                 </div>
             </div>
         </div>
@@ -150,42 +150,42 @@
     <!-- Control Buttons -->
     <div class="card mt-3">
         <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-sync me-2"></i>Main Operations</h5>
+            <h5 class="mb-0"><i class="fas fa-sync me-2"></i>{{ te('Main Operations') }}</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <button id="btn-sync" class="btn btn-success btn-lg btn-block" onclick="startSync(false, true, true)" style="height: 100px;">
                         <i class="fas fa-sync fa-2x d-block mb-2"></i>
-                        <strong>Auto Sync (fetch + scan)</strong>
+                        <strong>{{ te('Auto Sync (fetch + scan)') }}</strong>
                     </button>
                     <div class="mt-2 p-3 bg-light rounded border border-success">
-                        <div class="mb-2"><i class="fas fa-check-circle text-success me-1"></i><strong>Recommended for manual runs</strong></div>
+                        <div class="mb-2"><i class="fas fa-check-circle text-success me-1"></i><strong>{{ te('Recommended for manual runs') }}</strong></div>
                         <small class="text-muted">
-                            <strong>What it does:</strong><br>
-                            • Runs <code>smart_auto_filter.py</code> (missing style images from Dropbox → server folders)<br>
+                            <strong>{{ te('What it does:') }}</strong><br>
+                            • Runs <code>{{ te('smart_auto_filter.py') }}</code> (missing style images from Dropbox → server folders)<br>
                             • Runs DAM sync into the database + optional cleanup<br>
                             <br>
                             ⏱️ Often 5–15 minutes depending on volume<br>
-                            <span class="badge bg-warning text-dark mt-1">Server automation</span>
-                            <span class="d-block mt-2">Daily automation only runs if Task Scheduler calls <code>auto_run/daily_auto_sync.bat</code> <strong>and</strong> the server has <code>DAM_CRON_SECRET</code> set (see below). Posting to <code>/dam/start</code> from curl without a login <strong>does not work</strong> — use <code>POST /dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code>.</span>
+                            <span class="badge bg-warning text-dark mt-1">{{ te('Server automation') }}</span>
+                            <span class="d-block mt-2">Daily automation only runs if Task Scheduler calls <code>{{ te('auto_run/daily_auto_sync.bat') }}</code> <strong>{{ te('and') }}</strong> the server has <code>{{ te('DAM_CRON_SECRET') }}</code> set (see below). Posting to <code>{{ te('/dam/start') }}</code> from curl without a login <strong>{{ te('does not work') }}</strong> — use <code>{{ te('POST /dam/cron/start') }}</code> with header <code>{{ te('X-DAM-Cron-Secret') }}</code>.</span>
                         </small>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <button id="btn-sync-rebuild" class="btn btn-warning btn-lg btn-block" onclick="startSync(true, true, true)" style="height: 100px;">
                         <i class="fas fa-tools fa-2x d-block mb-2"></i>
-                        <strong>Complete Rebuild</strong>
+                        <strong>{{ te('Complete Rebuild') }}</strong>
                     </button>
                     <div class="mt-2 p-3 bg-light rounded border border-warning">
-                        <div class="mb-2"><i class="fas fa-wrench text-warning me-1"></i><strong>For troubleshooting only</strong></div>
+                        <div class="mb-2"><i class="fas fa-wrench text-warning me-1"></i><strong>{{ te('For troubleshooting only') }}</strong></div>
                         <small class="text-muted">
-                            <strong>What it does:</strong><br>
+                            <strong>{{ te('What it does:') }}</strong><br>
                             • Rescans ALL directories from scratch<br>
                             • Full database sync + cleanup<br>
                             <br>
                             ⏱️ 20-40 minutes<br>
-                            <span class="badge bg-warning text-dark">Use only when having issues</span>
+                            <span class="badge bg-warning text-dark">{{ te('Use only when having issues') }}</span>
                         </small>
                     </div>
                 </div>
@@ -205,7 +205,7 @@
         </div>
         <div class="collapse" id="advancedOptions">
             <div class="card-body">
-                <p class="text-muted"><i class="fas fa-info-circle me-1"></i>Technical operations - use only if you know what you're doing</p>
+                <p class="text-muted"><i class="fas fa-info-circle me-1"></i>{{ te('Technical operations - use only if you know what you\'re doing') }}</p>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <button class="btn btn-outline-info btn-block" onclick="generateIndex()">
@@ -231,18 +231,18 @@
     <!-- Progress Log -->
     <div class="card mt-3">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="mb-0">Progress Log</h5>
+            <h5 class="mb-0">{{ te('Progress Log') }}</h5>
             <div class="d-flex align-items-center gap-2">
                 <div class="form-check form-switch me-3">
                     <input class="form-check-input" type="checkbox" id="autoScrollToggle" checked>
-                    <label class="form-check-label" for="autoScrollToggle">Auto-scroll</label>
+                    <label class="form-check-label" for="autoScrollToggle">{{ te('Auto-scroll') }}</label>
                 </div>
-                <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()" data-bs-toggle="tooltip" title="Clear the log view (does not stop the job)"><i class="fas fa-eraser"></i> Clear</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()" data-bs-toggle="tooltip" title="{{ te('Clear the log view (does not stop the job)') }}"><i class="fas fa-eraser"></i> Clear</button>
             </div>
         </div>
         <div class="card-body">
             <div id="progress-log">
-                <div class="text-muted">No sync running...</div>
+                <div class="text-muted">{{ te('No sync running...') }}</div>
             </div>
         </div>
     </div>
@@ -250,7 +250,7 @@
     <!-- Progress history -->
     <div class="card mt-3">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Progress History</h5>
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>{{ te('Progress History') }}</h5>
             <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadProgressHistory()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
@@ -258,25 +258,25 @@
         <div class="card-body">
             <p class="text-muted small mb-3">
                 Daily sync keeps the last <strong>10</strong> runs (summary of new assets).
-                Complete rebuild keeps runs from the last <strong>30 days</strong> (added + files marked inactive).
+                Complete rebuild keeps runs from the last <strong>{{ te('30 days') }}</strong> (added + files marked inactive).
             </p>
             <div class="row">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <h6 class="text-success"><i class="fas fa-calendar-day me-1"></i>Daily sync (last 10)</h6>
-                    <div id="history-daily-empty" class="text-muted small">Loading…</div>
+                    <h6 class="text-success"><i class="fas fa-calendar-day me-1"></i>{{ te('Daily sync (last 10)') }}</h6>
+                    <div id="history-daily-empty" class="text-muted small">{{ te('Loading…') }}</div>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0" id="history-daily-table" style="display:none;">
-                            <thead><tr><th>When</th><th>Summary</th><th></th></tr></thead>
+                            <thead><tr><th>{{ te('When') }}</th><th>{{ te('Summary') }}</th><th></th></tr></thead>
                             <tbody id="history-daily-body"></tbody>
                         </table>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <h6 class="text-warning"><i class="fas fa-tools me-1"></i>Complete rebuild (30 days)</h6>
-                    <div id="history-rebuild-empty" class="text-muted small">Loading…</div>
+                    <h6 class="text-warning"><i class="fas fa-tools me-1"></i>{{ te('Complete rebuild (30 days)') }}</h6>
+                    <div id="history-rebuild-empty" class="text-muted small">{{ te('Loading…') }}</div>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0" id="history-rebuild-table" style="display:none;">
-                            <thead><tr><th>When</th><th>Summary</th><th></th></tr></thead>
+                            <thead><tr><th>{{ te('When') }}</th><th>{{ te('Summary') }}</th><th></th></tr></thead>
                             <tbody id="history-rebuild-body"></tbody>
                         </table>
                     </div>
@@ -290,11 +290,11 @@
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="historyDetailModalLabel">Run details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="historyDetailModalLabel">{{ te('Run details') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                 </div>
                 <div class="modal-body" id="history-detail-body">
-                    <div class="text-muted">Loading…</div>
+                    <div class="text-muted">{{ te('Loading…') }}</div>
                 </div>
             </div>
         </div>
@@ -303,38 +303,38 @@
     <!-- Quick Help -->
     <div class="card mt-3">
         <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>How It Works</h5>
+            <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>{{ te('How It Works') }}</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <h6><i class="fas fa-robot text-success me-2"></i>How unattended sync actually works</h6>
+                    <h6><i class="fas fa-robot text-success me-2"></i>{{ te('How unattended sync actually works') }}</h6>
                     <div class="p-3 bg-light rounded mb-3">
-                        <p class="mb-2"><strong>Nothing runs “by magic” in the browser.</strong> One of these must be configured on the <strong>Windows server</strong>:</p>
+                        <p class="mb-2"><strong>{{ te('Nothing runs “by magic” in the browser.') }}</strong> One of these must be configured on the <strong>{{ te('Windows server') }}</strong>:</p>
                         <ol class="mb-0">
-                            <li><strong>Task Scheduler</strong> runs <code>auto_run/daily_auto_sync.bat</code> once per day, which calls <code>POST …/dam/cron/start</code> with header <code>X-DAM-Cron-Secret</code> matching env <code>DAM_CRON_SECRET</code> on the machine running Flask.</li>
-                            <li>Or run <code>python py/standalone/smart_auto_filter.py</code> on a schedule (copies from Dropbox per Config paths), then run DAM sync separately.</li>
+                            <li><strong>{{ te('Task Scheduler') }}</strong> runs <code>{{ te('auto_run/daily_auto_sync.bat') }}</code> once per day, which calls <code>{{ te('POST …/dam/cron/start') }}</code> with header <code>{{ te('X-DAM-Cron-Secret') }}</code> matching env <code>{{ te('DAM_CRON_SECRET') }}</code> on the machine running Flask.</li>
+                            <li>Or run <code>{{ te('python py/standalone/smart_auto_filter.py') }}</code> on a schedule (copies from Dropbox per Config paths), then run DAM sync separately.</li>
                         </ol>
-                        <p class="mb-0 mt-2 small text-muted">Check server logs and <code>C:\FDC_FLASK_APP\daily_sync.log</code> after the scheduled time. <code>GET …/dam/cron/status</code> (same secret header) returns <code>is_running</code> / <code>last_run</code> for scripts.</p>
+                        <p class="mb-0 mt-2 small text-muted">Check server logs and <code>{{ te('C:\\FDC_FLASK_APP\\daily_sync.log') }}</code> after the scheduled time. <code>{{ te('GET …/dam/cron/status') }}</code> (same secret header) returns <code>{{ te('is_running') }}</code> / <code>{{ te('last_run') }}</code> for scripts.</p>
                     </div>
                     <div class="alert alert-info mb-0">
                         <i class="fas fa-info-circle me-1"></i>
-                        <strong>Green button</strong> only runs when you click it (or when Task Scheduler hits the cron URL). Set <code>DAM_CRON_SECRET</code> on the server, then point the batch file at your real base URL (<code>DAM_SYNC_BASE_URL</code>).
+                        <strong>{{ te('Green button') }}</strong> only runs when you click it (or when Task Scheduler hits the cron URL). Set <code>{{ te('DAM_CRON_SECRET') }}</code> on the server, then point the batch file at your real base URL (<code>{{ te('DAM_SYNC_BASE_URL') }}</code>).
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <h6><i class="fas fa-lightbulb text-warning me-2"></i>When to Use Manual Sync</h6>
+                    <h6><i class="fas fa-lightbulb text-warning me-2"></i>{{ te('When to Use Manual Sync') }}</h6>
                     <ul class="mb-3">
-                        <li><strong>Green "Auto Sync" button:</strong>
+                        <li><strong>{{ te('Green "Auto Sync" button:') }}</strong>
                             <ul>
-                                <li>Click after uploading many files (don't wait for the daily sync)</li>
-                                <li>Or let the Windows scheduled task run once every 24 hours</li>
+                                <li>{{ te('Click after uploading many files (don\'t wait for the daily sync)') }}</li>
+                                <li>{{ te('Or let the Windows scheduled task run once every 24 hours') }}</li>
                             </ul>
                         </li>
-                        <li><strong>Yellow "Complete Rebuild" button:</strong>
+                        <li><strong>{{ te('Yellow "Complete Rebuild" button:') }}</strong>
                             <ul>
-                                <li>Only if having database issues</li>
-                                <li>Or after major file reorganization</li>
+                                <li>{{ te('Only if having database issues') }}</li>
+                                <li>{{ te('Or after major file reorganization') }}</li>
                             </ul>
                         </li>
                     </ul>
@@ -593,7 +593,7 @@ function updateStatus(status) {
     const progressLog = document.getElementById('progress-log');
     
     if (status.is_running) {
-        statusBadge.innerHTML = '<span class="badge bg-warning">Running</span>';
+        statusBadge.innerHTML = '<span class="badge bg-warning">{{ te('Running') }}</span>';
         
         // Display logs
         if (status.logs) {
@@ -618,7 +618,7 @@ function updateStatus(status) {
             }
         }
     } else {
-        statusBadge.innerHTML = '<span class="badge bg-success">Idle</span>';
+        statusBadge.innerHTML = '<span class="badge bg-success">{{ te('Idle') }}</span>';
         
         // Preserve existing log content; just add a completion marker once
         if (status.last_stats && lastLogIndex >= 0) {
@@ -760,7 +760,7 @@ function showHistoryDetail(runId) {
     const body = document.getElementById('history-detail-body');
     const title = document.getElementById('historyDetailModalLabel');
     if (!body) return;
-    body.innerHTML = '<div class="text-muted">Loading…</div>';
+    body.innerHTML = '<div class="text-muted">{{ te('Loading…') }}</div>';
     const modalEl = document.getElementById('historyDetailModal');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
@@ -778,7 +778,7 @@ function showHistoryDetail(runId) {
 
             const added = e.added || [];
             const inact = e.inactivated || [];
-            let html = '<p class="mb-2"><strong>Summary:</strong> ' + (e.summary || '—') + '</p>';
+            let html = '<p class="mb-2"><strong>{{ te('Summary:') }}</strong> ' + (e.summary || '—') + '</p>';
             html += '<p class="small text-muted mb-3">Triggered by ' + (e.triggered_by || '—') +
                 ' · ' + formatHistoryWhen(e.started_at) + ' → ' + formatHistoryWhen(e.finished_at) + '</p>';
 

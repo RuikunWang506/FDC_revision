@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FDC Picklist Locations</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>4Seller Picklist</h1>
+
+    <input id="pdf-url" type="hidden">
+    <input id="fdc-base" type="hidden" value="https://www.fdcef.com">
+
+    <section id="preview-section" class="preview-section">
+      <div id="meta-summary" class="meta-summary">Loading picklist…</div>
+      <div class="table-wrap">
+        <table id="preview-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>库存SKU</th>
+              <th>Location</th>
+              <th>数量</th>
+            </tr>
+          </thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+      </div>
+
+      <fieldset class="export-format-field">
+        <legend>Label size</legend>
+        <label class="radio-row">
+          <input type="radio" name="export-format" value="label-4x6" checked>
+          <span>4×6 label</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="export-format" value="label-4x8">
+          <span>4×8 label</span>
+        </label>
+      </fieldset>
+
+      <button id="export-btn" type="button" class="secondary-btn" disabled>Export to PDF</button>
+    </section>
+
+    <p id="status" class="status" aria-live="polite"></p>
+  </main>
+
+  <script src="lib/pdf.min.js"></script>
+  <script src="pdf-processor.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+<script>
+  window.FDC_LOCALE = {{ locale|tojson }};
+  window.FDC_I18N = {{ client_i18n_bundle()|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/fdc-i18n.js') }}"></script>

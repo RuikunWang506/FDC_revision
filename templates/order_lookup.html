@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Lookup</title>
+    <title>{{ _('page.order_lookup.title') }}</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Font Awesome -->
@@ -773,6 +773,35 @@
             margin-top: 2px;
         }
 
+        .recent-order-invoice {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        .recent-order-invoice.invoiced {
+            color: #28a745;
+        }
+
+        .recent-order-invoice.uninvoiced {
+            color: #dc3545;
+        }
+
+        .invoice-status-tag {
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-left: 6px;
+        }
+
+        .invoice-status-tag.invoiced {
+            color: #28a745;
+        }
+
+        .invoice-status-tag.uninvoiced {
+            color: #dc3545;
+        }
+
         .recent-order-empty {
             padding: 20px 14px;
             text-align: center;
@@ -792,37 +821,42 @@
 <body>
     {% include 'navbar.html' %}
 
-    <button type="button" class="recent-orders-toggle" id="recentOrdersToggle" onclick="toggleRecentOrdersSidebar()" aria-label="Recent FDC orders" title="Recent orders">
+    <button type="button" class="recent-orders-toggle" id="recentOrdersToggle" onclick="toggleRecentOrdersSidebar()" aria-label="{{ te('Recent FDC orders') }}" title="{{ te('Recent orders') }}">
         <i class="fas fa-list-ul"></i>
     </button>
 
-    <aside class="recent-orders-sidebar" id="recentOrdersSidebar" aria-label="Recent FDC orders">
+    <aside class="recent-orders-sidebar" id="recentOrdersSidebar" aria-label="{{ te('Recent FDC orders') }}">
             <div class="recent-orders-sidebar-header">
                 <div class="header-text">
-                    <h2><i class="fas fa-list-ul mr-2"></i>Recent FDC Orders</h2>
-                    <div class="subtitle">Last 100 from FDC database</div>
+                    <h2><i class="fas fa-list-ul mr-2"></i>{{ te('Recent FDC Orders') }}</h2>
+                    <div class="subtitle">{{ te('Last 100 from FDC database') }}</div>
                 </div>
-                <button type="button" class="recent-orders-close" onclick="toggleRecentOrdersSidebar()" aria-label="Close">
+                <button type="button" class="recent-orders-close" onclick="toggleRecentOrdersSidebar()" aria-label="{{ te('Close') }}">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="recent-orders-filter">
-                <input type="search" id="recentOrdersFilter" placeholder="Filter by order # or customer..." autocomplete="off">
+                <input type="search" id="recentOrdersFilter" placeholder="{{ te('Filter by order # or customer...') }}" autocomplete="off">
             </div>
             <ul class="recent-orders-list" id="recentOrdersList">
                 {% for order in recent_fdc_orders or [] %}
                 <li class="recent-order-item{% if order_number and order.order_number == order_number|string %} active{% endif %}"
-                    data-search="{{ order.order_number }} {{ order.customer_name }} {{ order.order_date }}">
+                    data-search="{{ order.order_number }} {{ order.customer_name }} {{ order.order_date }} {{ order.invoice_number }}">
                     <a href="{{ url_for('order_lookup.order_lookup', order_number=order.order_number) }}">
                         <span class="recent-order-num">#{{ order.order_number }}</span>
                         <span class="recent-order-customer">{{ order.customer_name or '—' }}</span>
                         {% if order.order_date %}
                         <span class="recent-order-date">{{ order.order_date }}</span>
                         {% endif %}
+                        {% if order.invoiced %}
+                        <span class="recent-order-invoice invoiced">#{{ order.invoice_number }} ({{ te('Invoiced') }})</span>
+                        {% else %}
+                        <span class="recent-order-invoice uninvoiced">({{ te('Uninvoiced') }})</span>
+                        {% endif %}
                     </a>
                 </li>
                 {% else %}
-                <li class="recent-order-empty">No recent orders found</li>
+                <li class="recent-order-empty">{{ te('No recent orders found') }}</li>
                 {% endfor %}
             </ul>
         </aside>
@@ -834,7 +868,7 @@
         <div class="container">
             <h1 class="text-center mb-0">
                 <i class="fas fa-search mr-3"></i>
-                <a href="https://fdcef.com/order_lookup" style="color: inherit; text-decoration: none;">Order Lookup System</a>
+                <a href="https://fdcef.com/order_lookup" style="color: inherit; text-decoration: none;">{{ te('Order Lookup System') }}</a>
             </h1>
         </div>
     </div>
@@ -1059,16 +1093,16 @@
                 <div class="search-grid">
                     <!-- Order Search -->
                     <div class="search-input-section">
-                        <label><i class="fas fa-hashtag mr-2" style="color: var(--primary-color);"></i>Order Number</label>
+                        <label><i class="fas fa-hashtag mr-2" style="color: var(--primary-color);"></i>{{ te('Order Number') }}</label>
                         <div class="input-with-nav">
                             <div class="order-input-group" style="flex: 1;">
-                                <button class="nav-btn" type="button" id="prevOrderBtn" title="Previous Order">
+                                <button class="nav-btn" type="button" id="prevOrderBtn" title="{{ te('Previous Order') }}">
                                     <i class="fas fa-chevron-left"></i>
                                 </button>
                                 <input type="text" name="order_number" id="order_number" required pattern="\d{4,5}" 
-                                       title="Please enter a 4 or 5-digit number" value="{{ order_number or ''}}" 
-                                       placeholder="e.g., 12345">
-                                <button class="nav-btn" type="button" id="nextOrderBtn" title="Next Order">
+                                       title="{{ te('Please enter a 4 or 5-digit number') }}" value="{{ order_number or ''}}" 
+                                       placeholder="{{ te('e.g., 12345') }}">
+                                <button class="nav-btn" type="button" id="nextOrderBtn" title="{{ te('Next Order') }}">
                                     <i class="fas fa-chevron-right"></i>
                                 </button>
                             </div>
@@ -1080,10 +1114,10 @@
 
                     <!-- PO Search -->
                     <div class="search-input-section">
-                        <label><i class="fas fa-box mr-2" style="color: var(--secondary-color);"></i>PO Number</label>
+                        <label><i class="fas fa-box mr-2" style="color: var(--secondary-color);"></i>{{ te('PO Number') }}</label>
                         <div class="input-with-nav">
                             <div class="order-input-group" style="flex: 1;">
-                                <input type="text" name="po_number" id="po_number" placeholder="e.g., PO123456" value="{{ po_number or '' }}" style="width: 100%;">
+                                <input type="text" name="po_number" id="po_number" placeholder="{{ te('e.g., PO123456') }}" value="{{ po_number or '' }}" style="width: 100%;">
                             </div>
                             <button type="button" class="submit-btn" id="searchPOBtn">
                                 <i class="fas fa-search mr-2"></i>Search
@@ -1110,7 +1144,7 @@
                     <!-- Invoice Status Section -->
                     {% if header_info %}
                     <div class="sidebar-section">
-                        <div class="sidebar-section-title">Invoice Status</div>
+                        <div class="sidebar-section-title">{{ te('Invoice Status') }}</div>
                         <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
                             {% if header_info.invoice_number and header_info.invoice_number != 'not invoiced' %}
                                 <div style="color: #28a745; font-size: 18px; font-weight: 700;">
@@ -1135,7 +1169,7 @@
                     </div>
 
                     <div class="sidebar-section">
-                        <div class="sidebar-section-title">Label Status</div>
+                        <div class="sidebar-section-title">{{ te('Label Status') }}</div>
                         <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
                             {% if header_info.label_burlington %}
                             <div style="color: #2b6cb0; font-size: 15px; font-weight: 700; margin-bottom: 6px;">
@@ -1168,7 +1202,7 @@
                     
                     <!-- Action Buttons Section -->
                     <div class="sidebar-section">
-                        <div class="sidebar-section-title">Order Actions</div>
+                        <div class="sidebar-section-title">{{ te('Order Actions') }}</div>
                         
                         {% if items_html and all_descriptions_have_dash %}
                         <button type="button" class="sidebar-btn label-btn" onclick="generateLabel()">
@@ -1183,12 +1217,12 @@
                         </button>
                         <button type="button" class="sidebar-btn bol-btn" id="createBolBtn">
                             <i class="fas fa-file-alt"></i>
-                            <span>Create BOL</span>
+                            <span>{{ te('Create BOL') }}</span>
                         </button>
                         {% if header_info.customer_id|string == '00951' %}
                         <button type="button" class="sidebar-btn eta-label-btn" id="etaFashionLabelBtn" data-toggle="modal" data-target="#etaFashionLabelModal"{% if ez_default_boxes %} data-default-boxes="{{ ez_default_boxes }}"{% endif %}>
                             <i class="fas fa-tag"></i>
-                            <span>ETA Special Label</span>
+                            <span>{{ te('ETA Special Label') }}</span>
                         </button>
                         {% endif %}
                         {% endif %}
@@ -1196,7 +1230,7 @@
                         {% if header_info and header_info.customer_id|string == '01221' %}
                         <a href="{{ url_for('macy.macy_maker') }}" class="sidebar-btn macy-btn">
                             <i class="fas fa-star"></i>
-                            <span>Macy Special</span>
+                            <span>{{ te('Macy Special') }}</span>
                         </a>
                         {% endif %}
                     </div>
@@ -1204,13 +1238,13 @@
                     <!-- Order Notes Section -->
                     {% if header_info %}
                     <div class="sidebar-section">
-                        <div class="sidebar-section-title">Order Notes</div>
+                        <div class="sidebar-section-title">{{ te('Order Notes') }}</div>
                         <div style="margin-bottom: 10px;">
-                            <textarea id="order_notes" class="form-control" rows="6" placeholder="Enter order notes here..." style="font-family: 'Courier New', monospace; white-space: pre-wrap; font-size: 12px; resize: vertical;">{{ header_info.notes if header_info.notes else '' }}</textarea>
+                            <textarea id="order_notes" class="form-control" rows="6" placeholder="{{ te('Enter order notes here...') }}" style="font-family: 'Courier New', monospace; white-space: pre-wrap; font-size: 12px; resize: vertical;">{{ header_info.notes if header_info.notes else '' }}</textarea>
                         </div>
                         <button id="saveOrderNotesBtn" class="sidebar-btn" style="background: linear-gradient(135deg, #28a745, #20c997);">
                             <i class="fas fa-save"></i>
-                            <span>Save Notes</span>
+                            <span>{{ te('Save Notes') }}</span>
                         </button>
                         <small class="text-muted d-block mt-2" style="font-size: 11px;">
                             <i class="fas fa-info-circle"></i> For Order {{ header_info.order_number }}
@@ -1250,7 +1284,7 @@
                         <i class="fas fa-receipt mr-2"></i>Order #{{ header_info.order_number }}
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-user mr-2"></i>Customer:</span>
+                        <span class="info-label"><i class="fas fa-user mr-2"></i>{{ te('Customer:') }}</span>
                         <span class="info-value">
                             <a href="https://www.fdcef.com/customer#{{ header_info.customer_id }}" 
                                target="_blank" 
@@ -1261,7 +1295,7 @@
                         </span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-id-card mr-2"></i>ID:</span>
+                        <span class="info-label"><i class="fas fa-id-card mr-2"></i>{{ te('ID:') }}</span>
                         <span class="info-value">
                             <a href="https://www.fdcef.com/customer#{{ header_info.customer_id }}" 
                                target="_blank" 
@@ -1272,7 +1306,7 @@
                         </span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-file-invoice mr-2"></i>Invoice #:</span>
+                        <span class="info-label"><i class="fas fa-file-invoice mr-2"></i>{{ te('Invoice #:') }}</span>
                         <span class="info-value">
                             {% if header_info.invoice_number and header_info.invoice_number != 'not invoiced' %}
                                 <a href="{{ url_for('invoice_lookup.invoice_lookup', invoice_number=header_info.invoice_number) }}" 
@@ -1281,30 +1315,32 @@
                                     {{ header_info.invoice_number }}
                                     <i class="fas fa-external-link-alt ml-1" style="font-size: 0.85em;"></i>
                                 </a>
+                                <span class="invoice-status-tag invoiced">({{ te('Invoiced') }})</span>
                             {% else %}
                                 {{ header_info.invoice_number or 'not invoiced' }}
+                                <span class="invoice-status-tag uninvoiced">({{ te('Uninvoiced') }})</span>
                             {% endif %}
                         </span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>PO:</span>
+                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>{{ te('PO:') }}</span>
                         <span class="info-value">{{ header_info.po_number or 'N/A' }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-user-tie mr-2"></i>Sales:</span>
+                        <span class="info-label"><i class="fas fa-user-tie mr-2"></i>{{ te('Sales:') }}</span>
                         <span class="info-value">{{ header_info.salesman }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-calendar-plus mr-2"></i>Order Date:</span>
+                        <span class="info-label"><i class="fas fa-calendar-plus mr-2"></i>{{ te('Order Date:') }}</span>
                         <span class="info-value">{{ header_info.order_date }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-shipping-fast mr-2"></i>Ship Date:</span>
-                        <span class="info-value editable-cell" id="editableShipDate" title="Click to edit ship date">{{ header_info.ship_date }}</span>
+                        <span class="info-label"><i class="fas fa-shipping-fast mr-2"></i>{{ te('Ship Date:') }}</span>
+                        <span class="info-value editable-cell" id="editableShipDate" title="{{ te('Click to edit ship date') }}">{{ header_info.ship_date }}</span>
                     </div>
                     {% if header_info.cancel_date and header_info.cancel_date != '' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-ban mr-2"></i>Cancel Date:</span>
+                        <span class="info-label"><i class="fas fa-ban mr-2"></i>{{ te('Cancel Date:') }}</span>
                         <span class="info-value" style="color: #dc3545; font-weight: bold;">{{ header_info.cancel_date }}</span>
                     </div>
                     {% endif %}
@@ -1320,41 +1356,41 @@
                     
                     {% if header_info.order_status and header_info.order_status != 'N/A' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-info-circle mr-2"></i>Status:</span>
+                        <span class="info-label"><i class="fas fa-info-circle mr-2"></i>{{ te('Status:') }}</span>
                         <span class="info-value">{{ header_info.order_status }}</span>
                     </div>
                     {% endif %}
                     
                     {% if header_info.priority and header_info.priority != 'N/A' and header_info.priority != 'Normal' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-flag mr-2"></i>Priority:</span>
+                        <span class="info-label"><i class="fas fa-flag mr-2"></i>{{ te('Priority:') }}</span>
                         <span class="info-value">{{ header_info.priority }}</span>
                     </div>
                     {% endif %}
                     
                     {% if header_info.ship_method and header_info.ship_method != 'N/A' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-box mr-2"></i>Ship Method:</span>
+                        <span class="info-label"><i class="fas fa-box mr-2"></i>{{ te('Ship Method:') }}</span>
                         <span class="info-value">{{ header_info.ship_method }}</span>
                     </div>
                     {% endif %}
                     
                     {% if header_info.tracking_number and header_info.tracking_number != 'N/A' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-barcode mr-2"></i>Tracking:</span>
+                        <span class="info-label"><i class="fas fa-barcode mr-2"></i>{{ te('Tracking:') }}</span>
                         <span class="info-value">{{ header_info.tracking_number }}</span>
                     </div>
                     {% endif %}
 
                     {% if header_info.label_burlington_bol %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>BOL:</span>
+                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>{{ te('BOL:') }}</span>
                         <span class="info-value">
                             <a href="{{ header_info.label_burlington_url or url_for('burlington_label_processor.burlington_label_processor_page') }}"
                                class="bol-processor-link"
                                target="_blank"
                                rel="noopener"
-                               title="Open Burlington label processor entry">
+                               title="{{ te('Open Burlington label processor entry') }}">
                                 {{ header_info.label_burlington_bol }} <i class="fas fa-external-link-alt fa-xs"></i>
                             </a>
                         </span>
@@ -1390,21 +1426,21 @@
                     
                     {% if header_info.attention and header_info.attention != 'N/A' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-user mr-2"></i>Attention:</span>
+                        <span class="info-label"><i class="fas fa-user mr-2"></i>{{ te('Attention:') }}</span>
                         <span class="info-value">{{ header_info.attention }}</span>
                     </div>
                     {% endif %}
                     
                     {% if header_info.phone and header_info.phone != 'N/A' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-phone mr-2"></i>Phone:</span>
+                        <span class="info-label"><i class="fas fa-phone mr-2"></i>{{ te('Phone:') }}</span>
                         <span class="info-value">{{ header_info.phone }}</span>
                     </div>
                     {% endif %}
                     
                     {% if header_info.email and header_info.email != 'N/A' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-envelope mr-2"></i>Email:</span>
+                        <span class="info-label"><i class="fas fa-envelope mr-2"></i>{{ te('Email:') }}</span>
                         <span class="info-value">{{ header_info.email }}</span>
                     </div>
                     {% endif %}
@@ -1441,27 +1477,27 @@
                         <i class="fas fa-dollar-sign mr-2"></i>Financial Summary
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-box mr-2"></i>Package Amount:</span>
+                        <span class="info-label"><i class="fas fa-box mr-2"></i>{{ te('Package Amount:') }}</span>
                         <span class="info-value">{{ header_info.package_amount }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-tag mr-2"></i>Discount:</span>
+                        <span class="info-label"><i class="fas fa-tag mr-2"></i>{{ te('Discount:') }}</span>
                         <span class="info-value">{{ header_info.discount }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-truck mr-2"></i>Shipping:</span>
+                        <span class="info-label"><i class="fas fa-truck mr-2"></i>{{ te('Shipping:') }}</span>
                         <span class="info-value">{{ header_info.shipping_charge }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-hand-holding-usd mr-2"></i>Handling:</span>
+                        <span class="info-label"><i class="fas fa-hand-holding-usd mr-2"></i>{{ te('Handling:') }}</span>
                         <span class="info-value">{{ header_info.handling_fee }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-percentage mr-2"></i>Tax:</span>
+                        <span class="info-label"><i class="fas fa-percentage mr-2"></i>{{ te('Tax:') }}</span>
                         <span class="info-value">{{ header_info.tax_amount }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-coins mr-2"></i>Order Amount:</span>
+                        <span class="info-label"><i class="fas fa-coins mr-2"></i>{{ te('Order Amount:') }}</span>
                         <span class="info-value">{{ header_info.order_amount }}</span>
                     </div>
                 </div>
@@ -1477,16 +1513,16 @@
                 <table id="items_table" class="table">
                     <thead>
                         <tr>
-                            <th><i class="fas fa-hashtag mr-1"></i>Line</th>
-                            <th><i class="fas fa-barcode mr-1"></i>SKU</th>
-                            <th><i class="fas fa-align-left mr-1"></i>Description</th>
-                            <th><i class="fas fa-sort-numeric-up mr-1"></i>Qty</th>
-                            <th><i class="fas fa-dollar-sign mr-1"></i>Price</th>
-                            <th><i class="fas fa-box mr-1"></i>Per Box</th>
-                            <th><i class="fas fa-cubes mr-1"></i>Boxes</th>
-                            <th><i class="fas fa-map-marker-alt mr-1"></i>Location</th>
-                            <th><i class="fas fa-warehouse mr-1"></i>Stock</th>
-                            <th><i class="fas fa-weight-hanging mr-1"></i>Weight (lbs)</th>
+                            <th><i class="fas fa-hashtag mr-1"></i>{{ te('Line') }}</th>
+                            <th><i class="fas fa-barcode mr-1"></i>{{ te('SKU') }}</th>
+                            <th><i class="fas fa-align-left mr-1"></i>{{ te('Description') }}</th>
+                            <th><i class="fas fa-sort-numeric-up mr-1"></i>{{ te('Qty') }}</th>
+                            <th><i class="fas fa-dollar-sign mr-1"></i>{{ te('Price') }}</th>
+                            <th><i class="fas fa-box mr-1"></i>{{ te('Per Box') }}</th>
+                            <th><i class="fas fa-cubes mr-1"></i>{{ te('Boxes') }}</th>
+                            <th><i class="fas fa-map-marker-alt mr-1"></i>{{ te('Location') }}</th>
+                            <th><i class="fas fa-warehouse mr-1"></i>{{ te('Stock') }}</th>
+                            <th><i class="fas fa-weight-hanging mr-1"></i>{{ te('Weight (lbs)') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1495,7 +1531,7 @@
                     {% if items_total_qty is not none and items_total_boxes is not none %}
                     <tfoot>
                         <tr class="items-summary-row">
-                            <th colspan="3" class="text-right">Total</th>
+                            <th colspan="3" class="text-right">{{ te('Total') }}</th>
                             <th>{{ items_total_qty }}</th>
                             <th></th>
                             <th></th>
@@ -1621,12 +1657,12 @@
                             <thead>
                                 <tr>
                                     <th><i class="fas fa-hashtag mr-1"></i>#</th>
-                                    <th><i class="fas fa-palette mr-1"></i>Style</th>
-                                    <th><i class="fas fa-fill-drip mr-1"></i>Color</th>
-                                    <th><i class="fas fa-copy mr-1"></i>Duplicate</th>
-                                    <th><i class="fas fa-barcode mr-1"></i>Duplicate SKUs</th>
-                                    <th><i class="fas fa-box mr-1"></i>PC Unit</th>
-                                    <th><i class="fas fa-sort-numeric-up mr-1"></i>Quantity</th>
+                                    <th><i class="fas fa-palette mr-1"></i>{{ te('Style') }}</th>
+                                    <th><i class="fas fa-fill-drip mr-1"></i>{{ te('Color') }}</th>
+                                    <th><i class="fas fa-copy mr-1"></i>{{ te('Duplicate') }}</th>
+                                    <th><i class="fas fa-barcode mr-1"></i>{{ te('Duplicate SKUs') }}</th>
+                                    <th><i class="fas fa-box mr-1"></i>{{ te('PC Unit') }}</th>
+                                    <th><i class="fas fa-sort-numeric-up mr-1"></i>{{ te('Quantity') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2683,23 +2719,23 @@
                     <h5 class="modal-title" id="etaFashionLabelModalTitle">
                         <i class="fas fa-tag mr-2"></i>[special Label] — ETA Fashion
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="{{ te('Close') }}">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group mb-0">
-                        <label for="etaFashionTotalBoxes"><strong>Total boxes</strong></label>
+                        <label for="etaFashionTotalBoxes"><strong>{{ te('Total boxes') }}</strong></label>
                         <input type="number" class="form-control" id="etaFashionTotalBoxes" min="1" step="1" placeholder="10" required>
                     </div>
                     <small class="text-muted d-block mt-2">
-                        <strong>4-in-1 Letter</strong> — US Letter (8.5×11), four 8.5×2.75 labels per page.
-                        <strong>Label 4×6</strong> — horizontal 6×4 landscape, one label per sheet (fills page width).
+                        <strong>{{ te('4-in-1 Letter') }}</strong> — US Letter (8.5×11), four 8.5×2.75 labels per page.
+                        <strong>{{ te('Label 4×6') }}</strong> — horizontal 6×4 landscape, one label per sheet (fills page width).
                         Vendor prefilled FDC; box numbers 1 through total.
                     </small>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Cancel') }}</button>
                     <button type="button" class="btn btn-primary btn-eta-submit" id="etaFashionLabelLetterBtn">
                         <i class="fas fa-file-pdf mr-1"></i>4-in-1 Letter
                     </button>
@@ -2719,27 +2755,27 @@
                     <h5 class="modal-title" id="ezLabelModalTitle">
                         <i class="fas fa-sticky-note mr-2"></i>ez简易贴纸
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="{{ te('Close') }}">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="ezShipperSelect"><strong>Shipping service</strong> (up to 3 lines; auto-fits on label)</label>
+                        <label for="ezShipperSelect"><strong>{{ te('Shipping service') }}</strong> (up to 3 lines; auto-fits on label)</label>
                         <div class="ez-shipper-toolbar">
-                            <select class="form-control" id="ezShipperSelect" aria-label="Saved shippers"></select>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="ezShipperAddBtn" title="Create new shipper">
+                            <select class="form-control" id="ezShipperSelect" aria-label="{{ te('Saved shippers') }}"></select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="ezShipperAddBtn" title="{{ te('Create new shipper') }}">
                                 <i class="fas fa-plus mr-1"></i>New
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-success" id="ezShipperSaveBtn" title="Save shipper to this browser">
+                            <button type="button" class="btn btn-sm btn-outline-success" id="ezShipperSaveBtn" title="{{ te('Save shipper to this browser') }}">
                                 <i class="fas fa-save mr-1"></i>Save
                             </button>
                         </div>
-                        <textarea class="form-control" id="ezShippingService" rows="3" placeholder="UCL&#10;line 2&#10;line 3" autocomplete="off"></textarea>
-                        <small class="text-muted d-block mt-1">First line is the shipper name in the dropdown; up to 3 lines print on the label.</small>
+                        <textarea class="form-control" id="ezShippingService" rows="3" placeholder="{{ te('UCL&#10;line 2&#10;line 3') }}" autocomplete="off"></textarea>
+                        <small class="text-muted d-block mt-1">{{ te('First line is the shipper name in the dropdown; up to 3 lines print on the label.') }}</small>
                     </div>
                     <div class="form-group mb-0">
-                        <label for="ezTotalBoxes"><strong>Total boxes</strong></label>
+                        <label for="ezTotalBoxes"><strong>{{ te('Total boxes') }}</strong></label>
                         <input type="number" class="form-control" id="ezTotalBoxes" min="1" step="1" placeholder="13" required>
                     </div>
                     <small class="text-muted d-block mt-2">
@@ -2747,12 +2783,12 @@
                         {% if header_info.customer_id|string == '00951' %}
                         ETA Fashion: saved shippers include BTG; ship-to prints as ETA Fashion only.
                         {% else %}
-                        Shippers are saved in this browser (default UCL). Total boxes prefills from order notes (e.g. <em>1 box</em> or <em>30 boxes</em>).
+                        Shippers are saved in this browser (default UCL). Total boxes prefills from order notes (e.g. <em>{{ te('1 box') }}</em> or <em>{{ te('30 boxes') }}</em>).
                         {% endif %}
                     </small>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Cancel') }}</button>
                     <button type="button" class="btn btn-primary btn-ez-submit" id="ezLabelSubmitBtn">
                         <i class="fas fa-file-pdf mr-1"></i>Submit &amp; open PDF
                     </button>

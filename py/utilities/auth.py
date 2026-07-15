@@ -9,7 +9,10 @@ from flask import (
     flash,
     current_app,
     make_response,
+    g,
+    has_request_context,
 )
+import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -785,6 +788,48 @@ def manage_users():
             connection.close()
 
 
+def _external_service_credentials():
+    """Load GOFO / YunExpress credentials from env (nssm-fdcef-environment.env)."""
+    from py.utilities.nssm_env import load_nssm_env_file
+
+    load_nssm_env_file(reload_empty=True)
+    return {
+        "gofo": {
+            "carrier": "GOFO",
+            "order_prefix": "GFUS",
+            "platforms": "TEMU / TIKTOK / SHEIN / EBAY / Aliexpress / Amazon",
+            "api_account": (os.environ.get("GOFO_API_ACCOUNT") or "").strip(),
+            "api_password": (os.environ.get("GOFO_API_PASSWORD") or "").strip(),
+            "platform_url": (
+                os.environ.get("GOFO_PLATFORM_URL") or "https://platform.gofoexpress.com/login"
+            ).strip(),
+            "platform_account": (os.environ.get("GOFO_PLATFORM_ACCOUNT") or "").strip(),
+            "platform_password": (os.environ.get("GOFO_PLATFORM_PASSWORD") or "").strip(),
+        },
+        "yunexpress": {
+            "carrier": "YUNEXPRESS",
+            "order_prefix": "YT",
+            "platforms": "TEMU / TIKTOK / SHEIN / EBAY / AMAZON / WALMART / Ali International",
+            "api_account": (os.environ.get("YUNEXPRESS_API_ACCOUNT") or "").strip(),
+            "api_password": (os.environ.get("YUNEXPRESS_API_PASSWORD") or "").strip(),
+        },
+    }
+
+
+@auth_bp.route("/external_service_log", methods=["GET"])
+@login_required
+def external_service_log():
+    """Admin page: external carrier API keys and platform logins."""
+    if session.get("username") != "yeti":
+        flash("Access denied. Only yeti can view external service logins.")
+        return redirect(url_for("home"))
+    return render_template(
+        "external_service_log.html",
+        current_user=session["username"],
+        services=_external_service_credentials(),
+    )
+
+
 @auth_bp.route("/request_password_reset", methods=["POST"])
 def request_password_reset():
     try:
@@ -1072,11 +1117,34 @@ def _ensure_user_groups_schema_once() -> None:
             connection.close()
 
 
+def _permissions_request_cache() -> dict:
+    if not has_request_context():
+        return {}
+    cache = getattr(g, "_fdc_user_permissions_cache", None)
+    if cache is None:
+        cache = {}
+        g._fdc_user_permissions_cache = cache
+    return cache
+
+
+def _group_slug_request_cache() -> dict:
+    if not has_request_context():
+        return {}
+    cache = getattr(g, "_fdc_user_group_slug_cache", None)
+    if cache is None:
+        cache = {}
+        g._fdc_user_group_slug_cache = cache
+    return cache
+
+
 def get_user_permissions(username):
     """Effective ACL JSON from the user's group (not per-user column). yeti = unrestricted."""
     uname = (username or "").strip()
     if uname.lower() == "yeti":
         return {}
+    cache = _permissions_request_cache()
+    if uname in cache:
+        return cache[uname]
     _ensure_user_groups_schema_once()
     connection = get_db_connection()
     if connection:
@@ -1093,9 +1161,11 @@ def get_user_permissions(username):
             )
             user_data = cursor.fetchone()
             if not user_data:
+                cache[uname] = {}
                 return {}
             permissions_json = user_data.get("group_permissions")
             if permissions_json is None:
+                cache[uname] = {}
                 return {}
             try:
                 parsed = (
@@ -1103,18 +1173,22 @@ def get_user_permissions(username):
                     if isinstance(permissions_json, str)
                     else dict(permissions_json or {})
                 )
-                return parsed if isinstance(parsed, dict) else {}
+                result = parsed if isinstance(parsed, dict) else {}
             except json.JSONDecodeError:
                 print(f"Invalid JSON for group permissions: {username}")
-                return {}
+                result = {}
+            cache[uname] = result
+            return result
         except Error as e:
             print(f"Error fetching user permissions: {e}")
+            cache[uname] = {}
             return {}
         finally:
             if "cursor" in locals():
                 cursor.close()
             if connection.is_connected():
                 connection.close()
+    cache[uname] = {}
     return {}
 
 
@@ -1123,6 +1197,9 @@ def get_user_group_slug(username) -> str:
     uname = (username or "").strip()
     if not uname:
         return ""
+    cache = _group_slug_request_cache()
+    if uname in cache:
+        return cache[uname]
     _ensure_user_groups_schema_once()
     connection = get_db_connection()
     if not connection:
@@ -1140,8 +1217,11 @@ def get_user_group_slug(username) -> str:
             (uname,),
         )
         row = cursor.fetchone()
-        return str((row or {}).get("group_slug") or "").strip().lower()
+        slug = str((row or {}).get("group_slug") or "").strip().lower()
+        cache[uname] = slug
+        return slug
     except Error:
+        cache[uname] = ""
         return ""
     finally:
         if "cursor" in locals():

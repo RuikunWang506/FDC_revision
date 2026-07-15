@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Container Hub</title>
+    <title>{{ _('page.container_hub.title') }}</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -177,7 +177,7 @@
             <div class="d-flex flex-wrap align-items-center justify-content-between">
                 <div>
                     <h1 class="h3 mb-1"><i class="bi bi-box-seam"></i> Container Hub</h1>
-                    <small class="text-white-50">Process new containers · manage ocean & landed POs</small>
+                    <small class="text-white-50">{{ te('Process new containers · manage ocean & landed POs') }}</small>
                 </div>
                 <div class="text-right">
                     <div class="hub-header-links mb-2">
@@ -191,9 +191,9 @@
                             <i class="bi bi-table"></i> Google Sheet
                         </a>
                     </div>
-                    <div class="small text-white-50">Sheet updated</div>
-                    <div id="lastUpdated">Loading…</div>
-                    <button id="refreshBtn" class="btn btn-sm btn-light mt-1">Refresh</button>
+                    <div class="small text-white-50">{{ te('Sheet updated') }}</div>
+                    <div id="lastUpdated">{{ te('Loading…') }}</div>
+                    <button id="refreshBtn" class="btn btn-sm btn-light mt-1">{{ te('Refresh') }}</button>
                 </div>
             </div>
         </div>
@@ -208,16 +208,16 @@
             </button>
             <div id="shipmentUploadPanel" class="collapse mt-3">
                 <p class="text-muted small mb-2">
-                    Upload the weekly <strong>2026 shipment schedule</strong> Excel file (.xls or .xlsx).
+                    Upload the weekly <strong>{{ te('2026 shipment schedule') }}</strong> Excel file (.xls or .xlsx).
                     Must have a worksheet named <strong>2026</strong> with columns REFER NO, VESSEL NO, CONTAINTER NO, ETD, ETA.
-                    Not the FedEx <code>Shipment_Report</code> export.
-                    Column A = FDC container (<code>FT261112</code> → <code>F261112</code>).
+                    Not the FedEx <code>{{ te('Shipment_Report') }}</code> export.
+                    Column A = FDC container (<code>{{ te('FT261112') }}</code> → <code>F261112</code>).
                     Updates MySQL, Google Sheet, and local cache (vessel, container #, deliver date, ETD, ETA).
                 </p>
                 <div id="shipmentDropzone" class="shipment-dropzone mb-3">
                     <div><i class="bi bi-cloud-upload" style="font-size:1.5rem;color:#2d5a87;"></i></div>
-                    <div class="mt-2">Drag &amp; drop the Excel file here (.xls or .xlsx)</div>
-                    <div class="small">or choose a file below</div>
+                    <div class="mt-2">{{ te('Drag &amp; drop the Excel file here (.xls or .xlsx)') }}</div>
+                    <div class="small">{{ te('or choose a file below') }}</div>
                 </div>
                 <div class="d-flex flex-wrap align-items-center">
                     <input type="file" id="shipmentTrackingFile" class="d-none" accept=".xls,.xlsx,.xlsm">
@@ -245,26 +245,26 @@
                     <span class="stat-pill" data-filter="landed">Landed <span id="countLanded">0</span></span>
                     <span class="stat-pill" data-filter="special">Australia (L) <span id="countSpecial">0</span></span>
                 </div>
-                <input type="text" id="searchBox" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Search container…">
+                <input type="text" id="searchBox" class="form-control form-control-sm" style="max-width: 220px;" placeholder="{{ te('Search container…') }}">
             </div>
 
             <div id="loadingState" class="text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 text-muted mb-0">Loading containers…</p>
+                <p class="mt-2 text-muted mb-0">{{ te('Loading containers…') }}</p>
             </div>
 
             <div id="tableWrap" class="table-wrap" style="display:none;">
                 <table class="table table-sm table-hover hub-table mb-0">
                     <thead>
                         <tr>
-                            <th>Container</th>
-                            <th>BOL</th>
-                            <th>ETD / ETA</th>
-                            <th>Status</th>
-                            <th>Written Time</th>
-                            <th>PO Created</th>
-                            <th>MSRP</th>
-                            <th>Actions</th>
+                            <th>{{ te('Container') }}</th>
+                            <th>{{ te('BOL') }}</th>
+                            <th>{{ te('ETD / ETA') }}</th>
+                            <th>{{ te('Status') }}</th>
+                            <th>{{ te('Written Time') }}</th>
+                            <th>{{ te('PO Created') }}</th>
+                            <th>{{ te('MSRP') }}</th>
+                            <th>{{ te('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody id="hubTableBody"></tbody>
@@ -272,7 +272,7 @@
             </div>
             <div id="paginationBar" class="hub-pagination" style="display:none;">
                 <div class="page-info" id="paginationInfo"></div>
-                <nav aria-label="Container pagination">
+                <nav aria-label="{{ te('Container pagination') }}">
                     <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
                 </nav>
             </div>
@@ -291,12 +291,12 @@
                         <table class="table table-sm table-striped mb-0">
                             <thead class="thead-light">
                                 <tr>
-                                    <th>Container</th>
-                                    <th>Container #</th>
-                                    <th>Vessel NO</th>
-                                    <th>Deliver Date</th>
-                                    <th>ETD</th>
-                                    <th>ETA</th>
+                                    <th>{{ te('Container') }}</th>
+                                    <th>{{ te('Container #') }}</th>
+                                    <th>{{ te('Vessel NO') }}</th>
+                                    <th>{{ te('Deliver Date') }}</th>
+                                    <th>{{ te('ETD') }}</th>
+                                    <th>{{ te('ETA') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="shipmentViewBody"></tbody>
@@ -317,71 +317,71 @@
                 <div class="modal-body">
                     <ul class="nav nav-tabs" id="guideLangTabs" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="guide-en-tab" data-toggle="tab" href="#guideEn" role="tab">English</a>
+                            <a class="nav-link active" id="guide-en-tab" data-toggle="tab" href="#guideEn" role="tab">{{ te('English') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="guide-zh-tab" data-toggle="tab" href="#guideZh" role="tab">中文</a>
+                            <a class="nav-link" id="guide-zh-tab" data-toggle="tab" href="#guideZh" role="tab">{{ te('中文') }}</a>
                         </li>
                     </ul>
                     <div class="tab-content pt-3" id="guideLangContent">
                         <div class="tab-pane fade show active" id="guideEn" role="tabpanel">
                             <div class="guide-section">
-                                <h6>Overview</h6>
+                                <h6>{{ te('Overview') }}</h6>
                                 <p class="mb-2">Container Hub lists every container from the Google tracking sheet. Use it to import new containers into OMS, manage ocean POs, receive at 827, and download related files.</p>
                             </div>
                             <div class="guide-section">
-                                <h6>Status colors</h6>
+                                <h6>{{ te('Status colors') }}</h6>
                                 <div class="status-legend">
-                                    <span><span class="status-badge status-new">New</span> Dropbox file ready, not yet in OMS</span><br>
-                                    <span><span class="status-badge status-ocean">Ocean</span> PO created in OMS, not fully received</span><br>
-                                    <span><span class="status-badge status-landed">Landed</span> Received at 827 (<code>RCVD_QTY</code> &gt; 0)</span><br>
-                                    <span><span class="status-badge status-waiting">Waiting</span> On sheet but no Dropbox source file</span>
+                                    <span><span class="status-badge status-new">{{ te('New') }}</span> Dropbox file ready, not yet in OMS</span><br>
+                                    <span><span class="status-badge status-ocean">{{ te('Ocean') }}</span> PO created in OMS, not fully received</span><br>
+                                    <span><span class="status-badge status-landed">{{ te('Landed') }}</span> Received at 827 (<code>{{ te('RCVD_QTY') }}</code> &gt; 0)</span><br>
+                                    <span><span class="status-badge status-waiting">{{ te('Waiting') }}</span> On sheet but no Dropbox source file</span>
                                 </div>
                             </div>
                             <div class="guide-section">
-                                <h6>Columns</h6>
+                                <h6>{{ te('Columns') }}</h6>
                                 <ul>
-                                    <li><strong>Container</strong> — click to open item lookup. <code>FT…</code> numbers display as <code>F…</code>.</li>
-                                    <li><strong>BOL</strong> — bill of lading from weekly tracking; vessel name shown below.</li>
-                                    <li><strong>ETD / ETA</strong> — departure (ETD) on top, arrival (ETA) below from weekly tracking.</li>
-                                    <li><strong>Written Time</strong> — when the row was written on the Google sheet.</li>
-                                    <li><strong>PO Created</strong> — OMS PO date/time from FDC (<code>pur_ord</code> + <code>plog</code>). Blank if no PO exists yet.</li>
+                                    <li><strong>{{ te('Container') }}</strong> — click to open item lookup. <code>{{ te('FT…') }}</code> numbers display as <code>F…</code>.</li>
+                                    <li><strong>{{ te('BOL') }}</strong> — bill of lading from weekly tracking; vessel name shown below.</li>
+                                    <li><strong>{{ te('ETD / ETA') }}</strong> — departure (ETD) on top, arrival (ETA) below from weekly tracking.</li>
+                                    <li><strong>{{ te('Written Time') }}</strong> — when the row was written on the Google sheet.</li>
+                                    <li><strong>{{ te('PO Created') }}</strong> — OMS PO date/time from FDC (<code>{{ te('pur_ord') }}</code> + <code>{{ te('plog') }}</code>{{ te('). Blank if no PO exists yet.') }}</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
-                                <h6>Filters, search &amp; pages</h6>
+                                <h6>{{ te('Filters, search &amp; pages') }}</h6>
                                 <ul>
-                                    <li>Click the pills (<strong>All / New / Ocean / Landed / Australia (L)</strong>) to filter the list.</li>
-                                    <li>Use the search box to find a container # or BOL.</li>
-                                    <li>The table shows <strong>25 rows per page</strong>; use pagination at the bottom.</li>
-                                    <li><strong>Refresh</strong> reloads sheet + OMS data (bypasses cache).</li>
+                                    <li>{{ te('Click the pills (') }}<strong>{{ te('All / New / Ocean / Landed / Australia (L)') }}</strong>{{ te(') to filter the list.') }}</li>
+                                    <li>{{ te('Use the search box to find a container # or BOL.') }}</li>
+                                    <li>The table shows <strong>{{ te('25 rows per page') }}</strong>{{ te('; use pagination at the bottom.') }}</li>
+                                    <li><strong>{{ te('Refresh') }}</strong> reloads sheet + OMS data (bypasses cache).</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
-                                <h6>Actions by status</h6>
+                                <h6>{{ te('Actions by status') }}</h6>
                                 <ul>
-                                    <li><strong>New → Process</strong> — reads the Dropbox container file, opens the style preview grid, then imports styles (FDC + EFAS) and PO (FDC only) after you confirm.</li>
-                                    <li><strong>New → Files</strong> — download the original source file only.</li>
-                                    <li><strong>Ocean → PackingList / Receive</strong> — opens the packing list in a new tab, then asks whether the container arrived at 827. Answer <strong>Yes</strong> to receive into OMS and update the sheet RCD column.</li>
-                                    <li><strong>Ocean / Landed → Files</strong> — download PO CSV, Styles CSV, or Original.</li>
-                                    <li><strong>Ocean / Landed → Edit</strong> — <em>Delete PO</em> removes OMS records; <em>Reprocess</em> re-runs import preview; <em>Un-landed</em> (landed only) reverses 827 receive and moves back to ocean.</li>
-                                    <li><strong>MSRP column</strong> — Excel only: <em>OK</em> (all Price1 filled) or <em>Need Ken</em> (any Price1 missing).</li>
-                                    <li><strong>Ocean / Landed → Update MSRP</strong> — next to Edit when Excel MSRP is OK and any PO SKU in OMS still has $0 retail; pushes Price1 to FDC + EFAS.</li>
+                                    <li><strong>{{ te('New → Process') }}</strong> — reads the Dropbox container file, opens the style preview grid, then imports styles (FDC + EFAS) and PO (FDC only) after you confirm.</li>
+                                    <li><strong>{{ te('New → Files') }}</strong> — download the original source file only.</li>
+                                    <li><strong>{{ te('Ocean → PackingList / Receive') }}</strong> — opens the packing list in a new tab, then asks whether the container arrived at 827. Answer <strong>{{ te('Yes') }}</strong> to receive into OMS and update the sheet RCD column.</li>
+                                    <li><strong>{{ te('Ocean / Landed → Files') }}</strong> — download PO CSV, Styles CSV, or Original.</li>
+                                    <li><strong>{{ te('Ocean / Landed → Edit') }}</strong> — <em>{{ te('Delete PO') }}</em> removes OMS records; <em>{{ te('Reprocess') }}</em> re-runs import preview; <em>{{ te('Un-landed') }}</em> (landed only) reverses 827 receive and moves back to ocean.</li>
+                                    <li><strong>{{ te('MSRP column') }}</strong> — Excel only: <em>{{ te('OK') }}</em> (all Price1 filled) or <em>{{ te('Need Ken') }}</em> (any Price1 missing).</li>
+                                    <li><strong>{{ te('Ocean / Landed → Update MSRP') }}</strong> — next to Edit when Excel MSRP is OK and any PO SKU in OMS still has $0 retail; pushes Price1 to FDC + EFAS.</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
-                                <h6>Import preview tips</h6>
+                                <h6>{{ te('Import preview tips') }}</h6>
                                 <ul>
-                                    <li>Yellow rows = color names auto-converted to abbreviations — review before confirming.</li>
-                                    <li>You can edit Style, Color, Item#, Cost, Retail, and PO Qty in the grid.</li>
-                                    <li>Click <strong>Confirm Import</strong> only after the data looks correct.</li>
+                                    <li>{{ te('Yellow rows = color names auto-converted to abbreviations — review before confirming.') }}</li>
+                                    <li>{{ te('You can edit Style, Color, Item#, Cost, Retail, and PO Qty in the grid.') }}</li>
+                                    <li>Click <strong>{{ te('Confirm Import') }}</strong> only after the data looks correct.</li>
                                 </ul>
                             </div>
                             <div class="guide-section mb-0">
-                                <h6>Header shortcuts</h6>
+                                <h6>{{ te('Header shortcuts') }}</h6>
                                 <ul class="mb-0">
-                                    <li><strong>Manual Process Container</strong> — alternate import path at <code>/container</code>.</li>
-                                    <li><strong>Google Sheet</strong> — open the live tracking spreadsheet.</li>
+                                    <li><strong>{{ te('Manual Process Container') }}</strong> — alternate import path at <code>{{ te('/container') }}</code>.</li>
+                                    <li><strong>{{ te('Google Sheet') }}</strong> — open the live tracking spreadsheet.</li>
                                 </ul>
                             </div>
                         </div>
@@ -395,24 +395,24 @@
                                 <div class="status-legend">
                                     <span><span class="status-badge status-new">New 新建</span> Dropbox 有源文件，尚未导入 OMS</span><br>
                                     <span><span class="status-badge status-ocean">Ocean 在途</span> OMS 已建 PO，尚未完全收货</span><br>
-                                    <span><span class="status-badge status-landed">Landed 已到</span> 已在 827 收货（<code>RCVD_QTY</code> &gt; 0）</span><br>
+                                    <span><span class="status-badge status-landed">Landed 已到</span> 已在 827 收货（<code>{{ te('RCVD_QTY') }}</code> &gt; 0）</span><br>
                                     <span><span class="status-badge status-waiting">Waiting 等待</span> 表中有记录，但 Dropbox 无源文件</span>
                                 </div>
                             </div>
                             <div class="guide-section">
                                 <h6>列说明</h6>
                                 <ul>
-                                    <li><strong>Container 货柜号</strong> — 点击可打开货品查询。<code>FT…</code> 会显示为 <code>F…</code>。</li>
+                                    <li><strong>Container 货柜号</strong> — 点击可打开货品查询。<code>{{ te('FT…') }}</code> 会显示为 <code>F…</code>。</li>
                                     <li><strong>BOL 提单号</strong> — 来自每周跟踪表；下方显示船名。</li>
-                                    <li><strong>ETD / ETA</strong> — 上方为离港 ETD，下方为到港 ETA。</li>
+                                    <li><strong>{{ te('ETD / ETA') }}</strong> — 上方为离港 ETD，下方为到港 ETA。</li>
                                     <li><strong>Written Time 写入时间</strong> — Google 表上该行的写入时间。</li>
-                                    <li><strong>PO Created 建 PO 时间</strong> — FDC OMS 中 PO 的日期/时间（<code>pur_ord</code> + <code>plog</code>）。尚未建 PO 时显示空白。</li>
+                                    <li><strong>PO Created 建 PO 时间</strong> — FDC OMS 中 PO 的日期/时间（<code>{{ te('pur_ord') }}</code> + <code>{{ te('plog') }}</code>）。尚未建 PO 时显示空白。</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
                                 <h6>筛选、搜索与分页</h6>
                                 <ul>
-                                    <li>点击上方标签（<strong>All / New / Ocean / Landed / Australia (L)</strong>）筛选列表。</li>
+                                    <li>点击上方标签（<strong>{{ te('All / New / Ocean / Landed / Australia (L)') }}</strong>）筛选列表。</li>
                                     <li>搜索框可按货柜号或 BOL 查找。</li>
                                     <li>表格每页显示 <strong>25 条</strong>，底部可翻页。</li>
                                     <li><strong>Refresh 刷新</strong> 重新加载表格与 OMS 数据（跳过缓存）。</li>
@@ -423,10 +423,10 @@
                                 <ul>
                                     <li><strong>New → Process 处理</strong> — 读取 Dropbox 货柜文件，打开款式预览表，确认后导入款式（FDC + EFAS）和 PO（仅 FDC）。</li>
                                     <li><strong>New → Files 文件</strong> — 仅下载原始源文件。</li>
-                                    <li><strong>Ocean → PackingList / Receive 装箱单/收货</strong> — 新窗口打开装箱单，然后询问是否已在 827 到货。选 <strong>Yes</strong> 将在 OMS 收货并更新 Google 表 RCD 列。</li>
-                                    <li><strong>Ocean / Landed → Files 文件</strong> — 下载 PO CSV、Styles CSV 或 Original 原文件。</li>
-                                    <li><strong>Ocean / Landed → Edit 编辑</strong> — <em>Delete PO 删除 PO</em> 清除 OMS 记录；<em>Reprocess 重新处理</em> 重新打开导入预览；<em>Un-landed 取消到货</em>（仅 Landed）撤销 827 收货并回到在途状态。</li>
-                                    <li><strong>MSRP 列</strong> — 仅看 Excel：<em>OK</em>（Price1 齐全）或 <em>Need Ken</em>（Price1 有缺失）。</li>
+                                    <li><strong>Ocean → PackingList / Receive 装箱单/收货</strong> — 新窗口打开装箱单，然后询问是否已在 827 到货。选 <strong>{{ te('Yes') }}</strong> 将在 OMS 收货并更新 Google 表 RCD 列。</li>
+                                    <li><strong>{{ te('Ocean / Landed → Files 文件') }}</strong> — 下载 PO CSV、Styles CSV 或 Original 原文件。</li>
+                                    <li><strong>{{ te('Ocean / Landed → Edit 编辑') }}</strong> — <em>Delete PO 删除 PO</em> 清除 OMS 记录；<em>Reprocess 重新处理</em> 重新打开导入预览；<em>Un-landed 取消到货</em>（仅 Landed）撤销 827 收货并回到在途状态。</li>
+                                    <li><strong>MSRP 列</strong> — 仅看 Excel：<em>{{ te('OK') }}</em>（Price1 齐全）或 <em>{{ te('Need Ken') }}</em>（Price1 有缺失）。</li>
                                     <li><strong>Update MSRP 更新零售价</strong> — 在 Edit 旁，Excel 为 OK 且该 PO 仍有 SKU 在 OMS 零售价为 $0 时显示；从 Excel Price1 写入 FDC + EFAS。</li>
                                 </ul>
                             </div>
@@ -441,7 +441,7 @@
                             <div class="guide-section mb-0">
                                 <h6>顶部快捷入口</h6>
                                 <ul class="mb-0">
-                                    <li><strong>Manual Process Container 手动处理</strong> — 备用导入页面 <code>/container</code>。</li>
+                                    <li><strong>Manual Process Container 手动处理</strong> — 备用导入页面 <code>{{ te('/container') }}</code>。</li>
                                     <li><strong>Google Sheet 谷歌表格</strong> — 打开实时跟踪表。</li>
                                 </ul>
                             </div>
@@ -463,7 +463,7 @@
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small mb-3" id="editActionsHint">Delete the OMS PO or reprocess the container file and review the style grid before re-import.</p>
+                    <p class="text-muted small mb-3" id="editActionsHint">{{ te('Delete the OMS PO or reprocess the container file and review the style grid before re-import.') }}</p>
                     <button type="button" class="btn btn-outline-warning btn-block mb-2" id="editUnlandBtn" style="display:none;">
                         <i class="bi bi-arrow-counterclockwise"></i> Un-landed
                     </button>
@@ -482,15 +482,15 @@
         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">Container landed?</h5>
+                    <h5 class="modal-title">{{ te('Container landed?') }}</h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-0">Has <strong id="landedConfirmContainer"></strong> arrived at 827 and been received into OMS?</p>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">No</button>
-                    <button type="button" class="btn btn-success btn-sm" id="landedConfirmYesBtn">Yes, mark landed</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ te('No') }}</button>
+                    <button type="button" class="btn btn-success btn-sm" id="landedConfirmYesBtn">{{ te('Yes, mark landed') }}</button>
                 </div>
             </div>
         </div>
@@ -522,11 +522,11 @@
                     <div class="import-vendor-box mb-3">
                         <div class="form-row align-items-end">
                             <div class="col-md-4">
-                                <label for="importVendorId">Vendor ID (PO header)</label>
+                                <label for="importVendorId">{{ te('Vendor ID (PO header)') }}</label>
                                 <input type="text" id="importVendorId" class="form-control form-control-sm" autocomplete="off">
                             </div>
                             <div class="col-md-8">
-                                <div class="small text-muted mb-1">Pre-mapped from recent OMS POs (F → 50005, L → 00005). Verify before import.</div>
+                                <div class="small text-muted mb-1">{{ te('Pre-mapped from recent OMS POs (F → 50005, L → 00005). Verify before import.') }}</div>
                                 <div id="importVendorNameHint" class="small font-weight-bold text-dark"></div>
                             </div>
                         </div>
@@ -535,8 +535,8 @@
                         <table class="table table-sm table-bordered">
                             <thead class="thead-light">
                                 <tr>
-                                    <th>Style</th><th>Color</th><th>Was</th><th>Item#</th>
-                                    <th>Cost</th><th>Retail</th><th>PO Qty</th>
+                                    <th>{{ te('Style') }}</th><th>{{ te('Color') }}</th><th>{{ te('Was') }}</th><th>{{ te('Item#') }}</th>
+                                    <th>{{ te('Cost') }}</th><th>{{ te('Retail') }}</th><th>{{ te('PO Qty') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="importPreviewBody"></tbody>
@@ -544,8 +544,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" id="confirmImportBtn">Confirm Import</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Cancel') }}</button>
+                    <button type="button" class="btn btn-success" id="confirmImportBtn">{{ te('Confirm Import') }}</button>
                 </div>
             </div>
         </div>
@@ -555,25 +555,25 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">Confirm Vendor ID</h5>
+                    <h5 class="modal-title">{{ te('Confirm Vendor ID') }}</h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-2">Please double-check the vendor ID before importing this PO into OMS.</p>
+                    <p class="mb-2">{{ te('Please double-check the vendor ID before importing this PO into OMS.') }}</p>
                     <div id="vendorConfirmWarning" class="alert alert-warning py-2 small" style="display:none;">
-                        This vendor is <strong>not</strong> the usual <code>50005</code> / <code>00005</code> default.
+                        This vendor is <strong>{{ te('not') }}</strong> the usual <code>50005</code> / <code>00005</code> default.
                         Confirm the vendor name below is correct before continuing.
                     </div>
                     <dl class="row mb-0 small">
-                        <dt class="col-sm-4">Vendor ID</dt>
+                        <dt class="col-sm-4">{{ te('Vendor ID') }}</dt>
                         <dd class="col-sm-8"><strong id="vendorConfirmId"></strong></dd>
-                        <dt class="col-sm-4">Vendor name</dt>
+                        <dt class="col-sm-4">{{ te('Vendor name') }}</dt>
                         <dd class="col-sm-8"><strong id="vendorConfirmName"></strong></dd>
                     </dl>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Go back</button>
-                    <button type="button" class="btn btn-success btn-sm" id="vendorConfirmProceedBtn">Confirm and import</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ te('Go back') }}</button>
+                    <button type="button" class="btn btn-success btn-sm" id="vendorConfirmProceedBtn">{{ te('Confirm and import') }}</button>
                 </div>
             </div>
         </div>
@@ -686,10 +686,10 @@
         function msrpBadge(row) {
             var status = row.msrp_status || 'unknown';
             if (status === 'ok') {
-                return '<span class="status-badge status-msrp-ok">OK</span>';
+                return '<span class="status-badge status-msrp-ok">{{ te('OK') }}</span>';
             }
             if (status === 'need_ken') {
-                return '<span class="status-badge status-msrp-missing" title="Price1 missing in original Excel">Need Ken</span>';
+                return '<span class="status-badge status-msrp-missing" title="Price1 missing in original Excel">{{ te('Need Ken') }}</span>';
             }
             return '<span class="text-muted">—</span>';
         }
@@ -844,9 +844,27 @@
             return true;
         }
 
+        var actionModeSortOrder = { new: 0, waiting: 1, ocean: 2, port: 3, landed: 4 };
+
+        function fdcContainerSortNumber(container) {
+            var m = String(container || '').trim().match(/^([A-Za-z]+)(\d+)$/);
+            if (!m) return -1;
+            var n = parseInt(m[2], 10);
+            return isNaN(n) ? -1 : n;
+        }
+
+        function compareHubRows(a, b) {
+            var rankA = actionModeSortOrder[a.action_mode];
+            var rankB = actionModeSortOrder[b.action_mode];
+            if (rankA == null) rankA = 99;
+            if (rankB == null) rankB = 99;
+            if (rankA !== rankB) return rankA - rankB;
+            return fdcContainerSortNumber(b.container) - fdcContainerSortNumber(a.container);
+        }
+
         function getFilteredRows() {
             var q = ($('#searchBox').val() || '').trim().toUpperCase();
-            return allRows.filter(function(row) {
+            var rows = allRows.filter(function(row) {
                 if (!rowMatchesFilter(row)) return false;
                 if (q && row.container.indexOf(q) === -1
                     && (row.bol || '').toUpperCase().indexOf(q) === -1
@@ -855,6 +873,10 @@
                 }
                 return true;
             });
+            if (activeFilter === 'all') {
+                rows.sort(compareHubRows);
+            }
+            return rows;
         }
 
         function renderPagination(totalRows) {

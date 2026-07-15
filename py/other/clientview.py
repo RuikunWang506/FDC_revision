@@ -44,6 +44,63 @@ def user_hides_staff_nav_links(username: str) -> bool:
     return get_user_group_slug(username) in CLIENT_NAV_GROUP_SLUGS
 
 
+def must_use_client_product_detail(username: str) -> bool:
+    """True when the user must use /clientview/product_detail (not internal /productdetail)."""
+    uname = (username or "").strip()
+    if not uname or uname.lower() == "yeti":
+        return False
+    perms = get_user_permissions(uname)
+    # Unrestricted staff (no explicit tools list) may use internal product detail.
+    if not perms or perms.get("tools") is None:
+        return False
+    from py.utilities.client_product_detail_permissions import (
+        client_product_detail_rules_apply,
+    )
+
+    return client_product_detail_rules_apply(uname, perms)
+
+
+def product_detail_search_url() -> str:
+    """Dashboard / lookup quick-search target for the current session user."""
+    uname = session.get("username")
+    if uname and must_use_client_product_detail(uname):
+        return url_for("clientview.clientview_product_detail")
+    return url_for("product_detail.product_detail")
+
+
+def redirect_client_user_to_product_detail():
+    """Redirect client users away from internal product detail routes."""
+    username = session.get("username")
+    if not username or not must_use_client_product_detail(username):
+        return None
+
+    path = request.path or ""
+    if "/api/" in path:
+        from flask import jsonify
+
+        return (
+            jsonify(
+                success=False,
+                error="Use the client product detail page.",
+            ),
+            403,
+        )
+
+    search = None
+    if request.view_args and request.view_args.get("search_input"):
+        search = request.view_args["search_input"]
+    elif request.method == "POST":
+        search = (request.form.get("search_input") or "").strip()
+    if not search:
+        search = (request.args.get("search_id") or request.args.get("search") or "").strip()
+
+    if search:
+        return redirect(
+            url_for("clientview.clientview_product_detail", search_input=search)
+        )
+    return redirect(url_for("clientview.clientview_product_detail"))
+
+
 def is_client_portal_only_user(username: str) -> bool:
     """Users restricted to client portal tools only (no full dashboard)."""
     perms = get_user_permissions(username)

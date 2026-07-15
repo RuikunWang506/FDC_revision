@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mail — Compose</title>
+    <title>{{ te('Mail — Compose') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -105,9 +105,9 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <p class="text-muted small mb-0">Compose in the window at the bottom right — same as Gmail. <a href="{{ url_for('email.inbox', account_id=active_account_id) }}">Back to inbox</a></p>
+    <p class="text-muted small mb-0">Compose in the window at the bottom right — same as Gmail. <a href="{{ url_for('email.inbox', account_id=active_account_id) }}">{{ te('Back to inbox') }}</a></p>
     <div class="card mt-3">
-        <div class="card-header py-2">From mailbox</div>
+        <div class="card-header py-2">{{ te('From mailbox') }}</div>
         <div class="list-group list-group-flush">
             {% for a in accounts %}
                 <a class="list-group-item list-group-item-action {% if a.id == active_account_id %}active{% endif %}"
@@ -125,8 +125,8 @@
         <div class="fdc-gmail-compose-titlebar">
             <span id="fdc-gmail-compose-title">{% if defaults.reply_uid %}Reply{% else %}New message{% endif %}</span>
             <div>
-                <button type="button" id="fdc-gmail-compose-minbtn" title="Minimize">&#8722;</button>
-                <a class="text-reset" style="text-decoration:none" href="{{ url_for('email.inbox', account_id=active_account_id) }}" title="Close">&times;</a>
+                <button type="button" id="fdc-gmail-compose-minbtn" title="{{ te('Minimize') }}">&#8722;</button>
+                <a class="text-reset" style="text-decoration:none" href="{{ url_for('email.inbox', account_id=active_account_id) }}" title="{{ te('Close') }}">&times;</a>
             </div>
         </div>
         <div class="fdc-gmail-compose-body">
@@ -137,8 +137,8 @@
                 <input type="hidden" name="body_format" id="fdc-compose-body-format" value="{{ defaults.get('body_format', 'html') }}">
                 <input type="hidden" name="body" id="fdc-compose-body-hidden" value="">
                 <div class="fdc-send-from-row">
-                    <label for="fdc-compose-account">From</label>
-                    <select id="fdc-compose-account" class="form-control form-control-sm" aria-label="Send from mailbox">
+                    <label for="fdc-compose-account">{{ te('From') }}</label>
+                    <select id="fdc-compose-account" class="form-control form-control-sm" aria-label="{{ te('Send from mailbox') }}">
                         {% for a in accounts %}
                             <option value="{{ a.id }}"
                                     data-send-url="{{ url_for('email.send_mail', account_id=a.id) }}{% if defaults.reply_uid %}?reply={{ defaults.reply_uid }}{% endif %}"
@@ -146,25 +146,25 @@
                         {% endfor %}
                     </select>
                 </div>
-                <input type="text" class="form-control fdc-gmail-compose-field" name="to" id="fdc-compose-to" placeholder="To" required value="{{ defaults.to }}">
-                <input type="text" class="form-control fdc-gmail-compose-field" name="subject" id="fdc-compose-subject" placeholder="Subject" required value="{{ defaults.subject }}">
+                <input type="text" class="form-control fdc-gmail-compose-field" name="to" id="fdc-compose-to" placeholder="{{ te('To') }}" required value="{{ defaults.to }}">
+                <input type="text" class="form-control fdc-gmail-compose-field" name="subject" id="fdc-compose-subject" placeholder="{{ te('Subject') }}" required value="{{ defaults.subject }}">
                 <div class="fdc-gmail-compose-toolbar">
-                    <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
-                    <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
-                    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
-                    <button type="button" data-cmd="insertUnorderedList" title="Bullet list"><i class="fas fa-list-ul"></i></button>
-                    <button type="button" data-cmd="insertLineBreak" title="Line break">&#182;</button>
+                    <button type="button" data-cmd="bold" title="{{ te('Bold') }}"><b>B</b></button>
+                    <button type="button" data-cmd="italic" title="{{ te('Italic') }}"><i>I</i></button>
+                    <button type="button" data-cmd="underline" title="{{ te('Underline') }}"><u>U</u></button>
+                    <button type="button" data-cmd="insertUnorderedList" title="{{ te('Bullet list') }}"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" data-cmd="insertLineBreak" title="{{ te('Line break') }}">&#182;</button>
                 </div>
                 <div class="fdc-send-attach">
                     <label class="btn btn-light btn-sm border mb-0"><i class="fas fa-paperclip"></i> Attach files
                         <input type="file" name="attachments" id="fdc-compose-files" multiple class="d-none" tabindex="-1">
                     </label>
                     <div id="fdc-compose-file-list" class="mt-2"></div>
-                    <div class="small text-muted mt-1" style="font-size:0.72rem;">Up to 12 files, 15 MB total</div>
+                    <div class="small text-muted mt-1" style="font-size:0.72rem;">{{ te('Up to 12 files, 15 MB total') }}</div>
                 </div>
                 <div id="fdc-compose-editor" class="fdc-compose-editor" contenteditable="true" role="textbox" aria-multiline="true"></div>
                 <div class="fdc-gmail-compose-footer d-flex justify-content-between align-items-center flex-wrap">
-                    <a class="btn btn-light btn-sm border" href="{{ url_for('email.inbox', account_id=active_account_id) }}">Discard</a>
+                    <a class="btn btn-light btn-sm border" href="{{ url_for('email.inbox', account_id=active_account_id) }}">{{ te('Discard') }}</a>
                     <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane mr-1"></i> Send</button>
                 </div>
             </form>

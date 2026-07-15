@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FDC Toolkit — Sign in</title>
+  <title>{{ _('login.title') }}</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -53,7 +53,20 @@
       letter-spacing: 0.02em;
     }
 
-    .login-topbar-brand img { height: 28px; width: auto; }
+    .login-topbar-brand img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .login-topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .login-page .fdc-lang-btn { color: rgba(232, 244, 253, 0.75); }
+    .login-page .fdc-lang-btn.active { color: #fff; background: rgba(0, 212, 255, 0.25); }
 
     .login-main {
       flex: 1;
@@ -328,41 +341,44 @@
   <header class="login-topbar">
     <div class="login-topbar-brand">
       <img src="/static/icons/home.gif" alt="">
-      <span>FDC Toolkit</span>
+      <span>{{ _('login.brand') }}</span>
     </div>
-    <a href="{{ url_for('auth.login') }}" class="small" style="opacity:0.85;"><i class="fas fa-redo-alt mr-1"></i>Refresh</a>
+    <div class="login-topbar-actions">
+      {% include '_lang_switch.html' %}
+      <a href="{{ url_for('auth.login') }}" class="small" style="opacity:0.85;"><i class="fas fa-redo-alt mr-1"></i>{{ _('login.refresh') }}</a>
+    </div>
   </header>
 
   <main class="login-main">
     <div class="login-hero">
       <div class="login-hero-mark" aria-hidden="true">🀅</div>
-      <h1 class="login-hero-title">FDC V8</h1>
+      <h1 class="login-hero-title">{{ te('FDC V8') }}</h1>
     </div>
 
     <div class="login-card">
       <form method="POST" action="{{ url_for('auth.login') }}">
         <div class="form-group">
-          <label for="username"><i class="fas fa-user mr-1"></i>Username</label>
+          <label for="username"><i class="fas fa-user mr-1"></i>{{ _('login.username') }}</label>
           <input type="text" class="form-control" id="username" name="username" required autocomplete="username">
         </div>
         <div class="form-group">
-          <label for="password"><i class="fas fa-lock mr-1"></i>Password</label>
+          <label for="password"><i class="fas fa-lock mr-1"></i>{{ _('login.password') }}</label>
           <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
         </div>
         <div class="form-group form-check mb-2">
           <input type="checkbox" class="form-check-input" id="remember" name="remember">
-          <label class="form-check-label" for="remember">Remember me on this device</label>
+          <label class="form-check-label" for="remember">{{ _('login.remember') }}</label>
         </div>
         {% if turnstile_site_key %}
         <div class="form-group d-flex justify-content-center mb-2">
           <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark"></div>
         </div>
         {% endif %}
-        <button type="submit" class="login-btn-primary">Sign in</button>
+        <button type="submit" class="login-btn-primary">{{ _('login.button') }}</button>
       </form>
 
       <div class="login-forgot-wrap">
-        <a href="#" class="btn btn-link" data-toggle="modal" data-target="#resetPasswordModal">Forgot password?</a>
+        <a href="#" class="btn btn-link" data-toggle="modal" data-target="#resetPasswordModal">{{ _('login.forgot') }}</a>
       </div>
 
       {% with messages = get_flashed_messages() %}
@@ -373,21 +389,21 @@
     </div>
 
     {% if location and location.status == 'success' %}
-    <section class="login-map-section" aria-label="Approximate location">
+    <section class="login-map-section" aria-label="{{ te('Approximate location') }}">
       <div class="login-map-card">
-        <h3><i class="fas fa-location-dot mr-2"></i>Session location</h3>
+        <h3><i class="fas fa-location-dot mr-2"></i>{{ te('Session location') }}</h3>
         <p class="login-meta mb-2">
-          <strong>IP</strong> {{ client_ip }}
+          <strong>{{ te('IP') }}</strong> {{ client_ip }}
           &nbsp;·&nbsp;
           <strong>{{ location.city }}</strong>, {{ location.regionName }}, {{ location.country }}
           <br>
-          <strong>Lat</strong> {{ location.lat }} &nbsp; <strong>Lon</strong> {{ location.lon }}
+          <strong>{{ te('Lat') }}</strong> {{ location.lat }} &nbsp; <strong>{{ te('Lon') }}</strong> {{ location.lon }}
         </p>
         <div id="map"></div>
       </div>
     </section>
     {% else %}
-    <p class="login-meta mt-4">Location lookup unavailable.</p>
+    <p class="login-meta mt-4">{{ te('Location lookup unavailable.') }}</p>
     {% endif %}
   </main>
 
@@ -396,30 +412,30 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="resetPasswordModalLabel">Reset password</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <h5 class="modal-title" id="resetPasswordModalLabel">{{ _('login.reset') }}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="{{ _('common.close') }}">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
           <form id="resetPasswordForm">
             <div class="form-group">
-              <label for="resetIdentifier">Username or email</label>
+              <label for="resetIdentifier">{{ te('Username or email') }}</label>
               <input type="text" class="form-control" id="resetIdentifier" name="identifier" required>
-              <small class="form-text text-muted">We will email a reset link if the account exists.</small>
+              <small class="form-text text-muted">{{ te('We will email a reset link if the account exists.') }}</small>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Send reset link</button>
+            <button type="submit" class="btn btn-primary btn-block">{{ te('Send reset link') }}</button>
           </form>
         </div>
       </div>
     </div>
   </div>
 
-  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@joshwi?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Josh Williams</a> on <a href="https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Unsplash</a> · June 3, 2026</p>
+  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@joshwi?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">{{ te('Josh Williams') }}</a> on <a href="https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">{{ te('Unsplash') }}</a> · June 3, 2026</p>
 
   <footer class="login-footer">
     <img src="/static/icons/giraffe.ico" alt="">
-    <span>Giraffie — Powered by FlamingYeti</span>
+    <span>{{ te('Giraffie — Powered by FlamingYeti') }}</span>
   </footer>
 
   <script>
@@ -480,5 +496,6 @@
         });
     });
   </script>
+  {% include '_i18n_client.html' %}
 </body>
 </html>

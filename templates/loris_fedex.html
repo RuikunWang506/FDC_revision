@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>洛瑞丝庄园</title>
+    <title>{{ _('page.loris_fedex.title') }}</title>
     
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -79,12 +79,257 @@
             background-color: #f8f9fa;
             font-weight: bold;
         }
+        .loris-past-orders-sidebar {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            width: 340px;
+            height: calc(100vh - 56px);
+            background: #fff;
+            border-right: 1px solid #dee2e6;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
+            z-index: 1020;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            font-size: 1rem;
+        }
+        .loris-past-orders-sidebar.closed {
+            transform: translateX(-340px);
+        }
+        .loris-past-orders-sidebar .sidebar-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #0d6efd, #20c997);
+            color: #fff;
+        }
+        .loris-past-orders-sidebar .sidebar-header h5 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .loris-past-orders-sidebar .sidebar-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        .loris-past-orders-sidebar .sidebar-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+        .loris-past-orders-sidebar .customer-quicklink {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .loris-past-orders-sidebar table {
+            font-size: 1rem;
+        }
+        .loris-past-orders-sidebar th,
+        .loris-past-orders-sidebar td {
+            padding: 8px 6px;
+            vertical-align: middle;
+        }
+        .loris-past-orders-sidebar .order-link {
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+        .loris-past-orders-sidebar .orders-loading,
+        .loris-past-orders-sidebar .orders-empty,
+        .loris-past-orders-sidebar .orders-error {
+            font-size: 1.05rem;
+            color: #6c757d;
+            text-align: center;
+            padding: 16px 8px;
+        }
+        .loris-past-orders-sidebar .orders-error {
+            color: #dc3545;
+        }
+        .loris-past-orders-sidebar .load-more-wrap {
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+            margin-top: 10px;
+        }
+        .loris-past-orders-sidebar .load-more-wrap .btn {
+            font-size: 1rem;
+            padding: 0.5rem 0.75rem;
+        }
+        #lorisSidebarToggleBtn {
+            position: fixed;
+            top: 68px;
+            left: 12px;
+            z-index: 1030;
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 50%;
+            background: #0d6efd;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: left 0.3s ease, background-color 0.2s ease;
+        }
+        #lorisSidebarToggleBtn:hover {
+            background: #0b5ed7;
+        }
+        body.loris-sidebar-open #lorisSidebarToggleBtn {
+            left: 352px;
+        }
+        .loris-main-content {
+            transition: margin-left 0.3s ease;
+        }
+        body.loris-sidebar-open .loris-main-content {
+            margin-left: 340px;
+        }
+        @media (max-width: 991px) {
+            .loris-past-orders-sidebar {
+                transform: translateX(-340px);
+            }
+            .loris-past-orders-sidebar.open {
+                transform: translateX(0);
+            }
+            body.loris-sidebar-open .loris-main-content {
+                margin-left: 0;
+            }
+            body.loris-sidebar-open #lorisSidebarToggleBtn {
+                left: 352px;
+            }
+        }
+        .upc500-table-wrap {
+            max-height: 520px;
+            overflow: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+        }
+        .upc500-table-wrap table {
+            margin-bottom: 0;
+        }
+        .upc500-table-wrap thead th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 1;
+        }
+        .upc500-table-wrap tr.row-unmatched td {
+            background-color: #fff8e1;
+        }
+        .upc500-table-wrap tr.row-highlight td {
+            background-color: #cfe2ff !important;
+            animation: upc500-flash 1.5s ease;
+        }
+        @keyframes upc500-flash {
+            0%, 100% { background-color: #cfe2ff; }
+            50% { background-color: #9ec5fe; }
+        }
+        .upc500-sku-input {
+            min-width: 140px;
+            border: 1px solid transparent;
+            background: transparent;
+            width: 100%;
+            padding: 4px 6px;
+        }
+        .upc500-sku-input:focus {
+            border-color: #86b7fe;
+            background: #fff;
+            outline: none;
+        }
+        .upc500-sku-input.dirty {
+            border-color: #ffc107;
+            background: #fffdf5;
+        }
+        .upc500-source-auto {
+            display: inline-block;
+            padding: 0.1rem 0.45rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: lowercase;
+            color: #6f42c1;
+            background: #f3ebff;
+            border: 1px solid #d6bcfa;
+        }
+        .upc500-table-wrap tr.row-work-start td {
+            border-top: 3px solid #6f42c1;
+        }
+        .upc500-table-wrap tr.row-work-start td:first-child::before {
+            content: '▶ ';
+            color: #6f42c1;
+        }
+        .otb-upload-box {
+            border-width: 2px;
+        }
+        .otb-upload-box .card-header {
+            font-weight: 600;
+        }
+        .otb-step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 0.35rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .otb-upload-box .drop-zone {
+            min-height: 160px;
+            padding: 1rem;
+        }
+        .otb-upload-box .drop-zone h5 {
+            font-size: 1rem;
+            margin-bottom: 0.35rem;
+        }
     </style>
 </head>
-<body>
+<body class="loris-sidebar-open">
     <!-- Navigation -->
     {% include 'navbar.html' %}
 
+    <button id="lorisSidebarToggleBtn" type="button" aria-label="Toggle Loris past orders sidebar">
+        <i class="fas fa-history"></i>
+    </button>
+
+    <aside id="lorisPastOrdersSidebar" class="loris-past-orders-sidebar">
+        <div class="sidebar-header">
+            <h5><i class="fas fa-receipt"></i> Loris Past Orders</h5>
+            <div class="sidebar-subtitle" id="lorisPastOrdersSubtitle">Loading customer orders…</div>
+        </div>
+        <div class="sidebar-body">
+            <a href="{{ url_for('customer.customer_home', search_id='00868') }}" class="customer-quicklink" id="lorisCustomerQuicklink">
+                <i class="fas fa-external-link-alt"></i> Open Customer Page (00868)
+            </a>
+            <div id="lorisPastOrdersStatus" class="orders-loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading orders…
+            </div>
+            <div id="lorisPastOrdersTableWrap" style="display: none;">
+                <table class="table table-striped table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ te('Date') }}</th>
+                            <th>{{ te('Order') }}</th>
+                            <th>{{ te('Total') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lorisPastOrdersBody"></tbody>
+                </table>
+            </div>
+            <div id="lorisPastOrdersLoadMoreWrap" class="load-more-wrap" style="display: none;">
+                <button type="button" id="lorisPastOrdersLoadMoreBtn" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-history"></i> Load 6 more months
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <div class="loris-main-content">
     <div class="container mt-4">
         <div class="row mb-2">
             <div class="col-12">
@@ -111,45 +356,45 @@
                     <form method="post" action="{{ url_for('lori_automation.loris_fedex') }}" enctype="multipart/form-data">
                         <div class="textarea-container" style="display: flex; gap: 10px;">
                             <div class="form-group">
-                                <label for="sku">SKU:</label><br>
-                                <label for="sku">N1237-S or N1237 S</label>
+                                <label for="sku">{{ te('SKU:') }}</label><br>
+                                <label for="sku">{{ te('N1237-S or N1237 S') }}</label>
                                 <textarea id="sku" class="form-control" name="sku" rows="14">{{ sku }}</textarea>
                             </div>
                             <div class="form-group">
-                                <label for="barcode">Barcode:</label><br>
+                                <label for="barcode">{{ te('Barcode:') }}</label><br>
                                 <label for="barcode">
-                                    <a href="https://eancheck.com/" target="_blank">Check</a>
+                                    <a href="https://eancheck.com/" target="_blank">{{ te('Check') }}</a>
                                 </label>
                                 <textarea id="barcode" class="form-control" name="barcode" rows="14">{{ barcode }}</textarea>
                             </div>
                             <div class="form-group">
-                                <label for="quantity">Quantity:</label><br>
+                                <label for="quantity">{{ te('Quantity:') }}</label><br>
                                 <label for="quantity">100</label>
                                 <textarea id="quantity" class="form-control" name="quantity" rows="14">{{ quantity }}</textarea>
                             </div>
                             <div class="form-group" style="flex: 2;">
-                                <label for="input_data">Paste your list here:</label><br>
-                                <label for="input_data">Tab-separated values (SKU ⇥ Barcode ⇥ Quantity)</label>
+                                <label for="input_data">{{ te('Paste your list here:') }}</label><br>
+                                <label for="input_data">{{ te('Tab-separated values (SKU ⇥ Barcode ⇥ Quantity)') }}</label>
                                 <textarea id="input_data" class="form-control" name="input_data" rows="14">{{ input_data }}</textarea>
                             </div>
                         </div>
                         <div class="buttons mt-3">
-                            <button type="submit" name="show_table" class="btn btn-secondary btn-lg large-button">Show Table</button>
-                            <button type="submit" name="submit_data" class="btn btn-primary btn-lg large-button">Submit</button>
-                            <button type="reset" class="btn btn-danger btn-lg large-button">Reset</button>
+                            <button type="submit" name="show_table" class="btn btn-secondary btn-lg large-button">{{ te('Show Table') }}</button>
+                            <button type="submit" name="submit_data" class="btn btn-primary btn-lg large-button">{{ te('Submit') }}</button>
+                            <button type="reset" class="btn btn-danger btn-lg large-button">{{ te('Reset') }}</button>
 
                         </div>
                     </form>
                     
                     {% if table_data %}
                     <div class="table-container">
-                        <h3>Data Preview</h3>
+                        <h3>{{ te('Data Preview') }}</h3>
                         <table id="dataTable" class="table table-bordered table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th>SKU</th>
-                                    <th>Barcode</th>
-                                    <th>Quantity</th>
+                                    <th>{{ te('SKU') }}</th>
+                                    <th>{{ te('Barcode') }}</th>
+                                    <th>{{ te('Quantity') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -163,7 +408,7 @@
                             </tbody>
                             <tfoot>
                                 <tr class="total-row">
-                                    <td><strong>Total</strong></td>
+                                    <td><strong>{{ te('Total') }}</strong></td>
                                     <td><strong>{{ table_data|length }} items</strong></td>
                                     <td><strong>{{ table_data|sum(attribute=2) }}</strong></td>
                                 </tr>
@@ -175,10 +420,10 @@
                     
                     {% if loris_stickers_ready and input_data %}
                     <div class="text-center" style="padding-top: 50px;">
-                        <h2>View Labels</h2>
+                        <h2>{{ te('View Labels') }}</h2>
                         <div class="d-flex flex-wrap justify-content-center" style="padding-top: 10px;">
-                            <button type="button" class="btn btn-primary btn-lg m-2" onclick="openLorisStickerPdf('30_stickers')">View 30 Stickers Version</button>
-                            <button type="button" class="btn btn-secondary btn-lg m-2" onclick="openLorisStickerPdf('exact_stickers')">View Exact Quantity Version</button>
+                            <button type="button" class="btn btn-primary btn-lg m-2" onclick="openLorisStickerPdf('30_stickers')">{{ te('View 30 Stickers Version') }}</button>
+                            <button type="button" class="btn btn-secondary btn-lg m-2" onclick="openLorisStickerPdf('exact_stickers')">{{ te('View Exact Quantity Version') }}</button>
                         </div>
                     </div>
                     <textarea id="lorisStickerInputData" class="d-none">{{ input_data }}</textarea>
@@ -187,35 +432,113 @@
             </div>
         </div>
 
-        <!-- OTB Section -->
+        <!-- New 500 UPC Section -->
         <div class="card mt-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-purple text-white" style="background: linear-gradient(135deg, #6f42c1, #9b59b6);">
                 <h4 class="mb-0">
-                    <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#otbSection" aria-expanded="false" aria-controls="otbSection">
-                        <i class="fas fa-file-excel"></i> OTB (Open to Buy) 处理
+                    <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#upc500Section" aria-expanded="false" aria-controls="upc500Section">
+                        <i class="fas fa-barcode"></i> New 500 UPC
                         <i class="fas fa-chevron-down float-end mt-1"></i>
                     </button>
                 </h4>
             </div>
-            <div class="collapse" id="otbSection">
+            <div class="collapse" id="upc500Section">
                 <div class="card-body">
-                    <!-- OTB File Upload -->
-                    <div class="row mb-4">
-                        <div class="col-md-8">
-                            <div class="card">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">上传 OTB 文件</h5>
+                    <div id="upc500FileStatus" class="alert alert-secondary py-2 mb-3">
+                        <i class="fas fa-spinner fa-spin"></i> Checking Dropbox for <code>Copy of 500 UPC.xlsx</code>…
+                    </div>
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-md-5">
+                            <label for="upc500SearchInput" class="form-label mb-1">Search UPC / SKU</label>
+                            <input type="text" id="upc500SearchInput" class="form-control" placeholder="Search…">
+                        </div>
+                        <div class="col-md-7 d-flex flex-wrap gap-2">
+                            <button type="button" id="upc500SearchBtn" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <button type="button" id="upc500ClearSearchBtn" class="btn btn-outline-secondary">
+                                Clear
+                            </button>
+                            <button type="button" id="upc500AddNewBtn" class="btn btn-success" disabled>
+                                <i class="fas fa-plus"></i> Add New SKU
+                            </button>
+                            <button type="button" id="upc500SaveBtn" class="btn btn-warning" disabled>
+                                <i class="fas fa-save"></i> Save to Excel
+                            </button>
+                            <button type="button" id="upc500ReloadBtn" class="btn btn-outline-primary">
+                                <i class="fas fa-sync"></i> Reload
+                            </button>
+                        </div>
+                    </div>
+                    <div id="upc500AddNewBar" class="alert alert-info py-2 mb-3" style="display: none;">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <strong>Next open UPC (after row 1300):</strong>
+                                <span id="upc500NextUpc" class="ms-1 font-monospace">—</span>
+                                <span class="text-muted small">(row <span id="upc500NextRow">—</span>)</span>
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" id="upc500NewSkuInput" class="form-control" placeholder="Enter new SKU for next unmatched UPC">
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" id="upc500AssignSkuBtn" class="btn btn-success w-100">
+                                    <i class="fas fa-check"></i> Assign SKU
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="upc500Stats" class="upc500-stats mb-2"></p>
+                    <div class="upc500-table-wrap">
+                        <table class="table table-sm table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 70px;">Row</th>
+                                    <th style="width: 180px;">UPC</th>
+                                    <th>SKU</th>
+                                    <th style="width: 70px;">Source</th>
+                                </tr>
+                            </thead>
+                            <tbody id="upc500TableBody">
+                                <tr><td colspan="4" class="text-center text-muted py-4">Load the section to view data.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OTB 上传管理 -->
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#otbUploadSection" aria-expanded="false" aria-controls="otbUploadSection">
+                        <i class="fas fa-cloud-upload-alt"></i> OTB 上传管理
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </h4>
+            </div>
+            <div class="collapse" id="otbUploadSection">
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Three upload types — each box has a different purpose. Upload the matching Excel file to the labeled box.
+                    </p>
+                    <div class="row g-4">
+                        <!-- 1. OTB -->
+                        <div class="col-lg-4">
+                            <div class="card h-100 otb-upload-box border-info">
+                                <div class="card-header bg-info text-white">
+                                    <span class="otb-step-badge">1</span> OTB
                                 </div>
-                                <div class="card-body">
-                                    <div id="otb-drop-zone" class="drop-zone">
-                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-info"></i>
-                                        <h4>拖拽 Excel 文件到这里</h4>
-                                        <p class="text-muted">支持 .xlsx 格式</p>
-                                        <p class="small text-muted">或点击选择文件</p>
+                                <div class="card-body d-flex flex-column">
+                                    <p class="small text-muted mb-2">Vendor OTB price list → updates offered prices in the database.</p>
+                                    <div id="otb-drop-zone" class="drop-zone flex-grow-1">
+                                        <i class="fas fa-file-excel fa-2x mb-2 text-info"></i>
+                                        <h5>Upload OTB Excel</h5>
+                                        <p class="text-muted small mb-0">.xlsx · multiple files OK</p>
                                     </div>
                                     <input type="file" id="upload-otb-input" class="d-none" accept=".xlsx" multiple>
                                     <div id="otb-file-list" class="file-list mt-2">
-                                        <ul class="list-group" id="selected-otb-files"></ul>
+                                        <ul class="list-group list-group-flush" id="selected-otb-files"></ul>
                                     </div>
                                     <div class="d-grid mt-2">
                                         <button id="process-otb-btn" class="btn btn-info" style="display: none;">
@@ -225,51 +548,130 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <!-- SKU Query Section -->
-                            <div class="card">
-                                <div class="card-header bg-primary text-white">
-                                    <h5 class="mb-0">Styles</h5>
+
+                        <!-- 2. Confirmed OTB -->
+                        <div class="col-lg-4">
+                            <div class="card h-100 otb-upload-box border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <span class="otb-step-badge">2</span> Confirmed OTB
                                 </div>
-                                <div class="card-body">
-                                    <div class="form-group">
-                                        <label for="sku-input">输入Styles列表 (用逗号或换行分隔):</label>
-                                        <textarea id="sku-input" class="form-control" rows="3" placeholder="输入Styles..."></textarea>
+                                <div class="card-body d-flex flex-column">
+                                    <p class="small text-muted mb-2">Confirmed OTB → Setup Sheet. Exports <strong>yellow-highlighted</strong> colors (col M), qty from col L.</p>
+                                    <div id="otb-setup-drop-zone" class="drop-zone flex-grow-1">
+                                        <i class="fas fa-file-excel fa-2x mb-2 text-warning"></i>
+                                        <h5>Upload Confirmed OTB</h5>
+                                        <p class="text-muted small mb-0">e.g. Lori_OTB_output … Confirm.xlsx</p>
                                     </div>
-                                    <div class="text-center mt-3">
-                                        <button id="process-sku-btn" class="btn btn-primary">
-                                            <i class="fas fa-search"></i> 查询Styles
+                                    <input type="file" id="otb-setup-file-input" class="d-none" accept=".xlsx">
+                                    <div id="otb-setup-file-list" class="mt-2">
+                                        <ul class="list-group list-group-flush" id="selected-otb-setup-file"></ul>
+                                    </div>
+                                    <div class="d-grid mt-2">
+                                        <button id="export-setup-sheet-btn" class="btn btn-warning" style="display: none;">
+                                            <i class="fas fa-file-excel"></i> Generate Setup Sheet
                                         </button>
                                     </div>
+                                    <div id="otb-setup-result" class="alert py-2 small mt-2 mb-0" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Final Template -->
+                        <div class="col-lg-4">
+                            <div class="card h-100 otb-upload-box border-success">
+                                <div class="card-header bg-success text-white">
+                                    <span class="otb-step-badge">3</span> Final Template
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <p class="small text-muted mb-2">Edited Setup Sheet back → saves English Description &amp; Color as Loris defaults.</p>
+                                    <div id="otb-final-drop-zone" class="drop-zone flex-grow-1">
+                                        <i class="fas fa-file-excel fa-2x mb-2 text-success"></i>
+                                        <h5>Upload Final Template</h5>
+                                        <p class="text-muted small mb-0">Item Add Template after edits</p>
+                                    </div>
+                                    <input type="file" id="otb-final-file-input" class="d-none" accept=".xlsx">
+                                    <div id="otb-final-file-list" class="mt-2">
+                                        <ul class="list-group list-group-flush" id="selected-otb-final-file"></ul>
+                                    </div>
+                                    <div class="d-grid mt-2">
+                                        <button id="import-setup-final-btn" class="btn btn-success" style="display: none;">
+                                            <i class="fas fa-save"></i> Import Final Version
+                                        </button>
+                                    </div>
+                                    <div id="otb-final-result" class="alert py-2 small mt-2 mb-0" style="display: none;"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div id="sku-results" class="mt-4" style="display: none;">
-                        <h5>查询结果:</h5>
-                        <div id="sku-output" class="mt-3"></div>
-                    </div>
-                    
-                    <!-- Database Management Section -->
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-secondary text-white">
-                                    <h5 class="mb-0">数据库管理</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="d-grid gap-2">
-                                        <button id="download-db-btn" class="btn btn-outline-secondary">
-                                            <i class="fas fa-download"></i> 下载数据库
-                                        </button>
-                                        <button id="upload-db-btn" class="btn btn-outline-secondary">
-                                            <i class="fas fa-upload"></i> 上传数据库
-                                        </button>
+                </div>
+            </div>
+        </div>
 
-                                        <input type="file" id="upload-db-input" accept=".xlsx,.xls" style="display: none;">
-                                    </div>
+        <!-- OTB Lookup Section -->
+        <div class="card mt-4">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #0d6efd, #6610f2);">
+                <h4 class="mb-0">
+                    <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#otbLookupSection" aria-expanded="false" aria-controls="otbLookupSection">
+                        <i class="fas fa-search"></i> OTB Lookup
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </h4>
+            </div>
+            <div class="collapse" id="otbLookupSection">
+                <div class="card-body">
+                    <!-- SKU / UPC Lookup -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-barcode"></i> SKU / UPC Lookup</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-8">
+                                    <label for="otbLookupInput" class="form-label mb-1">Search SKU, UPC, or Style</label>
+                                    <input type="text" id="otbLookupInput" class="form-control" placeholder="e.g. L1850-BK, L1850, or 755833105278">
                                 </div>
+                                <div class="col-md-4 d-flex gap-2">
+                                    <button type="button" id="otbLookupSearchBtn" class="btn btn-primary flex-grow-1">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                    <button type="button" id="otbLookupRecentBtn" class="btn btn-outline-secondary">
+                                        Last 50
+                                    </button>
+                                </div>
+                            </div>
+                            <p id="otbLookupStatus" class="text-muted small mt-2 mb-2">Open this section to load the last 50 purchased SKUs.</p>
+                            <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" id="otbLookupHideUnpurchased" checked>
+                                    <label class="form-check-label small" for="otbLookupHideUnpurchased">Hide unpurchased SKUs</label>
+                                </div>
+                                <button type="button" id="otbLookupDownloadBtn" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download"></i> Download All
+                                </button>
+                                <button type="button" id="otbLookupUploadBtn" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-upload"></i> Upload Excel
+                                </button>
+                                <input type="file" id="otbLookupUploadInput" accept=".xlsx,.xls" class="d-none">
+                                <span class="text-muted small">Two sheets: Styles (OTB/desc) + SKUs (UPC/color) · upload replaces matching rows</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>UPC</th>
+                                            <th>Color</th>
+                                            <th>Style</th>
+                                            <th>Description</th>
+                                            <th>fdc_desc</th>
+                                            <th>OTB Offered</th>
+                                            <th>Purchase History</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="otbLookupTableBody">
+                                        <tr><td colspan="8" class="text-center text-muted py-4">No data loaded.</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -291,8 +693,8 @@
                             
                             <div id="pdf-drop-zone" class="drop-zone">
                                 <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
-                                <h4>manual drop files</h4>
-                                <p>or</p>
+                                <h4>{{ te('manual drop files') }}</h4>
+                                <p>{{ te('or') }}</p>
                                 <input type="file" id="pdf-file-input" multiple accept=".pdf" class="d-none">
                                 <button class="btn btn-primary" onclick="document.getElementById('pdf-file-input').click()">
                                     open files dialog
@@ -302,7 +704,7 @@
                             
 
                             <div id="pdf-file-list" class="mt-3">
-                                <h5>Selected PDF Files:</h5>
+                                <h5>{{ te('Selected PDF Files:') }}</h5>
                                 <ul class="list-group" id="selected-pdf-files">
                                 </ul>
                             </div>
@@ -317,14 +719,14 @@
                                     <button id="fetch-email-btn" class="btn btn-info btn-lg">
                                         <i class="fas fa-envelope"></i> Fetch PDF files from email (last 1 month)
                                     </button>
-                                    <p class="small text-muted mt-2">Automatically fetch PDF attachments from MI9_Merchant@lorisgifts.com in the last 1 month</p>
+                                    <p class="small text-muted mt-2">{{ te('Automatically fetch PDF attachments from MI9_Merchant@lorisgifts.com in the last 1 month') }}</p>
                                 </div>
                                 {% if session.username == 'yeti' %}
                                 <div class="border-top pt-3">
                                     <button id="delete-pdf-data-btn" class="btn btn-danger btn-lg">
                                         <i class="fas fa-trash-alt"></i> Delete All PDF Files & Orders
                                     </button>
-                                    <p class="small text-muted mt-2">Remove all downloaded PDF files and delete all orders from database</p>
+                                    <p class="small text-muted mt-2">{{ te('Remove all downloaded PDF files and delete all orders from database') }}</p>
                                 </div>
                                 {% endif %}
                             </div>
@@ -356,21 +758,21 @@
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="addStoreModalLabel">Add New Store</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <h5 class="modal-title" id="addStoreModalLabel">{{ te('Add New Store') }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                             </div>
                             <div class="modal-body">
                                 <form id="addStoreForm">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="add-store-number" class="form-label">Store Number</label>
+                                                <label for="add-store-number" class="form-label">{{ te('Store Number') }}</label>
                                                 <input type="text" class="form-control" id="add-store-number" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="add-store-name" class="form-label">Store Name</label>
+                                                <label for="add-store-name" class="form-label">{{ te('Store Name') }}</label>
                                                 <input type="text" class="form-control" id="add-store-name" required>
                                             </div>
                                         </div>
@@ -378,45 +780,45 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="add-company" class="form-label">Company</label>
+                                                    <label for="add-company" class="form-label">{{ te('Company') }}</label>
                                                     <input type="text" class="form-control" id="add-company">
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="add-phone" class="form-label">Phone</label>
+                                                    <label for="add-phone" class="form-label">{{ te('Phone') }}</label>
                                                     <input type="text" class="form-control" id="add-phone">
                                                 </div>
                                             </div>
                                         </div>
                                     <div class="mb-3">
-                                        <label for="add-address1" class="form-label">Address Line 1</label>
+                                        <label for="add-address1" class="form-label">{{ te('Address Line 1') }}</label>
                                         <input type="text" class="form-control" id="add-address1" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="add-address2" class="form-label">Address Line 2</label>
+                                        <label for="add-address2" class="form-label">{{ te('Address Line 2') }}</label>
                                         <input type="text" class="form-control" id="add-address2">
                                     </div>
                                     <div class="mb-3">
-                                        <label for="add-address3" class="form-label">Address Line 3</label>
+                                        <label for="add-address3" class="form-label">{{ te('Address Line 3') }}</label>
                                         <input type="text" class="form-control" id="add-address3">
                                     </div>
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="mb-3">
-                                                <label for="add-city" class="form-label">City</label>
+                                                <label for="add-city" class="form-label">{{ te('City') }}</label>
                                                 <input type="text" class="form-control" id="add-city" required>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="mb-3">
-                                                <label for="add-state" class="form-label">State</label>
+                                                <label for="add-state" class="form-label">{{ te('State') }}</label>
                                                 <input type="text" class="form-control" id="add-state" required>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="mb-3">
-                                                <label for="add-zip-code" class="form-label">Zip Code</label>
+                                                <label for="add-zip-code" class="form-label">{{ te('Zip Code') }}</label>
                                                 <input type="text" class="form-control" id="add-zip-code" required>
                                             </div>
                                         </div>
@@ -424,17 +826,17 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="add-status" class="form-label">Status</label>
+                                                <label for="add-status" class="form-label">{{ te('Status') }}</label>
                                                 <select class="form-control" id="add-status" required>
-                                                    <option value="">Select Status</option>
-                                                    <option value="Active">Active</option>
-                                                    <option value="Dead">Dead</option>
+                                                    <option value="">{{ te('Select Status') }}</option>
+                                                    <option value="Active">{{ te('Active') }}</option>
+                                                    <option value="Dead">{{ te('Dead') }}</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="add-memo" class="form-label">Memo</label>
+                                                <label for="add-memo" class="form-label">{{ te('Memo') }}</label>
                                                 <input type="text" class="form-control" id="add-memo">
                                             </div>
                                         </div>
@@ -442,8 +844,8 @@
                                 </form>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="add-store-btn">Add Store</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Cancel') }}</button>
+                                <button type="button" class="btn btn-primary" id="add-store-btn">{{ te('Add Store') }}</button>
                             </div>
                         </div>
                     </div>
@@ -454,21 +856,21 @@
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="editStoreModalLabel">Edit Store Information</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <h5 class="modal-title" id="editStoreModalLabel">{{ te('Edit Store Information') }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                             </div>
                             <div class="modal-body">
                                 <form id="editStoreForm">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="edit-store-number" class="form-label">Store Number</label>
+                                                <label for="edit-store-number" class="form-label">{{ te('Store Number') }}</label>
                                                 <input type="text" class="form-control" id="edit-store-number" readonly>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="edit-store-name" class="form-label">Store Name</label>
+                                                <label for="edit-store-name" class="form-label">{{ te('Store Name') }}</label>
                                                 <input type="text" class="form-control" id="edit-store-name">
                                             </div>
                                         </div>
@@ -476,45 +878,45 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="edit-company" class="form-label">Company</label>
+                                                    <label for="edit-company" class="form-label">{{ te('Company') }}</label>
                                                     <input type="text" class="form-control" id="edit-company">
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="edit-phone" class="form-label">Phone</label>
+                                                    <label for="edit-phone" class="form-label">{{ te('Phone') }}</label>
                                                     <input type="text" class="form-control" id="edit-phone">
                                                 </div>
                                             </div>
                                         </div>
                                     <div class="mb-3">
-                                        <label for="edit-address1" class="form-label">Address Line 1</label>
+                                        <label for="edit-address1" class="form-label">{{ te('Address Line 1') }}</label>
                                         <input type="text" class="form-control" id="edit-address1">
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-address2" class="form-label">Address Line 2</label>
+                                        <label for="edit-address2" class="form-label">{{ te('Address Line 2') }}</label>
                                         <input type="text" class="form-control" id="edit-address2">
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-address3" class="form-label">Address Line 3</label>
+                                        <label for="edit-address3" class="form-label">{{ te('Address Line 3') }}</label>
                                         <input type="text" class="form-control" id="edit-address3">
                                     </div>
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="mb-3">
-                                                <label for="edit-city" class="form-label">City</label>
+                                                <label for="edit-city" class="form-label">{{ te('City') }}</label>
                                                 <input type="text" class="form-control" id="edit-city">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="mb-3">
-                                                <label for="edit-state" class="form-label">State</label>
+                                                <label for="edit-state" class="form-label">{{ te('State') }}</label>
                                                 <input type="text" class="form-control" id="edit-state">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="mb-3">
-                                                <label for="edit-zip-code" class="form-label">Zip Code</label>
+                                                <label for="edit-zip-code" class="form-label">{{ te('Zip Code') }}</label>
                                                 <input type="text" class="form-control" id="edit-zip-code">
                                             </div>
                                         </div>
@@ -522,17 +924,17 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="edit-status" class="form-label">Status</label>
+                                                <label for="edit-status" class="form-label">{{ te('Status') }}</label>
                                                 <select class="form-control" id="edit-status">
-                                                    <option value="">Select Status</option>
-                                                    <option value="Active">Active</option>
-                                                    <option value="Dead">Dead</option>
+                                                    <option value="">{{ te('Select Status') }}</option>
+                                                    <option value="Active">{{ te('Active') }}</option>
+                                                    <option value="Dead">{{ te('Dead') }}</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="edit-memo" class="form-label">Memo</label>
+                                                <label for="edit-memo" class="form-label">{{ te('Memo') }}</label>
                                                 <input type="text" class="form-control" id="edit-memo">
                                             </div>
                                         </div>
@@ -540,8 +942,8 @@
                                 </form>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="save-store-btn">Save</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Cancel') }}</button>
+                                <button type="button" class="btn btn-primary" id="save-store-btn">{{ te('Save') }}</button>
                             </div>
                         </div>
                     </div>
@@ -553,7 +955,7 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="orderDetailsModalLabel">订单详情</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                             </div>
                             <div class="modal-body">
                                 <div id="order-details-content">
@@ -571,36 +973,648 @@
                 <div id="loading-overlay">
                     <div class="text-center text-white">
                         <div class="spinner-border text-light" role="status">
-                            <span class="sr-only">Loading...</span>
+                            <span class="sr-only">{{ te('Loading...') }}</span>
                         </div>
-                        <p class="mt-3" id="processing-status">Processing...</p>
+                        <p class="mt-3" id="processing-status">{{ te('Processing...') }}</p>
                     </div>
                 </div>
     </div> <!-- Close container -->
+    </div> <!-- Close loris-main-content -->
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Main JavaScript -->
 <script>
+    function formatOrderCurrency(value) {
+        const amount = parseFloat(value || 0);
+        if (Number.isNaN(amount)) return '$0.00';
+        return '$' + amount.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function initLorisPastOrdersSidebar() {
+        const sidebar = document.getElementById('lorisPastOrdersSidebar');
+        const toggleBtn = document.getElementById('lorisSidebarToggleBtn');
+        const statusEl = document.getElementById('lorisPastOrdersStatus');
+        const tableWrap = document.getElementById('lorisPastOrdersTableWrap');
+        const tableBody = document.getElementById('lorisPastOrdersBody');
+        const subtitleEl = document.getElementById('lorisPastOrdersSubtitle');
+        const quicklinkEl = document.getElementById('lorisCustomerQuicklink');
+        const loadMoreWrap = document.getElementById('lorisPastOrdersLoadMoreWrap');
+        const loadMoreBtn = document.getElementById('lorisPastOrdersLoadMoreBtn');
+
+        if (!sidebar || !toggleBtn) return;
+
+        function setSidebarOpen(isOpen) {
+            document.body.classList.toggle('loris-sidebar-open', isOpen);
+            sidebar.classList.toggle('closed', !isOpen);
+            sidebar.classList.toggle('open', isOpen);
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            const isOpen = document.body.classList.contains('loris-sidebar-open');
+            setSidebarOpen(!isOpen);
+        });
+
+        let nextPeriod = 0;
+        let loadedOrderCount = 0;
+        let customerName = 'Loris';
+
+        function renderOrderRows(orders, append) {
+            const rowsHtml = orders.map(order => `
+                <tr>
+                    <td>${order.date || 'N/A'}</td>
+                    <td>
+                        <a class="order-link" href="${order.order_lookup_url}" target="_blank" rel="noopener">
+                            ${order.order_number}
+                        </a>
+                    </td>
+                    <td class="text-end">${formatOrderCurrency(order.total)}</td>
+                </tr>
+            `).join('');
+            if (append) {
+                tableBody.insertAdjacentHTML('beforeend', rowsHtml);
+            } else {
+                tableBody.innerHTML = rowsHtml;
+            }
+        }
+
+        function updateSubtitle(periodLabel) {
+            const periodText = periodLabel ? ` · ${periodLabel}` : '';
+            subtitleEl.textContent = `${customerName} · ${loadedOrderCount} loaded${periodText}`;
+        }
+
+        async function loadLorisPastOrders(periodIndex, append) {
+            const isInitial = !append;
+            if (isInitial) {
+                loadedOrderCount = 0;
+                nextPeriod = 0;
+                statusEl.style.display = 'block';
+                statusEl.className = 'orders-loading';
+                statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading orders…';
+                tableWrap.style.display = 'none';
+                loadMoreWrap.style.display = 'none';
+            } else if (loadMoreBtn) {
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…';
+            }
+
+            try {
+                const response = await fetch(
+                    "{{ url_for('lori_automation.loris_past_orders') }}?period=" + encodeURIComponent(periodIndex),
+                    {
+                        credentials: 'same-origin',
+                        headers: { 'Accept': 'application/json' }
+                    }
+                );
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                if (data.customer_page_url && quicklinkEl) {
+                    quicklinkEl.href = data.customer_page_url;
+                }
+
+                if (data.customer) {
+                    customerName = data.customer.customer_name || data.customer.customer_id || 'Loris';
+                }
+
+                const orders = data.orders || [];
+                loadedOrderCount += orders.length;
+
+                if (isInitial && !orders.length) {
+                    statusEl.className = 'orders-empty';
+                    statusEl.innerHTML = '<i class="fas fa-inbox"></i> No orders in the last 6 months.';
+                    tableWrap.style.display = 'none';
+                    loadMoreWrap.style.display = data.has_more ? 'block' : 'none';
+                    if (data.has_more) {
+                        nextPeriod = data.next_period ?? (periodIndex + 1);
+                    }
+                    updateSubtitle(data.period_label || 'Last 6 months');
+                    return;
+                }
+
+                statusEl.style.display = 'none';
+                tableWrap.style.display = 'block';
+                renderOrderRows(orders, append);
+                updateSubtitle(data.period_label || '');
+
+                if (data.has_more) {
+                    nextPeriod = data.next_period ?? (periodIndex + 1);
+                    loadMoreWrap.style.display = 'block';
+                } else {
+                    loadMoreWrap.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to load Loris past orders:', error);
+                if (isInitial) {
+                    statusEl.className = 'orders-error';
+                    statusEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${error.message}`;
+                    tableWrap.style.display = 'none';
+                    loadMoreWrap.style.display = 'none';
+                } else {
+                    alert('Failed to load more orders: ' + error.message);
+                }
+            } finally {
+                if (loadMoreBtn) {
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.innerHTML = '<i class="fas fa-history"></i> Load 6 more months';
+                }
+            }
+        }
+
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', () => {
+                loadLorisPastOrders(nextPeriod, true);
+            });
+        }
+
+        loadLorisPastOrders(0, false);
+    }
+
+    function initUpc500Section() {
+        const section = document.getElementById('upc500Section');
+        const fileStatus = document.getElementById('upc500FileStatus');
+        const tableBody = document.getElementById('upc500TableBody');
+        const statsEl = document.getElementById('upc500Stats');
+        const searchInput = document.getElementById('upc500SearchInput');
+        const searchBtn = document.getElementById('upc500SearchBtn');
+        const clearSearchBtn = document.getElementById('upc500ClearSearchBtn');
+        const addNewBtn = document.getElementById('upc500AddNewBtn');
+        const saveBtn = document.getElementById('upc500SaveBtn');
+        const reloadBtn = document.getElementById('upc500ReloadBtn');
+        const addNewBar = document.getElementById('upc500AddNewBar');
+        const nextUpcEl = document.getElementById('upc500NextUpc');
+        const nextRowEl = document.getElementById('upc500NextRow');
+        const newSkuInput = document.getElementById('upc500NewSkuInput');
+        const assignSkuBtn = document.getElementById('upc500AssignSkuBtn');
+        const tableWrap = document.querySelector('.upc500-table-wrap');
+
+        if (!section || !tableBody) return;
+
+        let upc500Rows = [];
+        let upc500ByRow = {};
+        const dirtyRows = new Set();
+        let searchQuery = '';
+        let highlightRow = null;
+        let loaded = false;
+        let workStartRow = 1300;
+        let viewportStartRow = null;
+        let scrollToViewportOnRender = false;
+
+        function findNextUnmatched() {
+            for (const item of upc500Rows) {
+                if (item.row <= workStartRow) continue;
+                if (item.upc && !(item.sku || '').trim()) {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        function scrollToRow(rowNum, behavior = 'auto') {
+            const el = document.getElementById(`upc500-row-${rowNum}`);
+            if (!el || !tableWrap) return;
+            const delta = el.getBoundingClientRect().top - tableWrap.getBoundingClientRect().top;
+            tableWrap.scrollTo({ top: tableWrap.scrollTop + delta - 4, behavior });
+        }
+
+        function updateNextUnmatchedUi() {
+            const next = findNextUnmatched();
+            if (next) {
+                nextUpcEl.textContent = next.upc;
+                nextRowEl.textContent = next.row;
+            } else {
+                nextUpcEl.textContent = '—';
+                nextRowEl.textContent = '—';
+            }
+            return next;
+        }
+
+        function updateStats(stats) {
+            if (!stats || !stats.found) {
+                statsEl.textContent = '';
+                return;
+            }
+            statsEl.textContent =
+                `${stats.total} rows · ${stats.matched} matched · ${stats.unmatched} open · working from row ${workStartRow + 1}+ · last saved ${stats.modified || '—'}`;
+        }
+
+        function setFileStatus(type, html) {
+            fileStatus.className = `alert alert-${type} py-2 mb-3`;
+            fileStatus.innerHTML = html;
+        }
+
+        function markDirty(rowNum, inputEl) {
+            dirtyRows.add(rowNum);
+            if (inputEl) inputEl.classList.add('dirty');
+            saveBtn.disabled = false;
+        }
+
+        function getFilteredRows() {
+            const q = searchQuery.trim().toLowerCase();
+            if (!q) return upc500Rows;
+            return upc500Rows.filter(item =>
+                (item.upc || '').toLowerCase().includes(q) ||
+                (item.sku || '').toLowerCase().includes(q) ||
+                (item.source || '').toLowerCase().includes(q) ||
+                String(item.row).includes(q)
+            );
+        }
+
+        function renderUpc500Table() {
+            const rows = getFilteredRows();
+            if (!rows.length) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No matching rows.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = rows.map(item => {
+                const unmatched = item.upc && !(item.sku || '').trim();
+                const rowClass = [
+                    item.row === workStartRow + 1 ? 'row-work-start' : '',
+                    unmatched && item.row > workStartRow ? 'row-unmatched' : '',
+                    highlightRow === item.row ? 'row-highlight' : '',
+                ].filter(Boolean).join(' ');
+                const dirtyClass = dirtyRows.has(item.row) ? 'dirty' : '';
+                const source = (item.source || '').trim();
+                const sourceHtml = source.toLowerCase() === 'auto'
+                    ? '<span class="upc500-source-auto">auto</span>'
+                    : (source ? source.replace(/</g, '&lt;') : '');
+                return `
+                    <tr class="${rowClass}" data-row="${item.row}" id="upc500-row-${item.row}">
+                        <td class="text-muted">${item.row}</td>
+                        <td class="font-monospace">${item.upc || ''}</td>
+                        <td>
+                            <input type="text" class="upc500-sku-input ${dirtyClass}"
+                                data-row="${item.row}" value="${(item.sku || '').replace(/"/g, '&quot;')}">
+                        </td>
+                        <td class="text-center">${sourceHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tableBody.querySelectorAll('.upc500-sku-input').forEach(input => {
+                input.addEventListener('input', () => {
+                    const rowNum = parseInt(input.dataset.row, 10);
+                    const record = upc500ByRow[rowNum];
+                    if (!record) return;
+                    record.sku = input.value.trim();
+                    markDirty(rowNum, input);
+                    updateNextUnmatchedUi();
+                });
+            });
+
+            if (highlightRow) {
+                scrollToRow(highlightRow, 'smooth');
+            } else if (scrollToViewportOnRender && viewportStartRow) {
+                scrollToRow(viewportStartRow, 'auto');
+                scrollToViewportOnRender = false;
+            }
+        }
+
+        async function loadUpc500Data() {
+            setFileStatus('secondary', '<i class="fas fa-spinner fa-spin"></i> Loading <code>Copy of 500 UPC.xlsx</code>…');
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+
+            try {
+                const response = await fetch("{{ url_for('lori_automation.loris_500_upc_get') }}", {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                if (!data.stats || !data.stats.found) {
+                    setFileStatus('warning', '<i class="fas fa-exclamation-triangle"></i> File not found. Expected: <code>Dropbox\\Elaine\\Copy of 500 UPC.xlsx</code>');
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Workbook not found.</td></tr>';
+                    addNewBtn.disabled = true;
+                    saveBtn.disabled = true;
+                    return;
+                }
+
+                upc500Rows = data.rows || [];
+                upc500ByRow = {};
+                upc500Rows.forEach(item => { upc500ByRow[item.row] = item; });
+                dirtyRows.clear();
+                highlightRow = null;
+                loaded = true;
+                workStartRow = data.work_start_row || 1300;
+                viewportStartRow = data.viewport_start_row || data.next_unmatched_row || (workStartRow + 1);
+                scrollToViewportOnRender = true;
+
+                setFileStatus('success',
+                    `<i class="fas fa-check-circle"></i> Loaded <strong>${data.stats.total}</strong> rows from <code>${data.stats.path}</code> · view starts at row <strong>${viewportStartRow}</strong>`);
+                updateStats(data.stats);
+                addNewBtn.disabled = false;
+                saveBtn.disabled = true;
+                renderUpc500Table();
+                updateNextUnmatchedUi();
+            } catch (error) {
+                console.error('500 UPC load failed:', error);
+                setFileStatus('danger', `<i class="fas fa-times-circle"></i> ${error.message}`);
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">Failed to load.</td></tr>';
+            }
+        }
+
+        async function saveUpc500Changes() {
+            if (!dirtyRows.size) {
+                alert('No changes to save.');
+                return;
+            }
+
+            const updates = Array.from(dirtyRows).map(rowNum => ({
+                row: rowNum,
+                sku: (upc500ByRow[rowNum]?.sku || '').trim(),
+            }));
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+
+            try {
+                const response = await fetch("{{ url_for('lori_automation.loris_500_upc_save') }}", {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ updates }),
+                });
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                dirtyRows.clear();
+                highlightRow = null;
+                alert(data.message || 'Saved.');
+                await loadUpc500Data();
+            } catch (error) {
+                console.error('500 UPC save failed:', error);
+                alert('Save failed: ' + error.message);
+            } finally {
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save to Excel';
+                saveBtn.disabled = dirtyRows.size === 0;
+            }
+        }
+
+        function assignNewSku() {
+            const sku = (newSkuInput.value || '').trim();
+            if (!sku) {
+                alert('Enter a SKU first.');
+                newSkuInput.focus();
+                return;
+            }
+
+            const next = findNextUnmatched();
+            if (!next) {
+                alert('No unmatched UPC rows left.');
+                return;
+            }
+
+            next.sku = sku;
+            markDirty(next.row);
+            highlightRow = next.row;
+            newSkuInput.value = '';
+            renderUpc500Table();
+            updateNextUnmatchedUi();
+
+            const input = tableBody.querySelector(`.upc500-sku-input[data-row="${next.row}"]`);
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }
+
+        searchBtn.addEventListener('click', () => {
+            searchQuery = searchInput.value || '';
+            renderUpc500Table();
+        });
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchQuery = '';
+            searchInput.value = '';
+            scrollToViewportOnRender = true;
+            renderUpc500Table();
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchQuery = searchInput.value || '';
+                renderUpc500Table();
+            }
+        });
+
+        addNewBtn.addEventListener('click', () => {
+            addNewBar.style.display = 'block';
+            const next = updateNextUnmatchedUi();
+            if (next) {
+                highlightRow = next.row;
+                renderUpc500Table();
+            }
+            newSkuInput.focus();
+        });
+
+        assignSkuBtn.addEventListener('click', assignNewSku);
+        newSkuInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                assignNewSku();
+            }
+        });
+
+        saveBtn.addEventListener('click', saveUpc500Changes);
+        reloadBtn.addEventListener('click', () => {
+            if (dirtyRows.size && !confirm('Reload and discard unsaved edits?')) return;
+            loadUpc500Data();
+        });
+
+        section.addEventListener('shown.bs.collapse', () => {
+            if (!loaded) loadUpc500Data();
+        });
+    }
+
+    function initOtbLookupSection() {
+        const section = document.getElementById('otbLookupSection');
+        const input = document.getElementById('otbLookupInput');
+        const searchBtn = document.getElementById('otbLookupSearchBtn');
+        const recentBtn = document.getElementById('otbLookupRecentBtn');
+        const statusEl = document.getElementById('otbLookupStatus');
+        const tableBody = document.getElementById('otbLookupTableBody');
+        const downloadBtn = document.getElementById('otbLookupDownloadBtn');
+        const uploadBtn = document.getElementById('otbLookupUploadBtn');
+        const uploadInput = document.getElementById('otbLookupUploadInput');
+        const hideUnpurchasedEl = document.getElementById('otbLookupHideUnpurchased');
+        if (!section || !tableBody) return;
+
+        let loaded = false;
+
+        function esc(text) {
+            return String(text ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        }
+
+        function renderOtbLookupRows(items) {
+            if (!items || !items.length) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No results found.</td></tr>';
+                return;
+            }
+            tableBody.innerHTML = items.map(item => {
+                const prices = (item.purchase_prices || []).length
+                    ? esc((item.purchase_prices || []).join(', '))
+                    : '—';
+                const styleCode = esc(item.style || item.bag_style || '');
+                const styleLink = item.fdc_style_link
+                    ? `<a href="${esc(item.fdc_style_link)}" target="_blank" rel="noopener" class="font-monospace">${styleCode}</a>`
+                    : styleCode;
+                return `
+                    <tr>
+                        <td class="font-monospace">${esc(item.sku)}</td>
+                        <td class="font-monospace">${esc(item.upc || '—')}</td>
+                        <td>${esc(item.color || '—')}</td>
+                        <td>${styleLink || '—'}</td>
+                        <td>${esc(item.description || '')}</td>
+                        <td>${esc(item.fdc_desc || '')}</td>
+                        <td>${esc(item.otb_price || '—')}</td>
+                        <td>${prices}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadOtbLookup(query) {
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…';
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+
+            try {
+                const params = new URLSearchParams();
+                if (query) params.set('q', query);
+                if (hideUnpurchasedEl && hideUnpurchasedEl.checked) {
+                    params.set('hide_unpurchased', '1');
+                } else {
+                    params.set('hide_unpurchased', '0');
+                }
+                const response = await fetch(`{{ url_for('lori_automation.otb_lookup_api') }}?${params}`, {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' },
+                });
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                const items = data.items || [];
+                const hiding = !!(hideUnpurchasedEl && hideUnpurchasedEl.checked);
+                if (data.mode === 'style') {
+                    const total = data.style_total || items.length;
+                    if (hiding) {
+                        statusEl.textContent = total > items.length
+                            ? `Style ${data.style || query} — ${items.length} purchased SKU(s) of ${total} total (unpurchased hidden).`
+                            : `Style ${data.style || query} — ${items.length} purchased SKU(s).`;
+                    } else {
+                        statusEl.textContent = total > items.length
+                            ? `Style ${data.style || query} — showing ${items.length} of ${total} SKU(s).`
+                            : `Style ${data.style || query} — ${items.length} SKU(s).`;
+                    }
+                } else if (data.mode === 'search') {
+                    statusEl.textContent = query
+                        ? `Search results for "${query}" — ${items.length} item(s)${hiding ? ' (unpurchased hidden)' : ''}.`
+                        : `Showing ${items.length} item(s)${hiding ? ' (unpurchased hidden)' : ''}.`;
+                } else {
+                    statusEl.textContent = `Last ${items.length} purchased SKUs for Loris (00868).`;
+                }
+                renderOtbLookupRows(items);
+            } catch (error) {
+                console.error('OTB lookup failed:', error);
+                statusEl.textContent = error.message;
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${esc(error.message)}</td></tr>`;
+            }
+        }
+
+        searchBtn.addEventListener('click', () => {
+            const q = (input.value || '').trim();
+            if (!q) {
+                alert('Enter a SKU, UPC, or Style to search.');
+                input.focus();
+                return;
+            }
+            loadOtbLookup(q);
+        });
+
+        recentBtn.addEventListener('click', () => {
+            input.value = '';
+            loadOtbLookup('');
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchBtn.click();
+            }
+        });
+
+        if (hideUnpurchasedEl) {
+            hideUnpurchasedEl.addEventListener('change', () => {
+                loadOtbLookup((input.value || '').trim());
+            });
+        }
+
+        section.addEventListener('shown.bs.collapse', () => {
+            if (!loaded) {
+                loaded = true;
+                loadOtbLookup('');
+            }
+        });
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                window.location.href = "{{ url_for('lori_automation.download_database') }}";
+            });
+        }
+
+        if (uploadBtn && uploadInput) {
+            uploadBtn.addEventListener('click', () => uploadInput.click());
+            uploadInput.addEventListener('change', async () => {
+                const file = uploadInput.files[0];
+                if (!file) return;
+                statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading…';
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await fetch("{{ url_for('lori_automation.upload_database') }}", {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                    });
+                    const data = await response.json();
+                    if (!response.ok || data.error) {
+                        throw new Error(data.error || `HTTP ${response.status}`);
+                    }
+                    alert(data.message || 'Upload complete.');
+                    loadOtbLookup((input.value || '').trim());
+                } catch (error) {
+                    alert('Upload failed: ' + error.message);
+                } finally {
+                    uploadInput.value = '';
+                }
+            });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        initLorisPastOrdersSidebar();
+        initUpc500Section();
+        initOtbLookupSection();
     // OTB Dropzone
     const otbDropZone = document.getElementById('otb-drop-zone');
     const otbFileInput = document.getElementById('upload-otb-input');
     const otbFileList = document.getElementById('selected-otb-files');
     const processOtbBtn = document.getElementById('process-otb-btn');
     let uploadedOtbFiles = [];
-
-        // Styles Processing
-    const skuInput = document.getElementById('sku-input');
-    const processSKUBtn = document.getElementById('process-sku-btn');
-    const skuResults = document.getElementById('sku-results');
-    const skuOutput = document.getElementById('sku-output');
-
-        // Database buttons
-        const downloadDbBtn = document.getElementById('download-db-btn');
-        const uploadDbBtn = document.getElementById('upload-db-btn');
-        const uploadDbInput = document.getElementById('upload-db-input');
 
         // Helper: robust JSON fetch that handles HTML error pages
         async function fetchJson(url, options = {}) {
@@ -727,124 +1741,6 @@
             }
     });
 
-        // SKU Processing
-        if (processSKUBtn) processSKUBtn.addEventListener('click', async () => {
-            const skuList = skuInput.value.trim();
-            if (!skuList) {
-                alert('请输入Styles列表');
-                return;
-            }
-
-            // Show loading overlay
-            document.getElementById('loading-overlay').style.display = 'flex';
-            document.getElementById('processing-status').textContent = 'Processing Styles...';
-
-            try {
-                const response = await fetch("{{ url_for('lori_automation.process_skus') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ skus: skuList })
-                });
-
-                const data = await response.json();
-
-                console.log('Received data:', data);
-
-                if (!response.ok || data.error) {
-                    throw new Error(data.error || 'Server error');
-                }
-                
-                // Create table HTML
-                let tableHtml = `
-                    <table class="table table-striped table-bordered">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Styles</th>
-                                <th>你给过的价</th>
-                                <th>你卖过的价</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-                // Add rows for each SKU
-                data.table_data.forEach(item => {
-                    tableHtml += `
-                        <tr>
-                            <td>${item.sku.toUpperCase()}</td>
-                            <td>${item.list_price.map(price => `<span class="badge badge-warning">${price}</span>`).join(' ')}</td>
-                            <td>${item.sold_price.length > 0 ? item.sold_price.map(price => `<span class="badge badge-warning">${price}</span>`).join(' ') : 'No recent sales'}</td>
-                        </tr>
-                    `;
-                });
-                
-                tableHtml += `
-                        </tbody>
-                    </table>
-                `;
-                
-                // Display results
-                skuOutput.innerHTML = tableHtml;
-                skuResults.style.display = 'block';
-                
-                console.log('Table HTML set:', tableHtml);
-                
-                // Expand the OTB section to show results
-                const otbCollapseBtn = document.querySelector('[data-bs-target="#otbSection"]');
-                if (otbCollapseBtn) {
-                    otbCollapseBtn.setAttribute('aria-expanded', 'true');
-                }
-                const otbSection = document.getElementById('otbSection');
-                if (otbSection) {
-                    otbSection.classList.add('show');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while processing Styles.');
-            } finally {
-                // Hide loading overlay
-                document.getElementById('loading-overlay').style.display = 'none';
-            }
-    });
-
-        // Database management
-        if (downloadDbBtn) downloadDbBtn.addEventListener('click', async () => {
-            window.location.href = "{{ url_for('lori_automation.download_database') }}";
-        });
-
-        if (uploadDbBtn && uploadDbInput) uploadDbBtn.addEventListener('click', () => {
-            uploadDbInput.click();
-        });
-
-        if (uploadDbInput) uploadDbInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            // Show loading overlay
-            document.getElementById('loading-overlay').style.display = 'flex';
-            document.getElementById('processing-status').textContent = 'Uploading database...';
-            
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-                const response = await fetch("{{ url_for('lori_automation.upload_database') }}", { 
-                    method: 'POST', 
-                    body: formData 
-                });
-                const data = await response.json();
-                alert(data.message || data.error);
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while uploading the database.');
-            } finally {
-                // Hide loading overlay
-            document.getElementById('loading-overlay').style.display = 'none';
-                // Reset file input
-                uploadDbInput.value = '';
-            }
-    });
-
         // Delete button event handlers
 
         const deletePdfDataBtn = document.getElementById('delete-pdf-data-btn');
@@ -890,6 +1786,243 @@
                     } finally {
                         document.getElementById('loading-overlay').style.display = 'none';
                     }
+                }
+            });
+        }
+
+        // OTB 上传管理 — Confirmed OTB & Final Template
+        const otbSetupDropZone = document.getElementById('otb-setup-drop-zone');
+        const otbSetupFileInput = document.getElementById('otb-setup-file-input');
+        const otbSetupFileList = document.getElementById('selected-otb-setup-file');
+        const exportSetupSheetBtn = document.getElementById('export-setup-sheet-btn');
+        const otbSetupResult = document.getElementById('otb-setup-result');
+        const otbFinalDropZone = document.getElementById('otb-final-drop-zone');
+        const otbFinalFileInput = document.getElementById('otb-final-file-input');
+        const otbFinalFileList = document.getElementById('selected-otb-final-file');
+        const importSetupFinalBtn = document.getElementById('import-setup-final-btn');
+        const otbFinalResult = document.getElementById('otb-final-result');
+        let selectedOtbSetupFile = null;
+        let selectedOtbFinalFile = null;
+
+        if (otbSetupDropZone && otbSetupFileInput) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                otbSetupDropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                otbSetupDropZone.addEventListener(eventName, () => {
+                    otbSetupDropZone.classList.add('highlight');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                otbSetupDropZone.addEventListener(eventName, () => {
+                    otbSetupDropZone.classList.remove('highlight');
+                }, false);
+            });
+
+            otbSetupDropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleOtbSetupFile(files[0]);
+                }
+            });
+
+            otbSetupDropZone.addEventListener('click', () => {
+                otbSetupFileInput.click();
+            });
+
+            otbSetupFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleOtbSetupFile(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleOtbSetupFile(file) {
+            if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                alert('请选择 .xlsx 格式的 OTB 文件');
+                return;
+            }
+            selectedOtbSetupFile = file;
+            updateOtbSetupFileList();
+            exportSetupSheetBtn.style.display = 'block';
+        }
+
+        function updateOtbSetupFileList() {
+            otbSetupFileList.innerHTML = '';
+            if (!selectedOtbSetupFile) return;
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                <span><i class="fas fa-file-excel text-warning"></i> ${selectedOtbSetupFile.name}</span>
+                <button class="btn btn-sm btn-danger" type="button" id="remove-otb-setup-file">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            otbSetupFileList.appendChild(li);
+            document.getElementById('remove-otb-setup-file').addEventListener('click', () => {
+                selectedOtbSetupFile = null;
+                otbSetupFileInput.value = '';
+                updateOtbSetupFileList();
+                exportSetupSheetBtn.style.display = 'none';
+            });
+        }
+
+        if (exportSetupSheetBtn) {
+            exportSetupSheetBtn.addEventListener('click', async () => {
+                if (!selectedOtbSetupFile) {
+                    alert('请先选择 OTB 文件');
+                    return;
+                }
+
+                document.getElementById('loading-overlay').style.display = 'flex';
+                document.getElementById('processing-status').textContent = '正在生成 Setup Sheet...';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', selectedOtbSetupFile);
+
+                    const response = await fetch("{{ url_for('lori_automation.otb_to_setup_sheet') }}", {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const contentType = response.headers.get('content-type') || '';
+                    if (!response.ok) {
+                        if (contentType.includes('application/json')) {
+                            const data = await response.json();
+                            throw new Error(data.error || `HTTP ${response.status}`);
+                        }
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+                    let downloadName = selectedOtbSetupFile.name.replace(/\.xlsx$/i, '') + '_setup_sheet.xlsx';
+                    const disposition = response.headers.get('content-disposition') || '';
+                    const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)/i);
+                    if (match) {
+                        downloadName = decodeURIComponent(match[1]);
+                    }
+
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = downloadName;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+                    const itemCount = response.headers.get('X-Setup-Item-Count') || '?';
+                    const newUpcCount = response.headers.get('X-Setup-New-Upc-Count') || '0';
+                    const newUpcSkus = response.headers.get('X-Setup-New-Upc-Skus') || '';
+                    if (otbSetupResult) {
+                        let html = `<i class="fas fa-check-circle"></i> Exported <strong>${itemCount}</strong> highlighted color row(s).`;
+                        if (parseInt(newUpcCount, 10) > 0) {
+                            html += `<br><span class="text-warning"><i class="fas fa-exclamation-triangle"></i> ${newUpcCount} new UPC(s) assigned in 500 UPC (yellow in template):</span> ${newUpcSkus}`;
+                        }
+                        otbSetupResult.className = 'alert alert-success mt-3';
+                        otbSetupResult.innerHTML = html;
+                        otbSetupResult.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    if (otbSetupResult) {
+                        otbSetupResult.className = 'alert alert-danger mt-3';
+                        otbSetupResult.innerHTML = `<i class="fas fa-times-circle"></i> ${error.message}`;
+                        otbSetupResult.style.display = 'block';
+                    } else {
+                        alert('导出 Setup Sheet 时出错: ' + error.message);
+                    }
+                } finally {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+            });
+        }
+
+        function setupOtbDropZone(zone, input, handler) {
+            if (!zone || !input) return;
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, preventDefaults, false);
+            });
+            ['dragenter', 'dragover'].forEach(eventName => {
+                zone.addEventListener(eventName, () => zone.classList.add('highlight'), false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, () => zone.classList.remove('highlight'), false);
+            });
+            zone.addEventListener('drop', (e) => {
+                if (e.dataTransfer.files.length > 0) handler(e.dataTransfer.files[0]);
+            });
+            zone.addEventListener('click', () => input.click());
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handler(e.target.files[0]);
+            });
+        }
+
+        setupOtbDropZone(otbFinalDropZone, otbFinalFileInput, handleOtbFinalFile);
+
+        function handleOtbFinalFile(file) {
+            if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                alert('请选择 .xlsx 格式的 Setup Sheet 文件');
+                return;
+            }
+            selectedOtbFinalFile = file;
+            otbFinalFileList.innerHTML = `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-file-excel text-success"></i> ${file.name}</span>
+                    <button class="btn btn-sm btn-danger" type="button" id="remove-otb-final-file">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </li>`;
+            importSetupFinalBtn.style.display = 'block';
+            document.getElementById('remove-otb-final-file').addEventListener('click', () => {
+                selectedOtbFinalFile = null;
+                otbFinalFileInput.value = '';
+                otbFinalFileList.innerHTML = '';
+                importSetupFinalBtn.style.display = 'none';
+            });
+        }
+
+        if (importSetupFinalBtn) {
+            importSetupFinalBtn.addEventListener('click', async () => {
+                if (!selectedOtbFinalFile) {
+                    alert('请先选择 edited Setup Sheet 文件');
+                    return;
+                }
+                document.getElementById('loading-overlay').style.display = 'flex';
+                document.getElementById('processing-status').textContent = 'Importing Loris description & color…';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', selectedOtbFinalFile);
+                    const response = await fetch("{{ url_for('lori_automation.otb_setup_sheet_final') }}", {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                    });
+                    const data = await response.json();
+                    if (!response.ok || data.error) {
+                        throw new Error(data.error || `HTTP ${response.status}`);
+                    }
+                    if (otbFinalResult) {
+                        otbFinalResult.className = 'alert alert-success mt-3';
+                        otbFinalResult.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message}`;
+                        otbFinalResult.style.display = 'block';
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    if (otbFinalResult) {
+                        otbFinalResult.className = 'alert alert-danger mt-3';
+                        otbFinalResult.innerHTML = `<i class="fas fa-times-circle"></i> ${error.message}`;
+                        otbFinalResult.style.display = 'block';
+                    } else {
+                        alert('Import failed: ' + error.message);
+                    }
+                } finally {
+                    document.getElementById('loading-overlay').style.display = 'none';
                 }
             });
         }

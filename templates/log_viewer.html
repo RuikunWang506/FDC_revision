@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log Viewer</title>
+    <title>{{ _('page.log_viewer.title') }}</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; 
@@ -214,20 +214,20 @@
 </head>
 <body>
     {% include 'navbar.html' %}
-    <h1 style="color: black; font-size: 2em; text-align: center; display: block;">Log Viewer</h1>
+    <h1 style="color: black; font-size: 2em; text-align: center; display: block;">{{ te('Log Viewer') }}</h1>
 
     <div class="log-legend">
-        <h3 class="highlight-blue">User is Blue</h3>
-        <h3 class="highlight-purple">Action is Purple</h3>
-        <h3 class="highlight-red">Order and SKU are Red</h3>
+        <h3 class="highlight-blue">{{ te('User is Blue') }}</h3>
+        <h3 class="highlight-purple">{{ te('Action is Purple') }}</h3>
+        <h3 class="highlight-red">{{ te('Order and SKU are Red') }}</h3>
     </div>
     
     <!-- Search Box -->
     <form action="{{ url_for('search_logs') }}" method="post" class="search-container">
-        <input type="text" id="search-input" name="search_term" placeholder="Search logs..." value="{{ search_term }}">
-        <button type="submit" id="search-button">Search</button>
-        <a href="{{ url_for('display') }}" id="clear-search">Clear</a>
-        <button type="button" id="delete-system-restarted-server" style="background-color:#d32f2f; color:white; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; font-size:16px;">Delete from Log File</button>
+        <input type="text" id="search-input" name="search_term" placeholder="{{ te('Search logs...') }}" value="{{ search_term }}">
+        <button type="submit" id="search-button">{{ te('Search') }}</button>
+        <a href="{{ url_for('display') }}" id="clear-search">{{ te('Clear') }}</a>
+        <button type="button" id="delete-system-restarted-server" style="background-color:#d32f2f; color:white; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; font-size:16px;">{{ te('Delete from Log File') }}</button>
     </form>
     
     <!-- Search Results Info -->
@@ -239,12 +239,12 @@
 
     {% set stream_url = url_for('stream_log') %}
     <div class="live-panel">
-        <span id="live-indicator"{% if search_term %} class="off"{% endif %} title="Live stream heartbeat"></span>
+        <span id="live-indicator"{% if search_term %} class="off"{% endif %} title="{{ te('Live stream heartbeat') }}"></span>
         <button type="button"
                 id="live-toggle"
                 class="live-toggle-btn{% if not search_term %} active{% endif %}"
                 data-live-on="{% if search_term %}0{% else %}1{% endif %}"
-                {% if search_term %}disabled title="Clear search — live tail is disabled while filtering"{% endif %}>
+                {% if search_term %}disabled title="{{ te('Clear search — live tail is disabled while filtering') }}"{% endif %}>
             {% if search_term %}Live off{% else %}Live on{% endif %}
         </button>
         <span id="live-status"
@@ -252,23 +252,23 @@
     </div>
 
     <!-- Pagination (sticky — stays visible while scrolling logs) -->
-    <div class="log-pagination-bar" aria-label="Log page navigation">
+    <div class="log-pagination-bar" aria-label="{{ te('Log page navigation') }}">
         {% if page > 1 %}
-            <a href="{{ url_for('display', page=1, search=search_term) }}">First</a>
-            <a href="{{ url_for('display', page=page-1, search=search_term) }}">Previous</a>
+            <a href="{{ url_for('display', page=1, search=search_term) }}">{{ te('First') }}</a>
+            <a href="{{ url_for('display', page=page-1, search=search_term) }}">{{ te('Previous') }}</a>
         {% else %}
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">First</a>
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('First') }}</a>
+            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('Previous') }}</a>
         {% endif %}
 
         <span class="page-indicator">Page {{ page }} of {{ total_pages }}</span>
 
         {% if page < total_pages %}
-            <a href="{{ url_for('display', page=page+1, search=search_term) }}">Next</a>
-            <a href="{{ url_for('display', page=total_pages, search=search_term) }}">Last</a>
+            <a href="{{ url_for('display', page=page+1, search=search_term) }}">{{ te('Next') }}</a>
+            <a href="{{ url_for('display', page=total_pages, search=search_term) }}">{{ te('Last') }}</a>
         {% else %}
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">Next</a>
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">Last</a>
+            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('Next') }}</a>
+            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('Last') }}</a>
         {% endif %}
     </div>
 
@@ -276,7 +276,7 @@
         {% for log_class, line in log_lines %}
             <div class="log-entry {{ log_class }}">
                 {% if search_term %}
-                    {{ line | replace(search_term, '<mark class="highlight-search">' + search_term + '</mark>') | safe }}
+                    {{ line | replace(search_term, '<mark class="highlight-search">' ~ search_term ~ '</mark>') | safe }}
                 {% else %}
                     {{ line | safe }}
                 {% endif %}

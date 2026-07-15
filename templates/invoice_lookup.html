@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice Lookup</title>
+    <title>{{ _('page.invoice_lookup.title') }}</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Font Awesome -->
@@ -212,11 +212,11 @@
         <div class="search-card">
             <form method="POST" action="/invoice_lookup">
                 <div class="search-input-section">
-                    <label><i class="fas fa-search mr-2"></i>Invoice Number</label>
+                    <label><i class="fas fa-search mr-2"></i>{{ te('Invoice Number') }}</label>
                     <div class="invoice-input-group">
                         <input type="text" name="invoice_number" required pattern="\d{4,5}" 
-                               title="Please enter a 4 or 5-digit invoice number" value="{{ invoice_number or ''}}" 
-                               placeholder="e.g., 33615">
+                               title="{{ te('Please enter a 4 or 5-digit invoice number') }}" value="{{ invoice_number or ''}}" 
+                               placeholder="{{ te('e.g., 33615') }}">
                         <button type="submit" class="submit-btn">
                             <i class="fas fa-search mr-2"></i>Search
                         </button>
@@ -242,7 +242,7 @@
                         <i class="fas fa-file-invoice mr-2"></i>Invoice #{{ header_info.invoice_number }}
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-user mr-2"></i>Customer:</span>
+                        <span class="info-label"><i class="fas fa-user mr-2"></i>{{ te('Customer:') }}</span>
                         <span class="info-value">
                             <a href="https://www.fdcef.com/customer#{{ header_info.customer_id }}" 
                                target="_blank" 
@@ -253,12 +253,12 @@
                         </span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-id-card mr-2"></i>Customer ID:</span>
+                        <span class="info-label"><i class="fas fa-id-card mr-2"></i>{{ te('Customer ID:') }}</span>
                         <span class="info-value">{{ header_info.customer_id }}</span>
                     </div>
                     {% if header_info.order_number and header_info.order_number != 'N/A' %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-file-invoice mr-2"></i>SO #:</span>
+                        <span class="info-label"><i class="fas fa-file-invoice mr-2"></i>{{ te('SO #:') }}</span>
                         <span class="info-value">
                             <a href="{{ url_for('order_lookup.order_lookup', order_number=header_info.order_number) }}" 
                                target="_blank" 
@@ -270,20 +270,20 @@
                     </div>
                     {% endif %}
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-calendar mr-2"></i>Invoice Date:</span>
-                        <span class="info-value">{{ header_info.invoice_date }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label"><i class="fas fa-calendar-check mr-2"></i>Process Date:</span>
+                        <span class="info-label"><i class="fas fa-calendar-check mr-2"></i>{{ te('Process Date:') }}</span>
                         <span class="info-value">{{ header_info.process_date }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-user-tie mr-2"></i>Salesman:</span>
+                        <span class="info-label"><i class="fas fa-user-tie mr-2"></i>{{ te('Salesman:') }}</span>
                         <span class="info-value">{{ header_info.salesman }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-user-cog mr-2"></i>Processor:</span>
+                        <span class="info-label"><i class="fas fa-user-cog mr-2"></i>{{ te('Processor:') }}</span>
                         <span class="info-value">{{ header_info.processor }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-calendar mr-2"></i>{{ te('Invoice Date:') }}</span>
+                        <span class="info-value">{{ header_info.invoice_date }}</span>
                     </div>
                 </div>
             </div>
@@ -295,31 +295,31 @@
                         <i class="fas fa-dollar-sign mr-2"></i>Financial Summary
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-file-invoice-dollar mr-2"></i>Invoice Amount:</span>
+                        <span class="info-label"><i class="fas fa-file-invoice-dollar mr-2"></i>{{ te('Invoice Amount:') }}</span>
                         <span class="info-value" style="color: var(--success-color); font-weight: 700;">{{ header_info.invoice_amount }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-money-check-alt mr-2"></i>Paid Amount:</span>
+                        <span class="info-label"><i class="fas fa-money-check-alt mr-2"></i>{{ te('Paid Amount:') }}</span>
                         <span class="info-value">{{ header_info.paid_amount }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-percentage mr-2"></i>Tax:</span>
+                        <span class="info-label"><i class="fas fa-percentage mr-2"></i>{{ te('Tax:') }}</span>
                         <span class="info-value">{{ header_info.invoice_tax }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-calculator mr-2"></i>Taxable Amount:</span>
+                        <span class="info-label"><i class="fas fa-calculator mr-2"></i>{{ te('Taxable Amount:') }}</span>
                         <span class="info-value">{{ header_info.taxable_amount }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-hand-holding-usd mr-2"></i>Handling Fee:</span>
+                        <span class="info-label"><i class="fas fa-hand-holding-usd mr-2"></i>{{ te('Handling Fee:') }}</span>
                         <span class="info-value">{{ header_info.handling_fee }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-tag mr-2"></i>Discount:</span>
+                        <span class="info-label"><i class="fas fa-tag mr-2"></i>{{ te('Discount:') }}</span>
                         <span class="info-value">{{ header_info.discount }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-coins mr-2"></i>Invoice Cost:</span>
+                        <span class="info-label"><i class="fas fa-coins mr-2"></i>{{ te('Invoice Cost:') }}</span>
                         <span class="info-value">{{ header_info.invoice_cost }}</span>
                     </div>
                 </div>
@@ -332,27 +332,27 @@
                         <i class="fas fa-info-circle mr-2"></i>Additional Information
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-warehouse mr-2"></i>Warehouse:</span>
+                        <span class="info-label"><i class="fas fa-warehouse mr-2"></i>{{ te('Warehouse:') }}</span>
                         <span class="info-value">{{ header_info.warehouse }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>Invoice Type:</span>
+                        <span class="info-label"><i class="fas fa-file-alt mr-2"></i>{{ te('Invoice Type:') }}</span>
                         <span class="info-value">{{ header_info.invoice_type }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-money-check mr-2"></i>Check #:</span>
+                        <span class="info-label"><i class="fas fa-money-check mr-2"></i>{{ te('Check #:') }}</span>
                         <span class="info-value">{{ header_info.check_number }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-handshake mr-2"></i>Terms:</span>
+                        <span class="info-label"><i class="fas fa-handshake mr-2"></i>{{ te('Terms:') }}</span>
                         <span class="info-value">{{ header_info.terms_description }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-clock mr-2"></i>Terms Days:</span>
+                        <span class="info-label"><i class="fas fa-clock mr-2"></i>{{ te('Terms Days:') }}</span>
                         <span class="info-value">{{ header_info.terms_days }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label"><i class="fas fa-credit-card mr-2"></i>Paid By:</span>
+                        <span class="info-label"><i class="fas fa-credit-card mr-2"></i>{{ te('Paid By:') }}</span>
                         <span class="info-value">{{ header_info.paid_by }}</span>
                     </div>
                 </div>

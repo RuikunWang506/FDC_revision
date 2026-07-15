@@ -162,8 +162,14 @@ def _listcreator_input_is_single_dropbox_path(list_input):
 
 
 def _token_looks_like_style(token):
-    """Catalog style code: 1–2 letters + 4 digits, optional size suffix."""
-    return bool(re.match(r'^[A-Za-z]{1,2}\d{4}([-]?[smlSML]*)?$', (token or '').strip(), re.IGNORECASE))
+    """Catalog style code: letters + 4 digits, optional size suffix (e.g. L1343, TBDBN3602)."""
+    s = (token or '').strip()
+    if not s:
+        return False
+    return bool(
+        re.match(r'^[A-Za-z]{1,2}\d{4}([-]?[smlSML]*)?$', s, re.IGNORECASE)
+        or re.match(r'^[A-Za-z]{3,}\d{4}([-]?[smlSML]*)?$', s, re.IGNORECASE)
+    )
 
 
 def _extract_container_pur_num_from_token(token):
@@ -183,7 +189,8 @@ def _extract_container_pur_num_from_token(token):
         return None
     if _listcreator_input_source_looks_like_dropbox_path(t):
         return None
-    if re.match(r'^[A-Z][A-Z0-9]{3,}$', s):
+    # Container PO: one leading letter then digits only (e.g. F26193, T3305).
+    if re.match(r'^[A-Z]\d+$', s):
         return s
     return None
 
@@ -299,7 +306,11 @@ def _expand_listcreator_mixed_input(list_input):
     for cid in container_ids:
         styles = (by_pur or {}).get(cid) or []
         if not styles:
-            missing.append(cid)
+            # e.g. TBDBN3602 was misread as a container PO — keep it as an explicit style.
+            if _token_looks_like_style(cid):
+                all_styles.append(cid.strip().upper())
+            else:
+                missing.append(cid)
         else:
             all_styles.extend(styles)
 
@@ -1680,8 +1691,10 @@ def list_from_dropbox(list_input, current_user):
         
         for filename in os.listdir(dropbox_path):
             if filename.lower().endswith(('.jpg', '.png')):
-                # Extract the full SKU (1-2 letters followed by 4 digits, optionally followed by -digit(s))
+                # Standard (L1343) or extended (TBDBN3602) prefix + 4 digits
                 base_match = re.match(r'([A-Za-z]{1,2}\d{4}(?:-\d+)?)', filename)
+                if not base_match:
+                    base_match = re.match(r'([A-Za-z]{3,}\d{4}(?:-\d+)?)', filename)
                 if base_match:
                     base_sku = base_match.group(1).upper()
                     # Check if it's a size suffix pattern after the base SKU
@@ -2422,6 +2435,8 @@ def get_sql_data(style_list):
     
     for style in style_list:
         match = re.match(r'([A-Za-z]{1,2}\d{4})([-]?)([smlSML]*)', style)
+        if not match:
+            match = re.match(r'([A-Za-z]{3,}\d{4})([-]?)([smlSML]*)', style)
         if match and match.group(3):  # Has suffix
             suffix_styles.append(style)
         else:  # Base style only
@@ -2733,6 +2748,11 @@ def _listcreator_regenerate_snapshot_file(app, slug, rid, list_input, acting_use
             flask_session.permanent = True
             flask_session['username'] = acting_username
 
+            expanded_input, expand_err = _expand_listcreator_mixed_input(list_input)
+            if expand_err:
+                return False, expand_err
+            list_input = expanded_input or list_input
+
             phase = _phase1_resolve_list_input(list_input, acting_username)
             if phase.get('error_message'):
                 return False, phase['error_message'] or 'Invalid input'
@@ -2913,8 +2933,10 @@ def normalize_style_for_grouping(style):
     if not style:
         return None
         
-    # Check if the style has a suffix - Fixed the unbalanced parenthesis
+    # Check if the style has a suffix - standard or extended prefix + 4 digits
     match = re.match(r'([A-Za-z]{1,2}\d{4})([-]?)([smlSML]*)', style)
+    if not match:
+        match = re.match(r'([A-Za-z]{3,}\d{4})([-]?)([smlSML]*)', style)
     if not match:
         return style
         
@@ -2943,8 +2965,10 @@ def get_images_for_selection(sku_list):
 
     for sku in sku_list:
         try:
-            # Extract pattern: 1-2 letters followed by exactly 4 numbers, optionally followed by dash and suffix
+            # Standard (L1343) or extended (TBDBN3602) prefix + 4 digits, optional dash suffix
             base_match = re.match(r'([A-Za-z]{1,2}\d{4})(?:-[A-Za-z0-9]+)?', sku)
+            if not base_match:
+                base_match = re.match(r'([A-Za-z]{3,}\d{4})(?:-[A-Za-z0-9]+)?', sku)
             if base_match:
                 base_sku = base_match.group(1).upper()  # Base SKU without suffix
                 full_sku = sku.upper()  # Full SKU including any suffix
@@ -4075,43 +4099,8 @@ def export_lori_format():
             price_str = item['price'].replace('$', '').strip()
             price = float(price_str) if price_str and price_str != 'N/A' else 0
             image_filename = item['image']
-            
-            # Process image path using DAM system
-            image_path = None
-            if '/image/' in image_filename:
-                # DAM system URL - extract asset ID
-                asset_id_match = re.search(r'/image/(\d+)/', image_filename)
-                if asset_id_match:
-                    asset_id = int(asset_id_match.group(1))
-                    db = py.utilities.models.SessionLocal()
-                    try:
-                        asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
-                        image_path = asset.path if asset else None
-                    finally:
-                        db.close()
-            elif '/list_image/' in image_filename:
-                # Legacy path format
-                filename = re.sub(r'/list_image/', '', image_filename)
-                db = py.utilities.models.SessionLocal()
-                try:
-                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
-                        filename=filename, is_active=True
-                    ).first()
-                    image_path = asset.path if asset else None
-                finally:
-                    db.close()
-            else:
-                # Direct filename - search in DAM
-                db = py.utilities.models.SessionLocal()
-                try:
-                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
-                        filename=image_filename, is_active=True
-                    ).first()
-                    image_path = asset.path if asset else None
-                finally:
-                    db.close()
-                
-            if not image_path or not os.path.exists(image_path):
+            image_path = _resolve_listcreator_image_path(image_filename)
+            if not image_path:
                 current_app.logger.error(f"Image not found: {image_filename}")
                 image_path = os.path.join('static', 'no_image_available.jpg')
                 

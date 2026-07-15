@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Image Upload - FDC Image Management</title>
+    <title>{{ _('page.bulk_upload.title') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css" rel="stylesheet">
     <style>
@@ -39,13 +39,15 @@
     </style>
 </head>
 <body>
+    {% set lang_bar_light = true %}
+    {% include '_lang_bar_standalone.html' %}
     <div class="container mt-4">
         <div class="row">
             <div class="col-12">
                 <h1 class="mb-4">
                     <i class="fas fa-images"></i> Bulk Image Upload System
                 </h1>
-                <p class="lead">Organize and upload catalog images and product pictures efficiently</p>
+                <p class="lead">{{ te('Organize and upload catalog images and product pictures efficiently') }}</p>
             </div>
         </div>
 
@@ -59,15 +61,15 @@
                     <div class="card-body">
                         <form id="catalogForm" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <label for="catalogSku" class="form-label">SKU *</label>
+                                <label for="catalogSku" class="form-label">{{ te('SKU *') }}</label>
                                 <input type="text" class="form-control" id="catalogSku" name="sku" 
-                                       placeholder="e.g., T3305, N1151" required>
-                                <small class="form-text text-muted">Enter the product SKU for catalog images</small>
+                                       placeholder="{{ te('e.g., T3305, N1151') }}" required>
+                                <small class="form-text text-muted">{{ te('Enter the product SKU for catalog images') }}</small>
                             </div>
                             
                             <div class="upload-section" id="catalogDropzone">
                                 <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                                <p>Drag & drop catalog images here or click to browse</p>
+                                <p>{{ te('Drag & drop catalog images here or click to browse') }}</p>
                                 <input type="file" id="catalogFiles" name="catalog_files" 
                                        multiple accept=".jpg,.jpeg,.png,.bmp,.tiff" style="display: none;">
                                 <button type="button" class="btn btn-outline-primary" 
@@ -101,15 +103,15 @@
                     <div class="card-body">
                         <form id="bigPictureForm" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <label for="bigPictureSku" class="form-label">SKU *</label>
+                                <label for="bigPictureSku" class="form-label">{{ te('SKU *') }}</label>
                                 <input type="text" class="form-control" id="bigPictureSku" name="sku" 
-                                       placeholder="e.g., T3305, N1151" required>
-                                <small class="form-text text-muted">Enter the product SKU for detail images</small>
+                                       placeholder="{{ te('e.g., T3305, N1151') }}" required>
+                                <small class="form-text text-muted">{{ te('Enter the product SKU for detail images') }}</small>
                             </div>
                             
                             <div class="upload-section" id="bigPictureDropzone">
                                 <i class="fas fa-images fa-3x text-muted mb-3"></i>
-                                <p>Drag & drop product detail images here</p>
+                                <p>{{ te('Drag & drop product detail images here') }}</p>
                                 <input type="file" id="bigPictureFiles" name="big_picture_files" 
                                        multiple accept=".jpg,.jpeg,.png,.bmp,.tiff" style="display: none;">
                                 <button type="button" class="btn btn-outline-success" 
@@ -146,8 +148,8 @@
                         <form id="zipForm" enctype="multipart/form-data">
                             <div class="upload-section" id="zipDropzone">
                                 <i class="fas fa-file-archive fa-3x text-muted mb-3"></i>
-                                <p>Upload a ZIP file containing multiple images with organized folder structure</p>
-                                <p class="small text-muted">The system will automatically detect SKUs and classify images</p>
+                                <p>{{ te('Upload a ZIP file containing multiple images with organized folder structure') }}</p>
+                                <p class="small text-muted">{{ te('The system will automatically detect SKUs and classify images') }}</p>
                                 <input type="file" id="zipFile" name="zip_file" 
                                        accept=".zip" style="display: none;">
                                 <button type="button" class="btn btn-outline-warning" 
@@ -183,30 +185,30 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-4">
-                                <h6>Catalog Images</h6>
+                                <h6>{{ te('Catalog Images') }}</h6>
                                 <ul class="small">
-                                    <li>Product specifications and dimensions</li>
-                                    <li>White background preferred</li>
-                                    <li>Multiple versions supported (v2, v3, etc.)</li>
-                                    <li>Higher resolution images replace lower ones</li>
+                                    <li>{{ te('Product specifications and dimensions') }}</li>
+                                    <li>{{ te('White background preferred') }}</li>
+                                    <li>{{ te('Multiple versions supported (v2, v3, etc.)') }}</li>
+                                    <li>{{ te('Higher resolution images replace lower ones') }}</li>
                                 </ul>
                             </div>
                             <div class="col-md-4">
-                                <h6>Product Detail Images</h6>
+                                <h6>{{ te('Product Detail Images') }}</h6>
                                 <ul class="small">
-                                    <li>Close-up shots and details</li>
-                                    <li>Color variations</li>
-                                    <li>Lifestyle and usage images</li>
-                                    <li>Organized by SKU folders</li>
+                                    <li>{{ te('Close-up shots and details') }}</li>
+                                    <li>{{ te('Color variations') }}</li>
+                                    <li>{{ te('Lifestyle and usage images') }}</li>
+                                    <li>{{ te('Organized by SKU folders') }}</li>
                                 </ul>
                             </div>
                             <div class="col-md-4">
-                                <h6>ZIP Upload</h6>
+                                <h6>{{ te('ZIP Upload') }}</h6>
                                 <ul class="small">
-                                    <li>Automatic SKU detection</li>
-                                    <li>Smart image classification</li>
-                                    <li>Bulk processing</li>
-                                    <li>Folder structure preserved</li>
+                                    <li>{{ te('Automatic SKU detection') }}</li>
+                                    <li>{{ te('Smart image classification') }}</li>
+                                    <li>{{ te('Bulk processing') }}</li>
+                                    <li>{{ te('Folder structure preserved') }}</li>
                                 </ul>
                             </div>
                         </div>

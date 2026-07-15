@@ -15,6 +15,12 @@ from flask import Blueprint, current_app, jsonify, render_template, request, ses
 
 from py.utilities.database_utils import get_mysql_connection
 from py.utilities.setting import Config, login_required
+from py.search.item_lookup import fetch_locations
+
+try:
+    from py.utilities.fourseller_login import login_from_env
+except ImportError:
+    login_from_env = None  # type: ignore[misc, assignment]
 
 
 four_seller_bp = Blueprint("four_seller", __name__)
@@ -23,6 +29,7 @@ four_seller_bp = Blueprint("four_seller", __name__)
 SKU_EXPORT_URL = "https://www.4seller.com/api/sku-inventory/export"
 SKU_TASK_URL = "https://www.4seller.com/api/sku-inventory/task"
 DASHBOARD_URL = "https://www.4seller.com/web/dashboard.html"
+USER_INIT_URL = "https://www.4seller.com/api/user/user-init"
 
 DEFAULT_EXPORT_PAYLOAD = {
     "pageCurrent": 1,
@@ -77,14 +84,21 @@ def _save_cookie_cache(cookie_header: str) -> None:
 
 
 def _load_cookie_cache() -> str:
+    return _load_cookie_cache_meta().get("cookie", "") or ""
+
+
+def _load_cookie_cache_meta() -> dict[str, Any]:
     if not os.path.exists(COOKIE_CACHE_FILE):
-        return ""
+        return {"cookie": "", "saved_at": None}
     try:
         with open(COOKIE_CACHE_FILE, "r", encoding="utf-8") as handle:
             payload = json.load(handle)
-        return str(payload.get("cookie", "") or "").strip()
+        return {
+            "cookie": str(payload.get("cookie", "") or "").strip(),
+            "saved_at": payload.get("saved_at"),
+        }
     except Exception:
-        return ""
+        return {"cookie": "", "saved_at": None}
 
 
 def _delete_cookie_cache() -> None:
@@ -97,6 +111,13 @@ def _delete_cookie_cache() -> None:
 
 def _has_cookie_cache() -> bool:
     return bool(_load_cookie_cache())
+
+
+def _credentials_configured() -> bool:
+    from py.utilities.nssm_env import load_nssm_env_file
+
+    load_nssm_env_file()
+    return bool(os.getenv("FOURSELLER_EMAIL", "").strip() and os.getenv("FOURSELLER_PASSWORD", "").strip())
 
 
 def _parse_cookie_header(cookie_header: str) -> dict[str, str]:
@@ -161,6 +182,7 @@ def _build_cookie_session(cookie_header: str) -> requests.Session:
     if not cookies:
         raise ValueError("No valid cookie values found.")
     session.cookies.update(cookies)
+    session.headers["Referer"] = "https://www.4seller.com/web/dashboard.html"
     return session
 
 
@@ -177,13 +199,217 @@ def _resolve_cookie_header(user_cookie: str) -> tuple[str, bool]:
     return "", False
 
 
+def _auto_login_cookie() -> str:
+    """Log in with FOURSELLER_EMAIL / FOURSELLER_PASSWORD and cache the session cookie."""
+    cookie_header = _login_via_subprocess()
+    if cookie_header and _cookie_header_has_api_token(cookie_header):
+        _save_cookie_cache(cookie_header)
+        return cookie_header
+    if cookie_header:
+        _delete_cookie_cache()
+
+    if login_from_env is None:
+        return ""
+    try:
+        result = login_from_env()
+    except Exception as exc:
+        current_app.logger.error(f"4Seller auto-login failed: {exc}")
+        return ""
+
+    cookie_header = str(result.get("cookie_header", "") or "").strip()
+    if cookie_header and _cookie_header_has_api_token(cookie_header):
+        _save_cookie_cache(cookie_header)
+        return cookie_header
+    return ""
+
+
+def _login_via_subprocess() -> str:
+    """Run login in a clean Python process (ddddocr breaks after pandas/opencv import)."""
+    import subprocess
+    import sys
+
+    worker = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scripts", "4seller_login_worker.py")
+    if not os.path.isfile(worker):
+        return ""
+    try:
+        completed = subprocess.run(
+            [sys.executable, worker],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=os.path.dirname(os.path.dirname(worker)),
+            check=False,
+        )
+        if completed.returncode != 0:
+            current_app.logger.error(
+                "4Seller login worker failed: %s",
+                (completed.stderr or completed.stdout or "").strip()[:500],
+            )
+            return ""
+        import json as _json
+
+        payload = _json.loads((completed.stdout or "").strip().splitlines()[-1])
+        if not payload.get("success"):
+            return ""
+        return str(payload.get("cookie_header", "") or "").strip()
+    except Exception as exc:
+        current_app.logger.error(f"4Seller login worker error: {exc}")
+        return ""
+
+
+def _resolve_cookie_header_with_auto_login(user_cookie: str) -> tuple[str, bool]:
+    """Resolve cookie from user input, cache, env, or automated login."""
+    from py.utilities.nssm_env import load_nssm_env_file
+
+    load_nssm_env_file()
+
+    cookie_header, from_cache = _resolve_cookie_header(user_cookie)
+    if cookie_header and not _cookie_header_has_api_token(cookie_header):
+        current_app.logger.warning("4Seller cached cookie uses wrong token format; refreshing.")
+        _delete_cookie_cache()
+        cookie_header = ""
+        from_cache = False
+
+    if cookie_header:
+        return cookie_header, from_cache
+
+    env_cookie = os.getenv("FOURSELLER_COOKIE", "").strip()
+    if env_cookie and _cookie_header_has_api_token(env_cookie):
+        return env_cookie, False
+
+    auto_cookie = _auto_login_cookie()
+    if auto_cookie:
+        return auto_cookie, True
+
+    return "", False
+
+
+def _is_api_session_token(token: str) -> bool:
+    return bool(re.fullmatch(r"[a-f0-9]{32}", (token or "").strip(), flags=re.IGNORECASE))
+
+
+def _cookie_header_has_api_token(cookie_header: str) -> bool:
+    cookies = _parse_cookie_header(cookie_header)
+    return _is_api_session_token(str(cookies.get("userToken", "") or ""))
+
+
 def _verify_4seller_session(session: requests.Session) -> bool:
-    dashboard_response = session.get(DASHBOARD_URL, allow_redirects=True, timeout=30)
-    if dashboard_response.status_code != 200:
+    """Verify via API — dashboard HTML loads even when API cookies are invalid."""
+    try:
+        response = session.post(USER_INIT_URL, json={}, timeout=30)
+        data = _safe_json(response)
+    except Exception:
         return False
-    if "login.html" in dashboard_response.url.lower():
+    if not isinstance(data, dict):
         return False
-    return "dashboard" in dashboard_response.url.lower()
+    if data.get("code") == 4001:
+        return False
+    msg = str(data.get("msg") or data.get("messages") or "")
+    return "Validation_Failed" not in msg
+
+
+def _token_preview(cookie_header: str) -> str:
+    cookies = _parse_cookie_header(cookie_header) if cookie_header else {}
+    token = str(cookies.get("userToken", "") or "")
+    if not token:
+        return ""
+    if len(token) <= 12:
+        return token[:4] + "…" if len(token) > 4 else token
+    return f"{token[:6]}…{token[-4:]}"
+
+
+def _inspect_session_status(*, attempt_login: bool = False) -> dict[str, Any]:
+    """Return cookie + 4Seller login status for the dashboard status panel."""
+    from py.utilities.nssm_env import load_nssm_env_file
+
+    load_nssm_env_file()
+    auto_configured = _credentials_configured()
+    env_cookie = os.getenv("FOURSELLER_COOKIE", "").strip()
+    cache_meta = _load_cookie_cache_meta()
+
+    cookie_header = ""
+    source = "none"
+    if cache_meta.get("cookie"):
+        cookie_header = str(cache_meta["cookie"])
+        source = "cache"
+    elif env_cookie:
+        cookie_header = env_cookie
+        source = "env"
+
+    session_valid: bool | None = None
+    if cookie_header:
+        try:
+            session_valid = _verify_4seller_session(_build_cookie_session(cookie_header))
+        except Exception as exc:
+            session_valid = False
+            verify_error = str(exc)
+        else:
+            verify_error = ""
+    else:
+        verify_error = ""
+
+    if session_valid:
+        login_status = "connected"
+        login_message = "Connected to 4Seller."
+    elif not cookie_header:
+        login_status = "no_cookie"
+        login_message = "No cookie stored yet."
+    elif session_valid is False:
+        login_status = "expired"
+        login_message = verify_error or "Cookie expired or invalid."
+    else:
+        login_status = "unknown"
+        login_message = "Session not checked."
+
+    login_attempted = False
+    if attempt_login and not session_valid and auto_configured:
+        login_attempted = True
+        login_status = "logging_in"
+        login_message = "Logging in to 4Seller (captcha OCR)…"
+        refreshed = _auto_login_cookie()
+        if refreshed:
+            cookie_header = refreshed
+            source = "cache"
+            cache_meta = _load_cookie_cache_meta()
+            try:
+                session_valid = _verify_4seller_session(_build_cookie_session(cookie_header))
+            except Exception as exc:
+                session_valid = False
+                verify_error = str(exc)
+            if session_valid:
+                login_status = "connected"
+                login_message = "Logged in successfully; cookie cached."
+            else:
+                login_status = "failed"
+                login_message = verify_error or "Login returned a cookie but session verify failed."
+        else:
+            login_status = "failed"
+            login_message = "Auto-login failed. Check server logs or FOURSELLER_EMAIL/PASSWORD."
+
+    cookie_valid_label: str | None
+    if session_valid is True:
+        cookie_valid_label = "valid"
+    elif session_valid is False:
+        cookie_valid_label = "invalid"
+    else:
+        cookie_valid_label = None
+
+    return {
+        "auto_login_configured": auto_configured,
+        "cookie": {
+            "present": bool(cookie_header),
+            "source": source,
+            "saved_at": cache_meta.get("saved_at"),
+            "valid": session_valid,
+            "valid_label": cookie_valid_label,
+            "token_preview": _token_preview(cookie_header),
+        },
+        "login": {
+            "status": login_status,
+            "message": login_message,
+            "attempted": login_attempted,
+        },
+    }
 
 
 def _ensure_4seller_table() -> None:
@@ -221,9 +447,25 @@ def _ensure_4seller_table() -> None:
     if not has_status:
         cursor.execute("ALTER TABLE `4seller_stock` ADD COLUMN status VARCHAR(10) NOT NULL DEFAULT 'active'")
 
+    # One-time cleanup: mirrored stock SKUs with dashes → space (e.g. S1431-CF → S1431 CF).
+    # Skip rows that were already customized (internal_sku != stock_sku).
+    cursor.execute(
+        """
+        UPDATE `4seller_stock`
+        SET internal_sku = REPLACE(stock_sku, '-', ' ')
+        WHERE internal_sku = stock_sku
+          AND stock_sku LIKE '%-%'
+        """
+    )
+
     connection.commit()
     cursor.close()
     connection.close()
+
+
+def _default_internal_sku(stock_sku: str) -> str:
+    """Map 4Seller stock SKU to our internal SKU (dashes → spaces in almost all cases)."""
+    return str(stock_sku or "").strip().replace("-", " ")
 
 
 def _request_export_file_url(session: requests.Session) -> str:
@@ -277,16 +519,18 @@ def _load_rows_from_xlsx_bytes(file_bytes: bytes) -> list[tuple[str, str, int]]:
     if "Stock SKU" not in df.columns or "On Hand" not in df.columns:
         raise ValueError("Missing required xlsx columns: 'Stock SKU' and 'On Hand'.")
 
-    rows: list[tuple[str, str, int]] = []
+    # 4Seller exports can repeat the same Stock SKU (e.g. multiple warehouses).
+    # Aggregate On Hand so we never violate uniq_stock_sku.
+    aggregated: dict[str, int] = {}
     for _, row in df.iterrows():
         stock_sku = str(row.get("Stock SKU", "")).strip()
         if not stock_sku or stock_sku.lower() == "nan":
             continue
+        aggregated[stock_sku] = aggregated.get(stock_sku, 0) + _to_int(row.get("On Hand", 0))
 
-        on_hand = _to_int(row.get("On Hand", 0))
-        # Current rule requested by user: internal sku mirrors stock sku.
-        internal_sku = stock_sku
-        rows.append((stock_sku, internal_sku, on_hand))
+    rows: list[tuple[str, str, int]] = []
+    for stock_sku, on_hand in aggregated.items():
+        rows.append((stock_sku, _default_internal_sku(stock_sku), on_hand))
 
     return rows
 
@@ -300,8 +544,13 @@ def _replace_4seller_stock(rows: list[tuple[str, str, int]]) -> int:
 
     cursor = connection.cursor()
 
-    cursor.execute("SELECT stock_sku, status FROM `4seller_stock`")
-    status_map = {str(sku): str(status or "active").lower() for sku, status in cursor.fetchall()}
+    cursor.execute("SELECT stock_sku, internal_sku, status FROM `4seller_stock`")
+    existing_map: dict[str, tuple[str, str]] = {}
+    for sku, internal_sku, status in cursor.fetchall():
+        existing_map[str(sku)] = (
+            str(internal_sku or "").strip(),
+            str(status or "active").lower(),
+        )
 
     cursor.execute("DELETE FROM `4seller_stock`")
 
@@ -310,16 +559,32 @@ def _replace_4seller_stock(rows: list[tuple[str, str, int]]) -> int:
         "VALUES (%s, %s, %s, %s)"
     )
     if rows:
-        rows_with_status = []
+        # Final safety net against duplicate stock_sku in the payload.
+        merged: dict[str, tuple[str, int, str]] = {}
         for stock_sku, internal_sku, four_seller_stock in rows:
-            status = status_map.get(stock_sku, "active")
+            prev_internal, status = existing_map.get(stock_sku, ("", "active"))
             if status not in {"active", "inactive"}:
                 status = "active"
-            rows_with_status.append((stock_sku, internal_sku, four_seller_stock, status))
+            # Keep manual overrides; re-apply dash→space when still mirrored to stock SKU.
+            if prev_internal and prev_internal != stock_sku:
+                resolved_internal = prev_internal
+            else:
+                resolved_internal = _default_internal_sku(stock_sku)
+
+            if stock_sku in merged:
+                prev_resolved, prev_qty, prev_status = merged[stock_sku]
+                merged[stock_sku] = (prev_resolved, prev_qty + int(four_seller_stock or 0), prev_status)
+            else:
+                merged[stock_sku] = (resolved_internal, int(four_seller_stock or 0), status)
+
+        rows_with_status = [
+            (stock_sku, internal_sku, qty, status)
+            for stock_sku, (internal_sku, qty, status) in merged.items()
+        ]
         cursor.executemany(insert_sql, rows_with_status)
 
     connection.commit()
-    count = len(rows)
+    count = len(rows_with_status) if rows else 0
     cursor.close()
     connection.close()
     return count
@@ -583,7 +848,34 @@ def four_seller_page():
         total_rows=len(rows),
         last_updated=last_updated,
         has_cookie_cache=_has_cookie_cache(),
+        auto_login_configured=_credentials_configured(),
     )
+
+
+@four_seller_bp.route("/4seller/session-status", methods=["GET"])
+@login_required
+def four_seller_session_status():
+    """Fast check of cached cookie and 4Seller session (no auto-login)."""
+    try:
+        return jsonify({"success": True, **_inspect_session_status(attempt_login=False)})
+    except Exception as exc:
+        current_app.logger.error(f"4Seller session-status error: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@four_seller_bp.route("/4seller/warm-session", methods=["POST"])
+@login_required
+def four_seller_warm_session():
+    """Verify session; auto-login if credentials are configured and cookie is missing/invalid."""
+    try:
+        quick = _inspect_session_status(attempt_login=False)
+        if quick.get("cookie", {}).get("valid"):
+            return jsonify({"success": True, **quick})
+        warmed = _inspect_session_status(attempt_login=True)
+        return jsonify({"success": True, **warmed})
+    except Exception as exc:
+        current_app.logger.error(f"4Seller warm-session error: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
 
 
 @four_seller_bp.route("/4seller/sync", methods=["POST"])
@@ -591,14 +883,10 @@ def four_seller_page():
 def four_seller_sync():
     payload = request.get_json(silent=True) or {}
     user_cookie = (payload.get("cookie") or request.form.get("cookie") or "").strip()
-    cookie_header, from_cache = _resolve_cookie_header(user_cookie)
-    if not cookie_header:
-        env_cookie = os.getenv("FOURSELLER_COOKIE", "").strip()
-        if env_cookie:
-            cookie_header, from_cache = env_cookie, False
+    cookie_header, from_cache = _resolve_cookie_header_with_auto_login(user_cookie)
 
     if not cookie_header:
-        return jsonify({"success": False, "cookie_required": True, "message": "Missing cookie header. Paste a fresh 4Seller cookie."}), 400
+        return jsonify({"success": False, "cookie_required": True, "message": "Missing cookie header. Paste a fresh 4Seller cookie or set FOURSELLER_EMAIL/FOURSELLER_PASSWORD."}), 400
 
     try:
         result = sync_4seller_from_cookie(cookie_header)
@@ -610,8 +898,17 @@ def four_seller_sync():
         cookie_invalid = "Validation_Failed" in error_text or "invalid or expired" in error_text.lower()
         if from_cache or cookie_invalid:
             _delete_cookie_cache()
+            if cookie_invalid and not user_cookie:
+                try:
+                    refreshed = _auto_login_cookie()
+                    if refreshed:
+                        result = sync_4seller_from_cookie(refreshed)
+                        return jsonify(result)
+                except Exception as retry_exc:
+                    current_app.logger.error(f"4Seller auto-login retry failed: {retry_exc}")
+        need_manual_cookie = (from_cache or cookie_invalid) and not _credentials_configured()
         current_app.logger.error(f"4Seller sync error: {exc}")
-        return jsonify({"success": False, "cookie_required": from_cache or cookie_invalid, "message": str(exc)}), 500
+        return jsonify({"success": False, "cookie_required": need_manual_cookie, "message": str(exc)}), 500
 
 
 @four_seller_bp.route("/4seller/status", methods=["POST"])
@@ -651,6 +948,45 @@ def four_seller_update_status():
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
+@four_seller_bp.route("/4seller/internal-sku", methods=["POST"])
+@login_required
+def four_seller_update_internal_sku():
+    payload = request.get_json(silent=True) or {}
+    stock_sku = str(payload.get("stock_sku", "")).strip()
+    internal_sku = str(payload.get("internal_sku", "")).strip()
+
+    if not stock_sku:
+        return jsonify({"success": False, "message": "Missing stock_sku."}), 400
+    if not internal_sku:
+        return jsonify({"success": False, "message": "Internal SKU cannot be empty."}), 400
+    if len(internal_sku) > 120:
+        return jsonify({"success": False, "message": "Internal SKU is too long."}), 400
+
+    try:
+        _ensure_4seller_table()
+        connection = get_mysql_connection()
+        if connection is None:
+            raise RuntimeError("MySQL connection failed.")
+
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE `4seller_stock` SET internal_sku = %s WHERE stock_sku = %s",
+            (internal_sku, stock_sku),
+        )
+        connection.commit()
+        changed = cursor.rowcount
+        cursor.close()
+        connection.close()
+
+        if changed == 0:
+            return jsonify({"success": False, "message": "SKU not found."}), 404
+
+        return jsonify({"success": True, "stock_sku": stock_sku, "internal_sku": internal_sku})
+    except Exception as exc:
+        current_app.logger.error(f"4Seller internal SKU update error: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
 @four_seller_bp.route("/4seller/export", methods=["GET"])
 @login_required
 def four_seller_export_upload_file():
@@ -678,14 +1014,10 @@ def four_seller_export_upload_file():
 def four_seller_export_to_4seller():
     payload = request.get_json(silent=True) or {}
     user_cookie = (payload.get("cookie") or request.form.get("cookie") or "").strip()
-    cookie_header, from_cache = _resolve_cookie_header(user_cookie)
-    if not cookie_header:
-        env_cookie = os.getenv("FOURSELLER_COOKIE", "").strip()
-        if env_cookie:
-            cookie_header, from_cache = env_cookie, False
+    cookie_header, from_cache = _resolve_cookie_header_with_auto_login(user_cookie)
 
     if not cookie_header:
-        return jsonify({"success": False, "cookie_required": True, "message": "Missing cookie header. Paste a fresh 4Seller cookie."}), 400
+        return jsonify({"success": False, "cookie_required": True, "message": "Missing cookie header. Paste a fresh 4Seller cookie or set FOURSELLER_EMAIL/FOURSELLER_PASSWORD."}), 400
 
     try:
         session_client = _build_cookie_session(cookie_header)
@@ -714,5 +1046,124 @@ def four_seller_export_to_4seller():
         cookie_invalid = "Validation_Failed" in error_text or "invalid or expired" in error_text.lower()
         if from_cache or cookie_invalid:
             _delete_cookie_cache()
+            if cookie_invalid and not user_cookie:
+                try:
+                    refreshed = _auto_login_cookie()
+                    if refreshed:
+                        session_client = _build_cookie_session(refreshed)
+                        if _verify_4seller_session(session_client):
+                            rows = _build_page_rows()
+                            excel_bytes = _build_upload_xlsx_bytes(rows)
+                            upload_data = _upload_excel_to_4seller(session_client, excel_bytes)
+                            async_task = str(upload_data.get("data", "") or "")
+                            schedule_data = _poll_import_schedule(session_client, async_task)
+                            return jsonify(
+                                {
+                                    "success": True,
+                                    "upload": upload_data,
+                                    "schedule": schedule_data,
+                                    "async_task": async_task,
+                                }
+                            )
+                except Exception as retry_exc:
+                    current_app.logger.error(f"4Seller auto-login export retry failed: {retry_exc}")
+        need_manual_cookie = (from_cache or cookie_invalid) and not _credentials_configured()
         current_app.logger.error(f"4Seller export_to_4seller error: {exc}")
-        return jsonify({"success": False, "cookie_required": from_cache or cookie_invalid, "message": str(exc)}), 500
+        return jsonify({"success": False, "cookie_required": need_manual_cookie, "message": str(exc)}), 500
+
+
+@four_seller_bp.route("/4seller/refresh-cookie", methods=["POST"])
+@login_required
+def four_seller_refresh_cookie():
+    """Force a fresh 4Seller login and update the cached cookie."""
+    _delete_cookie_cache()
+    try:
+        cookie_header = _auto_login_cookie()
+        if not cookie_header:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": "Auto-login not configured. Set FOURSELLER_EMAIL and FOURSELLER_PASSWORD.",
+                }
+            ), 400
+        valid = _verify_4seller_session(_build_cookie_session(cookie_header))
+        return jsonify(
+            {
+                "success": True,
+                "message": "4Seller cookie refreshed." if valid else "Logged in; session verify returned false (cookie saved).",
+                "session_valid": valid,
+            }
+        )
+    except Exception as exc:
+        current_app.logger.error(f"4Seller refresh-cookie error: {exc}")
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@four_seller_bp.route("/4seller/picklist-locations", methods=["GET"])
+def four_seller_picklist_locations():
+    """Resolve warehouse locations for 4Seller stock SKUs (Chrome extension picklist helper)."""
+    skus_param = request.args.get("skus", "").strip()
+    if not skus_param:
+        return jsonify({"error": "skus parameter is required"}), 400
+
+    stock_skus = [s.strip() for s in skus_param.split(",") if s.strip()]
+    if not stock_skus:
+        return jsonify({"error": "No valid SKUs provided"}), 400
+
+    lookup_skus: list[str] = []
+    stock_to_internal: dict[str, str] = {}
+
+    try:
+        _ensure_4seller_table()
+        connection = get_mysql_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            placeholders = ",".join(["%s"] * len(stock_skus))
+            cursor.execute(
+                f"""
+                SELECT stock_sku, internal_sku
+                FROM `4seller_stock`
+                WHERE stock_sku IN ({placeholders})
+                """,
+                stock_skus,
+            )
+            for row in cursor.fetchall():
+                stock = str(row.get("stock_sku", "")).strip()
+                internal = str(row.get("internal_sku", "")).strip() or stock
+                stock_to_internal[stock] = internal
+                lookup_skus.append(internal)
+            cursor.close()
+            connection.close()
+    except Exception as exc:
+        current_app.logger.warning(f"4Seller stock SKU mapping lookup failed: {exc}")
+
+    for stock in stock_skus:
+        if stock not in stock_to_internal:
+            stock_to_internal[stock] = stock
+            lookup_skus.append(stock)
+
+    unique_lookup = list(dict.fromkeys(s for s in lookup_skus if s))
+    location_by_internal = fetch_locations(unique_lookup)
+
+    import re
+
+    def alnum(value: str) -> str:
+        return re.sub(r"[^0-9a-z]", "", value.lower())
+
+    def resolve_location(sku: str) -> str:
+        for key in (sku.lower(), sku.lower().replace(" ", ""), alnum(sku)):
+            loc = location_by_internal.get(key)
+            if loc:
+                return loc
+        return "N/A"
+
+    result: dict[str, str] = {}
+    for stock in stock_skus:
+        internal = stock_to_internal.get(stock, stock)
+        loc = resolve_location(internal)
+        result[stock] = loc
+        result[stock.lower()] = loc
+        result[stock.lower().replace(" ", "")] = loc
+        result[alnum(stock)] = loc
+
+    return jsonify(result)

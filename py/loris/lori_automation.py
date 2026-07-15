@@ -1187,53 +1187,50 @@ def process_skus():
 
 @lori_automation_bp.route("/download_database", methods=["GET"])
 def download_database():
-    connection = get_db_connection()
-    if not connection:
-        return jsonify({'error': 'Database connection failed'}), 500
+    """Download full OTB lookup database (same columns as lookup table)."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     try:
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT SKU, listprice FROM onlinedb.loris;")
-        rows = cursor.fetchall()
-        df = pd.DataFrame(rows)
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='loris')
-        output.seek(0)
-        return send_file(output, as_attachment=True,
-                         download_name="loris_database.xlsx",
-                         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        from py.loris.otb_lookup import default_lookup_export_filename, export_lookup_workbook
+
+        output = export_lookup_workbook()
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=default_lookup_export_filename(),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
     except Exception as e:
+        current_app.logger.error(f"OTB lookup export failed: {e}")
         return jsonify({'error': str(e)}), 500
-    finally:
-        cursor.close()
-        connection.close()
+
 
 @lori_automation_bp.route("/upload_database", methods=["POST"])
 def upload_database():
+    """Upload OTB lookup Excel; replace existing rows when SKU matches."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
     file = request.files['file']
+    if not file.filename:
+        return jsonify({'error': 'No file selected'}), 400
     try:
-        df = pd.read_excel(file)
-        if 'SKU' not in df.columns or 'listprice' not in df.columns:
-            return jsonify({'error': 'File must contain SKU and listprice columns.'}), 400
-        connection = get_db_connection()
-        if not connection:
-            return jsonify({'error': 'Database connection failed'}), 500
-        cursor = connection.cursor()
-        cursor.execute("DELETE FROM onlinedb.loris;")
-        for _, row in df.iterrows():
-            cursor.execute("INSERT INTO onlinedb.loris (SKU, listprice) VALUES (%s, %s);",
-                           (row['SKU'], row['listprice']))
-        connection.commit()
-        return jsonify({'message': 'Database updated successfully.'})
+        from py.loris.otb_lookup import import_lookup_workbook
+
+        result = import_lookup_workbook(file)
+        return jsonify({
+            'success': True,
+            'message': (
+                f"Updated {result['updated_loris']} style OTB price(s), "
+                f"{result['updated_meta']} description/color row(s), "
+                f"{result['updated_upc']} UPC row(s)."
+            ),
+            **result,
+        })
     except Exception as e:
+        current_app.logger.error(f"OTB lookup import failed: {e}")
         return jsonify({'error': str(e)}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'connection' in locals() and connection.is_connected():
-            connection.close()
 
 @lori_automation_bp.route("/upload_otb", methods=["POST"])
 def upload_otb():
@@ -1334,7 +1331,245 @@ def upload_otb():
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
-            
+
+
+@lori_automation_bp.route("/otb_to_setup_sheet", methods=["POST"])
+def otb_to_setup_sheet():
+    """Upload confirmed OTB Excel and export Setup Sheet."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({'error': 'No file selected'}), 400
+    if not file.filename.lower().endswith('.xlsx'):
+        return jsonify({'error': 'Only Excel (.xlsx) files are supported'}), 400
+
+    try:
+        from py.loris.otb_setup_sheet import (
+            convert_otb_to_setup_sheet,
+            default_setup_sheet_filename,
+        )
+
+        current_app.logger.info(f"OTB → Setup Sheet export: {file.filename}")
+        output, summary = convert_otb_to_setup_sheet(file)
+        download_name = default_setup_sheet_filename(file.filename)
+        response = send_file(
+            output,
+            as_attachment=True,
+            download_name=download_name,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response.headers["X-Setup-Item-Count"] = str(summary.get("item_count", 0))
+        response.headers["X-Setup-New-Upc-Count"] = str(summary.get("new_upc_count", 0))
+        new_skus = summary.get("new_upc_skus") or []
+        if new_skus:
+            response.headers["X-Setup-New-Upc-Skus"] = ",".join(new_skus[:50])
+        return response
+    except Exception as e:
+        current_app.logger.error(f"OTB → Setup Sheet export failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/otb_setup_sheet_final", methods=["POST"])
+def otb_setup_sheet_final():
+    """Upload edited setup sheet; save loris_desc and loris_color for future runs."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({'error': 'No file selected'}), 400
+    if not file.filename.lower().endswith('.xlsx'):
+        return jsonify({'error': 'Only Excel (.xlsx) files are supported'}), 400
+
+    try:
+        from py.loris.otb_setup_sheet import ingest_final_setup_sheet
+
+        result = ingest_final_setup_sheet(file)
+        return jsonify({
+            'success': True,
+            'message': f'Saved Loris description/color for {result["saved"]} SKU(s).',
+            **result,
+        })
+    except Exception as e:
+        current_app.logger.error(f"Setup sheet final ingest failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/otb_lookup", methods=["GET"])
+def otb_lookup_api():
+    """Search OTB data by SKU or UPC; default = last 50 Loris purchased SKUs."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    try:
+        from py.loris.otb_lookup import DEFAULT_RECENT_LIMIT, DEFAULT_STYLE_LIMIT, lookup_otb
+
+        query = (request.args.get('q') or '').strip()
+        limit = request.args.get('limit', DEFAULT_RECENT_LIMIT, type=int)
+        style_limit = request.args.get('style_limit', DEFAULT_STYLE_LIMIT, type=int)
+        hide_unpurchased = request.args.get('hide_unpurchased', '1').lower() in ('1', 'true', 'yes', 'on')
+        limit = max(1, min(limit, 200))
+        style_limit = max(1, min(style_limit, 50))
+        result = lookup_otb(
+            query=query or None,
+            limit=limit,
+            style_limit=style_limit,
+            hide_unpurchased=hide_unpurchased,
+        )
+        return jsonify({'success': True, **result})
+    except Exception as e:
+        current_app.logger.error(f"OTB lookup failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/loris_500_upc", methods=["GET"])
+def loris_500_upc_get():
+    """Load 500 UPC workbook rows for inline editing."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    try:
+        from py.loris.loris_500_upc import (
+            UPC_WORK_START_ROW,
+            find_first_unmatched_row,
+            load_500_upc_rows,
+        )
+
+        rows, path, stats = load_500_upc_rows()
+        next_unmatched_row = find_first_unmatched_row(rows, after_row=UPC_WORK_START_ROW)
+        viewport_start_row = next_unmatched_row or (UPC_WORK_START_ROW + 1)
+        return jsonify({
+            'success': True,
+            'rows': rows,
+            'stats': stats,
+            'work_start_row': UPC_WORK_START_ROW,
+            'next_unmatched_row': next_unmatched_row,
+            'viewport_start_row': viewport_start_row,
+        })
+    except Exception as e:
+        current_app.logger.error(f"500 UPC load failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/loris_500_upc/save", methods=["POST"])
+def loris_500_upc_save():
+    """Save SKU edits back to the 500 UPC workbook."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json(silent=True) or {}
+    updates = data.get('updates') or []
+    if not updates:
+        return jsonify({'error': 'No updates provided'}), 400
+
+    try:
+        from py.loris.loris_500_upc import load_500_upc_rows, save_500_upc_skus
+
+        cleaned = []
+        for item in updates:
+            row_num = item.get('row')
+            if row_num is None:
+                continue
+            cleaned.append({'row': int(row_num), 'sku': item.get('sku', '')})
+
+        if not cleaned:
+            return jsonify({'error': 'No valid row updates'}), 400
+
+        path, backup_path = save_500_upc_skus(cleaned)
+        _, _, stats = load_500_upc_rows()
+        cleared = sum(1 for u in cleaned if not (u.get('sku') or '').strip())
+        assigned = len(cleaned) - cleared
+        parts = []
+        if assigned:
+            parts.append(f'{assigned} SKU(s) saved')
+        if cleared:
+            parts.append(f'{cleared} SKU(s) removed')
+        message = ' · '.join(parts) + ' in Excel.' if parts else 'No changes written.'
+        return jsonify({
+            'success': True,
+            'message': message,
+            'path': path,
+            'backup_path': backup_path,
+            'stats': stats,
+        })
+    except FileNotFoundError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        current_app.logger.error(f"500 UPC save failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/loris_past_orders", methods=["GET"])
+def loris_past_orders():
+    """Past OMS orders for Loris customer 00868 (same source as /customer?search_id=00868)."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    try:
+        from py.other.customer import (
+            LORIS_CUSTOMER_ID,
+            fetch_past_orders_window,
+            loris_customer_page_url,
+            resolve_customer_by_id,
+        )
+
+        period_index = request.args.get('period', 0, type=int)
+        if period_index < 0:
+            period_index = 0
+
+        match = resolve_customer_by_id(LORIS_CUSTOMER_ID)
+        customer_page_url = loris_customer_page_url()
+        if not match:
+            return jsonify({
+                'success': True,
+                'orders': [],
+                'customer': None,
+                'customer_page_url': customer_page_url,
+                'has_more': False,
+                'period_index': period_index,
+                'period_label': '',
+                'message': f'No customer found with ID "{LORIS_CUSTOMER_ID}".',
+            })
+
+        orders, summary, has_more, period_label = fetch_past_orders_window(
+            match['cus_id'],
+            match['database_origin'],
+            period_index=period_index,
+        )
+        for order in orders:
+            order['order_lookup_url'] = url_for(
+                'order_lookup.order_lookup',
+                order_number=order['order_number'],
+            )
+        return jsonify({
+            'success': True,
+            'orders': orders,
+            'customer': {
+                'customer_id': summary.get('customer_id'),
+                'customer_name': summary.get('customer_name'),
+                'database': summary.get('database'),
+                'period_orders': summary.get('period_orders', 0),
+                'period_revenue': summary.get('period_revenue', 0),
+            },
+            'customer_page_url': customer_page_url,
+            'has_more': has_more,
+            'period_index': period_index,
+            'next_period': period_index + 1 if has_more else None,
+            'period_label': period_label,
+        })
+    except Exception as e:
+        current_app.logger.error(f"Loris past orders lookup failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @lori_automation_bp.route("/loris_fedex", methods=["GET", "POST"])
 def loris_fedex():
     if 'username' not in session:
@@ -1624,6 +1859,30 @@ def _ensure_lori_order_items_actual_quantity_column(cursor):
             "ALTER TABLE lori_order_items "
             "ADD COLUMN actual_quantity INT NULL DEFAULT NULL AFTER quantity"
         )
+
+
+def _ensure_lori_orders_status_canceled(cursor):
+    """Ensure lori_orders.status ENUM includes 'canceled'."""
+    cursor.execute("""
+        SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'lori_orders'
+          AND COLUMN_NAME = 'status'
+    """)
+    row = cursor.fetchone()
+    if not row:
+        return
+    column_type = row[0] if isinstance(row, (tuple, list)) else row.get('COLUMN_TYPE', '')
+    if isinstance(column_type, (bytes, bytearray)):
+        column_type = column_type.decode('utf-8', errors='ignore')
+    column_type = (column_type or '').lower()
+    if 'canceled' in column_type:
+        return
+    cursor.execute(
+        "ALTER TABLE lori_orders "
+        "MODIFY COLUMN status ENUM('pending','processed','shipped','completed','canceled') "
+        "NULL DEFAULT 'pending'"
+    )
 
 
 def _effective_item_qty(item):
@@ -2133,7 +2392,7 @@ def update_order_status():
     if not po_number or not status:
         return jsonify({'error': 'Missing order_id or status'}), 400
     
-    valid_statuses = ['pending', 'processed', 'shipped', 'completed']
+    valid_statuses = ['pending', 'processed', 'shipped', 'completed', 'canceled']
     if status not in valid_statuses:
         return jsonify({'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
     
@@ -2143,6 +2402,7 @@ def update_order_status():
     
     try:
         cursor = connection.cursor()
+        _ensure_lori_orders_status_canceled(cursor)
         cursor.execute("""
             UPDATE lori_orders 
             SET status = %s, updated_at = CURRENT_TIMESTAMP 
@@ -4667,6 +4927,140 @@ def create_processed_pdfs_only(processed_pdfs):
         raise e
 
 
+def _style_excel_header_row(worksheet, columns):
+    from openpyxl.styles import Font, PatternFill, Alignment
+    header_font = Font(bold=True, size=12)
+    header_fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+    header_alignment = Alignment(horizontal='center', vertical='center')
+    for col in columns:
+        cell = worksheet[f'{col}1']
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+
+
+def _style_excel_total_row(worksheet, row_num, columns):
+    from openpyxl.styles import Font, PatternFill, Alignment
+    total_font = Font(bold=True, size=11)
+    total_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+    total_alignment = Alignment(horizontal='right', vertical='center')
+    for col in columns:
+        cell = worksheet[f'{col}{row_num}']
+        cell.font = total_font
+        cell.fill = total_fill
+        cell.alignment = total_alignment
+
+
+def _build_invoice_summary_workbook(invoice_files, all_items):
+    """Build summary workbook: invoice totals plus SKU pivot (invoice qty vs actual qty)."""
+    summary_wb = Workbook()
+    ws_summary = summary_wb.active
+    ws_summary.title = 'Invoice Summary'
+
+    total_amount = Decimal(0)
+    total_invoice_qty = Decimal(0)
+    total_actual_qty = Decimal(0)
+    summary_headers = [
+        'Invoice File Name', 'Invoice Number', 'Total Amount',
+        'Invoice Qty', 'Actual Qty', 'Difference',
+    ]
+    ws_summary.append(summary_headers)
+    _style_excel_header_row(ws_summary, ['A', 'B', 'C', 'D', 'E', 'F'])
+
+    for invoice in invoice_files:
+        inv_qty = Decimal(str(invoice.get('invoice_qty', 0)))
+        act_qty = Decimal(str(invoice.get('total_qty', 0)))
+        amt = Decimal(str(invoice.get('total_cost', 0)))
+        ws_summary.append([
+            invoice['filename'],
+            invoice.get('po_number', ''),
+            float(amt),
+            float(inv_qty),
+            float(act_qty),
+            float(act_qty - inv_qty),
+        ])
+        total_amount += amt
+        total_invoice_qty += inv_qty
+        total_actual_qty += act_qty
+
+    total_row = ws_summary.max_row + 1
+    ws_summary.append([
+        'TOTAL', '',
+        float(total_amount),
+        float(total_invoice_qty),
+        float(total_actual_qty),
+        float(total_actual_qty - total_invoice_qty),
+    ])
+    _style_excel_total_row(ws_summary, total_row, ['A', 'B', 'C', 'D', 'E', 'F'])
+    ws_summary.column_dimensions['A'].width = 28
+    ws_summary.column_dimensions['B'].width = 18
+    ws_summary.column_dimensions['C'].width = 14
+    ws_summary.column_dimensions['D'].width = 14
+    ws_summary.column_dimensions['E'].width = 14
+    ws_summary.column_dimensions['F'].width = 14
+    ws_summary[f'C2'].number_format = '$#,##0.00'
+    ws_summary[f'C{total_row}'].number_format = '$#,##0.00'
+
+    pivot_data = {}
+    for item in all_items:
+        sku = item.get('vendor_item') or 'N/A'
+        invoice_qty = int(item.get('quantity') or 0)
+        actual_qty = _effective_item_qty(item)
+        if sku not in pivot_data:
+            pivot_data[sku] = {
+                'sku': sku,
+                'invoice_qty': 0,
+                'actual_qty': 0,
+                'unit_price': item.get('unit_price') or 0,
+                'upc': item.get('upc') or '',
+            }
+        pivot_data[sku]['invoice_qty'] += invoice_qty
+        pivot_data[sku]['actual_qty'] += actual_qty
+        if item.get('unit_price'):
+            pivot_data[sku]['unit_price'] = item['unit_price']
+        if item.get('upc'):
+            pivot_data[sku]['upc'] = item['upc']
+
+    ws_pivot = summary_wb.create_sheet('SKU Pivot')
+    pivot_headers = [
+        'Vendor Item SKU', 'Invoice Qty', 'Actual Qty', 'Difference', 'Unit Price', 'UPC',
+    ]
+    for col_idx, header in enumerate(pivot_headers, start=1):
+        ws_pivot.cell(row=1, column=col_idx, value=header)
+    _style_excel_header_row(ws_pivot, ['A', 'B', 'C', 'D', 'E', 'F'])
+
+    pivot_invoice_total = 0
+    pivot_actual_total = 0
+    row = 2
+    for sku_data in sorted(pivot_data.values(), key=lambda x: x['sku']):
+        diff = sku_data['actual_qty'] - sku_data['invoice_qty']
+        ws_pivot[f'A{row}'] = sku_data['sku']
+        ws_pivot[f'B{row}'] = sku_data['invoice_qty']
+        ws_pivot[f'C{row}'] = sku_data['actual_qty']
+        ws_pivot[f'D{row}'] = diff
+        ws_pivot[f'E{row}'] = float(sku_data['unit_price']) if sku_data['unit_price'] else 0
+        ws_pivot[f'F{row}'] = sku_data['upc']
+        ws_pivot[f'E{row}'].number_format = '$#,##0.00'
+        pivot_invoice_total += sku_data['invoice_qty']
+        pivot_actual_total += sku_data['actual_qty']
+        row += 1
+
+    pivot_total_row = row
+    ws_pivot[f'A{pivot_total_row}'] = 'TOTAL'
+    ws_pivot[f'B{pivot_total_row}'] = pivot_invoice_total
+    ws_pivot[f'C{pivot_total_row}'] = pivot_actual_total
+    ws_pivot[f'D{pivot_total_row}'] = pivot_actual_total - pivot_invoice_total
+    _style_excel_total_row(ws_pivot, pivot_total_row, ['A', 'B', 'C', 'D', 'E', 'F'])
+    ws_pivot.column_dimensions['A'].width = 25
+    ws_pivot.column_dimensions['B'].width = 14
+    ws_pivot.column_dimensions['C'].width = 14
+    ws_pivot.column_dimensions['D'].width = 14
+    ws_pivot.column_dimensions['E'].width = 15
+    ws_pivot.column_dimensions['F'].width = 20
+
+    return summary_wb
+
+
 @lori_automation_bp.route("/download_invoices", methods=["POST"])
 def download_invoices():
     """Generate invoices for selected orders from database data"""
@@ -4696,6 +5090,7 @@ def download_invoices():
             
             invoice_files = []
             processed_orders = []
+            all_items = []
             
             # Process each order
             for po_number in po_numbers:
@@ -4726,6 +5121,8 @@ def download_invoices():
                     if not items:
                         continue
                     
+                    all_items.extend(items)
+                    
                     # Generate invoice using the existing logic
                     invoice_data = generate_invoice_from_data(order, items, invoice_date)
                     if invoice_data:
@@ -4742,39 +5139,9 @@ def download_invoices():
             if not invoice_files:
                 return jsonify({'error': 'No valid invoices could be generated'}), 400
             
-            # --- Build summary file ---
+            summary_wb = None
             if len(invoice_files) > 1:
-                import openpyxl
-                from openpyxl import Workbook
-                summary_wb = Workbook()
-                summary_ws = summary_wb.active
-                total_amount = Decimal(0)
-                total_quantity = Decimal(0)
-                summary_rows = []
-                for invoice in invoice_files:
-                    invoice['excel'].seek(0)
-                    wb = openpyxl.load_workbook(invoice['excel'])
-                    ws = wb.active
-                    found_qty = 0
-                    found_amt = 0
-                    for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
-                        if row[2].value == "Total Quantity":
-                            found_qty = row[3].value or 0
-                        if row[6].value == "Total Amount":
-                            amt_val = row[7].value
-                            if amt_val and isinstance(amt_val, str) and amt_val.startswith("$"):
-                                amt_val = amt_val.replace("$", "")
-                            found_amt = Decimal(amt_val or 0)
-                    summary_rows.append([invoice['filename'], invoice.get('po_number', ''), float(found_amt), float(found_qty)])
-                    total_amount += found_amt
-                    total_quantity += Decimal(found_qty)
-                    
-                # Add total row
-                summary_ws.append(['Invoice File Name', 'Invoice Number', 'Total Amount', 'Total Quantity'])
-                for row in summary_rows:
-                    summary_ws.append(row)
-                summary_ws.append(['TOTAL', '', float(total_amount), float(total_quantity)])
-            # --- End summary file build ---
+                summary_wb = _build_invoice_summary_workbook(invoice_files, all_items)
 
             # Return single Excel file or ZIP based on count
             if len(invoice_files) == 1:
@@ -4858,10 +5225,12 @@ def generate_invoice_from_data(order, items, invoice_date=None):
         # Process items
         starting_row = 20
         total_qty = Decimal(0)
+        invoice_qty_total = Decimal(0)
         total_cost = Decimal(0)
         
         for item in items:
             vendor_item = item.get('vendor_item', '')
+            invoice_qty_total += Decimal(str(item.get('quantity') or 0))
             qty = Decimal(str(_effective_item_qty(item)))
             upc = item.get('upc', '')
             description = item.get('description', '')
@@ -4904,7 +5273,10 @@ def generate_invoice_from_data(order, items, invoice_date=None):
             'excel': memory_file,
             'filename': f"{target_filename}.xlsx",
             'po_number': po_number,
-            'address': ship_to_address
+            'address': ship_to_address,
+            'invoice_qty': invoice_qty_total,
+            'total_qty': total_qty,
+            'total_cost': total_cost,
         }
         
     except Exception as e:

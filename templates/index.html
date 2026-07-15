@@ -1,16 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FDC Main Menu</title>
+  <title>{{ _('dashboard.title') }}</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='josh-williams-bg.jpg') }}">
+  {% if portal_minimal|default(false) %}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+  {% endif %}
   <style>
     /* Scope all styles to dashboard only - avoid navbar conflicts */
     .dashboard-wrapper {
-      background: url("{{ url_for('static', filename='josh-williams-NMEnVWulWLQ-unsplash.jpg') }}") no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='josh-williams-bg.jpg') }}") no-repeat center center;
       background-size: cover;
       font-family: 'Inter', 'Segoe UI', sans-serif;
       color: #e8f4fd;
@@ -125,6 +128,50 @@
     }
     .dashboard-wrapper .dashboard-nav-search input[type="search"]::placeholder {
       color: #627792;
+    }
+
+    .dashboard-wrapper .dashboard-nav-product-search {
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+    }
+    .dashboard-wrapper .dashboard-nav-product-search form {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .dashboard-wrapper .dashboard-nav-product-search input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 0.52rem 0.72rem;
+      font-size: 0.86rem;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 240, 255, 0.28);
+      background: rgba(10, 14, 22, 0.55);
+      color: #e8f4fd;
+    }
+    .dashboard-wrapper .dashboard-nav-product-search input[type="text"]:focus {
+      outline: none;
+      border-color: #00d4ff;
+      box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.22);
+    }
+    .dashboard-wrapper .dashboard-nav-product-search input[type="text"]::placeholder {
+      color: #627792;
+    }
+    .dashboard-wrapper .dashboard-nav-product-search button {
+      flex-shrink: 0;
+      padding: 0.52rem 0.72rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 212, 255, 0.45);
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.35), rgba(28, 200, 138, 0.25));
+      color: #e8f4fd;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .dashboard-wrapper .dashboard-nav-product-search button:hover {
+      border-color: #00d4ff;
+      box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.22);
     }
     
     .dashboard-wrapper .nav-item {
@@ -487,7 +534,7 @@
       min-height: 100vh;
     }
     body.portal-minimal .dashboard-wrapper {
-      background: url("{{ url_for('static', filename='josh-williams-NMEnVWulWLQ-unsplash.jpg') }}") no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='josh-williams-bg.jpg') }}") no-repeat center center;
       background-size: cover;
       padding-top: 0;
       margin-top: 0;
@@ -516,6 +563,9 @@
       align-items: center;
       gap: 1rem;
     }
+    body.portal-minimal .fdc-lang-btn { color: #64748b; }
+    body.portal-minimal .fdc-lang-btn:hover { color: #1d4ed8; background: rgba(37, 99, 235, 0.08); }
+    body.portal-minimal .fdc-lang-btn.active { color: #fff; background: #2563eb; }
     body.portal-minimal .portal-top-bar a {
       color: #7ee8ff;
       text-decoration: none;
@@ -671,10 +721,11 @@
 <body class="{% if portal_minimal %}portal-minimal{% endif %}">
   {% if portal_minimal %}
   <div class="portal-top-bar">
-    <span class="portal-brand">{% if portal_company_name %}{{ portal_company_name }}{% else %}FDC Client{% endif %}</span>
+    <span class="portal-brand">{% if portal_company_name %}{{ portal_company_name }}{% else %}{{ _('portal.client') }}{% endif %}</span>
     <div class="portal-actions">
+      {% include '_lang_switch.html' %}
       <span><i class="fas fa-user"></i> {{ current_user }}</span>
-      <a href="{{ url_for('auth.logout') }}">退出 Logout</a>
+      <a href="{{ url_for('auth.logout') }}">{{ _('portal.logout') }}</a>
     </div>
   </div>
   {% else %}
@@ -689,12 +740,12 @@
       {% if portal_minimal %}
       <div class="portal-home">
         <div class="portal-greeting-panel">
-          <div class="main-title">{{ portal_greeting_en|default('Greetings') }}</div>
-          <p class="portal-subtitle">{{ portal_greeting_zh|default('您好') }}</p>
+          <div class="main-title">{{ _('portal.greeting') }}</div>
+          <p class="portal-subtitle">{{ _('portal.greeting_zh') }}</p>
           {% if portal_show_limit_notice|default(false) %}
           <p class="portal-limit-note">
-            {{ portal_limit_en|default('External User — function limited.') }}<br>
-            {{ portal_limit_zh|default('外部用户 · 部分功能受限') }}
+            {{ _('portal.limit_en') }}<br>
+            {{ _('portal.limit_zh') }}
           </p>
           {% endif %}
         </div>
@@ -707,20 +758,27 @@
       <!-- Smart Navigation Panel -->
       <div class="nav-panel" id="dashboard-nav-panel">
         <div class="nav-header">
-          <h2>Quick Access !</h2>
-          <p>Navigate by category</p>
+          <h2>{{ _('dashboard.quick_access') }}</h2>
+          <p>{{ _('dashboard.navigate_category') }}</p>
+        </div>
+
+        <div class="dashboard-nav-product-search">
+          <form method="get" action="{{ product_detail_search_url() }}" id="dashboardProductDetailSearch">
+            <input type="text" name="search" placeholder="{{ te('Enter SKU or Style') }}" autocomplete="off" aria-label="{{ te('Product detail search') }}">
+            <button type="submit">{{ te('Search') }}</button>
+          </form>
         </div>
 
         <div class="dashboard-nav-search">
-          <label for="dashboardToolSearch"><i class="fas fa-filter"></i> Search tools</label>
-          <input type="search" id="dashboardToolSearch" placeholder="Match title or description…" autocomplete="off" spellcheck="false">
+          <label for="dashboardToolSearch"><i class="fas fa-filter"></i> {{ _('dashboard.search_tools') }}</label>
+          <input type="search" id="dashboardToolSearch" placeholder="{{ _('dashboard.search_placeholder') }}" autocomplete="off" spellcheck="false">
         </div>
         
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'favorites')">
           <i class="fas fa-star"></i>
           <div class="nav-text">
-            <h4>Favorites</h4>
-            <p>我的收藏 · 点亮星星收藏</p>
+            <h4>{{ _('dashboard.favorites') }}</h4>
+            <p>{{ _('dashboard.favorites_hint') }}</p>
           </div>
           <span class="count" id="favoritesCount">0</span>
         </div>
@@ -728,8 +786,8 @@
         <div class="nav-item nav-item-compact active" onclick="filterCategory(this, 'all')">
           <i class="fas fa-th-large"></i>
           <div class="nav-text">
-            <h4>All Tools</h4>
-            <p>所有功能</p>
+            <h4>{{ _('dashboard.all_tools') }}</h4>
+            <p>{{ _('dashboard.all_tools') }}</p>
           </div>
           <span class="count" id="allToolsCount"></span>
         </div>
@@ -737,8 +795,8 @@
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'lookup')">
           <i class="fas fa-search"></i>
           <div class="nav-text">
-            <h4>Lookup &amp; customers</h4>
-            <p>SKU · invoice · customer</p>
+            <h4>{{ _('dashboard.cat.lookup') }}</h4>
+            <p>{{ _('dashboard.cat.lookup_hint') }}</p>
           </div>
           <span class="count" id="lookupCount"></span>
         </div>
@@ -746,8 +804,8 @@
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'orders')">
           <i class="fas fa-file-invoice"></i>
           <div class="nav-text">
-            <h4>Orders &amp; invoices</h4>
-            <p>Sales orders · price edits</p>
+            <h4>{{ _('dashboard.cat.orders') }}</h4>
+            <p>{{ _('dashboard.cat.orders_hint') }}</p>
           </div>
           <span class="count" id="ordersCount"></span>
         </div>
@@ -755,8 +813,8 @@
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'inventory')">
           <i class="fas fa-boxes"></i>
           <div class="nav-text">
-            <h4>Inventory &amp; stock</h4>
-            <p>Channels · locations · OOS</p>
+            <h4>{{ _('dashboard.cat.inventory') }}</h4>
+            <p>{{ _('dashboard.cat.inventory_hint') }}</p>
           </div>
           <span class="count" id="inventoryCount"></span>
         </div>
@@ -764,8 +822,8 @@
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'media')">
           <i class="fas fa-photo-video"></i>
           <div class="nav-text">
-            <h4>Media &amp; assets</h4>
-            <p>DAM · images · viewers</p>
+            <h4>{{ _('dashboard.cat.media') }}</h4>
+            <p>{{ _('dashboard.cat.media_hint') }}</p>
           </div>
           <span class="count" id="mediaCount"></span>
         </div>
@@ -773,8 +831,8 @@
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'toolkit')">
           <i class="fas fa-screwdriver-wrench"></i>
           <div class="nav-text">
-            <h4>Utilities &amp; automation</h4>
-            <p>Lists · labels · scanners</p>
+            <h4>{{ _('dashboard.cat.toolkit') }}</h4>
+            <p>{{ _('dashboard.cat.toolkit_hint') }}</p>
           </div>
           <span class="count" id="toolkitCount"></span>
         </div>
@@ -782,8 +840,8 @@
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'logistics')">
           <i class="fas fa-ship"></i>
           <div class="nav-text">
-            <h4>Logistics &amp; warehouse</h4>
-            <p>Shipping · floor map</p>
+            <h4>{{ _('dashboard.cat.logistics') }}</h4>
+            <p>{{ _('dashboard.cat.logistics_hint') }}</p>
           </div>
           <span class="count" id="logisticsCount"></span>
         </div>
@@ -791,8 +849,8 @@
         <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'admin')">
           <i class="fas fa-user-shield"></i>
           <div class="nav-text">
-            <h4>Admin &amp; audit</h4>
-            <p>Users · compliance</p>
+            <h4>{{ _('dashboard.cat.admin') }}</h4>
+            <p>{{ _('dashboard.cat.admin_hint') }}</p>
           </div>
           <span class="count" id="adminCount"></span>
         </div>
@@ -808,12 +866,12 @@
         <a href="{{ url_for('item_lookup.item_lookup') }}" class="tool-card" data-category="lookup" data-tool="item_lookup">
           <div class="card-header">
             <i class="fas fa-search"></i>
-            <h3>SKU/STYLE Lookup</h3>
+            <h3>{{ _('tool.item_lookup.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'item_lookup')"></i>
           </div>
-          <p>Advanced product and style search with intelligent filtering and real-time results</p>
+          <p>{{ _('tool.item_lookup.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Lookup</span>
+            <span class="category">{{ _('dashboard.category.lookup') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -822,12 +880,12 @@
         <a href="{{ url_for('invoice_lookup.invoice_lookup') }}" class="tool-card" data-category="lookup" data-tool="invoice_lookup">
           <div class="card-header">
             <i class="fas fa-file-invoice-dollar"></i>
-            <h3>Invoice Lookup</h3>
+            <h3>{{ _('tool.invoice_lookup.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'invoice_lookup')"></i>
           </div>
-          <p>Search and view detailed invoice information and line items</p>
+          <p>{{ _('tool.invoice_lookup.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Lookup</span>
+            <span class="category">{{ _('dashboard.category.lookup') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -836,13 +894,13 @@
         <a href="/customer" class="tool-card" data-category="lookup" data-tool="customer">
           <div class="card-header">
             <i class="fas fa-users"></i>
-            <h3>Customer Analytics</h3>
+            <h3>{{ _('tool.customer.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'customer')"></i>
           </div>
-          <p>View detailed customer purchase history and behavior insights</p>
+          <p>{{ _('tool.customer.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Lookup</span>
-            <span class="badge">NEW CHANGE</span>
+            <span class="category">{{ _('dashboard.category.lookup') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new_change') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -851,12 +909,12 @@
         <a href="{{ url_for('email.mailboxes') }}" class="tool-card" data-category="lookup" data-tool="fdc_mail">
           <div class="card-header">
             <i class="fas fa-envelope"></i>
-            <h3>Mail</h3>
+            <h3>{{ _('tool.fdc_mail.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'fdc_mail')"></i>
           </div>
-          <p>IMAP inbox, read and send mail (FatCow mailboxes)</p>
+          <p>{{ _('tool.fdc_mail.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Lookup</span>
+            <span class="category">{{ _('dashboard.category.lookup') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -866,12 +924,12 @@
         <a href="{{ url_for('order_lookup.order_lookup') }}" class="tool-card" data-category="orders" data-tool="order_lookup">
           <div class="card-header">
             <i class="fas fa-file-invoice"></i>
-            <h3>Sales Orders</h3>
+            <h3>{{ _('tool.order_lookup.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_lookup')"></i>
           </div>
-          <p>Find, manage and print sales orders with advanced search capabilities</p>
+          <p>{{ _('tool.order_lookup.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Orders</span>
+            <span class="category">{{ _('dashboard.category.orders') }}</span>
             <span class="badge">Jennifer专用</span>
           </div>
         </a>
@@ -881,12 +939,12 @@
         <a href="/order_processor" class="tool-card" data-category="orders" data-tool="order_processor">
           <div class="card-header">
             <i class="fas fa-edit"></i>
-            <h3>Order Processor</h3>
+            <h3>{{ _('tool.order_processor.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'order_processor')"></i>
           </div>
-          <p>Edit invoice prices, quantities and bulk import to OMS system</p>
+          <p>{{ _('tool.order_processor.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Orders</span>
+            <span class="category">{{ _('dashboard.category.orders') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -896,12 +954,12 @@
         <a href="{{ url_for('external_stock_check.external_stock_check_page') }}" class="tool-card" data-category="inventory" data-tool="external_stock_check">
           <div class="card-header">
             <i class="fas fa-globe"></i>
-            <h3>External Stock Check</h3>
+            <h3>{{ _('tool.external_stock_check.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'external_stock_check')"></i>
           </div>
-          <p>Monitor TikTok shop inventory and compare with available stock levels</p>
+          <p>{{ _('tool.external_stock_check.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Inventory</span>
+            <span class="category">{{ _('dashboard.category.inventory') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -910,12 +968,12 @@
         <a href="{{ url_for('internal_stock_check.internal_stock_check_page') }}" class="tool-card" data-category="inventory" data-tool="internal_stock_check">
           <div class="card-header">
             <i class="fas fa-layer-group"></i>
-            <h3>Internal Stock Check</h3>
+            <h3>{{ _('tool.internal_stock_check.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'internal_stock_check')"></i>
           </div>
-          <p>Track internal inventory and manage stock across all warehouses</p>
+          <p>{{ _('tool.internal_stock_check.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Inventory</span>
+            <span class="category">{{ _('dashboard.category.inventory') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -924,13 +982,13 @@
         <a href="{{ url_for('inventory_manual_adjuster.inventory_manual_adjuster_page') }}" class="tool-card" data-category="inventory" data-tool="inventory_manual_adjuster">
           <div class="card-header">
             <i class="fas fa-tools"></i>
-            <h3>Inventory Manual Adjuster</h3>
+            <h3>{{ _('tool.inventory_manual_adjuster.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'inventory_manual_adjuster')"></i>
           </div>
-          <p>Transfer inventory between FDC and E-Fashion, or add/remove stock on one database</p>
+          <p>{{ _('tool.inventory_manual_adjuster.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Inventory</span>
-            <span class="badge">NEW</span>
+            <span class="category">{{ _('dashboard.category.inventory') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -939,13 +997,13 @@
         <a href="{{ url_for('four_seller.four_seller_page') }}" class="tool-card" data-category="inventory" data-tool="four_seller">
           <div class="card-header">
             <i class="fas fa-store"></i>
-            <h3>4Seller Stock Sync</h3>
+            <h3>{{ _('tool.four_seller.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'four_seller')"></i>
           </div>
-          <p>Sync 4Seller stock export and compare on-hand inventory against our available qty</p>
+          <p>{{ _('tool.four_seller.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Inventory</span>
-            <span class="badge">NEW</span>
+            <span class="category">{{ _('dashboard.category.inventory') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -954,12 +1012,12 @@
         <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="inventory" data-tool="location_massive_update">
           <div class="card-header">
             <i class="fas fa-warehouse"></i>
-            <h3>Massive Location Update</h3>
+            <h3>{{ _('tool.location_massive_update.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_massive_update')"></i>
           </div>
-          <p>Bulk update locations for styles and all colors with smart suggestions.</p>
+          <p>{{ _('tool.location_massive_update.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Inventory</span>
+            <span class="category">{{ _('dashboard.category.inventory') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -968,13 +1026,13 @@
         <a href="/oosc" class="tool-card" data-category="inventory" data-tool="oosc">
           <div class="card-header">
             <i class="fas fa-exclamation-triangle"></i>
-            <h3>Out of Stock Check</h3>
+            <h3>{{ _('tool.oosc.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'oosc')"></i>
           </div>
-          <p>Monitor negative inventory, view stock status, and wipe locations for oversold items</p>
+          <p>{{ _('tool.oosc.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Inventory</span>
-            <span class="badge">NEW</span>
+            <span class="category">{{ _('dashboard.category.inventory') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -984,12 +1042,12 @@
         <a href="/dam" class="tool-card" data-category="media" data-tool="dam">
           <div class="card-header">
             <i class="fas fa-folder-open"></i>
-            <h3>DAM System</h3>
+            <h3>{{ _('tool.dam.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'dam')"></i>
           </div>
-          <p>Digital Asset Management - organize, search and manage product images and files</p>
+          <p>{{ _('tool.dam.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Media</span>
+            <span class="category">{{ _('dashboard.category.media') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -998,12 +1056,12 @@
         <a href="/image_upload" class="tool-card" data-category="media" data-tool="image_upload">
           <div class="card-header">
             <i class="fas fa-cloud-upload-alt"></i>
-            <h3>Smart Image Upload</h3>
+            <h3>{{ _('tool.image_upload.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'image_upload')"></i>
           </div>
-          <p>Bulk upload and AI-powered organization of product images</p>
+          <p>{{ _('tool.image_upload.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Media</span>
+            <span class="category">{{ _('dashboard.category.media') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1016,12 +1074,12 @@
             {% else %}
             <i class="fas fa-images"></i>
             {% endif %}
-            <h3>Master Image Viewer</h3>
+            <h3>{{ _('tool.master_image_viewer.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'master_image_viewer')"></i>
           </div>
-          <p>Search and view all images for any SKU across all sources with zoom</p>
+          <p>{{ _('tool.master_image_viewer.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Media</span>
+            <span class="category">{{ _('dashboard.category.media') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1034,12 +1092,12 @@
             {% else %}
             <i class="fas fa-box-open"></i>
             {% endif %}
-            <h3>商品查询 / Product Lookup</h3>
+            <h3>{{ _('tool.clientview.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'client_product_detail')"></i>
           </div>
-          <p>客户商品详情（无成本/客户价）· Client product detail without cost or customer price</p>
+          <p>{{ _('tool.clientview.desc') }}</p>
           <div class="card-footer">
-            <span class="category">Media</span>
+            <span class="category">{{ _('dashboard.category.media') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1048,12 +1106,12 @@
         <a href="/bag_style_viewer" class="tool-card" data-category="media" data-tool="bag_style_viewer">
           <div class="card-header">
             <i class="fas fa-shopping-bag"></i>
-            <h3>Bag Style Viewer</h3>
+            <h3>{{ _('tool.bag_style_viewer.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'bag_style_viewer')"></i>
           </div>
-          <p>Browse bag styles by description, search SKU, and manage product descriptions</p>
+          <p>{{ te('Browse bag styles by description, search SKU, and manage product descriptions') }}</p>
           <div class="card-footer">
-            <span class="category">Media</span>
+            <span class="category">{{ _('dashboard.category.media') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1062,13 +1120,13 @@
         <a href="/burlington_highlight" class="tool-card" data-category="media" data-tool="burlington_highlight">
           <div class="card-header">
             <i class="fas fa-highlighter"></i>
-            <h3>Burlington-highight</h3>
+            <h3>{{ te('Burlington-highight') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'burlington_highlight')"></i>
           </div>
-          <p>Search files in the Burlington folder and return matching file path and file name</p>
+          <p>{{ te('Search files in the Burlington folder and return matching file path and file name') }}</p>
           <div class="card-footer">
-            <span class="category">Media</span>
-            <span class="badge">NEW</span>
+            <span class="category">{{ _('dashboard.category.media') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1078,12 +1136,12 @@
         <a href="/v7_listcreator" class="tool-card" data-category="toolkit" data-tool="v7_listcreator">
           <div class="card-header">
             <i class="fas fa-list-ol"></i>
-            <h3>List Creator V7</h3>
+            <h3>{{ _('tool.v7_listcreator.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'v7_listcreator')"></i>
           </div>
-          <p>Create sophisticated product lists with advanced filtering and export options</p>
+          <p>{{ te('Create sophisticated product lists with advanced filtering and export options') }}</p>
           <div class="card-footer">
-            <span class="category">Utilities</span>
+            <span class="category">{{ _('dashboard.category.utilities') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1092,12 +1150,12 @@
         <a href="/lori_automation/loris_fedex" class="tool-card" data-category="toolkit" data-tool="loris_fedex">
           <div class="card-header">
             <i class="fas fa-robot"></i>
-            <h3>Loris Automation</h3>
+            <h3>{{ _('tool.loris_fedex.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'loris_fedex')"></i>
           </div>
-          <p>Automated workflow management and intelligent process optimization</p>
+          <p>{{ te('Automated workflow management and intelligent process optimization') }}</p>
           <div class="card-footer">
-            <span class="category">Utilities</span>
+            <span class="category">{{ _('dashboard.category.utilities') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1106,12 +1164,12 @@
         <a href="/mobile_scanner" class="tool-card" data-category="toolkit" data-tool="mobile_scanner">
           <div class="card-header">
             <i class="fas fa-camera"></i>
-            <h3>Mobile Barcode Scanner</h3>
+            <h3>{{ _('tool.mobile_scanner.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'mobile_scanner')"></i>
           </div>
-          <p>Use your device camera to scan barcodes and collect decoded values in a list</p>
+          <p>{{ te('Use your device camera to scan barcodes and collect decoded values in a list') }}</p>
           <div class="card-footer">
-            <span class="category">Utilities</span>
+            <span class="category">{{ _('dashboard.category.utilities') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1120,13 +1178,13 @@
         <a href="{{ url_for('burlington_label_processor.burlington_label_processor_page') }}" class="tool-card" data-category="toolkit" data-tool="burlington_label_processor">
           <div class="card-header">
             <i class="fas fa-scissors"></i>
-            <h3>Burlington Label Processor</h3>
+            <h3>{{ _('tool.burlington_label_processor.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'burlington_label_processor')"></i>
           </div>
-          <p>Process Burlington label PDFs: crop to 4×6, parse POs, and download with separators</p>
+          <p>{{ te('Process Burlington label PDFs: crop to 4×6, parse POs, and download with separators') }}</p>
           <div class="card-footer">
-            <span class="category">Utilities</span>
-            <span class="badge">NEW</span>
+            <span class="category">{{ _('dashboard.category.utilities') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1136,12 +1194,12 @@
         <a href="/boat" class="tool-card" data-category="logistics" data-tool="boat">
           <div class="card-header">
             <i class="fas fa-ship"></i>
-            <h3>Container Hub</h3>
+            <h3>{{ te('Container Hub') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'boat')"></i>
           </div>
-          <p>View container status, process new imports, and manage ocean & landed POs</p>
+          <p>{{ te('View container status, process new imports, and manage ocean & landed POs') }}</p>
           <div class="card-footer">
-            <span class="category">Logistics</span>
+            <span class="category">{{ _('dashboard.category.logistics') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1150,12 +1208,12 @@
         <a href="https://www.fdcef.com/container_search" class="tool-card" data-category="logistics" data-tool="fdcef_container_search">
           <div class="card-header">
             <i class="fas fa-box"></i>
-            <h3>FDCEF container search</h3>
+            <h3>{{ _('tool.fdcef_container_search.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'fdcef_container_search')"></i>
           </div>
-          <p>Open fdcef.com container lookup (paste container id in search)</p>
+          <p>{{ te('Open fdcef.com container lookup (paste container id in search)') }}</p>
           <div class="card-footer">
-            <span class="category">Logistics</span>
+            <span class="category">{{ _('dashboard.category.logistics') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1164,12 +1222,12 @@
         <a href="/warehousemap" class="tool-card" data-category="logistics" data-tool="warehousemap">
           <div class="card-header">
             <i class="fas fa-map"></i>
-            <h3>Warehouse Map</h3>
+            <h3>{{ _('tool.warehousemap.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'warehousemap')"></i>
           </div>
-          <p>Interactive warehouse layout and location mapping system</p>
+          <p>{{ te('Interactive warehouse layout and location mapping system') }}</p>
           <div class="card-footer">
-            <span class="category">Logistics</span>
+            <span class="category">{{ _('dashboard.category.logistics') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1179,12 +1237,12 @@
         <a href="/audit" class="tool-card" data-category="admin" data-tool="audit">
           <div class="card-header">
             <i class="fas fa-clipboard-check"></i>
-            <h3>Master Audit</h3>
+            <h3>{{ _('tool.audit.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'audit')"></i>
           </div>
-          <p>Comprehensive system auditing and compliance tracking tools</p>
+          <p>{{ te('Comprehensive system auditing and compliance tracking tools') }}</p>
           <div class="card-footer">
-            <span class="category">Admin</span>
+            <span class="category">{{ _('dashboard.category.admin') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1193,12 +1251,12 @@
         <a href="/manage_users" class="tool-card" data-category="admin" data-tool="manage_users">
           <div class="card-header">
             <i class="fas fa-users-cog"></i>
-            <h3>User Management</h3>
+            <h3>{{ _('tool.manage_users.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'manage_users')"></i>
           </div>
-          <p>Manage user accounts, permissions and access control settings</p>
+          <p>{{ te('Manage user accounts, permissions and access control settings') }}</p>
           <div class="card-footer">
-            <span class="category">Admin</span>
+            <span class="category">{{ _('dashboard.category.admin') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1208,12 +1266,12 @@
         <a href="{{ url_for('vendor_app.vendor_app_home') }}" class="tool-card" data-category="admin" data-tool="vendor_app">
           <div class="card-header">
             <i class="fas fa-handshake"></i>
-            <h3>Vendor App</h3>
+            <h3>{{ _('tool.vendor_app.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'vendor_app')"></i>
           </div>
-          <p>Vendor management portal</p>
+          <p>{{ te('Vendor management portal') }}</p>
           <div class="card-footer">
-            <span class="category">Admin</span>
+            <span class="category">{{ _('dashboard.category.admin') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -1228,17 +1286,23 @@
       {% endif %}
   </div>
 
-  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@joshwi?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Josh Williams</a> on <a href="https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Unsplash</a> · June 3, 2026</p>
+  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@joshwi?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">{{ te('Josh Williams') }}</a> on <a href="https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">{{ te('Unsplash') }}</a> · June 3, 2026</p>
   {% if not portal_minimal|default(false) %}
   {% include 'footer.html' %}
   {% endif %}
 
   <script>
     const PORTAL_MINIMAL = {{ portal_minimal|default(false)|tojson }};
+    const DASHBOARD_FAVORITES = {{ dashboard_favorites|default([])|tojson }};
     let currentFilter = 'all';
-    let userFavorites = [];
+    let userFavorites = Array.isArray(DASHBOARD_FAVORITES) ? DASHBOARD_FAVORITES.slice() : [];
     
     function loadFavorites() {
+      if (!PORTAL_MINIMAL) {
+        userFavorites = Array.isArray(DASHBOARD_FAVORITES) ? DASHBOARD_FAVORITES.slice() : [];
+        updateFavorites();
+        return Promise.resolve(userFavorites);
+      }
       return fetch('/get_favorites')
         .then(response => response.json())
         .then(favorites => {

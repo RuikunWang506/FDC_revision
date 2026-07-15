@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
         <script>
             window.showDropbox = {{ (current_user is not none)|tojson }};
@@ -7,7 +7,7 @@
         </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Image Viewer 主图查看器 - FDC</title>
+    <title>{{ _('page.master_image_viewer.title') }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <style>
                 .image-card.selected {
@@ -1602,14 +1602,14 @@
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1.25rem;border-bottom:1px solid #e2e8f0;background:#fff;">
         <a href="{{ url_for('home') }}" style="color:#2563eb;font-weight:600;text-decoration:none;"><i class="fas fa-arrow-left"></i> Home</a>
         <span style="color:#64748b;font-size:0.9rem;">{{ current_user }}</span>
-        <a href="{{ url_for('auth.logout') }}" style="color:#2563eb;font-weight:600;text-decoration:none;">Logout</a>
+        <a href="{{ url_for('auth.logout') }}" style="color:#2563eb;font-weight:600;text-decoration:none;">{{ te('Logout') }}</a>
     </div>
     {% endif %}
 
     <div class="container">
         <div class="header">
-            <h1 class="main-title">Master Image Viewer<span class="label-zh">主图查看器</span></h1>
-            <p class="page-subtitle">Search SKU images across all sources<span class="label-zh">搜索 SKU 全来源图片</span></p>
+            <h1 class="main-title">{{ te('Master Image Viewer') }}<span class="label-zh">主图查看器</span></h1>
+            <p class="page-subtitle">{{ te('Search SKU images across all sources') }}<span class="label-zh">搜索 SKU 全来源图片</span></p>
         </div>
 
         {% if customer_purchase_notice %}
@@ -1626,28 +1626,28 @@
                     type="text" 
                     class="search-input" 
                     id="skuInput" 
-                    placeholder="SKU search / 输入 SKU…"
+                    placeholder="{{ te('SKU search / 输入 SKU…') }}"
                     autocomplete="off"
                     required
                 >
                 <button type="submit" class="search-btn" id="searchBtn">
                     <i class="fas fa-search"></i>
                     <span class="btn-label">
-                        <span class="btn-label-en">Search Images</span>
+                        <span class="btn-label-en">{{ te('Search Images') }}</span>
                         <span class="btn-label-zh">搜索图片</span>
                     </span>
                 </button>
                 <button type="button" class="search-btn" id="fetchThisSkuBtn" style="background: linear-gradient(135deg, #ea8c0c, #d97706);">
                     <i class="fas fa-cloud-download-alt"></i>
                     <span class="btn-label">
-                        <span class="btn-label-en">Fetch this SKU from China</span>
+                        <span class="btn-label-en">{{ te('Fetch this SKU from China') }}</span>
                         <span class="btn-label-zh">从中国拉取此 SKU</span>
                     </span>
                 </button>
                 <button type="button" class="search-btn" id="batchFetchBtn" style="background: linear-gradient(135deg, #f6ad55, #f8b500);">
                     <i class="fas fa-list"></i>
                     <span class="btn-label">
-                        <span class="btn-label-en">Batch Fetch from China</span>
+                        <span class="btn-label-en">{{ te('Batch Fetch from China') }}</span>
                         <span class="btn-label-zh">批量从中国拉取</span>
                     </span>
                 </button>
@@ -1655,7 +1655,7 @@
                 <a href="/master_image_viewer/chinadirectory" class="search-btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); text-decoration: none; display: inline-flex; align-items: center;">
                     <i class="fas fa-folder-tree"></i>
                     <span class="btn-label">
-                        <span class="btn-label-en">China FTP Directory</span>
+                        <span class="btn-label-en">{{ te('China FTP Directory') }}</span>
                         <span class="btn-label-zh">中国 FTP 目录</span>
                     </span>
                 </a>
@@ -1665,16 +1665,16 @@
 
         <div class="loading" id="loadingDiv" style="display: none;">
             <i class="fas fa-spinner"></i>
-            <p style="margin-top: 0.5rem; font-size: 0.85rem;">Searching…<span class="label-zh">搜索中…</span></p>
+            <p style="margin-top: 0.5rem; font-size: 0.85rem;">{{ te('Searching…') }}<span class="label-zh">搜索中…</span></p>
         </div>
 
             <!-- TK Password Modal -->
             {% if not current_user and not session.tk_user %}
             <div id="tkPasswordModal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;">
                 <form method="POST" action="/tk_password" style="background:#222;padding:2rem 2.5rem;border-radius:18px;box-shadow:0 8px 32px rgba(0,212,255,0.18);display:flex;flex-direction:column;align-items:center;min-width:320px;">
-                    <h2 style="color:#00d4ff;margin-bottom:1.5rem;">Enter TK Password<span class="label-zh">输入 TK 密码</span></h2>
+                    <h2 style="color:#00d4ff;margin-bottom:1.5rem;">{{ te('Enter TK Password') }}<span class="label-zh">输入 TK 密码</span></h2>
                     <input type="password" name="password" placeholder="Password / 密码" style="padding:0.8rem 1.2rem;border-radius:10px;border:1px solid #00d4ff;font-size:1.1rem;margin-bottom:1.2rem;width:100%;" autofocus required />
-                    <button type="submit" style="padding:0.8rem 2rem;background:linear-gradient(135deg,#00d4ff,#1cc88a);border:none;border-radius:10px;color:white;font-weight:600;font-size:1.1rem;cursor:pointer;">Submit<span class="label-zh">提交</span></button>
+                    <button type="submit" style="padding:0.8rem 2rem;background:linear-gradient(135deg,#00d4ff,#1cc88a);border:none;border-radius:10px;color:white;font-weight:600;font-size:1.1rem;cursor:pointer;">{{ te('Submit') }}<span class="label-zh">提交</span></button>
                 </form>
             </div>
             {% endif %}
@@ -1686,7 +1686,7 @@
     </div>
 
     <!-- Left batch history sidebar -->
-    <aside id="mivBatchStatusDock" class="miv-batch-dock" aria-label="Recent batch jobs">
+    <aside id="mivBatchStatusDock" class="miv-batch-dock" aria-label="{{ te('Recent batch jobs') }}">
         <div class="miv-batch-dock-inner">
             <div class="miv-batch-history-head">
                 <p class="miv-batch-history-title">Recent Batches · 最近批次</p>
@@ -1695,12 +1695,12 @@
                 </button>
             </div>
             <div id="batchDockHistoryList" class="miv-batch-history-list"></div>
-            <p id="batchDockHistoryEmpty" class="miv-batch-history-empty" style="display:none;">No recent batches.<span class="label-zh">暂无最近批次。</span></p>
+            <p id="batchDockHistoryEmpty" class="miv-batch-history-empty" style="display:none;">{{ te('No recent batches.') }}<span class="label-zh">暂无最近批次。</span></p>
         </div>
     </aside>
 
     <!-- Floating selection sidebar (sticks while scrolling) -->
-    <aside id="mivSelectionDock" class="miv-selection-dock" aria-hidden="true" aria-label="Selected images actions">
+    <aside id="mivSelectionDock" class="miv-selection-dock" aria-hidden="true" aria-label="{{ te('Selected images actions') }}">
         <div class="miv-selection-dock-inner">
             <div class="miv-selection-dock-meta">
                 <p class="miv-selection-dock-title">Selection · 已选</p>
@@ -1711,7 +1711,7 @@
             <button type="button" id="downloadSelectedBtn" class="search-btn">
                 <i class="fas fa-download"></i>
                 <span class="btn-label">
-                    <span class="btn-label-en">Download Selected(avoid too many images)</span>
+                    <span class="btn-label-en">{{ te('Download Selected(avoid too many images)') }}</span>
                     <span class="btn-label-zh">下载已选(图多会慢)</span>
                 </span>
             </button>
@@ -1719,7 +1719,7 @@
             <button type="button" id="deleteSelectedBtn" class="search-btn" style="background:linear-gradient(135deg,#ff3b3b,#ff6b6b);">
                 <i class="fas fa-trash-alt"></i>
                 <span class="btn-label">
-                    <span class="btn-label-en">Delete Selected</span>
+                    <span class="btn-label-en">{{ te('Delete Selected') }}</span>
                     <span class="btn-label-zh">删除已选</span>
                 </span>
             </button>
@@ -1769,14 +1769,14 @@
                     <button class="modal-action-btn" onclick="downloadImage()">
                         <i class="fas fa-download"></i>
                         <span class="btn-label">
-                            <span class="btn-label-en">Download</span>
+                            <span class="btn-label-en">{{ te('Download') }}</span>
                             <span class="btn-label-zh">下载</span>
                         </span>
                     </button>
                     <button class="modal-action-btn" onclick="copyImageUrl()">
                         <i class="fas fa-link"></i>
                         <span class="btn-label">
-                            <span class="btn-label-en">Copy URL</span>
+                            <span class="btn-label-en">{{ te('Copy URL') }}</span>
                             <span class="btn-label-zh">复制链接</span>
                         </span>
                     </button>
@@ -1788,12 +1788,12 @@
     <!-- Batch Fetch Modal -->
     <div id="batchFetchModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
         <div class="miv-modal-panel" style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-            <h2 style="margin-top: 0; color: #111827;">Batch Fetch from China FTP<span class="label-zh">从中国 FTP 批量拉取</span></h2>
-            <p class="miv-muted" style="font-size: 0.95rem;">Paste a list of SKUs (comma-separated or each on a new line)<span class="label-zh">粘贴 SKU 列表（逗号分隔或每行一个）</span></p>
-            <textarea id="skuListInput" style="width: 100%; height: 150px; padding: 0.75rem; border: 2px solid #9ca3af; border-radius: 8px; font-family: monospace; font-size: 0.9rem; color: #111827; background: #fff; resize: vertical;" placeholder="S1549&#10;M1141&#10;P2234&#10;&#10;or: S1549, M1141, P2234"></textarea>
+            <h2 style="margin-top: 0; color: #111827;">{{ te('Batch Fetch from China FTP') }}<span class="label-zh">从中国 FTP 批量拉取</span></h2>
+            <p class="miv-muted" style="font-size: 0.95rem;">{{ te('Paste a list of SKUs (comma-separated or each on a new line)') }}<span class="label-zh">粘贴 SKU 列表（逗号分隔或每行一个）</span></p>
+            <textarea id="skuListInput" style="width: 100%; height: 150px; padding: 0.75rem; border: 2px solid #9ca3af; border-radius: 8px; font-family: monospace; font-size: 0.9rem; color: #111827; background: #fff; resize: vertical;" placeholder="{{ te('S1549&#10;M1141&#10;P2234&#10;&#10;or: S1549, M1141, P2234') }}"></textarea>
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <button id="batchFetchSubmitBtn" class="miv-btn-primary" style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, #ea8c0c, #d97706); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Fetch List from China<span class="label-zh">从中国拉取列表</span></button>
-                <button id="batchFetchCancelBtn" class="miv-btn-secondary" style="flex: 1; padding: 0.75rem 1rem; background: #e5e7eb; color: #111827; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Cancel<span class="label-zh">取消</span></button>
+                <button id="batchFetchSubmitBtn" class="miv-btn-primary" style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, #ea8c0c, #d97706); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">{{ te('Fetch List from China') }}<span class="label-zh">从中国拉取列表</span></button>
+                <button id="batchFetchCancelBtn" class="miv-btn-secondary" style="flex: 1; padding: 0.75rem 1rem; background: #e5e7eb; color: #111827; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">{{ te('Cancel') }}<span class="label-zh">取消</span></button>
             </div>
         </div>
     </div>
@@ -1802,17 +1802,17 @@
     <div id="batchStatusModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; align-items: center; justify-content: center;">
         <div class="miv-modal-panel" style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 style="margin: 0; color: #111827;">Batch Fetch Progress<span class="label-zh">批量拉取进度</span></h2>
-                <button id="batchStatusCloseBtn" type="button" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #374151;">&times;</button>
+                <h2 style="margin: 0; color: #111827;">{{ te('Batch Fetch Progress') }}<span class="label-zh">批量拉取进度</span></h2>
+                <button id="batchStatusCloseBtn" type="button" aria-label="{{ te('Close') }}" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #374151;">&times;</button>
             </div>
             <div id="batchStatusOutcome" role="status" style="display: none; margin-bottom: 1rem; padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.9rem; line-height: 1.45; border: 1px solid transparent;"></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px;">
-                    <div class="miv-muted" style="font-size: 0.85rem;">Elapsed Time<span class="label-zh">已用时间</span></div>
+                    <div class="miv-muted" style="font-size: 0.85rem;">{{ te('Elapsed Time') }}<span class="label-zh">已用时间</span></div>
                     <div id="elapsedTime" style="font-size: 1.5rem; font-weight: 600; color: #111827;">0:00</div>
                 </div>
                 <div style="background: #f3f4f6; padding: 1rem; border-radius: 8px;">
-                    <div class="miv-muted" style="font-size: 0.85rem;">Progress<span class="label-zh">进度</span></div>
+                    <div class="miv-muted" style="font-size: 0.85rem;">{{ te('Progress') }}<span class="label-zh">进度</span></div>
                     <div id="progressCount" style="font-size: 1.5rem; font-weight: 600; color: #111827;">0/0</div>
                 </div>
             </div>
@@ -1822,8 +1822,8 @@
                 </div>
             </div>
             <div style="margin-bottom: 1rem; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
-                <div id="currentStyleLabel" style="font-weight: 700; color: #111827; margin-bottom: 0.35rem;">Current Style: waiting<span class="label-zh">当前款式：等待中</span></div>
-                <div id="currentStyleDetails" class="miv-muted" style="font-size: 0.9rem;">No active style yet.<span class="label-zh">尚无进行中的款式。</span></div>
+                <div id="currentStyleLabel" style="font-weight: 700; color: #111827; margin-bottom: 0.35rem;">{{ te('Current Style: waiting') }}<span class="label-zh">当前款式：等待中</span></div>
+                <div id="currentStyleDetails" class="miv-muted" style="font-size: 0.9rem;">{{ te('No active style yet.') }}<span class="label-zh">尚无进行中的款式。</span></div>
                 <div id="batchLastUpdated" class="miv-muted" style="font-size: 0.8rem; margin-top: 0.35rem;"></div>
             </div>
             <div id="batchRerunWrap" style="display: none; margin-bottom: 1rem;">
@@ -2037,7 +2037,7 @@
             let html = '<div class="miv-filter-field">';
             html += '<label for="' + id + '">' + label + '</label>';
             html += '<select id="' + id + '" class="miv-filter-select" data-miv-filter="1">';
-            html += '<option value="">All</option>';
+            html += '<option value="">{{ te('All') }}</option>';
             values.forEach(function(value) {
                 html += '<option value="' + mivEscapeHtml(value) + '"' +
                     (selectedValue === value ? ' selected' : '') + '>' +
@@ -2077,12 +2077,12 @@
                         <div class="image-filename" title="${mivEscapeHtml(image.filename)}">${image.filename}${image.is_canonical ? '<span class="image-filename-canonical">CANONICAL</span>' : ''} <span class="image-filename-version">v${image.version}</span></div>
                         <div class="image-details">
                             <div class="image-detail-row">
-                                <span class="image-detail-label">Source</span>
+                                <span class="image-detail-label">{{ te('Source') }}</span>
                                 <span class="image-detail-value" title="${mivEscapeHtml(image.source || '—')}">${image.source || '—'}</span>
                             </div>
                             ${!window.mivHidePath && image.relative_path ? `
                             <div class="image-detail-row">
-                                <span class="image-detail-label">Path</span>
+                                <span class="image-detail-label">{{ te('Path') }}</span>
                                 <span class="image-detail-value" title="${mivEscapeHtml(image.relative_path)}">${image.relative_path}</span>
                             </div>` : ''}
                             <div class="image-detail-row">
@@ -2522,7 +2522,7 @@
                 <div class="detail-section">
                     <h4>${bi('Basic Information', '基本信息')}</h4>
                     <div class="detail-item">
-                        <span class="detail-label">SKU:</span>
+                        <span class="detail-label">{{ te('SKU:') }}</span>
                         <span class="detail-value">${image.sku}</span>
                     </div>
                     <div class="detail-item detail-item-stacked">
@@ -2983,7 +2983,7 @@ function applyBatchOutcomeBanner(status) {
         el.style.borderColor = '#f59e0b';
         el.style.color = '#78350f';
         el.innerHTML =
-            '<strong>' + bi('Interrupted', '已中断') + '</strong> — ' + bi('This batch is <em>not</em> running anymore (for example after a server restart).', '此批次已不再运行（例如服务器重启后）。') + ' ' +
+            '<strong>' + bi('Interrupted', '已中断') + '</strong> — ' + bi('This batch is <em>{{ te('not') }}</em> running anymore (for example after a server restart).', '此批次已不再运行（例如服务器重启后）。') + ' ' +
             bi('Numbers below are the last saved snapshot. Use the <strong>orange button</strong> under the status box (rerun or open Batch Fetch), or start <strong>Batch Fetch</strong> from the toolbar.', '下方数字为最后保存的快照。请使用状态框下的<strong>橙色按钮</strong>（重新运行或打开批量拉取），或从工具栏开始<strong>批量拉取</strong>。');
         return;
     }

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List building — V7 List Creator</title>
+    <title>{{ te('List building — V7 List Creator') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
         body { background: #f1f5f9; }
@@ -27,6 +27,8 @@
     </style>
 </head>
 <body>
+{% set lang_bar_light = true %}
+{% include '_lang_bar_standalone.html' %}
 <div class="container py-5">
     <div class="lc-hero text-center">
         <h1 id="jobHeadline">
@@ -47,26 +49,26 @@
     </div>
 
     <p class="text-muted text-center small mb-4">
-        You can leave this page open or return from <strong>HTML snapshots</strong> on the main screen. Finished pages are kept about <strong>{{ cache_days }}</strong> days.
+        You can leave this page open or return from <strong>{{ te('HTML snapshots') }}</strong> on the main screen. Finished pages are kept about <strong>{{ cache_days }}</strong> days.
     </p>
 
     <div class="lc-panel text-center mx-auto" style="max-width: 520px;">
         <div id="statusBox">
             <div id="spinner" class="spinner-border text-primary mb-3" role="status">
-                <span class="sr-only">Loading…</span>
+                <span class="sr-only">{{ te('Loading…') }}</span>
             </div>
-            <p id="statusText" class="mb-0 text-dark">Checking job status…</p>
+            <p id="statusText" class="mb-0 text-dark">{{ te('Checking job status…') }}</p>
         </div>
         <div id="readyBox" class="d-none">
-            <a id="viewLink" href="#" class="btn btn-success btn-lg">Open list</a>
-            <p class="small text-muted mt-3 mb-0">Save this URL — it is your snapshot for this request.</p>
+            <a id="viewLink" href="#" class="btn btn-success btn-lg">{{ te('Open list') }}</a>
+            <p class="small text-muted mt-3 mb-0">{{ te('Save this URL — it is your snapshot for this request.') }}</p>
             <p class="small mb-0"><code id="urlOut" class="user-select-all"></code></p>
         </div>
         <div id="failBox" class="d-none alert alert-danger text-left mb-0" role="alert"></div>
     </div>
 
     <p class="mt-4 small text-center">
-        <a href="{{ url_for('v7_listcreator.index') }}">Back to List Creator</a>
+        <a href="{{ url_for('v7_listcreator.index') }}">{{ te('Back to List Creator') }}</a>
     </p>
 </div>
 <script>

@@ -30,4 +30,6 @@ pywin32>=306; sys_platform == 'win32'
 imapclient>=3.0.1
 mail-parser>=4.1.2
 bleach>=6.1.0
-cryptography>=42.0.0
+ddddocr>=1.5.6
+pycryptodome>=3.20.0
+pytesseract>=0.3.10

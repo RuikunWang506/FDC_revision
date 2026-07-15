@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
-    <title>Upload Container File</title>
+    <title>{{ _('page.container_upload.title') }}</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Bootstrap Icons (Optional, for icons in buttons) -->
@@ -56,16 +56,16 @@
             <form method="POST" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
                 <div class="mb-3 w-50">
                     <input type="file" name="container_files" accept=".xlsx" class="form-control" multiple required>
-                    <div class="form-text">Hold Ctrl/Cmd to select multiple files</div>
+                    <div class="form-text">{{ te('Hold Ctrl/Cmd to select multiple files') }}</div>
                 </div>
-                <button type="submit" class="btn btn-upload btn-lg">Upload Files</button>
+                <button type="submit" class="btn btn-upload btn-lg">{{ te('Upload Files') }}</button>
             </form>
         </div>
 
         <!-- Download Section -->
         {% if files %}
         <div class="download-section">
-            <h2>Download Generated Files:</h2>
+            <h2>{{ te('Download Generated Files:') }}</h2>
             <div class="d-flex flex-wrap gap-3">
                 {% for file in files %}
                     {# Extract container number and file type from filename #}
@@ -89,7 +89,7 @@
         {% if errors %}
         <div class="error-section">
             <div class="alert alert-warning" role="alert">
-                <h4 class="alert-heading">Processing Errors:</h4>
+                <h4 class="alert-heading">{{ te('Processing Errors:') }}</h4>
                 <ul class="mb-0">
                     {% for error in errors %}
                     <li>{{ error }}</li>

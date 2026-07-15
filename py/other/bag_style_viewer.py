@@ -566,7 +566,9 @@ def _extract_container_pur_num(token):
     s = t.upper()
     if re.match(r'^[A-Za-z]{1,2}\d{4}([-]?[smlSML]*)?$', s):
         return None
-    if re.match(r'^[A-Z][A-Z0-9]{3,}$', s):
+    if re.match(r'^[A-Za-z]{3,}\d{4}([-]?[smlSML]*)?$', s):
+        return None
+    if re.match(r'^[A-Z]\d+$', s):
         return s
     return None
 

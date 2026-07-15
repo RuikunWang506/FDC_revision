@@ -150,6 +150,22 @@ def _hub_action_mode(row) -> str:
     return "waiting"
 
 
+_HUB_ACTION_SORT_ORDER = {
+    "new": 0,
+    "waiting": 1,
+    "ocean": 2,
+    "port": 3,
+    "landed": 4,
+}
+
+
+def _hub_row_sort_key(row: dict) -> tuple:
+    """All view: New first, then Ocean, then Landed; within each group by container # desc."""
+    action_mode = str(row.get("action_mode") or "waiting")
+    status_rank = _HUB_ACTION_SORT_ORDER.get(action_mode, 99)
+    return (status_rank, -_fdc_container_sort_number(row.get("container")))
+
+
 def _written_time_column(df: pd.DataFrame) -> str | None:
     for candidate in ("written time", "Written time", "WRITTEN TIME"):
         if candidate in df.columns:
@@ -733,6 +749,7 @@ def _build_container_hub_rows(
         }
         rows.append(row)
 
+    rows.sort(key=_hub_row_sort_key)
     return rows
 
 

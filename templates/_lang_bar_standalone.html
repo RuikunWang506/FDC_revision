@@ -1,0 +1,5 @@
+{% include '_lang_switch_styles.html' %}
+<div class="fdc-lang-topbar{% if lang_bar_light %} fdc-lang-topbar-light{% endif %}" role="banner">
+    {% include '_lang_switch.html' %}
+</div>
+<script>document.body.classList.add('has-lang-topbar');</script>

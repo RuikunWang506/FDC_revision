@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Vendor</title>
+    <title>{{ _('page.vendor_tiktok.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
     <style>
@@ -76,9 +76,9 @@
     {% include 'navbar.html' %}
     <div class="page-wrap">
         <div class="card-main">
-            <h1>TikTok Vendor</h1>
-            <p class="subtitle">SKU → TikTok SKU ID map (JSON dictionary)</p>
-            <button type="button" class="btn-database" onclick="openSkuMapDb()">🗄️ Database</button>
+            <h1>{{ te('TikTok Vendor') }}</h1>
+            <p class="subtitle">{{ te('SKU → TikTok SKU ID map (JSON dictionary)') }}</p>
+            <button type="button" class="btn-database" onclick="openSkuMapDb()">{{ te('🗄️ Database') }}</button>
         </div>
         <div class="mt-3 text-center">
             <a href="{{ url_for('vendor_app.vendor_app_home') }}" class="btn btn-outline-secondary btn-sm">
@@ -90,29 +90,29 @@
     <div id="skuMapModal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3>TikTok SKU map</h3>
+                <h3>{{ te('TikTok SKU map') }}</h3>
                 <button type="button" class="btn-modal-close" onclick="closeSkuMapDb()">✕</button>
             </div>
             <div class="modal-toolbar">
-                <input type="text" id="mapSearch" placeholder="Search SKU or SKU ID…" oninput="filterMapTable()" />
-                <button type="button" class="btn-modal-add" onclick="addMapRow()">＋ Add row</button>
+                <input type="text" id="mapSearch" placeholder="{{ te('Search SKU or SKU ID…') }}" oninput="filterMapTable()" />
+                <button type="button" class="btn-modal-add" onclick="addMapRow()">{{ te('＋ Add row') }}</button>
                 <span id="mapSaveStatus"></span>
             </div>
             <div class="modal-body">
                 <table id="skuMapTable">
                     <thead>
                         <tr>
-                            <th style="width:42%">SKU</th>
-                            <th style="width:42%">SKU ID</th>
-                            <th style="width:16%">Del</th>
+                            <th style="width:42%">{{ te('SKU') }}</th>
+                            <th style="width:42%">{{ te('SKU ID') }}</th>
+                            <th style="width:16%">{{ te('Del') }}</th>
                         </tr>
                     </thead>
                     <tbody id="skuMapBody"></tbody>
                 </table>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-modal-close" onclick="closeSkuMapDb()">Close</button>
-                <button type="button" class="btn-modal-save" onclick="saveSkuMap()">💾 Save</button>
+                <button type="button" class="btn-modal-close" onclick="closeSkuMapDb()">{{ te('Close') }}</button>
+                <button type="button" class="btn-modal-save" onclick="saveSkuMap()">{{ te('💾 Save') }}</button>
             </div>
         </div>
     </div>
@@ -169,7 +169,7 @@
         function addMapRow() {
             const tbody = document.getElementById('skuMapBody');
             tbody.insertAdjacentHTML('beforeend', `<tr>
-                <td><input type="text" value="" class="map-sku" placeholder="SKU" /></td>
+                <td><input type="text" value="" class="map-sku" placeholder="{{ te('SKU') }}" /></td>
                 <td><input type="text" value="" class="map-sku-id" placeholder="TikTok SKU ID" /></td>
                 <td style="text-align:center"><button type="button" onclick="deleteMapRow(this)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:1rem;">✕</button></td>
             </tr>`);

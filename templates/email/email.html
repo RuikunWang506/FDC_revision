@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -492,7 +492,7 @@
 {% include 'navbar.html' %}
 
 <div id="fdc-mail-newmail-banner" class="fdc-mail-newmail-banner" hidden role="status" aria-live="polite">
-    <button type="button" class="fdc-mail-newmail-dismiss" aria-label="Dismiss notification">&times;</button>
+    <button type="button" class="fdc-mail-newmail-dismiss" aria-label="{{ te('Dismiss notification') }}">&times;</button>
     <div class="fdc-mail-newmail-text"></div>
 </div>
 
@@ -519,16 +519,16 @@
     <div class="fdc-mail-shell shadow-sm{% if (mail_group or '') == 'container' %} fdc-mail-shell-container{% endif %}{% if not mail_group and imap_folder_nav %} fdc-mail-shell-folders{% endif %}">
         <aside class="fdc-mail-col">
             <div class="fdc-mail-head d-flex justify-content-between align-items-center">
-                <span>Mailboxes</span>
-                <a class="small" href="{{ url_for('email.mailboxes') }}">All</a>
+                <span>{{ te('Mailboxes') }}</span>
+                <a class="small" href="{{ url_for('email.mailboxes') }}">{{ te('All') }}</a>
             </div>
             {% set mail_group_labels = {'container': 'Container', 'burlington': 'Burlington', 'gabe': 'Gabe', 'ross': 'Ross', 'macy': 'Macy', 'tj': 'TJ'} %}
             <div class="fdc-mail-viewing-panel">
-                <div class="fdc-mail-viewing-title">Currently viewing</div>
+                <div class="fdc-mail-viewing-title">{{ te('Currently viewing') }}</div>
                 {% if mail_group %}
                     <div class="fdc-mail-viewing-primary">All mailboxes — {{ mail_group_labels.get(mail_group, mail_group) }}</div>
                     <div class="fdc-mail-viewing-accounts" title="{% for a in accounts %}{{ a.label }}{% if not loop.last %}, {% endif %}{% endfor %}">
-                        <span class="font-weight-bold text-secondary">Including:</span>
+                        <span class="font-weight-bold text-secondary">{{ te('Including:') }}</span>
                         {% for a in accounts %}<span class="text-nowrap d-inline-block mr-1">{{ a.label }}</span>{% if not loop.last %}<span class="text-muted">·</span>{% endif %}{% endfor %}
                     </div>
                 {% else %}
@@ -537,11 +537,11 @@
                 {% endif %}
             </div>
             <div class="fdc-mailbox-select-wrap">
-                <label for="fdc-mailbox-select">Switch mailbox</label>
-                <select id="fdc-mailbox-select" class="form-control form-control-sm" aria-label="Switch mailbox">
+                <label for="fdc-mailbox-select">{{ te('Switch mailbox') }}</label>
+                <select id="fdc-mailbox-select" class="form-control form-control-sm" aria-label="{{ te('Switch mailbox') }}">
                     {% if mail_group %}
                         <option value="{{ url_for('email.inbox', account_id=active_account_id) }}{{ inbox_nav_query|default('') }}"
-                                selected>All mail</option>
+                                selected>{{ te('All mail') }}</option>
                     {% endif %}
                     {% for a in accounts %}
                         <option value="{{ url_for('email.inbox', account_id=a.id) }}{{ individual_inbox_nav_query|default('') }}"
@@ -550,27 +550,27 @@
                 </select>
             </div>
             <div class="fdc-mail-aside-scroll">
-                <div class="fdc-mail-head py-2 px-3 border-top mb-0 small text-muted">Filter</div>
+                <div class="fdc-mail-head py-2 px-3 border-top mb-0 small text-muted">{{ te('Filter') }}</div>
                 <nav class="nav flex-column fdc-mailbox-nav px-2 pb-2">
                     <a class="nav-link {% if (list_filter or '') == 'attachments' %}active{% endif %}"
                        href="{{ url_for('email.inbox', account_id=active_account_id) }}{% if (list_filter or '') == 'attachments' %}{{ filter_query_all|default('') }}{% else %}{{ filter_query_attachments|default('') }}{% endif %}">
                         <i class="fas fa-paperclip mr-1 small"></i>Attachments only
                     </a>
                 </nav>
-                <div class="fdc-mail-head py-2 px-3 border-top mb-0 small text-muted">Allmail group</div>
+                <div class="fdc-mail-head py-2 px-3 border-top mb-0 small text-muted">{{ te('Allmail group') }}</div>
                 <nav class="nav flex-column fdc-mailbox-nav px-2 pb-2">
                     <a class="nav-link {% if (mail_group or '') == 'container' %}active{% endif %}"
-                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_container|default('') }}">Container</a>
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_container|default('') }}">{{ te('Container') }}</a>
                     <a class="nav-link {% if (mail_group or '') == 'burlington' %}active{% endif %}"
-                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_burlington|default('') }}">Burlington</a>
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_burlington|default('') }}">{{ te('Burlington') }}</a>
                     <a class="nav-link {% if (mail_group or '') == 'gabe' %}active{% endif %}"
-                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_gabe|default('') }}">Gabe</a>
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_gabe|default('') }}">{{ te('Gabe') }}</a>
                     <a class="nav-link {% if (mail_group or '') == 'ross' %}active{% endif %}"
-                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_ross|default('') }}">Ross</a>
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_ross|default('') }}">{{ te('Ross') }}</a>
                     <a class="nav-link {% if (mail_group or '') == 'macy' %}active{% endif %}"
-                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_macy|default('') }}">Macy</a>
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_macy|default('') }}">{{ te('Macy') }}</a>
                     <a class="nav-link {% if (mail_group or '') == 'tj' %}active{% endif %}"
-                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_tj|default('') }}">TJ</a>
+                       href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ allmail_suffix_tj|default('') }}">{{ te('TJ') }}</a>
                 </nav>
                 {% if (mail_group or '') in ['burlington', 'gabe', 'ross', 'macy', 'tj'] and bt_mode_toggle_suffix %}
                 <div class="fdc-group-mode-row border-top">
@@ -585,25 +585,25 @@
                         <input type="hidden" name="mail_group" value="{{ mail_group }}">
                         <input type="hidden" name="bt_mode" value="{% if (bt_mode or 'route') == 'pickup' %}route{% else %}pickup{% endif %}">
                         <label class="fdc-group-mode-toggle">
-                            <span class="fdc-group-mode-chip {% if (bt_mode or 'route') == 'route' %}active{% endif %}">Route</span>
+                            <span class="fdc-group-mode-chip {% if (bt_mode or 'route') == 'route' %}active{% endif %}">{{ te('Route') }}</span>
                             <input type="checkbox"
                                    {% if (bt_mode or 'route') == 'pickup' %}checked{% endif %}
                                    onchange="this.form.submit()">
                             <span class="fdc-group-mode-switch" aria-hidden="true"></span>
-                            <span class="fdc-group-mode-chip {% if (bt_mode or 'route') == 'pickup' %}active{% endif %}">Pickup</span>
+                            <span class="fdc-group-mode-chip {% if (bt_mode or 'route') == 'pickup' %}active{% endif %}">{{ te('Pickup') }}</span>
                         </label>
                     </form>
                 </div>
                 {% endif %}
             </div>
             <div class="p-2 border-top">
-                <button type="button" class="btn btn-primary btn-sm btn-block" id="fdc-gmail-compose-new">Compose</button>
+                <button type="button" class="btn btn-primary btn-sm btn-block" id="fdc-gmail-compose-new">{{ te('Compose') }}</button>
             </div>
         </aside>
 
         {% if not mail_group and imap_folder_nav %}
         <section class="fdc-mail-col fdc-mail-folders-col">
-            <div class="fdc-mail-head">Folders</div>
+            <div class="fdc-mail-head">{{ te('Folders') }}</div>
             <nav class="nav flex-column fdc-mailbox-nav p-2 fdc-mail-list">
                 {% for fn, suffix in imap_folder_nav %}
                     <a class="nav-link {% if fn == imap_folder_effective %}active{% endif %}"
@@ -618,8 +618,8 @@
         <section class="fdc-mail-col fdc-boat-lane">
             <div class="fdc-mail-head d-flex flex-column align-items-stretch">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span>Open containers</span>
-                    <a class="small" href="https://www.fdcef.com/boat" target="_blank" rel="noopener">Boat</a>
+                    <span>{{ te('Open containers') }}</span>
+                    <a class="small" href="https://www.fdcef.com/boat" target="_blank" rel="noopener">{{ te('Boat') }}</a>
                 </div>
                 {% if boat_lane_toggle_suffix is defined %}
                     <a class="small mt-1" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ boat_lane_toggle_suffix }}">
@@ -627,15 +627,15 @@
                     </a>
                 {% endif %}
                 {% if (fdc_focus or bol_focus) and boat_lane_clear_suffix is defined %}
-                    <a class="small mt-1" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ boat_lane_clear_suffix }}">Clear FDC / BOL filter</a>
+                    <a class="small mt-1" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ boat_lane_clear_suffix }}">{{ te('Clear FDC / BOL filter') }}</a>
                 {% endif %}
             </div>
             <div class="fdc-mail-list p-0">
                 {% if not (boat_lane_rows or []) %}
-                    <div class="p-2 text-muted small">No open rows (landed ✔️827✔️ hidden).</div>
+                    <div class="p-2 text-muted small">{{ te('No open rows (landed ✔️827✔️ hidden).') }}</div>
                 {% else %}
                     <table class="table table-sm table-striped mb-0 table-boat-open">
-                        <thead class="thead-light"><tr><th class="fdc-boat-col-fdc">FDC</th><th class="fdc-boat-col-bol">BOL</th><th class="fdc-boat-col-date">Date</th></tr></thead>
+                        <thead class="thead-light"><tr><th class="fdc-boat-col-fdc">{{ te('FDC') }}</th><th class="fdc-boat-col-bol">{{ te('BOL') }}</th><th class="fdc-boat-col-date">{{ te('Date') }}</th></tr></thead>
                         <tbody>
                         {% for br in boat_lane_rows %}
                             {% set fdcv = (fdc_focus|default('')|trim|lower) %}
@@ -657,7 +657,7 @@
                                     {% if br.mail_body_date_hint %}
                                         <span
                                             class="fdc-boat-date-edit js-boat-date-edit"
-                                            title="Click to edit date"
+                                            title="{{ te('Click to edit date') }}"
                                             data-container="{{ br.container }}"
                                             data-bol="{{ br.bol }}"
                                             data-date="{{ br.mail_body_date_hint }}"
@@ -681,7 +681,7 @@
                 <span class="mr-2 d-flex align-items-center flex-wrap">
                     <span>{{ inbox_header_title|default('Inbox') }}</span>
                     {% if not mail_group %}
-                    <span class="small text-muted font-weight-normal ml-2">· Newest first</span>
+                    <span class="small text-muted font-weight-normal ml-2">{{ te('· Newest first') }}</span>
                     {% endif %}
                 </span>
                 <div class="d-flex align-items-center flex-wrap justify-content-end">
@@ -689,9 +689,9 @@
                     <button type="button"
                             class="btn btn-sm btn-outline-primary mr-2"
                             id="fdc-mail-fetch-btn"
-                            title="Fetch new messages from the mail server (same as background sync)">
+                            title="{{ te('Fetch new messages from the mail server (same as background sync)') }}">
                         <i class="fas fa-sync-alt" id="fdc-mail-fetch-icon" aria-hidden="true"></i>
-                        <span class="ml-1 d-none d-md-inline">Sync</span>
+                        <span class="ml-1 d-none d-md-inline">{{ te('Sync') }}</span>
                     </button>
                     {% endif %}
                     <span class="small text-muted text-truncate" style="max-width: 200px;">{{ active_account.email }}</span>
@@ -717,17 +717,17 @@
                             class="form-control"
                             type="search"
                             name="q"
-                            placeholder="Search subject, sender, uid"
+                            placeholder="{{ te('Search subject, sender, uid') }}"
                             value="{{ search_query or '' }}"
                         >
                         <div class="input-group-append">
                             <select class="custom-select custom-select-sm" name="scope">
-                                <option value="current" {% if (search_scope or 'current') == 'current' %}selected{% endif %}>This inbox</option>
-                                <option value="all" {% if (search_scope or 'current') == 'all' %}selected{% endif %}>All inboxes</option>
+                                <option value="current" {% if (search_scope or 'current') == 'current' %}selected{% endif %}>{{ te('This inbox') }}</option>
+                                <option value="all" {% if (search_scope or 'current') == 'all' %}selected{% endif %}>{{ te('All inboxes') }}</option>
                             </select>
-                            <button class="btn btn-outline-primary" type="submit">Search</button>
+                            <button class="btn btn-outline-primary" type="submit">{{ te('Search') }}</button>
                             {% if search_query %}
-                                <a class="btn btn-outline-secondary" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ search_clear_suffix|default('') }}">Clear</a>
+                                <a class="btn btn-outline-secondary" href="{{ url_for('email.inbox', account_id=active_account_id) }}{{ search_clear_suffix|default('') }}">{{ te('Clear') }}</a>
                             {% endif %}
                         </div>
                     </div>
@@ -735,7 +735,7 @@
             </div>
             <div class="fdc-mail-list{% if not mail_group %} fdc-mail-list-classic{% endif %}">
                 {% if not messages %}
-                    <div class="p-3 text-muted small">No messages loaded.</div>
+                    <div class="p-3 text-muted small">{{ te('No messages loaded.') }}</div>
                 {% endif %}
                 {% for m in messages %}
                     {% if not mail_group %}
@@ -754,7 +754,7 @@
                         <div class="fdc-mail-classic-row2">
                             <span class="fdc-mail-classic-subject">{{ m.subject }}</span>
                             {% if m.has_attachments %}
-                            <i class="fas fa-paperclip fdc-mail-clip flex-shrink-0 mt-1" title="Has attachments"></i>
+                            <i class="fas fa-paperclip fdc-mail-clip flex-shrink-0 mt-1" title="{{ te('Has attachments') }}"></i>
                             {% endif %}
                         </div>
                     </a>
@@ -774,10 +774,10 @@
                             </div>
                             <span class="d-flex align-items-center flex-shrink-0">
                                 {% if m.has_attachments %}
-                                    <i class="fas fa-paperclip fdc-mail-clip mr-2" title="Has attachments"></i>
+                                    <i class="fas fa-paperclip fdc-mail-clip mr-2" title="{{ te('Has attachments') }}"></i>
                                 {% endif %}
                                 {% if not m.is_read %}
-                                    <span class="badge badge-primary fdc-mail-badge-unread">Unread</span>
+                                    <span class="badge badge-primary fdc-mail-badge-unread">{{ te('Unread') }}</span>
                                 {% endif %}
                             </span>
                         </div>
@@ -792,7 +792,7 @@
                                     <span class="fdc-mail-acct-chip mr-1">{{ po }}</span>
                                 {% endfor %}
                             {% else %}
-                                <span class="small text-muted">No PO found in body.</span>
+                                <span class="small text-muted">{{ te('No PO found in body.') }}</span>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -801,7 +801,7 @@
                             <div class="card-body py-2 px-2">
                                 <div class="font-weight-bold small text-primary mb-1">{{ m.account_labels_display or m.account_label or m.account_email }}</div>
                                 <div class="small">
-                                    <span class="text-muted">Container:</span>
+                                    <span class="text-muted">{{ te('Container:') }}</span>
                                     {% if m.get('container_ids') %}
                                         {% for cid in m.container_ids %}<span class="badge badge-light border text-dark mr-1">{{ cid }}</span>{% endfor %}
                                     {% else %}
@@ -809,7 +809,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="small mt-1">
-                                    <span class="text-muted">Origin:</span>
+                                    <span class="text-muted">{{ te('Origin:') }}</span>
                                     {% if m.get('container_origin') %}<strong>{{ m.container_origin }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}
                                 </div>
                             </div>
@@ -844,25 +844,25 @@
             <div class="fdc-mail-head d-flex justify-content-between align-items-center">
                 <span class="text-truncate mr-2 d-flex align-items-center">
                     {% if attachments %}
-                        <i class="fas fa-paperclip text-muted mr-2 flex-shrink-0" title="Has attachments"></i>
+                        <i class="fas fa-paperclip text-muted mr-2 flex-shrink-0" title="{{ te('Has attachments') }}"></i>
                     {% endif %}
                     <span class="text-truncate">{{ preview_subject or 'Preview' }}</span>
                 </span>
                 {% if selected_uid %}
                     <div class="d-flex align-items-center flex-wrap">
                         {% if reply_compose %}
-                        <button type="button" class="btn btn-sm btn-outline-primary mr-2 mb-1" id="fdc-gmail-reply">Reply</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary mr-2 mb-1" id="fdc-gmail-reply">{{ te('Reply') }}</button>
                         {% else %}
                         <a class="btn btn-sm btn-outline-primary mr-2 mb-1"
-                           href="{{ url_for('email.send_mail', account_id=active_account_id, reply=selected_uid) }}">Reply</a>
+                           href="{{ url_for('email.send_mail', account_id=active_account_id, reply=selected_uid) }}">{{ te('Reply') }}</a>
                         {% endif %}
                         <form method="post" action="{{ url_for('email.mark_read', account_id=active_account_id, uid=selected_uid) }}" class="mb-0 mr-2 mb-1">
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Mark read</button>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">{{ te('Mark read') }}</button>
                         </form>
                         <form method="post" action="{{ url_for('email.delete_message', account_id=active_account_id, uid=selected_uid) }}" class="mb-0 mb-1">
                             <input type="hidden" name="return_suffix" value="{{ inbox_nav_query|default('')|e }}">
                             <button type="submit" class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('Delete this message from the server? This cannot be undone.');">Delete</button>
+                                    onclick="return confirm('Delete this message from the server? This cannot be undone.');">{{ te('Delete') }}</button>
                         </form>
                     </div>
                 {% endif %}
@@ -873,7 +873,7 @@
                     <div class="card-body py-2 px-3">
                         <div class="font-weight-bold small text-primary mb-1">{{ active_account.label }}</div>
                         <div class="small">
-                            <span class="text-muted">Container:</span>
+                            <span class="text-muted">{{ te('Container:') }}</span>
                             {% if preview_container_ids %}
                                 {% for cid in preview_container_ids %}<span class="badge badge-light border text-dark mr-1">{{ cid }}</span>{% endfor %}
                             {% else %}
@@ -881,7 +881,7 @@
                             {% endif %}
                         </div>
                         <div class="small mt-1">
-                            <span class="text-muted">Origin:</span>
+                            <span class="text-muted">{{ te('Origin:') }}</span>
                             {% if preview_container_origin %}<strong>{{ preview_container_origin }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}
                         </div>
                     </div>
@@ -895,14 +895,14 @@
                 {% if preview_html %}
                     <div class="small text-muted mb-2">
                         {% if preview_meta %}
-                            <div><strong>From:</strong> {{ preview_meta.from }}</div>
-                            <div><strong>To:</strong> {{ preview_meta.to }}</div>
-                            {% if preview_meta.date %}<div><strong>Date:</strong> {{ preview_meta.date }}</div>{% endif %}
+                            <div><strong>{{ te('From:') }}</strong> {{ preview_meta.from }}</div>
+                            <div><strong>{{ te('To:') }}</strong> {{ preview_meta.to }}</div>
+                            {% if preview_meta.date %}<div><strong>{{ te('Date:') }}</strong> {{ preview_meta.date }}</div>{% endif %}
                         {% endif %}
                     </div>
                     {% if attachments %}
                         <div class="fdc-mail-attachments">
-                            <h6 class="mb-2">Attachments <span class="text-muted font-weight-normal small">(PDF / images: preview in new window)</span></h6>
+                            <h6 class="mb-2">Attachments <span class="text-muted font-weight-normal small">{{ te('(PDF / images: preview in new window)') }}</span></h6>
                             <div class="fdc-mail-att-row">
                                 {% for a in attachments %}
                                     {% set ct = (a.content_type or '')|lower %}
@@ -919,21 +919,21 @@
                                                 <span role="button" tabindex="0"
                                                       class="fdc-mail-att-thumb-wrap js-mail-att-preview"
                                                       data-preview-url="{{ preview_url|e }}"
-                                                      title="Preview image">
+                                                      title="{{ te('Preview image') }}">
                                                     <img class="fdc-mail-att-thumb"
                                                          src="{{ preview_url }}"
                                                          alt="{{ a.filename }}">
                                                 </span>
                                             </div>
                                             <div class="fdc-mail-att-actions">
-                                                <button type="button" class="fdc-mail-att-preview-btn js-mail-att-preview" data-preview-url="{{ preview_url|e }}">Preview</button>
-                                                <a href="{{ dl_url }}">Download</a>
+                                                <button type="button" class="fdc-mail-att-preview-btn js-mail-att-preview" data-preview-url="{{ preview_url|e }}">{{ te('Preview') }}</button>
+                                                <a href="{{ dl_url }}">{{ te('Download') }}</a>
                                             </div>
                                             <div class="small text-muted">{{ a.filename }}</div>
                                         {% elif is_pdf %}
                                             <div class="fdc-mail-att-actions mb-1">
                                                 <i class="fas fa-file-pdf text-danger" aria-hidden="true"></i>
-                                                <button type="button" class="fdc-mail-att-preview-btn js-mail-att-preview" data-preview-url="{{ preview_url|e }}">Preview</button>
+                                                <button type="button" class="fdc-mail-att-preview-btn js-mail-att-preview" data-preview-url="{{ preview_url|e }}">{{ te('Preview') }}</button>
                                                 <a href="{{ dl_url }}">{{ a.filename }}</a>
                                             </div>
                                         {% else %}
@@ -948,13 +948,13 @@
                     {% if (mail_group or '') == 'burlington' and (bt_mode or 'route') == 'pickup' and sent_reply_preview %}
                         <div class="fdc-preview-split">
                             <div class="fdc-preview-pane">
-                                <div class="small text-muted mb-1"><strong>Received</strong></div>
+                                <div class="small text-muted mb-1"><strong>{{ te('Received') }}</strong></div>
                                 <iframe sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                                         srcdoc="{{ preview_html | e }}"></iframe>
                             </div>
                             <div class="fdc-preview-pane">
                                 <div class="small text-muted mb-1">
-                                    <strong>Sent reply</strong>
+                                    <strong>{{ te('Sent reply') }}</strong>
                                     {% if sent_reply_preview.meta and sent_reply_preview.meta.date %}
                                         · {{ sent_reply_preview.meta.date }}
                                     {% endif %}
@@ -968,7 +968,7 @@
                                 srcdoc="{{ preview_html | e }}"></iframe>
                     {% endif %}
                 {% else %}
-                    <div class="text-muted">Select a message to preview sanitized HTML.</div>
+                    <div class="text-muted">{{ te('Select a message to preview sanitized HTML.') }}</div>
                 {% endif %}
             </div>
         </section>
@@ -978,10 +978,10 @@
 <div id="fdc-gmail-compose-root" class="fdc-gmail-compose-root" hidden>
     <div class="fdc-gmail-compose-card">
         <div class="fdc-gmail-compose-titlebar">
-            <span id="fdc-gmail-compose-title">New message</span>
+            <span id="fdc-gmail-compose-title">{{ te('New message') }}</span>
             <div>
-                <button type="button" id="fdc-gmail-compose-minbtn" title="Minimize">&#8722;</button>
-                <button type="button" id="fdc-gmail-compose-closebtn" title="Close">&times;</button>
+                <button type="button" id="fdc-gmail-compose-minbtn" title="{{ te('Minimize') }}">&#8722;</button>
+                <button type="button" id="fdc-gmail-compose-closebtn" title="{{ te('Close') }}">&times;</button>
             </div>
         </div>
         <div class="fdc-gmail-compose-body">
@@ -992,8 +992,8 @@
                 <input type="hidden" name="body_format" value="html">
                 <input type="hidden" name="body" id="fdc-compose-body-hidden" value="">
                 <div class="fdc-compose-from-row">
-                    <label class="fdc-compose-label" for="fdc-compose-account">From</label>
-                    <select id="fdc-compose-account" class="form-control fdc-compose-select" aria-label="Send from mailbox" data-default-account="{{ active_account_id }}">
+                    <label class="fdc-compose-label" for="fdc-compose-account">{{ te('From') }}</label>
+                    <select id="fdc-compose-account" class="form-control fdc-compose-select" aria-label="{{ te('Send from mailbox') }}" data-default-account="{{ active_account_id }}">
                         {% for ma in accounts %}
                             <option value="{{ ma.id }}"
                                     data-send-url="{{ url_for('email.send_mail', account_id=ma.id) }}"
@@ -1002,19 +1002,19 @@
                     </select>
                 </div>
                 <div class="fdc-compose-field-wrap">
-                    <span class="fdc-compose-field-icon" title="Recipients"><i class="fas fa-at"></i></span>
-                    <input type="text" class="form-control fdc-compose-input" name="to" id="fdc-compose-to" placeholder="Recipients" autocomplete="email" required>
+                    <span class="fdc-compose-field-icon" title="{{ te('Recipients') }}"><i class="fas fa-at"></i></span>
+                    <input type="text" class="form-control fdc-compose-input" name="to" id="fdc-compose-to" placeholder="{{ te('Recipients') }}" autocomplete="email" required>
                 </div>
                 <div class="fdc-compose-field-wrap">
-                    <span class="fdc-compose-field-icon" title="Subject"><i class="fas fa-heading"></i></span>
-                    <input type="text" class="form-control fdc-compose-input" name="subject" id="fdc-compose-subject" placeholder="Subject" required>
+                    <span class="fdc-compose-field-icon" title="{{ te('Subject') }}"><i class="fas fa-heading"></i></span>
+                    <input type="text" class="form-control fdc-compose-input" name="subject" id="fdc-compose-subject" placeholder="{{ te('Subject') }}" required>
                 </div>
                 <div class="fdc-gmail-compose-toolbar">
-                    <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
-                    <button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
-                    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
-                    <button type="button" data-cmd="insertUnorderedList" title="Bullet list"><i class="fas fa-list-ul"></i></button>
-                    <button type="button" data-cmd="insertLineBreak" title="Line break">&#182;</button>
+                    <button type="button" data-cmd="bold" title="{{ te('Bold (Ctrl+B)') }}"><b>B</b></button>
+                    <button type="button" data-cmd="italic" title="{{ te('Italic (Ctrl+I)') }}"><i>I</i></button>
+                    <button type="button" data-cmd="underline" title="{{ te('Underline') }}"><u>U</u></button>
+                    <button type="button" data-cmd="insertUnorderedList" title="{{ te('Bullet list') }}"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" data-cmd="insertLineBreak" title="{{ te('Line break') }}">&#182;</button>
                 </div>
                 <div class="fdc-compose-attach-zone">
                     <label class="fdc-compose-attach-btn mb-0">
@@ -1022,11 +1022,11 @@
                         <input type="file" name="attachments" id="fdc-compose-files" multiple class="d-none" tabindex="-1">
                     </label>
                     <div id="fdc-compose-file-list" class="fdc-compose-file-list"></div>
-                    <div class="small text-muted mt-1" style="font-size:0.72rem;">Up to 12 files, 15 MB total</div>
+                    <div class="small text-muted mt-1" style="font-size:0.72rem;">{{ te('Up to 12 files, 15 MB total') }}</div>
                 </div>
-                <div id="fdc-compose-editor" class="fdc-compose-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Compose email…"></div>
+                <div id="fdc-compose-editor" class="fdc-compose-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="{{ te('Compose email…') }}"></div>
                 <div class="fdc-gmail-compose-footer d-flex justify-content-between align-items-center flex-wrap">
-                    <button type="button" class="btn btn-light btn-sm border" id="fdc-compose-discard">Discard</button>
+                    <button type="button" class="btn btn-light btn-sm border" id="fdc-compose-discard">{{ te('Discard') }}</button>
                     <button type="submit" class="btn btn-primary btn-sm px-3"><i class="fas fa-paper-plane mr-1"></i> Send</button>
                 </div>
             </form>
@@ -1419,7 +1419,7 @@
 
     function renderRows(messages) {
         if (!messages || messages.length === 0) {
-            listEl.innerHTML = '<div class="p-3 text-muted small">No messages loaded.</div>';
+            listEl.innerHTML = '<div class="p-3 text-muted small">{{ te('No messages loaded.') }}</div>';
             return;
         }
         var html = '';
@@ -1438,10 +1438,10 @@
                 String(aid) === String(accountId);
             var activeCls = active ? ' active' : '';
             var attIcon = m.has_attachments
-                ? '<i class="fas fa-paperclip fdc-mail-clip mr-2" title="Has attachments"></i>'
+                ? '<i class="fas fa-paperclip fdc-mail-clip mr-2" title="{{ te('Has attachments') }}"></i>'
                 : '';
             var unreadBadge = rowIsUnread(m)
-                ? '<span class="badge badge-primary fdc-mail-badge-unread">Unread</span>'
+                ? '<span class="badge badge-primary fdc-mail-badge-unread">{{ te('Unread') }}</span>'
                 : '';
             var dt = m.internal_date || m.header_date || '';
             var subj = escapeHtml(
@@ -1459,7 +1459,7 @@
                 var dateStr = escapeHtml(formatMailListDateJs(dt));
                 var unrdCls = rowIsUnread(m) ? ' fdc-mail-unread' : '';
                 var attRow2 = m.has_attachments
-                    ? '<i class="fas fa-paperclip fdc-mail-clip flex-shrink-0 mt-1" title="Has attachments"></i>'
+                    ? '<i class="fas fa-paperclip fdc-mail-clip flex-shrink-0 mt-1" title="{{ te('Has attachments') }}"></i>'
                     : '';
                 html +=
                     '<a class="fdc-mail-item fdc-mail-item-classic' +
@@ -1532,10 +1532,10 @@
                     '<div class="font-weight-bold small text-primary mb-1">' +
                     labelChip +
                     '</div>' +
-                    '<div class="small"><span class="text-muted">Container:</span> ';
+                    '<div class="small"><span class="text-muted">{{ te('Container:') }}</span> ';
                 html += cids.length ? badges : '<span class="text-muted">—</span>';
                 html +=
-                    '</div><div class="small mt-1"><span class="text-muted">Origin:</span> ';
+                    '</div><div class="small mt-1"><span class="text-muted">{{ te('Origin:') }}</span> ';
                 html += origin
                     ? '<strong>' + origin + '</strong>'
                     : '<span class="text-muted">—</span>';
@@ -1553,7 +1553,7 @@
                     }
                     html += '</div>';
                 } else {
-                    html += '<div class="mb-1"><span class="small text-muted">No PO found in body.</span></div>';
+                    html += '<div class="mb-1"><span class="small text-muted">{{ te('No PO found in body.') }}</span></div>';
                 }
             } else {
                 html +=

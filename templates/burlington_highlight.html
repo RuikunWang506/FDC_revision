@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Burlington Highlight</title>
+    <title>{{ _('page.burlington_highlight.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
         .page-wrap {
@@ -61,15 +61,15 @@
     {% include 'navbar.html' %}
 
     <div class="container page-wrap">
-        <h3 class="mb-3">Burlington-highlight</h3>
+        <h3 class="mb-3">{{ te('Burlington-highlight') }}</h3>
 
         <form method="post" class="mb-4">
             <label for="query">Search for text in files under <code>{{ search_root }}</code></label>
             <div class="form-group">
-                <label for="query">Input</label>
-                <input id="query" name="query" type="text" class="form-control" placeholder="Type text to search in files" value="{{ query }}" required>
+                <label for="query">{{ te('Input') }}</label>
+                <input id="query" name="query" type="text" class="form-control" placeholder="{{ te('Type text to search in files') }}" value="{{ query }}" required>
             </div>
-            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="submit" class="btn btn-primary">{{ te('Search') }}</button>
         </form>
 
         {% if error_message %}
@@ -77,8 +77,8 @@
         {% endif %}
 
         {% if query %}
-            <div class="mb-2"><strong>Query:</strong> {{ query }}</div>
-            <div class="mb-3"><strong>Matches:</strong> {{ results|length }}</div>
+            <div class="mb-2"><strong>{{ te('Query:') }}</strong> {{ query }}</div>
+            <div class="mb-3"><strong>{{ te('Matches:') }}</strong> {{ results|length }}</div>
 
             {% if results %}
                 {% for row in results %}
@@ -92,7 +92,7 @@
                         <div class="result-path">File Path: {{ row.display_path }}</div>
                         <div class="result-rows">
                             {% if row.row_matches %}
-                                <div><strong>Rows:</strong></div>
+                                <div><strong>{{ te('Rows:') }}</strong></div>
                                 <ul class="result-rows-list">
                                     {% for match in row.row_matches %}
                                         <li>Sheet - {{ match.sheet }} ||  row - {{ match.row }}</li>
@@ -105,7 +105,7 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <div class="alert alert-warning">No files found containing this input.</div>
+                <div class="alert alert-warning">{{ te('No files found containing this input.') }}</div>
             {% endif %}
         {% endif %}
     </div>

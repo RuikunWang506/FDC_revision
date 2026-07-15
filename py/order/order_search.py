@@ -33,7 +33,8 @@ def get_recent_fdc_orders(limit=100):
                 LTRIM(RTRIM(c.cus_nm)) AS customer_name,
                 RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
                 RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS order_date
+                CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS order_date,
+                o.INVS_NUM
             FROM dbo.orders o
             INNER JOIN dbo.customer c ON o.cus_id = c.cus_id
             WHERE o.ord_num >= 10000 AND o.ord_num <= 99999 AND o.ORD_DT IS NOT NULL
@@ -41,10 +42,18 @@ def get_recent_fdc_orders(limit=100):
             """
         )
         for row in cursor.fetchall():
+            invs = row[3]
+            try:
+                invs_num = int(invs) if invs is not None else 0
+            except (TypeError, ValueError):
+                invs_num = 0
+            invoiced = invs_num > 0
             orders.append({
                 'order_number': str(row[0]).strip(),
                 'customer_name': (row[1] or '').strip(),
                 'order_date': (row[2] or '').strip(),
+                'invoice_number': str(invs_num) if invoiced else '',
+                'invoiced': invoiced,
             })
         cursor.close()
         conn.close()

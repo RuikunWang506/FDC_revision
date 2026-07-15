@@ -1,9 +1,9 @@
 <!doctype html> 
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Processor</title>
+    <title>{{ _('page.order_processor.title') }}</title>
     
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -69,13 +69,13 @@
     <!-- Loading overlay (initially hidden) -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="spinner-border text-light" role="status">
-            <span class="sr-only">Loading...</span>
+            <span class="sr-only">{{ te('Loading...') }}</span>
         </div>
-        <div class="loading-text">Processing...</div>
+        <div class="loading-text">{{ te('Processing...') }}</div>
     </div>
     
     <div class="container mt-4">
-        <h1 class="text-center mb-4">Order Processor Tool</h1>
+        <h1 class="text-center mb-4">{{ te('Order Processor Tool') }}</h1>
         <div class="text-center mb-4">
             <a href="/static/order_processor_instruction.pdf" target="_blank" class="btn btn-danger">
                 <i class="fa fa-file-pdf-o mr-2"></i>see Instructions PDF
@@ -85,27 +85,27 @@
         <div id="orderProcessorTool">
             <!-- Step 1: Input Area -->
             <div id="step1" class="step-container">
-                <h3 class="step-title">Step 1: Paste Your Item List</h3>
-                <p>Paste your list in the format: Item# --- Quantity ---- Price</p>
-                <p>M1121 bk 2 8.99</p>
+                <h3 class="step-title">{{ te('Step 1: Paste Your Item List') }}</h3>
+                <p>{{ te('Paste your list in the format: Item# --- Quantity ---- Price') }}</p>
+                <p>{{ te('M1121 bk 2 8.99') }}</p>
                 <div class="form-group">
-                    <textarea id="inputArea" class="form-control" placeholder="Paste your list here..."></textarea>
+                    <textarea id="inputArea" class="form-control" placeholder="{{ te('Paste your list here...') }}"></textarea>
                 </div>
                 <div class="text-center mt-3">
-                    <button id="formatButton" class="btn btn-primary">Format Data</button>
+                    <button id="formatButton" class="btn btn-primary">{{ te('Format Data') }}</button>
                 </div>
             </div>
             
             <!-- Step 2: Formatted Data Table -->
             <div id="step2" class="step-container" style="display: none;">
-                <h3 class="step-title">Step 2: Review Formatted Data</h3>
+                <h3 class="step-title">{{ te('Step 2: Review Formatted Data') }}</h3>
                 <div class="table-responsive">
                     <table id="formattedDataTable" class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th>Product Code</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
+                                <th>{{ te('Product Code') }}</th>
+                                <th>{{ te('Quantity') }}</th>
+                                <th>{{ te('Price') }}</th>
                             </tr>
                         </thead>
                         <tbody id="formattedDataBody">
@@ -113,41 +113,41 @@
                     </table>
                 </div>
                 <div class="text-center mt-3">
-                    <button id="continueButton" class="btn btn-success">Continue</button>
-                    <button id="backToStep1" class="btn btn-secondary ml-2">Back</button>
+                    <button id="continueButton" class="btn btn-success">{{ te('Continue') }}</button>
+                    <button id="backToStep1" class="btn btn-secondary ml-2">{{ te('Back') }}</button>
                 </div>
             </div>
             
             <!-- Step 3: Order Number Input -->
             <div id="step3" class="step-container" style="display: none;">
-                <h3 class="step-title">Step 3: Enter Order Number</h3>
+                <h3 class="step-title">{{ te('Step 3: Enter Order Number') }}</h3>
                 <h3 class="step-title"></h3>
                 <div class="form-group">
-                    <label for="orderNumberInput">Order Number:</label>
-                    <input type="text" id="orderNumberInput" class="form-control" placeholder="Enter order number">
+                    <label for="orderNumberInput">{{ te('Order Number:') }}</label>
+                    <input type="text" id="orderNumberInput" class="form-control" placeholder="{{ te('Enter order number') }}">
                 </div>
                 <div class="text-center mt-3">
-                    <button id="verifyOrderButton" class="btn btn-primary">Verify Order</button>
-                    <button id="downloadOmsCsvButton" class="btn btn-info ml-2">Download OMS CSV</button>
-                    <button id="backToStep2" class="btn btn-secondary ml-2">Back</button>
+                    <button id="verifyOrderButton" class="btn btn-primary">{{ te('Verify Order') }}</button>
+                    <button id="downloadOmsCsvButton" class="btn btn-info ml-2">{{ te('Download OMS CSV') }}</button>
+                    <button id="backToStep2" class="btn btn-secondary ml-2">{{ te('Back') }}</button>
                 </div>
             </div>
             
             <!-- Step 4: Order Verification and Confirmation -->
             <div id="step4" class="step-container" style="display: none;">
-                <h3 class="step-title">Step 4: Confirm Changes</h3>
+                <h3 class="step-title">{{ te('Step 4: Confirm Changes') }}</h3>
                 <div class="alert alert-warning">
-                    <strong>Warning:</strong> You are about to update the following items in order <span id="displayOrderNumber"></span>. Please review carefully.
+                    <strong>{{ te('Warning:') }}</strong> You are about to update the following items in order <span id="displayOrderNumber"></span>. Please review carefully.
                 </div>
                 <div class="table-responsive">
                     <table id="confirmationTable" class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th>Product Code</th>
-                                <th>Current Quantity</th>
-                                <th>New Quantity</th>
-                                <th>Current Price</th>
-                                <th>New Price</th>
+                                <th>{{ te('Product Code') }}</th>
+                                <th>{{ te('Current Quantity') }}</th>
+                                <th>{{ te('New Quantity') }}</th>
+                                <th>{{ te('Current Price') }}</th>
+                                <th>{{ te('New Price') }}</th>
                             </tr>
                         </thead>
                         <tbody id="confirmationTableBody">
@@ -155,26 +155,26 @@
                     </table>
                 </div>
                 <div class="text-center mt-3">
-                    <button id="submitChangesButton" class="btn btn-danger">Submit Changes</button>
-                    <button id="backToStep3" class="btn btn-secondary ml-2">Back</button>
+                    <button id="submitChangesButton" class="btn btn-danger">{{ te('Submit Changes') }}</button>
+                    <button id="backToStep3" class="btn btn-secondary ml-2">{{ te('Back') }}</button>
                 </div>
             </div>
             
             <!-- Step 5: Result -->
             <div id="step5" class="step-container" style="display: none;">
-                <h3 class="step-title">Step 5: Result</h3>
+                <h3 class="step-title">{{ te('Step 5: Result') }}</h3>
                 <div id="resultMessage" class="alert alert-success">
                     Changes have been successfully applied to the order.
                 </div>
                 <div id="resultDetails">
-                    <h4>Updated Items</h4>
+                    <h4>{{ te('Updated Items') }}</h4>
                     <div class="table-responsive">
                         <table id="updatedItemsTable" class="table table-striped table-bordered">
                             <thead>
                                 <tr>
-                                    <th>Product Code</th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
+                                    <th>{{ te('Product Code') }}</th>
+                                    <th>{{ te('Quantity') }}</th>
+                                    <th>{{ te('Price') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="updatedItemsBody">
@@ -183,24 +183,24 @@
                     </div>
                 </div>
                 <div class="text-center mt-3">
-                    <button id="startOverButton" class="btn btn-primary">Process Another Order</button>
+                    <button id="startOverButton" class="btn btn-primary">{{ te('Process Another Order') }}</button>
                 </div>
             </div>
         </div>
         
         <!-- Zhuankuan Tool Section -->
         <div id="zhuankuanTool" class="tool-section">
-            <h2 class="text-center mb-4">Zhuankuan Style Switcher Tool</h2>
+            <h2 class="text-center mb-4">{{ te('Zhuankuan Style Switcher Tool') }}</h2>
             <div class="step-container">
-                <h3 class="step-title">Enter Item Codes</h3>
-                <p>Enter item codes separated by commas (e.g., ES1269,L1687-M,L1687-S,L1689-S,L1731,L1732)</p>
+                <h3 class="step-title">{{ te('Enter Item Codes') }}</h3>
+                <p>{{ te('Enter item codes separated by commas (e.g., ES1269,L1687-M,L1687-S,L1689-S,L1731,L1732)') }}</p>
                 <div class="form-group">
-                    <textarea id="zhuankuanInput" class="form-control" rows="5" placeholder="Enter item codes separated by commas..."></textarea>
+                    <textarea id="zhuankuanInput" class="form-control" rows="5" placeholder="{{ te('Enter item codes separated by commas...') }}"></textarea>
                 </div>
                 <div id="zhuankuanTransferResult" class="alert mt-3" style="display: none;"></div>
                 <div class="text-center mt-3">
-                    <button id="processZhuankuanButton" class="btn btn-primary">Download CSV</button>
-                    <button id="transferEfasButton" class="btn btn-success ml-2">Transfer to EFAS</button>
+                    <button id="processZhuankuanButton" class="btn btn-primary">{{ te('Download CSV') }}</button>
+                    <button id="transferEfasButton" class="btn btn-success ml-2">{{ te('Transfer to EFAS') }}</button>
                 </div>
             </div>
         </div>

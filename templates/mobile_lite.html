@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Lite Search</title>
+    <title>{{ _('page.mobile_lite.title') }}</title>
     
     <!-- CSS Dependencies -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -288,17 +288,17 @@
 <body>
     {% include 'navbar.html' %}
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Mobile Lite Search</h2>
+        <h2 class="text-center mb-4">{{ te('Mobile Lite Search') }}</h2>
         
         <form method="POST" class="mb-4">
             <input type="text" 
                    class="search-input" 
                    name="user_input" 
-                   placeholder="Enter SKU or Style Number" 
+                   placeholder="{{ te('Enter SKU or Style Number') }}" 
                    value="{{ user_input }}"
                    required>
             <div class="text-center">
-                <button type="submit" class="btn btn-primary">View Data</button>
+                <button type="submit" class="btn btn-primary">{{ te('View Data') }}</button>
             </div>
         </form>
 
@@ -311,7 +311,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Style: <a href="{{ url_for('item_lookup.item_lookup', user_input=style) }}">{{ style }}</a></h5>
                     <div class="colors-container">
-                        <span class="color-toggle rainbow-toggle" onclick="clearAllColors(this, '{{ current_index }}')" title="Hide All Colors">
+                        <span class="color-toggle rainbow-toggle" onclick="clearAllColors(this, '{{ current_index }}')" title="{{ te('Hide All Colors') }}">
                             clear
                         </span>
                         Colors: 
@@ -336,25 +336,25 @@
                     <div class="col-md-4">
                         <img src="{{ style_data.image_url }}"
                             class="product-image"
-                            alt="Product Image"
+                            alt="{{ te('Product Image') }}"
                             onclick="enlargeImage(this, '{{ style_data.image_url }}')">
                     </div>
                     <div class="col-md-8">
                         <ul class="nav nav-tabs" role="tablist">
                             <li class="nav-item">
-                                <a class="nav-link active" data-toggle="tab" href="#inventory{{ loop.index }}">Inventory</a>
+                                <a class="nav-link active" data-toggle="tab" href="#inventory{{ loop.index }}">{{ te('Inventory') }}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" data-toggle="tab" href="#location{{ loop.index }}">Location</a>
+                                <a class="nav-link" data-toggle="tab" href="#location{{ loop.index }}">{{ te('Location') }}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" data-toggle="tab" href="#info{{ loop.index }}">Info</a>
+                                <a class="nav-link" data-toggle="tab" href="#info{{ loop.index }}">{{ te('Info') }}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" data-toggle="tab" href="#package{{ loop.index }}">Package</a>
+                                <a class="nav-link" data-toggle="tab" href="#package{{ loop.index }}">{{ te('Package') }}</a>
                             </li>
                             <li class="nav-item ml-auto hide-zero-container" style="display: none;">
-                                <button class="btn btn-sm btn-primary hide-zero-btn active">Show All</button>
+                                <button class="btn btn-sm btn-primary hide-zero-btn active">{{ te('Show All') }}</button>
                             </li>
                         </ul>
 
@@ -366,9 +366,9 @@
                                     <!-- Left side tabs -->
                                     <div class="col-md-3">
                                         <div class="nav flex-column nav-tabs nested-nav-tabs" role="tablist">
-                                            <a class="nav-link active" data-toggle="tab" href="#combinedInventory{{ current_index }}">Combined</a>
-                                            <a class="nav-link" data-toggle="tab" href="#fdcInventory{{ current_index }}">FDC</a>
-                                            <a class="nav-link" data-toggle="tab" href="#omsEFInventory{{ current_index }}">E_F</a>
+                                            <a class="nav-link active" data-toggle="tab" href="#combinedInventory{{ current_index }}">{{ te('Combined') }}</a>
+                                            <a class="nav-link" data-toggle="tab" href="#fdcInventory{{ current_index }}">{{ te('FDC') }}</a>
+                                            <a class="nav-link" data-toggle="tab" href="#omsEFInventory{{ current_index }}">{{ te('E_F') }}</a>
                                             
                                         </div>
                                     </div>
@@ -380,11 +380,11 @@
                                             <table class="table table-striped data-table">
                                                 <thead>
                                                     <tr>
-                                                        <th>SKU</th>
-                                                        <th>Stock</th>
-                                                        <th>Sold</th>
-                                                        <th>Avail</th>
-                                                        <th>ocean</th>
+                                                        <th>{{ te('SKU') }}</th>
+                                                        <th>{{ te('Stock') }}</th>
+                                                        <th>{{ te('Sold') }}</th>
+                                                        <th>{{ te('Avail') }}</th>
+                                                        <th>{{ te('ocean') }}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -427,13 +427,13 @@
                                             <table class="table table-striped data-table">
                                                 <thead>
                                                     <tr>
-                                                        <th>SKU</th>
-                                                        <th>Stock</th>
-                                                        <th>Sold</th>
-                                                        <th>Avail</th>
-                                                        <th>ocean</th>
-                                                        <th>perCase</th>
-                                                        <th>Updated</th>
+                                                        <th>{{ te('SKU') }}</th>
+                                                        <th>{{ te('Stock') }}</th>
+                                                        <th>{{ te('Sold') }}</th>
+                                                        <th>{{ te('Avail') }}</th>
+                                                        <th>{{ te('ocean') }}</th>
+                                                        <th>{{ te('perCase') }}</th>
+                                                        <th>{{ te('Updated') }}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -460,13 +460,13 @@
                                             <table class="table table-striped data-table">
                                                 <thead>
                                                     <tr>
-                                                        <th>SKU</th>
-                                                        <th>Stock</th>
-                                                        <th>Sold</th>
-                                                        <th>Avail</th>
-                                                        <th>ocean</th>
-                                                        <th>perCase</th>
-                                                        <th>Updated</th>
+                                                        <th>{{ te('SKU') }}</th>
+                                                        <th>{{ te('Stock') }}</th>
+                                                        <th>{{ te('Sold') }}</th>
+                                                        <th>{{ te('Avail') }}</th>
+                                                        <th>{{ te('ocean') }}</th>
+                                                        <th>{{ te('perCase') }}</th>
+                                                        <th>{{ te('Updated') }}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -496,20 +496,20 @@
                                 <!-- Add this bulk update section at the top -->
                                 <div class="bulk-location-update mb-3">
                                     <div class="input-group">
-                                        <input type="text" class="form-control bulk-location-input" placeholder="Enter location for all SKUs">
+                                        <input type="text" class="form-control bulk-location-input" placeholder="{{ te('Enter location for all SKUs') }}">
                                         <div class="input-group-append">
-                                            <button class="btn btn-primary bulk-update-btn">Update All Locations</button>
+                                            <button class="btn btn-primary bulk-update-btn">{{ te('Update All Locations') }}</button>
                                         </div>
                                     </div>
                                 </div>
                                 <table class="table table-striped data-table">
                                     <thead>
                                         <tr>
-                                            <th>SKU</th>
-                                            <th>Loc</th>
-                                            <th>Last</th>
-                                            <th>New</th>
-                                            <th>Update</th>
+                                            <th>{{ te('SKU') }}</th>
+                                            <th>{{ te('Loc') }}</th>
+                                            <th>{{ te('Last') }}</th>
+                                            <th>{{ te('New') }}</th>
+                                            <th>{{ te('Update') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -523,11 +523,11 @@
                                                     <td>{{ product.location.update_date if product.location.update_date else 'Never' }}</td>
                                                     <td>
                                                         <input type="text" class="form-control location-input" 
-                                                            placeholder="Enter new location" 
+                                                            placeholder="{{ te('Enter new location') }}" 
                                                             data-sku="{{ product.sku.upper() }}">
                                                     </td>
                                                     <td>
-                                                        <button class="btn btn-primary btn-sm update-location-btn">Update</button>
+                                                        <button class="btn btn-primary btn-sm update-location-btn">{{ te('Update') }}</button>
                                                     </td>
                                                 </tr>
                                             {% endif %}
@@ -541,9 +541,9 @@
                                 <table class="table table-striped data-table">
                                     <thead>
                                         <tr>
-                                            <th>Boat</th>
-                                            <th>Cost</th>
-                                            <th>Price</th>
+                                            <th>{{ te('Boat') }}</th>
+                                            <th>{{ te('Cost') }}</th>
+                                            <th>{{ te('Price') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -566,63 +566,63 @@
                             <div id="package{{ loop.index }}" class="tab-pane fade">
                                 <table class="table table-striped data-table">
                                     <tr>
-                                        <th>Unit Weight</th>
+                                        <th>{{ te('Unit Weight') }}</th>
                                         <td>{{ style_data.measurements.pc_weights }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Unit Dim</th>
+                                        <th>{{ te('Unit Dim') }}</th>
                                         <td>
                                             <div class="dimensions-display">
                                                 {{ style_data.measurements.dimensions | safe }}
-                                                <button class="btn btn-sm btn-primary edit-dims-btn">Edit</button>
+                                                <button class="btn btn-sm btn-primary edit-dims-btn">{{ te('Edit') }}</button>
                                             </div>
                                             <div class="dimensions-edit" style="display:none;">
                                                 <div class="form-row">
                                                     <div class="col">
-                                                        <input type="number" step="0.1" class="form-control length-input" placeholder="Length">
+                                                        <input type="number" step="0.1" class="form-control length-input" placeholder="{{ te('Length') }}">
                                                     </div>
                                                     <div class="col">
-                                                        <input type="number" step="0.1" class="form-control width-input" placeholder="Width">
+                                                        <input type="number" step="0.1" class="form-control width-input" placeholder="{{ te('Width') }}">
                                                     </div>
                                                     <div class="col">
-                                                        <input type="number" step="0.1" class="form-control height-input" placeholder="Height">
+                                                        <input type="number" step="0.1" class="form-control height-input" placeholder="{{ te('Height') }}">
                                                     </div>
                                                     <div class="col">
-                                                        <button class="btn btn-success save-dims-btn">Save</button>
-                                                        <button class="btn btn-secondary cancel-dims-btn">Cancel</button>
+                                                        <button class="btn btn-success save-dims-btn">{{ te('Save') }}</button>
+                                                        <button class="btn btn-secondary cancel-dims-btn">{{ te('Cancel') }}</button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th>Pkg Weight</th>
+                                        <th>{{ te('Pkg Weight') }}</th>
                                         <td>{{ style_data.measurements.pkg_weights }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Pkg Dim</th>
+                                        <th>{{ te('Pkg Dim') }}</th>
                                         <td>
                                             <div class="pkg-dimensions-display">
                                                 {{ style_data.measurements.pkg_dimensions | safe }}
-                                                <button class="btn btn-sm btn-primary edit-pkg-dims-btn">Edit</button>
+                                                <button class="btn btn-sm btn-primary edit-pkg-dims-btn">{{ te('Edit') }}</button>
                                             </div>
                                             <div class="pkg-dimensions-edit" style="display:none;">
                                                 <div class="form-row">
                                                     <div class="col">
-                                                        <input type="number" step="0.1" class="form-control box-length-input" placeholder="Length">
+                                                        <input type="number" step="0.1" class="form-control box-length-input" placeholder="{{ te('Length') }}">
                                                     </div>
                                                     <div class="col">
-                                                        <input type="number" step="0.1" class="form-control box-width-input" placeholder="Width">
+                                                        <input type="number" step="0.1" class="form-control box-width-input" placeholder="{{ te('Width') }}">
                                                     </div>
                                                     <div class="col">
-                                                        <input type="number" step="0.1" class="form-control box-height-input" placeholder="Height">
+                                                        <input type="number" step="0.1" class="form-control box-height-input" placeholder="{{ te('Height') }}">
                                                     </div>
                                                     <div class="col">
-                                                        <input type="number" step="0.1" class="form-control box-weight-input" placeholder="Weight">
+                                                        <input type="number" step="0.1" class="form-control box-weight-input" placeholder="{{ te('Weight') }}">
                                                     </div>
                                                     <div class="col">
-                                                        <button class="btn btn-success save-pkg-dims-btn">Save</button>
-                                                        <button class="btn btn-secondary cancel-pkg-dims-btn">Cancel</button>
+                                                        <button class="btn btn-success save-pkg-dims-btn">{{ te('Save') }}</button>
+                                                        <button class="btn btn-secondary cancel-pkg-dims-btn">{{ te('Cancel') }}</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -640,7 +640,7 @@
 
         <div id="imagePopup" class="image-popup" onclick="closePopup(event)">
             <span class="close-btn">&times;</span>
-            <img id="popupImage" src="" alt="Enlarged Image">
+            <img id="popupImage" src="" alt="{{ te('Enlarged Image') }}">
         </div>
 
         <!-- JavaScript Dependencies -->

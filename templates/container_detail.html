@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -336,23 +336,23 @@
 <body>
     {% include 'navbar.html' %}
     
-    <button id="sidebarToggleBtn" aria-label="Toggle sidebar">☰</button>
+    <button id="sidebarToggleBtn" aria-label="{{ te('Toggle sidebar') }}">☰</button>
     
     <aside class="sidebar" id="Sidebar">
         <div class="sidebar-header">
             Container Menu
         </div>
         <form method="GET" action="/container_search" style="padding: 15px 20px; border-bottom: 1px solid rgba(0,0,0,0.1);" onsubmit="this.action = '/container_search?container_id=' + this.container_id.value.toLowerCase() + '#container-info';">
-            <input type="text" name="container_id" placeholder="Search container..." required style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; font-size: 13px;">
-            <button type="submit" style="width: 100%; padding: 8px 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">Search</button>
+            <input type="text" name="container_id" placeholder="{{ te('Search container...') }}" required style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; font-size: 13px;">
+            <button type="submit" style="width: 100%; padding: 8px 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">{{ te('Search') }}</button>
         </form>
         <ul class="nav-list">
-            <li><a href="/product_detail">Back to Product Detail</a></li>
+            <li><a href="/product_detail">{{ te('Back to Product Detail') }}</a></li>
         </ul>
         
         {% if latest_containers %}
         <div style="padding: 15px 20px; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 15px;">
-            <h4 style="font-size: 13px; font-weight: bold; color: #667eea; margin-bottom: 10px; text-transform: uppercase; text-align: center;">Latest Containers</h4>
+            <h4 style="font-size: 13px; font-weight: bold; color: #667eea; margin-bottom: 10px; text-transform: uppercase; text-align: center;">{{ te('Latest Containers') }}</h4>
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 {% for container in latest_containers %}
                 <a href="/container_search?container_id={{ container }}" 
@@ -372,36 +372,36 @@
             <h1><i class="fas fa-box"></i> Container: {{ container_id }} 
                 {% if container_id %}
                     {% if is_arrived %}
-                        <span style="background: #4CAF50; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.6em; margin-left: 10px; vertical-align: middle;">[arrived]</span>
+                        <span style="background: #4CAF50; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.6em; margin-left: 10px; vertical-align: middle;">{{ te('[arrived]') }}</span>
                     {% else %}
-                        <span style="background: #FF9800; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.6em; margin-left: 10px; vertical-align: middle;">[ocean]</span>
+                        <span style="background: #FF9800; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.6em; margin-left: 10px; vertical-align: middle;">{{ te('[ocean]') }}</span>
                     {% endif %}
                 {% endif %}
             </h1>
         </div>
         
         <div class="info-section" style="background: #f0f8ff; border-left: 4px solid #667eea; padding: 20px; margin-bottom: 30px;">
-            <h3 style="color: #667eea; border: none; margin: 0 0 15px 0; padding: 0; text-align: center;">Container Info</h3>
+            <h3 style="color: #667eea; border: none; margin: 0 0 15px 0; padding: 0; text-align: center;">{{ te('Container Info') }}</h3>
             <div class="info-grid">
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">PO Number</div>
+                    <div class="info-label">{{ te('PO Number') }}</div>
                     <div class="info-value">{{ container_id }}</div>
                 </div>
                 {% if po_date %}
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">PO Date</div>
+                    <div class="info-label">{{ te('PO Date') }}</div>
                     <div class="info-value">{{ po_date }}</div>
                 </div>
                 {% endif %}
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">BOL Number</div>
+                    <div class="info-label">{{ te('BOL Number') }}</div>
                     <div class="info-value" id="bolNumDisplay">
-                        <span style="color: #999; font-size: 0.9em;">Loading...</span>
+                        <span style="color: #999; font-size: 0.9em;">{{ te('Loading...') }}</span>
                     </div>
                 </div>
                 {% if total_msrp > 0 %}
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">Total MSRP</div>
+                    <div class="info-label">{{ te('Total MSRP') }}</div>
                     <div class="info-value">${{ "%.2f"|format(total_msrp) }}</div>
                 </div>
                 {% endif %}
@@ -411,21 +411,21 @@
         
         <div id="products-section" class="info-section">
             {% if style_groups %}
-            <h3>Items</h3>
+            <h3>{{ te('Items') }}</h3>
             <div class="items-table-wrap">
             <table class="container-items-table">
                     <thead>
                         <tr>
                             <th class="style-image-cell"></th>
-                            <th>Style</th>
-                            <th>Catalog</th>
-                            <th>SKU</th>
-                            <th>Color</th>
-                            <th>Container Qty</th>
-                            <th class="col-available">Available</th>
-                            <th>In Warehouse</th>
-                            <th>Sold/Reserved</th>
-                            <th>Price</th>
+                            <th>{{ te('Style') }}</th>
+                            <th>{{ te('Catalog') }}</th>
+                            <th>{{ te('SKU') }}</th>
+                            <th>{{ te('Color') }}</th>
+                            <th>{{ te('Container Qty') }}</th>
+                            <th class="col-available">{{ te('Available') }}</th>
+                            <th>{{ te('In Warehouse') }}</th>
+                            <th>{{ te('Sold/Reserved') }}</th>
+                            <th>{{ te('Price') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -437,7 +437,7 @@
                                 {% if group.image_url %}
                                 <img src="{{ group.image_url }}" alt="{{ group.style }}">
                                 {% else %}
-                                <span style="color:#999; font-size:11px;">No image</span>
+                                <span style="color:#999; font-size:11px;">{{ te('No image') }}</span>
                                 {% endif %}
                             </td>
                             <td rowspan="{{ group.row_span }}" style="vertical-align: middle;">
@@ -455,7 +455,7 @@
                         </tr>
                         {% endfor %}
                         <tr class="style-subtotal">
-                            <td colspan="3"><strong>TOTAL</strong></td>
+                            <td colspan="3"><strong>{{ te('TOTAL') }}</strong></td>
                             <td class="num-col">{{ group.totals.container_qty }}</td>
                             <td class="num-col">{{ group.totals.available }}</td>
                             <td class="num-col">{{ group.totals.in_warehouse }}</td>
@@ -465,7 +465,7 @@
                         {% endfor %}
                         {% if grand_totals %}
                         <tr class="grand-total">
-                            <td colspan="5"><strong>GRAND TOTAL</strong></td>
+                            <td colspan="5"><strong>{{ te('GRAND TOTAL') }}</strong></td>
                             <td class="num-col">{{ grand_totals.container_qty }}</td>
                             <td class="num-col">{{ grand_totals.available }}</td>
                             <td class="num-col">{{ grand_totals.in_warehouse }}</td>
@@ -479,8 +479,8 @@
                 {% else %}
                 <div class="empty-state">
                     <i class="fas fa-inbox"></i>
-                    <h4>No items found in this container</h4>
-                    <p>Try searching with a different container number.</p>
+                    <h4>{{ te('No items found in this container') }}</h4>
+                    <p>{{ te('Try searching with a different container number.') }}</p>
                 </div>
                 {% endif %}
         </div>

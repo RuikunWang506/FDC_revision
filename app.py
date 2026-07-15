@@ -6,30 +6,9 @@ import sys
 
 
 def _load_nssm_env_file():
-    """Apply KEY=VALUE lines from nssm-fdcef-environment.env before Config is imported.
+    from py.utilities.nssm_env import load_nssm_env_file
 
-    NSSM does not read that file; this lets the same file drive Turnstile and other
-    vars for the fdcef service. Variables already in os.environ (e.g. set in NSSM) win.
-    """
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nssm-fdcef-environment.env")
-    if not os.path.isfile(path):
-        return
-    try:
-        with open(path, encoding="utf-8", errors="replace") as handle:
-            for raw in handle:
-                line = raw.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, _, val = line.partition("=")
-                key, val = key.strip(), val.strip()
-                if not key:
-                    continue
-                if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
-                    val = val[1:-1]
-                if key not in os.environ:
-                    os.environ[key] = val
-    except OSError:
-        pass
+    load_nssm_env_file()
 
 
 def _windows_process_ancestor_exes(max_depth=10):

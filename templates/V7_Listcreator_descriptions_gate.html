@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Descriptions required — V7 List Creator</title>
+    <title>{{ te('Descriptions required — V7 List Creator') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
         body { background: #f1f5f9; }
@@ -28,14 +28,16 @@
     </style>
 </head>
 <body>
+{% set lang_bar_light = true %}
+{% include '_lang_bar_standalone.html' %}
 <div class="container py-4">
     <div class="lc-hero">
-        <h1>Descriptions first</h1>
-        <p>This list is processed in two steps so the page stays fast: confirm the <strong>snapshot name</strong> (clock below uses <strong>your local time</strong>), assign a description for each style, then <strong>Update and build full list</strong>. The HTML snapshot is assembled on the server; you’ll get a link when it’s ready.</p>
+        <h1>{{ te('Descriptions first') }}</h1>
+        <p>{{ _('page.v7_gate.intro_confirm') }} <strong>{{ te('snapshot name') }}</strong> {{ _('page.v7_gate.intro_clock') }} <strong>{{ te('your local time') }}</strong>), {{ _('page.v7_gate.intro_assign') }} <strong>{{ te('Update and build full list') }}</strong>. {{ _('page.v7_gate.intro_ready') }}</p>
     </div>
 
     {% if snapshot_time_hint_iso is defined and snapshot_time_hint_iso %}
-    <p class="small text-muted mb-3 mb-md-4">Reference time: <strong data-fdc-local-iso="{{ snapshot_time_hint_iso }}">{% if snapshot_time_hint is defined and snapshot_time_hint %}{{ snapshot_time_hint }}{% endif %}</strong> <span class="text-muted">(your browser’s local timezone)</span></p>
+    <p class="small text-muted mb-3 mb-md-4">Reference time: <strong data-fdc-local-iso="{{ snapshot_time_hint_iso }}">{% if snapshot_time_hint is defined and snapshot_time_hint %}{{ snapshot_time_hint }}{% endif %}</strong> <span class="text-muted">{{ te('(your browser’s local timezone)') }}</span></p>
     {% elif snapshot_time_hint is defined and snapshot_time_hint %}
     <p class="small text-muted mb-3 mb-md-4"><strong>{{ snapshot_time_hint }}</strong></p>
     {% endif %}
@@ -43,7 +45,7 @@
     <div class="lc-card mb-4">
         <form method="POST" action="{{ url_for('v7_listcreator.update_descriptions') }}">
             <div class="form-group mb-4">
-                <label class="lc-label d-block" for="snapshot_name_gate">Snapshot name <span class="text-muted font-weight-normal">(required)</span></label>
+                <label class="lc-label d-block" for="snapshot_name_gate">Snapshot name <span class="text-muted font-weight-normal">{{ te('(required)') }}</span></label>
                 <input type="text"
                        class="form-control form-control-lg"
                        id="snapshot_name_gate"
@@ -51,25 +53,25 @@
                        maxlength="120"
                        minlength="2"
                        required
-                       placeholder="e.g. Nordstrom preorder — Summer 2026"
+                       placeholder="{{ te('e.g. Nordstrom preorder — Summer 2026') }}"
                        value="{{ snapshot_name if snapshot_name is defined else '' }}">
-                <small class="form-text text-muted">Used for your saved HTML page label. Timestamps are stored on the server in <strong>Pacific (Los Angeles)</strong> and shown here in your local time.</small>
+                <small class="form-text text-muted">Used for your saved HTML page label. Timestamps are stored on the server in <strong>{{ te('Pacific (Los Angeles)') }}</strong> and shown here in your local time.</small>
             </div>
 
             <div class="alert alert-info py-2 small mb-4">
-                <strong class="mr-1">Source</strong> <code class="small">{{ list_input|e }}</code>
+                <strong class="mr-1">{{ te('Source') }}</strong> <code class="small">{{ list_input|e }}</code>
             </div>
 
-            <h5 class="text-center mb-4">Please select descriptions for the following styles</h5>
+            <h5 class="text-center mb-4">{{ te('Please select descriptions for the following styles') }}</h5>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-sm mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 14%">Image</th>
-                            <th style="width: 14%">Style</th>
-                            <th style="width: 34%">Quick select</th>
-                            <th style="width: 38%">All options</th>
+                            <th style="width: 14%">{{ te('Image') }}</th>
+                            <th style="width: 14%">{{ te('Style') }}</th>
+                            <th style="width: 34%">{{ te('Quick select') }}</th>
+                            <th style="width: 38%">{{ te('All options') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -94,14 +96,14 @@
                                 </a>
                             </td>
                             <td class="align-middle">
-                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='Satchel'">SATCHEL</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">MINI SATCHEL</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">BACKPACK</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='Satchel'">{{ te('SATCHEL') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">{{ te('MINI SATCHEL') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">{{ te('BACKPACK') }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">{{ te('CROSSBODY') }}</button>
                             </td>
                             <td class="align-middle">
                                 <select name="description_{{ loop.index }}" class="form-control" required>
-                                    <option value="">Select a description</option>
+                                    <option value="">{{ te('Select a description') }}</option>
                                     {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
                                     <option value="{{ option }}">{{ option }}</option>
                                     {% endfor %}
@@ -113,12 +115,12 @@
                 </table>
             </div>
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-lg text-white px-5" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">Update and build full list</button>
+                <button type="submit" class="btn btn-lg text-white px-5" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">{{ te('Update and build full list') }}</button>
             </div>
         </form>
     </div>
     <p class="small text-muted text-center mb-0">
-        <a href="{{ url_for('v7_listcreator.index') }}">Back to List Creator</a>
+        <a href="{{ url_for('v7_listcreator.index') }}">{{ te('Back to List Creator') }}</a>
     </p>
 </div>
 <script>

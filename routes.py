@@ -69,9 +69,31 @@ from py.utilities.monitor import send_discord_notification
 from py.utilities import lan_detection
 
 four_seller_bp = importlib.import_module('py.other.4_seller').four_seller_bp
+four_seller_sales_bp = importlib.import_module('py.other.4seller_sales').four_seller_sales_bp
+
+
+from py.utilities.i18n import inject_i18n_context, set_locale as set_user_locale, client_i18n_bundle
 
 
 def register_routes(app):
+
+    @app.context_processor
+    def inject_i18n():
+        ctx = inject_i18n_context()
+        ctx["client_i18n_bundle"] = client_i18n_bundle
+        return ctx
+
+    @app.route("/set_locale/<locale>", methods=["GET"])
+    def set_locale(locale):
+        from flask import make_response, redirect, request, url_for
+
+        loc = set_user_locale(locale)
+        next_url = (request.args.get("next") or "").strip()
+        if not next_url or not next_url.startswith("/"):
+            next_url = url_for("home")
+        resp = make_response(redirect(next_url))
+        resp.set_cookie("fdc_locale", loc, max_age=60 * 60 * 24 * 365, samesite="Lax")
+        return resp
 
     @app.context_processor
     def inject_lan_context():
@@ -99,11 +121,12 @@ def register_routes(app):
         from py.utilities.auth import get_user_permissions
         from py.utilities.dashboard_permissions import tool_visible_for_user
 
+        uname = session.get("username")
+        perms = get_user_permissions(uname) if uname else {}
+
         def tool_allowed(tool_id: str) -> bool:
-            uname = session.get("username")
             if not uname:
                 return False
-            perms = get_user_permissions(uname)
             return tool_visible_for_user(perms, uname, tool_id)
 
         from py.utilities.log_viewer_permissions import user_can_view_logs
@@ -111,16 +134,17 @@ def register_routes(app):
         def can_view_logs() -> bool:
             return user_can_view_logs(session.get("username"))
 
-        from py.other.clientview import user_hides_staff_nav_links
+        from py.other.clientview import user_hides_staff_nav_links, product_detail_search_url
 
         def hide_staff_nav_links() -> bool:
             return user_hides_staff_nav_links(session.get("username"))
 
         return {
-            "current_user": session.get("username"),
+            "current_user": uname,
             "tool_allowed": tool_allowed,
             "can_view_logs": can_view_logs,
             "hide_staff_nav_links": hide_staff_nav_links,
+            "product_detail_search_url": product_detail_search_url,
         }
 
     @app.route('/delete_system_restarted', methods=['POST'])
@@ -176,6 +200,7 @@ def register_routes(app):
     app.register_blueprint(vendor_app_bp)
     app.register_blueprint(vendor_tiktok_processor_bp)
     app.register_blueprint(four_seller_bp)
+    app.register_blueprint(four_seller_sales_bp)
     app.register_blueprint(email_bp)
 
     app.permanent_session_lifetime = timedelta(days=30)
@@ -192,10 +217,29 @@ def register_routes(app):
             from py.utilities.customer_purchase_access import build_portal_home_context
 
             portal_ctx = build_portal_home_context(current_user)
+        dashboard_favorites: list = []
+        if not portal_minimal:
+            try:
+                conn = get_mysql_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT favorites FROM users WHERE username = %s",
+                    (current_user,),
+                )
+                row = cursor.fetchone()
+                dashboard_favorites = json.loads(row[0]) if row and row[0] else []
+            except Exception:
+                dashboard_favorites = []
+            finally:
+                if "cursor" in locals():
+                    cursor.close()
+                if "conn" in locals():
+                    conn.close()
         return render_template(
             "index.html",
             current_user=current_user,
             portal_minimal=portal_minimal,
+            dashboard_favorites=dashboard_favorites,
             **portal_ctx,
         )
 

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>China FTP Directory 中国FTP目录 - FDC</title>
+    <title>{{ _('page.china_directory.title') }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <style>
         /* Scoped page — navbar loads Bootstrap which overrides global body/table styles */
@@ -360,19 +360,19 @@
         </div>
 
         <h1 class="main-title">China FTP Directory <span class="label-zh">中国 FTP 目录</span></h1>
-        <p class="subtitle">Browse folder structure on China FTP — folders listed first<br>浏览中国 FTP 目录结构 — 文件夹优先显示</p>
+        <p class="subtitle">{{ te('Browse folder structure on China FTP — folders listed first') }}<br>浏览中国 FTP 目录结构 — 文件夹优先显示</p>
 
         <div class="toolbar">
             <input type="text" class="search-input" id="searchInput" placeholder="Search SKU or filename… e.g. N2640 / 搜索 SKU 或文件名…" value="{{ initial_query|default('') }}">
             <button type="button" class="btn btn-primary" id="searchBtn"><i class="fas fa-search"></i> Search / 搜索</button>
             <button type="button" class="btn btn-secondary" id="browseRootBtn"><i class="fas fa-home"></i> Root / 根目录</button>
-            <button type="button" class="btn btn-refresh" id="refreshBtn" title="Bypass cache and reload from China FTP">
+            <button type="button" class="btn btn-refresh" id="refreshBtn" title="{{ te('Bypass cache and reload from China FTP') }}">
                 <i class="fas fa-sync-alt"></i> Refresh / 刷新
             </button>
-            <button type="button" class="btn btn-rebuild" id="rebuildIndexBtn" title="Walk China FTP and rebuild local search index">
+            <button type="button" class="btn btn-rebuild" id="rebuildIndexBtn" title="{{ te('Walk China FTP and rebuild local search index') }}">
                 <i class="fas fa-database"></i> Rebuild index / 重建索引
             </button>
-            <button type="button" class="btn btn-toggle" id="previewToggleBtn" title="Show thumbnails for files already saved locally">
+            <button type="button" class="btn btn-toggle" id="previewToggleBtn" title="{{ te('Show thumbnails for files already saved locally') }}">
                 <i class="fas fa-image"></i> Preview saved / 已下载预览
             </button>
         </div>
@@ -710,7 +710,7 @@
         const pathHeader = options.showPath ? '<th>Relative path <span class="label-zh">相对路径</span></th>' : '';
         const lastHeader = options.showPath
             ? '<th>SKU / Actions <span class="label-zh">操作</span></th>'
-            : '<th>SKU</th>';
+            : '<th>{{ te('SKU') }}</th>';
 
         html += '<table class="table"><thead><tr>'
             + previewHeader

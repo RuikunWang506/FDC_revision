@@ -1,11 +1,11 @@
 {% if fdc_is_lan_session %}
 <div class="alert alert-success mb-0 rounded-0 py-1 px-2 text-center small border-0" role="status" style="font-size:0.85rem; position: relative; z-index: 1031;">
     <strong>LAN</strong>
-    — You are using a direct connection to this server (not through the Cloudflare tunnel), so pages and images should load faster.
+    — {{ _('lan.banner') }}
     {% if fdc_lan_current_origin %}
-    <span class="ml-1">Current origin: <code>{{ fdc_lan_current_origin }}</code></span>
+    <span class="ml-1">{{ _('lan.current_origin') }} <code>{{ fdc_lan_current_origin }}</code></span>
     {% elif fdc_lan_origin_hint %}
-    <span class="ml-1">On the office network you can use: <code>{{ fdc_lan_origin_hint }}</code></span>
+    <span class="ml-1">{{ _('lan.office_hint') }} <code>{{ fdc_lan_origin_hint }}</code></span>
     {% endif %}
 </div>
 {% endif %}
@@ -17,10 +17,10 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
     <a class="navbar-brand" href="/">
-        <img src="/static/icons/home.gif" alt="Home">Home
+        <img src="/static/icons/home.gif" alt="{{ _('nav.home') }}">{{ _('nav.home') }}
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            aria-controls="navbarNav" aria-expanded="false" aria-label="{{ _('nav.toggle') }}">
         <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -29,13 +29,13 @@
             {% if not hide_staff_nav_links() %}
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('item_lookup.item_lookup') }}">
-                    <img src="/static/icons/magnifying-glass.svg" alt="Item Lookup">SKU
+                    <img src="/static/icons/magnifying-glass.svg" alt="{{ _('nav.sku') }}">{{ _('nav.sku') }}
                 </a>
             </li>
 
             <li class="nav-item">
                 <a class="nav-link" href="/palletdetail/L1-A BOT">
-                    📦 Pallet
+                    📦 {{ _('nav.pallet') }}
                 </a>
             </li>
             {% endif %}
@@ -43,28 +43,42 @@
             {% if current_user and (current_user|lower) == 'yeti' %}
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('auth.manage_users') }}">
-                    <img src="/static/icons/shipping.svg" alt="User Management">Users
+                    <img src="/static/icons/shipping.svg" alt="{{ _('nav.users') }}">{{ _('nav.users') }}
                 </a>
             </li>
             {% endif %}
 
             {% if current_user in ['yeti','xj'] %}
             <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('master_audit.audit') }}">📝 audit</a>
+                <a class="nav-link" href="{{ url_for('master_audit.audit') }}">📝 {{ _('nav.audit') }}</a>
             </li>
             {% endif %}
         </ul>
 
+        {% if request.path.startswith('/4seller/sales') %}
+        <ul class="navbar-nav mx-auto">
+            <li class="nav-item">
+                <a class="nav-link{% if request.path == '/4seller/sales' %} active font-weight-bold{% endif %}" href="{{ url_for('four_seller_sales.four_seller_sales_page') }}">{{ _('Orders View') }}</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.path == '/4seller/sales/finance' %} active font-weight-bold{% endif %}" href="{{ url_for('four_seller_sales.four_seller_sales_finance_page') }}">{{ _('Finance View') }}</a>
+            </li>
+        </ul>
+        {% endif %}
+
         <ul class="navbar-nav ml-auto align-items-center">
+            <li class="nav-item d-flex align-items-center mr-2">
+                {% include '_lang_switch.html' %}
+            </li>
             <!-- QR code icon button -->
             <li class="nav-item d-flex align-items-center">
-                <button id="navbar-qr-btn" class="btn btn-link p-0 mr-2" title="Scan to visit this page" style="color: #fff;">
+                <button id="navbar-qr-btn" class="btn btn-link p-0 mr-2" title="{{ _('nav.qr_scan') }}" style="color: #fff;">
                     <i class="fas fa-qrcode fa-lg"></i>
                 </button>
             </li>
             {% if current_user and can_view_logs() %}
             <li class="nav-item d-flex align-items-center">
-                <a class="nav-link py-2 pr-2 mr-1" href="{{ url_for('display') }}" title="Log viewer">📕 Log</a>
+                <a class="nav-link py-2 pr-2 mr-1" href="{{ url_for('display') }}" title="{{ _('nav.log') }}">📕 {{ _('nav.log') }}</a>
             </li>
             {% endif %}
             <li class="nav-item dropdown">
@@ -85,11 +99,11 @@
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                    <a class="dropdown-item" href="{{ url_for('auth.user_settings') }}">Settings</a>
-                    <a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a>
+                    <a class="dropdown-item" href="{{ url_for('auth.user_settings') }}">{{ _('nav.settings') }}</a>
+                    <a class="dropdown-item" href="{{ url_for('auth.logout') }}">{{ _('nav.logout') }}</a>
                 </div>
                 <!-- Mobile logout -->
-                <a class="nav-link d-lg-none" href="{{ url_for('auth.logout') }}">Logout</a>
+                <a class="nav-link d-lg-none" href="{{ url_for('auth.logout') }}">{{ _('nav.logout') }}</a>
             </li>
         </ul>
     </div>
@@ -100,7 +114,7 @@
   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
     <div class="modal-content bg-dark text-center">
       <div class="modal-header border-0">
-        <h5 class="modal-title text-white" id="navbarQrModalLabel">Scan to visit</h5>
+        <h5 class="modal-title text-white" id="navbarQrModalLabel">{{ _('nav.qr_title') }}</h5>
         <button type="button" class="close text-white" onclick="$('#navbarQrModal').modal('hide');" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -163,6 +177,33 @@ body.has-navbar { padding-top: 50px; }
 #navbar-qr-btn:focus {
     outline: none;
 }
+.fdc-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+}
+.fdc-lang-btn {
+    color: rgba(255, 255, 255, 0.72);
+    text-decoration: none;
+    padding: 0.2rem 0.35rem;
+    border-radius: 4px;
+}
+.fdc-lang-btn:hover {
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.12);
+}
+.fdc-lang-btn.active {
+    color: #fff;
+    background: rgba(0, 123, 255, 0.55);
+}
+.fdc-lang-sep {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.75rem;
+}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
@@ -205,3 +246,4 @@ $(function() {
     }
 });
 </script>
+{% include '_i18n_client.html' %}

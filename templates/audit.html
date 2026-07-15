@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Audit</title>
+    <title>{{ _('page.audit.title') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .upload-section {
@@ -106,86 +106,86 @@
 <body>
     {% include 'navbar.html' %}
     <div class="container mt-4">
-        <h1>Master Audit</h1>
+        <h1>{{ te('Master Audit') }}</h1>
         <p>Welcome to the audit page, {{ current_user }}!</p>
         
         <!-- Search Options Form -->
         <div class="search-options">
-            <h4>Order Selection Criteria</h4>
+            <h4>{{ te('Order Selection Criteria') }}</h4>
             <form method="POST" id="auditForm">
                 <!-- Search Type Selection -->
                 <div class="form-row">
-                    <label class="form-label">Search by:</label>
+                    <label class="form-label">{{ te('Search by:') }}</label>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="search_type" id="search_orders" value="orders" 
                                {% if search_type == 'orders' or not search_type %}checked{% endif %}>
-                        <label class="form-check-label" for="search_orders">Number of Orders</label>
+                        <label class="form-check-label" for="search_orders">{{ te('Number of Orders') }}</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="search_type" id="search_days" value="days"
                                {% if search_type == 'days' %}checked{% endif %}>
-                        <label class="form-check-label" for="search_days">Last X Days</label>
+                        <label class="form-check-label" for="search_days">{{ te('Last X Days') }}</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="search_type" id="search_since" value="since"
                                {% if search_type == 'since' %}checked{% endif %}>
-                        <label class="form-check-label" for="search_since">Since Date</label>
+                        <label class="form-check-label" for="search_since">{{ te('Since Date') }}</label>
                     </div>
                 </div>
                 
                 <!-- Database Selection (common to all search types) -->
                 <div class="form-row">
-                    <label class="form-label">Database:</label>
+                    <label class="form-label">{{ te('Database:') }}</label>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="database_filter" id="db_both" value="both"
                                {% if database_filter == 'both' or not database_filter %}checked{% endif %}>
-                        <label class="form-check-label" for="db_both">Both</label>
+                        <label class="form-check-label" for="db_both">{{ te('Both') }}</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="database_filter" id="db_fdc" value="fdc"
                                {% if database_filter == 'fdc' %}checked{% endif %}>
-                        <label class="form-check-label" for="db_fdc">FDC</label>
+                        <label class="form-check-label" for="db_fdc">{{ te('FDC') }}</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="database_filter" id="db_efashion" value="efashion"
                                {% if database_filter == 'efashion' %}checked{% endif %}>
-                        <label class="form-check-label" for="db_efashion">E-Fashion</label>
+                        <label class="form-check-label" for="db_efashion">{{ te('E-Fashion') }}</label>
                     </div>
                 </div>
                 
                 <!-- Number of Orders Section -->
                 <div id="orders_section" class="search-type-section {% if search_type == 'orders' or not search_type %}active{% endif %}">
                     <div class="form-row">
-                        <label for="num_orders" class="form-label">Last</label>
+                        <label for="num_orders" class="form-label">{{ te('Last') }}</label>
                         <input type="number" class="form-control" id="num_orders" name="num_orders" 
                                value="{{ num_orders or 20 }}" min="1" max="1000" style="width: 100px;">
-                        <label class="form-label">orders</label>
+                        <label class="form-label">{{ te('orders') }}</label>
                     </div>
                 </div>
                 
                 <!-- Last X Days Section -->
                 <div id="days_section" class="search-type-section {% if search_type == 'days' %}active{% endif %}">
                     <div class="form-row">
-                        <label for="days_back" class="form-label">Last</label>
+                        <label for="days_back" class="form-label">{{ te('Last') }}</label>
                         <input type="number" class="form-control" id="days_back" name="days_back" 
        value="{{ days_back or 7 }}" min="0" max="365" style="width: 100px;">
-                        <label class="form-label">days</label>
+                        <label class="form-label">{{ te('days') }}</label>
                     </div>
                 </div>
                 
                 <!-- Since Date Section -->
                 <div id="since_section" class="search-type-section {% if search_type == 'since' %}active{% endif %}">
                     <div class="form-row">
-                        <label for="since_date" class="form-label">Orders since:</label>
+                        <label for="since_date" class="form-label">{{ te('Orders since:') }}</label>
                         <input type="text" class="form-control" id="since_date" name="since_date" 
-                               value="{{ since_date or '' }}" placeholder="MM-DD-YYYY" style="width: 150px;">
-                        <small class="text-muted">Format: MM-DD-YYYY (e.g., 12-01-2023)</small>
+                               value="{{ since_date or '' }}" placeholder="{{ te('MM-DD-YYYY') }}" style="width: 150px;">
+                        <small class="text-muted">{{ te('Format: MM-DD-YYYY (e.g., 12-01-2023)') }}</small>
                     </div>
                 </div>
                 
                 <div class="form-row">
-                    <button type="submit" class="btn btn-primary">Update Results</button>
-                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset to Defaults</button>
+                    <button type="submit" class="btn btn-primary">{{ te('Update Results') }}</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">{{ te('Reset to Defaults') }}</button>
                 </div>
             </form>
         </div>
@@ -193,7 +193,7 @@
 {% if show_upload_section %}
 <div class="upload-section">
     <h4><i class="fas fa-upload"></i> Upload Inventory Excel File</h4>
-    <p class="mb-3">Upload an Excel file to match additional inventory data with the sold out SKUs above.</p>
+    <p class="mb-3">{{ te('Upload an Excel file to match additional inventory data with the sold out SKUs above.') }}</p>
     
     <form method="POST" enctype="multipart/form-data" id="uploadForm">
         <!-- Preserve existing form data -->
@@ -204,7 +204,7 @@
         <input type="hidden" name="since_date" value="{{ since_date }}">
         
         <div class="form-row">
-            <label for="inventory_file" class="form-label">Select Excel File:</label>
+            <label for="inventory_file" class="form-label">{{ te('Select Excel File:') }}</label>
             <input type="file" class="form-control" id="inventory_file" name="inventory_file" 
                    accept=".xlsx,.xls" required style="width: 300px;">
             <button type="submit" class="btn btn-success upload-button">
@@ -213,9 +213,9 @@
         </div>
         
         <div class="file-upload-info">
-            <strong>Required Excel columns:</strong> Product Name, Stock SKU, Warehouse, Location, On Hand, Available, Reserved, Safety Stock, Average Cost, Total Value<br>
-            <strong>Supported formats:</strong> .xlsx, .xls<br>
-            <strong>Note:</strong> The system will match SKUs from the sold out table with the "Stock SKU" column in your Excel file.
+            <strong>{{ te('Required Excel columns:') }}</strong> Product Name, Stock SKU, Warehouse, Location, On Hand, Available, Reserved, Safety Stock, Average Cost, Total Value<br>
+            <strong>{{ te('Supported formats:') }}</strong> .xlsx, .xls<br>
+            <strong>{{ te('Note:') }}</strong> The system will match SKUs from the sold out table with the "Stock SKU" column in your Excel file.
         </div>
     </form>
 </div>
@@ -226,8 +226,8 @@
 <div class="audit-section">
     <div class="card">
         <div class="card-header">
-            <h3>Matched Inventory from Excel Upload</h3>
-            <small class="text-muted">SKUs that appear in both the sold out table and uploaded Excel file</small>
+            <h3>{{ te('Matched Inventory from Excel Upload') }}</h3>
+            <small class="text-muted">{{ te('SKUs that appear in both the sold out table and uploaded Excel file') }}</small>
         </div>
         <div class="card-body">
             <div class="table-container">
@@ -270,8 +270,8 @@
         <div class="audit-section">
             <div class="card">
                 <div class="card-header">
-                    <h3>Customer Pivot Summary</h3>
-                    <small class="text-muted">Grouped by customer with Sam Moon and Fashion Q combined across all locations</small>
+                    <h3>{{ te('Customer Pivot Summary') }}</h3>
+                    <small class="text-muted">{{ te('Grouped by customer with Sam Moon and Fashion Q combined across all locations') }}</small>
                 </div>
                 <div class="card-body">
                     <div class="table-container">
@@ -285,8 +285,8 @@
         <div class="audit-section">
             <div class="card">
                 <div class="card-header">
-                    <h3>Sold Out SKUs from Selected Orders</h3>
-                    <small class="text-muted">Items that have 0 or negative combined availability across both databases</small>
+                    <h3>{{ te('Sold Out SKUs from Selected Orders') }}</h3>
+                    <small class="text-muted">{{ te('Items that have 0 or negative combined availability across both databases') }}</small>
                 </div>
                 <div class="card-body">
                     <div class="table-container">

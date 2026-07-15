@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Out of Stock Check</title>
+    <title>{{ _('page.oosc.title') }}</title>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
@@ -232,15 +232,15 @@
 
             <div class="stats-summary">
                 <div class="stat-card">
-                    <div class="stat-label">Total Styles</div>
+                    <div class="stat-label">{{ te('Total Styles') }}</div>
                     <div class="stat-number">{{ styles_data | length }}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Negative Stock</div>
+                    <div class="stat-label">{{ te('Negative Stock') }}</div>
                     <div class="stat-number" id="negativeCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Positive Stock</div>
+                    <div class="stat-label">{{ te('Positive Stock') }}</div>
                     <div class="stat-number" id="positiveCount">0</div>
                 </div>
             </div>
@@ -248,12 +248,12 @@
             <table id="oosc_table" class="table table-striped table-bordered">
                 <thead>
                     <tr>
-                        <th><i class="fas fa-tag mr-1"></i>Style</th>
-                        <th><i class="fas fa-boxes mr-1"></i>Stock</th>
-                        <th><i class="fas fa-ship mr-1"></i>Ocean</th>
-                        <th><i class="fas fa-shopping-cart mr-1"></i>Sold</th>
-                        <th><i class="fas fa-box-open mr-1"></i>Available</th>
-                        <th><i class="fas fa-tools mr-1"></i>Action</th>
+                        <th><i class="fas fa-tag mr-1"></i>{{ te('Style') }}</th>
+                        <th><i class="fas fa-boxes mr-1"></i>{{ te('Stock') }}</th>
+                        <th><i class="fas fa-ship mr-1"></i>{{ te('Ocean') }}</th>
+                        <th><i class="fas fa-shopping-cart mr-1"></i>{{ te('Sold') }}</th>
+                        <th><i class="fas fa-box-open mr-1"></i>{{ te('Available') }}</th>
+                        <th><i class="fas fa-tools mr-1"></i>{{ te('Action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -295,8 +295,8 @@
         {% else %}
         <div class="main-container text-center">
             <i class="fas fa-inbox fa-3x mb-3" style="color: #667eea;"></i>
-            <h3>No Data Found</h3>
-            <p>No styles with locations were found in the database.</p>
+            <h3>{{ te('No Data Found') }}</h3>
+            <p>{{ te('No styles with locations were found in the database.') }}</p>
         </div>
         {% endif %}
     </div>
@@ -442,7 +442,7 @@
                     // compact table: SKU | Stock | Sold | Available | Ocean | Location
                     let html = '<div style="padding:6px 12px; background:#f9f9fb; border-radius:6px; font-size:0.9rem;">';
                     html += '<table class="table table-sm table-bordered mb-0" style="margin:0;font-size:0.9rem;">';
-                    html += '<thead><tr><th style="width:140px">SKU</th><th style="width:80px">Stock</th><th style="width:80px">Sold</th><th style="width:100px">Available</th><th style="width:80px">Ocean</th><th>Location</th></tr></thead><tbody>';
+                    html += '<thead><tr><th style="width:140px">{{ te('SKU') }}</th><th style="width:80px">{{ te('Stock') }}</th><th style="width:80px">{{ te('Sold') }}</th><th style="width:100px">{{ te('Available') }}</th><th style="width:80px">{{ te('Ocean') }}</th><th>{{ te('Location') }}</th></tr></thead><tbody>';
 
                     if (skus.length === 0) {
                         html += '<tr><td colspan="6">No SKUs found for this style.</td></tr>';

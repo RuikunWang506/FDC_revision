@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify,redirect,session,render_template,url_for,current_app
 import pyodbc
 import pandas as pd
-from datetime import datetime
+import re
+import calendar
+from datetime import datetime, date, timedelta
 from py.utilities.auth import login_required
 from py.utilities.setting import Config
 
@@ -10,6 +12,399 @@ customer_bp = Blueprint('customer', __name__)
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
+
+LORIS_CUSTOMER_ID = '00868'
+LORIS_CUSTOMER_SEARCH = 'loris'
+
+
+def _is_loris_name_match(name, customer_id, search):
+    """Avoid false positives such as FLORIST when searching for Loris."""
+    name_l = (name or '').strip().lower()
+    id_l = (customer_id or '').strip().lower()
+    search_l = (search or '').strip().lower()
+    if not search_l:
+        return False
+    if id_l == search_l or name_l == search_l:
+        return True
+    if search_l == 'loris' and 'florist' in name_l:
+        return False
+    if re.search(r'\bloris\b', name_l):
+        return True
+    if name_l.startswith(search_l):
+        return True
+    return search_l in id_l
+
+
+def _connect_sql_server(database):
+    return pyodbc.connect(
+        f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+        f'DATABASE={database};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+    )
+
+
+def resolve_customer_by_name(customer_name):
+    """
+    Find the best customer match across OMS databases.
+
+    Returns dict with cus_id, cus_nm, database_origin or None.
+    """
+    search = (customer_name or '').strip()
+    if not search:
+        return None
+
+    matches = []
+    for database in ('omsdata_FDC', 'oms_EF'):
+        try:
+            conn = _connect_sql_server(database)
+            cursor = conn.cursor()
+            query = """
+                SELECT
+                    c.cus_nm,
+                    c.cus_id,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_ord_dt,
+                    o.ord_num
+                FROM customer c
+                LEFT JOIN (
+                    SELECT cus_id, MAX(ord_num) AS max_ord_num
+                    FROM orders
+                    GROUP BY cus_id
+                ) AS max_orders ON c.cus_id = max_orders.cus_id
+                LEFT JOIN orders o ON max_orders.cus_id = o.cus_id AND max_orders.max_ord_num = o.ord_num
+                WHERE c.cus_nm LIKE ? OR c.cus_id LIKE ?
+            """
+            cursor.execute(query, ('%' + search + '%', '%' + search + '%'))
+            for row in cursor.fetchall():
+                if row[2] is not None and row[3] is not None:
+                    candidate = {
+                        'cus_nm': row[0],
+                        'cus_id': str(row[1]).strip(),
+                        'database_origin': database,
+                    }
+                    if _is_loris_name_match(candidate['cus_nm'], candidate['cus_id'], search):
+                        matches.append(candidate)
+            cursor.close()
+            conn.close()
+        except Exception:
+            continue
+
+    if not matches:
+        return None
+
+    search_lower = search.lower()
+
+    def score(match):
+        name = (match.get('cus_nm') or '').strip().lower()
+        customer_id = (match.get('cus_id') or '').strip().lower()
+        if name == search_lower or customer_id == search_lower:
+            return 0
+        if re.search(r'\bloris\b', name):
+            return 1
+        if name.startswith(search_lower) or customer_id.startswith(search_lower):
+            return 2
+        if search_lower in name or search_lower in customer_id:
+            return 3
+        return 4
+
+    matches.sort(key=lambda m: (score(m), m.get('database_origin') != 'omsdata_FDC'))
+    return matches[0]
+
+
+def resolve_customer_by_id(customer_id):
+    """
+    Find a customer by exact ID across OMS databases.
+
+    Returns dict with cus_id, cus_nm, database_origin or None.
+    """
+    lookup_id = (customer_id or '').strip()
+    if not lookup_id:
+        return None
+
+    for database in ('omsdata_FDC', 'oms_EF'):
+        try:
+            conn = _connect_sql_server(database)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT TOP 1 LTRIM(RTRIM(c.CUS_NM)) AS customer_name, LTRIM(RTRIM(c.CUS_ID)) AS customer_id
+                FROM customer c
+                WHERE LTRIM(RTRIM(c.CUS_ID)) = ?
+                """,
+                (lookup_id,),
+            )
+            row = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            if row:
+                return {
+                    'cus_nm': str(row[0]).strip() if row[0] is not None else lookup_id,
+                    'cus_id': str(row[1]).strip() if row[1] is not None else lookup_id,
+                    'database_origin': database,
+                }
+        except Exception:
+            continue
+
+    return None
+
+
+def loris_customer_page_url():
+    """Customer page deep link with Loris pre-selected."""
+    return url_for('customer.customer_home', search_id=LORIS_CUSTOMER_ID)
+
+
+OMS_ORDER_DATE_EXPR = (
+    "DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')"
+)
+OMS_ORDER_DATE_FORMATTED = (
+    "RIGHT('0' + CAST(MONTH(" + OMS_ORDER_DATE_EXPR + ") AS VARCHAR), 2) + '/' + "
+    "RIGHT('0' + CAST(DAY(" + OMS_ORDER_DATE_EXPR + ") AS VARCHAR), 2) + '/' + "
+    "CAST(YEAR(" + OMS_ORDER_DATE_EXPR + ") AS VARCHAR)"
+)
+
+
+def _subtract_months(dt, months):
+    """Shift a date backward by whole calendar months."""
+    if isinstance(dt, datetime):
+        base = dt.date()
+    else:
+        base = dt
+    year = base.year
+    month = base.month - months
+    while month <= 0:
+        month += 12
+        year -= 1
+    day = min(base.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def past_orders_period_range(period_index=0, months_per_period=6):
+    """Return inclusive start and exclusive end dates for a 6-month slice."""
+    today = date.today()
+    range_start = _subtract_months(today, (period_index + 1) * months_per_period)
+    if period_index == 0:
+        range_end = today + timedelta(days=1)
+    else:
+        range_end = _subtract_months(today, period_index * months_per_period)
+    return range_start, range_end
+
+
+def _format_period_label(range_start, range_end_exclusive):
+    display_end = range_end_exclusive - timedelta(days=1)
+    return f"{range_start.strftime('%m/%d/%Y')} – {display_end.strftime('%m/%d/%Y')}"
+
+
+def fetch_past_orders_window(customer_id, database_origin, period_index=0, months_per_period=6):
+    """Return unique orders for one half-year window, newest periods first."""
+    if database_origin not in ('omsdata_FDC', 'oms_EF'):
+        return [], {}, False, ''
+
+    range_start, range_end = past_orders_period_range(period_index, months_per_period)
+    period_label = _format_period_label(range_start, range_end)
+    unique_order_numbers = {}
+    customer_display_name = ''
+
+    try:
+        conn = _connect_sql_server(database_origin)
+        cursor = conn.cursor()
+
+        profile_query = """
+            SELECT TOP 1 LTRIM(RTRIM(c.CUS_NM)) AS customer_name
+            FROM customer c
+            WHERE c.cus_id = ?
+        """
+        cursor.execute(profile_query, (customer_id,))
+        profile_row = cursor.fetchone()
+        if profile_row and profile_row[0]:
+            customer_display_name = str(profile_row[0]).strip()
+
+        query = f"""
+            SELECT
+                ol.ord_num,
+                {OMS_ORDER_DATE_FORMATTED} AS formatted_olg_dt,
+                ol.olg_dt
+            FROM ord_log ol
+            JOIN customer c ON ol.cus_id = c.cus_id
+            WHERE c.cus_id = ?
+              AND {OMS_ORDER_DATE_EXPR} >= ?
+              AND {OMS_ORDER_DATE_EXPR} < ?
+            ORDER BY ol.olg_dt DESC
+        """
+        cursor.execute(query, (customer_id, range_start, range_end))
+        rows = cursor.fetchall()
+
+        for row in rows:
+            ord_num = row[0]
+            formatted_date = row[1]
+            if not ord_num or ord_num in unique_order_numbers:
+                continue
+
+            order_query = """
+                SELECT ord_amt, handl_fee, misc_chg
+                FROM orders
+                WHERE ord_num = ?
+            """
+            cursor.execute(order_query, (ord_num,))
+            order_row = cursor.fetchone()
+            if order_row:
+                ord_amt = order_row[0] or 0
+                handl_fee = order_row[1] or 0
+                misc_chg = order_row[2] or 0
+                total = ord_amt + handl_fee + misc_chg
+                unique_order_numbers[ord_num] = {
+                    'date': formatted_date,
+                    'ord_amt': ord_amt,
+                    'handl_fee': handl_fee,
+                    'misc_chg': misc_chg,
+                    'total': total,
+                }
+
+        has_more_query = f"""
+            SELECT TOP 1 1
+            FROM ord_log ol
+            JOIN customer c ON ol.cus_id = c.cus_id
+            WHERE c.cus_id = ?
+              AND {OMS_ORDER_DATE_EXPR} < ?
+        """
+        cursor.execute(has_more_query, (customer_id, range_start))
+        has_more = cursor.fetchone() is not None
+
+        cursor.close()
+        conn.close()
+    except Exception as exc:
+        raise exc
+
+    orders_list = [
+        {
+            'order_number': ord_num,
+            'date': details['date'],
+            'ord_amt': details['ord_amt'],
+            'handl_fee': details['handl_fee'],
+            'misc_chg': details['misc_chg'],
+            'total': details['total'],
+        }
+        for ord_num, details in unique_order_numbers.items()
+    ]
+
+    def _parse_date(date_text):
+        try:
+            return datetime.strptime(str(date_text), '%m/%d/%Y')
+        except Exception:
+            return None
+
+    orders_list.sort(
+        key=lambda item: _parse_date(item.get('date')) or datetime.min,
+        reverse=True,
+    )
+
+    customer_summary = {
+        'customer_id': customer_id,
+        'customer_name': customer_display_name or customer_id,
+        'database': database_origin,
+        'period_orders': len(orders_list),
+        'period_revenue': round(
+            sum(float(item.get('total', 0) or 0) for item in orders_list), 2
+        ),
+    }
+    return orders_list, customer_summary, has_more, period_label
+
+
+def fetch_unique_order_numbers(customer_id, database_origin):
+    """Return unique order summary rows for a customer (same data as customer page)."""
+    if database_origin not in ('omsdata_FDC', 'oms_EF'):
+        return [], {}
+
+    unique_order_numbers = {}
+    customer_display_name = ''
+    try:
+        conn = _connect_sql_server(database_origin)
+        cursor = conn.cursor()
+
+        profile_query = """
+            SELECT TOP 1 LTRIM(RTRIM(c.CUS_NM)) AS customer_name
+            FROM customer c
+            WHERE c.cus_id = ?
+        """
+        cursor.execute(profile_query, (customer_id,))
+        profile_row = cursor.fetchone()
+        if profile_row and profile_row[0]:
+            customer_display_name = str(profile_row[0]).strip()
+
+        query = f"""
+            SELECT
+                ol.ord_num,
+                {OMS_ORDER_DATE_FORMATTED} AS formatted_olg_dt
+            FROM ord_log ol
+            JOIN customer c ON ol.cus_id = c.cus_id
+            WHERE c.cus_id = ?
+        """
+        cursor.execute(query, (customer_id,))
+        rows = cursor.fetchall()
+
+        for row in rows:
+            ord_num = row[0]
+            formatted_date = row[1]
+            if not ord_num or ord_num in unique_order_numbers:
+                continue
+
+            order_query = """
+                SELECT ord_amt, handl_fee, misc_chg
+                FROM orders
+                WHERE ord_num = ?
+            """
+            cursor.execute(order_query, (ord_num,))
+            order_row = cursor.fetchone()
+            if order_row:
+                ord_amt = order_row[0] or 0
+                handl_fee = order_row[1] or 0
+                misc_chg = order_row[2] or 0
+                total = ord_amt + handl_fee + misc_chg
+                unique_order_numbers[ord_num] = {
+                    'date': formatted_date,
+                    'ord_amt': ord_amt,
+                    'handl_fee': handl_fee,
+                    'misc_chg': misc_chg,
+                    'total': total,
+                }
+
+        cursor.close()
+        conn.close()
+    except Exception as exc:
+        raise exc
+
+    unique_order_numbers_list = [
+        {
+            'order_number': ord_num,
+            'date': details['date'],
+            'ord_amt': details['ord_amt'],
+            'handl_fee': details['handl_fee'],
+            'misc_chg': details['misc_chg'],
+            'total': details['total'],
+        }
+        for ord_num, details in unique_order_numbers.items()
+    ]
+
+    def _parse_date(date_text):
+        try:
+            return datetime.strptime(str(date_text), '%m/%d/%Y')
+        except Exception:
+            return None
+
+    unique_order_numbers_list.sort(
+        key=lambda item: _parse_date(item.get('date')) or datetime.min,
+        reverse=True,
+    )
+
+    customer_summary = {
+        'customer_id': customer_id,
+        'customer_name': customer_display_name or customer_id,
+        'database': database_origin,
+        'total_orders': len(unique_order_numbers_list),
+        'total_revenue': round(
+            sum(float(item.get('total', 0) or 0) for item in unique_order_numbers_list), 2
+        ),
+    }
+    return unique_order_numbers_list, customer_summary
 
 @customer_bp.route('/customer', methods=['GET'])
 @login_required

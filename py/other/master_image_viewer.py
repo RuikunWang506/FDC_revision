@@ -108,13 +108,31 @@ def _china_dir_lookup_saved_images(filenames: list) -> dict:
 
 def _china_dir_enrich_downloaded(items: list) -> int:
     """Mark items whose filename exists in local big_picture storage."""
-    image_names = [i['name'] for i in items if i.get('is_image') and i.get('name')]
-    saved = _china_dir_lookup_saved_images(image_names)
+    image_items = [i for i in items if i.get('is_image')]
+    lookup_names = set()
+    derived_by_item = {}
+    for item in image_items:
+        name = item.get('name') or ''
+        if name:
+            lookup_names.add(name)
+        sku = _china_ftp_cache.guess_sku_from_path(item.get('rel_path') or '')
+        if sku:
+            derived = _china_ftp_cache.derive_sync_filename(item, sku)
+            derived_by_item[id(item)] = derived
+            lookup_names.add(derived)
+
+    saved = _china_dir_lookup_saved_images(list(lookup_names))
     downloaded_count = 0
-    for item in items:
-        if not item.get('is_image'):
-            continue
-        hit = saved.get(item['name'])
+    for item in image_items:
+        name = item.get('name') or ''
+        sku = _china_ftp_cache.guess_sku_from_path(item.get('rel_path') or '')
+        derived = derived_by_item.get(id(item))
+        if sku and _china_ftp_cache.is_generic_sync_filename(name, sku):
+            hit = saved.get(derived) if derived else None
+        else:
+            hit = saved.get(name)
+            if not hit and derived:
+                hit = saved.get(derived)
         if hit:
             item['downloaded'] = True
             item['preview_url'] = hit['preview_url']
@@ -869,7 +887,7 @@ def _list_china_ftp_images_for_sku(sku_upper: str) -> tuple:
     existing_big_picture = _load_existing_big_picture_filenames(sku_upper)
     images = []
     for entry in entries:
-        filename = entry.get('name') or os.path.basename(entry.get('full_path') or '')
+        filename = _china_ftp_cache.derive_sync_filename(entry, sku_upper)
         asset_info = _china_ftp_cache.sku_entry_to_asset_info(
             entry,
             sku_upper,
@@ -900,9 +918,10 @@ def _sync_one_china_ftp_image(image, sku_folder):
 
     filename = image['filename']
     remote_path = image.get('file_path')
+    remote_name = image.get('remote_filename') or filename
     local_path = os.path.join(sku_folder, filename)
 
-    if not _china_ftp_cache.is_sync_fetch_file(filename):
+    if not _china_ftp_cache.is_sync_fetch_file(remote_name):
         return filename, 'skipped', False
 
     try:

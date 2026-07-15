@@ -1,6 +1,10 @@
 from py.utilities.setting import login_required
-from flask import request, render_template, Blueprint, flash, redirect, url_for,jsonify,session
-import os,re
+from flask import request, render_template, Blueprint, flash, redirect, url_for, jsonify, session, send_file
+import io
+import os
+import re
+import zipfile
+from pathlib import Path
 import pandas as pd
 import json
 import mysql.connector
@@ -11,6 +15,13 @@ from py.utilities.database_utils import get_mysql_connection
 
 
 warehousemap_bp = Blueprint('whmap', __name__, template_folder='templates')
+
+EXTENSION_DIR_NAME = "fdc-4seller-picklist"
+
+
+def _four_seller_extension_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / "chrome_extension" / EXTENSION_DIR_NAME
+
 
 # Database configuration
 db_config = Config.DB_CONFIG
@@ -456,4 +467,29 @@ def update_qty():
     except Exception as e:
         print(f"Error updating quantity: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@warehousemap_bp.route("/warehousemap/download-4seller-extension", methods=["GET"])
+@login_required
+def download_4seller_extension():
+    """Zip and download the 4Seller picklist Chrome extension."""
+    ext_dir = _four_seller_extension_dir()
+    if not ext_dir.is_dir():
+        flash("Chrome extension package not found.")
+        return redirect(url_for("whmap.warehouse"))
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        for path in ext_dir.rglob("*"):
+            if path.is_file():
+                arcname = Path(EXTENSION_DIR_NAME) / path.relative_to(ext_dir)
+                archive.write(path, arcname.as_posix())
+
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"{EXTENSION_DIR_NAME}.zip",
+    )
 

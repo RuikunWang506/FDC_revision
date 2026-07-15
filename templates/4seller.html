@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>4Seller Stock</title>
+    <title>{{ _('page.four_seller.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
         body {
@@ -138,6 +138,28 @@
             color: #fff;
         }
 
+        .internal-sku-cell {
+            cursor: text;
+            min-width: 120px;
+        }
+
+        .internal-sku-cell:hover {
+            outline: 1px dashed #9db4e8;
+            outline-offset: 2px;
+            background: #f0f5ff;
+        }
+
+        .internal-sku-input {
+            width: 100%;
+            min-width: 140px;
+            border: 1px solid #7f9fe0;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 13px;
+            color: #1f2a44;
+            background: #fff;
+        }
+
         .table-wrap {
             overflow-x: auto;
         }
@@ -185,6 +207,69 @@
 
         .good { color: #1f8a55; }
         .warn { color: #b16a1a; }
+        .muted { color: #5d6a85; }
+
+        .session-status-box h5 {
+            margin: 0 0 12px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #15306b;
+        }
+
+        .session-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .session-status-item {
+            background: #f8fbff;
+            border: 1px solid #d9e6ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
+        .session-status-item .k {
+            font-size: 12px;
+            color: #5d6a85;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .session-status-item .v {
+            font-size: 18px;
+            font-weight: 700;
+            color: #15306b;
+        }
+
+        .session-status-item .v.is-checking {
+            color: #5d6a85;
+            animation: statusPulse 1.4s ease-in-out infinite;
+        }
+
+        .session-status-item .v.is-good { color: #1f8a55; }
+        .session-status-item .v.is-warn { color: #b16a1a; }
+        .session-status-item .v.is-bad { color: #b24444; }
+
+        .session-detail {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #5d6a85;
+            line-height: 1.45;
+        }
+
+        .session-status-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
 
         @media (max-width: 760px) {
             .sync-row input {
@@ -197,17 +282,39 @@
     {% include 'navbar.html' %}
     <div class="page-wrap">
         <div class="title-row">
-            <h1>4Seller Stock Dashboard</h1>
-            <a class="btn btn-outline-primary" href="{{ url_for('home') }}">Back Home</a>
+            <h1>{{ te('4Seller Stock Dashboard') }}</h1>
+            <div class="title-actions">
+                <a class="btn btn-outline-success" href="{{ url_for('four_seller_sales.four_seller_sales_page') }}">{{ te('Sales Orders') }}</a>
+                <a class="btn btn-outline-primary" href="{{ url_for('home') }}">{{ te('Back Home') }}</a>
+            </div>
+        </div>
+
+        <div class="card-box session-status-box" id="sessionStatusBox">
+            <h5>{{ te('4Seller Connection') }}</h5>
+            <div class="session-status-grid">
+                <div class="session-status-item">
+                    <div class="k">{{ te('Cookie Status') }}</div>
+                    <div class="v is-checking" id="cookieStatusValue">{{ te('Checking…') }}</div>
+                    <div class="session-detail" id="cookieStatusDetail">{{ te('Waiting for status check…') }}</div>
+                </div>
+                <div class="session-status-item">
+                    <div class="k">{{ te('4Seller Login') }}</div>
+                    <div class="v is-checking" id="loginStatusValue">{{ te('Checking…') }}</div>
+                    <div class="session-detail" id="loginStatusDetail">{{ te('Waiting for status check…') }}</div>
+                </div>
+            </div>
+            <div class="session-status-actions">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="refreshSessionStatusBtn">{{ te('Recheck connection') }}</button>
+            </div>
         </div>
 
         <div class="stats-row">
             <div class="stat">
-                <div class="k">Total SKU Rows</div>
+                <div class="k">{{ te('Total SKU Rows') }}</div>
                 <div class="v">{{ total_rows }}</div>
             </div>
             <div class="stat">
-                <div class="k">Last Updated</div>
+                <div class="k">{{ te('Last Updated') }}</div>
                 <div class="v" style="font-size:15px;">{{ last_updated or 'Not synced yet' }}</div>
             </div>
         </div>
@@ -215,59 +322,60 @@
         <div class="card-box">
             <div class="sync-row">
                 {% if not has_cookie_cache %}
-                <input id="cookieInput" class="form-control" placeholder="Optional: paste full 4Seller Cookie header here. If blank, uses FOURSELLER_COOKIE env var.">
+                <input id="cookieInput" class="form-control" placeholder="{{ te('Optional: paste full 4Seller Cookie header here. If blank, uses FOURSELLER_COOKIE env var.') }}">
                 {% endif %}
-                <button id="syncBtn" class="btn btn-primary">Sync From 4Seller</button>
-                <button id="exportBtn" class="btn btn-outline-success">Export to 4Seller</button>
+                <button id="syncBtn" class="btn btn-primary">{{ te('Sync From 4Seller') }}</button>
+                <button id="exportBtn" class="btn btn-outline-success">{{ te('Export to 4Seller') }}</button>
                 <span id="syncStatus" class="status"></span>
             </div>
         </div>
 
         <div class="card-box table-wrap">
-            <h5 style="margin-bottom:12px;">Stock Comparison Table</h5>
+            <h5 style="margin-bottom:12px;">{{ te('Stock Comparison Table') }}</h5>
             <div class="filter-row">
                 <div class="category-buttons" id="categoryButtons">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="all">Show All</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-light" data-mode="hide_inactive">Active</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-light" data-mode="deactivated">Inactive</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="synced">Synced</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="needs_sync">Needs Sync</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="all">{{ te('Show All') }}</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-light" data-mode="hide_inactive">{{ te('Active') }}</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-light" data-mode="deactivated">{{ te('Inactive') }}</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="synced">{{ te('Synced') }}</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="needs_sync">{{ te('Needs Sync') }}</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-mode="inactive_has_stock">{{ te('Inactive / Has Stock') }}</button>
                 </div>
                 <span class="meta">Last Synced: {{ last_updated or 'Not synced yet' }}</span>
             </div>
             <div class="range-filters">
-                <input id="skuSearch" class="form-control form-control-sm" placeholder="Search SKU (stock/internal)">
+                <input id="skuSearch" class="form-control form-control-sm" placeholder="{{ te('Search SKU (stock/internal)') }}">
                 <select id="statusFilter" class="form-control form-control-sm">
-                    <option value="all">Status: All</option>
-                    <option value="active">Status: Active</option>
-                    <option value="inactive">Status: Inactive</option>
+                    <option value="all">{{ te('Status: All') }}</option>
+                    <option value="active">{{ te('Status: Active') }}</option>
+                    <option value="inactive">{{ te('Status: Inactive') }}</option>
                 </select>
-                <input id="stockMin" type="number" class="form-control form-control-sm" placeholder="4Seller Stock Min">
-                <input id="stockMax" type="number" class="form-control form-control-sm" placeholder="4Seller Stock Max">
-                <input id="availMin" type="number" class="form-control form-control-sm" placeholder="Available Qty Min">
-                <input id="availMax" type="number" class="form-control form-control-sm" placeholder="Available Qty Max">
+                <input id="stockMin" type="number" class="form-control form-control-sm" placeholder="{{ te('4Seller Stock Min') }}">
+                <input id="stockMax" type="number" class="form-control form-control-sm" placeholder="{{ te('4Seller Stock Max') }}">
+                <input id="availMin" type="number" class="form-control form-control-sm" placeholder="{{ te('Available Qty Min') }}">
+                <input id="availMax" type="number" class="form-control form-control-sm" placeholder="{{ te('Available Qty Max') }}">
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Stock SKU</th>
-                        <th>Internal SKU</th>
-                        <th>4Seller Stock (On Hand)</th>
-                        <th>Our Available Quantity</th>
-                        <th>Status</th>
+                        <th>{{ te('Stock SKU') }}</th>
+                        <th>{{ te('Internal SKU') }}</th>
+                        <th>{{ te('4Seller Stock (On Hand)') }}</th>
+                        <th>{{ te('Our Available Quantity') }}</th>
+                        <th>{{ te('Status') }}</th>
                     </tr>
                 </thead>
                 <tbody id="stockTableBody">
                     {% for r in rows %}
                     <tr data-stock-sku="{{ r.stock_sku|lower }}" data-internal-sku="{{ r.internal_sku|lower }}" data-fourseller="{{ r.four_seller_stock }}" data-available="{{ r.our_available_qty }}" data-status="{{ r.status or 'active' }}">
-                        <td>{{ r.stock_sku }}</td>
-                        <td>{{ r.internal_sku }}</td>
+                        <td class="stock-sku-cell">{{ r.stock_sku }}</td>
+                        <td class="internal-sku-cell" title="{{ te('Double-click to edit') }}">{{ r.internal_sku }}</td>
                         <td>{{ r.four_seller_stock }}</td>
                         <td class="{% if r.our_available_qty < r.four_seller_stock %}warn{% else %}good{% endif %}">{{ r.our_available_qty }}</td>
                         <td>
                             <div class="status-chip">
-                                <button type="button" class="status-btn {% if (r.status or 'active') == 'active' %}active{% endif %}" data-status-action="active">Active</button>
-                                <button type="button" class="status-btn {% if (r.status or 'active') == 'inactive' %}inactive{% endif %}" data-status-action="inactive">Inactive</button>
+                                <button type="button" class="status-btn {% if (r.status or 'active') == 'active' %}active{% endif %}" data-status-action="active">{{ te('Active') }}</button>
+                                <button type="button" class="status-btn {% if (r.status or 'active') == 'inactive' %}inactive{% endif %}" data-status-action="inactive">{{ te('Inactive') }}</button>
                             </div>
                         </td>
                     </tr>
@@ -280,9 +388,181 @@
     {% include 'footer.html' %}
 
     <script id="hasCookieCacheData" type="application/json">{{ has_cookie_cache|tojson }}</script>
+    <script id="autoLoginConfiguredData" type="application/json">{{ auto_login_configured|tojson }}</script>
     <script>
         const hasCookieCache = JSON.parse(document.getElementById('hasCookieCacheData').textContent || 'false');
+        let autoLoginConfigured = JSON.parse(document.getElementById('autoLoginConfiguredData').textContent || 'false');
+        let hasCookieCacheLive = hasCookieCache;
         const cookieInputEl = document.getElementById('cookieInput');
+        const cookieStatusValue = document.getElementById('cookieStatusValue');
+        const cookieStatusDetail = document.getElementById('cookieStatusDetail');
+        const loginStatusValue = document.getElementById('loginStatusValue');
+        const loginStatusDetail = document.getElementById('loginStatusDetail');
+        const refreshSessionStatusBtn = document.getElementById('refreshSessionStatusBtn');
+
+        function setStatusLine(valueEl, detailEl, {text, detail, tone}) {
+            valueEl.textContent = text;
+            valueEl.className = 'v' + (tone ? ' is-' + tone : '');
+            detailEl.textContent = detail || '';
+        }
+
+        function formatSavedAt(iso) {
+            if (!iso) {
+                return '';
+            }
+            try {
+                return new Date(iso).toLocaleString();
+            } catch (err) {
+                return iso;
+            }
+        }
+
+        function renderSessionStatus(data) {
+            if (!data) {
+                return;
+            }
+
+            autoLoginConfigured = !!data.auto_login_configured;
+            const cookie = data.cookie || {};
+            const login = data.login || {};
+            hasCookieCacheLive = !!cookie.present;
+
+            let cookieText = 'No cookie';
+            let cookieTone = 'warn';
+            let cookieDetail = 'Paste a cookie below or configure FOURSELLER_EMAIL/PASSWORD.';
+
+            if (cookie.present) {
+                const sourceLabel = cookie.source === 'env' ? 'environment' : (cookie.source === 'cache' ? 'cached file' : cookie.source);
+                if (cookie.valid === true) {
+                    cookieText = 'Valid';
+                    cookieTone = 'good';
+                } else if (cookie.valid === false) {
+                    cookieText = 'Expired / invalid';
+                    cookieTone = 'bad';
+                } else {
+                    cookieText = 'Present';
+                    cookieTone = 'warn';
+                }
+                const parts = [`Source: ${sourceLabel}`];
+                if (cookie.token_preview) {
+                    parts.push(`userToken: ${cookie.token_preview}`);
+                }
+                if (cookie.saved_at) {
+                    parts.push(`Saved: ${formatSavedAt(cookie.saved_at)}`);
+                }
+                cookieDetail = parts.join(' · ');
+            } else if (data.auto_login_configured) {
+                cookieDetail = 'Auto-login can create a cookie when you sync.';
+            }
+
+            setStatusLine(cookieStatusValue, cookieStatusDetail, {
+                text: cookieText,
+                detail: cookieDetail,
+                tone: cookieTone,
+            });
+
+            const loginStatus = login.status || 'unknown';
+            const loginToneMap = {
+                connected: 'good',
+                logging_in: 'checking',
+                expired: 'bad',
+                failed: 'bad',
+                no_cookie: 'warn',
+                not_configured: 'warn',
+                unknown: 'warn',
+            };
+            const loginTextMap = {
+                connected: 'Logged in',
+                logging_in: 'Logging in…',
+                expired: 'Session expired',
+                failed: 'Login failed',
+                no_cookie: 'Not logged in',
+                not_configured: 'Auto-login off',
+                unknown: 'Unknown',
+            };
+            let loginDetail = login.message || '';
+            if (!data.auto_login_configured && loginStatus === 'no_cookie') {
+                loginDetail = 'Set FOURSELLER_EMAIL and FOURSELLER_PASSWORD in nssm-fdcef-environment.env.';
+            }
+
+            setStatusLine(loginStatusValue, loginStatusDetail, {
+                text: loginTextMap[loginStatus] || loginStatus,
+                detail: loginDetail,
+                tone: loginToneMap[loginStatus] || 'warn',
+            });
+        }
+
+        async function loadSessionStatus({warm = true} = {}) {
+            setStatusLine(cookieStatusValue, cookieStatusDetail, {
+                text: 'Checking…',
+                detail: 'Reading cached cookie…',
+                tone: 'checking',
+            });
+            setStatusLine(loginStatusValue, loginStatusDetail, {
+                text: 'Checking…',
+                detail: warm ? 'Will verify with 4Seller…' : 'Verifying session…',
+                tone: 'checking',
+            });
+
+            try {
+                const checkResponse = await fetch('/4seller/session-status');
+                const checkData = await checkResponse.json();
+                if (!checkResponse.ok || !checkData.success) {
+                    throw new Error(checkData.message || 'Status check failed');
+                }
+
+                renderSessionStatus(checkData);
+
+                const alreadyValid = checkData.cookie && checkData.cookie.valid;
+                if (alreadyValid || !warm) {
+                    return checkData;
+                }
+
+                if (!checkData.auto_login_configured) {
+                    return checkData;
+                }
+
+                setStatusLine(loginStatusValue, loginStatusDetail, {
+                    text: 'Logging in…',
+                    detail: 'Running auto-login (captcha OCR). This may take a few seconds…',
+                    tone: 'checking',
+                });
+
+                const warmResponse = await fetch('/4seller/warm-session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: '{}',
+                });
+                const warmData = await warmResponse.json();
+                if (!warmResponse.ok || !warmData.success) {
+                    throw new Error(warmData.message || 'Warm session failed');
+                }
+
+                renderSessionStatus(warmData);
+                return warmData;
+            } catch (err) {
+                setStatusLine(cookieStatusValue, cookieStatusDetail, {
+                    text: 'Check failed',
+                    detail: err.message,
+                    tone: 'bad',
+                });
+                setStatusLine(loginStatusValue, loginStatusDetail, {
+                    text: 'Unavailable',
+                    detail: err.message,
+                    tone: 'bad',
+                });
+                return null;
+            }
+        }
+
+        refreshSessionStatusBtn.addEventListener('click', () => {
+            refreshSessionStatusBtn.disabled = true;
+            loadSessionStatus({warm: true}).finally(() => {
+                refreshSessionStatusBtn.disabled = false;
+            });
+        });
+
+        loadSessionStatus({warm: true});
 
         function getCookieInputValue() {
             return cookieInputEl ? cookieInputEl.value.trim() : '';
@@ -293,9 +573,19 @@
             return (entered || '').trim();
         }
 
+        async function tryRefreshCookie() {
+            const response = await fetch('/4seller/refresh-cookie', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: '{}',
+            });
+            const data = await response.json();
+            return response.ok && data.success;
+        }
+
         async function postWithCookieRetry(url, payload) {
             let body = {...payload};
-            if (!hasCookieCache || getCookieInputValue()) {
+            if (!hasCookieCacheLive || getCookieInputValue()) {
                 body.cookie = getCookieInputValue();
             }
 
@@ -308,6 +598,21 @@
             let data = await response.json();
             if (response.ok && data.success) {
                 return {response, data};
+            }
+
+            if (data.cookie_required && autoLoginConfigured) {
+                const refreshed = await tryRefreshCookie();
+                if (refreshed) {
+                    response = await fetch(url, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({...payload}),
+                    });
+                    data = await response.json();
+                    if (response.ok && data.success) {
+                        return {response, data};
+                    }
+                }
             }
 
             if (data.cookie_required) {
@@ -381,6 +686,8 @@
                 } else if (categoryMode === 'needs_sync') {
                     const alreadySyncedAtZero = fourSeller === 0 && available < 0;
                     categoryMatch = status === 'active' && fourSeller !== available && !alreadySyncedAtZero;
+                } else if (categoryMode === 'inactive_has_stock') {
+                    categoryMatch = status === 'inactive' && fourSeller > 0;
                 }
 
                 const skuMatch = !skuTerm || stockSku.includes(skuTerm) || internalSku.includes(skuTerm);
@@ -418,7 +725,7 @@
         applyFilters();
 
         async function updateRowStatus(row, nextStatus) {
-            const stockSku = row.querySelector('td')?.textContent?.trim();
+            const stockSku = row.querySelector('.stock-sku-cell')?.textContent?.trim();
             if (!stockSku) {
                 return;
             }
@@ -442,6 +749,98 @@
 
             applyFilters();
         }
+
+        async function saveInternalSku(row, cell, nextSku) {
+            const stockSku = row.querySelector('.stock-sku-cell')?.textContent?.trim();
+            if (!stockSku) {
+                throw new Error('Missing stock SKU');
+            }
+
+            const response = await fetch('/4seller/internal-sku', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({stock_sku: stockSku, internal_sku: nextSku})
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Internal SKU update failed');
+            }
+
+            const saved = (data.internal_sku || nextSku).trim();
+            cell.textContent = saved;
+            row.dataset.internalSku = saved.toLowerCase();
+            applyFilters();
+        }
+
+        function beginInternalSkuEdit(cell) {
+            if (!(cell instanceof HTMLElement) || cell.querySelector('input')) {
+                return;
+            }
+
+            const row = cell.closest('tr');
+            if (!row) {
+                return;
+            }
+
+            const previous = (cell.textContent || '').trim();
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'internal-sku-input';
+            input.value = previous;
+            cell.textContent = '';
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+
+            let finished = false;
+            const finish = async (shouldSave) => {
+                if (finished) {
+                    return;
+                }
+                finished = true;
+
+                const nextSku = input.value.trim();
+                if (!shouldSave || !nextSku || nextSku === previous) {
+                    cell.textContent = previous;
+                    return;
+                }
+
+                cell.textContent = nextSku;
+                try {
+                    await saveInternalSku(row, cell, nextSku);
+                    statusEl.className = 'status good';
+                    statusEl.textContent = `Internal SKU updated: ${nextSku}`;
+                } catch (err) {
+                    cell.textContent = previous;
+                    row.dataset.internalSku = previous.toLowerCase();
+                    statusEl.className = 'status warn';
+                    statusEl.textContent = err.message;
+                }
+            };
+
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    input.blur();
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    finish(false);
+                }
+            });
+            input.addEventListener('blur', () => finish(true));
+        }
+
+        document.getElementById('stockTableBody').addEventListener('dblclick', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) {
+                return;
+            }
+            const cell = target.closest('.internal-sku-cell');
+            if (!cell) {
+                return;
+            }
+            beginInternalSkuEdit(cell);
+        });
 
         document.getElementById('stockTableBody').addEventListener('click', async (event) => {
             const target = event.target;
@@ -513,6 +912,7 @@
 
                 statusEl.classList.add('good');
                 statusEl.textContent = data.message + ' Reloading...';
+                await loadSessionStatus({warm: false});
                 setTimeout(() => window.location.reload(), 1200);
             } catch (err) {
                 statusEl.classList.add('warn');

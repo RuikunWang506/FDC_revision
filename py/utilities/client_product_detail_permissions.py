@@ -15,6 +15,42 @@ CLIENT_PRODUCT_DETAIL_SECTIONS: List[Dict[str, str]] = [
 
 SECTION_IDS = frozenset(s["id"] for s in CLIENT_PRODUCT_DETAIL_SECTIONS)
 
+CLIENTVIEW_TOOL_ID = "clientview"
+
+
+def client_product_detail_rules_apply(
+    username: Optional[str],
+    perms: Optional[Dict[str, Any]] = None,
+) -> bool:
+    """
+    True when product detail must follow client-portal rules
+    (restricted sections, no internal /product_detail page).
+    """
+    uname = (username or "").strip()
+    if not uname or uname.lower() == "yeti":
+        return False
+    if perms is None:
+        from py.utilities.auth import get_user_permissions
+
+        perms = get_user_permissions(uname)
+    if not perms:
+        return False
+
+    from py.utilities.auth import get_user_group_slug
+    from py.utilities.user_groups import CLIENT_NAV_GROUP_SLUGS
+    from py.utilities.dashboard_permissions import tool_visible_for_user
+
+    if get_user_group_slug(uname) in CLIENT_NAV_GROUP_SLUGS:
+        return True
+    if perms.get("client_product_detail_restrict"):
+        return True
+    tools = perms.get("tools")
+    if isinstance(tools, list) and tool_visible_for_user(
+        perms, uname, CLIENTVIEW_TOOL_ID
+    ):
+        return True
+    return False
+
 
 def client_pd_section_visible(
     username: Optional[str],
@@ -22,8 +58,8 @@ def client_pd_section_visible(
     perms: Optional[Dict[str, Any]] = None,
 ) -> bool:
     """
-    When client_product_detail_restrict is set on the group, only listed sections show.
-    Missing restrict key (NULL / unrestricted group) → all sections visible.
+    Client-portal users only see sections listed in client_product_detail_sections.
+    Internal staff (no client rules) see all sections.
     """
     if section_id not in SECTION_IDS:
         return False
@@ -34,11 +70,7 @@ def client_pd_section_visible(
         from py.utilities.auth import get_user_permissions
 
         perms = get_user_permissions(uname)
-    if not perms:
-        return True
-    if "client_product_detail_restrict" not in perms:
-        return True
-    if not perms.get("client_product_detail_restrict"):
+    if not client_product_detail_rules_apply(uname, perms):
         return True
     sections = perms.get("client_product_detail_sections")
     if not isinstance(sections, list):
@@ -84,6 +116,8 @@ def enforce_client_pd_section_api(section_id: str):
 
     username = session.get("username")
     if not username:
+        return None
+    if not client_product_detail_rules_apply(username):
         return None
     if client_pd_section_visible(username, section_id):
         return None

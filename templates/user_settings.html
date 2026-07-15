@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Settings</title>
+    <title>{{ _('page.user_settings.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
@@ -13,8 +13,8 @@
     {% include 'navbar.html' %}
     
     <div class="container mt-4">
-        <h2>User Settings</h2>
-        <p class="text-muted">Manage your account settings</p>
+        <h2>{{ te('User Settings') }}</h2>
+        <p class="text-muted">{{ te('Manage your account settings') }}</p>
         
         {% if success_message %}
             <div class="alert alert-success">{{ success_message }}</div>
@@ -28,20 +28,20 @@
             <div class="col-md-6">
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h4>Update Email</h4>
+                        <h4>{{ te('Update Email') }}</h4>
                     </div>
                     <div class="card-body">
                         <form method="POST">
                             <input type="hidden" name="action" value="update_email">
                             <div class="form-group">
-                                <label for="username">Username</label>
+                                <label for="username">{{ te('Username') }}</label>
                                 <input type="text" class="form-control" id="username" value="{{ username }}" readonly>
                             </div>
                             <div class="form-group">
-                                <label for="email">Email</label>
+                                <label for="email">{{ te('Email') }}</label>
                                 <input type="email" class="form-control" id="email" name="email" value="{{ email }}" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Update Email</button>
+                            <button type="submit" class="btn btn-primary">{{ te('Update Email') }}</button>
                         </form>
                     </div>
                 </div>
@@ -50,24 +50,24 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
-                        <h4>Change Password</h4>
+                        <h4>{{ te('Change Password') }}</h4>
                     </div>
                     <div class="card-body">
                         <form method="POST">
                             <input type="hidden" name="action" value="update_password">
                             <div class="form-group">
-                                <label for="current_password">Current Password</label>
+                                <label for="current_password">{{ te('Current Password') }}</label>
                                 <input type="password" class="form-control" id="current_password" name="current_password" required>
                             </div>
                             <div class="form-group">
-                                <label for="new_password">New Password</label>
+                                <label for="new_password">{{ te('New Password') }}</label>
                                 <input type="password" class="form-control" id="new_password" name="new_password" required>
                             </div>
                             <div class="form-group">
-                                <label for="confirm_password">Confirm New Password</label>
+                                <label for="confirm_password">{{ te('Confirm New Password') }}</label>
                                 <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Change Password</button>
+                            <button type="submit" class="btn btn-primary">{{ te('Change Password') }}</button>
                         </form>
                     </div>
                 </div>

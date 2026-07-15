@@ -1,0 +1,51 @@
+<style>
+.fdc-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+}
+.fdc-lang-btn {
+    color: rgba(255, 255, 255, 0.72);
+    text-decoration: none;
+    padding: 0.2rem 0.35rem;
+    border-radius: 4px;
+}
+.fdc-lang-btn:hover {
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.12);
+}
+.fdc-lang-btn.active {
+    color: #fff;
+    background: rgba(0, 123, 255, 0.55);
+}
+.fdc-lang-sep {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.75rem;
+}
+.fdc-lang-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0.45rem 0.85rem;
+    background: rgba(33, 37, 41, 0.92);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+body.has-lang-topbar { padding-top: 2.25rem; }
+.fdc-lang-topbar .fdc-lang-btn { color: rgba(255, 255, 255, 0.75); }
+.fdc-lang-topbar-light {
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid #dee2e6;
+}
+.fdc-lang-topbar-light .fdc-lang-btn { color: #495057; }
+.fdc-lang-topbar-light .fdc-lang-btn.active { color: #fff; }
+.fdc-lang-topbar-light .fdc-lang-sep { color: #adb5bd; }
+</style>

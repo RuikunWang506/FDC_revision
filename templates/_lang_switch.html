@@ -1,0 +1,9 @@
+<div class="fdc-lang-switch" role="group" aria-label="{{ _('lang.switch') }}">
+    <a href="{{ url_for('set_locale', locale='en', next=request.full_path if request else '/') }}"
+       class="fdc-lang-btn{% if locale == 'en' %} active{% endif %}"
+       title="English">EN</a>
+    <span class="fdc-lang-sep" aria-hidden="true">|</span>
+    <a href="{{ url_for('set_locale', locale='zh', next=request.full_path if request else '/') }}"
+       class="fdc-lang-btn{% if locale == 'zh' %} active{% endif %}"
+       title="中文">中文</a>
+</div>

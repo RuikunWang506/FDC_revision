@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>洛瑞丝庄园 - Shipping Management</title>
+    <title>{{ _('page.loris_shipping.title') }}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/giraffe.ico') }}">
     
     <!-- Bootstrap CSS -->
@@ -905,7 +905,7 @@
             </div>
             <div class="sidebar-body">
                 <div id="selected-orders-list">
-                    <h6>Selected Orders:</h6>
+                    <h6>{{ te('Selected Orders:') }}</h6>
                     <ul id="selected-orders-ul" class="list-unstyled"></ul>
                 </div>
                 <div class="mt-3">
@@ -916,7 +916,7 @@
                     </div>
                     <!-- Section 1: Prep -->
                     <div class="mb-4">
-                        <h5>Prep</h5>
+                        <h5>{{ te('Prep') }}</h5>
                         <div class="d-grid gap-2">
                             <button id="process-duplex-btn" class="btn btn-primary btn-block w-100 mb-2">
                                 <i class="fas fa-file-pdf"></i> Two-sides PDF 老头
@@ -938,7 +938,7 @@
 
                     <!-- Section 2: Shipping -->
                     <div class="mb-4">
-                        <h5>Shipping</h5>
+                        <h5>{{ te('Shipping') }}</h5>
                         <div class="d-grid gap-2">
                             <button id="process-excel-btn" class="btn btn-success btn-block w-100 mb-2">
                                 <i class="fas fa-file-excel"></i> Fedex Excel *DENNIS*
@@ -951,7 +951,7 @@
 
                     <!-- Section 3: Admin -->
                     <div class="mb-4">
-                        <h5>Admin</h5>
+                        <h5>{{ te('Admin') }}</h5>
                         <div class="d-grid gap-2">
                             <button id="download-invoices-btn" class="btn btn-warning btn-block w-100 mb-2">
                                 <i class="fas fa-file-invoice"></i> Download Invoices 徐锦
@@ -967,7 +967,7 @@
 
                     <!-- Section 4: Tools -->
                     <div class="mb-4">
-                        <h5>Tools</h5>
+                        <h5>{{ te('Tools') }}</h5>
                         <div class="d-grid gap-2">
                             <button id="send-to-shipped-btn" class="btn btn-success btn-block w-100 mb-2">
                                 <i class="fas fa-truck"></i> Send to Shipped Only
@@ -976,8 +976,8 @@
                                 <i class="fas fa-undo"></i> Send Back Pending
                             </button>
                             <div class="input-group mb-2">
-                                <input type="date" id="bulk-batch-date-input" class="form-control" placeholder="New Batch Date (YYYY-MM-DD)">
-                                <button id="bulk-batch-date-btn" class="btn btn-info">Bulk Modify Batch Date</button>
+                                <input type="date" id="bulk-batch-date-input" class="form-control" placeholder="{{ te('New Batch Date (YYYY-MM-DD)') }}">
+                                <button id="bulk-batch-date-btn" class="btn btn-info">{{ te('Bulk Modify Batch Date') }}</button>
                             </div>
                         </div>
                     </div>
@@ -1013,25 +1013,25 @@
                 <div class="card-body">
                 <div class="orders-filter-bar">
                     <div class="filter-field">
-                        <span class="filter-label">Batch</span>
-                        <input type="date" id="pending-batch-date-filter" class="form-control form-control-sm" title="Filter by email batch date">
+                        <span class="filter-label">{{ te('Batch') }}</span>
+                        <input type="date" id="pending-batch-date-filter" class="form-control form-control-sm" title="{{ te('Filter by email batch date') }}">
                     </div>
                     <div class="filter-field">
-                        <span class="filter-label">PO</span>
-                        <input type="text" id="pending-po-search" class="form-control form-control-sm" placeholder="PO number">
+                        <span class="filter-label">{{ te('PO') }}</span>
+                        <input type="text" id="pending-po-search" class="form-control form-control-sm" placeholder="{{ te('PO number') }}">
                     </div>
                     <div class="filter-field">
-                        <span class="filter-label">Ship After</span>
-                        <input type="date" id="pending-ship-date-after-filter" class="form-control form-control-sm" title="Ship-out after">
+                        <span class="filter-label">{{ te('Ship After') }}</span>
+                        <input type="date" id="pending-ship-date-after-filter" class="form-control form-control-sm" title="{{ te('Ship-out after') }}">
                     </div>
                     <div class="filter-field">
-                        <span class="filter-label">Ship Before</span>
-                        <input type="date" id="pending-ship-date-before-filter" class="form-control form-control-sm" title="Ship-out before">
+                        <span class="filter-label">{{ te('Ship Before') }}</span>
+                        <input type="date" id="pending-ship-date-before-filter" class="form-control form-control-sm" title="{{ te('Ship-out before') }}">
                     </div>
                     <div class="filter-actions">
-                        <button id="clear-pending-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">Clear</button>
-                        <button id="select-ready-orders-btn" class="btn btn-success btn-sm" type="button">Select Ready</button>
-                        <button type="button" id="combine-batches-open-btn" class="btn btn-info btn-sm">Combine Batches</button>
+                        <button id="clear-pending-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">{{ te('Clear') }}</button>
+                        <button id="select-ready-orders-btn" class="btn btn-success btn-sm" type="button">{{ te('Select Ready') }}</button>
+                        <button type="button" id="combine-batches-open-btn" class="btn btn-info btn-sm">{{ te('Combine Batches') }}</button>
                     </div>
                 </div>
                 <div id="pending-orders-table-section" class="table-section">
@@ -1040,16 +1040,16 @@
                             <thead class="thead-dark orders-table-header">
                                 <tr>
                                     <th class="table-header-cell">
-                                        <input type="checkbox" id="select-all-pending" title="Select All">
+                                        <input type="checkbox" id="select-all-pending" title="{{ te('Select All') }}">
                                     </th>
-                                    <th class="table-header-cell">Order Info</th>
-                                    <th class="table-header-cell ship-to-address-column">Ship To Address</th>
-                                    <th class="table-header-cell internal-add-column">Internal Add</th>
-                                    <th class="table-header-cell">Package Info</th>
-                                    <th class="table-header-cell">Invoice Qty</th>
-                                    <th class="table-header-cell">Actual Qty</th>
-                                    <th class="table-header-cell">Status</th>                                            
-                                    <th class="table-header-cell">Actions</th>
+                                    <th class="table-header-cell">{{ te('Order Info') }}</th>
+                                    <th class="table-header-cell ship-to-address-column">{{ te('Ship To Address') }}</th>
+                                    <th class="table-header-cell internal-add-column">{{ te('Internal Add') }}</th>
+                                    <th class="table-header-cell">{{ te('Package Info') }}</th>
+                                    <th class="table-header-cell">{{ te('Invoice Qty') }}</th>
+                                    <th class="table-header-cell">{{ te('Actual Qty') }}</th>
+                                    <th class="table-header-cell">{{ te('Status') }}</th>                                            
+                                    <th class="table-header-cell">{{ te('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="pending-orders-table-body">
@@ -1075,24 +1075,24 @@
                 <div class="card-body">
                 <div class="orders-filter-bar">
                     <div class="filter-field">
-                        <span class="filter-label">Batch</span>
-                        <input type="date" id="shipped-batch-date-filter" class="form-control form-control-sm" title="Filter by email batch date">
+                        <span class="filter-label">{{ te('Batch') }}</span>
+                        <input type="date" id="shipped-batch-date-filter" class="form-control form-control-sm" title="{{ te('Filter by email batch date') }}">
                     </div>
                     <div class="filter-field">
-                        <span class="filter-label">PO</span>
-                        <input type="text" id="shipped-po-search" class="form-control form-control-sm" placeholder="PO number">
+                        <span class="filter-label">{{ te('PO') }}</span>
+                        <input type="text" id="shipped-po-search" class="form-control form-control-sm" placeholder="{{ te('PO number') }}">
                     </div>
                     <div class="filter-field">
-                        <span class="filter-label">Ship After</span>
-                        <input type="date" id="shipped-ship-date-after-filter" class="form-control form-control-sm" title="Ship-out after">
+                        <span class="filter-label">{{ te('Ship After') }}</span>
+                        <input type="date" id="shipped-ship-date-after-filter" class="form-control form-control-sm" title="{{ te('Ship-out after') }}">
                     </div>
                     <div class="filter-field">
-                        <span class="filter-label">Ship Before</span>
-                        <input type="date" id="shipped-ship-date-before-filter" class="form-control form-control-sm" title="Ship-out before">
+                        <span class="filter-label">{{ te('Ship Before') }}</span>
+                        <input type="date" id="shipped-ship-date-before-filter" class="form-control form-control-sm" title="{{ te('Ship-out before') }}">
                     </div>
                     <div class="filter-actions">
-                        <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">Clear</button>
-                        <button id="upload-tracking-shipped-btn" class="btn btn-primary btn-sm" type="button">Upload Tracking</button>
+                        <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">{{ te('Clear') }}</button>
+                        <button id="upload-tracking-shipped-btn" class="btn btn-primary btn-sm" type="button">{{ te('Upload Tracking') }}</button>
                     </div>
                 </div>
                 <input type="file" id="tracking-file-input" accept=".xlsx" style="display: none;">
@@ -1102,20 +1102,80 @@
                             <thead class="thead-dark orders-table-header">
                                 <tr>
                                     <th class="table-header-cell">
-                                        <input type="checkbox" id="select-all-shipped" title="Select All">
+                                        <input type="checkbox" id="select-all-shipped" title="{{ te('Select All') }}">
                                     </th>
-                                    <th class="table-header-cell">Order Info</th>
-                                    <th class="table-header-cell ship-to-address-column">Ship To Address</th>
-                                    <th class="table-header-cell internal-add-column">Internal Add</th>
-                                    <th class="table-header-cell">Package Info</th>
-                                    <th class="table-header-cell">Invoice Qty</th>
-                                    <th class="table-header-cell">Actual Qty</th>
-                                    <th class="table-header-cell">Status</th>                                            
-                                    <th class="table-header-cell">Actions</th>
+                                    <th class="table-header-cell">{{ te('Order Info') }}</th>
+                                    <th class="table-header-cell ship-to-address-column">{{ te('Ship To Address') }}</th>
+                                    <th class="table-header-cell internal-add-column">{{ te('Internal Add') }}</th>
+                                    <th class="table-header-cell">{{ te('Package Info') }}</th>
+                                    <th class="table-header-cell">{{ te('Invoice Qty') }}</th>
+                                    <th class="table-header-cell">{{ te('Actual Qty') }}</th>
+                                    <th class="table-header-cell">{{ te('Status') }}</th>                                            
+                                    <th class="table-header-cell">{{ te('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="shipped-orders-table-body">
                                 <!-- Shipped orders will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Management Section - Canceled -->
+        <div class="card shipping-card">
+            <div class="card-header bg-secondary text-white py-1">
+                <h6 class="mb-0">
+                    <button class="btn btn-link text-white text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#canceledOrdersSection" aria-expanded="false" aria-controls="canceledOrdersSection">
+                        <i class="fas fa-ban"></i> {{ te('Canceled Orders') }}
+                        <i class="fas fa-chevron-down float-end"></i>
+                    </button>
+                </h6>
+            </div>
+            <div class="collapse" id="canceledOrdersSection">
+                <div class="card-body">
+                <div class="orders-filter-bar">
+                    <div class="filter-field">
+                        <span class="filter-label">{{ te('Batch') }}</span>
+                        <input type="date" id="canceled-batch-date-filter" class="form-control form-control-sm" title="{{ te('Filter by email batch date') }}">
+                    </div>
+                    <div class="filter-field">
+                        <span class="filter-label">{{ te('PO') }}</span>
+                        <input type="text" id="canceled-po-search" class="form-control form-control-sm" placeholder="{{ te('PO number') }}">
+                    </div>
+                    <div class="filter-field">
+                        <span class="filter-label">{{ te('Ship After') }}</span>
+                        <input type="date" id="canceled-ship-date-after-filter" class="form-control form-control-sm" title="{{ te('Ship-out after') }}">
+                    </div>
+                    <div class="filter-field">
+                        <span class="filter-label">{{ te('Ship Before') }}</span>
+                        <input type="date" id="canceled-ship-date-before-filter" class="form-control form-control-sm" title="{{ te('Ship-out before') }}">
+                    </div>
+                    <div class="filter-actions">
+                        <button id="clear-canceled-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">{{ te('Clear') }}</button>
+                    </div>
+                </div>
+                <div id="canceled-orders-table-section" class="table-section">
+                    <div class="table-responsive">
+                        <table id="canceled-orders-table" class="table table-bordered table-striped orders-table">
+                            <thead class="thead-dark orders-table-header">
+                                <tr>
+                                    <th class="table-header-cell">
+                                        <input type="checkbox" id="select-all-canceled" title="{{ te('Select All') }}">
+                                    </th>
+                                    <th class="table-header-cell">{{ te('Order Info') }}</th>
+                                    <th class="table-header-cell ship-to-address-column">{{ te('Ship To Address') }}</th>
+                                    <th class="table-header-cell internal-add-column">{{ te('Internal Add') }}</th>
+                                    <th class="table-header-cell">{{ te('Package Info') }}</th>
+                                    <th class="table-header-cell">{{ te('Invoice Qty') }}</th>
+                                    <th class="table-header-cell">{{ te('Actual Qty') }}</th>
+                                    <th class="table-header-cell">{{ te('Status') }}</th>
+                                    <th class="table-header-cell">{{ te('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="canceled-orders-table-body">
+                                <!-- Canceled orders will be populated here -->
                             </tbody>
                         </table>
                     </div>
@@ -1158,28 +1218,28 @@
                     </div>
                     <!-- Store Info Table -->
                     <div class="mb-3">
-                        <input type="text" id="store-search-input" class="form-control" placeholder="Search stores...">
+                        <input type="text" id="store-search-input" class="form-control" placeholder="{{ te('Search stores...') }}">
                     </div>
                     <div id="store-info-table-section" class="store-info-section">
                         <div class="table-responsive store-info-responsive">
                             <table id="store-info-table" class="table table-bordered table-striped w-100 store-info-table">
                                     <thead class="thead-dark">
                                         <tr>
-                                            <th>Store Number</th>
-                                            <th>Store Name</th>
-                                            <th>Company</th>
-                                            <th>Phone</th>
-                                            <th>Address 1</th>
-                                            <th>Address 2</th>
-                                            <th>Address 3</th>
-                                            <th>City</th>
-                                            <th>State</th>
-                                            <th>Zip Code</th>
-                                            <th>Status</th>
-                                            <th>Memo</th>
-                                            <th>Created At</th>
-                                            <th>Updated At</th>
-                                            <th>Actions</th>
+                                            <th>{{ te('Store Number') }}</th>
+                                            <th>{{ te('Store Name') }}</th>
+                                            <th>{{ te('Company') }}</th>
+                                            <th>{{ te('Phone') }}</th>
+                                            <th>{{ te('Address 1') }}</th>
+                                            <th>{{ te('Address 2') }}</th>
+                                            <th>{{ te('Address 3') }}</th>
+                                            <th>{{ te('City') }}</th>
+                                            <th>{{ te('State') }}</th>
+                                            <th>{{ te('Zip Code') }}</th>
+                                            <th>{{ te('Status') }}</th>
+                                            <th>{{ te('Memo') }}</th>
+                                            <th>{{ te('Created At') }}</th>
+                                            <th>{{ te('Updated At') }}</th>
+                                            <th>{{ te('Actions') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1192,9 +1252,9 @@
                         <!-- Loading indicator -->
                         <div id="store-info-loading" class="text-center" style="display: none;">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="sr-only">Loading...</span>
+                                <span class="sr-only">{{ te('Loading...') }}</span>
                             </div>
-                            <p class="mt-2">Loading...</p>
+                            <p class="mt-2">{{ te('Loading...') }}</p>
                         </div>
                     </div>
                 </div>
@@ -1206,71 +1266,71 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addStoreModalLabel">Add New Store</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title" id="addStoreModalLabel">{{ te('Add New Store') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <label for="add-store-number" class="form-label">Store Number *</label>
+                                <label for="add-store-number" class="form-label">{{ te('Store Number *') }}</label>
                                 <input type="text" class="form-control" id="add-store-number" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="add-store-name" class="form-label">Store Name *</label>
+                                <label for="add-store-name" class="form-label">{{ te('Store Name *') }}</label>
                                 <input type="text" class="form-control" id="add-store-name" required>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <label for="add-company" class="form-label">Company</label>
+                                <label for="add-company" class="form-label">{{ te('Company') }}</label>
                                 <input type="text" class="form-control" id="add-company">
                             </div>
                             <div class="col-md-6">
-                                <label for="add-phone" class="form-label">Phone</label>
+                                <label for="add-phone" class="form-label">{{ te('Phone') }}</label>
                                 <input type="text" class="form-control" id="add-phone">
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-12">
-                                <label for="add-address1" class="form-label">Address 1 *</label>
+                                <label for="add-address1" class="form-label">{{ te('Address 1 *') }}</label>
                                 <input type="text" class="form-control" id="add-address1" required>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <label for="add-address2" class="form-label">Address 2</label>
+                                <label for="add-address2" class="form-label">{{ te('Address 2') }}</label>
                                 <input type="text" class="form-control" id="add-address2">
                             </div>
                             <div class="col-md-6">
-                                <label for="add-address3" class="form-label">Address 3</label>
+                                <label for="add-address3" class="form-label">{{ te('Address 3') }}</label>
                                 <input type="text" class="form-control" id="add-address3">
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
-                                <label for="add-city" class="form-label">City *</label>
+                                <label for="add-city" class="form-label">{{ te('City *') }}</label>
                                 <input type="text" class="form-control" id="add-city" required>
                             </div>
                             <div class="col-md-4">
-                                <label for="add-state" class="form-label">State *</label>
+                                <label for="add-state" class="form-label">{{ te('State *') }}</label>
                                 <input type="text" class="form-control" id="add-state" required>
                             </div>
                             <div class="col-md-4">
-                                <label for="add-zip-code" class="form-label">Zip Code *</label>
+                                <label for="add-zip-code" class="form-label">{{ te('Zip Code *') }}</label>
                                 <input type="text" class="form-control" id="add-zip-code" required>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <label for="add-status" class="form-label">Status *</label>
+                                <label for="add-status" class="form-label">{{ te('Status *') }}</label>
                                 <select class="form-control" id="add-status" required>
-                                    <option value="">Select Status</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
+                                    <option value="">{{ te('Select Status') }}</option>
+                                    <option value="Active">{{ te('Active') }}</option>
+                                    <option value="Inactive">{{ te('Inactive') }}</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="add-memo" class="form-label">Memo</label>
+                                <label for="add-memo" class="form-label">{{ te('Memo') }}</label>
                                 <textarea class="form-control" id="add-memo" rows="2"></textarea>
                             </div>
                         </div>
@@ -1280,8 +1340,8 @@
                             <i class="fas fa-search-location"></i> Verify Address
                         </button>
                         <div>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="add-store-btn">Add Store</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Cancel') }}</button>
+                            <button type="button" class="btn btn-primary" id="add-store-btn">{{ te('Add Store') }}</button>
                         </div>
                     </div>
                 </div>
@@ -1293,77 +1353,77 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="editStoreModalLabel">Edit Store Information</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title" id="editStoreModalLabel">{{ te('Edit Store Information') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <label for="edit-store-number" class="form-label">Store Number</label>
+                                <label for="edit-store-number" class="form-label">{{ te('Store Number') }}</label>
                                 <input type="text" class="form-control" id="edit-store-number" readonly>
                             </div>
                             <div class="col-md-6">
-                                <label for="edit-store-name" class="form-label">Store Name</label>
+                                <label for="edit-store-name" class="form-label">{{ te('Store Name') }}</label>
                                 <input type="text" class="form-control" id="edit-store-name">
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <label for="edit-company" class="form-label">Company</label>
+                                <label for="edit-company" class="form-label">{{ te('Company') }}</label>
                                 <input type="text" class="form-control" id="edit-company">
                             </div>
                             <div class="col-md-6">
-                                <label for="edit-phone" class="form-label">Phone</label>
+                                <label for="edit-phone" class="form-label">{{ te('Phone') }}</label>
                                 <input type="text" class="form-control" id="edit-phone">
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-12">
-                                <label for="edit-address1" class="form-label">Address 1</label>
+                                <label for="edit-address1" class="form-label">{{ te('Address 1') }}</label>
                                 <input type="text" class="form-control" id="edit-address1">
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <label for="edit-address2" class="form-label">Address 2</label>
+                                <label for="edit-address2" class="form-label">{{ te('Address 2') }}</label>
                                 <input type="text" class="form-control" id="edit-address2">
                             </div>
                             <div class="col-md-6">
-                                <label for="edit-address3" class="form-label">Address 3</label>
+                                <label for="edit-address3" class="form-label">{{ te('Address 3') }}</label>
                                 <input type="text" class="form-control" id="edit-address3">
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
-                                <label for="edit-city" class="form-label">City</label>
+                                <label for="edit-city" class="form-label">{{ te('City') }}</label>
                                 <input type="text" class="form-control" id="edit-city">
                             </div>
                             <div class="col-md-4">
-                                <label for="edit-state" class="form-label">State</label>
+                                <label for="edit-state" class="form-label">{{ te('State') }}</label>
                                 <input type="text" class="form-control" id="edit-state">
                             </div>
                             <div class="col-md-4">
-                                <label for="edit-zip-code" class="form-label">Zip Code</label>
+                                <label for="edit-zip-code" class="form-label">{{ te('Zip Code') }}</label>
                                 <input type="text" class="form-control" id="edit-zip-code">
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <label for="edit-status" class="form-label">Status</label>
+                                <label for="edit-status" class="form-label">{{ te('Status') }}</label>
                                 <select class="form-control" id="edit-status">
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
+                                    <option value="Active">{{ te('Active') }}</option>
+                                    <option value="Inactive">{{ te('Inactive') }}</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="edit-memo" class="form-label">Memo</label>
+                                <label for="edit-memo" class="form-label">{{ te('Memo') }}</label>
                                 <textarea class="form-control" id="edit-memo" rows="2"></textarea>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="save-store-btn">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Cancel') }}</button>
+                        <button type="button" class="btn btn-primary" id="save-store-btn">{{ te('Save Changes') }}</button>
                     </div>
                 </div>
             </div>
@@ -1377,21 +1437,21 @@
                         <h5 class="modal-title" id="combineBatchesModalLabel">
                             <i class="fas fa-object-group"></i> Combine Batches
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="text-muted small mb-3">Select one or more batch dates and/or individual orders, then merge them into a single new batch date.</p>
+                        <p class="text-muted small mb-3">{{ te('Select one or more batch dates and/or individual orders, then merge them into a single new batch date.') }}</p>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label fw-semibold mb-0">Batch dates</label>
+                                    <label class="form-label fw-semibold mb-0">{{ te('Batch dates') }}</label>
                                     <div class="form-check form-check-inline mb-0">
                                         <input class="form-check-input" type="checkbox" id="combine-select-all-batches">
-                                        <label class="form-check-label small" for="combine-select-all-batches">All</label>
+                                        <label class="form-check-label small" for="combine-select-all-batches">{{ te('All') }}</label>
                                     </div>
                                 </div>
                                 <div id="combine-batch-dates-list" class="border rounded p-2" style="max-height: 320px; overflow-y: auto;">
-                                    <div class="text-muted small text-center py-3">Loading batches…</div>
+                                    <div class="text-muted small text-center py-3">{{ te('Loading batches…') }}</div>
                                 </div>
                             </div>
                             <div class="col-md-8">
@@ -1399,17 +1459,17 @@
                                     <label class="form-label fw-semibold mb-0">Orders <span id="combine-orders-count" class="text-muted fw-normal small"></span></label>
                                     <div class="form-check form-check-inline mb-0">
                                         <input class="form-check-input" type="checkbox" id="combine-select-all-orders">
-                                        <label class="form-check-label small" for="combine-select-all-orders">All visible</label>
+                                        <label class="form-check-label small" for="combine-select-all-orders">{{ te('All visible') }}</label>
                                     </div>
                                 </div>
                                 <div id="combine-orders-list" class="border rounded p-2" style="max-height: 320px; overflow-y: auto;">
-                                    <div class="text-muted small text-center py-3">Select batch dates or orders</div>
+                                    <div class="text-muted small text-center py-3">{{ te('Select batch dates or orders') }}</div>
                                 </div>
                             </div>
                         </div>
                         <div class="row mt-3 align-items-end">
                             <div class="col-md-4">
-                                <label for="combine-new-batch-date" class="form-label fw-semibold">New batch date</label>
+                                <label for="combine-new-batch-date" class="form-label fw-semibold">{{ te('New batch date') }}</label>
                                 <input type="date" class="form-control" id="combine-new-batch-date" required>
                             </div>
                             <div class="col-md-8">
@@ -1418,7 +1478,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Cancel') }}</button>
                         <button type="button" class="btn btn-info" id="combine-batches-merge-btn">
                             <i class="fas fa-object-group"></i> Merge into new batch
                         </button>
@@ -1435,7 +1495,7 @@
                         <h5 class="modal-title" id="saveMissingModalLabel">
                             <i class="fas fa-exclamation-triangle"></i> Save Missing Quantities
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                     </div>
                     <div class="modal-body">
                         <p class="text-muted small mb-3">PO: <strong id="save-missing-po-display"></strong> — adjust actual received quantities per SKU.</p>
@@ -1443,10 +1503,10 @@
                             <table class="table table-bordered table-sm">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Vendor Item</th>
-                                        <th>Color</th>
-                                        <th class="text-center">Invoice Qty</th>
-                                        <th class="text-center" style="min-width: 140px;">Actual Qty</th>
+                                        <th>{{ te('Vendor Item') }}</th>
+                                        <th>{{ te('Color') }}</th>
+                                        <th class="text-center">{{ te('Invoice Qty') }}</th>
+                                        <th class="text-center" style="min-width: 140px;">{{ te('Actual Qty') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="save-missing-items-body"></tbody>
@@ -1454,7 +1514,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Cancel') }}</button>
                         <button type="button" class="btn btn-warning" id="confirm-save-missing-btn">
                             <i class="fas fa-save"></i> Save Missing
                         </button>
@@ -1471,7 +1531,7 @@
                         <h5 class="modal-title" id="orderDetailsModalLabel">
                             <i class="fas fa-eye"></i> 订单详情 - Order Details
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                     </div>
                     <div class="modal-body">
                         <div id="order-details-content">
@@ -1503,17 +1563,17 @@
                         <h5 class="modal-title" id="addTrackingModalLabel">
                             <i class="fas fa-barcode"></i> Add Tracking Number
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="tracking-po-display" class="form-label">PO Number</label>
+                            <label for="tracking-po-display" class="form-label">{{ te('PO Number') }}</label>
                             <input type="text" class="form-control" id="tracking-po-display" readonly style="background-color: #e9ecef;">
                         </div>
                         <div class="mb-3">
-                            <label for="tracking-input" class="form-label">Tracking Number *</label>
-                            <input type="text" class="form-control" id="tracking-input" placeholder="Paste your tracking number here" autofocus>
-                            <small class="text-muted">FedEx, UPS, or any other carrier tracking number</small>
+                            <label for="tracking-input" class="form-label">{{ te('Tracking Number *') }}</label>
+                            <input type="text" class="form-control" id="tracking-input" placeholder="{{ te('Paste your tracking number here') }}" autofocus>
+                            <small class="text-muted">{{ te('FedEx, UPS, or any other carrier tracking number') }}</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1532,9 +1592,9 @@
         <div id="loading-overlay">
             <div class="text-center text-white">
                 <div class="spinner-border text-light" role="status">
-                    <span class="sr-only">Loading...</span>
+                    <span class="sr-only">{{ te('Loading...') }}</span>
                 </div>
-                <p id="processing-status" class="mt-3">Processing...</p>
+                <p id="processing-status" class="mt-3">{{ te('Processing...') }}</p>
             </div>
         </div>
     </div> <!-- Close container -->
@@ -1547,6 +1607,7 @@
     // Orders Management JavaScript  
     let allOrders = [];
     let shippedOrdersLoaded = false;
+    let canceledOrdersLoaded = false;
 
     // Toast notification function
     function showToast(message, type = 'success', duration = 4000) {
@@ -1690,9 +1751,9 @@
         const rowClass = isMain ? 'package-box-row main-box-row' : 'package-box-row package-row';
         const cmId = isMain ? `cm-check-main-${boxNumber}` : `cm-check-${boxNumber}`;
         const actionsHtml = isMain
-            ? `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">Duplicate</button>`
-            : `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">Duplicate</button>
-               <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn remove-box-btn" title="Delete this row">Remove</button>`;
+            ? `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">{{ te('Duplicate') }}</button>`
+            : `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">{{ te('Duplicate') }}</button>
+               <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn remove-box-btn" title="Delete this row">{{ te('Remove') }}</button>`;
 
         return `
             <div class="${rowClass}" data-box="${boxNumber}">
@@ -2202,11 +2263,22 @@
             allOrders = data.orders || [];
             console.log('Total orders loaded:', allOrders.length);
             
-            // Reset shipped orders loaded flag when new data is loaded
+            // Reset lazy-load flags when new data is loaded
             shippedOrdersLoaded = false;
+            canceledOrdersLoaded = false;
             
             renderPendingOrders();
-            // Don't render shipped orders until user expands the section
+            // Re-render expanded sections so status moves stay visible without re-collapse
+            const shippedExpanded = document.getElementById('shippedOrdersSection')?.classList.contains('show');
+            if (shippedExpanded) {
+                shippedOrdersLoaded = true;
+                renderShippedOrders();
+            }
+            const canceledExpanded = document.getElementById('canceledOrdersSection')?.classList.contains('show');
+            if (canceledExpanded) {
+                canceledOrdersLoaded = true;
+                renderCanceledOrders();
+            }
             console.log('Orders rendered successfully');
             
         } catch (error) {
@@ -2567,7 +2639,8 @@
     // Pagination state for each table
     let paginationState = {
         'pending-orders-table-body': { page: 1, itemsPerPage: 5, expandedBatches: new Set(), loadedBatches: new Set(), pageNavigated: false },
-        'shipped-orders-table-body': { page: 1, itemsPerPage: 5, expandedBatches: new Set(), loadedBatches: new Set(), pageNavigated: false }
+        'shipped-orders-table-body': { page: 1, itemsPerPage: 5, expandedBatches: new Set(), loadedBatches: new Set(), pageNavigated: false },
+        'canceled-orders-table-body': { page: 1, itemsPerPage: 5, expandedBatches: new Set(), loadedBatches: new Set(), pageNavigated: false }
     };
     
     // All orders organized by batch for lazy loading
@@ -2661,6 +2734,28 @@
         }
         paginationState['shipped-orders-table-body'].pageNavigated = false;
         renderOrdersByBatch(filtered, 'shipped-orders-table-body');
+    }
+
+    function renderCanceledOrders() {
+        const canceledBatchDateFilter = document.getElementById('canceled-batch-date-filter');
+        const canceledPoSearch = document.getElementById('canceled-po-search');
+        const canceledShipDateAfterFilter = document.getElementById('canceled-ship-date-after-filter');
+        const canceledShipDateBeforeFilter = document.getElementById('canceled-ship-date-before-filter');
+        const batchDate = canceledBatchDateFilter?.value || '';
+        const poValue = (canceledPoSearch?.value || '').toLowerCase();
+        const shipDateAfter = canceledShipDateAfterFilter?.value || '';
+        const shipDateBefore = canceledShipDateBeforeFilter?.value || '';
+        const filtered = allOrders.filter(order => {
+            return order.status === 'canceled' &&
+                (!batchDate || order.batch_date === batchDate) &&
+                (!poValue || order.po_number.toLowerCase().includes(poValue)) &&
+                matchesShipDateRangeFilter(order, shipDateAfter, shipDateBefore);
+        });
+        if (!paginationState['canceled-orders-table-body'].pageNavigated) {
+            paginationState['canceled-orders-table-body'].page = 1;
+        }
+        paginationState['canceled-orders-table-body'].pageNavigated = false;
+        renderOrdersByBatch(filtered, 'canceled-orders-table-body');
     }
 
     // Store information cache
@@ -2886,7 +2981,7 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm edit-store-from-po-btn" data-store-number="${editStoreNumberFromPo}" title="Edit store ${editStoreNumberFromPo}">Edit Store</button>` : ''}
                 <button class="btn btn-success btn-sm download-pdf-btn" data-po="${order.po_number}" title="Download Original PDF">Download PDF</button>
                 <button class="btn btn-info btn-sm view-items-btn" data-po="${order.po_number}" title="View Items">View Items</button>
-                <button class="btn btn-danger btn-sm delete-order-btn" data-po="${order.po_number}" title="Delete Order">Delete</button>
+                <button class="btn btn-danger btn-sm delete-order-btn" data-po="${order.po_number}" title="Delete Order">{{ te('Delete') }}</button>
             </div>
         `;
     }
@@ -2996,9 +3091,12 @@
                 // Re-render tables to update with store info
                 if (allOrders.length > 0) {
                     renderPendingOrders();
-                    // Only render shipped orders if they were already loaded
+                    // Only render shipped/canceled orders if they were already loaded
                     if (shippedOrdersLoaded) {
                         renderShippedOrders();
+                    }
+                    if (canceledOrdersLoaded) {
+                        renderCanceledOrders();
                     }
                 }
             } else {
@@ -3093,13 +3191,14 @@
 
                 const isPendingTable = containerId === 'pending-orders-table-body';
                 const isShippedTable = containerId === 'shipped-orders-table-body';
+                const isCanceledTable = containerId === 'canceled-orders-table-body';
                 const invoiceQtyCell = formatQtyCostCell(order.total_qty, order.total_cost);
                 const actualQtyCell = formatQtyCostCell(
                     order.actual_total_qty ?? order.total_qty,
                     order.actual_total_cost ?? order.total_cost
                 );
                 const qtyMismatchClass = orderHasQtyMismatch(order) ? ' qty-mismatch' : '';
-                const packageCellHtml = isShippedTable
+                const packageCellHtml = (isShippedTable || isCanceledTable)
                     ? buildReadonlyPackageCellHtml(order)
                     : buildEditablePackageCellHtml(order);
 
@@ -3123,6 +3222,7 @@
                         <select class="form-select status-select" data-po="${order.po_number}">
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                            <option value="canceled" ${order.status === 'canceled' ? 'selected' : ''}>Canceled</option>
                         </select>
                         ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div><button class="btn btn-outline-secondary btn-sm mt-1 w-100 edit-tracking-btn" data-po="${order.po_number}" data-tracking="${order.tracking}"><i class="fas fa-pen"></i> Edit Tracking</button>` : `<button class="btn btn-outline-primary btn-sm mt-2 w-100 add-tracking-btn" data-po="${order.po_number}"><i class="fas fa-plus"></i> Add Tracking</button>`}
                     </td>
@@ -3315,6 +3415,9 @@
             } else if (containerId === 'shipped-orders-table-body') {
                 console.log('Rendering shipped orders');
                 renderShippedOrders();
+            } else if (containerId === 'canceled-orders-table-body') {
+                console.log('Rendering canceled orders');
+                renderCanceledOrders();
             } else {
                 console.warn('Unknown containerId:', containerId);
             }
@@ -3365,6 +3468,7 @@
                     <select class="form-select status-select" data-po="${order.po_number}">
                         <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                        <option value="canceled" ${order.status === 'canceled' ? 'selected' : ''}>Canceled</option>
                     </select>
                     ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div><button class="btn btn-outline-secondary btn-sm mt-1 w-100 edit-tracking-btn" data-po="${order.po_number}" data-tracking="${order.tracking}"><i class="fas fa-pen"></i> Edit Tracking</button>` : ''}
                 </td>
@@ -3418,6 +3522,18 @@
                 }
             });
         }
+        const canceledSection = document.getElementById('canceledOrdersSection');
+        if (canceledSection) {
+            canceledSection.addEventListener('shown.bs.collapse', function() {
+                if (!canceledOrdersLoaded) {
+                    console.log('Loading canceled orders for the first time...');
+                    canceledOrdersLoaded = true;
+                    renderCanceledOrders();
+                } else {
+                    renderCanceledOrders();
+                }
+            });
+        }
 
         // Filter controls
         const pendingBatchDateFilter = document.getElementById('pending-batch-date-filter');
@@ -3430,6 +3546,11 @@
         const shippedShipDateAfterFilter = document.getElementById('shipped-ship-date-after-filter');
         const shippedShipDateBeforeFilter = document.getElementById('shipped-ship-date-before-filter');
         const clearShippedFiltersBtn = document.getElementById('clear-shipped-filters-btn');
+        const canceledBatchDateFilter = document.getElementById('canceled-batch-date-filter');
+        const canceledPoSearch = document.getElementById('canceled-po-search');
+        const canceledShipDateAfterFilter = document.getElementById('canceled-ship-date-after-filter');
+        const canceledShipDateBeforeFilter = document.getElementById('canceled-ship-date-before-filter');
+        const clearCanceledFiltersBtn = document.getElementById('clear-canceled-filters-btn');
         if (pendingBatchDateFilter) pendingBatchDateFilter.addEventListener('change', renderPendingOrders);
         if (pendingPoSearch) pendingPoSearch.addEventListener('input', renderPendingOrders);
         if (pendingShipDateAfterFilter) pendingShipDateAfterFilter.addEventListener('change', renderPendingOrders);
@@ -3478,6 +3599,17 @@
             if (shippedShipDateAfterFilter) shippedShipDateAfterFilter.value = '';
             if (shippedShipDateBeforeFilter) shippedShipDateBeforeFilter.value = '';
             renderShippedOrders();
+        });
+        if (canceledBatchDateFilter) canceledBatchDateFilter.addEventListener('change', renderCanceledOrders);
+        if (canceledPoSearch) canceledPoSearch.addEventListener('input', renderCanceledOrders);
+        if (canceledShipDateAfterFilter) canceledShipDateAfterFilter.addEventListener('change', renderCanceledOrders);
+        if (canceledShipDateBeforeFilter) canceledShipDateBeforeFilter.addEventListener('change', renderCanceledOrders);
+        if (clearCanceledFiltersBtn) clearCanceledFiltersBtn.addEventListener('click', function() {
+            canceledBatchDateFilter.value = '';
+            canceledPoSearch.value = '';
+            if (canceledShipDateAfterFilter) canceledShipDateAfterFilter.value = '';
+            if (canceledShipDateBeforeFilter) canceledShipDateBeforeFilter.value = '';
+            renderCanceledOrders();
         });
 
         // Upload Tracking button - both sidebar and shipped section
@@ -3633,10 +3765,10 @@
                         <div class="col-md-6">
                             <h5><i class="fas fa-receipt"></i> Order Information</h5>
                             <table class="table table-sm table-borderless">
-                                <tr><td><strong>PO Number:</strong></td><td>${poNumber}</td></tr>
+                                <tr><td><strong>{{ te('PO Number:') }}</strong></td><td>${poNumber}</td></tr>
                                 <tr><td><strong>Batch Date:</strong></td><td>${formatBatchDate(order?.batch_date || 'N/A')}</td></tr>
-                                <tr><td><strong>Ship Date:</strong></td><td>${formatShipOutDate(order || {})}</td></tr>
-                                <tr><td><strong>Status:</strong></td><td><span class="badge ${order?.status === 'pending' ? 'bg-warning' : order?.status === 'shipped' ? 'bg-success' : 'bg-info'}">${order?.status || 'N/A'}</span></td></tr>
+                                <tr><td><strong>{{ te('Ship Date:') }}</strong></td><td>${formatShipOutDate(order || {})}</td></tr>
+                                <tr><td><strong>{{ te('Status:') }}</strong></td><td><span class="badge ${order?.status === 'pending' ? 'bg-warning' : order?.status === 'shipped' ? 'bg-success' : 'bg-info'}">${order?.status || 'N/A'}</span></td></tr>
                                 <tr><td><strong>Invoice Qty / Cost:</strong></td><td>${order?.total_qty || 0} / $${parseFloat(order?.total_cost || 0).toFixed(2)}</td></tr>
                                 <tr><td><strong>Actual Qty / Cost:</strong></td><td>${order?.actual_total_qty ?? order?.total_qty ?? 0} / $${parseFloat(order?.actual_total_cost ?? order?.total_cost ?? 0).toFixed(2)}</td></tr>
                             </table>
@@ -3661,14 +3793,14 @@
                                         <thead class="table-dark">
                                             <tr>
                                                 <th>#</th>
-                                                <th>Vendor Item</th>
-                                                <th>Color</th>
-                                                <th>Quantity</th>
+                                                <th>{{ te('Vendor Item') }}</th>
+                                                <th>{{ te('Color') }}</th>
+                                                <th>{{ te('Quantity') }}</th>
                                                 <th>Actual Quantity</th>
-                                                <th>Description</th>
+                                                <th>{{ te('Description') }}</th>
                                                 <th>Unit Price</th>
                                                 <th>Extended Cost</th>
-                                                <th>UPC</th>
+                                                <th>{{ te('UPC') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -4049,6 +4181,11 @@
                 checkboxes.forEach(cb => cb.checked = e.target.checked);
                 updateSelectedOrdersList();
             }
+            if (e.target.id === 'select-all-canceled') {
+                const checkboxes = document.querySelectorAll('#canceled-orders-table-body .order-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateSelectedOrdersList();
+            }
         });
 
         // Sidebar functionality
@@ -4057,7 +4194,7 @@
         
         // Listen for checkbox changes to show/hide sidebar
         document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('order-checkbox') || e.target.id === 'select-all-pending' || e.target.id === 'select-all-shipped') {
+            if (e.target.classList.contains('order-checkbox') || e.target.id === 'select-all-pending' || e.target.id === 'select-all-shipped' || e.target.id === 'select-all-canceled') {
                 updateSelectedOrdersList();
             }
         });
@@ -4070,6 +4207,10 @@
                 updateSelectedOrdersList();
             } else if (e.target.id === 'select-all-shipped') {
                 const checkboxes = document.querySelectorAll('#shipped-orders-table-body .order-checkbox');
+                checkboxes.forEach(cb => cb.checked = e.target.checked);
+                updateSelectedOrdersList();
+            } else if (e.target.id === 'select-all-canceled') {
+                const checkboxes = document.querySelectorAll('#canceled-orders-table-body .order-checkbox');
                 checkboxes.forEach(cb => cb.checked = e.target.checked);
                 updateSelectedOrdersList();
             }
@@ -5559,25 +5700,25 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="applyToModalLabel">Apply Package Info to Other stores</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+                    <h5 class="modal-title" id="applyToModalLabel">{{ te('Apply Package Info to Other stores') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ te('Close') }}">X</button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">
-                        <strong>Source:</strong> <span id="apply-source-po">N/A</span>
+                        <strong>{{ te('Source:') }}</strong> <span id="apply-source-po">{{ te('N/A') }}</span>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Preview:</label>
+                        <label class="form-label">{{ te('Preview:') }}</label>
                         <div id="apply-source-dims" class="d-flex flex-wrap gap-2" style="margin-top:8px;"></div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">select stores</label>
+                        <label class="form-label">{{ te('select stores') }}</label>
                         <div class="position-relative mb-2">
                             <div class="input-group">
                                 <input id="apply-target-input" class="form-control" placeholder="651-.....">
-                                <button id="apply-target-clear" class="btn btn-outline-secondary" type="button" title="Clear selections">Clear</button>
+                                <button id="apply-target-clear" class="btn btn-outline-secondary" type="button" title="{{ te('Clear selections') }}">{{ te('Clear') }}</button>
                             </div>
                             <div id="apply-target-suggestions" class="list-group position-absolute w-100" style="max-height:200px;overflow:auto;display:none;top:100%;left:0;z-index:2050;"></div>
                         </div>
@@ -5597,8 +5738,8 @@
                     </div>
                 </div>
                 <div class="modal-footer" >
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" id="apply-to-confirm-btn" class="btn btn-primary">Apply to selected invoices</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Close') }}</button>
+                    <button type="button" id="apply-to-confirm-btn" class="btn btn-primary">{{ te('Apply to selected invoices') }}</button>
                 </div>
             </div>
         </div>
@@ -6070,8 +6211,8 @@
                     <td>${store.created_at || ''}</td>
                     <td>${store.updated_at || ''}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="editStore('${store.store_number}')">Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteStore('${store.store_number}')">Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="editStore('${store.store_number}')">{{ te('Edit') }}</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStore('${store.store_number}')">{{ te('Delete') }}</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -6164,9 +6305,12 @@
                 // Re-render orders to show updated store info
                 if (allOrders.length > 0) {
                     renderPendingOrders();
-                    // Only render shipped orders if they were already loaded
+                    // Only render shipped/canceled orders if they were already loaded
                     if (shippedOrdersLoaded) {
                         renderShippedOrders();
+                    }
+                    if (canceledOrdersLoaded) {
+                        renderCanceledOrders();
                     }
                 }
                 
@@ -6283,9 +6427,12 @@
                 // Re-render orders to show updated store info
                 if (allOrders.length > 0) {
                     renderPendingOrders();
-                    // Only render shipped orders if they were already loaded
+                    // Only render shipped/canceled orders if they were already loaded
                     if (shippedOrdersLoaded) {
                         renderShippedOrders();
+                    }
+                    if (canceledOrdersLoaded) {
+                        renderCanceledOrders();
                     }
                 }
                 
@@ -6535,8 +6682,8 @@
                         <h2 class="text-center mb-4">洛瑞丝庄园 - Order Details</h2>
                         ${modalContent.innerHTML}
                         <div class="text-center mt-4 no-print">
-                            <button onclick="window.print()" class="btn btn-primary">Print</button>
-                            <button onclick="window.close()" class="btn btn-secondary">Close</button>
+                            <button onclick="window.print()" class="btn btn-primary">{{ te('Print') }}</button>
+                            <button onclick="window.close()" class="btn btn-secondary">{{ te('Close') }}</button>
                         </div>
                     </div>
                 </body>

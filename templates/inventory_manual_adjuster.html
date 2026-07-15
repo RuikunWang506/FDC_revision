@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Manual Adjuster</title>
+    <title>{{ _('page.inventory_manual_adjuster.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -272,31 +272,31 @@
 
     <div class="container-main">
         <div class="page-header">
-            <h1><i class="fas fa-tools"></i> Inventory Manual Adjuster</h1>
-            <p>Transfer inventory between FDC and E-Fashion, or add/remove stock on one database.</p>
+            <h1><i class="fas fa-tools"></i> {{ _('page.inventory_manual_adjuster.title') }}</h1>
+            <p>{{ _('page.inventory_manual_adjuster.subtitle') }}</p>
         </div>
 
         <div class="mode-bar">
-            <label>Mode:</label>
+            <label>{{ _('page.inventory_manual_adjuster.mode') }}</label>
             <button type="button" class="mode-btn active" id="modeTransferBtn" data-mode="transfer">
-                <i class="fas fa-exchange-alt"></i> Transfer Style
+                <i class="fas fa-exchange-alt"></i> {{ _('page.inventory_manual_adjuster.mode_transfer') }}
             </button>
             <button type="button" class="mode-btn" id="modeAdjustBtn" data-mode="adjust">
-                <i class="fas fa-plus-minus"></i> Add / Remove Style
+                <i class="fas fa-plus-minus"></i> {{ _('page.inventory_manual_adjuster.mode_adjust') }}
             </button>
             <div class="adjust-db-row" id="adjustDbRow">
-                <label>Database:</label>
+                <label>{{ _('page.inventory_manual_adjuster.database') }}</label>
                 <label><input type="radio" name="adjustDb" value="FDC" checked> FDC</label>
                 <label><input type="radio" name="adjustDb" value="E_FAS"> E-Fashion</label>
-                <span class="hint-negative">Use negative qty to remove stock</span>
+                <span class="hint-negative">{{ _('page.inventory_manual_adjuster.hint_negative') }}</span>
             </div>
         </div>
 
         <div class="search-panel" id="searchPanel">
-            <label for="searchInput"><strong>Search style(s) or SKU(s)</strong> — comma-separated, press Enter</label>
+            <label for="searchInput"><strong>{{ _('page.inventory_manual_adjuster.search_label') }}</strong></label>
             <div class="search-row" style="margin-top: 8px;">
-                <input type="text" id="searchInput" placeholder="e.g. M1141, T3305 or M1141 BK, N1555 BK" autocomplete="off">
-                <button type="button" class="btn btn-outline" id="clearBtn">Clear table</button>
+                <input type="text" id="searchInput" placeholder="{{ _('page.inventory_manual_adjuster.search_placeholder') }}" autocomplete="off">
+                <button type="button" class="btn btn-outline" id="clearBtn">{{ _('page.inventory_manual_adjuster.clear_table') }}</button>
             </div>
             <div class="status-msg" id="searchStatus"></div>
         </div>
@@ -304,12 +304,12 @@
         <div id="resultsContainer">
             <div class="empty-state" id="emptyState">
                 <i class="fas fa-box fa-2x" style="margin-bottom: 10px; color: #bbb;"></i>
-                <div>Choose a mode above, then enter a style or SKU to load inventory rows.</div>
+                <div>{{ _('page.inventory_manual_adjuster.empty') }}</div>
             </div>
         </div>
 
         <div class="submit-bar" id="submitBar" style="display: none;">
-            <div id="actionSummary">Enter quantities, then submit.</div>
+            <div id="actionSummary">{{ te('Enter quantities, then submit.') }}</div>
             <button type="button" class="btn btn-success" id="submitBtn">
                 <i class="fas fa-paper-plane"></i> Submit
             </button>
@@ -318,8 +318,8 @@
 
     <div class="modal-overlay" id="directionModal">
         <div class="modal-card">
-            <h3>Transfer direction</h3>
-            <p id="modalSummary">Choose which database to move stock from and to.</p>
+            <h3>{{ te('Transfer direction') }}</h3>
+            <p id="modalSummary">{{ te('Choose which database to move stock from and to.') }}</p>
             <div class="modal-actions">
                 <button type="button" class="btn btn-primary" data-direction="fdc_to_efas">
                     FDC → E-Fashion
@@ -327,17 +327,17 @@
                 <button type="button" class="btn btn-primary" data-direction="efas_to_fdc">
                     E-Fashion → FDC
                 </button>
-                <button type="button" class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+                <button type="button" class="btn btn-secondary" id="cancelModalBtn">{{ te('Cancel') }}</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="resultModal">
         <div class="modal-card">
-            <h3 id="resultTitle">Complete</h3>
+            <h3 id="resultTitle">{{ te('Complete') }}</h3>
             <div id="resultBody" style="font-size: 13px; line-height: 1.5;"></div>
             <div class="modal-actions" style="margin-top: 16px;">
-                <button type="button" class="btn btn-primary" id="closeResultBtn">OK</button>
+                <button type="button" class="btn btn-primary" id="closeResultBtn">{{ te('OK') }}</button>
             </div>
         </div>
     </div>
@@ -389,7 +389,7 @@
         function dbRowCells(prefix, color, rowKind) {
             const edge = rowKind === 'fdc' ? 'grid-top' : 'grid-bottom';
             if (color[prefix + '_exists'] === false) {
-                const na = `<td class="num-col data-cell na-cell ${edge}">N/A</td>`;
+                const na = `<td class="num-col data-cell na-cell ${edge}">{{ te('N/A') }}</td>`;
                 return na + na + na;
             }
             const availCls = color[prefix + '_available'] > 0 ? 'positive'
@@ -483,8 +483,8 @@
                 meta.className = 'style-meta';
                 const pi = group.parent_info || {};
                 meta.innerHTML = `
-                    <span><strong>Style:</strong> ${esc(pi.style)}</span>
-                    <span><strong>Container:</strong> ${esc(pi.container || 'N/A')}</span>
+                    <span><strong>{{ te('Style:') }}</strong> ${esc(pi.style)}</span>
+                    <span><strong>{{ te('Container:') }}</strong> ${esc(pi.container || 'N/A')}</span>
                     <span><strong>FDC avail:</strong> ${fmtTotal(group.totals.fdc_available)}</span>
                     <span><strong>E-FAS avail:</strong> ${fmtTotal(group.totals.efas_available)}</span>
                 `;
@@ -499,7 +499,7 @@
                                 <a href="/product_detail?search=${encodeURIComponent(color.sku)}" target="_blank">${esc(color.sku)}</a>
                             </td>
                             <td class="merge-cell grid-top grid-bottom" rowspan="2">${esc(color.color || '-')}</td>
-                            <td class="db-label fdc grid-top">FDC</td>
+                            <td class="db-label fdc grid-top">{{ te('FDC') }}</td>
                             ${dbRowCells('fdc', color, 'fdc')}
                             <td class="merge-cell num-col grid-right grid-top grid-bottom" rowspan="2">
                                 <div class="qty-fill-wrap">
@@ -510,7 +510,7 @@
                                         value="">
                                     <button type="button" class="btn-fill-qty fill-sku-avail-btn"
                                         data-sku="${esc(color.sku)}"
-                                        title="Fill transfer qty from avail">Avail</button>
+                                        title="Fill transfer qty from avail">{{ te('Avail') }}</button>
                                 </div>
                             </td>
                         </tr>
@@ -528,12 +528,12 @@
                     <table class="dataTable">
                         <thead>
                             <tr>
-                                <th>SKU</th>
-                                <th>Color</th>
+                                <th>{{ te('SKU') }}</th>
+                                <th>{{ te('Color') }}</th>
                                 <th>Database</th>
-                                <th>Stock</th>
-                                <th>Avail</th>
-                                <th>Sold</th>
+                                <th>{{ te('Stock') }}</th>
+                                <th>{{ te('Avail') }}</th>
+                                <th>{{ te('Sold') }}</th>
                                 <th>Transfer Qty</th>
                             </tr>
                         </thead>
@@ -577,7 +577,7 @@
 
                 const meta = document.createElement('div');
                 meta.className = 'style-meta';
-                meta.innerHTML = `<span><strong>Database:</strong> ${esc(dbLabel)}</span>`;
+                meta.innerHTML = `<span><strong>{{ te('Database:') }}</strong> ${esc(dbLabel)}</span>`;
                 wrap.appendChild(meta);
 
                 let rowsHtml = '';
@@ -612,11 +612,11 @@
                     <table class="dataTable">
                         <thead>
                             <tr>
-                                <th>SKU</th>
-                                <th>Color</th>
-                                <th>Stock</th>
-                                <th>Avail</th>
-                                <th>Sold</th>
+                                <th>{{ te('SKU') }}</th>
+                                <th>{{ te('Color') }}</th>
+                                <th>{{ te('Stock') }}</th>
+                                <th>{{ te('Avail') }}</th>
+                                <th>{{ te('Sold') }}</th>
                                 <th>Adjust Qty (+/−)</th>
                             </tr>
                         </thead>

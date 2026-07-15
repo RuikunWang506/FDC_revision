@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Macy Label Maker</title>
+    <title>{{ _('page.macy.title') }}</title>
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
@@ -203,9 +203,9 @@
                 <div class="col-lg-10">
                     <div class="main-card">
                         <div class="text-center">
-                            <h1>MACY SET MAKER</h1>
-                            <h4>You will get BOX Label, Packing Slip, and Pallet Label</h4>
-                            <h4><a href="/static/checklist.docx">📋 Old Instruction.xlsx</a></h4>
+                            <h1>{{ te('MACY SET MAKER') }}</h1>
+                            <h4>{{ te('You will get BOX Label, Packing Slip, and Pallet Label') }}</h4>
+                            <h4><a href="/static/checklist.docx">{{ te('📋 Old Instruction.xlsx') }}</a></h4>
                         </div>
 
                         <!-- Email Fetcher Section -->
@@ -249,33 +249,33 @@
                 <form method="POST" class="mt-4">                
 
                     <div class="form-group">
-                        <label for="po_num">PO Number:</label>
+                        <label for="po_num">{{ te('PO Number:') }}</label>
                         <input type="text" class="form-control" id="po_num" name="po_num" value="{{ po_num }}" required>
-                        <span class="visible-placeholder" data-for="po_num">this is on the order like 1835178</span>
+                        <span class="visible-placeholder" data-for="po_num">{{ te('this is on the order like 1835178') }}</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="order_number">order#/BOL:</label>
+                        <label for="order_number">{{ te('order#/BOL:') }}</label>
                         <input type="text" class="form-control" id="order_number" name="order_number" value="{{ order_number }}" required>
-                        <span class="visible-placeholder" data-for="order_number">4 digit for E-Fashion<br>5 digit for FDC</span>
+                        <span class="visible-placeholder" data-for="order_number">{{ te('4 digit for E-Fashion') }}<br>{{ te('5 digit for FDC') }}</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="apt">APT:</label>
+                        <label for="apt">{{ te('APT:') }}</label>
                         <input type="text" class="form-control" id="apt" name="apt" value="{{ apt }}" required>
-                        <span class="visible-placeholder" data-for="apt">Ruby Email like 53375808</span>
+                        <span class="visible-placeholder" data-for="apt">{{ te('Ruby Email like 53375808') }}</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="carrier">Carrier:</label>
+                        <label for="carrier">{{ te('Carrier:') }}</label>
                         <input type="text" class="form-control" id="carrier" name="carrier" value="{{ carrier }}" required>
-                        <span class="visible-placeholder" data-for="carrier">From Ruby Email</span>
+                        <span class="visible-placeholder" data-for="carrier">{{ te('From Ruby Email') }}</span>
                     </div>
 
                     <div class="form-group">
-                        <label for="project">Project:</label>
+                        <label for="project">{{ te('Project:') }}</label>
                         <input type="text" class="form-control" id="project" name="project" value="{{ project }}" required>
-                        <span class="visible-placeholder" data-for="project">Ruby Email title Macy's, Inc. Routing Notification (Project(s) 7565620)</span>
+                        <span class="visible-placeholder" data-for="project">{{ te('Ruby Email title Macy\'s, Inc. Routing Notification (Project(s) 7565620)') }}</span>
                     </div>
 
                     <div class="text-center">
@@ -292,7 +292,7 @@
                 <div class="col-lg-10">
                     <div class="result-section text-center">
                         <div class="container d-flex justify-content-center align-items-top" style="min-height: 50vh;">
-                            <img src="static/macy_sticking_guide.jpg" alt="Sticking Guide">
+                            <img src="static/macy_sticking_guide.jpg" alt="{{ te('Sticking Guide') }}">
                         </div>
                         <div class="d-flex flex-wrap justify-content-center mt-4">
                             <a href="{{ url_for('download_file4', filename=filename) }}" class="download-btn">
@@ -356,16 +356,16 @@
                                 html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; font-size: 0.9rem;">';
                                 
                                 if (email.po_number) {
-                                    html += '<div><span style="color: #666;">PO:</span> <strong>' + escapeHtml(email.po_number) + '</strong></div>';
+                                    html += '<div><span style="color: #666;">{{ te('PO:') }}</span> <strong>' + escapeHtml(email.po_number) + '</strong></div>';
                                 }
                                 if (email.appointment_number) {
-                                    html += '<div><span style="color: #666;">APT:</span> <strong>' + escapeHtml(email.appointment_number) + '</strong></div>';
+                                    html += '<div><span style="color: #666;">{{ te('APT:') }}</span> <strong>' + escapeHtml(email.appointment_number) + '</strong></div>';
                                 }
                                 if (email.project_number) {
-                                    html += '<div><span style="color: #666;">Project:</span> <strong>' + escapeHtml(email.project_number) + '</strong></div>';
+                                    html += '<div><span style="color: #666;">{{ te('Project:') }}</span> <strong>' + escapeHtml(email.project_number) + '</strong></div>';
                                 }
                                 if (email.carrier) {
-                                    html += '<div><span style="color: #666;">Carrier:</span> <strong>' + escapeHtml(email.carrier) + '</strong></div>';
+                                    html += '<div><span style="color: #666;">{{ te('Carrier:') }}</span> <strong>' + escapeHtml(email.carrier) + '</strong></div>';
                                 }
                                 
                                 html += '</div>';

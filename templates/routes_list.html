@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,16 +29,18 @@
     </style>
 </head>
 <body>
+    {% set lang_bar_light = true %}
+    {% include '_lang_bar_standalone.html' %}
     <div class="container">
         <nav class="navbar navbar-expand-lg navbar-light bg-light rounded">
-            <a class="navbar-brand" href="/">FDC Flask App</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <a class="navbar-brand" href="/">{{ te('FDC Flask App') }}</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ te('Toggle navigation') }}">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
+                        <a class="nav-link" href="/">{{ te('Home') }}</a>
                     </li>
                 </ul>
                 <span class="navbar-text">
@@ -49,17 +51,17 @@
 
         <div class="mt-4">
             <h1>{{ title }}</h1>
-            <p class="text-muted">Showing all GET routes in the application</p>
+            <p class="text-muted">{{ te('Showing all GET routes in the application') }}</p>
             
             <div class="table-responsive">
                 <table class="table table-striped table-bordered route-table">
                     <thead class="thead-dark">
                         <tr>
-                            <th>Blueprint</th>
-                            <th>Endpoint</th>
-                            <th>Path</th>
-                            <th>Methods</th>
-                            <th>Actions</th>
+                            <th>{{ te('Blueprint') }}</th>
+                            <th>{{ te('Endpoint') }}</th>
+                            <th>{{ te('Path') }}</th>
+                            <th>{{ te('Methods') }}</th>
+                            <th>{{ te('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,9 +80,9 @@
                                 <td>{{ route.methods }}</td>
                                 <td>
                                     {% if 'GET' in route.methods and '<' not in route.path %}
-                                        <a href="{{ route.path }}" class="btn btn-sm btn-primary visit-btn" target="_blank">Visit</a>
+                                        <a href="{{ route.path }}" class="btn btn-sm btn-primary visit-btn" target="_blank">{{ te('Visit') }}</a>
                                     {% elif 'GET' in route.methods %}
-                                        <span class="text-muted">Requires parameters</span>
+                                        <span class="text-muted">{{ te('Requires parameters') }}</span>
                                     {% endif %}
                                 </td>
                             </tr>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mail — Manage accounts</title>
+    <title>{{ te('Mail — Manage accounts') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>body { padding-top: 76px; background: #f4f7fb; }</style>
 </head>
@@ -20,70 +20,70 @@
     {% endwith %}
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Mail accounts</h4>
-        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('email.mailboxes') }}">Back to mail</a>
+        <h4 class="mb-0">{{ te('Mail accounts') }}</h4>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('email.mailboxes') }}">{{ te('Back to mail') }}</a>
     </div>
 
     <div class="card mb-4">
-        <div class="card-header">Add mailbox</div>
+        <div class="card-header">{{ te('Add mailbox') }}</div>
         <div class="card-body">
             <form method="post" class="row">
                 <input type="hidden" name="action" value="add">
                 <div class="col-md-3 mb-2">
-                    <label class="small text-muted">Label</label>
-                    <input class="form-control" name="label" placeholder="orders" required>
+                    <label class="small text-muted">{{ te('Label') }}</label>
+                    <input class="form-control" name="label" placeholder="{{ te('orders') }}" required>
                 </div>
                 <div class="col-md-4 mb-2">
-                    <label class="small text-muted">Email</label>
+                    <label class="small text-muted">{{ te('Email') }}</label>
                     <input class="form-control" name="email" type="email" required>
                 </div>
                 <div class="col-md-3 mb-2">
-                    <label class="small text-muted">Password</label>
+                    <label class="small text-muted">{{ te('Password') }}</label>
                     <input class="form-control" name="password" type="password" required autocomplete="new-password">
                 </div>
                 <div class="col-md-2 mb-2">
-                    <label class="small text-muted">Inbox folder</label>
+                    <label class="small text-muted">{{ te('Inbox folder') }}</label>
                     <input class="form-control" name="inbox_folder" value="INBOX">
                 </div>
                 <div class="col-md-3 mb-2">
-                    <label class="small text-muted">IMAP host</label>
+                    <label class="small text-muted">{{ te('IMAP host') }}</label>
                     <input class="form-control" name="imap_host" value="imap.fatcow.com">
                 </div>
                 <div class="col-md-2 mb-2">
-                    <label class="small text-muted">IMAP port</label>
+                    <label class="small text-muted">{{ te('IMAP port') }}</label>
                     <input class="form-control" name="imap_port" value="993">
                 </div>
                 <div class="col-md-3 mb-2">
-                    <label class="small text-muted">SMTP host</label>
+                    <label class="small text-muted">{{ te('SMTP host') }}</label>
                     <input class="form-control" name="smtp_host" value="smtp.fatcow.com">
                 </div>
                 <div class="col-md-2 mb-2">
-                    <label class="small text-muted">SMTP port</label>
+                    <label class="small text-muted">{{ te('SMTP port') }}</label>
                     <input class="form-control" name="smtp_port" value="465">
                 </div>
                 <div class="col-12 mt-2">
-                    <button type="submit" class="btn btn-primary">Save (encrypt password)</button>
+                    <button type="submit" class="btn btn-primary">{{ te('Save (encrypt password)') }}</button>
                 </div>
             </form>
             <p class="small text-muted mb-0 mt-3">
-                Fernet key: set <code>MAIL_FERNET_KEY</code> in the environment, or rely on <code>D:\\Email\\.fernet_key</code> (auto-created).
-                Run <code>sql/mail_accounts.sql</code> on MySQL before adding accounts.
+                Fernet key: set <code>{{ te('MAIL_FERNET_KEY') }}</code> in the environment, or rely on <code>{{ te('D:\\\\Email\\\\.fernet_key') }}</code> (auto-created).
+                Run <code>{{ te('sql/mail_accounts.sql') }}</code> on MySQL before adding accounts.
             </p>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-header">Existing mailboxes</div>
+        <div class="card-header">{{ te('Existing mailboxes') }}</div>
         <div class="table-responsive">
             <table class="table mb-0">
                 <thead class="thead-light">
                     <tr>
-                        <th>Label</th>
-                        <th>Email</th>
-                        <th>IMAP</th>
-                        <th>SMTP</th>
-                        <th>Inbox</th>
-                        <th class="text-right" style="min-width: 9rem;">Actions</th>
+                        <th>{{ te('Label') }}</th>
+                        <th>{{ te('Email') }}</th>
+                        <th>{{ te('IMAP') }}</th>
+                        <th>{{ te('SMTP') }}</th>
+                        <th>{{ te('Inbox') }}</th>
+                        <th class="text-right" style="min-width: 9rem;">{{ te('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -104,11 +104,11 @@
                                     data-imap-host="{{ a.imap_host|e }}"
                                     data-imap-port="{{ a.imap_port }}"
                                     data-smtp-host="{{ a.smtp_host|e }}"
-                                    data-smtp-port="{{ a.smtp_port }}">Edit</button>
+                                    data-smtp-port="{{ a.smtp_port }}">{{ te('Edit') }}</button>
                             <form method="post" class="d-inline" onsubmit="return confirm('Delete this mailbox from the app database?');">
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="account_id" value="{{ a.id }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">{{ te('Delete') }}</button>
                             </form>
                         </td>
                     </tr>
@@ -126,55 +126,55 @@
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="account_id" id="mail_acct_edit_id" value="">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="mailAcctEditModalTitle">Edit mailbox</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <h5 class="modal-title" id="mailAcctEditModalTitle">{{ te('Edit mailbox') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p class="small text-muted">Leave password blank to keep the current mailbox password.</p>
+                        <p class="small text-muted">{{ te('Leave password blank to keep the current mailbox password.') }}</p>
                         <div class="form-row">
                             <div class="form-group col-md-4">
-                                <label class="small text-muted">Label</label>
+                                <label class="small text-muted">{{ te('Label') }}</label>
                                 <input class="form-control" name="label" id="mail_acct_edit_label" required>
                             </div>
                             <div class="form-group col-md-8">
-                                <label class="small text-muted">Email</label>
+                                <label class="small text-muted">{{ te('Email') }}</label>
                                 <input class="form-control" name="email" id="mail_acct_edit_email" type="email" required autocomplete="off">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="small text-muted">New password <span class="text-muted">(optional)</span></label>
-                            <input class="form-control" name="password" id="mail_acct_edit_password" type="password" placeholder="Leave blank to keep current" autocomplete="new-password">
+                            <label class="small text-muted">New password <span class="text-muted">{{ te('(optional)') }}</span></label>
+                            <input class="form-control" name="password" id="mail_acct_edit_password" type="password" placeholder="{{ te('Leave blank to keep current') }}" autocomplete="new-password">
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-4">
-                                <label class="small text-muted">Inbox folder</label>
+                                <label class="small text-muted">{{ te('Inbox folder') }}</label>
                                 <input class="form-control" name="inbox_folder" id="mail_acct_edit_inbox_folder" value="INBOX">
                             </div>
                             <div class="form-group col-md-4">
-                                <label class="small text-muted">IMAP host</label>
+                                <label class="small text-muted">{{ te('IMAP host') }}</label>
                                 <input class="form-control" name="imap_host" id="mail_acct_edit_imap_host">
                             </div>
                             <div class="form-group col-md-4">
-                                <label class="small text-muted">IMAP port</label>
+                                <label class="small text-muted">{{ te('IMAP port') }}</label>
                                 <input class="form-control" name="imap_port" id="mail_acct_edit_imap_port">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label class="small text-muted">SMTP host</label>
+                                <label class="small text-muted">{{ te('SMTP host') }}</label>
                                 <input class="form-control" name="smtp_host" id="mail_acct_edit_smtp_host">
                             </div>
                             <div class="form-group col-md-6">
-                                <label class="small text-muted">SMTP port</label>
+                                <label class="small text-muted">{{ te('SMTP port') }}</label>
                                 <input class="form-control" name="smtp_port" id="mail_acct_edit_smtp_port">
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ te('Save changes') }}</button>
                     </div>
                 </form>
             </div>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>External Stock Check</title>
+    <title>{{ _('page.external_stock_check.title') }}</title>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
@@ -399,12 +399,12 @@
     <div class="password-modal" id="passwordModal">
         <div class="password-card">
             <h2><i class="fas fa-lock"></i> Access Required</h2>
-            <p>Enter password to access external stock check</p>
+            <p>{{ te('Enter password to access external stock check') }}</p>
             
             <form id="passwordForm" method="POST" action="{{ url_for('external_stock_check.external_password') }}">
                 <div class="password-input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Enter password" required autofocus>
+                    <label for="password">{{ te('Password') }}</label>
+                    <input type="password" id="password" name="password" placeholder="{{ te('Enter password') }}" required autofocus>
                 </div>
                 <button type="submit" class="password-btn">
                     <i class="fas fa-arrow-right"></i> Access
@@ -418,7 +418,7 @@
         <!-- Header -->
         <div class="page-header">
             <h1><i class="fas fa-box"></i> External Stock Check</h1>
-            <p>Monitor and manage external inventory from TikTok store</p>
+            <p>{{ te('Monitor and manage external inventory from TikTok store') }}</p>
         </div>
         
         <!-- Alerts -->
@@ -451,8 +451,8 @@
             <table class="dataTable" id="inventoryTable">
                 <thead>
                     <tr>
-                        <th>Style</th>
-                        <th>SKU</th>
+                        <th>{{ te('Style') }}</th>
+                        <th>{{ te('SKU') }}</th>
                         <th>TK实时数据</th>
                         <th>实时可卖库存</th>
                         <th>TK价格</th>
@@ -463,7 +463,7 @@
                     <tr>
                         <td colspan="6" class="empty-state">
                             <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading inventory data...</p>
+                            <p>{{ te('Loading inventory data...') }}</p>
                         </td>
                     </tr>
                 </tbody>
@@ -472,7 +472,7 @@
         
         <!-- Image Preview Tooltip -->
         <div class="image-preview-tooltip" id="imagePreview">
-            <img id="previewImage" src="" alt="Style preview">
+            <img id="previewImage" src="" alt="{{ te('Style preview') }}">
         </div>
         
         <!-- Manual Styles Modal -->
@@ -480,13 +480,13 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="manualStylesTitle">Manual Styles Editor</h5>
-                        <button type="button" class="close" onclick="closeManualStylesModal()" aria-label="Close">
+                        <h5 class="modal-title" id="manualStylesTitle">{{ te('Manual Styles Editor') }}</h5>
+                        <button type="button" class="close" onclick="closeManualStylesModal()" aria-label="{{ te('Close') }}">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p style="color: #666; margin-bottom: 15px;"><em>Edit styles below (one per line). Styles already in TikTok inventory will be excluded automatically.</em></p>
+                        <p style="color: #666; margin-bottom: 15px;"><em>{{ te('Edit styles below (one per line). Styles already in TikTok inventory will be excluded automatically.') }}</em></p>
                         <textarea id="manualStylesTextarea" style="width: 100%; height: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 14px;"></textarea>
                     </div>
                     <div class="modal-footer">

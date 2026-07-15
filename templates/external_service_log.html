@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ te('External Service Log') }} — FDCEF</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <style>
+        :root {
+            --es-bg: #0f1419;
+            --es-surface: #1a2332;
+            --es-border: rgba(255,255,255,.08);
+            --es-text: #e8eef5;
+            --es-muted: #8b9cb3;
+            --es-accent: #5b9cf5;
+            --es-radius: 14px;
+        }
+        body.es-page {
+            background: linear-gradient(160deg, #0b0f14 0%, var(--es-bg) 40%, #121a24 100%);
+            color: var(--es-text);
+            min-height: 100vh;
+        }
+        .es-wrap { max-width: 920px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+        .es-hero {
+            display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;
+            gap: 1rem; padding-bottom: 1rem; margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--es-border);
+        }
+        .es-hero h1 { font-size: 1.55rem; font-weight: 600; margin: 0 0 .35rem; }
+        .es-hero p { color: var(--es-muted); margin: 0; font-size: .95rem; }
+        .es-card {
+            background: var(--es-surface); border: 1px solid var(--es-border);
+            border-radius: var(--es-radius); margin-bottom: 1.15rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,.25); overflow: hidden;
+        }
+        .es-card-header {
+            padding: .9rem 1.2rem; border-bottom: 1px solid var(--es-border);
+            display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+        }
+        .es-card-header h2 { font-size: 1.05rem; margin: 0; font-weight: 600; }
+        .es-badge {
+            font-size: .72rem; font-weight: 600; letter-spacing: .04em;
+            padding: .2rem .55rem; border-radius: 6px; background: rgba(91,156,245,.15); color: var(--es-accent);
+        }
+        .es-card-body { padding: 1.15rem 1.25rem; }
+        .es-meta { color: var(--es-muted); font-size: .88rem; margin-bottom: 1rem; }
+        .es-row {
+            display: grid; grid-template-columns: 140px 1fr auto; gap: .5rem .75rem;
+            align-items: center; padding: .55rem 0; border-bottom: 1px solid var(--es-border);
+        }
+        .es-row:last-child { border-bottom: none; }
+        .es-label { color: var(--es-muted); font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }
+        .es-value {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: .92rem; word-break: break-all; color: #f2f6fb;
+        }
+        .es-copy {
+            border: 1px solid var(--es-border); background: transparent; color: var(--es-muted);
+            border-radius: 8px; padding: .25rem .55rem; font-size: .78rem; cursor: pointer;
+        }
+        .es-copy:hover { color: var(--es-accent); border-color: var(--es-accent); }
+        .es-note {
+            margin-top: 1rem; padding: .75rem .9rem; border-radius: 10px;
+            background: rgba(91,156,245,.08); border: 1px solid rgba(91,156,245,.2);
+            color: var(--es-muted); font-size: .88rem;
+        }
+        .es-note a { color: var(--es-accent); font-weight: 600; }
+        @media (max-width: 640px) {
+            .es-row { grid-template-columns: 1fr auto; }
+            .es-label { grid-column: 1 / -1; }
+        }
+    </style>
+</head>
+<body class="es-page">
+    {% include 'navbar.html' %}
+    <div class="es-wrap">
+        <div class="es-hero">
+            <div>
+                <h1><i class="fas fa-key text-primary mr-2"></i> {{ te('External Service Log') }}</h1>
+                <p>{{ te('Carrier API accounts and platform logins (from env).') }}</p>
+            </div>
+            <a href="{{ url_for('auth.manage_users') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-left"></i> {{ te('Back to User Management') }}
+            </a>
+        </div>
+
+        {% set gofo = services.gofo %}
+        <div class="es-card">
+            <div class="es-card-header">
+                <h2><i class="fas fa-truck mr-2 text-primary"></i> {{ gofo.carrier }}</h2>
+                <span class="es-badge">{{ te('Order prefix') }}: {{ gofo.order_prefix }}</span>
+            </div>
+            <div class="es-card-body">
+                <p class="es-meta">{{ te('Platforms') }}: {{ gofo.platforms }}</p>
+                <div class="es-row">
+                    <div class="es-label">{{ te('API account') }}</div>
+                    <div class="es-value" id="gofo-api-account">{{ gofo.api_account or '—' }}</div>
+                    <button type="button" class="es-copy" data-copy="gofo-api-account">{{ te('Copy') }}</button>
+                </div>
+                <div class="es-row">
+                    <div class="es-label">{{ te('API password') }}</div>
+                    <div class="es-value" id="gofo-api-password">{{ gofo.api_password or '—' }}</div>
+                    <button type="button" class="es-copy" data-copy="gofo-api-password">{{ te('Copy') }}</button>
+                </div>
+                <div class="es-note">
+                    {{ te('Web login for query / exception handling / recharge:') }}
+                    <a href="{{ gofo.platform_url }}" target="_blank" rel="noopener noreferrer">{{ gofo.platform_url }}</a>
+                </div>
+                <div class="es-row mt-2">
+                    <div class="es-label">{{ te('Platform account') }}</div>
+                    <div class="es-value" id="gofo-platform-account">{{ gofo.platform_account or '—' }}</div>
+                    <button type="button" class="es-copy" data-copy="gofo-platform-account">{{ te('Copy') }}</button>
+                </div>
+                <div class="es-row">
+                    <div class="es-label">{{ te('Platform password') }}</div>
+                    <div class="es-value" id="gofo-platform-password">{{ gofo.platform_password or '—' }}</div>
+                    <button type="button" class="es-copy" data-copy="gofo-platform-password">{{ te('Copy') }}</button>
+                </div>
+                <div class="mt-3">
+                    <a class="btn btn-primary btn-sm" href="{{ gofo.platform_url }}" target="_blank" rel="noopener noreferrer">
+                        <i class="fas fa-external-link-alt"></i> {{ te('Open GOFO platform') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% set yt = services.yunexpress %}
+        <div class="es-card">
+            <div class="es-card-header">
+                <h2><i class="fas fa-plane mr-2 text-primary"></i> {{ yt.carrier }}</h2>
+                <span class="es-badge">{{ te('Order prefix') }}: {{ yt.order_prefix }}</span>
+            </div>
+            <div class="es-card-body">
+                <p class="es-meta">{{ te('Platforms') }}: {{ yt.platforms }}</p>
+                <div class="es-row">
+                    <div class="es-label">{{ te('API account') }}</div>
+                    <div class="es-value" id="yt-api-account">{{ yt.api_account or '—' }}</div>
+                    <button type="button" class="es-copy" data-copy="yt-api-account">{{ te('Copy') }}</button>
+                </div>
+                <div class="es-row">
+                    <div class="es-label">{{ te('API password') }}</div>
+                    <div class="es-value" id="yt-api-password">{{ yt.api_password or '—' }}</div>
+                    <button type="button" class="es-copy" data-copy="yt-api-password">{{ te('Copy') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.es-copy').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var el = document.getElementById(btn.getAttribute('data-copy'));
+                if (!el) return;
+                var text = (el.textContent || '').trim();
+                if (!text || text === '—') return;
+                navigator.clipboard.writeText(text).then(function () {
+                    var prev = btn.textContent;
+                    btn.textContent = 'Copied';
+                    setTimeout(function () { btn.textContent = prev; }, 1200);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

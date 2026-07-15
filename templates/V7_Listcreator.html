@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V7_listcreator</title>
+    <title>{{ _('page.v7_listcreator.title') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
@@ -777,35 +777,35 @@
 
     {% if not missing_descriptions and pivot_data %}
     <div class="bookmark-sidebar">
-        <h5>Styles</h5>
+        <h5>{{ te('Styles') }}</h5>
 
         
         <div class="action-sidebar">
             <div class="d-flex flex-column">
-                <button type="button" class="btn btn-success mb-4" data-toggle="modal" data-target="#imageSizeModal">Export List</button>
-                <button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#editDescriptionModal">Edit Desc</button>
-                <button type="button" class="btn btn-warning mb-2" id="togglePcsBox" onclick="togglePcsBox()">Hide PCS/BOX</button>
-                <button type="button" class="btn btn-warning mb-2" id="toggleDimensions" onclick="toggleDimensions()">Hide Dimensions</button>
-                <button type="button" class="btn btn-info mb-2" onclick="selectNonDropboxImages()">No Dropbox Img</button>
+                <button type="button" class="btn btn-success mb-4" data-toggle="modal" data-target="#imageSizeModal">{{ te('Export List') }}</button>
+                <button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#editDescriptionModal">{{ te('Edit Desc') }}</button>
+                <button type="button" class="btn btn-warning mb-2" id="togglePcsBox" onclick="togglePcsBox()">{{ te('Hide PCS/BOX') }}</button>
+                <button type="button" class="btn btn-warning mb-2" id="toggleDimensions" onclick="toggleDimensions()">{{ te('Hide Dimensions') }}</button>
+                <button type="button" class="btn btn-info mb-2" onclick="selectNonDropboxImages()">{{ te('No Dropbox Img') }}</button>
                 <!-- Toolkit: Remove rows with column value less than input -->
                 <div class="card p-2 mb-2" style="background:#f7f7f7; border:1px solid #ddd;">
                     <div class="form-group mb-1">
-                        <label for="removeColumnSelect" style="font-size:0.95em;">Remove rows where:</label>
+                        <label for="removeColumnSelect" style="font-size:0.95em;">{{ te('Remove rows where:') }}</label>
                         <select id="removeColumnSelect" class="form-control form-control-sm">
-                            <option value="quantity">Quantity</option>
-                            <option value="ocean">Ocean</option>
-                            <option value="total">Total</option>
+                            <option value="quantity">{{ te('Quantity') }}</option>
+                            <option value="ocean">{{ te('Ocean') }}</option>
+                            <option value="total">{{ te('Total') }}</option>
                         </select>
                     </div>
                     <div class="form-group mb-1">
                         <select id="removeComparisonSelect" class="form-control form-control-sm" style="width:120px; display:inline-block;">
-                            <option value="lt">Less than</option>
-                            <option value="eq">Equal to</option>
-                            <option value="gt">Greater than</option>
+                            <option value="lt">{{ te('Less than') }}</option>
+                            <option value="eq">{{ te('Equal to') }}</option>
+                            <option value="gt">{{ te('Greater than') }}</option>
                         </select>
-                        <input type="number" id="removeColumnThreshold" class="form-control form-control-sm" placeholder="Number" min="0" style="width:100px; display:inline-block; margin-left:5px;">
+                        <input type="number" id="removeColumnThreshold" class="form-control form-control-sm" placeholder="{{ te('Number') }}" min="0" style="width:100px; display:inline-block; margin-left:5px;">
                     </div>
-                    <button type="button" class="btn btn-danger btn-sm btn-block" onclick="removeRowsByColumnThreshold()">Delete</button>
+                    <button type="button" class="btn btn-danger btn-sm btn-block" onclick="removeRowsByColumnThreshold()">{{ te('Delete') }}</button>
                 </div>
                 <div class="card p-2 mb-2" style="background:#f7f7f7; border:1px solid #ddd;">
                     <a href="{{ url_for('v7_listcreator.index') }}" class="btn btn-outline-secondary btn-sm btn-block">Reset 重置</a>
@@ -823,9 +823,9 @@
                         Sort Cards
                     </button>
                     <div class="dropdown-menu" aria-labelledby="sortDropdownButton">
-                        <a class="dropdown-item" href="#" onclick="sortCards('az')">Sort by Style A-Z</a>
-                        <a class="dropdown-item" href="#" onclick="sortCards('za')">Sort by Style Z-A</a>
-                        <a class="dropdown-item" href="#" onclick="sortCards('input')">Sort by Input Order</a>
+                        <a class="dropdown-item" href="#" onclick="sortCards('az')">{{ te('Sort by Style A-Z') }}</a>
+                        <a class="dropdown-item" href="#" onclick="sortCards('za')">{{ te('Sort by Style Z-A') }}</a>
+                        <a class="dropdown-item" href="#" onclick="sortCards('input')">{{ te('Sort by Input Order') }}</a>
                     </div>
                 </div>
             </div>
@@ -838,7 +838,7 @@
             </div>
         
             <div class="section-header" onclick="toggleSection('descriptions-section')">
-                <h5>Unique Descriptions<h6>drag and change group </h6></h5>
+                <h5>{{ te('Unique Descriptions') }}<h6>drag and change group </h6></h5>
                 
                 <span class="collapse-icon">▼</span>
             </div>
@@ -862,9 +862,9 @@
     <div class="container mt-4">
         {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
         <div class="alert alert-light border rounded shadow-sm mb-3 small lc-snapshot-banner" role="note">
-            <strong>Offline HTML snapshot</strong> —
+            <strong>{{ te('Offline HTML snapshot') }}</strong> —
             Generated <strong data-fdc-local-iso="{{ snapshot_generated_at_iso if snapshot_generated_at_iso is defined else '' }}">{{ snapshot_generated_at_pt }}</strong>
-            <span class="text-muted">(your local time; server uses Pacific)</span>.
+            <span class="text-muted">{{ te('(your local time; server uses Pacific)') }}</span>.
         </div>
         {% endif %}
         {% if not your_input_was %}
@@ -885,33 +885,33 @@
             <div class="form-group mb-3">
                 <label class="lc-bilingual-label" for="list_input">
                     <span class="lc-zh">款式、货柜或 Dropbox 路径（可混合货柜与款式；Dropbox 链接请单独使用）</span>
-                    <span class="lc-en">Styles, container, or Dropbox path, you can mix container and style, but dropbox link by itself</span>
+                    <span class="lc-en">{{ te('Styles, container, or Dropbox path, you can mix container and style, but dropbox link by itself') }}</span>
                 </label>
-                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="e.g. T3305, T4401,F26193 · dropbox&#92;folder" value="{{ list_input or '' }}" autocomplete="off">
+                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="{{ te('e.g. T3305, T4401,F26193 · dropbox&#92;folder') }}" value="{{ list_input or '' }}" autocomplete="off">
                 <small class="form-text text-muted lc-bilingual-hint">
-                    <span class="lc-zh">逗号分隔的款式、货柜 PO（如 F26193）、货柜搜索链接，或一个 <code>dropbox\folder</code> 路径（文件夹名可含空格）。</span>
-                    <span class="lc-en">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>dropbox\folder</code> path (spaces in folder names are OK).</span>
+                    <span class="lc-zh">逗号分隔的款式、货柜 PO（如 F26193）、货柜搜索链接，或一个 <code>{{ te('dropbox\\folder') }}</code> 路径（文件夹名可含空格）。</span>
+                    <span class="lc-en">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>{{ te('dropbox\\folder') }}</code> path (spaces in folder names are OK).</span>
                 </small>
                 <div class="d-flex flex-wrap align-items-center mt-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-1" id="btnV7PickDropboxFolder" title="Open folders on the server’s synced Dropbox (names and image counts only)">Browse server Dropbox 在这里选dropbox的文件夹…</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-1" id="btnV7PickDropboxFolder" title="{{ te('Open folders on the server’s synced Dropbox (names and image counts only)') }}">Browse server Dropbox 在这里选dropbox的文件夹…</button>
                 </div>
             </div>
 
             <div class="lc-quick-filters mb-3" id="lcQuickFilters">
                 <label class="lc-bilingual-label mb-2">
                     <span class="lc-zh">快速筛选（来自 <a href="{{ url_for('bag_style_viewer.index') }}" target="_blank" rel="noopener">包款浏览器</a> 的描述与库存）</span>
-                    <span class="lc-en">Quick filters (from <a href="{{ url_for('bag_style_viewer.index') }}" target="_blank" rel="noopener">Bag Style Viewer</a> descriptions &amp; stock)</span>
+                    <span class="lc-en">Quick filters (from <a href="{{ url_for('bag_style_viewer.index') }}" target="_blank" rel="noopener">{{ te('Bag Style Viewer') }}</a> descriptions &amp; stock)</span>
                 </label>
                 <div class="form-row align-items-start">
                     <div class="form-group col-md-4 mb-2 mb-md-0">
                         <label class="lc-bilingual-label small mb-1">
                             <span class="lc-zh">描述</span>
-                            <span class="lc-en">Description</span>
+                            <span class="lc-en">{{ te('Description') }}</span>
                         </label>
                         <div class="lc-desc-filter-panel">
                             <div class="lc-desc-search-wrap">
                                 <input type="search" class="form-control form-control-sm lc-desc-search-input" id="lcFilterDescriptionSearch"
-                                    placeholder="搜索描述 · Search descriptions…" autocomplete="off" aria-label="Search descriptions">
+                                    placeholder="搜索描述 · Search descriptions…" autocomplete="off" aria-label="{{ te('Search descriptions') }}">
                                 <small class="lc-desc-search-meta" id="lcFilterDescriptionSearchMeta"></small>
                             </div>
                             <div class="lc-desc-checkbox-list" id="lcFilterDescriptionList">
@@ -933,7 +933,7 @@
                     <div class="form-group col-md-3 mb-2 mb-md-0">
                         <label class="lc-bilingual-label small mb-1" for="lcFilterStock">
                             <span class="lc-zh">库存筛选</span>
-                            <span class="lc-en">Stock filter</span>
+                            <span class="lc-en">{{ te('Stock filter') }}</span>
                         </label>
                         <select class="form-control form-control-sm" id="lcFilterStock">
                             <option value="">全部 · All</option>
@@ -945,21 +945,21 @@
                     <div class="form-group col-md-3 mb-2 mb-md-0">
                         <label class="lc-bilingual-label small mb-1" for="lcFilterColor">
                             <span class="lc-zh">颜色包含</span>
-                            <span class="lc-en">Color contains</span>
+                            <span class="lc-en">{{ te('Color contains') }}</span>
                         </label>
                         <input type="text" class="form-control form-control-sm" id="lcFilterColor"
-                            placeholder="如 BK、RED · e.g. BK, RED" value="{{ filter_color if filter_color is defined else '' }}">
+                            placeholder="{{ te('如 BK、RED · e.g. BK, RED') }}" value="{{ filter_color if filter_color is defined else '' }}">
                     </div>
                     <div class="form-group col-md-2 mb-0">
                         <button type="button" class="btn btn-sm btn-outline-primary btn-block lc-bilingual-btn" id="lcApplyFiltersBtn">
                             <span class="lc-zh">应用</span>
-                            <span class="lc-en">Apply</span>
+                            <span class="lc-en">{{ te('Apply') }}</span>
                         </button>
                     </div>
                 </div>
                 <p class="lc-filter-hint lc-bilingual-hint" id="lcFilterResultHint">
                     <span class="lc-zh">选择一个或多个描述并点击「应用」，填入上方款式列表（会替换当前列表）。</span>
-                    <span class="lc-en">Pick one or more descriptions and Apply to fill the style list above (replaces current list).</span>
+                    <span class="lc-en">{{ te('Pick one or more descriptions and Apply to fill the style list above (replaces current list).') }}</span>
                 </p>
             </div>
             {% endif %}
@@ -970,7 +970,7 @@
             <div class="form-group mb-3">
                 <label class="lc-bilingual-label" for="random_strings_input">
                     <span class="lc-zh">原始列表（Excel 粘贴）</span>
-                    <span class="lc-en">Raw list (Excel paste)</span>
+                    <span class="lc-en">{{ te('Raw list (Excel paste)') }}</span>
                 </label>
                 <textarea class="form-control" name="random_strings_input" id="random_strings_input" rows="5" placeholder="逗号或换行分隔 · Comma or new line separated"></textarea>
             </div>
@@ -980,14 +980,14 @@
                 <input class="form-check-input" type="checkbox" id="convert_newlines_checkbox">
                 <label class="form-check-label lc-bilingual-label mb-0" for="convert_newlines_checkbox">
                     <span class="lc-zh">将上方原始列表转换为逗号分隔格式</span>
-                    <span class="lc-en">Convert above raw list into comma-separated format</span>
+                    <span class="lc-en">{{ te('Convert above raw list into comma-separated format') }}</span>
                 </label>
             </div>
             {% endif %}
             <div class="form-group mb-4">
                 <label class="lc-bilingual-label" for="snapshot_name">
                     <span class="lc-zh">快照名称 <span class="text-muted font-weight-normal">（必填）</span></span>
-                    <span class="lc-en">Snapshot name <span class="text-muted font-weight-normal">(required)</span></span>
+                    <span class="lc-en">Snapshot name <span class="text-muted font-weight-normal">{{ te('(required)') }}</span></span>
                 </label>
                 <input type="text" class="form-control" id="snapshot_name" name="snapshot_name" maxlength="120" required minlength="2"
                     placeholder="那个谁的list做一下"
@@ -1000,7 +1000,7 @@
 
             <button type="submit" class="btn btn-lg text-white px-4 lc-bilingual-btn" style="background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
                 <span class="lc-zh">运行列表</span>
-                <span class="lc-en">Run list</span>
+                <span class="lc-en">{{ te('Run list') }}</span>
             </button>
             <label class="form-check-label" for="convert_newlines_checkbox">Slack will notifiy you ! slack 信息通知已上线</label>
         </form>
@@ -1008,24 +1008,24 @@
         <div class="lc-panel lc-jobs-panel" id="listcreatorHtmlJobsPanel">
             <div class="lc-jobs-head">
                 <div>
-                    <h6 class="font-weight-bold text-dark">HTML snapshot jobs</h6>
-                    <p class="small text-muted mb-0">Queued list builds · kept about <strong>7 days</strong> · filter by person</p>
+                    <h6 class="font-weight-bold text-dark">{{ te('HTML snapshot jobs') }}</h6>
+                    <p class="small text-muted mb-0">Queued list builds · kept about <strong>{{ te('7 days') }}</strong> · filter by person</p>
                 </div>
             </div>
             <div class="form-group mb-3 mt-3">
-                <label class="small font-weight-bold text-muted mb-1 d-block" for="listcreatorJobsUserFilter">Show jobs for</label>
-                <select id="listcreatorJobsUserFilter" class="form-control form-control-sm" style="max-width: 22rem;" title="Filter snapshot jobs by account">
+                <label class="small font-weight-bold text-muted mb-1 d-block" for="listcreatorJobsUserFilter">{{ te('Show jobs for') }}</label>
+                <select id="listcreatorJobsUserFilter" class="form-control form-control-sm" style="max-width: 22rem;" title="{{ te('Filter snapshot jobs by account') }}">
                 </select>
             </div>
             <ul id="listcreatorHtmlJobsHistory" class="lc-jobs-list list-unstyled small mb-0"></ul>
-            <p id="listcreatorHtmlJobsEmptyHint" class="small text-muted mb-0 mt-3">No snapshots yet. Run a list above to queue one.</p>
+            <p id="listcreatorHtmlJobsEmptyHint" class="small text-muted mb-0 mt-3">{{ te('No snapshots yet. Run a list above to queue one.') }}</p>
         </div>
         {% endif %}
 
         {% if your_input_was %}
         <div class="alert alert-info">
-            <strong>Your input was:</strong>
-            <div class="lc-your-input-lines mt-2 mb-0" role="region" aria-label="Submitted list">
+            <strong>{{ te('Your input was:') }}</strong>
+            <div class="lc-your-input-lines mt-2 mb-0" role="region" aria-label="{{ te('Submitted list') }}">
                 {% for raw in your_input_was.split(',') %}
                     {% set part = raw.strip() %}
                     {% if part %}<div class="lc-your-input-row" translate="no">{{ part }}</div>{% endif %}
@@ -1034,7 +1034,7 @@
 
     {% if clean_list_for_memo %}
     <div class="mt-2">
-        <strong>Your item list is:</strong> 
+        <strong>{{ te('Your item list is:') }}</strong> 
         <div style="word-wrap: break-word; white-space: normal; max-width: 100%;">
             {{ clean_list_for_memo }}
         </div>
@@ -1043,13 +1043,13 @@
     
 {% if duplicate_items %}
 <div class="mt-2">
-    <strong>Your duplicate items:</strong> 
+    <strong>{{ te('Your duplicate items:') }}</strong> 
     {% for item in duplicate_items %}
         <span class="badge badge-danger">{{ item.base_sku }} ({{ item.files|join(', ') }})</span>
     {% endfor %}
 </div>
 <div class="mt-2">
-    <strong>New Total Pic count:</strong> 
+    <strong>{{ te('New Total Pic count:') }}</strong> 
     <span class="badge badge-success">{{ list_input|count_dropbox_files if list_input else 0 }} Minus {{ total_duplicates }} duplicate(s) = {{ (list_input|count_dropbox_files if list_input else 0) - total_duplicates }} style(s)</span>
 </div>
 {% endif %}
@@ -1057,7 +1057,7 @@
 
     {% if duplicate_styles %}
     <div class="mt-2">
-        <strong>Duplicate styles:</strong> 
+        <strong>{{ te('Duplicate styles:') }}</strong> 
         {% for style in duplicate_styles %}
             <span class="badge badge-danger">{{ style }}</span>
         {% endfor %}
@@ -1067,23 +1067,23 @@
         {% endif %}
         {% if not your_input_was %}
         <div class="container-fluid px-0 px-md-2 mt-4 mb-3 border rounded p-3 bg-light">
-            <p>All styles with any stock</p>
+            <p>{{ te('All styles with any stock') }}</p>
             <div class="d-flex flex-wrap align-items-center">
                 <button type="button" class="btn btn-success d-inline-flex align-items-center" id="btnExportWorkbook" onclick="exportWorkbook()" aria-busy="false">
-                    <span id="exportWorkbookBtnLabel">Queue Workbook</span>
+                    <span id="exportWorkbookBtnLabel">{{ te('Queue Workbook') }}</span>
                     <span id="exportWorkbookBtnSpinner" class="spinner-border spinner-border-sm ml-2 d-none" role="status" aria-hidden="true"></span>
                 </button>
             </div>
             <p id="exportWorkbookStatus" class="small text-info mt-2 mb-0 d-none" role="status" aria-live="polite"></p>
             <div class="form-check mt-2 mb-0">
                 <input class="form-check-input" type="checkbox" id="includeFullCatalog" checked>
-                <label class="form-check-label small" for="includeFullCatalog">Include <strong>Full_catalog</strong> (1800px images) when the export is small enough. For large lists it is omitted automatically. Uncheck to skip it entirely for a faster server job.</label>
-                <p>this will take around 20 minutes</p>
+                <label class="form-check-label small" for="includeFullCatalog">Include <strong>{{ te('Full_catalog') }}</strong> (1800px images) when the export is small enough. For large lists it is omitted automatically. Uncheck to skip it entirely for a faster server job.</label>
+                <p>{{ te('this will take around 20 minutes') }}</p>
             </div>
             <div class="mt-3 pt-2 border-top">
-                <h6 class="small font-weight-bold text-muted mb-2">Recent exports (last 3)</h6>
+                <h6 class="small font-weight-bold text-muted mb-2">{{ te('Recent exports (last 3)') }}</h6>
                 <ul id="workbookExportHistory" class="list-unstyled small mb-0"></ul>
-                <p class="small text-muted mb-0 mt-2">Each click creates a new edition. Oldest file is removed when you exceed three.</p>
+                <p class="small text-muted mb-0 mt-2">{{ te('Each click creates a new edition. Oldest file is removed when you exceed three.') }}</p>
             </div>
         </div>
         {% endif %}
@@ -1116,15 +1116,15 @@
                                   session.get('verified_' + style_group[0].style[:6] + '-' + style_group[0].style[6:]) %}
                                 <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">{{ style_group|length }}</span>]</span></span>
                             {% else %}
-                                <span class="badge badge-warning px-2">NOT_IN_OMS</span>
+                                <span class="badge badge-warning px-2">{{ te('NOT_IN_OMS') }}</span>
                             {% endif %}
                         </div>
-                        <textarea class="description-input mx-3 form-control" placeholder="Enter description"
+                        <textarea class="description-input mx-3 form-control" placeholder="{{ te('Enter description') }}"
                             style="height: 40px;width:200px; resize: none;" rows="1">{{ descriptions[style_group[0].style] }}</textarea>
                         <p class="card-text mb-0 font-weight-bold text-primary">
                             ${{ style_group[0].selling_price }}
                         </p>
-                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">Delete</button>
+                        <button type="button" class="btn btn-danger ml-auto" onclick="deleteCard(this)">{{ te('Delete') }}</button>
                     </div>
         
                     <div class="row">
@@ -1132,13 +1132,13 @@
                             <table class="table table-bordered table-sm">
                                 <thead>
                                     <tr>
-                                        <th>Color</th>
-                                        <th>Quantity</th>
-                                        <th>Ocean</th>
-                                        <th>Total</th>
-                                        <th>PCS/BOX</th>
-                                        <th>Dimensions</th>
-                                        <th>Remove</th>
+                                        <th>{{ te('Color') }}</th>
+                                        <th>{{ te('Quantity') }}</th>
+                                        <th>{{ te('Ocean') }}</th>
+                                        <th>{{ te('Total') }}</th>
+                                        <th>{{ te('PCS/BOX') }}</th>
+                                        <th>{{ te('Dimensions') }}</th>
+                                        <th>{{ te('Remove') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1155,7 +1155,7 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">Add Row</button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="addRow(this)">{{ te('Add Row') }}</button>
                         </div>
         
                         <div class="col-6">
@@ -1208,7 +1208,7 @@
     console.log('Number of missing descriptions:', {{ missing_descriptions|length }});
 </script>
     <div class="mt-4 container">
-        <h5 class="text-center mb-4">Please select descriptions for the following styles:</h5>
+        <h5 class="text-center mb-4">{{ te('Please select descriptions for the following styles:') }}</h5>
         <form method="POST" action="{{ url_for('v7_listcreator.update_descriptions') }}">
             {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
             <input type="hidden" name="rebuild_html_snapshot" value="1">
@@ -1218,10 +1218,10 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th style="width: 15%">Image</th>
-                        <th style="width: 15%">Style</th>
-                        <th style="width: 50%">Quick Select</th>
-                        <th style="width: 20%">All Options</th>
+                        <th style="width: 15%">{{ te('Image') }}</th>
+                        <th style="width: 15%">{{ te('Style') }}</th>
+                        <th style="width: 50%">{{ te('Quick Select') }}</th>
+                        <th style="width: 20%">{{ te('All Options') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1246,19 +1246,19 @@
                             <a href="{{ url_for('item_lookup.item_lookup', user_input=style.lower()) }}" target="_blank">
                                 {{ style }}
                                 {% if session.get('verified_' + style) %}
-                                    <span class="badge badge-success">(IN_OMS)</span>
+                                    <span class="badge badge-success">{{ te('(IN_OMS)') }}</span>
                                 {% endif %}
                             </a>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='Satchel'">SATCHEL</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">MINI SATCHEL</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">BACKPACK</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">CROSSBODY</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='Satchel'">{{ te('SATCHEL') }}</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='MINI SATCHEL'">{{ te('MINI SATCHEL') }}</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='BACKPACK'">{{ te('BACKPACK') }}</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary m-1" onclick="this.closest('tr').querySelector('select').value='CROSSBODY'">{{ te('CROSSBODY') }}</button>
                         </td>
                         <td>
                             <select name="description_{{ loop.index }}" class="form-control" required>
-                                <option value="">Select a description</option>
+                                <option value="">{{ te('Select a description') }}</option>
                                 {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
                                 <option value="{{ option }}">{{ option }}</option>
                                 {% endfor %}
@@ -1269,7 +1269,7 @@
                 </tbody>
             </table>
             <div class="text-center mt-3">
-                <button type="submit" class="btn btn-primary">Update</button>
+                <button type="submit" class="btn btn-primary">{{ te('Update') }}</button>
             </div>
         </form>
     </div>
@@ -1278,13 +1278,13 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="imageSizeModalLabel">Select Image Size</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="imageSizeModalLabel">{{ te('Select Image Size') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <h3 class="text-center">Exporting Master:</h3>
+                <h3 class="text-center">{{ te('Exporting Master:') }}</h3>
                 <div class="d-flex justify-content-center align-items-center" style="gap: 10px; margin-top: 10px;">
                     <button type="button" class="btn btn-outline-primary" onclick="selectImageSize(600)">600</button>
                     <button type="button" class="btn btn-outline-primary" onclick="selectImageSize(1200)">1200</button>
@@ -1293,12 +1293,12 @@
                     <button type="button" class="btn btn-outline-primary" onclick="selectImageSize('full')">100%</button>
                 </div>
                 <div class="text-center mt-4 d-flex flex-wrap justify-content-center align-items-center" style="gap: 8px;">
-                    <button type="button" class="btn btn-success" onclick="exportWithSelectedSize()">Export List</button>
-                    <button type="button" class="btn btn-info" onclick="exportLoriFormat()">Export Lori</button>
-                    <button type="button" class="btn btn-primary" onclick="exportSelectedImages()">Export Images</button>
-                    <button type="button" class="btn btn-warning" onclick="exportPDF()">Export PDF</button>
+                    <button type="button" class="btn btn-success" onclick="exportWithSelectedSize()">{{ te('Export List') }}</button>
+                    <button type="button" class="btn btn-info" onclick="exportLoriFormat()">{{ te('Export Lori') }}</button>
+                    <button type="button" class="btn btn-primary" onclick="exportSelectedImages()">{{ te('Export Images') }}</button>
+                    <button type="button" class="btn btn-warning" onclick="exportPDF()">{{ te('Export PDF') }}</button>
                     {% if list_input_is_dropbox_folder | default(false) %}
-                    <button type="button" class="btn btn-dark border" onclick="exportListToDropboxFolder()" title="Saves Excel as aaaa.xlsx in the synced Dropbox folder">Export to Dropbox folder</button>
+                    <button type="button" class="btn btn-dark border" onclick="exportListToDropboxFolder()" title="{{ te('Saves Excel as aaaa.xlsx in the synced Dropbox folder') }}">{{ te('Export to Dropbox folder') }}</button>
                     {% endif %}
                 </div>
             </div>
@@ -1310,8 +1310,8 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="imageSizeModal600Label">Export List — 600 px</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="imageSizeModal600Label">{{ te('Export List — 600 px') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -1325,7 +1325,7 @@
                     <button type="button" class="btn btn-outline-primary" onclick="selectImageSize600('full')">100%</button>
                 </div>
                 <div class="text-center mt-4">
-                    <button type="button" class="btn btn-success btn-lg" onclick="exportListFromModal600()">Export List</button>
+                    <button type="button" class="btn btn-success btn-lg" onclick="exportListFromModal600()">{{ te('Export List') }}</button>
                 </div>
             </div>
         </div>
@@ -1334,40 +1334,40 @@
 
 <div id="imagePopup" class="image-popup" onclick="closePopup(event)">
     <span class="close-btn">&times;</span>
-    <span class="nav-btn prev-btn" onclick="navigateImages(-1)">&lt;</span>
-    <img id="popupImage" src="" alt="Enlarged Image">
-    <span class="nav-btn next-btn" onclick="navigateImages(1)">&gt;</span>
+    <span class="nav-btn prev-btn" onclick="navigateImages(-1)">{{ te('&lt;') }}</span>
+    <img id="popupImage" src="" alt="{{ te('Enlarged Image') }}">
+    <span class="nav-btn next-btn" onclick="navigateImages(1)">{{ te('&gt;') }}</span>
 </div>
 <!-- Edit Description Modal -->
 <div class="modal fade" id="editDescriptionModal" tabindex="-1" role="dialog" aria-labelledby="editDescriptionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editDescriptionModalLabel">Edit descriptions</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="editDescriptionModalLabel">{{ te('Edit descriptions') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
                 <p id="lcEditDescIntro" class="small text-muted border rounded bg-white px-2 py-2 mb-3">
-                    Changes are saved to the database <strong>and this snapshot HTML file is rewritten on disk</strong> (same URL and job). The page reloads afterward so grouping and headings match immediately.
+                    Changes are saved to the database <strong>{{ te('and this snapshot HTML file is rewritten on disk') }}</strong> (same URL and job). The page reloads afterward so grouping and headings match immediately.
                 </p>
                 {% else %}
                 <p id="lcEditDescIntro" class="small text-muted border rounded bg-white px-2 py-2 mb-3">
                     Update catalog descriptions below. Reload this tab if headings or grouping still show old labels.
                 </p>
                 {% endif %}
-                <label for="lcEditDescFilter" class="small font-weight-bold text-secondary">Search styles</label>
+                <label for="lcEditDescFilter" class="small font-weight-bold text-secondary">{{ te('Search styles') }}</label>
                 <input type="search" id="lcEditDescFilter" class="form-control form-control-sm mb-3"
-                       autocomplete="off" placeholder="Filter by SKU (substring match)" aria-describedby="lcEditDescIntro">
+                       autocomplete="off" placeholder="{{ te('Filter by SKU (substring match)') }}" aria-describedby="lcEditDescIntro">
                 <div class="table-responsive border rounded mb-2" style="max-height: 65vh;">
                     <table class="table table-sm table-hover table-bordered mb-0 lc-edit-desc-table">
                         <thead class="thead-light">
                             <tr>
-                                <th scope="col" class="sticky-top bg-light">Style — click to sort</th>
-                                <th scope="col" class="sticky-top bg-light">Current</th>
-                                <th scope="col" class="sticky-top bg-light">New description</th>
+                                <th scope="col" class="sticky-top bg-light">{{ te('Style — click to sort') }}</th>
+                                <th scope="col" class="sticky-top bg-light">{{ te('Current') }}</th>
+                                <th scope="col" class="sticky-top bg-light">{{ te('New description') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1379,21 +1379,21 @@
                                 <td class="text-break">{{ descriptions[st]|default('') }}</td>
                                 <td>
                                     <div class="d-flex flex-wrap align-items-center mb-1">
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'Satchel')">SATCHEL</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'MINI SATCHEL')">MINI SATCHEL</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'BACKPACK')">BACKPACK</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'CROSSBODY')">CROSSBODY</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'TOTE')">TOTE</button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'Wallet')">WALLET</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'Satchel')">{{ te('SATCHEL') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'MINI SATCHEL')">{{ te('MINI SATCHEL') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'BACKPACK')">{{ te('BACKPACK') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'CROSSBODY')">{{ te('CROSSBODY') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'TOTE')">{{ te('TOTE') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'Wallet')">{{ te('WALLET') }}</button>
                                     </div>
                                     <select class="form-control form-control-sm lc-edit-desc-select mb-1" aria-label="Preset {{ st }}">
-                                        <option value="">Choose preset…</option>
+                                        <option value="">{{ te('Choose preset…') }}</option>
                                         {% for option in lc_preset_opts %}
                                         <option value="{{ option }}">{{ option }}</option>
                                         {% endfor %}
                                     </select>
                                     <label class="sr-only">Custom text {{ st }}</label>
-                                    <input type="text" class="form-control form-control-sm lc-new-desc text-uppercase" placeholder="Or type freely (stored uppercase)"
+                                    <input type="text" class="form-control form-control-sm lc-new-desc text-uppercase" placeholder="{{ te('Or type freely (stored uppercase)') }}"
                                            maxlength="160" autocomplete="off" spellcheck="false">
                                 </td>
                             </tr>
@@ -1404,11 +1404,11 @@
                 <p id="lcEditDescFeedback" class="small text-danger mb-0 d-none" role="alert"></p>
             </div>
             <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap">
-                <span id="lcEditDescFooterHint" class="small text-muted mb-2 mb-md-0">Tip: presets fill the row; tweak the text field if needed before saving.</span>
+                <span id="lcEditDescFooterHint" class="small text-muted mb-2 mb-md-0">{{ te('Tip: presets fill the row; tweak the text field if needed before saving.') }}</span>
                 <div>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
                     <button type="button" class="btn btn-primary" id="submitDescriptions">
-                        <span class="lc-edit-save-label">Save to database</span>
+                        <span class="lc-edit-save-label">{{ te('Save to database') }}</span>
                         <span class="lc-edit-save-spinner spinner-border spinner-border-sm align-middle ml-1 d-none" role="status" aria-hidden="true"></span>
                     </button>
                 </div>
@@ -1421,34 +1421,34 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="v7BrowseDropboxModalLabel">Browse server Dropbox</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="v7BrowseDropboxModalLabel">{{ te('Browse server Dropbox') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="d-flex flex-wrap align-items-start justify-content-between mb-2">
                     <p class="small text-muted mb-1 mb-md-0 flex-grow-1" id="v7BrowseDropboxServerLine"></p>
-                    <button type="button" class="btn btn-sm btn-outline-primary ml-md-2" id="v7BrowseDropboxRefreshBtn" title="Check Dropbox sync app, restart if needed, then reload folders">
+                    <button type="button" class="btn btn-sm btn-outline-primary ml-md-2" id="v7BrowseDropboxRefreshBtn" title="{{ te('Check Dropbox sync app, restart if needed, then reload folders') }}">
                         ↻ Refresh sync &amp; folders
                     </button>
                 </div>
                 <div id="v7BrowseDropboxSyncStatus" class="small mb-2 d-none"></div>
-                <nav aria-label="breadcrumb"><ol class="breadcrumb mb-2 py-2 px-3 bg-light rounded" id="v7BrowseDropboxCrumbs" style="flex-wrap: wrap;"></ol></nav>
+                <nav aria-label="{{ te('breadcrumb') }}"><ol class="breadcrumb mb-2 py-2 px-3 bg-light rounded" id="v7BrowseDropboxCrumbs" style="flex-wrap: wrap;"></ol></nav>
                 <p class="mb-2" id="v7BrowseDropboxCountLine"></p>
-                <div id="v7BrowseDropboxLoading" class="text-muted small py-3 d-none">Loading…</div>
+                <div id="v7BrowseDropboxLoading" class="text-muted small py-3 d-none">{{ te('Loading…') }}</div>
                 <div id="v7BrowseDropboxError" class="alert alert-danger small d-none" role="alert"></div>
                 <div class="table-responsive border rounded" style="max-height: 380px; overflow-y: auto;">
                     <table class="table table-sm table-hover mb-0">
-                        <thead class="thead-light"><tr><th>Folder</th><th>Last updated</th><th class="text-right">Images</th></tr></thead>
+                        <thead class="thead-light"><tr><th>{{ te('Folder') }}</th><th>{{ te('Last updated') }}</th><th class="text-right">{{ te('Images') }}</th></tr></thead>
                         <tbody id="v7BrowseDropboxRows"></tbody>
                     </table>
                 </div>
-                <p class="small text-muted mb-0 mt-2">Folders are sorted by <strong>most recently updated</strong> on the server (folder modification time). Counts are for that folder only (not subfolders). List Creator still matches image <strong>filenames</strong> to SKUs.</p>
+                <p class="small text-muted mb-0 mt-2">Folders are sorted by <strong>{{ te('most recently updated') }}</strong> on the server (folder modification time). Counts are for that folder only (not subfolders). List Creator still matches image <strong>{{ te('filenames') }}</strong> to SKUs.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="v7BrowseDropboxUseBtn" disabled title="Pick a subfolder (not the Dropbox root)">Use this folder</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
+                <button type="button" class="btn btn-primary" id="v7BrowseDropboxUseBtn" disabled title="{{ te('Pick a subfolder (not the Dropbox root)') }}">{{ te('Use this folder') }}</button>
             </div>
         </div>
     </div>
@@ -2213,7 +2213,7 @@ function renderWorkbookHistory(jobs) {
         var line = '<strong>Edition #' + (j.edition != null ? j.edition : '?') + '</strong> &middot; ' + when;
         var dl = '';
         if (status === 'ready' && j.id) {
-            dl = ' <a class="btn btn-sm btn-outline-primary ml-2" href="' + workbookDownloadHref(j.id) + '">Download</a>';
+            dl = ' <a class="btn btn-sm btn-outline-primary ml-2" href="' + workbookDownloadHref(j.id) + '">{{ te('Download') }}</a>';
         }
         var err = (status === 'failed' && j.error) ? (' <span class="text-danger">' + escapeWorkbookHtml(j.error) + '</span>') : '';
         return '<li class="mb-2 border-bottom pb-2">' + line +
@@ -2534,7 +2534,7 @@ function renderListcreatorHtmlJobsHistory(jobs) {
         var metaLine = '<div class="lc-job-headline-wrap">' + line + ' <span class="badge badge-' + badge + ' lc-job-status-badge">'
             + escapeListcreatorJobsHtml(status) + '</span>' + whoBadge + '</div>';
         var delSnapBtn = '<button type="button" class="btn btn-outline-danger lc-job-action-btn mr-2 mb-1" data-action="delete-snapshot-job" data-rid="'
-            + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '"' + slugAttr + '>Delete</button>';
+            + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '"' + slugAttr + '>{{ te('Delete') }}</button>';
         var actions = '';
         var canM = !!j.can_manage;
         if (status === 'ready' && j.view_url) {
