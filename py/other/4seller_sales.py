@@ -1362,30 +1362,6 @@ def _format_finance_sku_lines(order: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _format_finance_bag_cost_lines(order: dict[str, Any], finance: Any) -> Any:
-    """Match UI Bag Cost stacked line amounts; numeric total used for summing elsewhere."""
-    if finance.order_is_returned(order):
-        return None
-    sku_lines = [
-        line
-        for line in (order.get("sku_lines") or [])
-        if str(line.get("sku") or "").strip()
-    ]
-    if not sku_lines:
-        return _finance_export_numeric(order, finance, "finance_bag_cost")
-    display_lines: list[str] = []
-    for line in sku_lines:
-        line_cost = line.get("line_cost")
-        if line_cost is None or line_cost == "":
-            display_lines.append("—")
-            continue
-        try:
-            display_lines.append(f"{float(line_cost):.2f}")
-        except (TypeError, ValueError):
-            display_lines.append(str(line_cost))
-    return "\n".join(display_lines)
-
-
 def _format_finance_export_date(order: dict[str, Any]) -> str | None:
     for key in ("paid_time", "ship_time", "create_time"):
         value = order.get(key)
@@ -1412,19 +1388,19 @@ def _attach_finance_cell_comment(cell: Any, text: str) -> None:
 
 
 # Mirrors FINANCE_VIEW_COLUMNS on /4seller/sales/finance
-FINANCE_VIEW_EXPORT_HEADERS: list[tuple[str, str | None]] = [
-    ("Platform Order No / Platform", "platform_order_no"),
-    ("Order Date", "create_time"),
-    ("SKU / Qty / Price", "sku_line"),
-    ("Net Sales", "finance_net_sales"),
-    ("Shipping", "finance_shipping"),
-    ("Fees", "finance_fees"),
-    ("Adjustment", "finance_adjustment"),
-    ("Final Payout", "finance_final_payout"),
-    ("Bag Cost", "finance_bag_cost"),
-    ("Other Fee", "finance_other_fee"),
-    ("Xingxing Payout", "finance_xingxing_payout"),
-    ("Tags", "order_tags"),
+FINANCE_VIEW_EXPORT_HEADERS: list[tuple[str, str, str | None]] = [
+    ("Platform Order No / Platform", "平台单号", "platform_order_no"),
+    ("Order Date", "订单日期", "create_time"),
+    ("SKU / Qty / Price", "sku 数量 价格", "sku_line"),
+    ("Net Sales", "销售额", "finance_net_sales"),
+    ("Shipping", "运费", "finance_shipping"),
+    ("Fees", "费用", "finance_fees"),
+    ("Adjustment", "平台审计", "finance_adjustment"),
+    ("Final Payout", "最终收入", "finance_final_payout"),
+    ("Bag Cost", "包成本", "finance_bag_cost"),
+    ("Other Fee", "其他费用", "finance_other_fee"),
+    ("Xingxing Payout", "星星收入", "finance_xingxing_payout"),
+    ("Tags", "标签", "order_tags"),
 ]
 FINANCE_VIEW_NUMERIC_FIELDS = frozenset(
     {
@@ -1438,7 +1414,8 @@ FINANCE_VIEW_NUMERIC_FIELDS = frozenset(
         "finance_xingxing_payout",
     }
 )
-FINANCE_VIEW_COLUMN_BY_ID = {field: label for label, field in FINANCE_VIEW_EXPORT_HEADERS}
+FINANCE_VIEW_COLUMN_BY_ID = {field: label for label, _, field in FINANCE_VIEW_EXPORT_HEADERS}
+FINANCE_VIEW_ZH_BY_ID = {field: zh for _, zh, field in FINANCE_VIEW_EXPORT_HEADERS}
 
 
 def _finance_view_row_values(order: dict[str, Any], finance: Any) -> list[Any]:
@@ -1451,7 +1428,7 @@ def _finance_view_row_values(order: dict[str, Any], finance: Any) -> list[Any]:
         _finance_export_numeric(order, finance, "finance_fees"),
         _finance_export_numeric(order, finance, "finance_adjustment"),
         _finance_export_numeric(order, finance, "finance_final_payout"),
-        _format_finance_bag_cost_lines(order, finance),
+        _finance_export_numeric(order, finance, "finance_bag_cost"),
         _finance_export_numeric(order, finance, "finance_other_fee"),
         _finance_export_numeric(order, finance, "finance_xingxing_payout"),
         _format_finance_order_tags(order),
@@ -1463,6 +1440,7 @@ def _write_finance_table_sheet(
     *,
     columns: list[dict[str, Any]],
     rows: list[list[Any]],
+    row_notes: list[dict[str, str]] | None = None,
     sheet_name: str = "Finance",
 ) -> None:
     """Write a Finance sheet from pre-built view columns (sums + labels + body)."""
@@ -1478,6 +1456,8 @@ def _write_finance_table_sheet(
     sum_font_negative = Font(bold=True, size=14, color="B24444")
     header_fill = PatternFill(start_color="EEF2FF", end_color="EEF2FF", fill_type="solid")
     header_font = Font(bold=True, color="2B3F75")
+    zh_header_fill = PatternFill(start_color="F7F9FF", end_color="F7F9FF", fill_type="solid")
+    zh_header_font = Font(bold=True, color="4A5F8C")
     returned_fill = PatternFill(start_color="FFF0F0", end_color="FFF0F0", fill_type="solid")
     thin = Border(
         left=Side(style="thin", color="D7DEEE"),
@@ -1513,7 +1493,7 @@ def _write_finance_table_sheet(
         else:
             cell.value = None
 
-    # Row 2: column labels (same headers as the table)
+    # Row 2: English labels
     for col_idx, column in enumerate(columns, start=1):
         cell = ws.cell(2, col_idx, column.get("label") or "")
         cell.font = header_font
@@ -1521,10 +1501,24 @@ def _write_finance_table_sheet(
         cell.alignment = wrap_center
         cell.border = thin
 
-    # Data rows
-    for row_idx, row_values in enumerate(rows, start=3):
+    # Row 3: Chinese labels
+    for col_idx, column in enumerate(columns, start=1):
+        col_id = str(column.get("id") or "")
+        zh_label = str(column.get("label_zh") or FINANCE_VIEW_ZH_BY_ID.get(col_id) or "").strip()
+        cell = ws.cell(3, col_idx, zh_label)
+        cell.font = zh_header_font
+        cell.fill = zh_header_fill
+        cell.alignment = wrap_center
+        cell.border = thin
+
+    notes = row_notes or []
+
+    # Data rows start at row 4
+    for row_offset, row_values in enumerate(rows):
+        row_idx = row_offset + 4
         is_returned = bool(row_values and len(row_values) > len(columns) and row_values[-1] is True)
         values = row_values[: len(columns)]
+        cell_notes = notes[row_offset] if row_offset < len(notes) else {}
         for col_idx, value in enumerate(values, start=1):
             column = columns[col_idx - 1]
             cell = ws.cell(row_idx, col_idx, value)
@@ -1538,6 +1532,9 @@ def _write_finance_table_sheet(
                 cell.alignment = Alignment(vertical="top")
             if is_returned:
                 cell.fill = returned_fill
+            field_key = str(column.get("id") or "")
+            if field_key and field_key in cell_notes:
+                _attach_finance_cell_comment(cell, cell_notes[field_key])
 
     default_widths = {
         "platform_order_no": 24,
@@ -1558,16 +1555,19 @@ def _write_finance_table_sheet(
         width = float(column.get("width") or default_widths.get(col_id) or 14)
         ws.column_dimensions[get_column_letter(col_idx)].width = width
     ws.row_dimensions[1].height = 22
-    ws.row_dimensions[2].height = 30
-    ws.freeze_panes = "A3"
-    ws.auto_filter.ref = f"A2:{get_column_letter(len(columns))}{max(2, len(rows) + 2)}"
+    ws.row_dimensions[2].height = 28
+    ws.row_dimensions[3].height = 28
+    # Freeze sum + English + Chinese header rows
+    ws.freeze_panes = "A4"
+    last_data_row = max(3, len(rows) + 3)
+    ws.auto_filter.ref = f"A2:{get_column_letter(len(columns))}{last_data_row}"
 
 
 def _write_finance_export_sheet(workbook: Any, orders: list[dict[str, Any]]) -> None:
     finance = importlib.import_module("py.other.4seller_finance")
 
     columns: list[dict[str, Any]] = []
-    field_keys = [field for _, field in FINANCE_VIEW_EXPORT_HEADERS]
+    field_keys = [field for _, _, field in FINANCE_VIEW_EXPORT_HEADERS]
     numeric_fields = [field for field in field_keys if field in FINANCE_VIEW_NUMERIC_FIELDS]
 
     sums = {field: 0.0 for field in numeric_fields}
@@ -1577,12 +1577,13 @@ def _write_finance_export_sheet(workbook: Any, orders: list[dict[str, Any]]) -> 
             if value is not None:
                 sums[field] += value
 
-    for label, field in FINANCE_VIEW_EXPORT_HEADERS:
+    for label, label_zh, field in FINANCE_VIEW_EXPORT_HEADERS:
         column: dict[str, Any] = {
             "id": field,
             "label": label,
+            "label_zh": label_zh,
             "numeric": field in FINANCE_VIEW_NUMERIC_FIELDS,
-            "wrap": field in {"platform_order_no", "create_time", "sku_line", "finance_bag_cost", "order_tags"},
+            "wrap": field in {"platform_order_no", "create_time", "sku_line", "order_tags"},
         }
         if field == "platform_order_no":
             column["sum_text"] = f"{len(orders)} orders"
@@ -1591,14 +1592,14 @@ def _write_finance_export_sheet(workbook: Any, orders: list[dict[str, Any]]) -> 
         columns.append(column)
 
     rows: list[list[Any]] = []
+    row_notes: list[dict[str, str]] = []
     for order in orders:
         values = _finance_view_row_values(order, finance)
-        # Keep numeric bag cost total for sum row, but display stacked lines in body.
-        # Replace bag cost display cell already done in _finance_view_row_values.
         values.append(bool(finance.order_is_returned(order)))
         rows.append(values)
+        row_notes.append(finance.build_finance_export_cell_notes(order))
 
-    _write_finance_table_sheet(workbook, columns=columns, rows=rows)
+    _write_finance_table_sheet(workbook, columns=columns, rows=rows, row_notes=row_notes)
 
 
 def _finance_view_to_xlsx_bytes(orders: list[dict[str, Any]]) -> bytes:
@@ -1640,6 +1641,7 @@ def _finance_table_payload_to_xlsx_bytes(payload: dict[str, Any]) -> bytes:
             {
                 "id": col_id,
                 "label": label,
+                "label_zh": column.get("label_zh") or FINANCE_VIEW_ZH_BY_ID.get(col_id, ""),
                 "numeric": bool(column.get("numeric")),
                 "wrap": bool(column.get("wrap")),
                 "sum_text": column.get("sum_text"),

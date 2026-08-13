@@ -949,6 +949,95 @@ def _build_tiktok_finance_detail(row: dict[str, Any]) -> dict[str, Any]:
 
 NOTE_DETAIL_SEPARATOR = "----------------------"
 
+# Chinese labels for finance Excel cell notes (section titles + TikTok breakdown lines)
+FINANCE_NOTE_LABEL_ZH: dict[str, str] = {
+    "Net sales": "销售额",
+    "Shipping": "运费",
+    "Fees": "费用",
+    "Adjustment": "平台审计",
+    "Adjustment reason": "调整原因",
+    "Related order ID": "相关订单号",
+    "Final payout": "最终收入",
+    "Bag cost": "包成本",
+    "Returned order: bag cost = 0": "退货订单：包成本 = 0",
+    "Other fee": "其他费用",
+    "Shipping label price": "面单费用",
+    "Xingxing payout": "星星收入",
+    "Final payout - Bag cost": "最终收入 - 包成本",
+    "Total settlement amount": "总结算金额",
+    "Gross sales": "毛销售额",
+    "Gross sales refund": "毛销售额退款",
+    "Seller discount": "卖家折扣",
+    "TikTok Shop shipping fee": "TikTok Shop 运费",
+    "Customer-paid shipping fee": "顾客支付运费",
+    "Customer-paid shipping fee refund": "顾客支付运费退款",
+    "Return shipping fee": "退货运费",
+    "Return shipping fee reimbursement": "退货运费报销",
+    "Referral fee": "佣金",
+    "Refund administration fee": "退款手续费",
+    "Affiliate Commission": "联盟佣金",
+    "Affiliate partner commission": "联盟伙伴佣金",
+    "Affiliate Shop Ads commission": "联盟 Shop Ads 佣金",
+    "TikTok Shop Partner commission": "TikTok Shop 合作方佣金",
+    "Co-funded promotion (seller-funded)": "联合促销（卖家出资）",
+    "Smart Promotion fee tax": "智能促销费用税",
+    "Co-funded creator bonus": "联合创作者奖励",
+    "Affiliate commission deposit": "联盟佣金保证金",
+    "Affiliate commission refund": "联盟佣金退款",
+    "Affiliate Partner shop ads commission": "联盟伙伴商店广告佣金",
+    "Campaign service fee": "活动服务费",
+    "Campaign resource fee": "活动资源费",
+    "Sales tax on referral fees": "佣金销售税",
+    "Smart Promotion fee": "智能促销费",
+    "Managed service plan (Sales tax)": "托管服务计划（销售税）",
+    "Managed service plan (Per order fee)": "托管服务计划（按单收费）",
+    "Co-funded Promotion campaign period fee": "联合促销活动期费用",
+    "Smart Promotion campaign period fee": "智能促销活动期费用",
+    "Co-funded Promotion campaign period fee sales tax": "联合促销活动期费用销售税",
+    "Smart Promotion campaign period fee sales tax": "智能促销活动期费用销售税",
+    "GMV Max coupon": "GMV Max 优惠券",
+    "GMV Max coupon sales tax": "GMV Max 优惠券销售税",
+    "GMV Max ad fee": "GMV Max 广告费",
+    "Category-led campaign fee": "类目活动费",
+    "Category-led campaign fee tax": "类目活动费税",
+    "Brand Amplification Program commission fee": "品牌放大计划佣金",
+    "Brand Amplification Program fee tax": "品牌放大计划费用税",
+    "Brand campaign fee": "品牌活动费",
+    "Brand campaign fee tax": "品牌活动费税",
+    "Adjustment amount": "调整金额",
+    "Customer payment": "顾客付款",
+    "Customer refund": "顾客退款",
+    "Seller co-funded voucher discount": "卖家联合优惠券折扣",
+    "Seller co-funded voucher discount refund": "卖家联合优惠券折扣退款",
+    "Platform discounts": "平台折扣",
+    "Platform discounts refund": "平台折扣退款",
+    "Platform co-funded voucher discounts": "平台联合优惠券折扣",
+    "Platform co-funded voucher discounts refund": "平台联合优惠券折扣退款",
+    "Ads referral fee discount": "广告佣金折扣",
+    "Sales tax payment": "销售税支付",
+    "Sales tax refund": "销售税退款",
+    "Retail delivery fee payment": "零售配送费支付",
+    "Retail delivery fee refund": "零售配送费退款",
+    "Customer-paid shipping fee before discounts": "折扣前顾客支付运费",
+    "Seller shipping fee discount": "卖家运费折扣",
+}
+
+
+def _finance_note_label_zh(label: str) -> str:
+    text = str(label or "").strip()
+    if not text:
+        return ""
+    return FINANCE_NOTE_LABEL_ZH.get(text, text)
+
+
+def _localize_note_lines(lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for line in lines or []:
+        item = dict(line)
+        item["label"] = _finance_note_label_zh(str(item.get("label") or ""))
+        out.append(item)
+    return out
+
 
 def _format_note_amount(amount: float | None, currency: str) -> str:
     if amount is None:
@@ -966,12 +1055,12 @@ def _format_breakdown_note(
     *,
     extra_text_lines: list[tuple[str, str]] | None = None,
 ) -> str:
-    parts: list[str] = [section_label]
+    parts: list[str] = [_finance_note_label_zh(section_label)]
     if total is not None:
         parts.append(_format_note_amount(total, currency))
 
     detail_parts: list[str] = []
-    for line in lines:
+    for line in _localize_note_lines(lines):
         amount = _to_float(line.get("amount"))
         if amount is not None and amount != 0:
             detail_parts.append(str(line.get("label") or ""))
@@ -980,7 +1069,7 @@ def _format_breakdown_note(
         text = str(value or "").strip()
         if not text:
             continue
-        detail_parts.append(label)
+        detail_parts.append(_finance_note_label_zh(label))
         detail_parts.append(text)
 
     if detail_parts:
@@ -990,7 +1079,7 @@ def _format_breakdown_note(
 
 
 def build_finance_export_cell_notes(order: dict[str, Any]) -> dict[str, str]:
-    """Build Excel cell comment text for finance export columns."""
+    """Build Excel cell comment text for finance export columns (Chinese)."""
     prefix = platform_prefix(str(order.get("platform") or ""))
     notes: dict[str, str] = {}
 
@@ -1035,12 +1124,12 @@ def build_finance_export_cell_notes(order: dict[str, Any]) -> dict[str, str]:
             extra_text_lines=adjustment_extra,
         )
 
-        payout_parts = ["Final payout"]
+        payout_parts = [_finance_note_label_zh("Final payout")]
         final_payout = _to_float(detail.get("summary", {}).get("final_payout"))
         if final_payout is not None:
             payout_parts.append(_format_note_amount(final_payout, currency))
         payout_detail_parts: list[str] = []
-        for line in (detail.get("payout_calculation") or {}).get("lines") or []:
+        for line in _localize_note_lines((detail.get("payout_calculation") or {}).get("lines") or []):
             payout_detail_parts.append(str(line.get("label") or ""))
             payout_detail_parts.append(_format_note_amount(_to_float(line.get("amount")), currency))
         if payout_detail_parts:
@@ -1048,7 +1137,7 @@ def build_finance_export_cell_notes(order: dict[str, Any]) -> dict[str, str]:
             payout_parts.extend(payout_detail_parts)
         notes["finance_final_payout"] = "\n".join(part for part in payout_parts if part)
 
-    bag_lines: list[str] = ["Bag cost"]
+    bag_lines: list[str] = [_finance_note_label_zh("Bag cost")]
     bag_detail_lines: list[str] = []
     bag_total = 0.0
     found_bag = False
@@ -1071,7 +1160,7 @@ def build_finance_export_cell_notes(order: dict[str, Any]) -> dict[str, str]:
         else:
             bag_detail_lines.append(f"{sku} x{qty}")
     if order_is_returned(order):
-        bag_detail_lines.append("Returned order: bag cost = 0")
+        bag_detail_lines.append(_finance_note_label_zh("Returned order: bag cost = 0"))
     elif found_bag:
         currency = str(order.get("currency") or "USD")
         bag_lines.insert(1, _format_note_amount(round(bag_total, 2), currency))
@@ -1086,10 +1175,10 @@ def build_finance_export_cell_notes(order: dict[str, Any]) -> dict[str, str]:
         currency = str(order.get("currency") or "USD")
         notes["finance_other_fee"] = "\n".join(
             [
-                "Other fee",
+                _finance_note_label_zh("Other fee"),
                 _format_note_amount(round(abs(label_price), 2), currency),
                 NOTE_DETAIL_SEPARATOR,
-                "Shipping label price",
+                _finance_note_label_zh("Shipping label price"),
                 _format_note_amount(label_price, currency),
             ]
         )
@@ -1100,10 +1189,10 @@ def build_finance_export_cell_notes(order: dict[str, Any]) -> dict[str, str]:
     if payout is not None:
         currency = str(order.get("currency") or "USD")
         xingxing_parts = [
-            "Xingxing payout",
+            _finance_note_label_zh("Xingxing payout"),
             _format_note_amount(xingxing, currency),
             NOTE_DETAIL_SEPARATOR,
-            "Final payout - Bag cost",
+            _finance_note_label_zh("Final payout - Bag cost"),
             f"{_format_note_amount(payout, currency)} - "
             f"{_format_note_amount(bag or 0, currency)}",
         ]

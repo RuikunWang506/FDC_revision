@@ -975,55 +975,106 @@ def get_sku_sold_price(sku):
         except:
             pass
 
+_US_STATES = set(
+    "AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO "
+    "MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split()
+)
+_ZIP_LINE_RE = re.compile(r"^(\d{5}(?:-\d{4})?)$")
+_ZIP_INLINE_RE = re.compile(r"(\d{5}(?:-\d{4})?)")
+_STREET_RE = re.compile(
+    r"(^\d+\s)|(\b(AVE|AVENUE|ST|STREET|RD|ROAD|HWY|HIGHWAY|BLVD|DR|DRIVE|"
+    r"LN|LANE|PKWY|PARKWAY|CT|COURT|WAY|PL|PLACE)\b)",
+    re.IGNORECASE,
+)
+
+
 def extract_clean_address(text_content):
-    ship_to_match = re.search(r"SHIP TO\s*:\s*\d*\s*(.*?)(?:TOTAL UNITS:|Ship to Arrive:)", text_content, re.DOTALL)
+    """Parse Loris SHIP TO even when PDF text splits city / state / ZIP across lines."""
+    ship_to_match = re.search(
+        r"SHIP TO\s*:\s*(.*?)(?:TOTAL UNITS:|Ship to Arrive:)",
+        text_content,
+        re.DOTALL | re.IGNORECASE,
+    )
     if not ship_to_match:
         return "N/A"
-    
-    full_address_block = ship_to_match.group(1).strip()
-    lines = [line.strip() for line in full_address_block.split('\n')]
-    lines = [line for line in lines if line and line != "US" and "Attn: Lori's Gifts" not in line]
-    
-    company = lines[0] if len(lines) > 0 else ""
-    street = lines[1] if len(lines) > 1 else ""
-    city = ""
-    state = ""
-    zip_candidate = ""
-    
-    i = 2
-    while i < len(lines):
-        line = lines[i]
-        if re.fullmatch(r"[A-Z]{2}", line):
-            state = line
-        elif line.isdigit():
-            zip_candidate = zip_candidate + line if zip_candidate else line
-        elif ',' in line:
-            parts = line.split(',')
-            city = parts[0].strip()
-            if len(parts) > 1:
-                candidate = parts[1].strip()
-                if candidate.endswith('-'):
-                    j = i + 1
-                    while j < len(lines) and (not lines[j] or not lines[j].isdigit()):
-                        j += 1
-                    if j < len(lines) and lines[j].isdigit():
-                        candidate = candidate + lines[j].strip()
-                        lines[j] = ""
-                elif len(candidate) not in [5, 9]:
-                    j = i + 1
-                    while j < len(lines) and (not lines[j] or not lines[j].isdigit()):
-                        j += 1
-                    if j < len(lines) and lines[j].isdigit():
-                        candidate = candidate + lines[j].strip()
-                        lines[j] = ""
-                zip_candidate = candidate
-        i += 1
 
-    if zip_candidate.isdigit() and len(zip_candidate) == 9:
-        zip_candidate = f"{zip_candidate[:5]}-{zip_candidate[5:]}"
-    
-    final_address = [company, street, f"{city}, {state} {zip_candidate}".strip()]
-    return "\n".join(line for line in final_address if line)
+    raw_lines = [line.strip() for line in ship_to_match.group(1).splitlines()]
+    lines = []
+    for line in raw_lines:
+        if not line:
+            continue
+        if line.upper() in ("US", "USA"):
+            continue
+        if "attn:" in line.lower() and "lori" in line.lower():
+            continue
+        lines.append(line)
+    if not lines:
+        return "N/A"
+
+    zip_code = ""
+    state = ""
+    city = ""
+    street = ""
+    leftover = []
+
+    for line in lines:
+        if re.fullmatch(r"\d{3,5}", line):
+            continue
+        zip_only = _ZIP_LINE_RE.match(line)
+        if zip_only:
+            zip_code = zip_only.group(1)
+            continue
+        if re.fullmatch(r"[A-Z]{2}", line) and line in _US_STATES:
+            state = line
+            continue
+        if _STREET_RE.search(line) and re.match(r"^\d+\s+\S", line) and not street:
+            street = line
+            continue
+        leftover.append(line)
+
+    company_parts = []
+    for line in leftover:
+        work = line
+        inline_zip = _ZIP_INLINE_RE.search(work)
+        if inline_zip and not zip_code:
+            zip_code = inline_zip.group(1)
+            work = (work[:inline_zip.start()] + work[inline_zip.end():]).strip(" ,")
+        if not work:
+            continue
+        if "," in work:
+            left, right = [part.strip() for part in work.split(",", 1)]
+            if left:
+                city = left
+            tokens = right.split()
+            if tokens and re.fullmatch(r"[A-Z]{2}", tokens[0]) and tokens[0] in _US_STATES:
+                state = state or tokens[0]
+            continue
+        tokens = work.split()
+        if len(tokens) >= 2 and re.fullmatch(r"[A-Z]{2}", tokens[-1]) and tokens[-1] in _US_STATES:
+            city = city or " ".join(tokens[:-1])
+            state = state or tokens[-1]
+            continue
+        company_parts.append(work)
+
+    company = company_parts[0] if company_parts else (lines[0] if lines else "")
+    if not street:
+        for line in lines:
+            if _STREET_RE.search(line) and re.match(r"^\d+\s+\S", line):
+                street = line
+                break
+
+    if zip_code.isdigit() and len(zip_code) == 9:
+        zip_code = f"{zip_code[:5]}-{zip_code[5:]}"
+
+    if city and state:
+        city_line = f"{city}, {state} {zip_code}".strip()
+    elif city:
+        city_line = f"{city} {zip_code}".strip()
+    else:
+        city_line = f"{state} {zip_code}".strip()
+
+    return "\n".join(part for part in (company, street, city_line) if part)
+
 
 def process_pdf(pdf_content):
     memory_file = io.BytesIO()
@@ -1711,6 +1762,79 @@ def generate_stickers_api():
     except Exception as e:
         current_app.logger.error("Error generating stickers: %s", str(e), exc_info=True)
         return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/dymo_sticker_preview", methods=["POST"])
+def dymo_sticker_preview():
+    """JSON preview of DYMO 1933084 labels (barcode on top, SKU on bottom)."""
+    if 'username' not in session:
+        return jsonify({'ok': False, 'error': 'Not authenticated'}), 401
+
+    try:
+        input_data = request.form.get("input_data")
+        validated_input_data, validation_error = _validate_loris_sticker_input(input_data)
+        if validation_error:
+            return jsonify({'ok': False, 'error': validation_error}), 400
+
+        from py.loris.loris_sticker import (
+            DYMO_PRINTER_DEFAULT,
+            build_dymo_preview,
+            resolve_dymo_printer_name,
+        )
+
+        items, total_labels = build_dymo_preview(validated_input_data)
+        printer = os.getenv("DYMO_LABEL_PRINTER", DYMO_PRINTER_DEFAULT).strip()
+        printer_warning = None
+        try:
+            printer = resolve_dymo_printer_name()
+        except Exception as exc:
+            printer_warning = str(exc)
+
+        return jsonify({
+            'ok': True,
+            'items': items,
+            'total_labels': total_labels,
+            'printer': printer,
+            'label': '1933084',
+            'label_size': '2-1/4 × 1-1/4 in',
+            'printer_warning': printer_warning,
+        })
+    except Exception as e:
+        current_app.logger.error("Error building Dymo sticker preview: %s", str(e), exc_info=True)
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/print_dymo_stickers", methods=["POST"])
+def print_dymo_stickers():
+    """Generate 2.25×1.25 labels and send them to the server's Dymo LabelWriter."""
+    if 'username' not in session:
+        return jsonify({'ok': False, 'error': 'Not authenticated'}), 401
+
+    try:
+        input_data = request.form.get("input_data")
+        validated_input_data, validation_error = _validate_loris_sticker_input(input_data)
+        if validation_error:
+            return jsonify({'ok': False, 'error': validation_error}), 400
+
+        from py.loris.loris_sticker import generate_dymo_labels_pdf, print_dymo_pdf, resolve_dymo_printer_name
+
+        printer = resolve_dymo_printer_name()
+        pdf_bytes, total_labels = generate_dymo_labels_pdf(validated_input_data)
+        current_app.logger.info(
+            "%s print_dymo_stickers labels=%s printer=%s",
+            session['username'],
+            total_labels,
+            printer,
+        )
+        print_dymo_pdf(pdf_bytes, printer, current_app.logger)
+        return jsonify({
+            'ok': True,
+            'printer': printer,
+            'total_labels': total_labels,
+        })
+    except Exception as e:
+        current_app.logger.error("Error printing Dymo stickers: %s", str(e), exc_info=True)
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 @lori_automation_bp.route("/loris_shipping", methods=["GET"])
 def loris_shipping():
@@ -3911,74 +4035,32 @@ def download_original_pdf(po_number):
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        # Get the base download path
-        base_path = email_config['download_path']
-        
-        if not os.path.exists(base_path):
-            return jsonify({'error': 'PDF directory not found'}), 404
-        
-        # Search for PDF file containing this PO number
-        # First, try to find the PO number in the database to get batch date
-        found_file = None
         batch_date = None
-        
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
-            
-            # Get batch date for this PO number
             cursor.execute("""
                 SELECT DISTINCT batch_date 
-                FROM loris_orders 
+                FROM lori_orders 
                 WHERE po_number = %s
                 LIMIT 1
             """, (po_number,))
-            
             result = cursor.fetchone()
             if result:
                 batch_date = result['batch_date']
-                
         except Error as e:
             current_app.logger.error(f"Database error when looking up batch date: {str(e)}")
         finally:
             if 'connection' in locals() and connection.is_connected():
                 cursor.close()
                 connection.close()
-        
-        # Search strategy 1: If we have batch date, look in that specific directory first
-        if batch_date:
-            batch_dir = os.path.join(base_path, batch_date)
-            if os.path.exists(batch_dir):
-                for filename in os.listdir(batch_dir):
-                    if filename.lower().endswith('.pdf'):
-                        filepath = os.path.join(batch_dir, filename)
-                        # Check if PO number appears in the PDF content or filename
-                        if po_number in filename or check_pdf_contains_po(filepath, po_number):
-                            found_file = filepath
-                            break
-        
-        # Search strategy 2: If not found in batch dir, search all directories
-        if not found_file:
-            for item in os.listdir(base_path):
-                item_path = os.path.join(base_path, item)
-                if os.path.isdir(item_path):
-                    for filename in os.listdir(item_path):
-                        if filename.lower().endswith('.pdf'):
-                            filepath = os.path.join(item_path, filename)
-                            # Check if PO number appears in the PDF content or filename
-                            if po_number in filename or check_pdf_contains_po(filepath, po_number):
-                                found_file = filepath
-                                break
-                    if found_file:
-                        break
-        
+
+        found_file = _find_original_pdf_path(po_number, batch_date)
         if not found_file:
             return jsonify({'error': f'Original PDF not found for PO {po_number}'}), 404
         
-        # Generate download filename
         original_filename = os.path.basename(found_file)
         download_name = f"{po_number}_original_{original_filename}"
-        
         return send_file(found_file, as_attachment=True, download_name=download_name)
         
     except Exception as e:

@@ -2904,9 +2904,12 @@
         if (!raw) return '';
         const normalized = String(raw).replace(/<br\s*\/?>/gi, '\n');
         const lines = normalized.split('\n').map(l => l.trim()).filter(Boolean);
+        const streetRe = /^\d+\s+\S/i;
+        const streetWordRe = /\b(rd|road|st|street|ave|avenue|blvd|dr|drive|ln|lane|ct|court|way|pl|place|pkwy|hwy|highway)\b/i;
         for (let i = lines.length - 1; i >= 0; i--) {
             const line = lines[i];
             if (/^phone\s*:/i.test(line)) continue;
+            if (streetRe.test(line) && streetWordRe.test(line)) continue;
 
             const cityStZip = line.match(/^([^,]+),\s*([A-Za-z]{2})\s+(\d{5})(?:-\d{4})?\s*$/);
             if (cityStZip) return cityStZip[3];
@@ -2920,8 +2923,8 @@
             const stZipOnly = line.match(/^([A-Za-z]{2})\s+(\d{5})(?:-\d{4})?\s*$/);
             if (stZipOnly) return stZipOnly[2];
 
-            const zip = normalizeZip(line);
-            if (zip && !/\(\d{3}\)/.test(line)) return zip;
+            const bareZip = line.match(/^(\d{5})(?:-\d{4})?$/);
+            if (bareZip) return bareZip[1];
         }
         return '';
     }
@@ -3961,7 +3964,12 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    let msg = `HTTP ${response.status}: ${response.statusText}`;
+                    try {
+                        const err = await response.json();
+                        if (err && err.error) msg = err.error;
+                    } catch (e) { /* ignore */ }
+                    throw new Error(msg);
                 }
                 
                 // Check if the response is actually a PDF or an error message

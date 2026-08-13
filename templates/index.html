@@ -1188,6 +1188,21 @@
           </div>
         </a>
         {%- endif %}
+
+        {%- if tool_allowed('print_center') %}
+        <a href="{{ url_for('print_center.print_center_page') }}" class="tool-card" data-category="toolkit" data-tool="print_center">
+          <div class="card-header">
+            <i class="fas fa-print"></i>
+            <h3>{{ te('打印中心') }}</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'print_center')"></i>
+          </div>
+          <p>{{ te('Upload PDF and print to warehouse label, Dymo, or Front Office Big') }}</p>
+          <div class="card-footer">
+            <span class="category">{{ _('dashboard.category.utilities') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
+          </div>
+        </a>
+        {%- endif %}
         
         <!-- Logistics & warehouse -->
         {%- if tool_allowed('boat') %}

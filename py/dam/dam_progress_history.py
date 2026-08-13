@@ -151,8 +151,12 @@ def record_completed_run(
     inact_capped, inact_total = _cap_items(inactivated)
     st = stats or {}
     summary = (
-        f"Added {st.get('total_added', 0)}, updated {st.get('total_updated', 0)}, "
-        f"skipped {st.get('total_skipped', 0)}, errors {st.get('total_errors', 0)}"
+        f"Dropbox found {st.get('fetch_candidates', 0)} new/modified, "
+        f"organized {st.get('fetch_organized', 0)}, "
+        f"created {st.get('fetch_db_added', 0)} DB records; "
+        f"DAM verified {st.get('total_processed', 0)}, "
+        f"unchanged {st.get('total_skipped', 0)}, "
+        f"errors {st.get('fetch_errors', 0) + st.get('total_errors', 0)}"
     )
     if cleanup_count:
         summary += f"; cleanup marked inactive: {cleanup_count}"

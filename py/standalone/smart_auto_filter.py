@@ -68,6 +68,29 @@ class SmartAutoFilter:
         
         # Database connection
         self.db_conn = None
+        self.run_stats = {
+            'candidates': 0,
+            'organized': 0,
+            'already_organized': 0,
+            'db_added': 0,
+            'db_updated': 0,
+            'db_unchanged': 0,
+            'errors': 0,
+        }
+
+    def print_run_summary(self):
+        """Emit human-readable and machine-readable Dropbox import totals."""
+        stats = self.run_stats
+        print("\nDropbox import results:")
+        print(f"  - New/modified files found: {stats['candidates']}")
+        print(f"  - New files organized:      {stats['organized']}")
+        print(f"  - Already organized:        {stats['already_organized']}")
+        print(f"  - DB records created:       {stats['db_added']}")
+        print(f"  - DB records updated:       {stats['db_updated']}")
+        print(f"  - Import errors:            {stats['errors']}")
+        print("FETCH_SUMMARY|" + "|".join(
+            f"{key}={value}" for key, value in stats.items()
+        ))
     
     def get_db_connection(self):
         """Get or create database connection"""
@@ -159,8 +182,10 @@ class SmartAutoFilter:
                             (source, datetime.now(), existing_id)
                         )
                         conn.commit()
+                        self.run_stats['db_updated'] += 1
                         print(f"  ✏️  Updated source for {filename}: {existing_source} → {source}")
                     else:
+                        self.run_stats['db_unchanged'] += 1
                         print(f"  ℹ️  {filename} already in DB with correct source ({source}), skipping")
                     return True
                 
@@ -177,6 +202,7 @@ class SmartAutoFilter:
                     source, datetime.now(), existing_id
                 ))
                 conn.commit()
+                self.run_stats['db_updated'] += 1
                 print(f"  ✏️  Updated DB record for {filename} (hash changed, source: {source})")
                 return True
             
@@ -188,6 +214,7 @@ class SmartAutoFilter:
             duplicate = cursor.fetchone()
             
             if duplicate:
+                self.run_stats['db_unchanged'] += 1
                 print(f"  ℹ️  Content already in DB with {source} source, skipping")
                 return True
             
@@ -205,10 +232,12 @@ class SmartAutoFilter:
                 datetime.now(), datetime.now()
             ))
             conn.commit()
+            self.run_stats['db_added'] += 1
             print(f"  ✅ Added to DB: {sku} - {filename}")
             return True
             
         except Exception as e:
+            self.run_stats['errors'] += 1
             print(f"❌ DB sync error for {filename}: {e}")
             try:
                 conn.rollback()
@@ -352,6 +381,7 @@ class SmartAutoFilter:
             
             # Check if already processed
             if self.check_if_already_processed(file_path, sku, classification):
+                self.run_stats['already_organized'] += 1
                 print(f"⏭️  Already processed: {sku} - {Path(file_path).name}")
                 return True
             
@@ -378,6 +408,7 @@ class SmartAutoFilter:
             # If main doesn't exist, copy as main
             if not main_path.exists():
                 shutil.copy2(source_path, str(main_path))
+                self.run_stats['organized'] += 1
                 print(f"✅ New catalog: {sku}.jpg")
                 # Sync to database
                 self.sync_to_database(source_path, sku, 'catalog', main_path)
@@ -387,12 +418,14 @@ class SmartAutoFilter:
             version_num = self.get_next_version_fast(sku)
             version_path = Path(self.catalog_dest) / f"{sku}_v{version_num}.jpg"
             shutil.copy2(source_path, str(version_path))
+            self.run_stats['organized'] += 1
             print(f"✅ Catalog version: {sku}_v{version_num}.jpg")
             # Sync to database
             self.sync_to_database(source_path, sku, 'catalog', version_path)
             return True
             
         except Exception as e:
+            self.run_stats['errors'] += 1
             print(f"❌ Catalog processing error: {e}")
             return False
     
@@ -417,12 +450,14 @@ class SmartAutoFilter:
                 counter += 1
             
             shutil.copy2(source_path, str(dest_path))
+            self.run_stats['organized'] += 1
             print(f"✅ Big picture: {sku}/{dest_path.name}")
             # Sync to database
             self.sync_to_database(source_path, sku, 'big_picture', dest_path)
             return True
             
         except Exception as e:
+            self.run_stats['errors'] += 1
             print(f"❌ Big picture processing error: {e}")
             return False
     
@@ -469,9 +504,11 @@ class SmartAutoFilter:
         
         # Get only new/modified files
         new_files = self.get_new_or_modified_files()
+        self.run_stats['candidates'] = len(new_files)
         
         if not new_files:
             print("✅ No new files to process")
+            self.print_run_summary()
             log_event('info', 'Smart Auto-Filter completed: No new files to process')
             return
         
@@ -516,6 +553,7 @@ class SmartAutoFilter:
         print(f"📖 Catalog images: {catalog_count}")
         print(f"🖼️  Big pictures: {big_picture_count}")
         print(f"⚡ Processing time: Minimal (incremental)")
+        self.print_run_summary()
         
         log_event('info', f'Smart Auto-Filter completed: Processed={processed_count}, Catalog={catalog_count}, BigPicture={big_picture_count}')
         
@@ -533,6 +571,8 @@ class SmartAutoFilter:
 
         if not os.path.exists(self.dropbox_path):
             print(f"⚠️  Dropbox path not accessible: {self.dropbox_path}")
+            self.run_stats['errors'] += 1
+            self.print_run_summary()
             log_event('error', f'Smart Auto-Filter: Dropbox path not accessible: {self.dropbox_path}')
             return
 
@@ -546,6 +586,7 @@ class SmartAutoFilter:
                 if Path(file_path).suffix.lower() not in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}:
                     continue
 
+                self.run_stats['candidates'] += 1
                 sku = self.extract_sku_fast(file_path)
                 classification = self.classify_image_fast(file_path)
 
@@ -578,6 +619,7 @@ class SmartAutoFilter:
         print(f"📊 Total processed: {processed_count}")
         print(f"📖 Catalog images: {catalog_count}")
         print(f"🖼️  Big pictures: {big_picture_count}")
+        self.print_run_summary()
         log_event('info', f'Smart Auto-Filter Full Scan completed: Processed={processed_count}, Catalog={catalog_count}, BigPicture={big_picture_count}')
         sys.stdout.flush()
         sys.stderr.flush()

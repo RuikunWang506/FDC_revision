@@ -659,6 +659,90 @@ def transfer_container_po_to_fdc(
         conn.close()
 
 
+def _sync_plog_received_for_skus(cursor, container_number: str, skus: list[str]) -> int:
+    """Set plog.hdl_chg = log_qty for received SKUs so product-detail Ocean drops them."""
+    normalized = str(container_number).strip().upper()
+    updated = 0
+    for sku in skus:
+        sku_key = str(sku).strip()
+        if not sku_key:
+            continue
+        cursor.execute(
+            """
+            UPDATE dbo.plog
+            SET hdl_chg = ISNULL(log_qty, 0)
+            WHERE RTRIM(pur_num) = ?
+              AND RTRIM(prod_cd) = ?
+              AND ISNULL(hdl_chg, 0) = 0
+              AND ISNULL(log_qty, 0) > 0
+            """,
+            (normalized, sku_key),
+        )
+        updated += int(cursor.rowcount or 0)
+    return updated
+
+
+def _sync_plog_ocean_for_skus(cursor, container_number: str, skus: list[str]) -> int:
+    """Clear plog.hdl_chg when un-landing so lines return to Ocean."""
+    normalized = str(container_number).strip().upper()
+    updated = 0
+    for sku in skus:
+        sku_key = str(sku).strip()
+        if not sku_key:
+            continue
+        cursor.execute(
+            """
+            UPDATE dbo.plog
+            SET hdl_chg = 0
+            WHERE RTRIM(pur_num) = ?
+              AND RTRIM(prod_cd) = ?
+              AND ISNULL(hdl_chg, 0) <> 0
+            """,
+            (normalized, sku_key),
+        )
+        updated += int(cursor.rowcount or 0)
+    return updated
+
+
+def _container_has_received_plog(cursor, container_number: str) -> bool:
+    """True if OMS already wrote receive lines (hdl_chg>0) for this PO."""
+    cursor.execute(
+        """
+        SELECT TOP 1 1
+        FROM dbo.plog
+        WHERE RTRIM(pur_num) = ?
+          AND ISNULL(hdl_chg, 0) > 0
+        """,
+        (str(container_number).strip().upper(),),
+    )
+    return cursor.fetchone() is not None
+
+
+def _sync_plog_for_fully_received_container(cursor, container_number: str) -> int:
+    """Backfill plog.hdl_chg for SKUs already fully received in bin_pur but still ocean in plog.
+
+    Skips POs that already have OMS receive plog rows (hdl_chg>0) to avoid
+    double-counting Hist-Received.
+    """
+    normalized = str(container_number).strip().upper()
+    if _container_has_received_plog(cursor, normalized):
+        return 0
+    cursor.execute(
+        """
+        SELECT RTRIM(prod_cd)
+        FROM dbo.bin_pur
+        WHERE RTRIM(pur_num) = ?
+          AND pur_cd = ?
+        GROUP BY RTRIM(prod_cd)
+        HAVING SUM(ISNULL(po_qty, 0)) > 0
+           AND SUM(ISNULL(rcvd_qty, 0)) >= SUM(ISNULL(po_qty, 0))
+        """,
+        (normalized, PO_LINE_PUR_CD),
+    )
+    skus = [str(row[0]).strip() for row in cursor.fetchall() if row[0]]
+    return _sync_plog_received_for_skus(cursor, normalized, skus)
+
+
 def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
     """Receive open PO lines at 827: bin_pur RCVD_QTY → PO_QTY and update inv_data stock."""
     normalized = str(container_number).strip().upper()
@@ -667,6 +751,7 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         "container": normalized,
         "lines_received": 0,
         "qty_received": 0.0,
+        "plog_synced": 0,
         "received_date": datetime.now().strftime("%m/%d/%Y"),
         "already_landed": False,
         "errors": [],
@@ -694,8 +779,13 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         )
         lines = cursor.fetchall()
         if not lines:
+            # Already landed in bin_pur — still repair plog if mark-landed skipped it earlier.
+            plog_synced = _sync_plog_for_fully_received_container(cursor, normalized)
+            if plog_synced:
+                conn.commit()
             result["success"] = True
             result["already_landed"] = True
+            result["plog_synced"] = plog_synced
             return result
 
         erp_today = erp_date(cursor)
@@ -746,12 +836,14 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
             lines_received += 1
             qty_received += receive_delta
 
+        plog_synced = _sync_plog_received_for_skus(cursor, normalized, affected_skus)
         _recalc_on_order_qty_for_skus(cursor, affected_skus)
 
         conn.commit()
         result["success"] = True
         result["lines_received"] = lines_received
         result["qty_received"] = float(qty_received)
+        result["plog_synced"] = plog_synced
         return result
     except Exception as exc:
         conn.rollback()
@@ -769,6 +861,7 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
         "container": normalized,
         "lines_reverted": 0,
         "qty_reverted": 0.0,
+        "plog_synced": 0,
         "already_ocean": False,
         "errors": [],
     }
@@ -842,12 +935,98 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
             lines_reverted += 1
             qty_reverted += rcvd_qty
 
+        plog_synced = _sync_plog_ocean_for_skus(cursor, normalized, affected_skus)
         _recalc_on_order_qty_for_skus(cursor, affected_skus)
 
         conn.commit()
         result["success"] = True
         result["lines_reverted"] = lines_reverted
         result["qty_reverted"] = float(qty_reverted)
+        result["plog_synced"] = plog_synced
+        return result
+    except Exception as exc:
+        conn.rollback()
+        result["errors"].append(str(exc))
+        return result
+    finally:
+        conn.close()
+
+
+def backfill_plog_hdl_chg_for_landed_containers(
+    container_numbers: list[str] | None = None,
+) -> dict[str, Any]:
+    """Set plog.hdl_chg for boat-landed containers still ocean in plog.
+
+    Only touches POs with no existing hdl_chg>0 lines, so native OMS receives
+    (which add a second plog row) are not double-counted in Hist-Received.
+    """
+    result: dict[str, Any] = {
+        "success": False,
+        "containers_checked": 0,
+        "containers_fixed": 0,
+        "containers_skipped_oms_receive": 0,
+        "plog_lines_updated": 0,
+        "fixed": [],
+        "errors": [],
+    }
+
+    conn = get_sql_server_connection_fdc()
+    try:
+        cursor = conn.cursor()
+        if container_numbers:
+            targets = sorted(
+                {str(c).strip().upper() for c in container_numbers if str(c).strip()}
+            )
+        else:
+            # Boat / Dropbox container ids (F###### / L######), fully received in bin_pur,
+            # with open plog lines and no OMS receive plog rows yet.
+            cursor.execute(
+                f"""
+                SELECT RTRIM(bp.pur_num)
+                FROM dbo.bin_pur bp
+                WHERE bp.pur_cd = {PO_LINE_PUR_CD}
+                  AND (
+                      RTRIM(bp.pur_num) LIKE 'F[0-9]%'
+                      OR RTRIM(bp.pur_num) LIKE 'L[0-9]%'
+                  )
+                GROUP BY RTRIM(bp.pur_num)
+                HAVING SUM(ISNULL(bp.po_qty, 0)) > 0
+                   AND SUM(ISNULL(bp.rcvd_qty, 0)) >= SUM(ISNULL(bp.po_qty, 0))
+                   AND NOT EXISTS (
+                       SELECT 1
+                       FROM dbo.plog pl
+                       WHERE RTRIM(pl.pur_num) = RTRIM(bp.pur_num)
+                         AND ISNULL(pl.hdl_chg, 0) > 0
+                   )
+                   AND EXISTS (
+                       SELECT 1
+                       FROM dbo.plog pl2
+                       WHERE RTRIM(pl2.pur_num) = RTRIM(bp.pur_num)
+                         AND ISNULL(pl2.hdl_chg, 0) = 0
+                         AND ISNULL(pl2.log_qty, 0) > 0
+                   )
+                """
+            )
+            targets = [str(row[0]).strip().upper() for row in cursor.fetchall() if row[0]]
+
+        result["containers_checked"] = len(targets)
+        for container in targets:
+            try:
+                if _container_has_received_plog(cursor, container):
+                    result["containers_skipped_oms_receive"] += 1
+                    continue
+                updated = _sync_plog_for_fully_received_container(cursor, container)
+                if updated:
+                    result["containers_fixed"] += 1
+                    result["plog_lines_updated"] += updated
+                    result["fixed"].append(
+                        {"container": container, "plog_lines_updated": updated}
+                    )
+            except Exception as exc:
+                result["errors"].append(f"{container}: {exc}")
+
+        conn.commit()
+        result["success"] = not result["errors"]
         return result
     except Exception as exc:
         conn.rollback()

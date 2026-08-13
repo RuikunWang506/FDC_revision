@@ -509,18 +509,18 @@ class DAMSyncServiceV2:
         elapsed = self.stats['end_time'] - self.stats['start_time']
         
         print("\n" + "="*60)
-        print("SYNC SUMMARY")
+        print("DAM RECONCILIATION SUMMARY")
         print("="*60)
         # Persistent log of final stats
         try:
-            log_event('info', f"DAM SYNC SUMMARY - Processed: {self.stats['total_processed']}, Added: {self.stats['total_added']}, Updated: {self.stats['total_updated']}, Skipped: {self.stats['total_skipped']}, Errors: {self.stats['total_errors']}, Elapsed(min): {elapsed/60:.2f}")
+            log_event('info', f"DAM RECONCILIATION - Checked: {self.stats['total_processed']}, MissingRecordsCreated: {self.stats['total_added']}, Repaired: {self.stats['total_updated']}, Unchanged: {self.stats['total_skipped']}, Errors: {self.stats['total_errors']}, Elapsed(min): {elapsed/60:.2f}")
         except Exception:
             pass
-        print(f"Total Processed: {self.stats['total_processed']}")
-        print(f"  - Added:       {self.stats['total_added']}")
-        print(f"  - Updated:     {self.stats['total_updated']}")
-        print(f"  - Skipped:     {self.stats['total_skipped']}")
-        print(f"  - Errors:      {self.stats['total_errors']}")
+        print(f"Files checked:                  {self.stats['total_processed']}")
+        print(f"  - Missing DB records created: {self.stats['total_added']}")
+        print(f"  - Existing records repaired:  {self.stats['total_updated']}")
+        print(f"  - Unchanged:                  {self.stats['total_skipped']}")
+        print(f"  - Errors:                     {self.stats['total_errors']}")
         print(f"Time Elapsed:    {elapsed/60:.2f} minutes")
         print(f"Processing Rate: {self.stats['total_processed']/elapsed:.2f} files/sec")
         print("="*60)

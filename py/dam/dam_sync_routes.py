@@ -87,6 +87,7 @@ def _cron_request_client():
 DAILY_SYNC_TASK_NAME = 'FDC DAM Daily Sync'
 LEGACY_HOURLY_TASK_NAME = 'FDC DAM Hourly Sync'
 WEEKLY_TASK_NAME = 'FDC DAM Weekly Rebuild'
+CHINA_FTP_INDEX_INTERVAL_DAYS = 3
 
 # Max log lines to retain in memory (prevent unbounded growth)
 MAX_LOG_LINES = 10000
@@ -102,6 +103,26 @@ def _parse_windows_next_run_line(raw_line):
         except ValueError:
             continue
     return None
+
+
+def _china_ftp_index_rebuild_due() -> bool:
+    """Return True when the persisted China FTP index is missing or at least three days old."""
+    try:
+        from py.utilities import china_ftp_cache
+
+        built_at = china_ftp_cache.index_status().get('built_at')
+        if not built_at:
+            return True
+
+        built_time = datetime.fromisoformat(str(built_at).replace('Z', '+00:00'))
+        if built_time.tzinfo is None:
+            built_time = built_time.replace(tzinfo=timezone.utc)
+
+        age = datetime.now(timezone.utc) - built_time.astimezone(timezone.utc)
+        return age.total_seconds() >= CHINA_FTP_INDEX_INTERVAL_DAYS * 86400
+    except (TypeError, ValueError, OSError):
+        # Rebuild if the timestamp cannot be read or parsed.
+        return True
 
 
 def _schtasks_next_run(task_name):
@@ -158,6 +179,24 @@ sync_status = {
 
 def _utc_now_iso():
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _parse_fetch_summary(lines):
+    """Parse the stable summary emitted by smart_auto_filter.py."""
+    for line in reversed(lines or []):
+        marker = 'FETCH_SUMMARY|'
+        if marker not in line:
+            continue
+        stats = {}
+        for item in line.split(marker, 1)[1].split('|'):
+            key, separator, value = item.partition('=')
+            if separator:
+                try:
+                    stats[f'fetch_{key}'] = int(value)
+                except ValueError:
+                    pass
+        return stats
+    return {}
 
 
 def _history_kind(force_rebuild_index: bool) -> str:
@@ -253,11 +292,12 @@ def _notify_dam_finished(
     _notify_dam_discord(
         f"**DAM sync finished** ({kind})\n"
         f"Triggered by: **{triggered_by}**\n"
-        f"Processed: {st.get('total_processed', '?')} | "
-        f"Added: {st.get('total_added', '?')} | "
-        f"Updated: {st.get('total_updated', '?')} | "
-        f"Skipped: {st.get('total_skipped', '?')} | "
-        f"Errors: {st.get('total_errors', '?')}"
+        f"Dropbox found: {st.get('fetch_candidates', 0)} | "
+        f"New files organized: {st.get('fetch_organized', 0)} | "
+        f"DB records created: {st.get('fetch_db_added', 0)} | "
+        f"DAM files checked: {st.get('total_processed', 0)} | "
+        f"Unchanged: {st.get('total_skipped', 0)} | "
+        f"Errors: {st.get('fetch_errors', 0) + st.get('total_errors', 0)}"
         + (f" | Cleanup inactive: {cleanup_count}" if cleanup_count else ""),
         success=True,
     )
@@ -283,6 +323,7 @@ def run_sync_background(
     inactivated_paths = []
     cleanup_count = 0
     sync_service = None
+    fetch_stats = {}
     
     try:
         sync_status['is_running'] = True
@@ -340,6 +381,7 @@ def run_sync_background(
             # Helper to stream subprocess output line-by-line
             def stream_process(cmd, log_fn):
                 import subprocess, threading, sys as _sys
+                output_lines = []
                 proc = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
@@ -354,7 +396,9 @@ def run_sync_background(
                     try:
                         for line in iter(stream.readline, ''):
                             if line:
-                                log_fn((prefix + line.rstrip()))
+                                message = prefix + line.rstrip()
+                                output_lines.append(message)
+                                log_fn(message)
                     except UnicodeDecodeError:
                         # Handle any remaining encoding issues
                         pass
@@ -369,7 +413,7 @@ def run_sync_background(
                 returncode = proc.wait()
                 t_out.join(timeout=1)
                 t_err.join(timeout=1)
-                return returncode
+                return returncode, output_lines
 
             # Optional: fetch new images from Dropbox first
             if include_fetch:
@@ -380,7 +424,8 @@ def run_sync_background(
                     fetch_cmd = [_sys.executable, 'py/standalone/smart_auto_filter.py']
                     if fetch_full:
                         fetch_cmd.append('--full')
-                    rc = stream_process(fetch_cmd, capture_print)
+                    rc, fetch_output = stream_process(fetch_cmd, capture_print)
+                    fetch_stats = _parse_fetch_summary(fetch_output)
                     if rc != 0:
                         # If the subprocess returned non-zero, inspect recent output for a completion marker.
                         recent = '\n'.join(sync_status.get('logs', [])[-200:])
@@ -408,6 +453,26 @@ def run_sync_background(
 
             sync_service = DAMSyncServiceV2()
             sync_service.run_full_sync(force_rebuild_index=force_rebuild_index)
+            sync_service.stats.update(fetch_stats)
+            capture_print("\n=== USEFUL SYNC SUMMARY ===")
+            if include_fetch:
+                capture_print(
+                    f"Dropbox: {fetch_stats.get('fetch_candidates', 0)} new/modified found, "
+                    f"{fetch_stats.get('fetch_organized', 0)} newly organized, "
+                    f"{fetch_stats.get('fetch_already_organized', 0)} already organized"
+                )
+                capture_print(
+                    f"Database during import: {fetch_stats.get('fetch_db_added', 0)} created, "
+                    f"{fetch_stats.get('fetch_db_updated', 0)} updated, "
+                    f"{fetch_stats.get('fetch_db_unchanged', 0)} unchanged"
+                )
+            capture_print(
+                f"DAM verification: {sync_service.stats['total_processed']} files checked, "
+                f"{sync_service.stats['total_added']} missing records created, "
+                f"{sync_service.stats['total_updated']} repaired, "
+                f"{sync_service.stats['total_skipped']} unchanged, "
+                f"{sync_service.stats['total_errors']} errors"
+            )
             
             sync_status['last_stats'] = sync_service.stats
             sync_status['last_run'] = str(sync_service.stats.get('end_time'))
@@ -675,6 +740,12 @@ def dam_cron_start():
     include_cleanup = data.get('include_cleanup', True)
     fetch_full = data.get('fetch_full', False)
     include_china_ftp_index = data.get('include_china_ftp_index', True)
+    if include_china_ftp_index and not _china_ftp_index_rebuild_due():
+        include_china_ftp_index = False
+        log_event(
+            'info',
+            f'China FTP index rebuild skipped (less than {CHINA_FTP_INDEX_INTERVAL_DAYS} days old)',
+        )
 
     dam_cron_audit(
         'cron_start_accepted',

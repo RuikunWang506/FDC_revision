@@ -241,6 +241,14 @@ def fetch_oms_description_by_sku(sku, conn_fdc=None, conn_oms_ef=None):
         return None
 
 
+def normalize_oms_text(value):
+    """Strip OMS padding and control chars (CR/LF/TAB) from SKU/style/color text."""
+    if value is None:
+        return ''
+    text = str(value).replace('\r', '').replace('\n', '').replace('\t', '')
+    return ' '.join(text.split())
+
+
 def search_product_data(search_input):
     """
     Search for products by SKU or Style.
@@ -325,16 +333,19 @@ def search_product_data(search_input):
             
             # Add database identifier to each row
             for row in rows:
-                sku_key = str(row[0]).strip()
+                sku_norm = normalize_oms_text(row[0])
+                style_norm = normalize_oms_text(row[1])
+                color_norm = normalize_oms_text(row[12]) or None
+                sku_key = sku_norm
                 if sku_key in ocean_lookup:
                     incoming = ocean_lookup[sku_key]
                 else:
                     incoming = int(row[6] or 0)
                 all_results.append({
                     'db': db_name,
-                    'sku': row[0],
-                    'style': row[1],
-                    'container': row[2],
+                    'sku': sku_norm or row[0],
+                    'style': style_norm or row[1],
+                    'container': normalize_oms_text(row[2]) or row[2],
                     'stock': row[3],
                     'sold': row[4],
                     'available': row[5],
@@ -344,7 +355,7 @@ def search_product_data(search_input):
                     'case_qty': row[9],
                     'box_wt': row[10],
                     'pc_wt': row[11],
-                    'color': row[12],
+                    'color': color_norm,
                     'len': row[13],
                     'wid': row[14],
                     'hei': row[15],
@@ -375,7 +386,7 @@ def group_by_style(results):
     grouped = {}
     
     for item in results:
-        style = item['style']
+        style = normalize_oms_text(item.get('style')) or (item.get('style') or '')
         
         if style not in grouped:
             grouped[style] = {
@@ -402,12 +413,14 @@ def group_by_style(results):
             }
         
         # Create color key for aggregation
-        color_key = item['color'] if item['color'] else 'NO_COLOR'
+        color_norm = normalize_oms_text(item.get('color')) if item.get('color') else ''
+        color_key = color_norm if color_norm else 'NO_COLOR'
+        sku_norm = normalize_oms_text(item.get('sku')) or item.get('sku')
         
         if color_key not in grouped[style]['color_variants']:
             grouped[style]['color_variants'][color_key] = {
-                'color': item['color'],
-                'sku': item['sku'],
+                'color': color_norm or item['color'],
+                'sku': sku_norm,
                 'fdc': None,
                 'efas': None
             }

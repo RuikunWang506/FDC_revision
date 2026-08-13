@@ -62,6 +62,7 @@ from py.other.inventory_manual_adjuster import inventory_manual_adjuster_bp
 from py.other.burlington_highlight import burlington_highlight_bp
 from py.other.mobile_scanner import mobile_scanner_bp
 from py.other.burlington_label_processor import burlington_label_processor_bp
+from py.other.print_center import print_center_bp
 from py.other.vendor_app import vendor_app_bp
 from py.other.vendor_tiktok_processor import vendor_tiktok_processor_bp
 from py.other.email import email_bp
@@ -197,6 +198,7 @@ def register_routes(app):
     app.register_blueprint(burlington_highlight_bp)
     app.register_blueprint(mobile_scanner_bp)
     app.register_blueprint(burlington_label_processor_bp)
+    app.register_blueprint(print_center_bp)
     app.register_blueprint(vendor_app_bp)
     app.register_blueprint(vendor_tiktok_processor_bp)
     app.register_blueprint(four_seller_bp)

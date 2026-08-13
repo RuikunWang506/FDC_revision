@@ -30,8 +30,15 @@ class ImageAsset(Base):
     def __repr__(self):
         return f"<ImageAsset(id={self.id}, sku={self.sku}, filename={self.filename})>"
 
-# Create engine and session
-engine = create_engine(Config.DATABASE_URL, echo=False)
+# Create engine and session. MySQL may close idle connections while they are
+# still present in SQLAlchemy's pool; validate pooled connections before use
+# and periodically replace them so requests do not require an app restart.
+engine = create_engine(
+    Config.DATABASE_URL,
+    echo=False,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():

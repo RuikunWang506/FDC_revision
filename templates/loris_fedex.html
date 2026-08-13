@@ -287,6 +287,100 @@
             font-size: 1rem;
             margin-bottom: 0.35rem;
         }
+        .btn.btn-dymo {
+            background-color: #c2410c;
+            background-image: none;
+            border: 2px solid #7c2d12;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        }
+        .btn.btn-dymo:hover,
+        .btn.btn-dymo:focus,
+        .btn.btn-dymo:active {
+            background-color: #9a3412;
+            border-color: #431407;
+            color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .btn.btn-dymo:disabled,
+        .btn.btn-dymo.disabled {
+            background-color: #ea580c;
+            border: 2px solid #9a3412;
+            color: #fff;
+            opacity: 0.8;
+        }
+        .dymo-preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.25rem;
+            padding: 0.5rem 0 0.25rem;
+        }
+        .dymo-label-wrap {
+            position: relative;
+        }
+        .dymo-label-card {
+            width: 324px;
+            height: 180px;
+            background: #fff;
+            border: 1px solid #c8c8c8;
+            border-radius: 4px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px 12px 6px;
+            box-sizing: border-box;
+        }
+        .dymo-label-card img {
+            width: 100%;
+            height: 75px;
+            object-fit: fill;
+            flex-shrink: 0;
+        }
+        .dymo-label-barcode-num {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 4px;
+            color: #111;
+        }
+        .dymo-label-sku {
+            font-weight: 800;
+            font-size: 1.45rem;
+            letter-spacing: 0.02em;
+            text-align: center;
+            text-transform: uppercase;
+            line-height: 1.15;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-top: auto;
+            padding-bottom: 2px;
+        }
+        .dymo-qty-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #e36c09;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+        .dymo-print-meta {
+            text-align: center;
+            color: #6c757d;
+            margin-top: 0.75rem;
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body class="loris-sidebar-open">
@@ -381,8 +475,10 @@
                         <div class="buttons mt-3">
                             <button type="submit" name="show_table" class="btn btn-secondary btn-lg large-button">{{ te('Show Table') }}</button>
                             <button type="submit" name="submit_data" class="btn btn-primary btn-lg large-button">{{ te('Submit') }}</button>
+                            <button type="button" class="btn btn-dymo btn-lg large-button" onclick="openDymoPrintModal()">
+                                <i class="fas fa-print"></i> {{ te('Print to Dymo') }}
+                            </button>
                             <button type="reset" class="btn btn-danger btn-lg large-button">{{ te('Reset') }}</button>
-
                         </div>
                     </form>
                     
@@ -428,6 +524,31 @@
                     </div>
                     <textarea id="lorisStickerInputData" class="d-none">{{ input_data }}</textarea>
                     {% endif %}
+
+                    <div class="modal fade" id="dymoPrintModal" tabindex="-1" aria-labelledby="dymoPrintModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header text-white" style="background: #e36c09;">
+                                    <h5 class="modal-title" id="dymoPrintModalLabel">
+                                        <i class="fas fa-print"></i> {{ te('Print to Dymo') }} — 2¼ × 1¼ (1933084)
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="text-muted mb-2">{{ te('Barcode on top, SKU on the bottom. Prints to the LabelWriter 450 Turbo on the server.') }}</p>
+                                    <div id="dymoPreviewStatus" class="text-center py-4">{{ te('Loading label design…') }}</div>
+                                    <div id="dymoPreviewGrid" class="dymo-preview-grid"></div>
+                                    <p id="dymoPrintMeta" class="dymo-print-meta"></p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ te('Close') }}</button>
+                                    <button type="button" class="btn btn-dymo" id="dymoConfirmPrintBtn" disabled onclick="printDymoStickers()">
+                                        <i class="fas fa-print"></i> {{ te('Print to Dymo') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2412,11 +2533,25 @@
 
             for (let i = 0; i < Math.max(sku.length, barcode.length, quantity.length); i++) {
                 if (sku[i]?.trim() && barcode[i]?.trim() && quantity[i]?.trim()) {
-                    inputData += `${sku[i].trim()}\t${barcode[i].trim()}\t${quantity[i].trim()}\n`;
+                    inputData += `${sku[i].trim().toUpperCase()}\t${barcode[i].trim()}\t${quantity[i].trim()}\n`;
                 }
             }
 
             document.getElementById('input_data').value = inputData.trim();
+        }
+
+        function uppercaseSkuField() {
+            const skuElement = document.getElementById('sku');
+            if (!skuElement) return;
+            const start = skuElement.selectionStart;
+            const end = skuElement.selectionEnd;
+            const upper = skuElement.value.toUpperCase();
+            if (skuElement.value !== upper) {
+                skuElement.value = upper;
+                if (typeof start === 'number' && typeof end === 'number') {
+                    skuElement.setSelectionRange(start, end);
+                }
+            }
         }
 
         async function openLorisStickerPdf(variant) {
@@ -2451,6 +2586,120 @@
             }
         }
 
+        function getLorisStickerInputData() {
+            if (typeof updateInputData === 'function') {
+                updateInputData();
+            }
+            const liveEl = document.getElementById('input_data');
+            if (liveEl && liveEl.value.trim()) {
+                return liveEl.value.trim();
+            }
+            const hiddenEl = document.getElementById('lorisStickerInputData');
+            return (hiddenEl && hiddenEl.value) ? hiddenEl.value.trim() : '';
+        }
+
+        async function openDymoPrintModal() {
+            const inputData = getLorisStickerInputData();
+            if (!inputData) {
+                alert('No sticker data available. Submit your SKU/barcode/quantity data first.');
+                return;
+            }
+
+            const statusEl = document.getElementById('dymoPreviewStatus');
+            const gridEl = document.getElementById('dymoPreviewGrid');
+            const metaEl = document.getElementById('dymoPrintMeta');
+            const printBtn = document.getElementById('dymoConfirmPrintBtn');
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Loading label design…';
+            gridEl.innerHTML = '';
+            metaEl.textContent = '';
+            printBtn.disabled = true;
+
+            const modalEl = document.getElementById('dymoPrintModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+
+            const formData = new FormData();
+            formData.append('input_data', inputData);
+            try {
+                const response = await fetch('{{ url_for("lori_automation.dymo_sticker_preview") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error((data && data.error) || 'Failed to build Dymo preview.');
+                }
+                statusEl.style.display = 'none';
+                (data.items || []).forEach(function(item) {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'dymo-label-wrap';
+                    const qty = document.createElement('span');
+                    qty.className = 'dymo-qty-badge';
+                    qty.textContent = '× ' + item.quantity;
+                    const card = document.createElement('div');
+                    card.className = 'dymo-label-card';
+                    const img = document.createElement('img');
+                    img.src = item.barcode_png;
+                    img.alt = item.barcode || '';
+                    const barcodeNum = document.createElement('div');
+                    barcodeNum.className = 'dymo-label-barcode-num';
+                    barcodeNum.textContent = item.barcode || '';
+                    const sku = document.createElement('div');
+                    sku.className = 'dymo-label-sku';
+                    sku.textContent = item.sku || '';
+                    card.appendChild(img);
+                    card.appendChild(barcodeNum);
+                    card.appendChild(sku);
+                    wrap.appendChild(qty);
+                    wrap.appendChild(card);
+                    gridEl.appendChild(wrap);
+                });
+                const printerNote = data.printer_warning
+                    ? 'Printer not confirmed: ' + data.printer_warning
+                    : 'Printer: ' + (data.printer || 'DYMO LabelWriter 450 Turbo');
+                metaEl.textContent = (data.total_labels || 0) + ' label(s) · ' +
+                    (data.label_size || '2-1/4 × 1-1/4 in') + ' · ' + printerNote;
+                printBtn.disabled = false;
+                printBtn.dataset.total = data.total_labels || 0;
+            } catch (err) {
+                statusEl.textContent = err.message || 'Failed to load Dymo preview.';
+            }
+        }
+
+        async function printDymoStickers() {
+            const inputData = getLorisStickerInputData();
+            if (!inputData) {
+                alert('No sticker data available. Submit your SKU/barcode/quantity data first.');
+                return;
+            }
+            const printBtn = document.getElementById('dymoConfirmPrintBtn');
+            const originalHtml = printBtn.innerHTML;
+            printBtn.disabled = true;
+            printBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Printing…';
+            const formData = new FormData();
+            formData.append('input_data', inputData);
+            try {
+                const response = await fetch('{{ url_for("lori_automation.print_dymo_stickers") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error((data && data.error) || 'Failed to print to Dymo.');
+                }
+                printBtn.innerHTML = '<i class="fas fa-check"></i> Sent to ' + (data.printer || 'Dymo');
+                setTimeout(function() {
+                    printBtn.innerHTML = originalHtml;
+                    printBtn.disabled = false;
+                }, 2500);
+            } catch (err) {
+                alert(err.message || 'Failed to print to Dymo.');
+                printBtn.innerHTML = originalHtml;
+                printBtn.disabled = false;
+            }
+        }
+
         {% if loris_stickers_ready and input_data %}
         document.addEventListener('DOMContentLoaded', function() {
             openLorisStickerPdf('30_stickers');
@@ -2464,7 +2713,17 @@
         const inputDataElement = document.getElementById('input_data');
 
         if (skuElement && barcodeElement && quantityElement && inputDataElement) {
-            [skuElement, barcodeElement, quantityElement].forEach(element => {
+            skuElement.addEventListener('input', function() {
+                uppercaseSkuField();
+                updateInputData();
+            });
+            skuElement.addEventListener('paste', function() {
+                setTimeout(function() {
+                    uppercaseSkuField();
+                    updateInputData();
+                }, 10);
+            });
+            [barcodeElement, quantityElement].forEach(element => {
                 element.addEventListener('input', updateInputData);
                 element.addEventListener('paste', function() {
                     setTimeout(updateInputData, 10);
@@ -2478,7 +2737,7 @@
                 lines.forEach(line => {
                     const parts = line.split('\t');
                     if (parts.length === 3) {
-                        skus.push(parts[0].trim());
+                        skus.push(parts[0].trim().toUpperCase());
                         barcodes.push(parts[1].trim());
                         quantities.push(parts[2].trim());
                     }

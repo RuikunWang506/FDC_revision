@@ -1,6 +1,13 @@
 """In-transit (ocean) qty from plog — sums open PO lines, not inv_data.on_order_qty."""
 from __future__ import annotations
 
+
+def _norm_sku(sku) -> str:
+    if sku is None:
+        return ""
+    return str(sku).replace("\r", "").replace("\n", "").replace("\t", "").strip()
+
+
 PLOG_OCEAN_AGG_SUBQUERY = """
 (
     SELECT RTRIM(pl.prod_cd) AS prod_cd,
@@ -51,7 +58,7 @@ def fetch_ocean_qty_by_style_prefix(conn, style_prefix: str) -> dict[str, int]:
             (search_param, search_param),
         )
         for sku, qty in cursor.fetchall():
-            lookup[str(sku).strip()] = int(qty or 0)
+            lookup[_norm_sku(sku)] = int(qty or 0)
     finally:
         cursor.close()
     return lookup
@@ -59,7 +66,7 @@ def fetch_ocean_qty_by_style_prefix(conn, style_prefix: str) -> dict[str, int]:
 
 def fetch_ocean_qty_by_skus(conn, skus: list[str], *, chunk_size: int = 400) -> dict[str, int]:
     """Return {trimmed SKU: ocean qty} for explicit SKU list."""
-    normalized = sorted({str(s).strip() for s in skus if str(s).strip()})
+    normalized = sorted({_norm_sku(s) for s in skus if _norm_sku(s)})
     if not normalized:
         return {}
 
@@ -88,7 +95,7 @@ def fetch_ocean_qty_by_skus(conn, skus: list[str], *, chunk_size: int = 400) -> 
                 chunk,
             )
             for sku, qty in cursor.fetchall():
-                lookup[str(sku).strip()] = int(qty or 0)
+                lookup[_norm_sku(sku)] = int(qty or 0)
     finally:
         cursor.close()
     return lookup
@@ -104,7 +111,7 @@ def apply_ocean_qty_to_rows(
     """Replace on_order_qty column values with plog-summed ocean qty per SKU."""
     if not rows:
         return rows
-    skus = [str(row[sku_index]).strip() for row in rows]
+    skus = [_norm_sku(row[sku_index]) for row in rows]
     try:
         ocean_lookup = fetch_ocean_qty_by_skus(conn, skus)
     except Exception:
@@ -114,7 +121,7 @@ def apply_ocean_qty_to_rows(
     updated = []
     for row in rows:
         values = list(row)
-        sku = str(values[sku_index]).strip()
+        sku = _norm_sku(values[sku_index])
         if sku in ocean_lookup:
             values[ocean_index] = ocean_lookup[sku]
         updated.append(tuple(values))
@@ -123,7 +130,7 @@ def apply_ocean_qty_to_rows(
 
 def resolve_ocean_qty(conn, sku: str, fallback=0) -> int:
     """Single-SKU ocean qty with fallback when plog has no open lines."""
-    sku_key = str(sku or "").strip()
+    sku_key = _norm_sku(sku)
     if not sku_key:
         return int(fallback or 0)
     lookup = fetch_ocean_qty_by_skus(conn, [sku_key])

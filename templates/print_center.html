@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ te('打印中心') }} · Print Center</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; }
+    .pc-wrap { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }
+    .hero-card {
+      background: linear-gradient(135deg, #0f2744 0%, #1a4a6e 55%, #2a6f8f 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 12px 28px rgba(15, 39, 68, 0.22);
+    }
+    .hero-card h1 { font-size: 1.45rem; font-weight: 700; margin: 0 0 0.35rem; }
+    .hero-card p { margin: 0; opacity: 0.92; font-size: 0.95rem; }
+    .shortcut-row { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1rem; }
+    .shortcut-row a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.28);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+    .shortcut-row a:hover { background: rgba(255,255,255,0.24); color: #fff; }
+    .panel {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+      padding: 1.35rem 1.4rem;
+      margin-bottom: 1.1rem;
+    }
+    .panel h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a365d;
+      margin: 0 0 0.85rem;
+    }
+    .upload-zone {
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 2rem 1.25rem;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #2b6cb0;
+      background: #ebf8ff;
+    }
+    .upload-zone .hint { color: #718096; font-size: 0.88rem; margin: 0.35rem 0 0; }
+    .printer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+    .printer-card {
+      position: relative;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.95rem 1rem 0.95rem 2.5rem;
+      cursor: pointer;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      text-align: left;
+      width: 100%;
+    }
+    .printer-card:hover { border-color: #90cdf4; }
+    .printer-card.selected {
+      border-color: #2b6cb0;
+      background: #ebf8ff;
+      box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.15);
+    }
+    .printer-card input {
+      position: absolute;
+      left: 0.85rem;
+      top: 1.1rem;
+    }
+    .printer-card .title { font-weight: 700; color: #1a365d; font-size: 0.98rem; }
+    .printer-card .meta { font-size: 0.78rem; color: #718096; margin-top: 0.2rem; word-break: break-word; }
+    .printer-card .status {
+      display: inline-block;
+      margin-top: 0.45rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+    }
+    .status-ok { background: #c6f6d5; color: #22543d; }
+    .status-bad { background: #fed7d7; color: #9b2c2c; }
+
+    .preview-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .preview-toolbar .left, .preview-toolbar .right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .paper-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #edf2f7;
+      color: #1a365d;
+      border: 1px solid #cbd5e0;
+      border-radius: 999px;
+      padding: 0.28rem 0.7rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .orient-toggle {
+      display: inline-flex;
+      border: 1px solid #cbd5e0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f7fafc;
+    }
+    .orient-toggle button {
+      border: 0;
+      background: transparent;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #4a5568;
+    }
+    .orient-toggle button.active {
+      background: #2b6cb0;
+      color: #fff;
+    }
+    .orient-toggle button:hover:not(.active) { background: #edf2f7; }
+
+    .zoom-controls {
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.3rem 0.45rem;
+    }
+    .zoom-controls.visible { display: inline-flex; }
+    .zoom-controls button {
+      width: 2rem;
+      height: 2rem;
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      color: #1a365d;
+      font-weight: 700;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .zoom-controls button:hover { background: #ebf8ff; }
+    .zoom-controls input[type="range"] { width: 110px; }
+    .zoom-pct {
+      min-width: 3.2rem;
+      text-align: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2d3748;
+    }
+
+    .stage {
+      background: #1a202c;
+      border-radius: 12px;
+      border: 1px solid #2d3748;
+      min-height: 280px;
+      max-height: 560px;
+      overflow: auto;
+      margin-bottom: 1rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+    .stage.is-label {
+      background:
+        linear-gradient(45deg, #2d3748 25%, transparent 25%) 0 0 / 16px 16px,
+        linear-gradient(-45deg, #2d3748 25%, transparent 25%) 0 8px / 16px 16px,
+        linear-gradient(45deg, transparent 75%, #2d3748 75%) 8px -8px / 16px 16px,
+        linear-gradient(-45deg, transparent 75%, #2d3748 75%) -8px 0 / 16px 16px,
+        #1a202c;
+    }
+    .paper {
+      position: relative;
+      background: #fff;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.35),
+        0 14px 36px rgba(0,0,0,0.45);
+      overflow: hidden;
+      flex: 0 0 auto;
+      transform-origin: center center;
+      transition: width 0.15s ease, height 0.15s ease;
+    }
+    .paper::after {
+      content: attr(data-size-label);
+      position: absolute;
+      left: 0.45rem;
+      bottom: 0.35rem;
+      z-index: 3;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #1a365d;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      padding: 0.12rem 0.4rem;
+      pointer-events: none;
+    }
+    .paper .print-area {
+      position: absolute;
+      inset: 4px;
+      border: 1px dashed rgba(43, 108, 176, 0.55);
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .paper .content {
+      position: absolute;
+      inset: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #fff;
+    }
+    .paper .content img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .paper .content iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #fff;
+    }
+    .preview-empty {
+      color: #a0aec0;
+      text-align: center;
+      padding: 3rem 1rem;
+      font-size: 0.95rem;
+    }
+    .fit-note {
+      font-size: 0.8rem;
+      color: #718096;
+      margin: -0.35rem 0 0.85rem;
+    }
+    .copies-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .copies-row input { width: 5rem; }
+    .btn-print {
+      background: linear-gradient(135deg, #1a4a6e, #2b6cb0);
+      border: none;
+      font-weight: 700;
+      padding: 0.7rem 1.1rem;
+    }
+    .btn-print:disabled { opacity: 0.55; }
+    #statusBox { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="pc-wrap">
+    <div class="hero-card">
+      <h1><i class="fas fa-print me-2"></i>{{ te('打印中心') }}</h1>
+      <p>{{ te('Upload a PDF or photo (JPG) and print on the server to the warehouse label printer, Dymo, or Front Office Big.') }}</p>
+      <div class="shortcut-row">
+        <a href="{{ loris_url }}">
+          <i class="fas fa-tags"></i> {{ te('Loris Maker Label') }}
+        </a>
+        <a href="{{ url_for('home') }}">
+          <i class="fas fa-home"></i> {{ te('Dashboard') }}
+        </a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><i class="fas fa-cloud-upload-alt text-primary me-2"></i>{{ te('1. Upload file') }}</h2>
+      <div class="upload-zone" id="dropZone" tabindex="0" role="button" aria-label="{{ te('Choose PDF or photo') }}">
+        <i class="fas fa-file-image fa-2x text-primary mb-2"></i>
+        <p class="mb-1"><strong>{{ te('Drop a PDF or JPG here') }}</strong> {{ te('or click to browse') }}</p>
+        <p class="hint">{{ te('PDF · JPG · JPEG · PNG · max 40 MB') }}</p>
+        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,application/pdf,image/*" class="d-none">
+        <div class="mt-2"><span class="badge bg-secondary" id="fileName">{{ te('No file chosen') }}</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><i class="fas fa-print me-2"></i>{{ te('2. Choose printer') }}</h2>
+      <div class="printer-grid" id="printerGrid">
+        {% for p in printers %}
+        <label class="printer-card{% if loop.first %} selected{% endif %}" data-target="{{ p.id }}">
+          <input type="radio" name="target" value="{{ p.id }}" {% if loop.first %}checked{% endif %}>
+          <div class="title">{{ p.label }}</div>
+          <div class="meta">{{ p.hint }}</div>
+          <div class="meta">→ {{ p.resolved }}</div>
+          {% if p.available %}
+          <span class="status status-ok"><i class="fas fa-check"></i> {{ te('Online') }}</span>
+          {% else %}
+          <span class="status status-bad"><i class="fas fa-exclamation-triangle"></i> {{ te('Not found') }}</span>
+          {% endif %}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel" id="previewPanel">
+      <h2><i class="fas fa-eye me-2"></i>{{ te('3. Preview & print') }}</h2>
+      <div class="preview-toolbar">
+        <div class="left">
+          <span class="paper-badge" id="paperBadge"><i class="fas fa-ruler-combined"></i> <span id="paperBadgeText">—</span></span>
+          <span class="text-muted small" id="previewHint">{{ te('Upload a file to see preview here.') }}</span>
+        </div>
+        <div class="right">
+          <div class="orient-toggle" role="group" aria-label="Orientation">
+            <button type="button" id="orientPortraitBtn" data-orient="portrait">{{ te('Portrait') }}</button>
+            <button type="button" id="orientLandscapeBtn" data-orient="landscape">{{ te('Landscape') }}</button>
+          </div>
+          <div class="zoom-controls" id="zoomControls" aria-label="Zoom preview">
+            <button type="button" id="zoomOutBtn" title="Zoom out">−</button>
+            <input type="range" id="zoomRange" min="50" max="400" value="100" step="10">
+            <button type="button" id="zoomInBtn" title="Zoom in">+</button>
+            <span class="zoom-pct" id="zoomPct">100%</span>
+            <button type="button" id="zoomFitBtn" title="Fit to view" style="width:auto;padding:0 0.55rem;font-size:0.75rem;">Fit</button>
+          </div>
+        </div>
+      </div>
+      <p class="fit-note" id="fitNote">{{ te('Content is shown inside the printer paper area (same fit used when printing).') }}</p>
+
+      <div class="stage" id="previewStage">
+        <div class="preview-empty" id="previewEmpty">{{ te('No preview yet') }}</div>
+        <div class="paper d-none" id="paperFrame" data-size-label="">
+          <div class="print-area" aria-hidden="true"></div>
+          <div class="content">
+            <img id="previewImage" class="d-none" alt="Preview">
+            <iframe id="previewPdf" class="d-none" title="PDF preview"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="copies-row mb-3">
+        <label for="copiesInput" class="mb-0 fw-semibold">{{ te('Copies') }}</label>
+        <input type="number" class="form-control" id="copiesInput" min="1" max="20" value="1">
+        <span class="text-muted small">{{ te('(1–20)') }}</span>
+      </div>
+      <button type="button" class="btn btn-primary btn-print w-100" id="printBtn" disabled>
+        <i class="fas fa-print me-2"></i>{{ te('Print now') }}
+      </button>
+      <div id="statusBox" class="d-none"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const PAPER = {
+        warehouse: {
+          id: 'warehouse',
+          wIn: 6,
+          hIn: 4,
+          labelLandscape: '6 × 4 in label',
+          labelPortrait: '4 × 6 in label',
+          defaultOrient: 'landscape',
+          isLabel: true,
+          basePx: 420,
+        },
+        dymo: {
+          id: 'dymo',
+          wIn: 2.25,
+          hIn: 1.25,
+          labelLandscape: '2.25 × 1.25 in Dymo',
+          labelPortrait: '1.25 × 2.25 in Dymo',
+          defaultOrient: 'landscape',
+          isLabel: true,
+          basePx: 360,
+        },
+        front_office: {
+          id: 'front_office',
+          wIn: 8.5,
+          hIn: 11,
+          labelLandscape: 'Letter 11 × 8.5 in',
+          labelPortrait: 'Letter 8.5 × 11 in',
+          defaultOrient: 'portrait',
+          isLabel: false,
+          basePx: 360,
+        },
+      };
+
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const fileName = document.getElementById('fileName');
+      const printBtn = document.getElementById('printBtn');
+      const statusBox = document.getElementById('statusBox');
+      const copiesInput = document.getElementById('copiesInput');
+      const previewStage = document.getElementById('previewStage');
+      const previewEmpty = document.getElementById('previewEmpty');
+      const paperFrame = document.getElementById('paperFrame');
+      const previewImage = document.getElementById('previewImage');
+      const previewPdf = document.getElementById('previewPdf');
+      const previewHint = document.getElementById('previewHint');
+      const paperBadgeText = document.getElementById('paperBadgeText');
+      const zoomControls = document.getElementById('zoomControls');
+      const zoomRange = document.getElementById('zoomRange');
+      const zoomPct = document.getElementById('zoomPct');
+      const fitNote = document.getElementById('fitNote');
+      const orientPortraitBtn = document.getElementById('orientPortraitBtn');
+      const orientLandscapeBtn = document.getElementById('orientLandscapeBtn');
+
+      let selectedFile = null;
+      let previewUrl = null;
+      let zoom = 100;
+      let orientation = 'landscape';
+
+      const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tif', '.tiff'];
+      const ALLOWED_EXTS = ['.pdf'].concat(IMAGE_EXTS);
+
+      function setStatus(kind, message) {
+        statusBox.className = 'alert alert-' + (kind === 'ok' ? 'success' : kind === 'busy' ? 'info' : 'danger');
+        statusBox.textContent = message;
+        statusBox.classList.remove('d-none');
+      }
+
+      function extOf(name) {
+        const m = (name || '').toLowerCase().match(/(\.[a-z0-9]+)$/);
+        return m ? m[1] : '';
+      }
+
+      function isAllowed(file) {
+        if (!file) return false;
+        const ext = extOf(file.name);
+        if (ALLOWED_EXTS.indexOf(ext) >= 0) return true;
+        if ((file.type || '').indexOf('image/') === 0) return true;
+        if (file.type === 'application/pdf') return true;
+        return false;
+      }
+
+      function isImage(file) {
+        const ext = extOf(file.name);
+        if (IMAGE_EXTS.indexOf(ext) >= 0) return true;
+        return (file.type || '').indexOf('image/') === 0;
+      }
+
+      function currentTarget() {
+        const el = document.querySelector('input[name="target"]:checked');
+        return (el && el.value) || 'warehouse';
+      }
+
+      function paperSpec() {
+        return PAPER[currentTarget()] || PAPER.front_office;
+      }
+
+      function orientedSize(spec) {
+        const landscape = orientation === 'landscape';
+        // Native dims are landscape for labels (w>h) and portrait for letter (w<h).
+        const nativeLandscape = spec.wIn >= spec.hIn;
+        let w = spec.wIn;
+        let h = spec.hIn;
+        if (nativeLandscape !== landscape) {
+          w = spec.hIn;
+          h = spec.wIn;
+        }
+        return {
+          wIn: w,
+          hIn: h,
+          label: landscape ? spec.labelLandscape : spec.labelPortrait,
+        };
+      }
+
+      function syncOrientButtons() {
+        orientPortraitBtn.classList.toggle('active', orientation === 'portrait');
+        orientLandscapeBtn.classList.toggle('active', orientation === 'landscape');
+      }
+
+      function setOrientation(next, opts) {
+        const options = opts || {};
+        orientation = next === 'portrait' ? 'portrait' : 'landscape';
+        syncOrientButtons();
+        if (!options.skipLayout) layoutPaper();
+      }
+
+      function setZoom(pct) {
+        const spec = paperSpec();
+        const min = spec.isLabel ? 50 : 70;
+        const max = spec.isLabel ? 400 : 160;
+        zoom = Math.max(min, Math.min(max, Math.round(pct)));
+        zoomRange.min = String(min);
+        zoomRange.max = String(max);
+        zoomRange.value = String(zoom);
+        zoomPct.textContent = zoom + '%';
+        layoutPaper();
+      }
+
+      function layoutPaper() {
+        const spec = paperSpec();
+        const sized = orientedSize(spec);
+        const aspect = sized.wIn / sized.hIn;
+        const base = spec.basePx * (zoom / 100);
+
+        let widthPx;
+        let heightPx;
+        if (aspect >= 1) {
+          widthPx = base;
+          heightPx = base / aspect;
+        } else {
+          heightPx = base;
+          widthPx = base * aspect;
+        }
+
+        if (!spec.isLabel) {
+          const maxW = Math.min(previewStage.clientWidth - 40, orientation === 'landscape' ? 520 : 420);
+          const scale = Math.min(1, maxW / widthPx);
+          widthPx *= scale;
+          heightPx *= scale;
+        }
+
+        paperFrame.style.width = Math.round(widthPx) + 'px';
+        paperFrame.style.height = Math.round(heightPx) + 'px';
+        paperFrame.setAttribute('data-size-label', sized.label + ' · ' + orientation);
+        paperBadgeText.textContent = sized.label + ' · ' + orientation;
+        previewStage.classList.toggle('is-label', !!spec.isLabel);
+        zoomControls.classList.toggle('visible', !!spec.isLabel);
+
+        if (spec.isLabel) {
+          fitNote.textContent = 'Label stock preview (' + orientation + ') — zoom to inspect fit. Print uses this orientation.';
+        } else {
+          fitNote.textContent = 'Letter preview (' + orientation + '). Print fits content to this page orientation.';
+        }
+      }
+
+      function clearPreviewMedia() {
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          previewUrl = null;
+        }
+        previewImage.classList.add('d-none');
+        previewImage.removeAttribute('src');
+        previewPdf.classList.add('d-none');
+        previewPdf.removeAttribute('src');
+      }
+
+      function showEmpty() {
+        clearPreviewMedia();
+        previewEmpty.classList.remove('d-none');
+        paperFrame.classList.add('d-none');
+        previewHint.textContent = 'Upload a file to see preview here.';
+      }
+
+      function showPreview(file) {
+        clearPreviewMedia();
+        if (!file) {
+          showEmpty();
+          return;
+        }
+        previewUrl = URL.createObjectURL(file);
+        previewEmpty.classList.add('d-none');
+        paperFrame.classList.remove('d-none');
+        previewHint.textContent = file.name + ' · ' + Math.max(1, Math.round(file.size / 1024)) + ' KB';
+        if (isImage(file)) {
+          previewImage.src = previewUrl;
+          previewImage.classList.remove('d-none');
+        } else {
+          previewPdf.src = previewUrl;
+          previewPdf.classList.remove('d-none');
+        }
+        const spec = paperSpec();
+        setZoom(spec.isLabel ? 140 : 100);
+      }
+
+      function refreshPrintEnabled() {
+        printBtn.disabled = !selectedFile;
+      }
+
+      function acceptFile(file) {
+        if (!file) return;
+        if (!isAllowed(file)) {
+          setStatus('err', 'Only PDF and photo files (JPG, JPEG, PNG) are supported.');
+          return;
+        }
+        selectedFile = file;
+        fileName.textContent = file.name + ' · ' + Math.max(1, Math.round(file.size / 1024)) + ' KB';
+        fileName.classList.remove('bg-secondary');
+        fileName.classList.add('bg-primary');
+        statusBox.classList.add('d-none');
+        showPreview(file);
+        refreshPrintEnabled();
+        document.getElementById('previewPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function onPrinterChanged() {
+        const spec = paperSpec();
+        setOrientation(spec.defaultOrient, { skipLayout: true });
+        if (selectedFile) {
+          setZoom(spec.isLabel ? Math.max(zoom, 120) : 100);
+        } else {
+          layoutPaper();
+        }
+      }
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+      });
+      fileInput.addEventListener('change', () => acceptFile(fileInput.files && fileInput.files[0]));
+
+      ['dragenter', 'dragover'].forEach((ev) => {
+        dropZone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          dropZone.classList.add('dragover');
+        });
+      });
+      ['dragleave', 'drop'].forEach((ev) => {
+        dropZone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+        });
+      });
+      dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        acceptFile(file);
+      });
+
+      document.querySelectorAll('.printer-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.printer-card').forEach((c) => c.classList.remove('selected'));
+          card.classList.add('selected');
+          const radio = card.querySelector('input[type="radio"]');
+          if (radio) radio.checked = true;
+          onPrinterChanged();
+        });
+      });
+
+      orientPortraitBtn.addEventListener('click', () => setOrientation('portrait'));
+      orientLandscapeBtn.addEventListener('click', () => setOrientation('landscape'));
+
+      document.getElementById('zoomInBtn').addEventListener('click', () => setZoom(zoom + 20));
+      document.getElementById('zoomOutBtn').addEventListener('click', () => setZoom(zoom - 20));
+      document.getElementById('zoomFitBtn').addEventListener('click', () => setZoom(100));
+      zoomRange.addEventListener('input', () => setZoom(parseInt(zoomRange.value, 10) || 100));
+
+      previewStage.addEventListener('wheel', (e) => {
+        if (!paperSpec().isLabel || !selectedFile) return;
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        setZoom(zoom + (e.deltaY < 0 ? 15 : -15));
+      }, { passive: false });
+
+      window.addEventListener('resize', () => layoutPaper());
+
+      printBtn.addEventListener('click', async () => {
+        if (!selectedFile) return;
+        const targetInput = document.querySelector('input[name="target"]:checked');
+        if (!targetInput) {
+          setStatus('err', 'Choose a printer.');
+          return;
+        }
+        const copies = Math.max(1, Math.min(20, parseInt(copiesInput.value || '1', 10) || 1));
+        const fd = new FormData();
+        fd.append('file', selectedFile, selectedFile.name);
+        fd.append('target', targetInput.value);
+        fd.append('orientation', orientation);
+        fd.append('copies', String(copies));
+
+        printBtn.disabled = true;
+        setStatus('busy', 'Sending to printer…');
+        try {
+          const resp = await fetch('{{ url_for("print_center.print_center_print") }}', {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok || !data.ok) {
+            throw new Error((data && data.error) || ('Print failed (' + resp.status + ')'));
+          }
+          setStatus('ok', data.message || ('Sent to ' + (data.printer || 'printer')));
+        } catch (err) {
+          setStatus('err', err.message || 'Print failed.');
+        } finally {
+          refreshPrintEnabled();
+        }
+      });
+
+      // Defaults: first selected printer orientation
+      setOrientation(paperSpec().defaultOrient, { skipLayout: true });
+      layoutPaper();
+      showEmpty();
+    })();
+  </script>
+</body>
+</html>

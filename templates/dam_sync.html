@@ -109,13 +109,15 @@
                 </div>
                 <div class="col-md-6">
                     {% if status and status.last_stats %}
-                    <p><strong>{{ te('Last Sync Stats:') }}</strong></p>
+                    <p><strong>{{ te('Last Sync Results:') }}</strong></p>
                     <ul>
-                        <li>Processed: {{ status.last_stats.total_processed }}</li>
-                        <li>Added: {{ status.last_stats.total_added }}</li>
-                        <li>Updated: {{ status.last_stats.total_updated }}</li>
-                        <li>Skipped: {{ status.last_stats.total_skipped }}</li>
-                        <li>Errors: {{ status.last_stats.total_errors }}</li>
+                        <li>Dropbox new/modified files found: {{ status.last_stats.fetch_candidates|default(0) }}</li>
+                        <li>New files organized: {{ status.last_stats.fetch_organized|default(0) }}</li>
+                        <li>Database records created during import: {{ status.last_stats.fetch_db_added|default(0) }}</li>
+                        <li>Database records updated during import: {{ status.last_stats.fetch_db_updated|default(0) }}</li>
+                        <li>DAM files verified: {{ status.last_stats.total_processed }}</li>
+                        <li>Unchanged records: {{ status.last_stats.total_skipped }}</li>
+                        <li>Total errors: {{ status.last_stats.total_errors + (status.last_stats.fetch_errors|default(0)) }}</li>
                     </ul>
                     {% endif %}
                 </div>

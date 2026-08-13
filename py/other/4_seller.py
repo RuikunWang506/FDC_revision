@@ -47,6 +47,12 @@ DEFAULT_EXPORT_PAYLOAD = {
     "availableMax": "",
 }
 
+ZERO_STOCK_EXPORT_PAYLOAD = {
+    **DEFAULT_EXPORT_PAYLOAD,
+    "onHandMin": "0",
+    "onHandMax": "0",
+}
+
 COOKIE_CACHE_FILE = os.path.join("data", "4seller_cookie_cache.json")
 EXCEL_IMPORT_URL = "https://www.4seller.com/api/excel/import"
 EXCEL_IMPORT_SCHEDULE_URL = "https://www.4seller.com/api/excel/get-import-schedule"
@@ -468,8 +474,15 @@ def _default_internal_sku(stock_sku: str) -> str:
     return str(stock_sku or "").strip().replace("-", " ")
 
 
-def _request_export_file_url(session: requests.Session) -> str:
-    export_response = session.post(SKU_EXPORT_URL, json=DEFAULT_EXPORT_PAYLOAD, timeout=30)
+def _request_export_file_url(
+    session: requests.Session,
+    payload: dict[str, Any] | None = None,
+) -> str:
+    export_response = session.post(
+        SKU_EXPORT_URL,
+        json=payload or DEFAULT_EXPORT_PAYLOAD,
+        timeout=30,
+    )
     export_data = _safe_json(export_response)
 
     if not isinstance(export_data, dict) or export_data.get("code") != 0:
@@ -807,15 +820,25 @@ def sync_4seller_from_cookie(cookie_header: str) -> dict[str, Any]:
     if not _verify_4seller_session(session_client):
         raise RuntimeError("4Seller session invalid or expired.")
 
-    file_url = _request_export_file_url(session_client)
-    file_bytes = _download_export_bytes(file_url)
-    rows = _load_rows_from_xlsx_bytes(file_bytes)
+    regular_file_url = _request_export_file_url(session_client, DEFAULT_EXPORT_PAYLOAD)
+    zero_stock_file_url = _request_export_file_url(session_client, ZERO_STOCK_EXPORT_PAYLOAD)
+
+    regular_rows = _load_rows_from_xlsx_bytes(_download_export_bytes(regular_file_url))
+    zero_stock_rows = _load_rows_from_xlsx_bytes(_download_export_bytes(zero_stock_file_url))
+    rows = regular_rows + zero_stock_rows
     inserted = _replace_4seller_stock(rows)
 
     return {
         "success": True,
-        "message": f"Imported {inserted} SKU rows from 4Seller export.",
-        "file_url": file_url,
+        "message": (
+            f"Imported {inserted} SKU rows from 4Seller exports "
+            f"({len(regular_rows)} regular, {len(zero_stock_rows)} zero-stock)."
+        ),
+        "file_url": regular_file_url,
+        "file_urls": {
+            "regular": regular_file_url,
+            "zero_stock": zero_stock_file_url,
+        },
         "file_path": None,
         "synced_at": datetime.now().isoformat(),
         "imported_rows": inserted,
